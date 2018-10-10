@@ -139,7 +139,7 @@ module file and test that the real module works via :command:`ansible` or
     The wrapper provides one more subcommand, ``excommunicate``.  This
     subcommand is very similar to ``execute`` in that it invokes the exploded
     module on the arguments in the :file:`args`.  The way it does this is
-    different, however.  ``excommunicate`` imports the :func:`main`
+    different, however.  ``excommunicate`` imports the :py3:func:`main`
     function from the module and then calls that.  This makes excommunicate
     execute the module in the wrapper's process.  This may be useful for
     running the module under some graphical debuggers but it is very different
