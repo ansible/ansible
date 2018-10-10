@@ -26,8 +26,9 @@ class TestOnyxMagpModule(TestOnyxModule):
         self.mock_load_config = patch(
             'ansible.module_utils.network.onyx.onyx.load_config')
         self.load_config = self.mock_load_config.start()
-        self.mock_get_version = patch.object(
-           onyx_magp.OnyxMagpModule, "_get_os_version")
+
+        self.mock_get_version = patch.object(onyx_magp.OnyxMagpModule,
+                                             "_get_os_version")
         self.get_version = self.mock_get_version.start()
 
     def tearDown(self):
