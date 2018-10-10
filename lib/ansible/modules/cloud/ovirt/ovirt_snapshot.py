@@ -48,6 +48,12 @@ options:
     description:
         description:
             - "Description of the snapshot."
+    disk_id:
+        description:
+            - "Disk id which you want to upload or download"
+    disk_name:
+        description:
+            - "Disk name which you want to upload or download"
     download_image_path:
         description:
             - "Path on a file system where disk should be downloaded."
@@ -402,6 +408,7 @@ def restore_snapshot(module, vm_service, snapshots_service):
         'snapshot': get_dict_of_struct(snapshot),
     }
 
+
 def get_snapshot_disk_id(module, snapshots_service):
     snapshot_service = snapshots_service.snapshot_service(module.params.get('snapshot_id'))
     snapshot_disks_service = snapshot_service.disks_service()
@@ -413,6 +420,7 @@ def get_snapshot_disk_id(module, snapshots_service):
         disk_id = get_id_by_name(snapshot_disks_service, module.params.get('disk_name'))
 
     return snapshot_disks_service.disk_service(disk_id).get().id
+
 
 def remove_old_snapshosts(module, vm_service, snapshots_service):
     deleted_snapshots = []
@@ -440,7 +448,7 @@ def main():
         disk_name=dict(default=None),
         description=dict(default=None),
         download_image_path=dict(default=None),
-        upload_image_path=dict(default=None, aliases=['image_path']),
+        upload_image_path=dict(default=None),
         keep_days_old=dict(default=None, type='int'),
         use_memory=dict(
             default=None,
