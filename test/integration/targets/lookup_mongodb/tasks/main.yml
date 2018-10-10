@@ -26,12 +26,10 @@
       #optional
       collection: "startup_log"
       connection_string: "mongodb://localhost/"
-      # extra_connection_parameters: { "ssl" : True , "ssl_certfile": /etc/self_signed_certificate.pem" }
+      # extra_connection_parameters: { "ssl": True , "ssl_certfile": /etc/self_signed_certificate.pem" }
       #optional query  parameters, we accept any parameter from the normal mongodb query.
       # filter:  { "hostname": "u18" }
-      projection: { "pid": True    , "_id" : False , "hostname" : True }
+      projection: { "pid": True, "_id": False, "hostname": True }
       skip: 0
       limit: 1
-      sort:  [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
-
-
+      sort:  [ [ "startTime", "ASCENDING" ], [ "age", "DESCENDING" ] ]
