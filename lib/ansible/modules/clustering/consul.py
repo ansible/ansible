@@ -117,6 +117,11 @@ options:
             Similar to the interval this is a number with a s or m suffix to
             signify the units of seconds or minutes e.g 15s or 1m. If no suffix
             is supplied, m will be used by default e.g. 1 will be 1m
+    tcp:
+        description:
+          - checks can be registered with a tcp port. This means that consul
+            will check if the connection attempt to that port is successful (ie - the port is currently accepting connections).
+            Interval must also be provided with this option.
     http:
         description:
           - checks can be registered with an http endpoint. This means that consul
@@ -146,6 +151,13 @@ EXAMPLES = '''
     service_port: 80
     script: curl http://localhost
     interval: 60s
+
+- name: register nginx with a tcp check
+  consul:
+    service_name: nginx
+    service_port: 80
+    interval: 60s
+    tcp: localhost:80
 
 - name: register nginx with an http check
   consul:
@@ -270,6 +282,7 @@ def add_check(module, check):
                      script=check.script,
                      interval=check.interval,
                      ttl=check.ttl,
+                     tcp=check.tcp,
                      http=check.http,
                      timeout=check.timeout,
                      service_id=check.service_id)
@@ -342,11 +355,12 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-    if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('http')) if p]) > 1:
+    if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('tcp'), module.params.get('http')) if p]) > 1:
         module.fail_json(
-            msg='checks are either script, http or ttl driven, supplying more than one does not make sense')
+            msg='checks are either script, tcp, http or ttl driven, supplying more than one does not make sense')
 
-    if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
+
+    if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('tcp') or module.params.get('http'):
 
         return ConsulCheck(
             module.params.get('check_id'),
@@ -357,6 +371,7 @@ def parse_check(module):
             module.params.get('interval'),
             module.params.get('ttl'),
             module.params.get('notes'),
+            module.params.get('tcp'),
             module.params.get('http'),
             module.params.get('timeout'),
             module.params.get('service_id'),
@@ -442,7 +457,7 @@ class ConsulService():
 class ConsulCheck(object):
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                 script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
+                 script=None, interval=None, ttl=None, notes=None, tcp=None, http=None, timeout=None, service_id=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
@@ -454,6 +469,7 @@ class ConsulCheck(object):
         self.interval = self.validate_duration('interval', interval)
         self.ttl = self.validate_duration('ttl', ttl)
         self.script = script
+        self.tcp = tcp
         self.http = http
         self.timeout = self.validate_duration('timeout', timeout)
 
@@ -468,8 +484,13 @@ class ConsulCheck(object):
         if http:
             if interval is None:
                 raise Exception('http check must specify interval')
-
             self.check = consul.Check.http(http, self.interval, self.timeout)
+
+        if tcp:
+            if interval is None:
+                raise Exception('tcp check must specify interval')
+            tcpParsedList = tcp.split(':')
+            self.check = consul.Check.tcp(tcpParsedList[0], int(tcpParsedList[1]), self.interval)
 
     def validate_duration(self, name, duration):
         if duration:
@@ -504,6 +525,7 @@ class ConsulCheck(object):
         self._add(data, 'host')
         self._add(data, 'interval')
         self._add(data, 'ttl')
+        self._add(data, 'tcp')
         self._add(data, 'http')
         self._add(data, 'timeout')
         self._add(data, 'service_id')
@@ -543,6 +565,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             interval=dict(required=False, type='str'),
             ttl=dict(required=False, type='str'),
+            tcp=dict(required=False, type='str'),
             http=dict(required=False, type='str'),
             timeout=dict(required=False, type='str'),
             tags=dict(required=False, type='list'),
