@@ -15,7 +15,7 @@ description:
     - Create an EC2 Placement Group; if the placement group already exists,
       nothing is done. Or, delete an existing placement group. If the placement
       group is absent, do nothing. See also
-      http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html
+      U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html)
 version_added: "2.5"
 author: "Brad Macpherson (@iiibrad)"
 options:

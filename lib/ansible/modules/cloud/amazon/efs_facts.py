@@ -270,7 +270,7 @@ class EFSConnection(object):
             AWS updated it and now there is no need to add a suffix. MountPoint is left for back-compatibility purpose
             And new FilesystemAddress variable is introduced for direct use with other modules (e.g. mount)
             AWS documentation is available here:
-            http://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
+            U(https://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html)
             """
             item['MountPoint'] = '.%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
             item['FilesystemAddress'] = '%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
