@@ -554,6 +554,7 @@ def main():
                                               'SecurityGroupIds': vpc_security_group_ids}})
 
         # Finally try to create function
+        current_version = None
         try:
             if not check_mode:
                 response = client.create_function(**func_kwargs)
