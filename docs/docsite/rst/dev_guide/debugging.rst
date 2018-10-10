@@ -109,11 +109,11 @@ When you look into the debug_dir you'll see a directory structure like this::
   that are passed to the module, this is the file to do it in.
 
 * The :file:`ansible` directory contains code from
-  :mod:`ansible.module_utils` that is used by the module.  Ansible includes
-  files for any :`module:`ansible.module_utils` imports in the module but not
+  ``ansible.module_utils`` that is used by the module.  Ansible includes
+  files for any ``ansible.module_utils`` imports in the module but not
   any files from any other module.  So if your module uses
-  :mod:`ansible.module_utils.url` Ansible will include it for you, but if
-  your module includes :mod:`requests` then you'll have to make sure that
+  ``ansible.module_utils.url`` Ansible will include it for you, but if
+  your module includes ``requests`` then you'll have to make sure that
   the python requests library is installed on the system before running the
   module.  You can modify files in this directory if you suspect that the
   module is having a problem in some of this boilerplate code rather than in
@@ -139,7 +139,7 @@ module file and test that the real module works via :command:`ansible` or
     The wrapper provides one more subcommand, ``excommunicate``.  This
     subcommand is very similar to ``execute`` in that it invokes the exploded
     module on the arguments in the :file:`args`.  The way it does this is
-    different, however.  ``excommunicate`` imports the :func:`main`
+    different, however.  ``excommunicate`` imports the ``main``
     function from the module and then calls that.  This makes excommunicate
     execute the module in the wrapper's process.  This may be useful for
     running the module under some graphical debuggers but it is very different

@@ -283,18 +283,18 @@ substitutions:
     :ref:`new-style Python modules <flow_python_modules>` under the
     :ref:`Ansiballz` framework the proper way is to instead instantiate an
     `AnsibleModule` and then access the version from
-    :attr:``AnsibleModule.ansible_version``.
+    ``AnsibleModule.ansible_version``.
   - :code:`"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"` is substituted with
     a string which is the Python ``repr`` of the :term:`JSON` encoded module
     parameters.  Using ``repr`` on the JSON string makes it safe to embed in
     a Python file.  In new-style Python modules under the Ansiballz framework
     this is better accessed by instantiating an `AnsibleModule` and
-    then using :attr:`AnsibleModule.params`.
+    then using ``AnsibleModule.params``.
   - :code:`<<SELINUX_SPECIAL_FILESYSTEMS>>` substitutes a string which is
     a comma separated list of file systems which have a file system dependent
     security context in SELinux.  In new-style Python modules, if you really
     need this you should instantiate an `AnsibleModule` and then use
-    :attr:`AnsibleModule._selinux_special_fs`.  The variable has also changed
+    ``AnsibleModule._selinux_special_fs``.  The variable has also changed
     from a comma separated string of file system names to an actual python
     list of filesystem names.
   - :code:`<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>` substitutes the module
@@ -307,7 +307,7 @@ substitutions:
     ``ansible_syslog_facility`` inventory variable that applies to this host.  In
     new-style Python modules this has changed slightly.  If you really need to
     access it, you should instantiate an `AnsibleModule` and then use
-    :attr:`AnsibleModule._syslog_facility` to access it.  It is no longer the
+    ``AnsibleModule._syslog_facility`` to access it.  It is no longer the
     actual syslog facility and is now the name of the syslog facility.  See
     the :ref:`documentation on internal arguments <flow_internal_arguments>`
     for details.
@@ -341,7 +341,7 @@ ansible module.
       understands scripts on stdin but does not understand zip files.
 
 In Ansiballz, any imports of Python modules from the
-:py:mod:`ansible.module_utils` package trigger inclusion of that Python file
+``ansible.module_utils`` package trigger inclusion of that Python file
 into the zipfile.  Instances of :code:`#<<INCLUDE_ANSIBLE_MODULE_COMMON>>` in
 the module are turned into :code:`from ansible.module_utils.basic import *`
 and :file:`ansible/module-utils/basic.py` is then included in the zipfile.
@@ -352,7 +352,7 @@ the zipfile as well.
 .. warning::
     At present, the Ansiballz Framework cannot determine whether an import
     should be included if it is a relative import.  Always use an absolute
-    import that has :py:mod:`ansible.module_utils` in it to allow Ansiballz to
+    import that has ``ansible.module_utils`` in it to allow Ansiballz to
     determine that the file should be included.
 
 .. _flow_passing_module_args:
@@ -363,14 +363,14 @@ Passing args
 In :ref:`module_replacer`, module arguments are turned into a JSON-ified
 string and substituted into the combined module file.  In :ref:`Ansiballz`,
 the JSON-ified string is passed into the module via stdin.  When
-a  :class:`ansible.module_utils.basic.AnsibleModule` is instantiated,
+a  ``ansible.module_utils.basic.AnsibleModule`` is instantiated,
 it parses this string and places the args into
-:attr:`AnsibleModule.params` where it can be accessed by the module's
+``AnsibleModule.params`` where it can be accessed by the module's
 other code.
 
 .. note::
     Internally, the `AnsibleModule` uses the helper function,
-    :py:func:`ansible.module_utils.basic._load_params`, to load the parameters
+    ``ansible.module_utils.basic._load_params``, to load the parameters
     from stdin and save them into an internal global variable.  Very dynamic
     custom modules which need to parse the parameters prior to instantiating
     an ``AnsibleModule`` may use ``_load_params`` to retrieve the
@@ -389,7 +389,7 @@ Both :ref:`module_replacer` and :ref:`Ansiballz` send additional arguments to
 the module beyond those which the user specified in the playbook.  These
 additional arguments are internal parameters that help implement global
 Ansible features.  Modules often do not need to know about these explicitly as
-the features are implemented in :py:mod:`ansible.module_utils.basic` but certain
+the features are implemented in ``ansible.module_utils.basic`` but certain
 features need support from the module so it's good to know about them.
 
 _ansible_no_log
@@ -397,10 +397,10 @@ _ansible_no_log
 
 This is a boolean.  If it's True then the playbook specified ``no_log`` (in
 a task's parameters or as a play parameter).  This automatically affects calls
-to :py:meth:`AnsibleModule.log`.  If a module implements its own logging then
+to ``AnsibleModule.log``.  If a module implements its own logging then
 it needs to check this value.  The best way to look at this is for the module
 to instantiate an `AnsibleModule` and then check the value of
-:attr:`AnsibleModule.no_log`.
+``AnsibleModule.no_log``.
 
 .. note::
     ``no_log`` specified in a module's argument_spec are handled by a different mechanism.
@@ -409,13 +409,13 @@ _ansible_debug
 ^^^^^^^^^^^^^^^
 
 This is a boolean that turns on more verbose logging.  If a module uses
-:py:meth:`AnsibleModule.debug` rather than :py:meth:`AnsibleModule.log` then
+``AnsibleModule.debug`` rather than ``AnsibleModule.log`` then
 the messages are only logged if this is True.  This also turns on logging of
 external commands that the module executes.  This can be changed via
 the ``debug`` setting in :file:`ansible.cfg` or the environment variable
 :envvar:`ANSIBLE_DEBUG`.  If, for some reason, a module must access this, it
 should do so by instantiating an `AnsibleModule` and accessing
-:attr:`AnsibleModule._debug`.
+``AnsibleModule._debug``.
 
 _ansible_diff
 ^^^^^^^^^^^^^^^
@@ -424,7 +424,7 @@ This boolean is turned on via the ``--diff`` command line option.  If a module
 supports it, it will tell the module to show a unified diff of changes to be
 made to templated files.  The proper way for a module to access this is by
 instantiating an `AnsibleModule` and accessing
-:attr:`AnsibleModule._diff`.
+``AnsibleModule._diff``.
 
 _ansible_verbosity
 ^^^^^^^^^^^^^^^^^^
@@ -447,9 +447,9 @@ via a comma separated string of filesystem names from :file:`ansible.cfg`::
 If a module cannot use the builtin ``AnsibleModule`` methods to manipulate
 files and needs to know about these special context filesystems, it should
 instantiate an ``AnsibleModule`` and then examine the list in
-:attr:`AnsibleModule._selinux_special_fs`.
+``AnsibleModule._selinux_special_fs``.
 
-This replaces :attr:`ansible.module_utils.basic.SELINUX_SPECIAL_FS` from
+This replaces ``ansible.module_utils.basic.SELINUX_SPECIAL_FS`` from
 :ref:`module_replacer`.  In module replacer it was a comma separated string of
 filesystem names.  Under Ansiballz it's an actual list.
 
@@ -460,10 +460,10 @@ _ansible_syslog_facility
 
 This parameter controls which syslog facility ansible module logs to.  It may
 be set by changing the ``syslog_facility`` value in :file:`ansible.cfg`.  Most
-modules should just use :meth:`AnsibleModule.log` which will then make use of
+modules should just use ``AnsibleModule.log`` which will then make use of
 this.  If a module has to use this on its own, it should instantiate an
 `AnsibleModule` and then retrieve the name of the syslog facility from
-:attr:`AnsibleModule._syslog_facility`.  The code will look slightly different
+``AnsibleModule._syslog_facility``.  The code will look slightly different
 than it did under :ref:`module_replacer` due to how hacky the old way was
 
 .. code-block:: python
@@ -485,8 +485,8 @@ _ansible_version
 
 This parameter passes the version of ansible that runs the module.  To access
 it, a module should instantiate an `AnsibleModule` and then retrieve it
-from :attr:`AnsibleModule.ansible_version`.  This replaces
-:attr:`ansible.module_utils.basic.ANSIBLE_VERSION` from
+from ``AnsibleModule.ansible_version``.  This replaces
+``ansible.module_utils.basic.ANSIBLE_VERSION`` from
 :ref:`module_replacer`.
 
 .. versionadded:: 2.1
