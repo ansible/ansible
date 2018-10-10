@@ -155,7 +155,7 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
             vlans = allowed_vlans.split(',')
             for vlan in vlans:
                 if '-' not in vlan:
-                    interface_allwoed_vlans.append(vlan)
+                    interface_allwoed_vlans.append(int(vlan))
                 else:
                     vlan_range = vlan.split("-")
                     min_number = int(vlan_range[0].strip())
