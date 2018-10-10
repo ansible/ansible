@@ -58,8 +58,9 @@ class TerminalModule(TerminalBase):
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
     def on_become(self, passwd=None):
-        if self._get_prompt():
-            if self._get_prompt().endswith(b'#'):
+        conn_prompt = self._get_prompt()
+        if conn_prompt:
+            if conn_prompt.endswith(b'#'):
                 return
         else:
             return
