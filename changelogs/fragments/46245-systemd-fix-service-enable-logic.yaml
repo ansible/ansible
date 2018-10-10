@@ -1,0 +1,3 @@
+bugfixes:
+- In systemd module, allow scope to default to 'system'
+- In systemd module, fix check if a systemd+initd service is enabled - disabled in systemd means disabled
