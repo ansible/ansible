@@ -49,6 +49,7 @@ options:
     choices: ["present", "absent"]
     required: False
     default: 'present'
+extends_documentation_fragment: phpipam
 '''
 
 EXAMPLES = '''
