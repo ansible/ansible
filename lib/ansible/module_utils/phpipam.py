@@ -108,4 +108,3 @@ def phpipam_argument_spec(**kwargs):
     )
     spec.update(kwargs)
     return spec
-
