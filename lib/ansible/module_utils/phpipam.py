@@ -8,20 +8,26 @@ import urllib
 
 
 class PhpIpamWrapper(urls.Request):
-    def __init__(self, username, password, url):
+    def __init__(self, auth):
         urls.Request.__init__(self)
-        self.username = username
-        self.password = password
-        self.url = url
-        self.auth_header = {'Authorization':
-                            urls.basic_auth_header(self.username, self.password)}
+        self.url = auth['url']
+        if 'token' not in auth:
+            self.username = auth['username']
+            self.password = auth['password']
+            self.auth_header = {'Authorization':
+                                urls.basic_auth_header(self.username, self.password)}
 
     # Create and authenticates a session against phpipam server
-    def create_session(self):
-        url = self.url + 'user/'
-        auth = json.load(self.post(url, headers=self.auth_header))
-        token = auth['data']['token']
-        self.headers.update({'token': '%s' % token})
+    def create_session(self, auth):
+        try:
+            if auth['token']:
+                self.headers.update({'token': '%s' % auth['token']})
+        except KeyError:
+            url = self.url + 'user/'
+            authenticate = json.load(self.post(url, headers=self.auth_header))
+            token = authenticate['data']['token']
+            self.headers.update({'token': '%s' % token})
+            print(token)
 
     # Retrieves subnet information in json
     def get_subnet(self, subnet, section):
@@ -94,3 +100,12 @@ class PhpIpamWrapper(urls.Request):
         payload = urllib.urlencode({'id': id})
         result = json.load(session.delete(url, data=payload))
         return result
+
+
+def phpipam_argument_spec(**kwargs):
+    spec = dict(
+        auth=dict(required=True, type='dict')
+    )
+    spec.update(kwargs)
+    return spec
+

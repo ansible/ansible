@@ -22,18 +22,6 @@ version_added: "2.8"
 description:
     - Creates, modifies, or destroys subnet in phpIPAM instance if necessary.
 options:
-  username:
-    description:
-      - username that has permission to access phpIPAM API
-    required: True
-  password:
-    description:
-      - password for username provided
-    required: True
-  url:
-    description:
-      - API url for phpIPAM instance
-    required: True
   section:
     description:
       - Name of the section that the subnet belongs to.
@@ -67,9 +55,10 @@ EXAMPLES = '''
 
 - name: Create a subnet
   phpipam_subnet:
-    username: username
-    password: secret
-    url: "https://ipam.domain.tld/api/app/"
+    auth:
+      username: user
+      password: secret
+      url: http://phpipam.domain.tld/api/app/
     section: 'ansible section'
     subnet: "192.168.10.0/24"
     description: "optional description"
@@ -77,9 +66,10 @@ EXAMPLES = '''
 
 - name: Create a nested subnet
   phpipam_subnet:
-    username: username
-    password: secret
-    url: "https://ipam.domain.tld/api/app/"
+    auth:
+      username: user
+      password: secret
+      url: http://phpipam.domain.tld/api/app/
     section: 'section two'
     subnet: '192.168.10.0/25'
     master_subnet: '192.168.10.0/24'
@@ -88,9 +78,10 @@ EXAMPLES = '''
 
 - name: Delete a subnet
   phpipam_subnet:
-    username: username
-    password: secret
-    url: "https://ipam.domain.tld/api/app/"
+    auth:
+      username: user
+      password: secret
+      url: http://phpipam.domain.tld/api/app/
     section: 'section two'
     subnet: '192.168.10.0/24'
     state: absent
@@ -133,27 +124,24 @@ import ansible.module_utils.phpipam as phpipam
 
 
 def main():
+    argument_spec = phpipam.phpipam_argument_spec(
+        section=dict(type=str, required=True),
+        subnet=dict(type=str, required=True),
+        master_subnet=dict(type=str, required=False),
+        description=dict(type=str, required=False),
+        vlan=dict(type=str, required=False),
+        state=dict(default='present', choices=['present', 'absent'])
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            username=dict(type=str, required=True),
-            password=dict(type=str, required=True, no_log=True),
-            url=dict(type=str, required=True),
-            section=dict(type=str, required=True),
-            subnet=dict(type=str, required=True),
-            master_subnet=dict(type=str, required=False),
-            description=dict(type=str, required=False),
-            vlan=dict(type=str, required=False),
-            state=dict(default='present', choices=['present', 'absent'])
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=False
     )
 
     result = dict(
         changed=False
     )
-    username = module.params['username']
-    password = module.params['password']
-    url = module.params['url']
+    auth = module.params.pop('auth')
+    url = auth['url']
     section = module.params['section']
     subnet = module.params['subnet']
     master_subnet = module.params['master_subnet']
@@ -161,9 +149,9 @@ def main():
     vlan = module.params['vlan']
     state = module.params['state']
 
-    session = phpipam.PhpIpamWrapper(username, password, url)
+    session = phpipam.PhpIpamWrapper(auth)
     try:
-        session.create_session()
+        session.create_session(auth)
     except AttributeError:
         module.fail_json(msg='Error getting authorization token', **result)
 
