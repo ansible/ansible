@@ -91,15 +91,19 @@ To build a single rST file, you have two options:
 
 .. code-block:: bash
 
-   make htmlsingle rst=<relative/path/to/your_file.rst>
+   make htmlsingle rst=path/to/your_file.rst
 
 For example:
 
 .. code-block:: bash
 
-   make htmlsingle rst=dev_guide/developing_modules_documenting.rst
+   make htmlsingle rst=community/documentation_contributions.rst
 
 This method compiles all the links but provides minimal log output.
+
+.. note::
+
+    ``make htmlsingle`` adds ``rst/`` to the beginning of the path you provide in ``rst=``, so you can't type the filename with autocomplete. If you run ``make htmlsingle`` from the ``docs/docsite/rst/` directory, you'll get ``make: *** No rule to make target `htmlsingle'.  Stop.`` If you run it from ``docs/docsite/`` and provide the full path, you'll get ``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']``.
 
 2. Building an rST file with sphinx-build:
 
