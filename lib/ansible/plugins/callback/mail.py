@@ -74,6 +74,7 @@ from ansible.plugins.callback import CallbackBase
 
 FACTS_NOT_GATHERED_MSG = 'unknown'
 
+
 class CallbackModule(CallbackBase):
     ''' This Ansible callback plugin mails errors to interested parties. '''
     CALLBACK_VERSION = 2.0
