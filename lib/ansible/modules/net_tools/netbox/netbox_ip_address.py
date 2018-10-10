@@ -12,10 +12,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: netbox_device
-short_description: Manage devices
+module: netbox_ip_address
+short_description: Manage IP address
 description:
-  - Creates or removes devices from Netbox
+  - Creates or removes IP addresses from Netbox
 notes:
   - Tags should be defined as a YAML list
   - This should be ran with connection C(local) and hosts C(localhost)
@@ -37,20 +37,16 @@ options:
     description:
       - Defines the device configuration
     choices:
-      - name
-      - device_type (required if state is C(present))
-      - device_role (required if state is C(present))
+      - family (options: C(4) or C(6))
+      - address (required if state is C(present))
+      - vrf
       - tenant
-      - platform
-      - serial
-      - asset_tag
-      - site (required if state is C(present)
-      - rack
-      - position
-      - face
       - status
-      - cluster
-      - comments
+      - role
+      - interface
+      - description
+      - nat_inside
+      - nat_outside
       - tags
       - custom_fields (must exist in Netbox)
     required: true
@@ -73,50 +69,50 @@ EXAMPLES = r'''
   gather_facts: False
 
   tasks:
-    - name: Create device within Netbox with only required information
-      netbox_device:
+    - name: Create IP address within Netbox with only required information
+      netbox_ip_address:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test (not really required, but helpful)
-          device_type: C9410R
-          device_role: Core Switch
-          site: Main
+          address: 192.168.1.10
         state: present
 
-    - name: Delete device within netbox
-      netbox_device:
+    - name: Delete IP address within netbox
+      netbox_ip_address:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test
+          address: 192.168.1.10
         state: absent
 
-    - name: Create device with tags
-      netbox_device:
+    - name: Create IP address with several specified
+      netbox_ip_address:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test
-          device_type: C9410R
-          device_role: Core Switch
-          site: Main
+          family: 4
+          address: 192.168.1.20
+          vrf: Test
+          tenant: Test Tenant
+          status: Reserved
+          role: Loopback
+          description: Test description
           tags:
             - Schnozzberry
         state: present
 
-    - name: Create device and assign to rack and position
-      netbox_device:
+    - name: Create IP address and assign a nat_inside IP
+      netbox_ip_address:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test
-          device_type: C9410R
-          device_role: Core Switch
-          site: Main
-          rack: Test Rack
-          position: 10
-          face: Front
+          family: 4
+          address: 192.168.1.30
+          vrf: Test
+          nat_inside: 192.168.1.20
+          interface:
+            name: GigabitEthernet1
+            device: test100
 '''
 
 RETURN = r'''
@@ -126,7 +122,7 @@ meta:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.net_tools.netbox.netbox_utils import netbox_create_device, netbox_delete_device
+from ansible.module_utils.net_tools.netbox.netbox_utils import netbox_create_ip_address, netbox_delete_ip_address
 
 try:
     import pynetbox
@@ -156,8 +152,8 @@ def main():
 
     # Assign variables to be used with module
     changed = False
-    app = 'dcim'
-    endpoint = 'devices'
+    app = 'ipam'
+    endpoint = 'ip_addresses'
     url = module.params["netbox_url"]
     token = module.params["netbox_token"]
     data = module.params["data"]
@@ -176,11 +172,11 @@ def main():
 
     nb_endpoint = getattr(nb_app, endpoint)
     if 'present' in state:
-        response = netbox_create_device(nb, nb_endpoint, data)
+        response = netbox_create_ip_address(nb, nb_endpoint, data)
         if isinstance(response, list):
             changed = True
     else:
-        response = netbox_delete_device(nb_endpoint, data)
+        response = netbox_delete_ip_address(nb_endpoint, data)
         if 'SUCCESS' in response:
             changed = True
     module.exit_json(changed=changed, meta=response)
