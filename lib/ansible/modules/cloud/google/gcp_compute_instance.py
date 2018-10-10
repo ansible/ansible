@@ -1106,7 +1106,7 @@ def raise_if_errors(response, err_path, module):
 
 
 def encode_request(request, module):
-    if 'metadata' in request:
+    if 'metadata' in request and request['metadata'] is not None:
         request['metadata'] = metadata_encoder(request['metadata'])
     return request
 
