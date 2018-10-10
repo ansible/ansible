@@ -98,4 +98,3 @@
     that:
       - "{{ presented_instance_fact.instances | length }} > 0"
       - "{{ checkmode_instance_fact.instances | length }} == 0"
-

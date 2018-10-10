@@ -185,4 +185,3 @@
       until: removed is not failed
       ignore_errors: yes
       retries: 10
-
