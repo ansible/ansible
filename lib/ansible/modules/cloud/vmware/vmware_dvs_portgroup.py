@@ -39,7 +39,7 @@ options:
         description:
             - The description of the portgroup that is to be created.
         required: False
-        version_added: '2.7'
+        version_added: '2.8'
     switch_name:
         description:
             - The name of the distributed vSwitch the port group should be created on.
@@ -261,7 +261,6 @@ class VMwareDvsPortgroup(PyVmomi):
         config.name = self.module.params['portgroup_name']
         config.numPorts = self.module.params['num_ports']
         config.description = self.module.params['portgroup_description']
-
 
         # Default port config
         config.defaultPortConfig = vim.dvs.VmwareDistributedVirtualSwitch.VmwarePortConfigPolicy()
