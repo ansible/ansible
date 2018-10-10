@@ -44,7 +44,7 @@ options:
   target_status:
     description:
       - Blocks and waits for the target status to equal given value. For more detail on target status see
-        U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html#target-health-states)
+        U(https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html#target-health-states)
     required: false
     choices: [ 'initial', 'healthy', 'unhealthy', 'unused', 'draining', 'unavailable' ]
   target_status_timeout:

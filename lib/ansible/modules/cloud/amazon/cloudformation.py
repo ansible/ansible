@@ -61,7 +61,7 @@ options:
   stack_policy:
     description:
       - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified.
-        (for instance, [allow all updates](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
+        for instance, allow all updates U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
     version_added: "1.9"
   tags:
     description:
@@ -72,13 +72,13 @@ options:
       - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
         as the stack.
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
     version_added: "2.0"
   create_changeset:
     description:
       - "If stack already exists create a changeset instead of directly applying changes.
-        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
+        See the AWS Change Sets docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
         WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
         changeset."
     type: bool
@@ -88,7 +88,7 @@ options:
     description:
       - Name given to the changeset when creating a changeset, only used when create_changeset is true. By default a name prefixed with Ansible-STACKNAME
         is generated based on input parameters.
-        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+        See the AWS Change Sets docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
     version_added: "2.4"
   template_format:
     description:
@@ -100,7 +100,7 @@ options:
   role_arn:
     description:
     - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role
-      docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
+      docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
     version_added: "2.3"
   termination_protection:
     description:
@@ -110,7 +110,7 @@ options:
     description:
       - Template body. Use this to pass in the actual body of the Cloudformation template.
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
     version_added: "2.5"
   events_limit:
