@@ -122,6 +122,7 @@ options:
           - checks can be registered with a tcp port. This means that consul
             will check if the connection attempt to that port is successful (ie - the port is currently accepting connections).
             Interval must also be provided with this option.
+        version_added: "2.8"
     http:
         description:
           - checks can be registered with an http endpoint. This means that consul
@@ -358,7 +359,6 @@ def parse_check(module):
     if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('tcp'), module.params.get('http')) if p]) > 1:
         module.fail_json(
             msg='checks are either script, tcp, http or ttl driven, supplying more than one does not make sense')
-
 
     if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('tcp') or module.params.get('http'):
 
