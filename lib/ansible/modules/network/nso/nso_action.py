@@ -67,7 +67,7 @@ EXAMPLES = '''
     username: username
     password: password
     path: /ncs:devices/device{ce0}/sync-from
-    input{}
+    input: {}
 '''
 
 RETURN = '''
