@@ -382,6 +382,8 @@ class Interfaces(FactsBase):
             if entry == '':
                 continue
             intf = self.parse_lldp_intf(entry)
+            if intf is None:
+                return facts
             if intf not in facts:
                 facts[intf] = list()
             fact = dict()
@@ -447,7 +449,7 @@ class Interfaces(FactsBase):
             return match.group(1)
 
     def parse_lineprotocol(self, data):
-        match = re.search(r'line protocol is (.+)$', data, re.M)
+        match = re.search(r'line protocol is (\S+)\s*$', data, re.M)
         if match:
             return match.group(1)
 
