@@ -27,42 +27,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+# Contains LXCA common class
+# Lenovo xClarity Administrator (LXCA)
 
-
-class ModuleDocFragment(object):
-    # Standard Pylxca documentation fragment
-    DOCUMENTATION = '''
-author:
-  - Naval Patel (@navalkp)
-  - Prashant Bhosale (@prabhosa)
-
-options:
-  login_user:
-    description:
-      The username for use in HTTP basic authentication.
-
-    required: true
-
-  login_password:
-    description:
-      The password for use in HTTP basic authentication.
-    required: true
-
-  auth_url:
-    description:
-      lxca https full web address
-    required: true
-
-  noverify:
-    description:
-      no verification of certificate required
-    default: "True"
-
-requirement:
-  - pylxca
-
-notes:
-  -  Additional detail about pylxca can be found at U(https://github.com/lenovo/pylxca)
-  -  Playbooks using these modules can be found at U(https://github.com/lenovo/ansible.lenovo-lxca)
-  -  Check mode is not supported.
-'''
+LXCA_COMMON_ARGS = dict(
+    login_user=dict(required=True),
+    login_password=dict(required=True, no_log=True),
+    auth_url=dict(required=True),
+    noverify=dict(default=True)
+)
