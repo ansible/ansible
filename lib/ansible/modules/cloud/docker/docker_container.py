@@ -147,6 +147,21 @@ options:
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
+  healthcheck:
+    version_added: "2.8"
+    type: dict
+    description:
+      - 'Configure a check that is run to determine whether or not containers for this service are "healthy".
+        See the docs for the L(HEALTHCHECK Dockerfile instruction,https://docs.docker.com/engine/reference/builder/#healthcheck)
+        for details on how healthchecks work.'
+      - 'I(test) - Command to run to check health. C(test) must be either a string or a list. If it is a list, the first item must
+        be one of C(NONE), C(CMD) or C(CMD-SHELL).'
+      - 'I(interval) - Time between running the check. (default: 30s)'
+      - 'I(timeout) - Maximum time to allow one check to run. (default: 30s)'
+      - 'I(retries) - Consecutive failures needed to report unhealthy. It accept integer value. (default: 3)'
+      - 'I(start_period) - Start period for the container to initialize before starting health-retries countdown. (default: 0s)'
+      - 'C(interval), C(timeout) and C(start_period) are specified as durations. They accept duration as a string in a format
+        that look like: C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)'
   hostname:
     description:
       - Container hostname.
@@ -659,6 +674,20 @@ EXAMPLES = '''
     comparisons:
       '*': ignore  # by default, ignore *all* options (including image)
       env: strict   # except for environment variables; there, we want to be strict
+
+- name: Start container with healthstatus
+  docker_container:
+    name: nginx-proxy
+    image: nginx:1.13
+    state: started
+    healthcheck:
+      # Check if nginx server is healthy by curl'ing the server.
+      # If this fails or timeouts, the healthcheck fails.
+      test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 '''
 
 RETURN = '''
@@ -708,6 +737,7 @@ docker_container:
 import os
 import re
 import shlex
+from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
@@ -824,6 +854,7 @@ class TaskParameters(DockerBaseClass):
         self.exposed_ports = None
         self.force_kill = None
         self.groups = None
+        self.healthcheck = None
         self.hostname = None
         self.ignore_image = None
         self.image = None
@@ -917,6 +948,7 @@ class TaskParameters(DockerBaseClass):
         self.ulimits = self._parse_ulimits()
         self.sysctls = self._parse_sysctls()
         self.log_config = self._parse_log_config()
+        self.healthcheck = self._parse_healthcheck()
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
 
@@ -1011,6 +1043,9 @@ class TaskParameters(DockerBaseClass):
 
         if self.client.HAS_STOP_TIMEOUT_OPT:
             create_params['stop_timeout'] = 'stop_timeout'
+
+        if self.client.HAS_HEALTHCHECK_OPT:
+            create_params['healthcheck'] = 'healthcheck'
 
         result = dict(
             host_config=self._host_config(),
@@ -1330,6 +1365,61 @@ class TaskParameters(DockerBaseClass):
         except ValueError as exc:
             self.fail('Error parsing logging options - %s' % (exc))
 
+    def _parse_healthcheck(self):
+        '''
+        Return dictionary of healthcheck parameters
+        '''
+        if (not self.healthcheck) or (not self.healthcheck.get('test')):
+            return None
+
+        result = dict()
+
+        # all the supported healthecheck parameters
+        options = dict(
+            test='test',
+            interval='interval',
+            timeout='timeout',
+            start_period='start_period',
+            retries='retries'
+        )
+
+        duration_options = ['interval', 'timeout', 'start_period']
+
+        for (key, value) in options.items():
+            if value in self.healthcheck:
+                if value in duration_options:
+                    time = self._convert_duration_to_nanosecond(self.healthcheck.get(value))
+                    if time:
+                        result[key] = time
+                elif self.healthcheck.get(value):
+                    result[key] = self.healthcheck.get(value)
+
+        return result
+
+    def _convert_duration_to_nanosecond(self, time_str):
+        '''
+        Return time duration in nanosecond
+        '''
+        if not isinstance(time_str, str):
+            self.fail("Missing unit in duration - %s" % time_str)
+
+        regex = re.compile(r'^(((?P<hours>\d+)h)?((?P<minutes>\d+)m(?!s))?((?P<seconds>\d+)s)?((?P<milliseconds>\d+)ms)?((?P<microseconds>\d+)us)?)$')
+        parts = regex.match(time_str)
+
+        if not parts:
+            self.fail("Invalid time duration - %s" % time_str)
+
+        parts = parts.groupdict()
+        time_params = {}
+        for (name, value) in parts.items():
+            if value:
+                time_params[name] = int(value)
+
+        time = timedelta(**time_params)
+        time_in_nanoseconds = (time.seconds * 1000000 + time.microseconds) * 1000
+
+        return time_in_nanoseconds
+
     def _parse_tmpfs(self):
         '''
         Turn tmpfs into a hash of Tmpfs objects
@@ -1406,6 +1496,7 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_binds'] = 'volumes'
         self.parameters_map['expected_cmd'] = 'command'
         self.parameters_map['expected_devices'] = 'devices'
+        self.parameters_map['expected_healthcheck'] = 'healthcheck'
 
     def fail(self, msg):
         self.parameters.client.module.fail_json(msg=msg)
@@ -1512,6 +1603,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_env = self._get_expected_env(image)
         self.parameters.expected_cmd = self._get_expected_cmd()
         self.parameters.expected_devices = self._get_expected_devices()
+        self.parameters.expected_healthcheck = self._get_expected_healthcheck()
 
         if not self.container.get('HostConfig'):
             self.fail("has_config_diff: Error parsing container properties. HostConfig missing.")
@@ -1584,6 +1676,7 @@ class Container(DockerBaseClass):
             volumes_from=host_config.get('VolumesFrom'),
             working_dir=config.get('WorkingDir'),
             publish_all_ports=host_config.get('PublishAllPorts'),
+            expected_healthcheck=(config.get('Healthcheck') or dict())
         )
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
@@ -1966,6 +2059,16 @@ class Container(DockerBaseClass):
             return port + '/tcp'
         return port
 
+    def _get_expected_healthcheck(self):
+        self.log('_get_expected_healthcheck')
+        expected_healthcheck = dict()
+
+        if self.parameters.healthcheck:
+            expected_healthcheck.update([(k.title().replace("_", ""), v)
+                                         for k, v in self.parameters.healthcheck.items()])
+
+        return expected_healthcheck
+
 
 class ContainerManager(DockerBaseClass):
     '''
@@ -1978,6 +2081,8 @@ class ContainerManager(DockerBaseClass):
 
         if client.module.params.get('log_options') and not client.module.params.get('log_driver'):
             client.module.warn('log_options is ignored when log_driver is not specified')
+        if client.module.params.get('healthcheck') and not client.module.params.get('healthcheck').get('test'):
+            client.module.warn('healthcheck is ignored when test is not specified')
         if client.module.params.get('restart_retries') and not client.module.params.get('restart_policy'):
             client.module.warn('restart_retries is ignored when restart_policy is not specified')
 
@@ -2434,11 +2539,17 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         if self.module.params.get("runtime") and not runtime_supported:
             self.fail('docker API version is %s. Minimum version required is 1.12 to set runtime option.' % (docker_api_version,))
 
+        healthcheck_supported = LooseVersion(docker_version) >= LooseVersion('2.0')
+        if self.module.params.get("healthcheck") and not healthcheck_supported:
+            self.module.warn("docker or docker-py version is %s. Minimum version required is 2.0 to set healthcheck option. "
+                             "healthcheck is ignored." % (docker_version,))
+
         self.HAS_INIT_OPT = init_supported
         self.HAS_UTS_MODE_OPT = uts_mode_supported
         self.HAS_BLKIO_WEIGHT_OPT = blkio_weight_supported
         self.HAS_CPUSET_MEMS_OPT = cpuset_mems_supported
         self.HAS_STOP_TIMEOUT_OPT = stop_timeout_supported
+        self.HAS_HEALTHCHECK_OPT = healthcheck_supported
 
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
         self.HAS_RUNTIME_OPT = runtime_supported
@@ -2476,6 +2587,7 @@ def main():
         exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),
         groups=dict(type='list'),
+        healthcheck=dict(type='dict'),
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
