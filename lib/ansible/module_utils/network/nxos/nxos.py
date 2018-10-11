@@ -555,6 +555,24 @@ class HttpApi:
             self._device_configs[cmd] = cfg
             return cfg
 
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        diff = {}
+
+        # prepare candidate configuration
+        candidate_obj = NetworkConfig(indent=2)
+        candidate_obj.load(candidate)
+
+        if running and diff_match != 'none' and diff_replace != 'config':
+            # running configuration
+            running_obj = NetworkConfig(indent=2, contents=running, ignore_lines=diff_ignore_lines)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
+
+        else:
+            configdiffobjs = candidate_obj.items
+
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
+        return diff
+
     def load_config(self, commands, return_error=False, opts=None, replace=None):
         """Sends the ordered set of commands to the device
         """
