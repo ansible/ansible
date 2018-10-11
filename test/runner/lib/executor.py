@@ -786,9 +786,9 @@ def command_integration_filtered(args, targets, all_targets):
                         make_dirs(test_dir)
 
                     if target.script_path:
-                        command_integration_script(args, target)
+                        command_integration_script(args, target, test_dir)
                     else:
-                        command_integration_role(args, target, start_at_task)
+                        command_integration_role(args, target, start_at_task, test_dir)
                         start_at_task = None
 
                     end_time = time.time()
@@ -1010,18 +1010,19 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
             make_dirs(test_dir)
 
         if target.script_path:
-            command_integration_script(args, target)
+            command_integration_script(args, target, test_dir)
         else:
-            command_integration_role(args, target, None)
+            command_integration_role(args, target, None, test_dir)
 
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, cmd):
+def integration_environment(args, target, cmd, test_dir):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type cmd: list[str]
+    :type test_dir: str
     :rtype: dict[str, str]
     """
     env = ansible_environment(args)
@@ -1035,6 +1036,7 @@ def integration_environment(args, target, cmd):
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST='junit',
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        OUTPUT_DIR=test_dir,
     )
 
     if args.debug_strategy:
@@ -1056,10 +1058,11 @@ def integration_environment(args, target, cmd):
     return env
 
 
-def command_integration_script(args, target):
+def command_integration_script(args, target, test_dir):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
+    :type test_dir: str
     """
     display.info('Running %s integration test script' % target.name)
 
@@ -1068,17 +1071,18 @@ def command_integration_script(args, target):
     if args.verbosity:
         cmd.append('-' + ('v' * args.verbosity))
 
-    env = integration_environment(args, target, cmd)
+    env = integration_environment(args, target, cmd, test_dir)
     cwd = target.path
 
     intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
-def command_integration_role(args, target, start_at_task):
+def command_integration_role(args, target, start_at_task, test_dir):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type start_at_task: str | None
+    :type test_dir: str
     """
     display.info('Running %s integration test role' % target.name)
 
@@ -1138,7 +1142,7 @@ def command_integration_role(args, target, start_at_task):
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, cmd)
+        env = integration_environment(args, target, cmd, test_dir)
         cwd = 'test/integration'
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
