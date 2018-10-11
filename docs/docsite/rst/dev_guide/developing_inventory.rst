@@ -102,11 +102,11 @@ This method is used by Ansible to make a quick determination if the inventory so
         valid = False
         if super(InventoryModule, self).verify_file(path):
             # base class verifies that file exists and is readable by current user
-            if path.endswith(('.vbox.yaml', '.vbox.yml')):
+            if path.endswith(('virtualbox.yaml', 'virtualbox.yml', 'vbox.yaml', 'vbox.yml')):
                 valid = True
         return valid
 
-In this case, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid yaml file. You can add any type of condition here, but the most common one is 'extension matching'
+In this case, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid yaml file. You can add any type of condition here, but the most common one is 'extension matching'. If you implement extension matching for YAML configuration files the path suffix <plugin_name>.<yml|yaml> should be accepted. All valid extensions should be documented in the plugin description.
 
 Another example that actually does not use a 'file' but the inventory source string itself,
 from the :ref:`host list <host_list_inventory>` plugin:
