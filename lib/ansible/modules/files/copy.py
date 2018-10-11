@@ -174,7 +174,7 @@ EXAMPLES = r'''
 - name: if follow is False, /path/to/link will become a file and be overwritten by contents of foo.conf
   copy:
     src: /etc/foo.conf
-    dest: /path/to/a/link # /path/to/link is link to /path/to/file
+    dest: /path/to/link # /path/to/link is link to /path/to/file
     follow: False
 '''
 
