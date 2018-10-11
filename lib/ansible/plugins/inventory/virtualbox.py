@@ -10,7 +10,7 @@ DOCUMENTATION = '''
     short_description: virtualbox inventory source
     description:
         - Get inventory hosts from the local virtualbox installation.
-        - Uses a <name>.vbox.yaml (or .vbox.yml) YAML configuration file.
+        - Uses a YAML configuration file that ends with virtualbox.(yml|yaml) or vbox.(yml|yaml).
         - The inventory_hostname is always the 'Name' of the virtualbox instance.
     extends_documentation_fragment:
       - constructed
@@ -210,7 +210,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith(('.vbox.yaml', '.vbox.yml')):
+            if path.endswith(('virtualbox.yaml', 'virtualbox.yml', 'vbox.yaml', 'vbox.yml')):
                 valid = True
         return valid
 
