@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+# Copyright: (c) 2018, David Gomez (@amb1s1) <david.gomez@networktocode.com>
 # Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -126,13 +126,37 @@ meta:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.net_tools.netbox.netbox_utils import netbox_create_device, netbox_delete_device
+from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
+
 
 try:
     import pynetbox
     HAS_PYNETBOX = True
 except ImportError:
     HAS_PYNETBOX = False
+
+
+def netbox_create_device(nb, nb_endpoint, data):
+    norm_data = normalize_data(data)
+    if norm_data.get("status"):
+            norm_data["status"] = DEVICE_STATUS.get(norm_data["status"].lower(), 0)
+    if norm_data.get("face"):
+        norm_data["face"] = FACE_ID.get(norm_data["face"].lower(), 0)
+    data = find_ids(nb, norm_data)
+    try:
+        return nb_endpoint.create([norm_data])
+    except pynetbox.RequestError as e:
+        module.fail_json(msg=e.error)
+
+
+def netbox_delete_device(nb_endpoint, data):
+    norm_data = normalize_data(data)
+    endpoint = nb_endpoint.get(name=norm_data["name"])
+    try:
+        if endpoint.delete():
+            return 'SUCCESS: %s deleted from Netbox' % (norm_data["name"])
+    except AttributeError:
+        return 'FAILED: %s not found' % (norm_data["name"])
 
 
 def main():

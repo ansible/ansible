@@ -116,77 +116,26 @@ def find_app(endpoint):
 
 
 def find_ids(nb, data):
-    for key in data.keys():
-        if key in CONVERT_TO_ID.keys():
-            endpoint = CONVERT_TO_ID[key]
-            search = data[key]
+    for k, v in data.items():
+        if k in CONVERT_TO_ID:
+            endpoint = CONVERT_TO_ID[k]
+            search = v
             app = find_app(endpoint)
             nb_app = getattr(nb, app)
             nb_endpoint = getattr(nb_app, endpoint)
-            #if 'int' in key:
-            #    try:
-            #        query_id = nb_endpoint.get(**{"name": data[key]["name"], "device": data[key]["device"]})
-            #    except pynetbox.RequestError as e:
-            #        return e.error
+
             try:
-                query_id = nb_endpoint.get(**{QUERY_TYPES.get(key, "q"): search})
+                query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
             except pynetbox.RequestError as e:
                 return e.error
 
-            if key in NO_DEFAULT_ID:
+            if k in NO_DEFAULT_ID:
                 pass
             elif query_id:
-                data[key] = query_id.id
+                data[k] = query_id.id
             else:
-                data[key] = 1
+                data[k] = 1
     return data
-
-
-def netbox_create_device(nb, nb_endpoint, data):
-    norm_data = normalize_data(data)
-    if norm_data.get("status"):
-            norm_data["status"] = DEVICE_STATUS.get(norm_data["status"].lower(), 0)
-    if norm_data.get("face"):
-        norm_data["face"] = FACE_ID.get(norm_data["face"].lower(), 0)
-    data = find_ids(nb, norm_data)
-    try:
-        return nb_endpoint.create([norm_data])
-    except pynetbox.RequestError as e:
-        return e.error
-
-
-def netbox_delete_device(nb_endpoint, data):
-    norm_data = normalize_data(data)
-    endpoint = nb_endpoint.get(name=norm_data["name"])
-    try:
-        if endpoint.delete():
-            return 'SUCCESS: %s deleted from Netbox' % (norm_data["name"])
-    except AttributeError:
-        return 'FAILED: %s not found' % (norm_data["name"])
-
-
-def netbox_create_ip_address(nb, nb_endpoint, data):
-    norm_data = normalize_data(data)
-    if norm_data.get("status"):
-        norm_data["status"] = IP_ADDRESS_STATUS.get(norm_data["status"].lower())
-    if norm_data.get("role"):
-        norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
-
-    data = find_ids(nb, norm_data)
-    try:
-        return nb_endpoint.create([norm_data])
-    except pynetbox.RequestError as e:
-        return e.error
-
-
-def netbox_delete_ip_address(nb_endpoint, data):
-    norm_data = normalize_data(data)
-    endpoint = nb_endpoint.get(address=norm_data["address"])
-    try:
-        if endpoint.delete():
-            return 'SUCCESS: %s deleted from Netbox' % (norm_data["address"])
-    except AttributeError:
-        return 'FAILED: %s not found' % (norm_data["address"])
 
 
 def normalize_data(data):
