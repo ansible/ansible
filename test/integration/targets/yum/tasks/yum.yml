@@ -110,6 +110,15 @@
     that:
         - "yum_result is successful"
 
+- name: install sos with state latest in check mode with config file param
+  yum: name=sos state=latest conf_file=/etc/yum.conf
+  check_mode: true
+  register: yum_result
+- name: verify install sos with state latest in check mode with config file param
+  assert:
+    that:
+        - "yum_result is changed"
+
 - name: install sos with state latest in check mode
   yum: name=sos state=latest
   check_mode: true
@@ -134,6 +143,15 @@
   assert:
     that:
         - "not yum_result is changed"
+
+- name: install sos with state latest idempotence with config file param
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos with state latest idempotence with config file param
+  assert:
+    that:
+        - "not yum_result is changed"
+
 
 # Multiple packages
 - name: uninstall sos and bc
