@@ -632,7 +632,7 @@ DEFAULT_HANDLER_INCLUDES_STATIC:
   type: boolean
   deprecated:
     why: include itself is deprecated and this setting will not matter in the future
-    version: "2.8"
+    version: "2.12"
     alternatives: none as its already built into the decision between include_tasks and import_tasks
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
@@ -1155,7 +1155,7 @@ DEFAULT_TASK_INCLUDES_STATIC:
   version_added: "2.1"
   deprecated:
     why: include itself is deprecated and this setting will not matter in the future
-    version: "2.8"
+    version: "2.12"
     alternatives: None, as its already built into the decision between include_tasks and import_tasks
 DEFAULT_TERMINAL_PLUGIN_PATH:
   name: Terminal Plugins Path
