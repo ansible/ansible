@@ -116,7 +116,8 @@ def axapi_call_v3(module, url, method=None, body=None, signature=None):
     if not rsp or info['status'] >= 400:
         error_message = info.get('msg', 'no error given')
         if info['body'] is not None:
-            error_message = json.loads(info['body']).get('response').get('err').get('msg')
+            error_message = json.loads(info['body']).get('response', {'msg': 'no error given'})\
+                    .get('err', {'msg': 'no error given'}).get('msg')
         module.fail_json(msg="failed to connect (status code %s), error was: %s " % (info['status'], error_message))
 
     # in at least one case (uploading an ssl cert) the api simply returns HTTP 204 which would result in status == fail
