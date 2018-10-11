@@ -163,7 +163,7 @@ def main():
         module.fail_json(msg='section doesn\'t exist', **result)
     found_subnet = session.get_subnet(subnet, section)
     optional_args = {}
-    
+
     if description:
         optional_args['description'] = description
 
