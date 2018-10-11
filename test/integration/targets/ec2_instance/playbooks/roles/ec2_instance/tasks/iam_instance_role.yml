@@ -48,6 +48,42 @@
         that:
           - 'instance_with_role.instances[0].iam_instance_profile.arn == iam_role.arn.replace(":role/", ":instance-profile/")'
 
+    - name: Make instance with an instance_role(check mode)
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-instance-role-checkmode"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        instance_role: "{{ resource_prefix }}-test-policy"
+        volumes:
+        - device_name: /dev/sda1
+          ebs:
+            delete_on_termination: true
+        <<: *aws_connection_info
+      check_mode: yes
+
+    - name: "fact presented ec2 instance"
+      ec2_instance_facts:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-instance-role"
+          "instance-state-name": "running"
+        <<: *aws_connection_info
+      register: presented_instance_fact
+
+    - name: "fact checkmode ec2 instance"
+      ec2_instance_facts:
+        filters:
+          "tag:Name": "{{ resource_prefix }}-test-instance-role-checkmode"
+          "instance-state-name": "running"
+        <<: *aws_connection_info
+      register: checkmode_instance_fact
+
+    - name: "Confirm whether the check mode is working normally."
+      assert:
+        that:
+          - "{{ presented_instance_fact.instances | length }} > 0"
+          - "{{ checkmode_instance_fact.instances | length }} == 0"
+
     - name: Update instance with new instance_role
       ec2_instance:
         name: "{{ resource_prefix }}-test-instance-role"
