@@ -130,7 +130,7 @@ options:
     description:
         - The password for use in HTTP basic authentication.
         - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
-      - Since version 2.8 you can also use the 'password' aliases for this option.
+        - Since version 2.8 you can also use the 'password' aliases for this option.
     version_added: '1.6'
     aliases: ['password']
   force_basic_auth:
