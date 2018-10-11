@@ -143,8 +143,11 @@ class Role(Base, Become, Conditional, Taggable):
             params = role_include.get_role_params()
             if role_include.when is not None:
                 params['when'] = role_include.when
-            if role_include.tags is not None:
-                params['tags'] = role_include.tags
+            # If a role is defined, either via include_role/Static, no matter
+            # what tags are not a criterion for the cache, as that's not them
+            # that would change upcoming result
+            # if role_include.tags is not None:
+            #     params['tags'] = role_include.tags
             if from_files is not None:
                 params['from_files'] = from_files
             if role_include.vars:
