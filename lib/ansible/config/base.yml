@@ -656,20 +656,9 @@ DEFAULT_HOST_LIST:
   default: /etc/ansible/hosts
   description: Comma separated list of Ansible inventory sources
   env:
-    - name: ANSIBLE_HOSTS
-      deprecated:
-        why: The variable is misleading as it can be a list of hosts and/or paths to inventory sources
-        version: "2.8"
-        alternatives: ANSIBLE_INVENTORY
     - name: ANSIBLE_INVENTORY
   expand_relative_paths: True
   ini:
-    - key: hostfile
-      section: defaults
-      deprecated:
-        why: The key is misleading as it can also be a list of hosts, a directory or a list of paths
-        version: "2.8"
-        alternatives: "[defaults]\ninventory=/path/to/file|dir"
     - key: inventory
       section: defaults
   type: pathlist
