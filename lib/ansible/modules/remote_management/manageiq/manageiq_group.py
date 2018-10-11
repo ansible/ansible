@@ -71,8 +71,8 @@ options:
     required: false
     default: null
   managed_filters:
-    description: A list of list of tag categories
-    type: list
+    description: The tag values per category
+    type: dict
     required: false
     default: null
   managed_filters_merge_mode:
@@ -126,11 +126,13 @@ EXAMPLES = '''
     role: 'EvmRole-user'
     tenant: my_tenant
     managed_filters:
-    - - "/managed/prov_max_cpu/1"
-      - "/managed/prov_max_cpu/3"
-      - "/managed/prov_max_cpu/4"
-    - - "/managed/department/defense"
-      - "/managed/department/engineering"
+      prov_max_cpu:
+      - '1'
+      - '2'
+      - '4'
+      department:
+      - defense
+      - engineering
     managed_filters_merge_mode: replace
     belongsto_filters:
     - "/belongsto/ExtManagementSystem|ProviderName/EmsFolder|Datacenters/EmsFolder|dc_name/EmsFolder|host/EmsCluster|Cluster name"
@@ -177,11 +179,11 @@ group:
       description: The group type, system or user
       returned: success
       type: string
-    role_name:
+    role:
       description: The group role name
       returned: success
       type: string
-    tenant_name:
+    tenant:
       description: The group tenant name
       returned: success
       type: string
@@ -227,7 +229,7 @@ class ManageIQgroup(object):
     def tenant(self, tenant_id, tenant_name):
         """ Search for tenant entity by name or id
         Returns:
-            the tenant entity, None no id or name was supplied
+            the tenant entity, None if no id or name was supplied
         """
 
         if tenant_id:
@@ -273,57 +275,30 @@ class ManageIQgroup(object):
                 return None
 
     @staticmethod
-    def have_same_values_nested_array(current_values, updated_values):
-        if (not current_values) and (not updated_values):
-            return True
-        if current_values and (not updated_values):
-            return False
-        if (not current_values) and updated_values:
-            return False
-        if len(current_values) != len(updated_values):
-            return False
+    def merge_dict_values(norm_current_values, norm_updated_values):
+        """ Create an merged update object for manageiq group filters.
 
-        # sort subs
-        for sub in current_values:
-            sub.sort()
-        for sub in updated_values:
-            sub.sort()
+            The input dict contain the tag values per category.
+            If the new values contain the category, all tags for that category are replaced
+            If the new values do not contain the category, the existing tags are kept
 
-        current_values.sort()
-        updated_values.sort()
+        Returns:
+            the nested array with the merged values, used in the update post body
+        """
 
-        return current_values == updated_values
+        # If no updated values are supplied, in merge mode, the original values must be returned
+        # otherwise the existing tag filters will be removed.
+        if norm_current_values and (not norm_updated_values):
+            return norm_current_values
 
-    @staticmethod
-    def merge_values_nested_array(current_values, updated_values):
-        if current_values and (not updated_values):
-            return current_values
-        if (not current_values) and updated_values:
-            return updated_values
+        # If no existing tag filters exist, use the user supplied values
+        if (not norm_current_values) and norm_updated_values:
+            return norm_updated_values
 
-        current_values_categories = {}
-        new_values_categories = {}
-
-        # organize the values per category name
-        for sub in current_values:
-            sub.sort()
-            key = sub[0].split('/')[2]
-            current_values_categories[key] = sub
-
-        for sub in updated_values:
-            sub.sort()
-            key = sub[0].split('/')[2]
-            new_values_categories[key] = sub
-
-        # add and update current categories
-        for key in new_values_categories:
-            current_values_categories[key] = new_values_categories[key]
-
-        res = []
-
-        for key in current_values_categories:
-            res.append(current_values_categories[key])
-
+        # start with norm_current_values's keys and values
+        res = norm_current_values.copy()
+        # replace res with norm_updated_values's keys and values
+        res.update(norm_updated_values)
         return res
 
     def delete_group(self, group):
@@ -344,7 +319,7 @@ class ManageIQgroup(object):
             changed=True,
             msg="deleted group %s with id %i" % (group['description'], group['id']))
 
-    def edit_group(self, group, description, role, tenant, managed_filters, managed_filters_merge_mode,
+    def edit_group(self, group, description, role, tenant, norm_managed_filters, managed_filters_merge_mode,
                    belongsto_filters, belongsto_filters_merge_mode):
         """ Edit a manageiq group.
 
@@ -354,7 +329,7 @@ class ManageIQgroup(object):
             msg: a short message describing the operation executed.
         """
 
-        if role or managed_filters or belongsto_filters:
+        if role or norm_managed_filters or belongsto_filters:
             group.reload(attributes=['miq_user_role_name', 'entitlement'])
 
         try:
@@ -377,19 +352,20 @@ class ManageIQgroup(object):
             resource['role'] = dict(id=role['id'])
             changed = True
 
-        if managed_filters or belongsto_filters:
+        if norm_managed_filters or belongsto_filters:
 
             # Only compare if filters are supplied
             entitlement = group['entitlement']
 
             if 'filters' not in entitlement:
                 # No existing filters exist, use supplied filters
-                resource['filters'] = {'managed': managed_filters, "belongsto": belongsto_filters}
+                managed_tag_filters_post_body = self.normalized_managed_tag_filters_to_miq(norm_managed_filters)
+                resource['filters'] = {'managed': managed_tag_filters_post_body, "belongsto": belongsto_filters}
                 changed = True
             else:
                 current_filters = entitlement['filters']
                 new_filters = self.edit_group_edit_filters(current_filters,
-                                                           managed_filters, managed_filters_merge_mode,
+                                                           norm_managed_filters, managed_filters_merge_mode,
                                                            belongsto_filters, belongsto_filters_merge_mode)
                 if new_filters:
                     resource['filters'] = new_filters
@@ -411,7 +387,7 @@ class ManageIQgroup(object):
             changed=changed,
             msg="successfully updated the group %s with id %s" % (group['description'], group['id']))
 
-    def edit_group_edit_filters(self, current_filters, managed_filters, managed_filters_merge_mode,
+    def edit_group_edit_filters(self, current_filters, norm_managed_filters, managed_filters_merge_mode,
                                 belongsto_filters, belongsto_filters_merge_mode):
         """ Edit a manageiq group filters.
 
@@ -444,18 +420,20 @@ class ManageIQgroup(object):
             filters_updated = True
 
         # Process belongsto managed filter tags
-        if 'managed' in current_filters:
-            current_managed = current_filters['managed']
-        else:
-            current_managed = None
+        # The input is in the form dict with keys are the categories and the tags are supplied string array
+        # ManageIQ, the current_managed, uses an array of arrays. One array of categories.
+        # We normalize the user input from a dict with arrays to a dict of sorted arrays
+        # We normalize the current manageiq array of arrays also to a dict of sorted arrays so we can compare
+        norm_current_filters = self.manageiq_filters_to_sorted_dict(current_filters)
 
-        if self.have_same_values_nested_array(current_managed, managed_filters):
+        if norm_current_filters == norm_managed_filters:
             new_filters_resource['managed'] = current_filters['managed']
         else:
             if managed_filters_merge_mode == 'merge':
-                new_filters_resource['managed'] = self.merge_values_nested_array(current_managed, managed_filters)
+                merged_dict = self.merge_dict_values(norm_current_filters, norm_managed_filters)
+                new_filters_resource['managed'] = self.normalized_managed_tag_filters_to_miq(merged_dict)
             else:
-                new_filters_resource['managed'] = managed_filters
+                new_filters_resource['managed'] = self.normalized_managed_tag_filters_to_miq(norm_managed_filters)
             filters_updated = True
 
         if not filters_updated:
@@ -463,7 +441,7 @@ class ManageIQgroup(object):
 
         return new_filters_resource
 
-    def create_group(self, description, role, tenant, managed_filters, belongsto_filters):
+    def create_group(self, description, role, tenant, norm_managed_filters, belongsto_filters):
         """ Creates the group in manageiq.
 
         Returns:
@@ -485,8 +463,9 @@ class ManageIQgroup(object):
         if tenant is not None:
             resource['tenant'] = dict(id=tenant['id'])
 
-        if managed_filters or belongsto_filters:
-            resource['filters'] = {'managed': managed_filters, "belongsto": belongsto_filters}
+        if norm_managed_filters or belongsto_filters:
+            managed_tag_filters_post_body = self.normalized_managed_tag_filters_to_miq(norm_managed_filters)
+            resource['filters'] = {'managed': managed_tag_filters_post_body, "belongsto": belongsto_filters}
 
         try:
             result = self.client.post(url, action='create', resource=resource)
@@ -500,11 +479,48 @@ class ManageIQgroup(object):
         )
 
     @staticmethod
+    def normalized_managed_tag_filters_to_miq(norm_managed_filters):
+        if not norm_managed_filters:
+            return None
+
+        return list(norm_managed_filters.values())
+
+    @staticmethod
+    def manageiq_filters_to_sorted_dict(current_filters):
+        if 'managed' not in current_filters:
+            return None
+
+        res = {}
+        for tag_list in current_filters['managed']:
+            tag_list.sort()
+            key = tag_list[0].split('/')[2]
+            res[key] = tag_list
+
+        return res
+
+    @staticmethod
+    def normalize_user_managed_filters_to_sorted_dict(managed_filters):
+        if not managed_filters:
+            return None
+
+        res = {}
+        for cat_key in managed_filters:
+            cat_array = []
+            for tags in managed_filters[cat_key]:
+                miq_managed_tag = "/managed/" + cat_key + "/" + tags
+                cat_array.append(miq_managed_tag)
+            # Do not add empty categories. ManageIQ will remove all categories that are not supplied
+            if cat_array:
+                cat_array.sort()
+                res[cat_key] = cat_array
+        return res
+
+    @staticmethod
     def create_result_group(group):
         """ Creates the ansible result object from a manageiq group entity
 
         Returns:
-            a dict with the group id, description, role_name, tenant_name, filters, group_type, created_on, updated_on
+            a dict with the group id, description, role, tenant, filters, group_type, created_on, updated_on
         """
         try:
             role_name = group['miq_user_role_name']
@@ -519,8 +535,8 @@ class ManageIQgroup(object):
         return dict(
             id=group['id'],
             description=group['description'],
-            role_name=role_name,
-            tenant_name=group['tenant']['name'],
+            role=role_name,
+            tenant=group['tenant']['name'],
             filters=filters,
             group_type=group['group_type'],
             created_on=group['created_on'],
@@ -536,7 +552,7 @@ def main():
         role=dict(required=False, type='str'),
         tenant_id=dict(required=False, type='int'),
         tenant=dict(required=False, type='str'),
-        managed_filters=dict(required=False, type='list', elements='list'),
+        managed_filters=dict(required=False, type='dict', elements='list'),
         managed_filters_merge_mode=dict(required=False, choices=['merge', 'replace'], default='replace'),
         belongsto_filters=dict(required=False, type='list', elements='str'),
         belongsto_filters_merge_mode=dict(required=False, choices=['merge', 'replace'], default='replace'),
@@ -580,15 +596,16 @@ def main():
 
         tenant = manageiq_group.tenant(tenant_id, tenant_name)
         role = manageiq_group.role(role_id, role_name)
+        norm_managed_filters = manageiq_group.normalize_user_managed_filters_to_sorted_dict(managed_filters)
         # if we have a group, edit it
         if group:
             res_args = manageiq_group.edit_group(group, description, role, tenant,
-                                                 managed_filters, managed_filters_merge_mode,
+                                                 norm_managed_filters, managed_filters_merge_mode,
                                                  belongsto_filters, belongsto_filters_merge_mode)
 
         # if we do not have a group, create it
         else:
-            res_args = manageiq_group.create_group(description, role, tenant, managed_filters, belongsto_filters)
+            res_args = manageiq_group.create_group(description, role, tenant, norm_managed_filters, belongsto_filters)
             group = manageiq.client.get_entity('groups', res_args['group_id'])
 
         group.reload(expand='resources', attributes=['miq_user_role_name', 'tenant', 'entitlement'])
