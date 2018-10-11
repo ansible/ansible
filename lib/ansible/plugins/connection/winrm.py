@@ -85,15 +85,22 @@ DOCUMENTATION = """
           - name: ansible_winrm_kinit_mode
       connection_timeout:
         description:
-            - Sets the operation and read timeout settings for the WinRM
-              connection.
-            - Corresponds to the C(operation_timeout_sec) and
-              C(read_timeout_sec) args in pywinrm so avoid setting these vars
-              with this one.
+            - Sets the operation timeout settings for the WinRM connection.
+            - Corresponds to the C(operation_timeout_sec) arg in pywinrm so avoid
+              setting these vars with this one.
             - The default value is whatever is set in the installed version of
               pywinrm.
         vars:
           - name: ansible_winrm_connection_timeout
+      read_timeout:
+        description:
+            - Sets the read timeout settings for the WinRM connection.
+            - Corresponds to the C(read_timeout_sec) arg in pywinrm so avoid
+              setting these vars with this one.
+            - The default value is whatever is set in the installed version of
+              pywinrm.
+        vars:
+          - name: ansible_winrm_read_timeout
 """
 
 import base64
@@ -223,6 +230,7 @@ class Connection(ConnectionBase):
         self._kinit_cmd = self.get_option('kerberos_command')
         self._winrm_transport = self.get_option('transport')
         self._winrm_connection_timeout = self.get_option('connection_timeout')
+        self._winrm_read_timeout = self.get_option('read_timeout')
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
@@ -395,6 +403,9 @@ class Connection(ConnectionBase):
                 winrm_kwargs = self._winrm_kwargs.copy()
                 if self._winrm_connection_timeout:
                     winrm_kwargs['operation_timeout_sec'] = self._winrm_connection_timeout
+                if self._winrm_read_timeout:
+                    winrm_kwargs['read_timeout_sec'] = self._winrm_read_timeout
+                elif self._winrm_connection_timeout:
                     winrm_kwargs['read_timeout_sec'] = self._winrm_connection_timeout + 1
                 protocol = Protocol(endpoint, transport=transport, **winrm_kwargs)
 
