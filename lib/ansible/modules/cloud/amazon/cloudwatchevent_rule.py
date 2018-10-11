@@ -67,7 +67,7 @@ options:
         form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
         input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]},
         launch_type: 'FARGATE', network_configuration: {awsvpc_configuration: {subnets: [string],
-        security_groups: [string], assign_public_ip: 'ENABLED' }).
+        security_groups: [string], assign_public_ip: 'ENABLED|DISABLED' }).
         I(id) [required] is the unique target assignment ID. I(arn) (required)
         is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
         of the IAM role to be used for this target when the rule is triggered. I(input)
