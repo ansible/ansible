@@ -534,6 +534,35 @@ class HttpApi:
 
         return out
 
+    def load_config(self, commands, return_error=False, opts=None, replace=None):
+        """Sends the ordered set of commands to the device
+        """
+        if opts is None:
+            opts = {}
+
+        responses = []
+        try:
+            resp = self.edit_config(commands, replace=replace)
+        except ConnectionError as exc:
+            code = getattr(exc, 'code', 1)
+            message = getattr(exc, 'err', exc)
+            err = to_text(message, errors='surrogate_then_replace')
+            if opts.get('ignore_timeout') and code:
+                responses.append(code)
+                return responses
+            elif code and 'no graceful-restart' in err:
+                if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
+                    msg = ['']
+                    responses.extend(msg)
+                    return responses
+                else:
+                    self._module.fail_json(msg=err)
+            elif code:
+                self._module.fail_json(msg=err)
+
+        responses.extend(resp)
+        return responses
+
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = list()
 
