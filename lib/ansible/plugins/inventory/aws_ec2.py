@@ -16,7 +16,7 @@ DOCUMENTATION = '''
         - constructed
     description:
         - Get inventory hosts from Amazon Web Services EC2.
-        - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
+        - Uses a YAML configuration file that ends with aws_ec2.(yml|yaml).
     options:
         plugin:
             description: token that ensures this is a source file for the 'aws_ec2' plugin.
@@ -509,9 +509,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.aws_ec2.yml') or path.endswith('.aws_ec2.yaml'):
+            if path.endswith(('aws_ec2.yml', 'aws_ec2.yaml')):
                 return True
-        display.debug("aws_ec2 inventory filename must end with '*.aws_ec2.yml' or '*.aws_ec2.yaml'")
+        display.debug("aws_ec2 inventory filename must end with 'aws_ec2.yml' or 'aws_ec2.yaml'")
         return False
 
     def _get_query_options(self, config_data):
