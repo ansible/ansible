@@ -23,44 +23,44 @@ short_description: Configure Link, NetDev and Network for systemd-networkd
 requirements: [ systemd-networkd, systemd]
 version_added: "2.8"
 description:
-    - Generate systemd-networks configuration files.
+    - Generate systemd-networks configuration files
 options:
     state:
         description:
-            - Whether the configuration files should exist or not.
+            - Whether the configuration files should exist or not
         required: True
         choices: [ "present", "absent" ]
     config_type:
         description:
-            - Specifies the configuration type file to create.
+            - Specifies the configuration type file to create
         required: true
         choices: [ "link", "netdev", "network" ]
     config_path:
         description:
-            - Specifies the path where to write the configuration files.
+            - Specifies the path where to write the configuration files
         default: "/var/run/systemd/network"
         choices: [ "/var/run/systemd/network", "/lib/systemd/network", "/etc/systemd/network" ]
     file_name:
         description:
-            - This configuration file name  where the configurations will be written.
+            - This configuration file name  where the configurations will be written
 
 # [Match] Section Options
     name:
         description:
-            - Where name will be the what we call the interface name.
+            - Where name will be the what we call the interface name
         required: True
 
     match_mac_address:
         description:
-            - Specifies the intercace mac address that would be applied for matching.
+            - Specifies the intercace mac address that would be applied for matching
         required: True
 
     driver:
         description:
-            - Matches against the hostname or machine ID of the host. Applies to link config [Match] section.
+            - Matches against the hostname or machine ID of the host. Applies to link config [Match] section
     host:
         description:
-            - A whitespace-separated list of shell-style globs matching the driver currently bound to the device.
+            - A whitespace-separated list of shell-style globs matching the driver currently bound to the device
 
 # NetDev Configuration [NetDev]
 
@@ -71,18 +71,18 @@ options:
                    "ip6gretap", "vti", "vti6", "vxlan" ]
     mac_address:
         description:
-            - Configures the MAC address that should be applied to this netdev.
+            - Configures the MAC address that should be applied to this netdev
     mtu_bytes:
         description:
             - Configures MTU of the interface.
     bond_mode:
         description:
-            - This is the type of device or network connection that you wish to create for a bond.
+            - This is the type of device or network connection that you wish to create for a bond
         default: balance-rr
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
     transmit_hash_policy:
         description:
-            - Configures the transmit hash policy to use for slave selection in balance-xor, 802.3ad, and tlb modes.
+            - Configures the transmit hash policy to use for slave selection in balance-xor, 802.3ad, and tlb modes
               Applies only for Bond.
         required: false
         choices: [ "layer2", "layer3+4", "layer2+3", "encap2+3", "encap3+4" ]
@@ -96,7 +96,7 @@ options:
             - The VLAN ID to use. An integer in the range 0–4094. This option is compulsory.
     tunnel_local:
         description:
-            - Local IP address of tunnel. Applies only for tunnels.
+            - Local IP address of tunnel. Applies only for tunnels
         required: true
     tunnel_remote:
         description:
@@ -104,50 +104,50 @@ options:
         required: true
     tunnel_create_independent:
         description:
-            - Created as "tunnel@NONE". Applies only for tunnel.
+            - Created as "tunnel@NONE". Applies only for tunnel
         required: false
     stp:
         description:
-            - This enables the bridge's Spanning Tree Protocol (STP).
+            - This enables the bridge's Spanning Tree Protocol (STP)
         choices: [ "yes", "no"]
     hello_time:
         description:
-            - Configures the bridge's hello time in seconds.
+            - Configures the bridge's hello time in seconds
         required: false
     forward_delay:
         description:
-            - Configures the bridge's forward delay in seconds.
+            - Configures the bridge's forward delay in seconds
         required: false
     max_age:
         description:
-            - Configures the bridge's max delay in seconds.
+            - Configures the bridge's max delay in seconds
         required: false
     priority:
         description:
-            - Configures the priority of the bridge.
+            - Configures the priority of the bridge
         required: false
     vxlan_id:
         description:
-            - The VXLAN ID to use.
+            - The VXLAN ID to use
         required: false
     vxlan_local:
         description:
-            - Configures local IP address.
+            - Configures local IP address
         required: false
     vxlan_remote:
         description:
-            - Configures destination IP address.
+            - Configures destination IP address
         required: false
     vxlan_destination_port:
         description:
-            - Configures the default destination UDP port on a per-device basis.
+            - Configures the default destination UDP port on a per-device basis
         required: false
 
 # Network Configuration [Network] Section
 
     lldp:
         description:
-            - Controls support for Ethernet LLDP packet reception.
+            - Controls support for Ethernet LLDP packet reception
         choices: [ "yes", "no" ]
     ipv6_accept_ra:
         description:
@@ -155,22 +155,22 @@ options:
         choices: [ "yes", "no" ]
     dhcp:
         description:
-            - Enables DHCPv4 and/or DHCPv6 client support.
+            - Enables DHCPv4 and/or DHCPv6 client support
         choices: ["yes", "no", "ipv4", "ipv6"]
     address:
         description:
-            - A static IPv4 or IPv6 address and its prefix length, separated by a "/" character.
+            - A static IPv4 or IPv6 address and its prefix length, separated by a "/" character
     gateway:
         description:
-            - The gateway address.
+            - The gateway address
         required: false
     dns:
         description:
-            - A DNS server address to setup for the name.
+            - A DNS server address to setup for the name
         required: false
     domains:
         description:
-            - A space separated list of domains which should be resolved using the DNS servers on this link.
+            - A space separated list of domains which should be resolved using the DNS servers on this link
         required: false
     ntp:
         description:
@@ -178,23 +178,39 @@ options:
         required: false
     master_bridge:
         description:
-            - Name of the bridge which name (interface) will join.
+            - Name of the bridge which name (interface) will join
         required: false
     master_bond:
         description:
-            - The name of the bond to add the link.
+            - The name of the bond to add the link
         required: false
     vlan_device:
         description:
-            - The name of a vlan to create on the link.
+            - The name of a vlan to create on the link
         required: false
     macvlan_device:
         description:
-            - The name of a macvlan to create on the link.
+            - The name of a macvlan to create on the link
         required: false
     tunnel_device:
         description:
-            - The name of a tunnel(ipip) to create on the link.
+            - The name of a tunnel(ipip) to create on the link
+        required: false
+    addresses:
+        description:
+            - Specifies static IPv4 or IPv6 addresses. Applies to Address section
+        required: false
+    routes:
+        description:
+            - Specifies static routes to be cofigured accepts multiple routes applies to Route section separated by ',' and following keys
+              via= The gateway address
+              to= The destination prefix of the route
+              from= The preferred source address of the route
+              route_type= The Type identifier for special route types which can be one of "unicast", "blackhole", "unreachable", "prohibit"
+              metric= Specifies the metric of the route
+              scope= The scope of the route, which can be "global", "link" or "host". Defaults to "global"
+              table= The table identifier for the route (a number between 1 and 4294967295, or 0 to unset)
+              onlink= Accpets "yes" or "no"
         required: false
 
 # [Link] Section Options
@@ -229,6 +245,13 @@ EXAMPLES = '''
       dhcp: yes
       addresses: 192.168.1.5/24 192.168.1.6/24 192.168.1.7/24
       state: present
+
+# Configure interface with multiple routes
+  - networkd:
+        config_type=network
+        name=eth0
+        routes="to=0.0.0.0/0 via=5.0.0.1 metric=100, to=192.168.4.0/24 via=192.168.5.2 metric=100"
+        state=present
 
 # Bridge with two ports
   - networkd:
@@ -467,6 +490,57 @@ class Network:
         self.tunnel_device = module.params['tunnel_device']
 
         self.addresses = module.params['addresses']
+        self.routes = module.params['routes']
+
+    def create_config_route(self, route):
+        from_source = None
+        route_type = None
+        scope = None
+        table = None
+        metric = None
+        onlink = None
+        via = None
+        to = None
+
+        conf = "\n[Route]\n"
+        route_keys = route.split(' ')
+
+        for key in route_keys:
+            if key.startswith('via'):
+                via = key.split('=')[1]
+            elif key.startswith('to'):
+                to = key.split('=')[1]
+            elif key.startswith('from'):
+                from_source = key.split('=')[1]
+            elif key.startswith('scope'):
+                scope = key.split('=')[1]
+            elif key.startswith('type'):
+                route_type = key.split('=')[1]
+            elif key.startswith('table'):
+                table = key.split('=')[1]
+            elif key.startswith('metric'):
+                metric = key.split('=')[1]
+            elif key.startswith('onlink'):
+                onlink = key.split('=')[1]
+
+        if via:
+            conf += 'Gateway={0}\n'.format(via)
+        if to:
+            conf += 'Destination={0}\n'.format(to)
+        if from_source:
+            conf += 'PreferredSource={0}\n'.format(from_source)
+        if scope:
+            conf += 'Scope={0}\n'.format(scope)
+        if route_type:
+            conf += 'Type={0}\n'.format(route_type)
+        if onlink:
+            conf += 'GatewayOnlink={0}\n'.format(onlink)
+        if metric:
+            conf += 'Metric={0}\n'.format(metric)
+        if table:
+            conf += 'Table={0}\n'.format(table)
+
+        return conf + '\n'
 
     def create_config_network(self):
         link = Link(self.module)
@@ -495,7 +569,6 @@ class Network:
             conf += 'Bond={0}\n'.format(self.master_bond)
         if self.vlan_device:
             list_vlans = self.vlan_device.split(' ')
-
             for vlan in list_vlans:
                 conf += 'VLAN={0}\n'.format(vlan)
         if self.macvlan_device:
@@ -507,6 +580,11 @@ class Network:
             list_addresses = self.addresses.split(' ')
             for address in list_addresses:
                 conf += "\n[Address]\nAddress={0}\n".format(address)
+
+        if self.routes:
+            list_routes = self.routes.split(',')
+            for route in list_routes:
+                conf += self.create_config_route(route)
 
         config = NetworkdUtilities(self.module)
         return config.write_configs_to_file(conf)
@@ -752,6 +830,8 @@ def main():
             # [Address] Section options
             addresses=dict(type='str', default=None),
 
+            # [Route] Section options
+            routes=dict(type='str', default=None),
         ),
     )
 
