@@ -36,7 +36,7 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 notes:
-  - Tested against CNOS 10.8.0.42
+  - Tested against CNOS 10.8.1
 options:
   authorize:
     version_added: "2.6"

@@ -50,8 +50,6 @@ description:
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_interface.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -134,11 +132,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 ---
 - name: Test Interface Ethernet - channel-group
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 1
@@ -148,11 +142,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - switchport
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -162,11 +152,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - switchport mode
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -176,11 +162,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet  - Description
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -189,11 +171,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - Duplex
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 1
@@ -202,11 +180,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - flowcontrol
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -216,11 +190,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - lacp
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -230,11 +200,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet  - lldp
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -244,11 +210,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - load-interval
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -259,11 +221,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - mac
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -272,11 +230,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - microburst-detection
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -285,11 +239,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet  - mtu
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -298,11 +248,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - service-policy
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -312,11 +258,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - speed
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 1
@@ -325,11 +267,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - storm
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -339,11 +277,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - vlan
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -352,11 +286,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - vrrp
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -365,11 +295,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - spanning tree1
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -379,11 +305,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - spanning tree 2
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -395,11 +317,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - ip1
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -410,11 +328,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - ip2
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -424,11 +338,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - bfd
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -440,11 +350,7 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 - name: Test Interface Ethernet - bfd
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
@@ -489,9 +395,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             outputfile=dict(required=True),
-            host=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            host=dict(required=False),
+            username=dict(required=False),
+            password=dict(required=False, no_log=True),
             enablePassword=dict(required=False, no_log=True),
             deviceType=dict(required=True),
             interfaceRange=dict(required=False),

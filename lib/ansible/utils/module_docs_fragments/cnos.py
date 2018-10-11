@@ -72,11 +72,11 @@ options:
     deviceType:
         description:
             - This specifies the type of device where the method is executed.
-             The choices NE1072T,NE1032,NE1032T,NE10032,
-             NE2572 are added since version 2.4
+             The choices NE1072T,NE1032,NE1032T,NE10032,NE2572 are added
+             since version 2.4. The choice NE0152T is added since 2.8
         required: Yes
         choices: [g8272_cnos,g8296_cnos,g8332_cnos,NE1072T,NE1032,
-         NE1032T,NE10032,NE2572]
+         NE1032T,NE10032,NE2572,NE0152T]
         version_added: 2.3
 notes:
   - For more information on using Ansible to manage Lenovo Network devices see U(https://www.ansible.com/ansible-lenovo).

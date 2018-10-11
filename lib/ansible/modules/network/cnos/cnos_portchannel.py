@@ -45,9 +45,7 @@ description:
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the
-     playbook is run. For more information about this module from Lenovo and
-     customizing it usage for your use cases, please
-     U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_portchannel.html)
+     playbook is run.
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -159,9 +157,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 ---
 - name: Test Port Channel - channel-group
   cnos_portchannel:
-    host: "{{ inventory_hostname }}"
-    username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-    password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
     deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
     outputfile: "./results/test_portchannel_{{inventory_hostname}}_output.txt"
     interfaceRange: 33
@@ -171,9 +166,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - channel-group - Interface Range
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: "1/1-2"
@@ -183,9 +175,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - bridge-port
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -195,9 +184,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - bridgeport mode
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -207,9 +193,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel  - Description
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -218,9 +201,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - Duplex
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -229,9 +209,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - flowcontrol
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -241,9 +218,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - lacp
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -253,9 +227,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel  - lldp
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -265,9 +236,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - load-interval
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -278,9 +246,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - microburst-detection
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -289,9 +254,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel  - mtu
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -300,9 +262,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - service-policy
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -312,9 +271,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - speed
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -323,9 +279,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - storm
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -335,9 +288,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - vlan
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -346,9 +296,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - vrrp
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -357,9 +304,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - spanning tree1
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -369,9 +313,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - spanning tree 2
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -383,9 +324,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - ip1
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -396,9 +334,6 @@ Tasks : The following are examples of using the module cnos_portchannel. These
 
 - name: Test Port Channel - ip2
   cnos_portchannel:
-  host: "{{ inventory_hostname }}"
-  username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-  password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
   deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
   outputfile: "./results/test_portchannel_{{ inventory_hostname }}_output.txt"
   interfaceRange: 33
@@ -473,9 +408,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             outputfile=dict(required=True),
-            host=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            host=dict(required=False),
+            username=dict(required=False),
+            password=dict(required=False, no_log=True),
             enablePassword=dict(required=False, no_log=True),
             deviceType=dict(required=True),
             interfaceRange=dict(required=False),
