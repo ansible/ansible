@@ -100,10 +100,7 @@ def exec_command(module, command):
 def request_builder(method_, *args, **kwargs):
     reqid = str(uuid.uuid4())
     req = {'jsonrpc': '2.0', 'method': method_, 'id': reqid}
-
-    params = args or kwargs or None
-    if params:
-        req['params'] = params
+    req['params'] = (args, kwargs)
 
     return req
 
