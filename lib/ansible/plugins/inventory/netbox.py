@@ -285,8 +285,8 @@ class InventoryModule(BaseInventoryPlugin):
         query_parameters = [("limit", 0)]
         query_parameters.extend(filter(lambda x: x,
                                        map(self.validate_query_parameters, self.query_filters)))
+
         self.device_url = self.api_endpoint + "/api/dcim/devices/" + "?" + urlencode(query_parameters)
-        self.display.v("Refreshed URL: " + self.device_url)
     def fetch_hosts(self):
         return self.get_resource_list(self.device_url)
 
@@ -326,7 +326,7 @@ class InventoryModule(BaseInventoryPlugin):
         self.refresh_lookups()
         self.refresh_url()
         hosts_list = self.fetch_hosts()
-        self.display.v(type(hosts_list))
+
         for host in hosts_list:
             hostname = self.extract_name(host=host)
             self.inventory.add_host(host=hostname)
