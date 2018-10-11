@@ -285,7 +285,6 @@ def main():
 
     results = dict(
         changed=False,
-        config_id=''
     )
 
     ConfigManager(client, results)()
