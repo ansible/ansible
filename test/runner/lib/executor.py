@@ -1478,7 +1478,7 @@ def get_integration_docker_filter(args, targets):
 
     python_version = 2  # images are expected to default to python 2 unless otherwise specified
 
-    python_version = int(get_docker_completion().get(args.docker_raw).get('python', str(python_version)))
+    python_version = int(get_docker_completion().get(args.docker_raw, {}).get('python', str(python_version)))
 
     if args.python:  # specifying a numeric --python option overrides the default python
         if args.python.startswith('3'):
