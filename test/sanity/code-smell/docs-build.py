@@ -52,12 +52,6 @@ def main():
         'unknown-interpreted-text-role': '^Unknown interpreted text role "[^"]*".$',
     }
 
-    ignore_codes = [
-        'reference-target-not-found',
-    ]
-
-    used_ignore_codes = set()
-
     for line in lines:
         match = re.search('^(?P<path>[^:]+):((?P<line>[0-9]+):)?((?P<column>[0-9]+):)? (?P<level>WARNING|ERROR): (?P<message>.*)$', line)
 
@@ -96,19 +90,7 @@ def main():
         else:
             code = 'error'
 
-        if code == 'not-in-toc-tree' and path.startswith('docs/docsite/rst/modules/'):
-            continue  # modules are not expected to be in the toc tree
-
-        if code in ignore_codes:
-            used_ignore_codes.add(code)
-            continue  # ignore these codes
-
         print('%s:%d:%d: %s: %s' % (path, lineno, column, code, message))
-
-    unused_ignore_codes = set(ignore_codes) - used_ignore_codes
-
-    for code in unused_ignore_codes:
-        print('test/sanity/code-smell/docs-build.py:0:0: remove `%s` from the `ignore_codes` list as it is no longer needed' % code)
 
 
 def simplify_stdout(value):
