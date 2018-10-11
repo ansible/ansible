@@ -1406,6 +1406,14 @@ def common_integration_filter(args, targets, exclude):
             display.warning('Excluding tests marked "%s" which require --allow-unstable or prefixing with "unstable/": %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    if args.windows:
+        for window in args.windows:
+            skip = 'skip/windows/%s/' % window
+            skipped = [target.name for target in targets if skip in target.aliases]
+            if skipped:
+                exclude.extend(skipped)
+                display.warning('Excluding tests marked "%s" which are set to skip --windows %s' % (skip.rstrip('/'), window))
+
 
 def get_integration_local_filter(args, targets):
     """
