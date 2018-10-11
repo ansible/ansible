@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Fix the win_reboot plugin so that the post_reboot_delay parameter is honored
