@@ -275,12 +275,12 @@ def self_link(module):
     return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/rrsets?name={name}&type={type}".format(**res)
 
 
-def collection(module, extra_url=''):
+def collection(module):
     res = {
         'project': module.params['project'],
         'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')
     }
-    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res) + extra_url
+    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res)
 
 
 def return_if_object(module, response, kind, allow_not_found=False):
@@ -440,7 +440,7 @@ def wait_for_change_to_complete(change_id, module):
 
 def get_change_status(change_id, module):
     auth = GcpSession(module, 'dns')
-    link = collection(module, "/%s" % change_id)
+    link = collection(module) + "/%s" % change_id
     return return_if_change_object(module, auth.get(link))['status']
 
 
