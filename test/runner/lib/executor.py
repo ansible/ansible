@@ -1412,7 +1412,8 @@ def common_integration_filter(args, targets, exclude):
             skipped = [target.name for target in targets if skip in target.aliases]
             if skipped:
                 exclude.extend(skipped)
-                display.warning('Excluding tests marked "%s" which are set to skip --windows %s' % (skip.rstrip('/'), window))
+                display.warning('Excluding tests marked "%s" which are set to skip --windows %s: %s'
+                                % (skip.rstrip('/'), window, ', '.join(skipped)))
 
 
 def get_integration_local_filter(args, targets):
