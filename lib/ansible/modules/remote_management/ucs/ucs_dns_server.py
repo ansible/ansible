@@ -13,12 +13,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: ucs_dns_server
+
+
 short_description: Configures DNS server on Cisco UCS Manager
+
 extends_documentation_fragment:
 - ucs
+
 description:
 - Configures DNS server on Cisco UCS Manager.
 - Examples can be used with the L(UCS Platform Emulator,https://communities.cisco.com/ucspe).
+
 options:
   state:
     description:
@@ -52,9 +57,11 @@ options:
 
 requirements:
 - ucsmsdk
+
 author:
 - John McDonough (@movinalot)
 - CiscoUcs (@CiscoUcs)
+
 version_added: "2.8"
 '''
 
@@ -106,12 +113,11 @@ def run_module():
     # UCSModule verifies ucsmsdk is present and exits on failure.
     # Imports are below for UCS object creation.
     ucs = UCSModule(module)
-
-    err = False
-
     from ucsmsdk.mometa.comm.CommDnsProvider import CommDnsProvider
 
+    err = False
     changed = False
+
     try:
         mo_exists = False
         props_match = False

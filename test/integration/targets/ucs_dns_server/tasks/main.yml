@@ -1,7 +1,7 @@
 # Test code for the UCS modules
 # Copyright 2018, John McDonough (@movinalot)
 
-- name: Test that we have a UCS host, UCS username, and UCS password
+- name: Test that we have a UCS host, UCS username, and UCS password.
   fail:
     msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
   when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
