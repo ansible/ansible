@@ -133,7 +133,7 @@ single_kv_result:
     type: string
 
 recurse_kv_result:
-  description: "A list of kv results"
+  description: A list of kv results
   sample:
     - '{
          "CreateIndex": 1539295,
