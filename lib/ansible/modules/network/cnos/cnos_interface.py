@@ -306,7 +306,6 @@ Tasks : The following are examples of using the module cnos_interface. These are
 - name: Test Interface Ethernet - spanning tree 2
   cnos_interface:
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
       interfaceOption: 'ethernet'
       interfaceRange: 33
