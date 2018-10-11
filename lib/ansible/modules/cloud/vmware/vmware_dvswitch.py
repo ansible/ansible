@@ -48,6 +48,7 @@ options:
         description:
             - Add the LACP configuration
         required: True
+        version_added: 2.8
     uplink_quantity:
         description:
             - Quantity of uplink per ESXi host added to the switch
