@@ -58,3 +58,43 @@
     that:
       - cpu_options_update is success
       - cpu_options_update is not changed
+
+- name: create c4.large instance with cpu_options(check mode)
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-c4large-1-threads-per-core-checkmode"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    tags:
+      TestId: "{{ resource_prefix }}"
+    vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+    instance_type: c4.large
+    cpu_options:
+        core_count: 1
+        threads_per_core: 1
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+    <<: *aws_connection_info
+  check_mode: yes
+
+- name: "fact presented ec2 instance"
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-c4large-1-threads-per-core"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: presented_instance_fact
+
+- name: "fact checkmode ec2 instance"
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-c4large-1-threads-per-core-checkmode"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: checkmode_instance_fact
+
+- name: "Confirm existence of instance id."
+  assert:
+    that:
+      - "{{ presented_instance_fact.instances | length }} > 0"
+      - "{{ checkmode_instance_fact.instances | length }} == 0"
