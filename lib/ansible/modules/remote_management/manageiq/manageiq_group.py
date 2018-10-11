@@ -82,7 +82,7 @@ options:
     choices: [ merge, replace ]
     default: replace
   belongsto_filters:
-    description: A of strings with a reference to the allowed host, cluster or folder
+    description: A list of strings with a reference to the allowed host, cluster or folder
     type: list
     required: false
     default: null
@@ -187,6 +187,14 @@ group:
       description: The group tenant name
       returned: success
       type: string
+    managed_filters:
+      description: The tag values per category
+      returned: success
+      type: dict
+    belongsto_filters:
+      description: A list of strings with a reference to the allowed host, cluster or folder
+      returned: success
+      type: list
     created_on:
       description: Group creation date
       returned: success
@@ -527,17 +535,28 @@ class ManageIQgroup(object):
         except AttributeError:
             role_name = None
 
+        managed_filters = None
+        belongsto_filters = None
         if 'filters' in group['entitlement']:
             filters = group['entitlement']['filters']
-        else:
-            filters = None
+            if 'belongsto' in filters:
+                belongsto_filters = filters['belongsto']
+            if 'managed' in filters:
+                managed_filters = {}
+                for tag_list in filters['managed']:
+                    key = tag_list[0].split('/')[2]
+                    tags = []
+                    for t in tag_list:
+                        tags.append(t.split('/')[3])
+                    managed_filters[key] = tags
 
         return dict(
             id=group['id'],
             description=group['description'],
             role=role_name,
             tenant=group['tenant']['name'],
-            filters=filters,
+            managed_filters=managed_filters,
+            belongsto_filters=belongsto_filters,
             group_type=group['group_type'],
             created_on=group['created_on'],
             updated_on=group['updated_on'],
