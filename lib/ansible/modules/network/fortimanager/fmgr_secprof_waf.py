@@ -95,9 +95,9 @@ options:
   address_list:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -141,9 +141,9 @@ options:
   constraint:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -748,9 +748,9 @@ options:
   method:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -834,9 +834,9 @@ options:
   signature:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -935,7 +935,7 @@ options:
       - flag | resp-hdr | HTTP response headers.
       - flag | resp-status | HTTP response status.
     required: false
-    choices: 
+    choices:
     ["arg",
     "arg-name",
     "req-body",
@@ -987,9 +987,9 @@ options:
   url_access:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -1052,136 +1052,26 @@ options:
       - Source address.
     required: false
 
-
 '''
 
 EXAMPLES = '''
-- name: EDIT FMGR_WAF_PROFILE
-  fmgr_waf_profile:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    mode:
-    adom:
-    name:
-    external:
-    extended_log:
-    comment:
-    address_list_blocked_address:
-    address_list_blocked_log:
-    address_list_severity:
-    address_list_status:
-    address_list_trusted_address:
-    constraint_content_length_action:
-    constraint_content_length_length:
-    constraint_content_length_log:
-    constraint_content_length_severity:
-    constraint_content_length_status:
-    constraint_exception_address:
-    constraint_exception_content_length:
-    constraint_exception_header_length:
-    constraint_exception_hostname:
-    constraint_exception_line_length:
-    constraint_exception_malformed:
-    constraint_exception_max_cookie:
-    constraint_exception_max_header_line:
-    constraint_exception_max_range_segment:
-    constraint_exception_max_url_param:
-    constraint_exception_method:
-    constraint_exception_param_length:
-    constraint_exception_pattern:
-    constraint_exception_regex:
-    constraint_exception_url_param_length:
-    constraint_exception_version:
-    constraint_header_length_action:
-    constraint_header_length_length:
-    constraint_header_length_log:
-    constraint_header_length_severity:
-    constraint_header_length_status:
-    constraint_hostname_action:
-    constraint_hostname_log:
-    constraint_hostname_severity:
-    constraint_hostname_status:
-    constraint_line_length_action:
-    constraint_line_length_length:
-    constraint_line_length_log:
-    constraint_line_length_severity:
-    constraint_line_length_status:
-    constraint_malformed_action:
-    constraint_malformed_log:
-    constraint_malformed_severity:
-    constraint_malformed_status:
-    constraint_max_cookie_action:
-    constraint_max_cookie_log:
-    constraint_max_cookie_max_cookie:
-    constraint_max_cookie_severity:
-    constraint_max_cookie_status:
-    constraint_max_header_line_action:
-    constraint_max_header_line_log:
-    constraint_max_header_line_max_header_line:
-    constraint_max_header_line_severity:
-    constraint_max_header_line_status:
-    constraint_max_range_segment_action:
-    constraint_max_range_segment_log:
-    constraint_max_range_segment_max_range_segment:
-    constraint_max_range_segment_severity:
-    constraint_max_range_segment_status:
-    constraint_max_url_param_action:
-    constraint_max_url_param_log:
-    constraint_max_url_param_max_url_param:
-    constraint_max_url_param_severity:
-    constraint_max_url_param_status:
-    constraint_method_action:
-    constraint_method_log:
-    constraint_method_severity:
-    constraint_method_status:
-    constraint_param_length_action:
-    constraint_param_length_length:
-    constraint_param_length_log:
-    constraint_param_length_severity:
-    constraint_param_length_status:
-    constraint_url_param_length_action:
-    constraint_url_param_length_length:
-    constraint_url_param_length_log:
-    constraint_url_param_length_severity:
-    constraint_url_param_length_status:
-    constraint_version_action:
-    constraint_version_log:
-    constraint_version_severity:
-    constraint_version_status:
-    method_default_allowed_methods:
-    method_log:
-    method_severity:
-    method_status:
-    method_method_policy_address:
-    method_method_policy_allowed_methods:
-    method_method_policy_pattern:
-    method_method_policy_regex:
-    signature_credit_card_detection_threshold:
-    signature_disabled_signature:
-    signature_disabled_sub_class:
-    signature_custom_signature_action:
-    signature_custom_signature_case_sensitivity:
-    signature_custom_signature_direction:
-    signature_custom_signature_log:
-    signature_custom_signature_name:
-    signature_custom_signature_pattern:
-    signature_custom_signature_severity:
-    signature_custom_signature_status:
-    signature_custom_signature_target:
-    signature_main_class_action:
-    signature_main_class_log:
-    signature_main_class_severity:
-    signature_main_class_status:
-    url_access_action:
-    url_access_address:
-    url_access_log:
-    url_access_severity:
-    url_access_access_pattern_negate:
-    url_access_access_pattern_pattern:
-    url_access_access_pattern_regex:
-    url_access_access_pattern_srcaddr:
+  - name: DELETE Profile
+    fmgr_secprof_waf:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_WAF_Profile"
+      comment: "Created by Ansible Module TEST"
+      mode: "delete"
 
+  - name: CREATE Profile
+    fmgr_secprof_waf:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_WAF_Profile"
+      comment: "Created by Ansible Module TEST"
+      mode: "set"
 '''
 
 RETURN = """
@@ -1258,7 +1148,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
     if msg != "NULL" and len(results) == 0:
         try:
             fmg.logout()
-        except:
+        except BaseException:
             pass
         module.fail_json(msg=msg)
 
@@ -1267,7 +1157,7 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
         if msg == "NULL":
             try:
                 msg = results[1]['status']['message']
-            except:
+            except BaseException:
                 msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
 
         if results[0] not in good_codes:
@@ -1716,13 +1606,13 @@ def main():
         override_data = list()
         try:
             override_data = module.params[list_variable]
-        except:
+        except BaseException:
             pass
         try:
             if override_data:
                 del paramgram[list_variable]
                 paramgram[list_variable] = override_data
-        except:
+        except BaseException:
             pass
 
     # CHECK IF THE HOST/USERNAME/PW EXISTS, AND IF IT DOES, LOGIN.
