@@ -129,12 +129,12 @@ EXAMPLES = """
 
 RETURN = """"
 single_kv_result:
-    description: A single value of a quried key
+    description: A single value of a queried key
     type: string
 
-recurse_kv_result: 
-  description: "A list of kv results"
-  sample: 
+recurse_kv_result:
+  description: A list of kv results
+  sample:
     - |
         {
           "CreateIndex": 1539295,
@@ -146,9 +146,9 @@ recurse_kv_result:
         }
   type: list
 
-health_by_state: 
-  description: "A list of nodes with the given health status"
-  sample: 
+health_by_state:
+  description: A list of nodes with the given health status
+  sample:
     - |-
         {
           "CheckID": "serfHealth",
@@ -166,11 +166,12 @@ health_by_state:
         }
   type: list
 
-health_of_service_result: 
-  contains: 
-    Checks: 
+health_of_service_result:
+  description: Results for the various service elements
+  contains:
+    Checks:
       description: "A list of checks for the service"
-      sample: 
+      sample:
         - |
             {
               "CheckID": "serfHealth",
@@ -187,88 +188,88 @@ health_of_service_result:
               "Status": "passing"
             }
       type: list
-    Node: 
-      contains: 
-        Address: 
+    Node:
+      contains:
+        Address:
           description: "The IP Address of the Node"
           type: string
-        CreateIndex: 
+        CreateIndex:
           description: "The index of the entry"
           type: int
-        Datacenter: 
+        Datacenter:
           description: "The name of the datacenter"
           type: string
-        ID: 
+        ID:
           description: "The node ID"
           type: string
-        Meta: 
-          contains: 
-            consul-network-segment: 
+        Meta:
+          contains:
+            consul-network-segment:
               description: "The name of the network segment"
               type: string
           description: "META Information"
           type: complex
-        ModifyIndex: 
+        ModifyIndex:
           description: "The modify index ID"
           type: int
-        Node: 
+        Node:
           description: "The node name"
           type: string
-        TaggedAddresses: 
-          contains: 
-            lan: 
+        TaggedAddresses:
+          contains:
+            lan:
               description: "LAN IP Address"
               type: string
-            wan: 
+            wan:
               description: "WAN IP Address"
               type: string
           type: complex
       description: "The node information"
       type: complex
-    Service: 
-      contains: 
-        Address: 
+    Service:
+      contains:
+        Address:
           description: "the address of the service"
           type: string
-        Connect: 
-          contains: 
-            Native: 
+        Connect:
+          contains:
+            Native:
               description: "Is the connection native?"
               type: bool
-            Proxy: 
+            Proxy:
               description: "Information about the proxy if one is used in the connection"
               type: string
           description: "information about the connection of the service"
           type: complex
-        CreateIndex: 
+        CreateIndex:
           description: "The index of the entry"
           type: int
-        EnableTagOverride: 
+        EnableTagOverride:
           description: "can tags be overridden"
           type: bool
-        ID: 
+        ID:
           description: "The ID of the service"
           type: string
-        ModifyIndex: 
+        ModifyIndex:
           description: "The modify index ID"
           type: int
-        Port: 
+        Port:
           description: "The port of the service"
           type: int
-        ProxyDestination: 
+        ProxyDestination:
           description: "The proxy destination"
           type: string
-        Service: 
+        Service:
           description: "The name of the service"
           type: string
-        Tags: 
+        Tags:
           description: "A list of tags associated with the service"
           type: list
-        Weights: 
-          contains: 
-            Passing: 
+        Weights:
+          contains:
+            Passing:
               type: int
-            Warning: 
+            Warning:
               type: int
           type: complex
       description: "Information about the service"
