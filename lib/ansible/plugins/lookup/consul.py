@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright: (c) 2018, Johannes Brunswicker <johannes.brunswicker@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
@@ -134,149 +132,149 @@ single_kv_result:
     description: A single value of a quried key
     type: string
 
-recurse_kv_result:
-    description: A list of kv results
-    type: list
-    sample:
-        - |
-          {
-            "CreateIndex": 1539295,
-            "Flags": 0,
-            "Key": "foo/bar",
-            "LockIndex": 0,
-            "ModifyIndex": 1539295,
-            "Value": "BAR_Value"
-          }
+recurse_kv_result: 
+  description: "A list of kv results"
+  sample: 
+    - |
+        {
+          "CreateIndex": 1539295,
+          "Flags": 0,
+          "Key": "foo/bar",
+          "LockIndex": 0,
+          "ModifyIndex": 1539295,
+          "Value": "BAR_Value"
+        }
+  type: list
 
-health_by_state:
-    description: A list of nodes with the given health status
-    type: list
-    sample:
-        - |
-          {
-            "CheckID": "serfHealth",
-            "CreateIndex": 1654898,
-            "Definition": {},
-            "ModifyIndex": 1654898,
-            "Name": "Serf Health Status",
-            "Node": "nodeFQDN",
-            "Notes": "",
-            "Output": "Agent alive and reachable",
-            "ServiceID": "",
-            "ServiceName": "",
-            "ServiceTags": [],
-            "Status": "passing"
-          }
+health_by_state: 
+  description: "A list of nodes with the given health status"
+  sample: 
+    - |-
+        {
+          "CheckID": "serfHealth",
+          "CreateIndex": 1654898,
+          "Definition": {},
+          "ModifyIndex": 1654898,
+          "Name": "Serf Health Status",
+          "Node": "nodeFQDN",
+          "Notes": "",
+          "Output": "Agent alive and reachable",
+          "ServiceID": "",
+          "ServiceName": "",
+          "ServiceTags": [],
+          "Status": "passing"
+        }
+  type: list
 
-health_of_service_result:
-    description: A list of health states of a service
-    type: complex
-    contains:
-        Checks:
-            description: A list of checks for the service
-            type: list
-            sample:
-                - |
-                  {
-                    "CheckID": "serfHealth",
-                    "CreateIndex": 1654898,
-                    "Definition": {},
-                    "ModifyIndex": 1654898,
-                    "Name": "Serf Health Status",
-                    "Node": "nodeFQDN",
-                    "Notes": "",
-                    "Output": "Agent alive and reachable",
-                    "ServiceID": "",
-                    "ServiceName": "",
-                    "ServiceTags": [],
-                    "Status": "passing"
-                  }
-        Node:
-            description: The node information
-            type: complex
-            contains:
-                Address:
-                    description: The IP Address of the Node
-                    type: string
-                CreateIndex:
-                    description: The index of the entry
-                    type: int
-                Datacenter:
-                    description: The name of the datacenter
-                    type: string
-                ID:
-                    description: The node ID
-                    type: string
-                Meta:
-                    description: META Information
-                    type: complex
-                    contains:
-                        consul-network-segment:
-                            description: The name of the network segment
-                            type: string
-                ModifyIndex:
-                    description: The modify index ID
-                    type: int
-                Node:
-                    description: The node name
-                    type: string
-                TaggedAddresses:
-                    type: complex
-                    contains:
-                        lan:
-                            description: LAN IP Address
-                            type: string
-                        wan:
-                            description: WAN IP Address
-                            type: string
-        Service:
-            description: Information about the service
-            type: complex
-            contains:
-                Address:
-                    description: the address of the service
-                    type: string
-                Connect:
-                    description: information about the connection of the service
-                    type: complex
-                    contains:
-                        Native:
-                            description: Is the connection native?
-                            type: bool
-                        Proxy:
-                            description: Information about the proxy if one is used in the connection
-                            type: string
-                CreateIndex:
-                    description: The index of the entry
-                    type: int
-                EnableTagOverride:
-                    description: can tags be overridden
-                    type: bool
-                ID:
-                    description: The ID of the service
-                    type: string
-                ModifyIndex:
-                    description: The modify index ID
-                    type: int
-                Port:
-                    description: The port of the service
-                    type: int
-                ProxyDestination:
-                    description: The proxy destination
-                    type: string
-                Service:
-                    description: The name of the service
-                    type: string
-                Tags:
-                    description: A list of tags associated with the service
-                    type: list
-                Weights:
-                    type: complex
-                    contains:
-                        Passing:
-                            type: int
-                        Warning:
-                            type: int
+health_of_service_result: 
+  contains: 
+    Checks: 
+      description: "A list of checks for the service"
+      sample: 
+        - |
+            {
+              "CheckID": "serfHealth",
+              "CreateIndex": 1654898,
+              "Definition": {},
+              "ModifyIndex": 1654898,
+              "Name": "Serf Health Status",
+              "Node": "nodeFQDN",
+              "Notes": "",
+              "Output": "Agent alive and reachable",
+              "ServiceID": "",
+              "ServiceName": "",
+              "ServiceTags": [],
+              "Status": "passing"
+            }
+      type: list
+    Node: 
+      contains: 
+        Address: 
+          description: "The IP Address of the Node"
+          type: string
+        CreateIndex: 
+          description: "The index of the entry"
+          type: int
+        Datacenter: 
+          description: "The name of the datacenter"
+          type: string
+        ID: 
+          description: "The node ID"
+          type: string
+        Meta: 
+          contains: 
+            consul-network-segment: 
+              description: "The name of the network segment"
+              type: string
+          description: "META Information"
+          type: complex
+        ModifyIndex: 
+          description: "The modify index ID"
+          type: int
+        Node: 
+          description: "The node name"
+          type: string
+        TaggedAddresses: 
+          contains: 
+            lan: 
+              description: "LAN IP Address"
+              type: string
+            wan: 
+              description: "WAN IP Address"
+              type: string
+          type: complex
+      description: "The node information"
+      type: complex
+    Service: 
+      contains: 
+        Address: 
+          description: "the address of the service"
+          type: string
+        Connect: 
+          contains: 
+            Native: 
+              description: "Is the connection native?"
+              type: bool
+            Proxy: 
+              description: "Information about the proxy if one is used in the connection"
+              type: string
+          description: "information about the connection of the service"
+          type: complex
+        CreateIndex: 
+          description: "The index of the entry"
+          type: int
+        EnableTagOverride: 
+          description: "can tags be overridden"
+          type: bool
+        ID: 
+          description: "The ID of the service"
+          type: string
+        ModifyIndex: 
+          description: "The modify index ID"
+          type: int
+        Port: 
+          description: "The port of the service"
+          type: int
+        ProxyDestination: 
+          description: "The proxy destination"
+          type: string
+        Service: 
+          description: "The name of the service"
+          type: string
+        Tags: 
+          description: "A list of tags associated with the service"
+          type: list
+        Weights: 
+          contains: 
+            Passing: 
+              type: int
+            Warning: 
+              type: int
+          type: complex
+      description: "Information about the service"
+      type: complex
+  description: "A list of health states of a service"
+  type: complex
 """
 
 import string
