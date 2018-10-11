@@ -97,12 +97,6 @@ items:
                   be a dash.
             returned: success
             type: str
-        labelFingerprint:
-            description:
-                - The fingerprint used for optimistic locking of this resource.  Used internally during
-                  updates.
-            returned: success
-            type: str
         ipVersion:
             description:
                 - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
