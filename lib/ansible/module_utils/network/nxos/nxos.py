@@ -105,8 +105,8 @@ def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
         load_params(module)
-        if is_nxapi(module):
-            conn = Nxapi(module)
+        if is_local_nxapi(module):
+            conn = LocalNxapi(module)
         else:
             connection_proxy = Connection(module._socket_path)
             cap = json.loads(connection_proxy.get_capabilities())
@@ -249,7 +249,7 @@ class Cli:
         return None
 
 
-class Nxapi:
+class LocalNxapi:
 
     OUTPUT_TO_COMMAND_TYPE = {
         'text': 'cli_show_ascii',
@@ -509,10 +509,9 @@ class HttpApi:
 
     @property
     def _connection(self):
-        if self._connection_obj:
-            return self._connection_obj
+        if not self._connection_obj:
+            self._connection_obj = Connection(self._module._socket_path)
 
-        self._connection_obj = Connection(self._module._socket_path)
         return self._connection_obj
 
     def run_commands(self, commands, check_rc=True):
@@ -558,21 +557,21 @@ class HttpApi:
 
 
 def is_json(cmd):
-    return str(cmd).endswith('| json')
+    return to_text(cmd).endswith('| json')
 
 
 def is_text(cmd):
     return not is_json(cmd)
 
 
-def is_nxapi(module):
+def is_local_nxapi(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
     return 'nxapi' in (transport, provider_transport)
 
 
 def to_command(module, commands):
-    if is_nxapi(module):
+    if is_local_nxapi(module):
         default_output = 'json'
     else:
         default_output = 'text'
