@@ -93,7 +93,7 @@ class LXDClient(object):
         if resp_json['type'] == 'async':
             url = '{0}/wait'.format(resp_json['operation'])
             resp_json = self._send_request('GET', url)
-            if resp_json['metadata']['status'] != 'Success':
+            if resp_json['status'] != 'Success':
                 self._raise_err_from_json(resp_json)
         return resp_json
 
