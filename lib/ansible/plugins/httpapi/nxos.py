@@ -139,6 +139,7 @@ class HttpApi(HttpApiBase):
         return self._device_info
 
     def get_device_operations(self):
+        platform = self.get_device_info().get('network_os_platform', '')
         return {
             'supports_diff_replace': True,
             'supports_commit': False,
@@ -150,7 +151,7 @@ class HttpApi(HttpApiBase):
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
             'supports_generate_diff': True,
-            'supports_replace': True
+            'supports_replace': True if '9K' in platform else False,
         }
 
     def get_capabilities(self):
