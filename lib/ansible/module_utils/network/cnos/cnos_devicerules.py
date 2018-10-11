@@ -73,6 +73,11 @@ def getRuleString(deviceType, variableId):
             retVal = retVal + NE2572[variableId]
         else:
             retVal = "The variable " + variableId + " is not supported"
+    elif(deviceType == 'NE0152T'):
+        if variableId in NE0152T:
+            retVal = retVal + NE0152T[variableId]
+        else:
+            retVal = "The variable " + variableId + " is not supported"
     else:
         if variableId in default_cnos:
             retVal = retVal + default_cnos[variableId]
