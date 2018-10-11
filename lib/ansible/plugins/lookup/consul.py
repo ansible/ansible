@@ -130,13 +130,160 @@ EXAMPLES = """
 """
 
 RETURN = """"
+single_kv_result:
+    description: A single value of a quried key
+    type: string
 
+recurse_kv_result:
+    description: A list of kv results
+    type: list
+    sample:
+        - |
+          {
+            "CreateIndex": 1539295,
+            "Flags": 0,
+            "Key": "foo/bar",
+            "LockIndex": 0,
+            "ModifyIndex": 1539295,
+            "Value": "BAR_Value"
+          }
+
+health_by_state:
+    description: A list of nodes with the given health status
+    type: list
+    sample:
+        - |
+          {
+            "CheckID": "serfHealth",
+            "CreateIndex": 1654898,
+            "Definition": {},
+            "ModifyIndex": 1654898,
+            "Name": "Serf Health Status",
+            "Node": "nodeFQDN",
+            "Notes": "",
+            "Output": "Agent alive and reachable",
+            "ServiceID": "",
+            "ServiceName": "",
+            "ServiceTags": [],
+            "Status": "passing"
+          }
+
+health_of_service_result:
+    description: A list of health states of a service
+    type: complex
+    contains:
+        Checks:
+            description: A list of checks for the service
+            type: list
+            sample:
+                - |
+                  {
+                    "CheckID": "serfHealth",
+                    "CreateIndex": 1654898,
+                    "Definition": {},
+                    "ModifyIndex": 1654898,
+                    "Name": "Serf Health Status",
+                    "Node": "nodeFQDN",
+                    "Notes": "",
+                    "Output": "Agent alive and reachable",
+                    "ServiceID": "",
+                    "ServiceName": "",
+                    "ServiceTags": [],
+                    "Status": "passing"
+                  }
+        Node:
+            description: The node information
+            type: complex
+            contains:
+                Address:
+                    description: The IP Address of the Node
+                    type: string
+                CreateIndex:
+                    description: The index of the entry
+                    type: int
+                Datacenter:
+                    description: The name of the datacenter
+                    type: string
+                ID:
+                    description: The node ID
+                    type: string
+                Meta:
+                    description: META Information
+                    type: complex
+                    contains:
+                        consul-network-segment:
+                            description: The name of the network segment
+                            type: string
+                ModifyIndex:
+                    description: The modify index ID
+                    type: int
+                Node:
+                    description: The node name
+                    type: string
+                TaggedAddresses:
+                    type: complex
+                    contains:
+                        lan:
+                            description: LAN IP Address
+                            type: string
+                        wan:
+                            description: WAN IP Address
+                            type: string
+        Service:
+            description: Information about the service
+            type: complex
+            contains:
+                Address:
+                    description: the address of the service
+                    type: string
+                Connect:
+                    description: information about the connection of the service
+                    type: complex
+                    contains:
+                        Native:
+                            description: Is the connection native?
+                            type: bool
+                        Proxy:
+                            description: Information about the proxy if one is used in the connection
+                            type: string
+                CreateIndex:
+                    description: The index of the entry
+                    type: int
+                EnableTagOverride:
+                    description: can tags be overridden
+                    type: bool
+                ID:
+                    description: The ID of the service
+                    type: string
+                ModifyIndex:
+                    description: The modify index ID
+                    type: int
+                Port:
+                    description: The port of the service
+                    type: int
+                ProxyDestination:
+                    description: The proxy destination
+                    type: string
+                Service:
+                    description: The name of the service
+                    type: string
+                Tags:
+                    description: A list of tags associated with the service
+                    type: list
+                Weights:
+                    type: complex
+                    contains:
+                        Passing:
+                            type: int
+                        Warning:
+                            type: int
 """
+
 import string
 import os
 from ansible.errors import AnsibleError
-
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text
 
 try:
     import consul
@@ -172,7 +319,7 @@ class LookupModule(LookupBase):
         if api_type is None:
             raise AnsibleError('You need to define a consul api to use.')
 
-        key = next(iter(terms), None)
+        term = next(iter(terms), None)
         index = kwargs.get('index', None)
         token = kwargs.get('token', None)
         short_keys = kwargs.get('short_keys', False)
@@ -185,18 +332,27 @@ class LookupModule(LookupBase):
 
         try:
             consul_api = consul.Consul(host=hostname, port=port, scheme=scheme, verify=validate_certs, cert=client_cert)
-            results = None
             if api_type is 'health_of_service':
-                index, results = consul_api.health.service(key, token=token, index=index, wait="10s")
+                index, results = consul_api.health.service(service=term, token=token, index=index, wait="10s")
+                return results
             if api_type is 'health_by_state':
-                index, results = consul_api.health.state(key, token=token, index=index, wait="10s")
+                index, results = consul_api.health.state(name=term, token=token, index=index, wait="10s")
+                return results
             elif api_type is 'kv':
-                index, results = consul_api.kv.get(key, token=token, index=index, recurse=recurse, wait="10s")
+                values = []
+                index, results = consul_api.kv.get(key=term, token=token, index=index, recurse=recurse, wait="10s")
                 if results is not None:
-                    if isinstance(results, list) and short_keys:
-                        for result in results:
-                            result['Key'] = string.replace(result['Key'], key + '/', '')
-
-            return results
+                    if isinstance(results, list):
+                        if len(results) == 1:
+                            result = next(iter(results))
+                            values.append(to_text(result['Value']))
+                        else:
+                            for result in results:
+                                if short_keys:
+                                    result['Key'] = string.replace(result['Key'], term + '/', '')
+                                values.append(result)
+                    elif not isinstance(results, list):
+                        values.append(to_text(results['Value']))
+                return values
         except Exception as e:
-            raise AnsibleError("Error looking up '%s' in consul '%s'. Error was %s" % (key, api_type, e))
+            raise AnsibleError("Error looking up '%s' in consul '%s'. Error was %s" % (term, api_type, e))
