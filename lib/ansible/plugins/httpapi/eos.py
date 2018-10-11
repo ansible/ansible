@@ -51,6 +51,7 @@ OPTIONS = {
 class HttpApi(HttpApiBase):
     def __init__(self, *args, **kwargs):
         super(HttpApi, self).__init__(*args, **kwargs)
+        self._device_info = None
         self._session_support = None
 
     @property
@@ -101,6 +102,9 @@ class HttpApi(HttpApiBase):
         return results
 
     def get_device_info(self):
+        if self._device_info:
+            return self._device_info
+
         device_info = {}
 
         device_info['network_os'] = 'eos'
@@ -115,7 +119,8 @@ class HttpApi(HttpApiBase):
 
         device_info['network_os_hostname'] = data['hostname']
 
-        return device_info
+        self._device_info = device_info
+        return self._device_info
 
     def get_device_operations(self):
         return {

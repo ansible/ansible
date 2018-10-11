@@ -39,6 +39,10 @@ OPTIONS = {
 
 
 class HttpApi(HttpApiBase):
+    def __init__(self, *args, **kwargs):
+        super(HttpApi, self).__init__(*args, **kwargs)
+        self._device_info = None
+
     def send_request(self, data, **message_kwargs):
         output = None
         queue = list()
@@ -96,6 +100,9 @@ class HttpApi(HttpApiBase):
         return results
 
     def get_device_info(self):
+        if self._device_info:
+            return self._device_info
+
         device_info = {}
 
         device_info['network_os'] = 'nxos'
@@ -141,7 +148,8 @@ class HttpApi(HttpApiBase):
         if match_os_platform:
             device_info['network_os_platform'] = match_os_platform.group(1)
 
-        return device_info
+        self._device_info = device_info
+        return self._device_info
 
     def get_device_operations(self):
         return {
