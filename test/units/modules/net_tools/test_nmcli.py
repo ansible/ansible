@@ -402,7 +402,15 @@ def test_create_vlan_con(mocked_generic_connection_create):
     arg_list = nmcli.Nmcli.execute_command.call_args_list
     args, kwargs = arg_list[0]
 
-    for param in ['vlan']:
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'add'
+    assert args[0][3] == 'type'
+    assert args[0][4] == 'vlan'
+    assert args[0][5] == 'con-name'
+    assert args[0][6] == 'non_existent_nw_device'
+
+    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1']:
         assert param in args[0]
 
 
@@ -419,7 +427,12 @@ def test_mod_vlan_conn(mocked_generic_connection_modify):
     arg_list = nmcli.Nmcli.execute_command.call_args_list
     args, kwargs = arg_list[0]
 
-    for param in ['vlan.id']:
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'mod'
+    assert args[0][3] == 'non_existent_nw_device'
+
+    for param in ['ipv4.address', '10.10.10.10', 'ipv4.gateway', '10.10.10.1']:
         assert param in args[0]
 
 
