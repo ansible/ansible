@@ -68,15 +68,15 @@ they can be an array of text.  Text is what we think of as letters, digits,
 numbers, other printable symbols, and a small number of unprintable "symbols"
 (control codes).
 
-In Python 2, the two types for these (:class:`str` for bytes and
-:class:`unicode` for text) are often used interchangeably.  When dealing only
+In Python 2, the two types for these (:class:`str <python:str>` for bytes and
+:func:`unicode <python:unicode>` for text) are often used interchangeably.  When dealing only
 with ASCII characters, the strings can be combined, compared, and converted
 from one type to another automatically.  When non-ASCII characters are
 introduced, Python 2 starts throwing exceptions due to not knowing what encoding
 the non-ASCII characters should be in.
 
-Python 3 changes this behavior by making the separation between bytes (:class:`bytes`)
-and text (:class:`str`) more strict.  Python 3 will throw an exception when
+Python 3 changes this behavior by making the separation between bytes (:class:`bytes <python3:bytes>`)
+and text (:class:`str <python3:str>`) more strict.  Python 3 will throw an exception when
 trying to combine and compare the two types.  The programmer has to explicitly
 convert from one type to the other to mix values from each.
 
@@ -95,7 +95,7 @@ Controller string strategy: the Unicode Sandwich
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In controller-side code we use a strategy known as the Unicode Sandwich (named
-after Python 2's :class:`unicode` text type).  For Unicode Sandwich we know that
+after Python 2's :func:`unicode  <python:unicode>` text type).  For Unicode Sandwich we know that
 at the border of our code and the outside world (for example, file and network IO,
 environment variables, and some library calls) we are going to receive bytes.
 We need to transform these bytes into text and use that throughout the
@@ -189,7 +189,7 @@ to the filesystem, it can be more convenient to transform to bytes right away
 and manipulate in bytes.
 
 .. warning:: Make sure all variables passed to a function are the same type.
-    If you're working with something like :func:`os.path.join` which takes
+    If you're working with something like :func:`python3:os.path.join` which takes
     multiple strings and uses them in combination, you need to make sure that
     all the types are the same (either all bytes or all text).  Mixing
     bytes and text will cause tracebacks.
@@ -271,17 +271,17 @@ to make certain constructs act the same way on Python 2 and Python 3:
     __metaclass__ = type
 
 ``__metaclass__ = type`` makes all classes defined in the file into new-style
-classes without explicitly inheriting from :class:`object`.
+classes without explicitly inheriting from :class:`object <python3:object>`.
 
 The ``__future__`` imports do the following:
 
-:absolute_import: Makes imports look in :attr:`sys.path` for the modules being
+:absolute_import: Makes imports look in :data:`sys.path <python3:sys.path>` for the modules being
     imported, skipping the directory in which the module doing the importing
     lives.  If the code wants to use the directory in which the module doing
     the importing, there's a new dot notation to do so.
 :division: Makes division of integers always return a float.  If you need to
    find the quotient use ``x // y`` instead of ``x / y``.
-:print_function: Changes :func:`print` from a keyword into a function.
+:print_function: Changes :func:`print <python3:print>` from a keyword into a function.
 
 .. seealso::
     * `PEP 0328: Absolute Imports <https://www.python.org/dev/peps/pep-0328/#guido-s-decision>`_
