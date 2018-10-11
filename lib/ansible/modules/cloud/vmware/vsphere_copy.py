@@ -63,6 +63,7 @@ options:
       - The timeout in seconds for the upload to the datastore.
     default: 10
     type: int
+    version_added: "2.8"
 
 notes:
   - "This module ought to be run from a system that can access vCenter directly and has the file to transfer.
