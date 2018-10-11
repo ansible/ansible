@@ -195,7 +195,7 @@ options:
             type: str
           interval:
             description:
-            - The amount of time between earch restart of the task/
+            - The amount of time between each restart of the task.
             - The value is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
             type: str
           stop_at_duration_end:
