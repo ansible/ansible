@@ -105,6 +105,7 @@ import json
 import uuid
 from sys import version as python_version
 from threading import Thread
+from itertools import chain
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.ansible_release import __version__ as ansible_version
@@ -113,7 +114,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urljoin, urlencode
 from ansible.module_utils.compat.ipaddress import ip_interface
-
 
 ALLOWED_DEVICE_QUERY_PARAMETERS = (
     "asset_tag",
@@ -190,10 +190,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "tenants": self.extract_tenant,
             "racks": self.extract_rack,
             "tags": self.extract_tags,
+            "disk": self.extract_disk,
+            "memory": self.extract_memory,
+            "vcpus": self.extract_vcpus,
             "device_roles": self.extract_device_role,
             "device_types": self.extract_device_type,
             "manufacturers": self.extract_manufacturer
         }
+
+    def extract_disk(self, host):
+        return host.get("disk")
+
+    def extract_vcpus(self, host):
+        return host.get("vcpus")
+
+    def extract_memory(self, host):
+        return host.get("memory")
 
     def extract_device_type(self, host):
         try:
@@ -319,7 +331,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         v = tuple(x.values())[0]
 
         if not (k in ALLOWED_DEVICE_QUERY_PARAMETERS or k.startswith("cf_")):
-            self.display.warning("Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS))
+            msg = "Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS)
+            self.display.warning(msg=msg)
             return
         return k, v
 
@@ -328,9 +341,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         query_parameters.extend(filter(lambda x: x,
                                        map(self.validate_query_parameters, self.query_filters)))
         self.device_url = self.api_endpoint + "/api/dcim/devices/" + "?" + urlencode(query_parameters)
+        self.virtual_machines_url = "".join([self.api_endpoint,
+                                             "/api/virtualization/virtual-machines/",
+                                             "?",
+                                             urlencode(query_parameters)])
 
     def fetch_hosts(self):
-        return self.get_resource_list(self.device_url)
+        return chain(
+            self.get_resource_list(self.device_url),
+            self.get_resource_list(self.virtual_machines_url),
+        )
 
     def extract_name(self, host):
         # An host in an Ansible inventory requires an hostname.
