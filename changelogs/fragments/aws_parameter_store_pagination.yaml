@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - aws_ssm_parameter_store - AWS Systems Manager Parameter Store may reach
+    an internal limit before finding the expected parameter, causing misleading
+    results. This is resolved by paginating the describe_parameters call.
