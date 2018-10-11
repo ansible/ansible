@@ -145,6 +145,7 @@ except ImportError:
     pass
 
 
+# duplicated in azure_rm_managed_disk_facts
 def managed_disk_to_dict(managed_disk):
     create_data = managed_disk.creation_data
     return dict(
