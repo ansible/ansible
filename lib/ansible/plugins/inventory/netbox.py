@@ -14,6 +14,8 @@ DOCUMENTATION = '''
     short_description: NetBox inventory source
     description:
         - Get inventory hosts from NetBox
+    extends_documentation_fragment:
+        - constructed
     options:
         plugin:
             description: token that ensures this is a source file for the 'netbox' plugin.
@@ -51,10 +53,15 @@ DOCUMENTATION = '''
         query_filters:
             description: List of parameters passed to the query string (Multiple values may be separated by commas)
             type: list
+            default: []
         timeout:
             description: Timeout for Netbox requests in seconds
             type: int
             default: 60
+        compose:
+            description: List of custom ansible host vars to create from the device object fetched from NetBox
+            default: {}
+            type: dict
 '''
 
 EXAMPLES = '''
@@ -83,6 +90,15 @@ query_filters:
 
 query_filters:
   - cf_foo: bar
+
+# NetBox inventory plugin also supports Constructable semantics
+# You can fill your hosts vars using the compose option:
+
+plugin: netbox
+compose:
+  foo: last_updated
+  bar: display_name
+  nested_variable: rack.display_name
 '''
 
 import json
@@ -90,7 +106,7 @@ import uuid
 from sys import version as python_version
 from threading import Thread
 
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
@@ -131,7 +147,7 @@ ALLOWED_DEVICE_QUERY_PARAMETERS = (
 )
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
@@ -358,6 +374,16 @@ class InventoryModule(BaseInventoryPlugin):
             hostname = self.extract_name(host=host)
             self.inventory.add_host(host=hostname)
             self._fill_host_variables(host=host, hostname=hostname)
+
+            strict = self.get_option("strict")
+
+            # Composed variables
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
+
+            # Create groups based on variable values and add the corresponding hosts to it
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
             self.add_host_to_groups(host=host, hostname=hostname)
 
     def parse(self, inventory, loader, path, cache=True):
