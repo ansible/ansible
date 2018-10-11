@@ -5,6 +5,10 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = """
     lookup: consul_kv
     version_added: "1.9"
@@ -99,8 +103,7 @@ import os
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
-
-import json
+from ansible.module_utils._text import to_text
 
 try:
     import consul
@@ -146,9 +149,9 @@ class LookupModule(LookupBase):
                     # responds with a single or list of result maps
                     if isinstance(results[1], list):
                         for r in results[1]:
-                            values.append(r['Value'])
+                            values.append(to_text(r['Value']))
                     else:
-                        values.append(results[1]['Value'])
+                        values.append(to_text(results[1]['Value']))
         except Exception as e:
             raise AnsibleError(
                 "Error locating '%s' in kv store. Error was %s" % (term, e))
