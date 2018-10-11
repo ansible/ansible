@@ -107,7 +107,7 @@ options:
             - Defines how CDN caches requests that include query strings
         type: str
         choices:
-            - ignor_query_string
+            - ignore_query_string
             - bypass_caching
             - use_query_string
             - not_set
