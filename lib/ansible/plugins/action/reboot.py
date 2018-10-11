@@ -1,5 +1,5 @@
-# (c) 2016-2018, Matt Davis <mdavis@ansible.com>
-# (c) 2018, Sam Doran <sdoran@redhat.com>
+# Copyright: (c) 2016-2018, Matt Davis <mdavis@ansible.com>
+# Copyright: (c) 2018, Sam Doran <sdoran@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -11,8 +11,8 @@ import time
 from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError
-from ansible.plugins.action import ActionBase
 from ansible.module_utils._text import to_native, to_text
+from ansible.plugins.action import ActionBase
 
 
 try:
@@ -230,14 +230,6 @@ class ActionModule(ActionBase):
         except AnsibleError:
             display.debug("%s: connect_timeout connection option has not been set" % self._task.action)
 
-        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self._task.args.get('post_reboot_delay_sec', self.DEFAULT_POST_REBOOT_DELAY)))
-        if post_reboot_delay < 0:
-            post_reboot_delay = 0
-
-        if post_reboot_delay != 0:
-            display.vvv("%s: waiting an additional %d seconds" % (self._task.action, post_reboot_delay))
-            time.sleep(post_reboot_delay)
-
         return result
 
     def validate_reboot(self):
@@ -312,6 +304,14 @@ class ActionModule(ActionBase):
             elapsed = datetime.utcnow() - reboot_result['start']
             result['elapsed'] = elapsed.seconds
             return result
+
+        post_reboot_delay = int(self._task.args.get('post_reboot_delay', self._task.args.get('post_reboot_delay_sec', self.DEFAULT_POST_REBOOT_DELAY)))
+        if post_reboot_delay < 0:
+            post_reboot_delay = 0
+
+        if post_reboot_delay != 0:
+            display.vvv("%s: waiting an additional %d seconds" % (self._task.action, post_reboot_delay))
+            time.sleep(post_reboot_delay)
 
         # Make sure reboot was successful
         result = self.validate_reboot()
