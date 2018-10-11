@@ -324,6 +324,7 @@ In addition to Cobbler and EC2, inventory scripts are also available for::
 
    BSD Jails
    DigitalOcean
+   Foreman
    Google Compute Engine
    Linode
    OpenShift
