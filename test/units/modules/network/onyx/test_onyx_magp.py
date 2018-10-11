@@ -41,6 +41,7 @@ class TestOnyxMagpModule(TestOnyxModule):
         config_file = 'onyx_magp_show.cfg'
         self.get_config.return_value = load_fixture(config_file)
         self.load_config.return_value = None
+        self.get_version.return_value = "3.6.5000"
 
     def test_magp_absent_no_change(self):
         set_module_args(dict(interface='Vlan 1002', magp_id=110,
