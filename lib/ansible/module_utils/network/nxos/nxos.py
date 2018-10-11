@@ -505,6 +505,7 @@ class HttpApi:
     def __init__(self, module):
         self._module = module
         self._device_configs = {}
+        self._module_context = {}
         self._connection_obj = None
 
     @property
@@ -643,6 +644,17 @@ class HttpApi:
 
         if comment and not operations.get('supports_commit_comment', False):
             raise ValueError("commit comment is not supported")
+
+    def read_module_context(self, module_key):
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
+
+        return None
 
 
 def is_json(cmd):
