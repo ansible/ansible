@@ -38,7 +38,7 @@ description:
     a deterministic way.
 extends_documentation_fragment: enos
 notes:
-  - Tested against ENOS 8.4.1.0
+  - Tested against ENOS 8.4.1
 options:
   lines:
     description:
