@@ -83,6 +83,7 @@ EXAMPLES = '''
     switch_name: dvSwitch
     switch_version: 6.0.0
     mtu: 9000
+    lacp: singleLag
     uplink_quantity: 2
     discovery_proto: lldp
     discovery_operation: both
@@ -115,6 +116,7 @@ class VMwareDVSwitch(object):
         self.switch_version = self.module.params['switch_version']
         self.datacenter_name = self.module.params['datacenter_name']
         self.mtu = self.module.params['mtu']
+        self.lacp = self.module.params['lacp']
         self.uplink_quantity = self.module.params['uplink_quantity']
         self.discovery_proto = self.module.params['discovery_proto']
         self.discovery_operation = self.module.params['discovery_operation']
@@ -153,6 +155,7 @@ class VMwareDVSwitch(object):
 
         spec.configSpec.name = self.switch_name
         spec.configSpec.maxMtu = self.mtu
+        spec.configSpec.lacpApiVersion = self.lacp
         spec.configSpec.linkDiscoveryProtocolConfig.protocol = self.discovery_proto
         spec.configSpec.linkDiscoveryProtocolConfig.operation = self.discovery_operation
         spec.productInfo = vim.dvs.ProductSpec()
@@ -201,6 +204,7 @@ def main():
     argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
                               switch_name=dict(required=True, type='str'),
                               mtu=dict(required=True, type='int'),
+                              lacp=dict(required=True, type='str'),
                               switch_version=dict(type='str'),
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
