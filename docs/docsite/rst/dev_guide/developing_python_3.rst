@@ -69,7 +69,7 @@ numbers, other printable symbols, and a small number of unprintable "symbols"
 (control codes).
 
 In Python 2, the two types for these (:class:`str <python:str>` for bytes and
-:mod:`unicode <unicodedata>` for text) are often used interchangeably.  When dealing only
+:func:`unicode <python:unicode>` for text) are often used interchangeably.  When dealing only
 with ASCII characters, the strings can be combined, compared, and converted
 from one type to another automatically.  When non-ASCII characters are
 introduced, Python 2 starts throwing exceptions due to not knowing what encoding
@@ -95,7 +95,7 @@ Controller string strategy: the Unicode Sandwich
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In controller-side code we use a strategy known as the Unicode Sandwich (named
-after Python 2's :mod:`unicode  <unicodedata>` text type).  For Unicode Sandwich we know that
+after Python 2's :func:`unicode  <python:unicode>` text type).  For Unicode Sandwich we know that
 at the border of our code and the outside world (for example, file and network IO,
 environment variables, and some library calls) we are going to receive bytes.
 We need to transform these bytes into text and use that throughout the
