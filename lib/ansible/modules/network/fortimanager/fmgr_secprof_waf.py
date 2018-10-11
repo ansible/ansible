@@ -32,9 +32,9 @@ author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
-short_description: %%SHORT_DESC%% # TODO UPDATE THIS!
+short_description: FortiManager web application firewall security profile
 description: #TODO UPDATE THIS!
-  -  %%LONG_DESC%%
+  -  Manage web application firewall security profiles for FGTs via FMG
 
 options:
   adom:
