@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_metadata_facts - Parse IAM role name from metadata ARN instead of security credential field.
