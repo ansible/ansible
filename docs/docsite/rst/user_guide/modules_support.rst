@@ -22,7 +22,7 @@ Network
 Certified
 `````````
 
-Certified modules are part of a future planned program currently in development.
+:ref:`Certified<certified_supported>` modules are part of a future planned program currently in development.
 
 Community
 `````````
