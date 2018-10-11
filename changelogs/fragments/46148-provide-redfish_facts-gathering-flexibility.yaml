@@ -1,0 +1,2 @@
+bugfixes:
+- "Provides flexibility when retrieving redfish facts by not assuming that certains keys exist. Checks first if key exists before attempting to read from it."
