@@ -1306,8 +1306,8 @@ class YumModule(YumDnf):
         if self.conf_file and os.path.exists(self.conf_file):
             self.yum_basecmd += ['-c', self.conf_file]
 
-        if repoq:
-            repoq += ['-c', self.conf_file]
+            if repoq:
+                repoq += ['-c', self.conf_file]
 
         if self.skip_broken:
             self.yum_basecmd.extend(['--skip-broken'])
