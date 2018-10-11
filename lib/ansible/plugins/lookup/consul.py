@@ -133,37 +133,35 @@ single_kv_result:
     type: string
 
 recurse_kv_result:
-  description: A list of kv results
+  description: "A list of kv results"
   sample:
-    - |
-        {
-          "CreateIndex": 1539295,
-          "Flags": 0,
-          "Key": "foo/bar",
-          "LockIndex": 0,
-          "ModifyIndex": 1539295,
-          "Value": "BAR_Value"
-        }
+    - '{
+         "CreateIndex": 1539295,
+         "Flags": 0,
+         "Key": "foo/bar",
+         "LockIndex": 0,
+         "ModifyIndex": 1539295,
+         "Value": "BAR_Value"
+       }'
   type: list
 
 health_by_state:
   description: A list of nodes with the given health status
   sample:
-    - |-
-        {
-          "CheckID": "serfHealth",
-          "CreateIndex": 1654898,
-          "Definition": {},
-          "ModifyIndex": 1654898,
-          "Name": "Serf Health Status",
-          "Node": "nodeFQDN",
-          "Notes": "",
-          "Output": "Agent alive and reachable",
-          "ServiceID": "",
-          "ServiceName": "",
-          "ServiceTags": [],
-          "Status": "passing"
-        }
+    - '{
+         "CheckID": "serfHealth",
+         "CreateIndex": 1654898,
+         "Definition": {},
+         "ModifyIndex": 1654898,
+         "Name": "Serf Health Status",
+         "Node": "nodeFQDN",
+         "Notes": "",
+         "Output": "Agent alive and reachable",
+         "ServiceID": "",
+         "ServiceName": "",
+         "ServiceTags": [],
+         "Status": "passing"
+       }'
   type: list
 
 health_of_service_result:
@@ -172,21 +170,20 @@ health_of_service_result:
     Checks:
       description: "A list of checks for the service"
       sample:
-        - |
-            {
-              "CheckID": "serfHealth",
-              "CreateIndex": 1654898,
-              "Definition": {},
-              "ModifyIndex": 1654898,
-              "Name": "Serf Health Status",
-              "Node": "nodeFQDN",
-              "Notes": "",
-              "Output": "Agent alive and reachable",
-              "ServiceID": "",
-              "ServiceName": "",
-              "ServiceTags": [],
-              "Status": "passing"
-            }
+        - '{
+             "CheckID": "serfHealth",
+             "CreateIndex": 1654898,
+             "Definition": {},
+             "ModifyIndex": 1654898,
+             "Name": "Serf Health Status",
+             "Node": "nodeFQDN",
+             "Notes": "",
+             "Output": "Agent alive and reachable",
+             "ServiceID": "",
+             "ServiceName": "",
+             "ServiceTags": [],
+             "Status": "passing"
+           }'
       type: list
     Node:
       contains:
