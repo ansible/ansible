@@ -121,7 +121,9 @@ def convert_yaml_objects_to_native(obj):
     way to tell the encoder about custom types, so we need to ensure objects
     that we pass are native types.
 
-    This funciton recurses an object and ensures we cast any of the types from
+    Only used on ``toml<0.10.0`` where ``toml.TomlEncoder`` is missing.
+
+    This function recurses an object and ensures we cast any of the types from
     ``ansible.parsing.yaml.objects`` into their native types, effectively cleansing
     the data before we hand it over to ``toml``
     """
