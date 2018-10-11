@@ -69,14 +69,14 @@ numbers, other printable symbols, and a small number of unprintable "symbols"
 (control codes).
 
 In Python 2, the two types for these (:class:`str <python:str>` for bytes and
-:class:`unicode <python:unicode>` for text) are often used interchangeably.  When dealing only
+:mod:`unicode <unicodedata>` for text) are often used interchangeably.  When dealing only
 with ASCII characters, the strings can be combined, compared, and converted
 from one type to another automatically.  When non-ASCII characters are
 introduced, Python 2 starts throwing exceptions due to not knowing what encoding
 the non-ASCII characters should be in.
 
-Python 3 changes this behavior by making the separation between bytes (:class:`bytes <python3:bytes`)
-and text (:class:`str <python3:str`) more strict.  Python 3 will throw an exception when
+Python 3 changes this behavior by making the separation between bytes (:class:`bytes <python3:bytes>`)
+and text (:class:`str <python3:str>`) more strict.  Python 3 will throw an exception when
 trying to combine and compare the two types.  The programmer has to explicitly
 convert from one type to the other to mix values from each.
 
@@ -95,7 +95,7 @@ Controller string strategy: the Unicode Sandwich
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In controller-side code we use a strategy known as the Unicode Sandwich (named
-after Python 2's :class:`unicode <python:unicode>` text type).  For Unicode Sandwich we know that
+after Python 2's :mod:`unicode  <unicodedata>` text type).  For Unicode Sandwich we know that
 at the border of our code and the outside world (for example, file and network IO,
 environment variables, and some library calls) we are going to receive bytes.
 We need to transform these bytes into text and use that throughout the
@@ -275,7 +275,7 @@ classes without explicitly inheriting from :class:`object <python3:object>`.
 
 The ``__future__`` imports do the following:
 
-:absolute_import: Makes imports look in :attr:`sys.path <python3:sys.path>` for the modules being
+:absolute_import: Makes imports look in :data:`sys.path <python3:sys.path>` for the modules being
     imported, skipping the directory in which the module doing the importing
     lives.  If the code wants to use the directory in which the module doing
     the importing, there's a new dot notation to do so.
