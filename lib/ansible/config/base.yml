@@ -392,7 +392,7 @@ DEFAULT_ASK_SUDO_PASS:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description:
     - This controls whether an Ansible playbook should prompt for a sudo password.
@@ -405,7 +405,7 @@ DEFAULT_ASK_SU_PASS:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description:
     - This controls whether an Ansible playbook should prompt for a su password.
@@ -1063,7 +1063,7 @@ DEFAULT_SUDO:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Toggle the use of "sudo" for tasks.'
   env: [{name: ANSIBLE_SUDO}]
@@ -1075,7 +1075,7 @@ DEFAULT_SUDO_EXE:
   default: sudo
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'specify an "sudo" executable, otherwise it relies on PATH.'
   env: [{name: ANSIBLE_SUDO_EXE}]
@@ -1086,7 +1086,7 @@ DEFAULT_SUDO_FLAGS:
   default: '-H -S -n'
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Flags to pass to "sudo"'
   env: [{name: ANSIBLE_SUDO_FLAGS}]
@@ -1097,7 +1097,7 @@ DEFAULT_SUDO_USER:
   default:
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'User you become when using "sudo", leaving it blank will use the default configured on the target (normally root)'
   env: [{name: ANSIBLE_SUDO_USER}]
@@ -1108,7 +1108,7 @@ DEFAULT_SU_EXE:
   default: su
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'specify an "su" executable, otherwise it relies on PATH.'
   env: [{name: ANSIBLE_SU_EXE}]
@@ -1119,7 +1119,7 @@ DEFAULT_SU_FLAGS:
   default: ''
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Flags to pass to su'
   env: [{name: ANSIBLE_SU_FLAGS}]
@@ -1134,7 +1134,7 @@ DEFAULT_SU_USER:
   - {key: su_user, section: defaults}
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
 DEFAULT_SYSLOG_FACILITY:
   name: syslog facility
