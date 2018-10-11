@@ -44,7 +44,7 @@ options:
         description:
             - The switch maximum transmission unit
         required: True
-    lacp: 
+    lacp:
         description:
             - Add the LACP configuration
         required: True
