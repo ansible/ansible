@@ -40,9 +40,17 @@ class BlacklistEntry(object):
             return False
 
         if self.modules_only:
-            return '/lib/ansible/modules/' in path or '/lib/ansible/module_utils/' in path
+            return is_module_path(path)
 
         return True
+
+
+def is_module_path(path):
+    """
+    :type path: str
+    :rtype: bool
+    """
+    return '/lib/ansible/modules/' in path or '/lib/ansible/module_utils/' in path
 
 
 class AnsibleBlacklistChecker(BaseChecker):
@@ -54,6 +62,7 @@ class AnsibleBlacklistChecker(BaseChecker):
     BAD_IMPORT = 'ansible-bad-import'
     BAD_IMPORT_FROM = 'ansible-bad-import-from'
     BAD_FUNCTION = 'ansible-bad-function'
+    BAD_MODULE_IMPORT = 'ansible-bad-module-import'
 
     msgs = dict(
         E5101=('Import %s instead of %s',
@@ -65,6 +74,9 @@ class AnsibleBlacklistChecker(BaseChecker):
         E5103=('Call %s instead of %s',
                BAD_FUNCTION,
                'Identifies functions which should not be used.'),
+        E5104=('Import external package or ansible.module_utils not %s',
+               BAD_MODULE_IMPORT,
+               'Identifies imports which should not be used.'),
     )
 
     blacklist_imports = dict(
@@ -171,6 +183,8 @@ class AnsibleBlacklistChecker(BaseChecker):
         :type node: astroid.node_classes.Import
         :type modname: str
         """
+        self._check_module_import(node, modname)
+
         entry = self.blacklist_imports.get(modname)
 
         if not entry:
@@ -185,6 +199,8 @@ class AnsibleBlacklistChecker(BaseChecker):
         :type modname: str
         :type names:  list[str[
         """
+        self._check_module_import(node, modname)
+
         entry = self.blacklist_imports.get(modname)
 
         if not entry:
@@ -193,6 +209,20 @@ class AnsibleBlacklistChecker(BaseChecker):
         for name in names:
             if entry.applies_to(self.linter.current_file, name[0]):
                 self.add_message(self.BAD_IMPORT_FROM, args=(name[0], entry.alternative, modname), node=node)
+
+    def _check_module_import(self, node, modname):
+        """
+        :type node: astroid.node_classes.Import | astroid.node_classes.ImportFrom
+        :type modname: str
+        """
+        if not is_module_path(self.linter.current_file):
+            return
+
+        if modname == 'ansible.module_utils' or modname.startswith('ansible.module_utils.'):
+            return
+
+        if modname == 'ansible' or modname.startswith('ansible.'):
+            self.add_message(self.BAD_MODULE_IMPORT, args=(modname,), node=node)
 
 
 def register(linter):
