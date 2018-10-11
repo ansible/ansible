@@ -7,12 +7,12 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 author: Ansible Networking Team
-cliconf: eos
+httpapi: eos
 short_description: Use eAPI to run command on eos platform
 description:
   - This eos plugin provides low level abstraction api's for
-    sending and receiving CLI commands from eos network devices.
-version_added: "2.7"
+    sending and receiving CLI commands with eos network devices.
+version_added: "2.6"
 options:
   eos_use_sessions:
     type: int
@@ -40,10 +40,37 @@ except ImportError:
     display = Display()
 
 
+OPTIONS = {
+    'format': ['text', 'json'],
+    'diff_match': ['line', 'strict', 'exact', 'none'],
+    'diff_replace': ['line', 'block', 'config'],
+    'output': ['text', 'json']
+}
+
+
 class HttpApi(HttpApiBase):
     def __init__(self, *args, **kwargs):
         super(HttpApi, self).__init__(*args, **kwargs)
         self._session_support = None
+
+    @property
+    def supports_sessions(self):
+        use_session = self.get_option('eos_use_sessions')
+        try:
+            use_session = int(use_session)
+        except ValueError:
+            pass
+
+        if not bool(use_session):
+            self._session_support = False
+        else:
+            if self._session_support:
+                return self._session_support
+
+            response = self.get('show configuration sessions')
+            self._session_support = 'error' not in response
+
+        return self._session_support
 
     def send_request(self, data, **message_kwargs):
         data = to_list(data)
@@ -72,25 +99,6 @@ class HttpApi(HttpApiBase):
             results = results[0]
 
         return results
-
-    @property
-    def supports_sessions(self):
-        use_session = self.get_option('eos_use_sessions')
-        try:
-            use_session = int(use_session)
-        except ValueError:
-            pass
-
-        if not bool(use_session):
-            self._session_support = False
-        else:
-            if self._session_support:
-                return self._session_support
-
-            response = self.get('show configuration sessions')
-            self._session_support = 'error' not in response
-
-        return self._session_support
 
     def get_device_info(self):
         device_info = {}
@@ -126,12 +134,10 @@ class HttpApi(HttpApiBase):
 
     def get_capabilities(self):
         result = {}
-        __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
-        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
-        result['rpc'] = __rpc__ + rpc_list
+        result['rpc'] = []
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
-        result.update(self.get_option_values())
+        result.update(OPTIONS)
         result['network_api'] = 'eapi'
 
         return json.dumps(result)
@@ -149,6 +155,7 @@ def handle_response(response):
         raise ConnectionError(error_text, code=error['code'])
 
     results = []
+
     for result in response['result']:
         if 'messages' in result:
             results.append(result['messages'][0])

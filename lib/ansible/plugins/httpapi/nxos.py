@@ -4,6 +4,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+httpapi: nxos
+short_description: Use NX-API to run command on nxos platform
+description:
+  - This eos plugin provides low level abstraction api's for
+    sending and receiving CLI commands with nxos network devices.
+version_added: "2.6"
+"""
+
 import json
 import re
 
@@ -17,6 +28,14 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+
+OPTIONS = {
+    'format': ['text', 'json'],
+    'diff_match': ['line', 'strict', 'exact', 'none'],
+    'diff_replace': ['line', 'block', 'config'],
+    'output': ['text', 'json']
+}
 
 
 class HttpApi(HttpApiBase):
@@ -141,24 +160,13 @@ class HttpApi(HttpApiBase):
 
     def get_capabilities(self):
         result = {}
-        __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
-        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
-        result['rpc'] = __rpc__ + rpc_list
+        result['rpc'] = []
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
-        result.update(get_option_values())
+        result.update(OPTIONS)
         result['network_api'] = 'nxapi'
 
         return json.dumps(result)
-
-
-def get_option_values():
-    return {
-        'format': ['text', 'json'],
-        'diff_match': ['line', 'strict', 'exact', 'none'],
-        'diff_replace': ['line', 'block', 'config'],
-        'output': ['text', 'json']
-    }
 
 
 def handle_response(response):
