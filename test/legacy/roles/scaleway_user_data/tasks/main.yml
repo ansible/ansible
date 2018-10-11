@@ -4,10 +4,10 @@
   scaleway_compute:
     name: foobar
     state: present
-    image: 857de28c-39ce-4b15-9389-b68d8bb1bb51
-    organization: 951df375-e094-4d26-97c1-ba548eeb9c42
-    region: par1
-    commercial_type: START1-S
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
     wait: true
 
   register: server_creation_task
@@ -22,7 +22,7 @@
 - name: Patch user_data cloud-init configuration (Check)
   check_mode: yes
   scaleway_user_data:
-    region: par1
+    region: '{{ scaleway_region }}'
     server_id: "{{ server_id }}"
     user_data:
       cloud-init: "{{ cloud_init_script }}"
@@ -37,7 +37,7 @@
 
 - name: Patch user_data cloud-init configuration
   scaleway_user_data:
-    region: par1
+    region: '{{ scaleway_region }}'
     server_id: "{{ server_id }}"
     user_data:
       cloud-init: "{{ cloud_init_script }}"
@@ -52,7 +52,7 @@
 
 - name: Patch user_data cloud-init configuration (Confirmation)
   scaleway_user_data:
-    region: par1
+    region: '{{ scaleway_region }}'
     server_id: "{{ server_id }}"
     user_data:
       cloud-init: "{{ cloud_init_script }}"
@@ -69,10 +69,10 @@
   scaleway_compute:
     name: foobar
     state: absent
-    region: par1
-    image: 857de28c-39ce-4b15-9389-b68d8bb1bb51
-    organization: 951df375-e094-4d26-97c1-ba548eeb9c42
-    commercial_type: START1-S
+    region: '{{ scaleway_region }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
     wait: true
   register: server_destroy_task
 
