@@ -48,6 +48,8 @@ class AnsibleJSONEncoder(json.JSONEncoder):
     '''
     Simple encoder class to deal with JSON encoding of Ansible internal types
     '''
+
+    # NOTE: ALWAYS inform AWS/Tower when new items get added as they consume them downstream via a callback
     def default(self, o):
         if isinstance(o, AnsibleVaultEncryptedUnicode):
             # vault object
