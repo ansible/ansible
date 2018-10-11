@@ -38,7 +38,7 @@ description:
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: enos
 notes:
-  - Tested against ENOS 8.4.1.68
+  - Tested against ENOS 8.4.1
 options:
   gather_subset:
     description:
