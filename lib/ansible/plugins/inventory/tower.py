@@ -16,7 +16,7 @@ DOCUMENTATION = '''
     description:
         - Reads inventories from Ansible Tower.
         - Supports reading configuration from both YAML config file and environment variables.
-        - If reading from the YAML file, the file name must end with tower_inventory.(yml|yaml),
+        - If reading from the YAML file, the file name must end with tower.(yml|yaml) or tower_inventory.(yml|yaml),
           the path in the command would be /path/to/tower_inventory.(yml|yaml). If some arguments in the config file
           are missing, this plugin will try to fill in missing arguments by reading from environment variables.
         - If reading configurations from environment variables, the path in the command must be @tower_inventory.
@@ -143,7 +143,7 @@ class InventoryModule(BaseInventoryPlugin):
             self.no_config_file_supplied = True
             return True
         elif super(InventoryModule, self).verify_file(path):
-            return path.endswith('tower_inventory.yml') or path.endswith('tower_inventory.yaml')
+            return path.endswith(('tower_inventory.yml', 'tower_inventory.yaml', 'tower.yml', 'tower.yaml'))
         else:
             return False
 

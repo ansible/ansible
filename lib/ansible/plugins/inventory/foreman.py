@@ -100,7 +100,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.foreman.yaml') or path.endswith('.foreman.yml'):
+            if path.endswith(('foreman.yaml', 'foreman.yml')):
                 valid = True
         return valid
 
