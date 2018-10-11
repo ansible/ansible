@@ -123,14 +123,14 @@ options:
     description:
       - The username for use in HTTP basic authentication.
       - This parameter can be used without C(url_password) for sites that allow empty passwords.
-      - Since version 2.8 you can also use the 'username' aliases for this option.
+      - Since version 2.8 you can also use the 'username' alias for this option.
     version_added: '1.6'
     aliases: ['username']
   url_password:
     description:
         - The password for use in HTTP basic authentication.
         - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
-        - Since version 2.8 you can also use the 'password' aliases for this option.
+        - Since version 2.8 you can also use the 'password' alias for this option.
     version_added: '1.6'
     aliases: ['password']
   force_basic_auth:
