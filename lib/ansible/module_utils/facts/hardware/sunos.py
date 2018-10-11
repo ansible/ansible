@@ -168,8 +168,13 @@ class SunOSHardware(Hardware):
     def get_dmi_facts(self):
         dmi_facts = {}
 
-        uname_path = self.module.get_bin_path("prtdiag")
-        rc, out, err = self.module.run_command(uname_path)
+        # On Solaris 8 the prtdiag wrapper is absent from /usr/sbin,
+        # but that's okay, because we know where to find the real thing:
+        rc, platform, err = self.module.run_command('/usr/bin/uname -i')
+        platform_sbin = '/usr/platform/' + platform.rstrip() + '/sbin'
+
+        prtdiag_path = self.module.get_bin_path("prtdiag", opt_dirs=[platform_sbin])
+        rc, out, err = self.module.run_command(prtdiag_path)
         """
         rc returns 1
         """
