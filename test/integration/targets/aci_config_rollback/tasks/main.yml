@@ -93,4 +93,3 @@
       - '"fabric/configimp-anstest.json" in rollback_rollback.url'
       - tenant_removed.changed == true
       - 'tenant_removed.existing == [{"fvTenant": {"attributes": {"descr": "", "dn": "uni/tn-anstest", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
-
