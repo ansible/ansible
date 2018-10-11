@@ -123,12 +123,16 @@ options:
     description:
       - The username for use in HTTP basic authentication.
       - This parameter can be used without C(url_password) for sites that allow empty passwords.
+      - Since version 2.8 you can also use the 'username' aliases for this option.
     version_added: '1.6'
+    aliases: ['username']
   url_password:
     description:
         - The password for use in HTTP basic authentication.
         - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
+      - Since version 2.8 you can also use the 'password' aliases for this option.
     version_added: '1.6'
+    aliases: ['password']
   force_basic_auth:
     version_added: '2.0'
     description:
@@ -203,6 +207,14 @@ EXAMPLES = r'''
   get_url:
     url: file:///tmp/afile.txt
     dest: /tmp/afilecopy.txt
+
+- name: < Fetch file that requires authentication.
+        username/password only availabe since 2.8, in older versions you ned to use url_username/url_password
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
+    username: bar
+    password: '{{ mysecret }}'
 '''
 
 RETURN = r'''
@@ -396,6 +408,11 @@ def extract_filename_from_headers(headers):
 
 def main():
     argument_spec = url_argument_spec()
+
+    # setup aliases
+    argument_spec['url_username']['aliases'] = ['username']
+    argument_spec['url_password']['aliases'] = ['password']
+
     argument_spec.update(
         url=dict(type='str', required=True),
         dest=dict(type='path', required=True),
