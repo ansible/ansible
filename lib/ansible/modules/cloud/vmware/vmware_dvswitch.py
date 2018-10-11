@@ -44,6 +44,10 @@ options:
         description:
             - The switch maximum transmission unit
         required: True
+    lacp: 
+        description:
+            - Add the LACP configuration
+        required: True
     uplink_quantity:
         description:
             - Quantity of uplink per ESXi host added to the switch
