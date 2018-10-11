@@ -221,7 +221,7 @@ try:
     from docker.errors import APIError
     from docker import __version__ as docker_py_version
     MINIMUM_DOCKER_PY_VERSION = '2.6.0'
-        
+
 except ImportError:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
@@ -232,11 +232,11 @@ from ansible.module_utils._text import to_native
 
 class TaskParameters(DockerBaseClass):
     def __init__(self, client):
-        
+
         if LooseVersion(docker_py_version) < LooseVersion(MINIMUM_DOCKER_PY_VERSION):
             client.fail("Found docker.py version %s. Minimum required version is %s. "
-                             "Upgrade docker.py to a min version of %s." %
-                             (docker_py_version, MINIMUM_DOCKER_PY_VERSION, MINIMUM_DOCKER_PY_VERSION))
+                        "Upgrade docker.py to a min version of %s." %
+                        (docker_py_version, MINIMUM_DOCKER_PY_VERSION, MINIMUM_DOCKER_PY_VERSION))
 
         super(TaskParameters, self).__init__()
 
