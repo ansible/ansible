@@ -1,0 +1,2 @@
+bugfixes:
+  - "nmcli - fix syntax of vlan modification command (https://github.com/ansible/ansible/issues/42322)"
