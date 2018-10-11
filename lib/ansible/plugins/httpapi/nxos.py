@@ -109,18 +109,12 @@ class HttpApi(HttpApiBase):
         reply = self.send_request('show version')
         platform_reply = self.send_request('show inventory')
 
-        match_sys_ver = re.search(r'\s+system:\s+version\s*(\S+)', reply, re.M)
-        if match_sys_ver:
-            device_info['network_os_version'] = match_sys_ver.group(1)
-        else:
-            match_kick_ver = re.search(r'\s+kickstart:\s+version\s*(\S+)', reply, re.M)
-            if match_kick_ver:
-                device_info['network_os_version'] = match_kick_ver.group(1)
-
-        if 'network_os_version' not in device_info:
-            match_sys_ver = re.search(r'\s+NXOS:\s+version\s*(\S+)', reply, re.M)
-            if match_sys_ver:
-                device_info['network_os_version'] = match_sys_ver.group(1)
+        find_os_version = [r'\s+system:\s+version\s*(\S+)', r'\s+kickstart:\s+version\s*(\S+)', r'\s+NXOS:\s+version\s*(\S+)']
+        for regex in find_os_version:
+            match_ver = re.search(regex, reply, re.M)
+            if match_ver:
+                device_info['network_os_version'] = match_ver.group(1)
+                break
 
         match_chassis_id = re.search(r'Hardware\n\s+cisco\s*(\S+\s+\S+)', reply, re.M)
         if match_chassis_id:
@@ -130,21 +124,14 @@ class HttpApi(HttpApiBase):
         if match_host_name:
             device_info['network_os_hostname'] = match_host_name.group(1)
 
-        match_isan_file_name = re.search(r'\s+system image file is:\s*(\S+)', reply, re.M)
-        if match_isan_file_name:
-            device_info['network_os_image'] = match_isan_file_name.group(1)
-        else:
-            match_kick_file_name = re.search(r'\s+kickstart image file is:\s*(\S+)', reply, re.M)
-            if match_kick_file_name:
-                device_info['network_os_image'] = match_kick_file_name.group(1)
+        find_os_image = [r'\s+system image file is:\s*(\S+)', r'\s+kickstart image file is:\s*(\S+)', r'\s+NXOS image file is:\s*(\S+)']
+        for regex in find_os_image:
+            match_file_name = re.search(regex, reply, re.M)
+            if match_file_name:
+                device_info['network_os_image'] = match_file_name.group(1)
+                break
 
-        if 'network_os_image' not in device_info:
-            match_isan_file_name = re.search(r'\s+NXOS image file is:\s*(\S+)', reply, re.M)
-            if match_isan_file_name:
-                device_info['network_os_image'] = match_isan_file_name.group(1)
-
-        match_os_platform = re.search(r'NAME: "Chassis",\s*DESCR:.*\n'
-                                      r'PID:\s*(\S+)', platform_reply, re.M)
+        match_os_platform = re.search(r'NAME: "Chassis",\s*DESCR:.*\nPID:\s*(\S+)', platform_reply, re.M)
         if match_os_platform:
             device_info['network_os_platform'] = match_os_platform.group(1)
 
