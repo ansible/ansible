@@ -7,9 +7,12 @@
     plugin_type: inventory
     author:
         - Remy Leone (@sieben)
+        - Anthony Ruhier (@Anthony25)
     short_description: NetBox inventory source
     description:
         - Get inventory hosts from NetBox
+    extends_documentation_fragment:
+        - constructed
     options:
         plugin:
             description: token that ensures this is a source file for the 'netbox' plugin.
@@ -39,6 +42,7 @@
                 - sites
                 - tenants
                 - racks
+                - tags
                 - device_roles
                 - device_types
                 - manufacturers
@@ -46,32 +50,73 @@
         query_filters:
             description: List of parameters passed to the query string (Multiple values may be separated by commas)
             type: list
+            default: []
         timeout:
             description: Timeout for Netbox requests in seconds
             type: int
             default: 60
+        compose:
+            description: List of custom ansible host vars to create from the device object fetched from NetBox
+            default: {}
+            type: dict
 '''
  EXAMPLES = '''
 # netbox_inventory.yml file in YAML format
+<<<<<<< HEAD
 # Example command line: ansible-inventory --list -i netbox_inventory.yml
  plugin: netbox
+=======
+# Example command line: ansible-inventory -v --list -i netbox_inventory.yml
+plugin: netbox
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
 api_endpoint: http://localhost:8000
 group_by:
   - device_roles
 query_filters:
   - role: network-edge-router
+# Query filters are passed directly as an argument to the fetching queries.
+# You can repeat tags in the query string.
+query_filters:
+  - role: server
+  - tag: web
+  - tag: production
+# See the NetBox documentation at https://netbox.readthedocs.io/en/latest/api/overview/
+# the query_filters work as a logical **OR**
+#
+# Prefix any custom fields with cf_ and pass the field value with the regular NetBox query string
+query_filters:
+  - cf_foo: bar
+# NetBox inventory plugin also supports Constructable semantics
+# You can fill your hosts vars using the compose option:
+plugin: netbox
+compose:
+  foo: last_updated
+  bar: display_name
+  nested_variable: rack.display_name
 '''
  import json
 import uuid
 from sys import version as python_version
+<<<<<<< HEAD
  from ansible.plugins.inventory import BaseInventoryPlugin
+=======
+from threading import Thread
+from itertools import chain
+
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urljoin, urlencode
 from ansible.module_utils.compat.ipaddress import ip_interface
+<<<<<<< HEAD
  ALLOWED_DEVICE_QUERY_PARAMETERS = (
+=======
+
+ALLOWED_DEVICE_QUERY_PARAMETERS = (
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
     "asset_tag",
     "cluster_id",
     "device_type_id",
@@ -101,11 +146,23 @@ from ansible.module_utils.compat.ipaddress import ip_interface
     "tenant_id",
     "virtual_chassis_id",
 )
+<<<<<<< HEAD
  class InventoryModule(BaseInventoryPlugin):
     NAME = 'netbox'
      def _fetch_information(self, url):
          response = open_url(url, headers=self.headers, timeout=self.timeout)
          try:
+=======
+
+
+class InventoryModule(BaseInventoryPlugin, Constructable):
+    NAME = 'netbox'
+
+    def _fetch_information(self, url):
+        response = open_url(url, headers=self.headers, timeout=self.timeout)
+
+        try:
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
             raw_data = to_text(response.read(), errors='surrogate_or_strict')
         except UnicodeError:
             raise AnsibleError("Incorrect encoding of fetched payload from NetBox API.")
@@ -113,13 +170,19 @@ from ansible.module_utils.compat.ipaddress import ip_interface
             return json.loads(raw_data)
         except ValueError:
             raise AnsibleError("Incorrect JSON payload: %s" % raw_data)
+<<<<<<< HEAD
      def get_resource_list(self, api_url, api_token=None, specific_host=None):
+=======
+
+    def get_resource_list(self, api_url):
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
         """Retrieves resource list from netbox API.
          Returns:
             A list of all resource from netbox API.
         """
         if not api_url:
             raise AnsibleError("Please check API URL in script configuration file.")
+<<<<<<< HEAD
         api_url_headers = {}
         api_url_params = {}
         if api_token:
@@ -128,6 +191,11 @@ from ansible.module_utils.compat.ipaddress import ip_interface
             api_url_params.update({"name": specific_host})
          hosts_list = []
          # Pagination.
+=======
+
+        hosts_list = []
+        # Pagination.
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
         while api_url:
             self.display.v("Fetching: " + api_url)
             # Get hosts list.
@@ -142,38 +210,56 @@ from ansible.module_utils.compat.ipaddress import ip_interface
             "sites": self.extract_site,
             "tenants": self.extract_tenant,
             "racks": self.extract_rack,
+            "tags": self.extract_tags,
+            "disk": self.extract_disk,
+            "memory": self.extract_memory,
+            "vcpus": self.extract_vcpus,
             "device_roles": self.extract_device_role,
             "device_types": self.extract_device_type,
             "manufacturers": self.extract_manufacturer
         }
+<<<<<<< HEAD
      def extract_device_type(self, host):
+=======
+
+    def extract_disk(self, host):
+        return host.get("disk")
+
+    def extract_vcpus(self, host):
+        return host.get("vcpus")
+
+    def extract_memory(self, host):
+        return host.get("memory")
+
+    def extract_device_type(self, host):
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
         try:
-            return self.device_types_lookup[host["device_type"]["id"]]
+            return [self.device_types_lookup[host["device_type"]["id"]]]
         except Exception:
             return
      def extract_rack(self, host):
         try:
-            return self.racks_lookup[host["rack"]["id"]]
+            return [self.racks_lookup[host["rack"]["id"]]]
         except Exception:
             return
      def extract_site(self, host):
         try:
-            return self.sites_lookup[host["site"]["id"]]
+            return [self.sites_lookup[host["site"]["id"]]]
         except Exception:
             return
      def extract_tenant(self, host):
         try:
-            return self.tenants_lookup[host["tenant"]["id"]]
+            return [self.tenants_lookup[host["tenant"]["id"]]]
         except Exception:
             return
      def extract_device_role(self, host):
         try:
-            return self.device_roles_lookup[host["device_role"]["id"]]
+            return [self.device_roles_lookup[host["device_role"]["id"]]]
         except Exception:
             return
      def extract_manufacturer(self, host):
         try:
-            return self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]
+            return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
      def extract_primary_ip(self, host):
@@ -194,7 +280,15 @@ from ansible.module_utils.compat.ipaddress import ip_interface
             return str(ip_interface(address).ip)
         except Exception:
             return
+<<<<<<< HEAD
      def refresh_sites_lookup(self):
+=======
+
+    def extract_tags(self, host):
+        return host["tags"]
+
+    def refresh_sites_lookup(self):
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
         url = urljoin(self.api_endpoint, "/api/dcim/sites/?limit=0")
         sites = self.get_resource_list(api_url=url)
         self.sites_lookup = dict((site["id"], site["name"]) for site in sites)
@@ -222,6 +316,7 @@ from ansible.module_utils.compat.ipaddress import ip_interface
         url = urljoin(self.api_endpoint, "/api/dcim/manufacturers/?limit=0")
         manufacturers = self.get_resource_list(api_url=url)
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
+<<<<<<< HEAD
      def refresh_lookups(self):
         self.refresh_sites_lookup()
         self.refresh_regions_lookup()
@@ -238,6 +333,40 @@ from ansible.module_utils.compat.ipaddress import ip_interface
         v = x.values()[0]
          if not (k in ALLOWED_DEVICE_QUERY_PARAMETERS or k.startswith("cf_")):
             self.display.warning("Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS))
+=======
+
+    def refresh_lookups(self):
+        lookup_processes = (
+            self.refresh_sites_lookup,
+            self.refresh_regions_lookup,
+            self.refresh_tenants_lookup,
+            self.refresh_racks_lookup,
+            self.refresh_device_roles_lookup,
+            self.refresh_device_types_lookup,
+            self.refresh_manufacturers_lookup,
+        )
+
+        thread_list = []
+        for p in lookup_processes:
+            t = Thread(target=p)
+            thread_list.append(t)
+            t.start()
+
+        for thread in thread_list:
+            thread.join()
+
+    def validate_query_parameters(self, x):
+        if not (isinstance(x, dict) and len(x) == 1):
+            self.display.warning("Warning query parameters %s not a dict with a single key." % x)
+            return
+
+        k = tuple(x.keys())[0]
+        v = tuple(x.values())[0]
+
+        if not (k in ALLOWED_DEVICE_QUERY_PARAMETERS or k.startswith("cf_")):
+            msg = "Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS)
+            self.display.warning(msg=msg)
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
             return
         return k, v
      def refresh_url(self):
@@ -245,13 +374,29 @@ from ansible.module_utils.compat.ipaddress import ip_interface
         query_parameters.extend(filter(lambda x: x,
                                        map(self.validate_query_parameters, self.query_filters)))
         self.device_url = self.api_endpoint + "/api/dcim/devices/" + "?" + urlencode(query_parameters)
+<<<<<<< HEAD
      def fetch_hosts(self):
         return self.get_resource_list(self.device_url)
      def extract_name(self, host):
+=======
+        self.virtual_machines_url = "".join([self.api_endpoint,
+                                             "/api/virtualization/virtual-machines/",
+                                             "?",
+                                             urlencode(query_parameters)])
+
+    def fetch_hosts(self):
+        return chain(
+            self.get_resource_list(self.device_url),
+            self.get_resource_list(self.virtual_machines_url),
+        )
+
+    def extract_name(self, host):
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
         # An host in an Ansible inventory requires an hostname.
         # name is an unique but not required attribute for a device in NetBox
         # We default to an UUID for hostname in case the name is not set in NetBox
         return host["name"] or str(uuid.uuid4())
+<<<<<<< HEAD
      def add_host_to_groups(self, host, hostname):
         for g in self.group_by:
             group = self.group_extractors[g](host)
@@ -261,6 +406,22 @@ from ansible.module_utils.compat.ipaddress import ip_interface
             self.inventory.add_group(group=group_name)
             self.inventory.add_host(group=group_name, host=hostname)
      def _fill_host_variables(self, host, hostname):
+=======
+
+    def add_host_to_groups(self, host, hostname):
+        for group in self.group_by:
+            sub_groups = self.group_extractors[group](host)
+
+            if not sub_groups:
+                continue
+
+            for sub_group in sub_groups:
+                group_name = "_".join([group, sub_group])
+                self.inventory.add_group(group=group_name)
+                self.inventory.add_host(group=group_name, host=hostname)
+
+    def _fill_host_variables(self, host, hostname):
+>>>>>>> 72919ca3d25be30b68549db7d2bf8753c9845217
         for attribute, extractor in self.group_extractors.items():
             if not extractor(host):
                 continue
@@ -279,6 +440,16 @@ from ansible.module_utils.compat.ipaddress import ip_interface
             hostname = self.extract_name(host=host)
             self.inventory.add_host(host=hostname)
             self._fill_host_variables(host=host, hostname=hostname)
+
+            strict = self.get_option("strict")
+
+            # Composed variables
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
+
+            # Create groups based on variable values and add the corresponding hosts to it
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
             self.add_host_to_groups(host=host, hostname=hostname)
      def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
@@ -288,7 +459,7 @@ from ansible.module_utils.compat.ipaddress import ip_interface
         self.api_endpoint = self.get_option("api_endpoint")
         self.timeout = self.get_option("timeout")
         self.headers = {
-            'Authorization': "Bearer %s" % token,
+            'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
             'Content-type': 'application/json'
         }
