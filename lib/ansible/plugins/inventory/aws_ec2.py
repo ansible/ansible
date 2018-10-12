@@ -436,7 +436,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _format_inventory(self):
         results = {'_meta': {'hostvars': {}}}
-        groups = self.inventory.get_groups_dict()
         for group in self.inventory.groups:
             hosts = self.inventory.groups[group].get_hosts()
             results[group] = {'hosts': map(lambda host: host.name, hosts)}
