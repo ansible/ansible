@@ -33,6 +33,38 @@ In the example above, each of the 3 tasks will be executed after appending the `
 and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
 for all the enclosed tasks.
 
+
+You may also define the tasks inside of a block with their own names, just as
+you can outside of a block, for added output about the tasks being executed when
+you run the playbook.
+
+.. code-block:: YAML
+ :emphasize-lines: 3
+ :caption: Block example with named tasks inside the block
+
+
+  tasks:
+    - name: Install Apache
+      block:
+        - name: install httpd and memcached
+          yum:
+            name:
+               - httpd
+               - memcached
+            state: installed
+        - name: apply the foo config template
+          template:
+            src: templates/src.j2
+            dest: /etc/foo.conf
+        - name: start service bar and enable it
+          service:
+            name: bar
+            state: started
+            enabled: True
+      when: ansible_facts['distribution'] == 'CentOS'
+      become: true
+      become_user: root
+
 .. versionadded:: 2.3
 
     The ``name:`` keyword for ``block:`` was added in Ansible 2.3.
