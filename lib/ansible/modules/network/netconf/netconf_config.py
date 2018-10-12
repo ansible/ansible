@@ -305,8 +305,8 @@ def main():
     if confirm_commit and not operations.get('supports_confirm_commit', False):
         module.fail_json(msg='confirm commit is not supported by Netconf server')
 
-    if confirm_commit or (confirm > 0) and not operations.get('supports_confirm_commit', False):
-        module.fail_json(msg='confirm commit is not supported by this netconf server')
+    if (confirm > 0) and not operations.get('supports_confirm_commit', False):
+        module.fail_json(msg='confirm commit is not supported by this netconf server, given confirm timeout: %d' % confirm)
 
     if validate and not operations.get('supports_validate', False):
         module.fail_json(msg='validate is not supported by this netconf server')
