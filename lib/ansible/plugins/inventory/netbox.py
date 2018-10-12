@@ -60,22 +60,27 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # netbox_inventory.yml file in YAML format
 # Example command line: ansible-inventory -v --list -i netbox_inventory.yml
+
 plugin: netbox
 api_endpoint: http://localhost:8000
 group_by:
   - device_roles
 query_filters:
   - role: network-edge-router
+
 # Query filters are passed directly as an argument to the fetching queries.
 # You can repeat tags in the query string.
+
 query_filters:
   - role: server
   - tag: web
   - tag: production
+
 # See the NetBox documentation at https://netbox.readthedocs.io/en/latest/api/overview/
 # the query_filters work as a logical **OR**
 #
 # Prefix any custom fields with cf_ and pass the field value with the regular NetBox query string
+
 query_filters:
   - cf_foo: bar
 '''
