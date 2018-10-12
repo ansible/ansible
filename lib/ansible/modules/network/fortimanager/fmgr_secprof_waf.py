@@ -936,7 +936,7 @@ options:
       - flag | resp-status | HTTP response status.
     required: false
     choices: ["arg","arg-name","req-body","req-cookie","req-cookie-name","req-filename","req-header","req-header-name",
-      - "req-raw-uri","req-uri","resp-body","resp-hdr","resp-status"]
+      "req-raw-uri","req-uri","resp-body","resp-hdr","resp-status"]
 
   signature_main_class_action:
     description:
