@@ -21,8 +21,5 @@ cd $OUTPUT_DIR
 # muck the shebang to conform to test environment
 sed -i.bak "s|#!/usr/bin/env python|#!${ANSIBLE_TEST_PYTHON_INTERPRETER}|" foreman.py
 
-# run once to opcheck and validate script
-./foreman.py | tee -a inventory.json
-
 # use ansible to validate the return data
 ansible-playbook -i foreman.py test_foreman_inventory.yml --connection=local
