@@ -51,12 +51,7 @@ default_version:
   description: The version that will be used if only the template name is specified. Often this is the same as the latest version, but not always.
   returned: when state=present
   type: int
-arn:
-  description: The full Amazon Resource Name for the launch template
-  returned: when state=present
-  type: string
 '''
-import q
 import re
 from uuid import uuid4
 
@@ -94,7 +89,6 @@ def existing_templates(module):
             matches = ec2.describe_launch_templates(LaunchTemplateNames=[module.params.get('template_name')])
     except is_boto3_error_code('InvalidLaunchTemplateName.NotFoundException') as e:
         # no named template was found, return nothing/empty versions
-        q('No template with that name')
         return None, []
     except is_boto3_error_code('InvalidLaunchTemplateId.Malformed') as e:
         module.fail_json_aws(e, msg='Launch template with ID {0} is not a valid ID. It should start with `lt-....`'.format(module.params.get('launch_template_id')))
@@ -105,7 +99,6 @@ def existing_templates(module):
     else:
         template = matches['LaunchTemplates'][0]
         template_id, template_version, template_default = template['LaunchTemplateId'], template['LatestVersionNumber'], template['DefaultVersionNumber']
-        q('Found template', template_id, template_version, template_default)
         try:
             return template, ec2.describe_launch_template_versions(LaunchTemplateId=template_id)['LaunchTemplateVersions']
         except (ClientError, BotoCoreError, WaiterError) as e:
@@ -124,14 +117,12 @@ def params_to_launch_data(module, template_params):
             for r_type in ('instance', 'network-interface', 'volume')
         ]
         del template_params['tags']
-    q(template_params)
     if module.params.get('iam_instance_profile'):
         template_params['iam_instance_profile'] = determine_iam_role(module, module.params['iam_instance_profile'])
     params = snake_dict_to_camel_dict(
         dict((k, v) for k, v in template_params.items() if v is not None),
         capitalize_first=True,
     )
-    q(params)
     return params
 
 
@@ -152,7 +143,6 @@ def delete_template(module):
                         v_resp['UnsuccessfullyDeletedLaunchTemplateVersions'],
                         template['LaunchTemplateId'],
                     ))
-                q(v_resp)
                 deleted_versions = [camel_dict_to_snake_dict(v) for v in v_resp['SuccessfullyDeletedLaunchTemplateVersions']]
             except (ClientError, BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Could not delete existing versions of the launch template {0}".format(template['LaunchTemplateId']))
@@ -187,7 +177,6 @@ def create_or_update(module, template_options):
             )
         except (ClientError, BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't create launch template")
-        q('Create result', resp)
         template, template_versions = existing_templates(module)
         out['changed'] = True
     elif template and template_versions:
@@ -199,7 +188,6 @@ def create_or_update(module, template_options):
                 ClientToken=uuid4().hex,
                 aws_retry=True,
             )
-            q('New version response', resp)
             if module.params.get('default_version') in (None, ''):
                 # no need to do anything, leave the existing version as default
                 pass
@@ -242,7 +230,6 @@ def format_module_output(module):
     output['latest_template'] = [v for v in template_versions
         if v.get('version_number') and int(v['version_number']) == int(template['latest_version_number'])
     ][0]
-    q(output)
     return output
 
 
@@ -383,38 +370,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# TODO: remove this
-# service_module_shape_to_argspec('RequestLaunchTemplateData')
-def service_module_shape_to_argspec(shape_name):
-    launch_template_input = ec2._service_model.shape_for(shape_name)
-    def long_to_short(l):
-        if l in 'string':
-            return 'str'
-        if l in 'integer':
-            return 'int'
-        if l in 'boolean':
-            return 'bool'
-
-    def recurse_complex(struct):
-        out = {}
-        for field, structure in struct.members.items():
-            if structure.type_name == 'string':
-                out[field] = dict()
-            elif structure.type_name in ('string', 'integer', 'boolean'):
-                out[field] = dict(type=long_to_short(structure.type_name))
-            elif structure.type_name == 'list':
-                if structure.member.type_name in ('integer', 'boolean'):
-                    out[field] = dict(type='list', options=dict(type=long_to_short(structure.member.type_name)))
-                if structure.member.type_name == 'string':
-                    out[field] = dict(type='list')
-                else:
-                    out[field] = dict(type='list', options=recurse_complex(structure.member))
-            elif structure.type_name == 'structure':
-                out[field] = dict(type='dict', options=recurse_complex(structure))
-            else:
-                q('Got', field, structure.type_name)
-        return out
-    comp = camel_dict_to_snake_dict(recurse_complex(launch_template_input))
-    yaml.dump(comp, open('/tmp/comp.yml', 'w'))
-    return comp
