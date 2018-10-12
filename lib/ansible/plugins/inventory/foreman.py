@@ -14,7 +14,7 @@ DOCUMENTATION = '''
         - requests >= 1.1
     description:
         - Get inventory hosts from the foreman service.
-        - "Uses a configuration file as an inventory source, it must end in foreman.yml or foreman.yaml and has a ``plugin: foreman`` entry."
+        - "Uses a configuration file as an inventory source, it must end in ``.foreman.yml`` or ``.foreman.yaml`` and has a ``plugin: foreman`` entry."
     extends_documentation_fragment:
         - inventory_cache
     options:
@@ -29,7 +29,7 @@ DOCUMENTATION = '''
         description: foreman authentication user
         required: True
       password:
-        description: forman authentication password
+        description: foreman authentication password
         required: True
       validate_certs:
         description: verify SSL certificate if using https
@@ -102,6 +102,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         if super(InventoryModule, self).verify_file(path):
             if path.endswith('.foreman.yaml') or path.endswith('.foreman.yml'):
                 valid = True
+            else:
+                self.display.vvv('Skipping due to inventory source not ending in "foreman.yaml" nor "foreman.yml"')
         return valid
 
     def _get_session(self):
