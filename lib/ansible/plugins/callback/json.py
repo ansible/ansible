@@ -35,7 +35,7 @@ import json
 from functools import partial
 
 from ansible.inventory.host import Host
-
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 
 
@@ -111,7 +111,7 @@ class CallbackModule(CallbackBase):
             'custom_stats': custom_stats,
         }
 
-        self._display.display(json.dumps(output, indent=4, sort_keys=True))
+        self._display.display(json.dumps(output, cls=AnsibleJSONEncoder, indent=4, sort_keys=True))
 
     def _record_task_result(self, on_info, result, **kwargs):
         """This function is used as a partial to add failed/skipped info in a single method"""

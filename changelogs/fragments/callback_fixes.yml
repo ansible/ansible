@@ -1,0 +1,2 @@
+bugfixes:
+    - Update callbacks to use Ansible's JSON encoder to avoid known serialization issues

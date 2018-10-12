@@ -24,6 +24,7 @@ import json
 from collections import MutableMapping
 
 from ansible.module_utils._text import to_bytes
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 
 
@@ -61,7 +62,7 @@ class CallbackModule(CallbackBase):
             else:
                 data = data.copy()
                 invocation = data.pop('invocation', None)
-                data = json.dumps(data)
+                data = json.dumps(data, cls=AnsibleJSONEncoder)
                 if invocation is not None:
                     data = json.dumps(invocation) + " => %s " % data
 
