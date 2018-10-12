@@ -74,7 +74,7 @@ options:
      choices: ["bios", "efi"]
    secure_boot_enabled:
      description:
-     - Choose if EFI secure boot should be enabled.
+     - Choose if EFI secure boot should be enabled.  EFI secure boot can only be enabled with boot_firmware = efi
      type: 'bool'
      default: False
      version_added: '2.8'
@@ -255,6 +255,15 @@ class VmBootManager(PyVmomi):
             boot_firmware_required = True
 
         if self.vm.config.bootOptions.efiSecureBootEnabled != self.params.get('secure_boot_enabled'):
+            if self.params.get('secure_boot_enabled') is True and self.params.get('boot_firmware') == "bios":
+                self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios, but both are specified")
+
+            # If the user is not specifying boot_firmware, make sure they aren't trying to enable it on a
+            # system with boot_firmware already set to 'bios'
+            if self.params.get('secure_boot_enabled') is True and self.params.get('boot_firmware') is None:
+                if self.vm.config.firmware == 'bios':
+                    self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
+
             kwargs.update({'efiSecureBootEnabled': self.params.get('secure_boot_enabled')})
             change_needed = True
 
