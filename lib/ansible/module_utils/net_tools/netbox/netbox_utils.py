@@ -8,7 +8,7 @@ __metaclass__ = type
 import json
 try:
     import pynetbox
-except ImportError:
+except:
     raise 'pynetbox is required for this module'
 
 API_APPS_ENDPOINTS = dict(
@@ -111,9 +111,9 @@ VLAN_STATUS = dict(
 
 
 def find_app(endpoint):
-    for key, value in API_APPS_ENDPOINTS.items():
-        if endpoint in value:
-            nb_app = key
+    for k, v in API_APPS_ENDPOINTS.items():
+        if endpoint in v:
+            nb_app = k
     return nb_app
 
 
@@ -125,29 +125,33 @@ def find_ids(nb, data):
             app = find_app(endpoint)
             nb_app = getattr(nb, app)
             nb_endpoint = getattr(nb_app, endpoint)
-
+            if 'interface' in k:
+                try:
+                    query_id = nb_endpoint.get(**{"name": v["name"], "device": v["device"]})
+                except pynetbox.RequestError as e:
+                    return e.error
             try:
-                query_id = nb_endpoint.get(**{QUERY_TYPES.get(key, "q"): search})
+                query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
             except pynetbox.RequestError as e:
                 return e.error
 
-            if key in NO_DEFAULT_ID:
+            if k in NO_DEFAULT_ID:
                 pass
             elif query_id:
-                data[key] = query_id.id
+                data[k] = query_id.id
             else:
-                data[key] = 1
+                data[k] = 1
     return data
 
 
 def normalize_data(data):
     clean_json = data.replace("'", '"')
     data = json.loads(clean_json)
-    for key, value in data.items():
-        data_type = QUERY_TYPES.get(key, "q")
+    for k, v in data.items():
+        data_type = QUERY_TYPES.get(k, "q")
         if data_type == "slug":
-            if " " in value:
-                data[key] = value.replace(" ", "-").lower()
+            if " " in v:
+                data[k] = v.replace(" ", "-").lower()
             else:
-                data[key] = value.lower()
+                data[k] = v.lower()
     return data

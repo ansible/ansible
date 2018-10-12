@@ -4,6 +4,7 @@
 # Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -131,7 +132,7 @@ from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normali
 try:
     import pynetbox
     HAS_PYNETBOX = True
-except ImportError:
+except:
     HAS_PYNETBOX = False
 
 
@@ -145,7 +146,7 @@ def netbox_create_device(nb, nb_endpoint, data):
     try:
         return nb_endpoint.create([norm_data])
     except pynetbox.RequestError as e:
-        module.fail_json(msg=e.error)
+        return e.error
 
 
 def netbox_delete_device(nb_endpoint, data):
@@ -207,6 +208,7 @@ def main():
         if 'SUCCESS' in response:
             changed = True
     module.exit_json(changed=changed, meta=response)
+
 
 if __name__ == "__main__":
     main()
