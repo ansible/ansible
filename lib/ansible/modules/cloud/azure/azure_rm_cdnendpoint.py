@@ -28,13 +28,6 @@ options:
         description:
             - Name of the Azure CDN endpoint.
         required: true
-    state:
-        description:
-            - Assert the state of the Azure CDN endpoint. Use C(present) to create or update a Azure CDN endpoint and C(absent) to delete it.
-        default: present
-        choices:
-            - absent
-            - present
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
@@ -46,6 +39,7 @@ options:
         description:
             - Use with I(state) 'present' to purge the endpoint. Set to false to have the endpoint be purged.
         type: bool
+        default: false
     purge_content_paths:
         description:
             - Use with I(state) 'present' and I(purge) 'true' to specify content paths to be purged.
@@ -112,6 +106,13 @@ options:
             - use_query_string
             - not_set
         default: ignore_query_string
+    state:
+        description:
+            - Assert the state of the Azure CDN endpoint. Use C(present) to create or update a Azure CDN endpoint and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
@@ -146,20 +147,19 @@ RETURN = '''
 state:
     description: Current state of the Azure CDN endpoint
     returned: always
-    type: dict
-    contains:
-        id:
-            description:
-                - Id of the CDN endpoint.
-            returned: always
-            type: str
-            sample: "/subscriptions/<subs_id>/resourcegroups/xxx/providers/Microsoft.Cdn/profiles/xxx/endpoints/xxx"
-        host_name:
-            description:
-                - Host name of the CDN endpoint.
-            returned: always
-            type: str
-            sample: "myendpoint.azureedge.net"
+    type: string
+id:
+    description:
+        - Id of the CDN endpoint.
+    returned: always
+    type: str
+    sample: "/subscriptions/<subs_id>/resourcegroups/xxx/providers/Microsoft.Cdn/profiles/xxx/endpoints/xxx"
+host_name:
+    description:
+        - Host name of the CDN endpoint.
+    returned: always
+    type: str
+    sample: "myendpoint.azureedge.net"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -478,8 +478,8 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
                 DeepCreatedOrigin(name=item['name'],
                                   host_name=item['host_name'],
                                   http_port=item['http_port'] if 'http_port' in item else None,
-                                  https_port=item['https_port'] if 'https_port' in item else None,
-            ))
+                                  https_port=item['https_port'] if 'https_port' in item else None)
+            )
 
         parameters = Endpoint(
             origins=origins,
@@ -653,8 +653,9 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
             return True
 
         if self.query_string_caching_behavior and \
-            _snake_to_camel(response['query_string_caching_behavior']).lower() != _snake_to_camel(self.query_string_caching_behavior).lower():
-            self.log("query_string_caching_behavior Diff - Origin {0} / Update {1}".format(response['query_string_caching_behavior'], self.query_string_caching_behavior))
+           _snake_to_camel(response['query_string_caching_behavior']).lower() != _snake_to_camel(self.query_string_caching_behavior).lower():
+            self.log("query_string_caching_behavior Diff - Origin {0} / Update {1}".format(response['query_string_caching_behavior'],
+                                                                                           self.query_string_caching_behavior))
             return True
 
         return False
