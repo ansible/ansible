@@ -15,11 +15,12 @@ ssl_verify = False
 FOREMAN_INI
 
 cp test_foreman_inventory.yml $OUTPUT_DIR/.
-cp ~/ansible/contrib/inventory/foreman.py $OUTPUT_DIR/.
+cp ../../../../contrib/inventory/foreman.py $OUTPUT_DIR/.
 cd $OUTPUT_DIR
 
 # muck the shebang to conform to test environment
-sed -i.bak "s|#!/usr/bin/env python|#!${ANSIBLE_TEST_PYTHON_INTERPRETER}|" foreman.py
+sed -i.bak "s|^#!.*|#!${ANSIBLE_TEST_PYTHON_INTERPRETER}|" foreman.py
+head -n1 foreman.py
 
 # use ansible to validate the return data
 ansible-playbook -i foreman.py test_foreman_inventory.yml --connection=local
