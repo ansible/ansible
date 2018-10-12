@@ -11,8 +11,10 @@ DOCUMENTATION = '''
 ---
 module: code_commit
 version_added: "2.8"
-short_description: Represents AWS CodeCommit
-description: Creates,deletes repository in AWS CodeCommit
+short_description: Manage repositories in AWS CodeCommit
+description:
+  - Supports creation and deletion of CodeCommit repositories.
+  - See U(https://aws.amazon.com/codecommit/) for more information about CodeCommit.
 author: Shuang Wang (@ptux)
 
 requirements:
@@ -49,7 +51,7 @@ result:
 '''
 
 EXAMPLES = '''
-# Create A new repository
+# Create a new repository
 - code_commit:
     name: repo
     state: present
@@ -72,51 +74,44 @@ class CodeCommit(object):
 
     def process(self):
         result = dict(changed=False)
-        repository_exists = self._repository_exists()
 
-        if self._module.params['state'] == 'present' and not repository_exists:
-            result['changed'] = True
+        if self._module.params['state'] == 'present' and not self._repository_exists():
             if not self._module.check_mode:
                 result = self._create_repository()
-        if self._module.params['state'] == 'absent' and repository_exists:
             result['changed'] = True
+        if self._module.params['state'] == 'absent' and self._repository_exists():
             if not self._module.check_mode:
                 result = self._delete_repository()
+            result['changed'] = True
         return result
 
     def _repository_exists(self):
         try:
-            repository_exists = False
             paginator = self._client.get_paginator('list_repositories')
             for page in paginator.paginate():
                 repositories = page['repositories']
                 for item in repositories:
                     if self._module.params['name'] in item.values():
-                        repository_exists = True
-                        return repository_exists
+                        return True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't get repository")
-        return repository_exists
+        return False
 
     def _create_repository(self):
-        result = dict(changed=False)
         try:
             result = self._client.create_repository(
                 repositoryName=self._module.params['name'],
                 repositoryDescription=self._module.params['comment']
             )
-            result['changed'] = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't create repository")
         return result
 
     def _delete_repository(self):
-        result = dict(changed=False)
         try:
             result = self._client.delete_repository(
                 repositoryName=self._module.params['name']
             )
-            result['changed'] = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self._module.fail_json_aws(e, msg="couldn't delete repository")
         return result
