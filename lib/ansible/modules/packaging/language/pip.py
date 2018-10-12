@@ -503,6 +503,7 @@ class Package:
             # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
             if self._requirement.project_name == "distribute":
                 self.package_name = "setuptools"
+                self._requirement.project_name = "setuptools"
             else:
                 self.package_name = self._requirement.project_name
             self._plain_package = True
