@@ -100,7 +100,7 @@ from ansible.plugins.inventory import BaseFileInventoryPlugin
 try:
     import toml
     HAS_TOML = True
-except (ImportError, AttributeError):
+except ImportError:
     HAS_TOML = False
 
 
