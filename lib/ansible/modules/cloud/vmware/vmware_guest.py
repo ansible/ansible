@@ -205,6 +205,7 @@ options:
   wait_for_customization:
     description:
     - Wait until vCenter detects all guest customizations as successfully completed.
+    - When enabled, the VM will automatically be powered on.
     default: 'no'
     type: bool
     version_added: '2.8'
@@ -2160,7 +2161,10 @@ class PyVmomiHelper(PyVmomi):
                     self.wait_for_vm_ip(vm)
 
                 if self.params['wait_for_customization']:
-                    self.wait_for_customization(vm)
+                    is_customization_ok = self.wait_for_customization(vm)
+                    if not is_customization_ok:
+                        vm_facts = self.gather_facts(vm)
+                        return {'changed': self.change_detected, 'failed': True, 'instance': vm_facts}
 
             vm_facts = self.gather_facts(vm)
             return {'changed': self.change_detected, 'failed': False, 'instance': vm_facts}
@@ -2319,22 +2323,22 @@ class PyVmomiHelper(PyVmomi):
             if len(eventStarted):
                 thispoll = 0
                 while thispoll <= poll:
-                    eventsFinishedFailed = self.get_vm_events(['CustomizationSucceeded', 'CustomizationFailed'])
-                    if len(eventsFinishedFailed):
-                        if not isinstance(eventsFinishedFailed[0], vim.event.CustomizationSucceeded):
-                            raise RuntimeError('Customization failed with error {0}:\n{1}'.format(
-                                eventsFinishedFailed[0]._wsdlName, eventsFinishedFailed[0].fullFormattedMessage))
+                    eventsFinishedResult = self.get_vm_events(['CustomizationSucceeded', 'CustomizationFailed'])
+                    if len(eventsFinishedResult):
+                        if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
+                            self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(
+                                eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
+                            return False
                         break
                     else:
                         time.sleep(sleep)
                         thispoll += 1
-                newvm = self.get_vm()
-                facts = self.gather_facts(newvm)
-                return facts
+                return True
             else:
                 time.sleep(sleep)
                 thispoll += 1
-        raise RuntimeError('waiting for customizations timed out.')
+        self.module.fail_json('waiting for customizations timed out.')
+        return False
 
 
 def main():
