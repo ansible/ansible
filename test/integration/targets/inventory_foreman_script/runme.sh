@@ -4,40 +4,30 @@
 
 set -euo pipefail
 
-export ANSIBLE_CONFIG=ansible.cfg
+# OUTPUT_DIR is the build directory
+if [[ ! -d $OUTPUT_DIR ]]; then
+    mkdir -p $OUTPUT_DIR
+fi
+#cd $OUTPUT_DIR
+
 export FOREMAN_HOST="${FOREMAN_HOST:-localhost}"
 export FOREMAN_PORT="${FOREMAN_PORT:-8080}"
-FOREMAN_CONFIG=foreman.ini
+export FOREMAN_CONFIG="${OUTPUT_DIR}/foreman.ini"
 
-# flag for checking whether cleanup has already fired
-_is_clean=
-
-function _cleanup() {
-    [[ -n "$_is_clean" ]] && return  # don't double-clean
-    echo Cleanup: removing $FOREMAN_CONFIG...
-    rm -vf "$FOREMAN_CONFIG"
-    echo Cleanup: removing foreman.py...
-    rm -v foreman.py
-    echo Cleanup: removing inventory.json...
-    rm -vf inventory.json
-    unset ANSIBLE_CONFIG
-    unset FOREMAN_HOST
-    unset FOREMAN_PORT
-    unset FOREMAN_CONFIG
-    _is_clean=1
-}
-trap _cleanup INT TERM EXIT
-
-cat > "$FOREMAN_CONFIG" <<FOREMAN_YAML
+cat > "$FOREMAN_CONFIG" <<FOREMAN_INI
 [foreman]
 url = http://${FOREMAN_HOST}:${FOREMAN_PORT}
 user = ansible-tester
 password = secure
 ssl_verify = False
-FOREMAN_YAML
+FOREMAN_INI
 
-cp ~/ansible/contrib/inventory/foreman.py .
+cp test_foreman_inventory.yml $OUTPUT_DIR/.
+cp ~/ansible/contrib/inventory/foreman.py $OUTPUT_DIR/.
+cd $OUTPUT_DIR
+
 # run once to opcheck and validate script
-./foreman.py | tee -a inventory.json
+$ANSIBLE_TEST_PYTHON_INTERPRETER foreman.py | tee -a inventory.json
+
 # use ansible to validate the return data
 ansible-playbook -i foreman.py test_foreman_inventory.yml --connection=local
