@@ -333,6 +333,7 @@ def parse_args():
                                      config=WindowsIntegrationConfig)
 
     add_extra_docker_options(windows_integration, integration=False)
+    add_httptester_options(windows_integration, argparse)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
