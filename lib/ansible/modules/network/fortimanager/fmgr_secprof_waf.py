@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: fmgr_waf_profile
+module: fmgr_secprof_waf
 version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
