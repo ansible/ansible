@@ -75,23 +75,56 @@ class ManageWindowsCI(object):
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
 
-    def ssh(self, command, options=None):
+    def download(self, remote, local):
+        """
+        :type remote: str
+        :type local: str
+        """
+        self.scp('%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote), local)
+
+    def upload(self, local, remote):
+        """
+        :type local: str
+        :type remote: str
+        """
+        self.scp(local, '%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote))
+
+    def ssh(self, command, options=None, force_pty=True):
         """
         :type command: str | list[str]
         :type options: list[str] | None
+        :type force_pty: bool
         """
         if not options:
             options = []
+        if force_pty:
+            options.append('-tt')
 
         if isinstance(command, list):
             command = ' '.join(pipes.quote(c) for c in command)
 
         run_command(self.core_ci.args,
-                    ['ssh', '-tt', '-q'] + self.ssh_args +
+                    ['ssh', '-q'] + self.ssh_args +
                     options +
                     ['-p', '22',
                      '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
                     [command])
+
+    def scp(self, src, dst):
+        """
+        :type src: str
+        :type dst: str
+        """
+        for dummy in range(1, 10):
+            try:
+                run_command(self.core_ci.args,
+                            ['scp'] + self.ssh_args +
+                            ['-P', '22', '-q', '-r', src, dst])
+                return
+            except SubprocessError:
+                time.sleep(10)
+
+        raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))
 
 
 class ManageNetworkCI(object):

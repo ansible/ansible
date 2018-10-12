@@ -60,6 +60,8 @@ from lib.util import (
 from lib.docker_util import (
     docker_pull,
     docker_run,
+    docker_available,
+    docker_rm,
     get_docker_container_id,
     get_docker_container_ip,
 )
@@ -507,6 +509,8 @@ def command_windows_integration(args):
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
     instances = []  # type: list [lib.thread.WrappedThread]
+    use_httptester = False
+    httptester_id = None
 
     if args.windows:
         get_coverage_path(args)  # initialize before starting threads
@@ -533,12 +537,58 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
+        use_httptester = args.httptester and any('needs/httptester/' in t.aliases for t in internal_targets)
+        # if running under Docker delegation, the httptester may have already been started
+        docker_httptester = bool(os.environ.get("HTTPTESTER", False))
+
+        if use_httptester and not docker_available() and not docker_httptester:
+            display.warning('Assuming --disable-httptester since `docker` is not available.')
+            use_httptester = False
+
+        if use_httptester:
+            if docker_httptester:
+                # we are running in a Docker container that is linked to the httptester container, we just need to
+                # forward these requests to the linked hostname
+                first_host = HTTPTESTER_HOSTS[0]
+                ssh_options = ["-R", "8080:%s:80" % first_host, "-R", "8443:%s:443" % first_host]
+            else:
+                # we are running directly and need to start the httptester container ourselves and forward the port
+                # from there manually set so HTTPTESTER env var is set during the run
+                args.inject_httptester = True
+                httptester_id, ssh_options = start_httptester(args)
+
+            # to get this SSH command to run in the background we need to set to run in background (-f) and disable
+            # the pty allocation (-T)
+            ssh_options.insert(0, "-fT")
+
+            # create a script that will continue to run in the background until the script is deleted, this will
+            # cleanup and close the connection
+            watcher_path = "ansible-test-http-watcher-%s.ps1" % time.time()
+            for remote in [r for r in remotes if r.version != '2008']:
+                manage = ManageWindowsCI(remote)
+                manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
+
+                # need to use -Command as we cannot pass an array of values with -File
+                script = "powershell.exe -NoProfile -Command .\\%s -Hosts %s" % (watcher_path, ", ".join(HTTPTESTER_HOSTS))
+                if args.verbosity > 3:
+                    script += " -Verbose"
+                manage.ssh(script, options=ssh_options, force_pty=False)
+
     success = False
 
     try:
         command_integration_filtered(args, internal_targets, all_targets)
         success = True
     finally:
+        if use_httptester:
+            if httptester_id:
+                docker_rm(args, httptester_id)
+
+            for remote in [r for r in remotes if r.version != '2008']:
+                # delete the tmp file that keeps the http-tester alive
+                manage = ManageWindowsCI(remote)
+                manage.ssh("del %s /F /Q" % watcher_path)
+
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             for instance in instances:
                 instance.result.stop()
@@ -736,7 +786,8 @@ def command_integration_filtered(args, targets, all_targets):
                 display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
                 time.sleep(seconds)
 
-    if args.inject_httptester:
+    # Windows is different as Ansible execution is done locally but the host is remote
+    if args.inject_httptester and not isinstance(args, WindowsIntegrationConfig):
         inject_httptester(args)
 
     start_at_task = args.start_at_task
