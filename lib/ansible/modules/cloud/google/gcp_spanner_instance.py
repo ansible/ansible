@@ -99,7 +99,7 @@ EXAMPLES = '''
         cost_center: ti-1700004
       config: regional-us-central1
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -117,13 +117,13 @@ RETURN = '''
             - A reference to the instance configuration.
         returned: success
         type: str
-    display_name:
+    displayName:
         description:
             - The descriptive name for this instance as it appears in UIs. Must be unique per
               project and between 4 and 30 characters in length.
         returned: success
         type: str
-    node_count:
+    nodeCount:
         description:
             - The number of nodes allocated to this instance.
         returned: success
@@ -189,7 +189,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -238,9 +239,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -251,9 +252,9 @@ def collection(module):
     return "https://spanner.googleapis.com/v1/projects/{project}/instances".format(**module.params)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
