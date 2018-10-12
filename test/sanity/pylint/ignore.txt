@@ -1,3 +1,4 @@
+lib/ansible/module_utils/k8s/inventory.py catching-non-exception
 lib/ansible/module_utils/network/iosxr/iosxr.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/amazon/aws_kms.py ansible-format-automatic-specification
