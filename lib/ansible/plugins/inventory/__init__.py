@@ -171,8 +171,13 @@ class BaseInventoryPlugin(AnsiblePlugin):
                  So only call this base class if you expect it to be a file.
         '''
 
+        valid = False
         b_path = to_bytes(path, errors='surrogate_or_strict')
-        return (os.path.exists(b_path) and os.access(b_path, os.R_OK))
+        if (os.path.exists(b_path) and os.access(b_path, os.R_OK)):
+            valid = True
+        else:
+            self.display.vvv('Skipping due to inventory source not existing or not being readable by the current user')
+        return valid
 
     def _populate_host_vars(self, hosts, variables, group=None, port=None):
         if not isinstance(variables, Mapping):
