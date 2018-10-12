@@ -1423,18 +1423,18 @@ def common_integration_filter(args, targets, exclude):
                 else:
                     skip_missing.append(version)
 
-            if len(skip_missing) > 0 and len(skip_valid) > 0:
+            if skip_missing and skip_valid:
                 not_skipped.append((target.name, skip_valid, skip_missing))
-            elif len(skip_valid) > 0:
+            elif skip_valid:
                 all_skipped.append(target.name)
 
-        if len(all_skipped) > 0:
+        if all_skipped:
             exclude.extend(all_skipped)
             skip_aliases = ["skip/windows/%s/" % w for w in args.windows]
             display.warning('Excluding tests marked "%s" which are set to skip with --windows %s: %s'
                             % ('", "'.join(skip_aliases), ', '.join(args.windows), ', '.join(all_skipped)))
 
-        if len(not_skipped) > 0:
+        if not_skipped:
             for target, skip_valid, skip_missing in not_skipped:
                 display.warning('The test "%s" was marked to skip for the Windows version(s) "%s" but not "%s"; running for all targets'
                                 % (target, '", "'.join(skip_valid), '", "'.join(skip_missing)))
