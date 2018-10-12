@@ -93,7 +93,7 @@ EXAMPLES = r'''
     boot_retry_enabled: True
     boot_retry_delay: 22300
     boot_firmware: bios
-    secure_boot_enabled: True
+    secure_boot_enabled: False
     boot_order:
       - floppy
       - cdrom
@@ -120,12 +120,12 @@ vm_boot_status:
         "current_boot_retry_enabled": true,
         "current_enter_bios_setup": true,
         "current_boot_firmware": "bios",
-        "current_secure_boot_enabled": true,
+        "current_secure_boot_enabled": false,
         "previous_boot_delay": 10,
         "previous_boot_retry_delay": 10000,
         "previous_boot_retry_enabled": true,
         "previous_enter_bios_setup": false,
-        "previous_boot_firmware": "bios",
+        "previous_boot_firmware": "efi",
         "previous_secure_boot_enabled": true,
         "previous_boot_order": [
             "ethernet",
@@ -255,13 +255,14 @@ class VmBootManager(PyVmomi):
             boot_firmware_required = True
 
         if self.vm.config.bootOptions.efiSecureBootEnabled != self.params.get('secure_boot_enabled'):
-            if self.params.get('secure_boot_enabled') is True and self.params.get('boot_firmware') == "bios":
+            if self.params.get('secure_boot_enabled') and self.params.get('boot_firmware') == "bios":
                 self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios, but both are specified")
 
             # If the user is not specifying boot_firmware, make sure they aren't trying to enable it on a
             # system with boot_firmware already set to 'bios'
-            if self.params.get('secure_boot_enabled') is True and self.params.get('boot_firmware') is None:
-                if self.vm.config.firmware == 'bios':
+            if self.params.get('secure_boot_enabled') and \
+               self.params.get('boot_firmware') is None and \
+               self.vm.config.firmware == 'bios':
                     self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
 
             kwargs.update({'efiSecureBootEnabled': self.params.get('secure_boot_enabled')})
