@@ -1406,14 +1406,38 @@ def common_integration_filter(args, targets, exclude):
             display.warning('Excluding tests marked "%s" which require --allow-unstable or prefixing with "unstable/": %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    # only skip a Windows test if using --windows and all the --windows versions are defined in the aliases as skip/windows/%s
     if args.windows:
-        for window in args.windows:
-            skip = 'skip/windows/%s/' % window
-            skipped = [target.name for target in targets if skip in target.aliases]
-            if skipped:
-                exclude.extend(skipped)
-                display.warning('Excluding tests marked "%s" which are set to skip --windows %s: %s'
-                                % (skip.rstrip('/'), window, ', '.join(skipped)))
+        all_skipped = []
+        not_skipped = []
+
+        for target in targets:
+            if "skip/windows/" not in target.aliases:
+                continue
+
+            skip_valid = []
+            skip_missing = []
+            for version in args.windows:
+                if "skip/windows/%s/" % version in target.aliases:
+                    skip_valid.append(version)
+                else:
+                    skip_missing.append(version)
+
+            if len(skip_missing) > 0 and len(skip_valid) > 0:
+                not_skipped.append((target.name, skip_valid, skip_missing))
+            elif len(skip_valid) > 0:
+                all_skipped.append(target.name)
+
+        if len(all_skipped) > 0:
+            exclude.extend(all_skipped)
+            skip_aliases = ["skip/windows/%s/" % w for w in args.windows]
+            display.warning('Excluding tests marked "%s" which are set to skip with --windows %s: %s'
+                            % ('", "'.join(skip_aliases), ', '.join(args.windows), ', '.join(all_skipped)))
+
+        if len(not_skipped) > 0:
+            for target, skip_valid, skip_missing in not_skipped:
+                display.warning('The test "%s" was marked to skip for the Windows version(s) "%s" but not "%s"; running for all targets'
+                                % (target, '", "'.join(skip_valid), '", "'.join(skip_missing)))
 
 
 def get_integration_local_filter(args, targets):
