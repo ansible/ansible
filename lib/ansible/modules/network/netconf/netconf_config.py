@@ -366,6 +366,7 @@ def main():
             if supports_commit and module.params['commit']:
                 if not module.check_mode:
                     timeout = confirm if confirm > 0 else None
+                    confirm_commit = True if timeout else False
                     conn.commit(confirmed=confirm_commit, timeout=timeout)
                 else:
                     conn.discard_changes()
