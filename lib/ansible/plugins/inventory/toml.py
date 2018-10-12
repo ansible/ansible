@@ -130,6 +130,9 @@ def convert_yaml_objects_to_native(obj):
     This function recurses an object and ensures we cast any of the types from
     ``ansible.parsing.yaml.objects`` into their native types, effectively cleansing
     the data before we hand it over to ``toml``
+
+    This function doesn't directly check for the types from ``ansible.parsing.yaml.objects``
+    but instead checks for the types those objects inherit from, to offer more flexibility.
     """
     if isinstance(obj, dict):
         return dict((k, convert_yaml_objects_to_native(v)) for k, v in obj.items())
