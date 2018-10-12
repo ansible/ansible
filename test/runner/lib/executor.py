@@ -1407,7 +1407,7 @@ def common_integration_filter(args, targets, exclude):
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
     # only skip a Windows test if using --windows and all the --windows versions are defined in the aliases as skip/windows/%s
-    if args.windows:
+    if isinstance(args, WindowsIntegrationConfig) and args.windows:
         all_skipped = []
         not_skipped = []
 
