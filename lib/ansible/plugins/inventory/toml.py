@@ -108,6 +108,7 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
     class AnsibleTomlEncoder(toml.TomlEncoder):
         def __init__(self, *args, **kwargs):
             super(AnsibleTomlEncoder, self).__init__(*args, **kwargs)
+            # Map our custom YAML object types to dump_funcs from ``toml``
             self.dump_funcs.update({
                 AnsibleSequence: self.dump_funcs.get(list),
                 AnsibleUnicode: self.dump_funcs.get(str),
