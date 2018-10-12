@@ -70,6 +70,7 @@ import smtplib
 
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 
 
@@ -207,7 +208,7 @@ class CallbackModule(CallbackBase):
                 body += self.body_blob(result._result['deprecations'][i], 'exception %d' % (i + 1))
 
         body += 'and a complete dump of the error:\n\n'
-        body += self.indent('%s: %s' % (failtype, json.dumps(result._result, indent=4)))
+        body += self.indent('%s: %s' % (failtype, json.dumps(result._result, cls=AnsibleJSONEncoder, indent=4)))
 
         self.mail(subject=subject, body=body)
 
@@ -230,4 +231,4 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_failed(self, result):
         # Pass item information to task failure
         self.itemsubject = result._result['msg']
-        self.itembody += self.body_blob(json.dumps(result._result, indent=4), "failed item dump '%(item)s'" % result._result)
+        self.itembody += self.body_blob(json.dumps(result._result, cls=AnsibleJSONEncoder, indent=4), "failed item dump '%(item)s'" % result._result)
