@@ -1,10 +1,4 @@
 - hosts: localhost
   connection: local
-  vars:
-    aws_access_key: ""
-    aws_secret_key: ""
-    security_token: ""
-    aws_region: us-west-2
-    aws_profile: slscode
   roles:
     - ec2_launch_template

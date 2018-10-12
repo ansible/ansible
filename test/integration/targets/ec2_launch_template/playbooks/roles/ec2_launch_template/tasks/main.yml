@@ -14,7 +14,6 @@
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
-      profile: "{{ aws_profile }}"
   block:
     - include_tasks: cpu_options.yml
     - include_tasks: iam_instance_role.yml
