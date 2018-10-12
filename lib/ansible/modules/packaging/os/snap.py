@@ -45,6 +45,12 @@ options:
         type: bool
         required: false
         default: False
+    channel:
+        description:
+            - Define which release of a snap is installed and tracked for updates.
+        type: str
+        required: false
+        default: stable
 
 author:
     - Victor Carceler (vcarceler@iespuigcastellar.xeill.net)
@@ -70,12 +76,22 @@ EXAMPLES = '''
   snap:
     name: foo
     classic: yes
+
+# Install a snap with from a specific channel
+- name: Install "foo" with option --channel=latest/edge
+  snap:
+    name: foo
+    channel: latest/edge
 '''
 
 RETURN = '''
 classic:
     description: Whether or not the snaps were installed with the classic confinement
     type: boolean
+    returned: When snaps are installed
+channel:
+    description: The channel the snaps were installed from
+    type: string
     returned: When snaps are installed
 cmd:
     description: The command that was executed on the host
@@ -108,6 +124,7 @@ def is_snap_installed(module, snap_name):
 def install_snaps(module, snap_names):
     exit_kwargs = {
         'classic': module.params['classic'],
+        'channel': module.params['channel'],
         'changed': False,
     }
 
@@ -125,9 +142,10 @@ def install_snaps(module, snap_names):
         module.exit_json(**exit_kwargs)
 
     classic = '--classic' if module.params['classic'] else ''
+    channel = '--channel ' + module.params['channel']
 
     snap_path = module.get_bin_path("snap", True)
-    cmd_parts = [snap_path, 'install'] + snaps_not_installed + [classic]
+    cmd_parts = [snap_path, 'install'] + snaps_not_installed + [classic] + [channel]
     cmd = ' '.join(cmd_parts)
 
     # Actually install the snaps
@@ -176,6 +194,7 @@ def main():
         'name': dict(type='list', required=True),
         'state': dict(type='str', required=False, default='present', choices=['absent', 'present']),
         'classic': dict(type='bool', required=False, default=False),
+        'channel': dict(type='str', required=False, default='stable'),
     }
     module = AnsibleModule(
         argument_spec=module_args,
