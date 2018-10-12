@@ -1436,8 +1436,9 @@ def common_integration_filter(args, targets, exclude):
 
         if not_skipped:
             for target, skip_valid, skip_missing in not_skipped:
-                display.warning('The test "%s" was marked to skip for the Windows version(s) "%s" but not "%s"; running for all targets'
-                                % (target, '", "'.join(skip_valid), '", "'.join(skip_missing)))
+                # warn when failing to skip due to lack of support for skipping only some versions
+                display.warning('Including test "%s" which was marked to skip for --windows %s but not %s.'
+                                % (target, ', '.join(skip_valid), ', '.join(skip_missing)))
 
 
 def get_integration_local_filter(args, targets):
