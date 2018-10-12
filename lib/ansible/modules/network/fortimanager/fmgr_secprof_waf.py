@@ -8,7 +8,7 @@
 # (at your option) any later version.
 #
 # Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# but WITHOUT ANY WARRANTY; without even the implied warranty of`
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
@@ -935,20 +935,8 @@ options:
       - flag | resp-hdr | HTTP response headers.
       - flag | resp-status | HTTP response status.
     required: false
-    choices:
-    ["arg",
-    "arg-name",
-    "req-body",
-    "req-cookie",
-    "req-cookie-name",
-    "req-filename",
-    "req-header",
-    "req-header-name",
-    "req-raw-uri",
-    "req-uri",
-    "resp-body",
-    "resp-hdr",
-    "resp-status"]
+    choices: ["arg","arg-name","req-body","req-cookie","req-cookie-name","req-filename","req-header","req-header-name",
+      - "req-raw-uri","req-uri","resp-body","resp-hdr","resp-status"]
 
   signature_main_class_action:
     description:
