@@ -1410,6 +1410,40 @@ def common_integration_filter(args, targets, exclude):
             display.warning('Excluding tests marked "%s" which require --allow-unstable or prefixing with "unstable/": %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    # only skip a Windows test if using --windows and all the --windows versions are defined in the aliases as skip/windows/%s
+    if isinstance(args, WindowsIntegrationConfig) and args.windows:
+        all_skipped = []
+        not_skipped = []
+
+        for target in targets:
+            if "skip/windows/" not in target.aliases:
+                continue
+
+            skip_valid = []
+            skip_missing = []
+            for version in args.windows:
+                if "skip/windows/%s/" % version in target.aliases:
+                    skip_valid.append(version)
+                else:
+                    skip_missing.append(version)
+
+            if skip_missing and skip_valid:
+                not_skipped.append((target.name, skip_valid, skip_missing))
+            elif skip_valid:
+                all_skipped.append(target.name)
+
+        if all_skipped:
+            exclude.extend(all_skipped)
+            skip_aliases = ["skip/windows/%s/" % w for w in args.windows]
+            display.warning('Excluding tests marked "%s" which are set to skip with --windows %s: %s'
+                            % ('", "'.join(skip_aliases), ', '.join(args.windows), ', '.join(all_skipped)))
+
+        if not_skipped:
+            for target, skip_valid, skip_missing in not_skipped:
+                # warn when failing to skip due to lack of support for skipping only some versions
+                display.warning('Including test "%s" which was marked to skip for --windows %s but not %s.'
+                                % (target, ', '.join(skip_valid), ', '.join(skip_missing)))
+
 
 def get_integration_local_filter(args, targets):
     """
