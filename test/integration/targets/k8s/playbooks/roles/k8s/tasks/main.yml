@@ -15,6 +15,19 @@
       debug:
         var: output
 
+    - name: k8s_facts works with empty resources
+      k8s_facts:
+        kind: Deployment
+        namespace: testing
+        api_version: extensions/v1beta1
+      register: k8s_facts
+
+    - name: assert that k8s_facts is in correct format
+      assert:
+        that:
+          - "'resources' in k8s_facts"
+          - not k8s_facts.resources
+
     - name: Create a service
       k8s:
         state: present
@@ -85,7 +98,7 @@
       k8s:
         state: present
         inline: &deployment
-          apiVersion: apps/v1beta1
+          apiVersion: extensions/v1beta1
           kind: Deployment
           metadata:
             name: elastic

@@ -189,7 +189,7 @@ class K8sAnsibleMixin(object):
                                   label_selector=','.join(label_selectors),
                                   field_selector=','.join(field_selectors)).to_dict()
         except openshift.dynamic.exceptions.NotFoundError:
-            return dict(items=[])
+            return dict(resources=[])
 
         if 'items' in result:
             return dict(resources=result['items'])
