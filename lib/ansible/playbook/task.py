@@ -66,22 +66,22 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
-    _args = FieldAttribute(isa='dict', default=dict())
+    _args = FieldAttribute(isa='dict', default=dict)
     _action = FieldAttribute(isa='string')
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
-    _changed_when = FieldAttribute(isa='list', default=[])
+    _changed_when = FieldAttribute(isa='list', default=list)
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
-    _failed_when = FieldAttribute(isa='list', default=[])
+    _failed_when = FieldAttribute(isa='list', default=list)
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
     _register = FieldAttribute(isa='string')
     _retries = FieldAttribute(isa='int', default=3)
-    _until = FieldAttribute(isa='list', default=[])
+    _until = FieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
