@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 
-[[ -n "$DEBUG" || -n "$ANSIBLE_DEBUG" ]] && set -x
-
 set -euo pipefail
-
-# OUTPUT_DIR is the build directory
-if [[ ! -d $OUTPUT_DIR ]]; then
-    mkdir -p $OUTPUT_DIR
-fi
-#cd $OUTPUT_DIR
 
 export FOREMAN_HOST="${FOREMAN_HOST:-localhost}"
 export FOREMAN_PORT="${FOREMAN_PORT:-8080}"
