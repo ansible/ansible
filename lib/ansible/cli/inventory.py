@@ -200,11 +200,13 @@ class InventoryCLI(CLI):
         elif self.options.toml:
             try:
                 import toml
-                from ansible.plugins.inventory.toml import AnsibleTomlEncoder, convert_yaml_objects_to_native
             except ImportError:
                 raise AnsibleError(
                     'The python "toml" library is required when using the TOML output format'
                 )
+            else:
+                from ansible.plugins.inventory.toml import AnsibleTomlEncoder, convert_yaml_objects_to_native
+
             if AnsibleTomlEncoder:
                 results = toml.dumps(stuff, encoder=AnsibleTomlEncoder())
             else:
