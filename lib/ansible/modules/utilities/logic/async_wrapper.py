@@ -19,6 +19,8 @@ import signal
 import time
 import syslog
 
+from ansible.module_utils._text import to_text
+
 PY3 = sys.version_info[0] == 3
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
@@ -164,7 +166,7 @@ def _run_module(wrapped_cmd, jid, job_path):
         result = {
             "failed": 1,
             "cmd": wrapped_cmd,
-            "msg": str(e),
+            "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
             "stderr": stderr
         }

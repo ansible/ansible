@@ -32,6 +32,7 @@ from distutils.version import LooseVersion
 from shutil import rmtree
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.galaxy.api import GalaxyAPI
@@ -189,7 +190,7 @@ class GalaxyRole(object):
                 temp_file.close()
                 return temp_file.name
             except Exception as e:
-                display.error("failed to download the file: %s" % str(e))
+                display.error(u"failed to download the file: %s" % to_text(e))
 
         return False
 
@@ -333,7 +334,7 @@ class GalaxyRole(object):
                                 self.path = self.paths[current + 1]
                                 error = False
                         if error:
-                            raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
+                            raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % str(self))
@@ -341,7 +342,7 @@ class GalaxyRole(object):
                     try:
                         os.unlink(tmp_file)
                     except (OSError, IOError) as e:
-                        display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
+                        display.warning(u"Unable to remove tmp file (%s): %s" % (tmp_file, to_text(e)))
                 return True
 
         return False

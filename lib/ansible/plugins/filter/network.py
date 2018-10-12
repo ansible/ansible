@@ -27,7 +27,7 @@ import string
 
 from xml.etree.ElementTree import fromstring
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.common._collections_compat import Mapping
@@ -96,7 +96,7 @@ def parse_cli(output, tmpl):
     try:
         template = Template()
     except ImportError as exc:
-        raise AnsibleError(str(exc))
+        raise AnsibleError(to_native(exc))
 
     spec = yaml.safe_load(open(tmpl).read())
     obj = {}
@@ -241,7 +241,7 @@ def parse_cli_textfsm(value, template):
     try:
         template = open(template)
     except IOError as exc:
-        raise AnsibleError(str(exc))
+        raise AnsibleError(to_native(exc))
 
     re_table = textfsm.TextFSM(template)
     fsm_results = re_table.ParseText(value)
@@ -333,7 +333,7 @@ def parse_xml(output, tmpl):
     try:
         template = Template()
     except ImportError as exc:
-        raise AnsibleError(str(exc))
+        raise AnsibleError(to_native(exc))
 
     spec = yaml.safe_load(open(tmpl).read())
     obj = {}

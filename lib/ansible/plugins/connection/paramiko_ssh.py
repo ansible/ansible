@@ -145,7 +145,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
     from __main__ import display
@@ -354,7 +354,7 @@ class Connection(ConnectionBase):
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except Exception as e:
-            msg = str(e)
+            msg = to_text(e)
             if "PID check failed" in msg:
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
             elif "Private key file is encrypted" in msg:
@@ -380,9 +380,9 @@ class Connection(ConnectionBase):
             self.ssh.get_transport().set_keepalive(5)
             chan = self.ssh.get_transport().open_session()
         except Exception as e:
-            msg = "Failed to open session"
-            if len(str(e)) > 0:
-                msg += ": %s" % str(e)
+            msg = u"Failed to open session"
+            if len(to_text(e)) > 0:
+                msg += u": %s" % to_text(e)
             raise AnsibleConnectionFailure(msg)
 
         # sudo usually requires a PTY (cf. requiretty option), therefore

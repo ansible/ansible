@@ -25,6 +25,7 @@ import re
 import collections
 
 from ansible import constants as C
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils.network.iosxr.iosxr import build_xml, etree_find
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
@@ -111,7 +112,7 @@ class Netconf(NetconfBase):
                 timeout=obj._play_context.timeout
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
 
         guessed_os = None
         for c in m.server_capabilities:

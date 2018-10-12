@@ -296,7 +296,7 @@ class Connection(NetworkConnectionBase):
                 ssh_config=ssh_config
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
         except ImportError as exc:
             raise AnsibleError("connection=netconf is not supported on {0}".format(self._network_os))
 

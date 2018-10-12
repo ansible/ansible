@@ -53,6 +53,7 @@ try:
 except ImportError:
     cli = None
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
@@ -124,8 +125,8 @@ class CallbackModule(CallbackBase):
             response = open_url(self.webhook_url, data=data)
             return response.read()
         except Exception as e:
-            self._display.warning('Could not submit message to Slack: %s' %
-                                  str(e))
+            self._display.warning(u'Could not submit message to Slack: %s' %
+                                  to_text(e))
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_name = os.path.basename(playbook._file_name)

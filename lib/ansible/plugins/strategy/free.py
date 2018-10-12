@@ -235,7 +235,7 @@ class StrategyModule(StrategyBase):
                     except AnsibleError as e:
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)
-                        display.warning(str(e))
+                        display.warning(to_text(e))
                         continue
 
                     for new_block in new_blocks:

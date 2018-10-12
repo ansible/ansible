@@ -965,7 +965,7 @@ class StrategyBase:
                     for host in included_file._hosts:
                         iterator.mark_host_failed(host)
                         self._tqm._failed_hosts[host.name] = True
-                    display.warning(str(e))
+                    display.warning(to_text(e))
                     continue
 
         # remove hosts from notification list
