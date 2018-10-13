@@ -59,6 +59,7 @@ options:
     connection_number:
         description:
             - Allows more than one connection to be established for the same user. Valid values include 1-100.
+        version_added: '2.8'
     cyberark_session:
         description:
             - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session.
