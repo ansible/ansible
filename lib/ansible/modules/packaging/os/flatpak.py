@@ -203,7 +203,10 @@ def _flatpak_command(module, noop, command):
     result['stderr'] = stderr_data
     if result['rc'] != 0:
         module.fail_json(msg="Failed to execute flatpak command", **result)
-    return stdout_data
+    if isinstance(stdout_data, str):
+        return stdout_data
+    else:
+        return stdout_data.decode('utf-8')
 
 
 def main():
