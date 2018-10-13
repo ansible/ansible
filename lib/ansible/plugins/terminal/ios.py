@@ -59,10 +59,7 @@ class TerminalModule(TerminalBase):
 
     def on_become(self, passwd=None):
         conn_prompt = self._get_prompt()
-        if conn_prompt:
-            if conn_prompt.endswith(b'#'):
-                return
-        else:
+        if not conn_prompt or conn_prompt.endswith(b'#'):
             return
 
         cmd = {u'command': u'enable'}
