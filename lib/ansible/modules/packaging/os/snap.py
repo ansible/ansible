@@ -141,11 +141,11 @@ def install_snaps(module, snap_names):
         exit_kwargs['changed'] = True
         module.exit_json(**exit_kwargs)
 
-    classic = '--classic' if module.params['classic'] else ''
-    channel = '--channel ' + module.params['channel']
+    classic = ['--classic'] if module.params['classic'] else []
+    channel = ['--channel ', module.params['channel']]
 
     snap_path = module.get_bin_path("snap", True)
-    cmd_parts = [snap_path, 'install'] + snaps_not_installed + [classic] + [channel]
+    cmd_parts = [snap_path, 'install'] + snaps_not_installed + classic + channel
     cmd = ' '.join(cmd_parts)
 
     # Actually install the snaps
