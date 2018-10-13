@@ -166,7 +166,6 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
-from requests.exceptions import ConnectTimeout
 
 HAS_PYPSRP = True
 PYPSRP_IMP_ERR = None
@@ -177,6 +176,7 @@ try:
     from pypsrp.powershell import PowerShell, RunspacePool
     from pypsrp.shell import Process, SignalCode, WinRS
     from pypsrp.wsman import WSMan, AUTH_KWARGS
+    from requests.exceptions import ConnectTimeout
 except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
