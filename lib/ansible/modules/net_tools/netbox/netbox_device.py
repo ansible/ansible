@@ -128,7 +128,6 @@ meta:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
 
-
 try:
     import pynetbox
     HAS_PYNETBOX = True
@@ -156,7 +155,7 @@ def netbox_delete_device(nb_endpoint, data):
         if endpoint.delete():
             return 'SUCCESS: %s deleted from Netbox' % (norm_data["name"])
     except AttributeError:
-        return 'FAILED: %s not found' % (norm_data["name"])
+        return AttributeError('FAILED: %s not found' % (norm_data["name"]))
 
 
 def main():

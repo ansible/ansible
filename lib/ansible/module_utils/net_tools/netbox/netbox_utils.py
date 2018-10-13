@@ -6,10 +6,6 @@
 __metaclass__ = type
 
 import json
-try:
-    import pynetbox
-except:
-    raise 'pynetbox is required for this module'
 
 API_APPS_ENDPOINTS = dict(
     circuits=[],
@@ -63,11 +59,11 @@ FACE_ID = dict(
     rear=1
 )
 
-NO_DEFAULT_ID = {
+NO_DEFAULT_ID = set([
     'primary_ip',
     'primary_ip4',
     'primary_ip6'
-}
+])
 
 DEVICE_STATUS = dict(
     offline=0,
@@ -125,11 +121,7 @@ def find_ids(nb, data):
             app = find_app(endpoint)
             nb_app = getattr(nb, app)
             nb_endpoint = getattr(nb_app, endpoint)
-            if 'interface' in k:
-                try:
-                    query_id = nb_endpoint.get(**{"name": v["name"], "device": v["device"]})
-                except pynetbox.RequestError as e:
-                    return e.error
+
             try:
                 query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
             except pynetbox.RequestError as e:
