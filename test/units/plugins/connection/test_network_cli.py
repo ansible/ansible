@@ -25,8 +25,8 @@ import json
 
 from io import StringIO
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext

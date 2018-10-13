@@ -20,8 +20,8 @@
 import os
 from mock import patch, MagicMock
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 RESP_STATUS = 0
 RESP_REASON = 1
