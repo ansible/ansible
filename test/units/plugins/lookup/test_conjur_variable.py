@@ -22,7 +22,7 @@ __metaclass__ = type
 
 
 import pytest
-from ansible.compat.tests.mock import MagicMock
+from units.compat.mock import MagicMock
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import http_client
 from ansible.plugins.lookup import conjur_variable
