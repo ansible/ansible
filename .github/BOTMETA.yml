@@ -293,6 +293,7 @@ files:
   $modules/packaging/os/redhat_subscription.py: alikins kahowell
   $modules/packaging/os/rhn_channel.py: alikins
   $modules/packaging/os/rhn_register.py: $team_rhn
+  $modules/packaging/os/snap.py: angristan
   $modules/packaging/os/yum.py: $team_ansible kustodian
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
