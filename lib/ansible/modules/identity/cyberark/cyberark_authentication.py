@@ -56,6 +56,9 @@ options:
         default: 'no'
         description:
             - Whether or not users will be authenticated via a RADIUS server. Valid values are true/false.
+    connection_number:
+        description:
+            - Allows more than one connection to be established for the same user. Valid values include 1-100.
     cyberark_session:
         description:
             - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session.
@@ -128,6 +131,7 @@ def processAuthentication(module):
     use_shared_logon_authentication = module.params[
         "use_shared_logon_authentication"]
     use_radius_authentication = module.params["use_radius_authentication"]
+    connection_number = module.params["connection_number"]
     state = module.params["state"]
     cyberark_session = module.params["cyberark_session"]
 
@@ -151,7 +155,7 @@ def processAuthentication(module):
             end_point = "/PasswordVault/WebServices/auth/Cyberark/CyberArkAuthenticationService.svc/Logon"
 
             # The payload will contain username, password
-            # and optionally use_radius_authentication and new_password
+            # and optionally use_radius_authentication, new_password and connection_number
             payload_dict = {"username": username, "password": password}
 
             if use_radius_authentication:
@@ -159,6 +163,9 @@ def processAuthentication(module):
 
             if new_password is not None:
                 payload_dict["newPassword"] = new_password
+
+            if connection_number:
+                payload_dict["connectionNumber"] = connection_number
 
             payload = json.dumps(payload_dict)
 
@@ -266,6 +273,7 @@ def main():
         "new_password": {"type": "str", "no_log": True},
         "use_shared_logon_authentication": {"default": False, "type": "bool"},
         "use_radius_authentication": {"default": False, "type": "bool"},
+        "connection_number": {"type": "str"},
         "state": {"type": "str",
                   "choices": ["present", "absent"],
                   "default": "present"},
