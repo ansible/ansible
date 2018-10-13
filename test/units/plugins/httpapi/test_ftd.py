@@ -22,9 +22,9 @@ from io import BytesIO
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import mock_open, patch
+from units.compat import mock
+from units.compat import unittest
+from units.compat.mock import mock_open, patch
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams

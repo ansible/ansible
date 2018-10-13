@@ -7,7 +7,7 @@
 
 from ansible.modules.monitoring import icinga2_feature
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.module_utils import basic
 
 
