@@ -120,6 +120,7 @@ stdout:
 
 import subprocess
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils import _text
 
 
 def add_remote(module, binary, name, flatpakrepo_url, method):
@@ -168,7 +169,7 @@ def _flatpak_command(module, noop, command):
     result['stderr'] = stderr_data
     if result['rc'] != 0:
         module.fail_json(msg="Failed to execute flatpak command", **result)
-    return stdout_data
+    return _text.to_native(stdout_data)
 
 
 def main():

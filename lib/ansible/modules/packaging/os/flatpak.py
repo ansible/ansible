@@ -127,6 +127,7 @@ stdout:
 import subprocess
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils import _text
 
 
 def install_flat(module, binary, remote, name, method):
@@ -203,10 +204,7 @@ def _flatpak_command(module, noop, command):
     result['stderr'] = stderr_data
     if result['rc'] != 0:
         module.fail_json(msg="Failed to execute flatpak command", **result)
-    if isinstance(stdout_data, str):
-        return stdout_data
-    else:
-        return stdout_data.decode('utf-8')
+    return _text.to_native(stdout_data)
 
 
 def main():
