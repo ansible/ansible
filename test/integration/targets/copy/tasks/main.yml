@@ -9,15 +9,25 @@
         local_temp_dir: '{{ tempfile_result.stdout }}'
         # output_dir is hardcoded in test/runner/lib/executor.py and created there
         remote_dir: '{{ output_dir }}'
+        symlinks:
+          ansible-test-abs-link: /tmp/ansible-test-abs-link
+          ansible-test-abs-link-dir: /tmp/ansible-test-abs-link-dir
+          circles: ../
+          invalid: invalid
+          invalid2: ../invalid
+          out_of_tree_circle: /tmp/ansible-test-link-dir/out_of_tree_circle
+          subdir3: ../subdir2/subdir3
 
     - file: path={{local_temp_dir}} state=directory
       name: ensure temp dir exists
 
     # file cannot do this properly, use command instead
-    - name: Create circular symbolic link
-      command: ln -s ../ circles
+    - name: Create symbolic link
+      command: "ln -s '{{ item.value }}' '{{ item.key }}'"
       args:
         chdir: '{{role_path}}/files/subdir/subdir1'
+        warn: no
+      with_dict: "{{ symlinks }}"
 
     - name: Create remote unprivileged remote user
       user:
@@ -55,11 +65,12 @@
         state: absent
       connection: local
 
-    - name: Remove circular symbolic link
+    - name: Remove symbolic link
       file:
-        path: '{{ role_path }}/files/subdir/subdir1/circles'
+        path: '{{ role_path }}/files/subdir/subdir1/{{ item.key }}'
         state: absent
       connection: local
+      with_dict: "{{ symlinks }}"
 
     - name: Remote unprivileged remote user
       user:
