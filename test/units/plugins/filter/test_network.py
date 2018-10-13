@@ -22,7 +22,7 @@ import sys
 
 import pytest
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5
 from ansible.errors import AnsibleFilterError
 

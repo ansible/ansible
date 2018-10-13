@@ -3,7 +3,7 @@ __metaclass__ = type
 
 import json
 import os
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.cnos import cnos_bgp
 from units.modules.utils import set_module_args
 from .cnos_module import TestCnosModule, load_fixture

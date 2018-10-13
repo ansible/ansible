@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nso import nso_config
 from units.modules.utils import set_module_args, AnsibleFailJson
 from . import nso_module

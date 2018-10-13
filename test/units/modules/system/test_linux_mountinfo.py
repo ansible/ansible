@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils._text import to_bytes
 
 from ansible.modules.system.mount import get_linux_mounts

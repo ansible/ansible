@@ -19,12 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-'''
-This module contains things that are only needed for compat in the testsuites,
-not in ansible itself.  If you are not installing the test suite, you can
-safely remove this subdirectory.
-'''
-
 #
 # Compat for python2.7
 #

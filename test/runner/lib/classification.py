@@ -614,6 +614,11 @@ class PathMapper(object):
                     'units': path,
                 }
 
+            if path.startswith('test/units/compat/'):
+                return {
+                    'units': 'test/units/',
+                }
+
             # changes to files which are not unit tests should trigger tests from the nearest parent directory
 
             test_path = os.path.dirname(path)

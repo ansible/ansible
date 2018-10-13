@@ -4,7 +4,7 @@
 
 import json
 
-from ansible.compat.tests.mock import MagicMock
+from units.compat.mock import MagicMock
 from ansible.modules.source_control import gitlab_project
 
 import pytest

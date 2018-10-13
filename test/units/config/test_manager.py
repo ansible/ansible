@@ -5,7 +5,7 @@ __metaclass__ = type
 import os
 import os.path
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.config.manager import ConfigManager, Setting, ensure_type, resolve_path, find_ini_config_file
 

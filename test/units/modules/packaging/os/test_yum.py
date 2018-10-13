@@ -1,6 +1,6 @@
 
 # -*- coding: utf-8 -*-
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.modules.packaging.os.yum import YumModule
 

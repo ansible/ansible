@@ -6,7 +6,7 @@ from ansible.modules.storage.netapp.netapp_e_alerts import Alerts
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
-from ansible.compat.tests import mock
+from units.compat import mock
 
 
 class AlertsTest(ModuleTestCase):

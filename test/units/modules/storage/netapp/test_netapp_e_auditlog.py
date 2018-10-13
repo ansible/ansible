@@ -5,7 +5,7 @@ from ansible.modules.storage.netapp.netapp_e_auditlog import AuditLog
 from units.modules.utils import AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
-from ansible.compat.tests import mock
+from units.compat import mock
 
 
 class AuditLogTests(ModuleTestCase):

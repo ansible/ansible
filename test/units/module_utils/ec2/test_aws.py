@@ -25,7 +25,7 @@ except:
 
 from nose.plugins.skip import SkipTest
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.ec2 import AWSRetry
 
 if not HAS_BOTO3:

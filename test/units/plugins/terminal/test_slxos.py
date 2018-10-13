@@ -24,7 +24,7 @@ import json
 
 from mock import MagicMock
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.plugins.terminal import slxos
 from ansible.errors import AnsibleConnectionFailure
 

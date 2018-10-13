@@ -24,7 +24,7 @@ import copy
 import pytest
 
 from ansible.module_utils.aws.core import HAS_BOTO3
-from ansible.compat.tests.mock import MagicMock
+from units.compat.mock import MagicMock
 from units.modules.utils import set_module_args
 
 if not HAS_BOTO3:

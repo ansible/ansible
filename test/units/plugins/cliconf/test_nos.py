@@ -24,7 +24,7 @@ import json
 
 from mock import MagicMock, call
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.plugins.cliconf import nos
 
 FIXTURE_DIR = b'%s/fixtures/nos' % (

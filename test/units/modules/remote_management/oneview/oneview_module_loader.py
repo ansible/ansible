@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import sys
-from ansible.compat.tests.mock import patch, Mock
+from units.compat.mock import patch, Mock
 
 # FIXME: These should be done inside of a fixture so that they're only mocked during
 # these unittests
