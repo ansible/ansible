@@ -99,8 +99,10 @@ cmd:
     returned: When changed is true
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import operator
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def snap_exists(module, snap_name):
@@ -121,6 +123,18 @@ def is_snap_installed(module, snap_name):
     return rc == 0
 
 
+def get_snap_for_action(module):
+    """Construct a list of snaps to use for current action."""
+    snaps = module.params['name']
+
+    is_present_state = module.params['state'] == 'present'
+    negation_predicate = bool if is_present_state else operator.not_
+    def predicate(s):
+        return negation_predicate(is_snap_installed(module, s))
+
+    return [s for s in snaps if predicate(s)]
+
+
 def install_snaps(module, snap_names):
     exit_kwargs = {
         'classic': module.params['classic'],
@@ -128,12 +142,7 @@ def install_snaps(module, snap_names):
         'changed': False,
     }
 
-    snaps_not_installed = list()
-    for snap_name in snap_names:
-        if is_snap_installed(module, snap_name):
-            continue
-        snaps_not_installed.append(snap_name)
-
+    snaps_not_installed = get_snap_for_action(module)
     if not snaps_not_installed:
         module.exit_json(**exit_kwargs)
 
@@ -164,11 +173,7 @@ def install_snaps(module, snap_names):
 
 
 def remove_snaps(module, snap_names):
-    snaps_installed = list()
-    for snap_name in snap_names:
-        if not is_snap_installed(module, snap_name):
-            continue
-        snaps_installed.append(snap_name)
+    snaps_installed = get_snap_for_action(module)
     if not snaps_installed:
         module.exit_json(changed=False)
 
@@ -200,20 +205,18 @@ def main():
         argument_spec=module_args,
         supports_check_mode=True,
     )
-    # This argument is a list and will be treated as such, even if there is only one snap
-    snap_names = module.params['name']
     state = module.params['state']
 
     # Check if snaps are valid
-    for snap_name in snap_names:
+    for snap_name in module.params['name']:
         if not snap_exists(module, snap_name):
             module.fail_json(msg="No snap matching '%s' available." % snap_name)
 
     # Apply changes to the snaps
     if state == 'present':
-        install_snaps(module, snap_names)
+        install_snaps(module)
     elif state == 'absent':
-        remove_snaps(module, snap_names)
+        remove_snaps(module)
 
 
 if __name__ == '__main__':
