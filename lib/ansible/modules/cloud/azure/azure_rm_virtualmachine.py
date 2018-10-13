@@ -137,7 +137,7 @@ options:
             - storage_container
     storage_blob_name:
         description:
-            - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
+            - Name of the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
               the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
         aliases:
             - storage_blob
