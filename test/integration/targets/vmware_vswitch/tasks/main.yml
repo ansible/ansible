@@ -35,7 +35,6 @@
 - debug:
     var: vcsim_instance
 
-# FIXME: Implement check-mode support
 - name: Add a nic to a switch (check-mode)
   vmware_vswitch: &add_nic
     hostname: '{{ vcsim }}'
@@ -61,7 +60,6 @@
     that:
     - add_nic_run.changed == true
 
-# FIXME: Implement check-mode support
 - name: Add a nic to a switch again (check-mode)
   vmware_vswitch: *add_nic
   check_mode: yes
@@ -90,7 +88,6 @@
   check_mode: yes
   register: remove_nic_check
 
-# FIXME: Implement check-mode support
 - assert:
     that:
     - remove_nic_check.changed == true
@@ -109,7 +106,6 @@
   check_mode: yes
   register: remove_nic_again_check
 
-# FIXME: Implement check-mode support
 - assert:
     that:
     - remove_nic_again_check_mode.changed == false
@@ -149,3 +145,69 @@
 - assert:
     that:
     - add_vswitch_with_host_system.changed == true
+
+- name: Configure teaming
+  vmware_vswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch: vmswitch_0002
+    nics: [vnic_1, vnic_2]
+    esxi_hostname: hs1
+    teaming:
+      load_balancing: loadbalance_srcid
+      network_failure_detection: link_status_only
+      notify_switches: True
+      failback: True
+      active_nics: [vnic_1, vnic_2]
+  register: configure_teaming
+
+- debug: var=configure_teaming
+
+- assert:
+    that:
+    - configure_teaming.changed == true
+
+- name: Configure security
+  vmware_vswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch: vmswitch_0002
+    nics: [vnic_1, vnic_2]
+    esxi_hostname: hs1
+    security:
+      promiscuous_mode: False
+      mac_changes: False
+      forged_transmits: False
+  register: configure_security
+
+- debug: var=configure_security
+
+- assert:
+    that:
+    - configure_security.changed == true
+
+- name: Configure traffic shaping
+  vmware_vswitch:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch: vmswitch_0002
+    nics: [vnic_1, vnic_2]
+    esxi_hostname: hs1
+    traffic_shaping:
+      enabled: True
+      average_bandwidth: 200000
+      peak_bandwidth: 200000
+      burst_size: 204800
+  register: configure_traffic_shaping
+
+- debug: var=configure_traffic_shaping
+
+- assert:
+    that:
+    - configure_traffic_shaping.changed == true
