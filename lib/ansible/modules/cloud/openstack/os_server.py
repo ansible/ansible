@@ -23,7 +23,7 @@ extends_documentation_fragment: openstack
 version_added: "2.0"
 author: "Monty Taylor (@emonty)"
 description:
-   - Create or Remove compute instances from OpenStack.
+   - Create or Delete compute instances from OpenStack.
 options:
    name:
      description:
