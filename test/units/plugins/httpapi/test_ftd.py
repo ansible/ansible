@@ -24,6 +24,7 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 from units.compat import mock
 from units.compat import unittest
+from units.compat.builtins import BUILTINS
 from units.compat.mock import mock_open, patch
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError
@@ -31,11 +32,6 @@ from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams
 from ansible.module_utils.network.ftd.fdm_swagger_client import SpecProp, FdmSwaggerParser
 from ansible.module_utils.six import PY3, StringIO
 from ansible.plugins.httpapi.ftd import HttpApi
-
-if PY3:
-    BUILTINS_NAME = 'builtins'
-else:
-    BUILTINS_NAME = '__builtin__'
 
 EXPECTED_BASE_HEADERS = {
     'Accept': 'application/json',
@@ -191,7 +187,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response('File content')
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             self.ftd_plugin.download_file('/files/1', '/tmp/test.txt')
 
         open_mock.assert_called_once_with('/tmp/test.txt', 'wb')
@@ -206,7 +202,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = response, response_data
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             self.ftd_plugin.download_file('/files/1', '/tmp/')
 
         open_mock.assert_called_once_with('/tmp/%s' % filename, 'wb')
@@ -219,7 +215,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response({'id': '123'})
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             resp = self.ftd_plugin.upload_file('/tmp/test.txt', '/files')
 
         assert {'id': '123'} == resp
@@ -237,7 +233,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response('invalidJsonResponse')
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             with self.assertRaises(ConnectionError) as res:
                 self.ftd_plugin.upload_file('/tmp/test.txt', '/files')
 

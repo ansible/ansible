@@ -22,7 +22,8 @@ __metaclass__ = type
 
 import os
 
-from units.compat import BUILTINS, unittest
+from units.compat import unittest
+from units.compat.builtins import BUILTINS
 from units.compat.mock import mock_open, patch, MagicMock
 from ansible.plugins.loader import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
