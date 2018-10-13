@@ -26,11 +26,11 @@ requirements:
   - pynetbox
 version_added: '2.8'
 options:
-  api_endpoint:
+  netbox_url:
     description:
       - URL of the Netbox instance resolvable by Ansible control host
     required: true
-  api_token:
+  netbox_token:
     description:
       - The token created within Netbox to authorize API access
     required: true
@@ -45,7 +45,7 @@ options:
       - platform
       - serial
       - asset_tag
-      - site (required if state is C(present)
+      - site (required if state is C(present))
       - rack
       - position
       - face
@@ -64,6 +64,7 @@ options:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
     default: 'yes'
+    type: bool
 '''
 
 EXAMPLES = r'''
@@ -155,7 +156,7 @@ def netbox_delete_device(nb_endpoint, data):
         if endpoint.delete():
             return 'SUCCESS: %s deleted from Netbox' % (norm_data["name"])
     except AttributeError:
-        return AttributeError('FAILED: %s not found' % (norm_data["name"]))
+        return 'FAILED: %s not found' % (norm_data["name"])
 
 
 def main():

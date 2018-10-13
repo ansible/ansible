@@ -122,10 +122,7 @@ def find_ids(nb, data):
             nb_app = getattr(nb, app)
             nb_endpoint = getattr(nb_app, endpoint)
 
-            try:
-                query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
-            except pynetbox.RequestError as e:
-                return e.error
+            query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
 
             if k in NO_DEFAULT_ID:
                 pass
