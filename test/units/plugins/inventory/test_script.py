@@ -26,8 +26,8 @@ import pytest
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.loader import PluginLoader
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
+from units.compat import mock
+from units.compat import unittest
 from ansible.module_utils._text import to_bytes, to_native
 
 

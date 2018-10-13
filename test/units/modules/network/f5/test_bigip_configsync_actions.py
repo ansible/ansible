@@ -28,8 +28,8 @@ from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
+from units.compat import unittest
+from units.compat.mock import patch, Mock
 from ansible.module_utils.f5_utils import AnsibleF5Client
 from units.modules.utils import set_module_args
 

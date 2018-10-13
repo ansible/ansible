@@ -1,5 +1,5 @@
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from units.mock.loader import DictDataLoader
 
 from ansible.plugins.strategy import SharedPluginLoaderObj

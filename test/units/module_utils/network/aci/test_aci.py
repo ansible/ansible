@@ -20,7 +20,7 @@
 
 import sys
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.network.aci.aci import ACIModule
 from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_native

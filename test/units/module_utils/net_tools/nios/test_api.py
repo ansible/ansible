@@ -7,8 +7,8 @@ __metaclass__ = type
 import sys
 import copy
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, Mock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock, Mock
 from ansible.module_utils.net_tools.nios import api
 
 

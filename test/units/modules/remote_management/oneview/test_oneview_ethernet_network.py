@@ -17,7 +17,7 @@
 
 import yaml
 
-from ansible.compat.tests import unittest, mock
+from units.compat import unittest, mock
 from oneview_module_loader import EthernetNetworkModule, OneViewModuleResourceNotFound
 from hpe_test_utils import OneViewBaseTestCase
 

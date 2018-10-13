@@ -8,8 +8,8 @@
 import os
 
 from units.modules.utils import ModuleTestCase, set_module_args
-from ansible.compat.tests.mock import patch
-from ansible.compat.tests.mock import Mock
+from units.compat.mock import patch
+from units.compat.mock import Mock
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.system.java_keystore import create_jks, cert_changed, ArgumentSpec
 

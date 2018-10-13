@@ -2,7 +2,7 @@
 # Copyright (c) 2018 Marcus Watkins <marwatk@marcuswatkins.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.source_control import gitlab_deploy_key
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic

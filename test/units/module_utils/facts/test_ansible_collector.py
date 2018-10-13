@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 # for testing
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock, patch
+from units.compat import unittest
+from units.compat.mock import Mock, patch
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts import ansible_collector

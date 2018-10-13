@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 from ansible.modules.network.nxos import nxos_config
 from ansible.plugins.cliconf.nxos import Cliconf
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
