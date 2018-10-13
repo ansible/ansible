@@ -255,6 +255,8 @@ def main():
                 if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                                (host, port, to_native(e)), exception=traceback.format_exc())
+            except:
+                pass
 
         if not secure_state:
             smtp = smtplib.SMTP(timeout=timeout)
