@@ -550,7 +550,7 @@ if ($bytes_read -gt 0) {
             # create our own output based on the properties if that is the
             # case+
             try:
-                output_msg = str(output)
+                output_msg = to_text(output)
             except TypeError:
                 if isinstance(output, GenericComplexObject):
                     obj_lines = output.property_sets
