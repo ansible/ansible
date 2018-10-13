@@ -43,6 +43,7 @@ class ActionModule(ActionBase):
     DEPRECATED_ARGS = {}
 
     BOOT_TIME_COMMANDS = {
+        'linux': 'cat /proc/sys/kernel/random/boot_id',
         'openbsd': "/sbin/sysctl kern.boottime",
     }
 
@@ -109,22 +110,6 @@ class ActionModule(ActionBase):
 
         boot_time_command = self.BOOT_TIME_COMMANDS.get(distribution, self.DEFAULT_BOOT_TIME_COMMAND)
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
-
-        # For single board computers, e.g., Raspberry Pi, that lack a real time clock and are using fake-hwclock
-        # launched by systemd, the update of utmp/wtmp is not done correctly.
-        # Fall back to using uptime -s for those systems.
-        # https://github.com/systemd/systemd/issues/6057
-        if '1970-01-01 00:00' in command_result['stdout']:
-            stdout += command_result['stdout']
-            stderr += command_result['stderr']
-            command_result = self._low_level_execute_command('uptime -s', sudoable=self.DEFAULT_SUDOABLE)
-
-        # This is a last resort for bare Linux systems (e.g. OpenELEC) where 'who -b' or 'uptime -s' are not supported.
-        # Other options like parsing /proc/uptime or default uptime output are less reliable than this
-        if command_result['rc'] != 0:
-            stdout += command_result['stdout']
-            stderr += command_result['stderr']
-            command_result = self._low_level_execute_command('cat /proc/sys/kernel/random/boot_id', sudoable=self.DEFAULT_SUDOABLE)
 
         if command_result['rc'] != 0:
             stdout += command_result['stdout']
