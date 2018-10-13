@@ -213,10 +213,11 @@ def main():
             module.fail_json(msg="No snap matching '%s' available." % snap_name)
 
     # Apply changes to the snaps
-    if state == 'present':
-        install_snaps(module)
-    elif state == 'absent':
-        remove_snaps(module)
+    action_map = {
+        'present': install_snaps,
+        'absent': remove_snaps,
+    }
+    action_map[state](module)
 
 
 if __name__ == '__main__':
