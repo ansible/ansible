@@ -300,7 +300,8 @@ class NetworkConnectionBase(ConnectionBase):
         self._local = connection_loader.get('local', play_context, '/dev/null')
         self._local.set_options()
 
-        self._implementation_plugins = []
+        self._sub_plugins = []
+        self._cached_variables = (None, None, None)
 
         # reconstruct the socket_path and set instance values accordingly
         self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
@@ -311,8 +312,8 @@ class NetworkConnectionBase(ConnectionBase):
             return self.__dict__[name]
         except KeyError:
             if not name.startswith('_'):
-                for plugin in self._implementation_plugins:
-                    method = getattr(plugin, name, None)
+                for plugin in self._sub_plugins:
+                    method = getattr(plugin['obj'], name, None)
                     if method is not None:
                         return method
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
@@ -340,18 +341,16 @@ class NetworkConnectionBase(ConnectionBase):
     def close(self):
         if self._connected:
             self._connected = False
-        self._implementation_plugins = []
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-        self.set_implementation_plugin_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-    def set_implementation_plugin_options(self, task_keys=None, var_options=None, direct=None):
-        '''
-        initialize implementation plugin options
-        '''
-        for plugin in self._implementation_plugins:
-            plugin.set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        for plugin in self._sub_plugins:
+            if plugin['type'] != 'external':
+                try:
+                    plugin['obj'].set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+                except AttributeError:
+                    pass
 
     def _update_connection_state(self):
         '''

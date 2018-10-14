@@ -70,7 +70,6 @@ In this use case / example, we will be selecting a virtual machine template and 
     ---
     - name: Create a VM from a template
       hosts: localhost
-      connection: local
       gather_facts: no
       tasks:
       - name: Clone the template

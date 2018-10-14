@@ -21,7 +21,7 @@ notes:
 description:
     - Creates or terminates ecs clusters.
 version_added: "2.0"
-author: Mark Chance(@Java1Guy)
+author: Mark Chance (@Java1Guy)
 requirements: [ boto3 ]
 options:
     state:

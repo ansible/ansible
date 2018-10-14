@@ -308,16 +308,11 @@ class VMwareHostVirtualSwitch(PyVmomi):
                 vswitch_pnic_info['num_ports'] != self.number_of_ports:
             diff = True
 
-        if not all_nics:
-            diff = False
-            results['result'] += " as no NICs provided / found which are required while updating vSwitch."
-
         try:
             if diff:
-                # vSwitch needs every parameter again while updating,
-                # even if we are updating any one of them
                 vss_spec = vim.host.VirtualSwitch.Specification()
-                vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=all_nics)
+                if all_nics:
+                    vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=all_nics)
                 vss_spec.numPorts = self.number_of_ports
                 vss_spec.mtu = self.mtu
 

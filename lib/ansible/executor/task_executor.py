@@ -171,9 +171,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')))
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._play_context.no_log)
         except Exception as e:
-            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()), stdout='')
+            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
+                        stdout='', _ansible_no_log=self._play_context.no_log)
         finally:
             try:
                 self._connection.close()
@@ -303,6 +304,7 @@ class TaskExecutor:
             # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
             items = self._squash_items(items, loop_var, task_vars)
 
+        no_log = False
         for item_index, item in enumerate(items):
             task_vars[loop_var] = item
             if index_var:
@@ -337,6 +339,9 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
+            # update 'general no_log' based on specific no_log
+            no_log = no_log or tmp_task.no_log
+
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
@@ -359,6 +364,8 @@ class TaskExecutor:
             )
             results.append(res)
             del task_vars[loop_var]
+
+        self._task.no_log = no_log
 
         return results
 
@@ -552,6 +559,11 @@ class TaskExecutor:
             tmp_args = module_defaults[self._task.action].copy()
             tmp_args.update(self._task.args)
             self._task.args = tmp_args
+        if self._task.action in C.config.module_defaults_groups:
+            for group in C.config.module_defaults_groups.get(self._task.action, []):
+                tmp_args = (module_defaults.get('group/{0}'.format(group)) or {}).copy()
+                tmp_args.update(self._task.args)
+                self._task.args = tmp_args
 
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
@@ -629,6 +641,7 @@ class TaskExecutor:
                 if self._task.action in ('set_fact', 'include_vars'):
                     vars_copy.update(result['ansible_facts'])
                 else:
+                    # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     vars_copy.update(namespace_facts(result['ansible_facts']))
                     if C.INJECT_FACTS_AS_VARS:
                         vars_copy.update(clean_facts(result['ansible_facts']))
@@ -690,6 +703,7 @@ class TaskExecutor:
             if self._task.action in ('set_fact', 'include_vars'):
                 variables.update(result['ansible_facts'])
             else:
+                # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 variables.update(namespace_facts(result['ansible_facts']))
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(result['ansible_facts']))
@@ -737,8 +751,8 @@ class TaskExecutor:
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
-        normal_handler = self._shared_loader_obj.action_loader.get(
-            'normal',
+        async_handler = self._shared_loader_obj.action_loader.get(
+            'async_status',
             task=async_task,
             connection=self._connection,
             play_context=self._play_context,
@@ -752,7 +766,7 @@ class TaskExecutor:
             time.sleep(self._task.poll)
 
             try:
-                async_result = normal_handler.run(task_vars=task_vars)
+                async_result = async_handler.run(task_vars=task_vars)
                 # We do not bail out of the loop in cases where the failure
                 # is associated with a parsing error. The async_runner can
                 # have issues which result in a half-written/unparseable result
@@ -769,7 +783,7 @@ class TaskExecutor:
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
-                    normal_handler._connection.reset()
+                    async_handler._connection.reset()
                 except AttributeError:
                     pass
 
@@ -828,13 +842,28 @@ class TaskExecutor:
             self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
-            # We don't need to send the entire contents of variables to ansible-connection
-            filtered_vars = dict((key, value) for key, value in variables.items() if key.startswith('ansible'))
-            socket_path = self._start_connection(filtered_vars)
+
+            options = self._get_persistent_connection_options(connection, variables, templar)
+            socket_path = self._start_connection(options)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
         return connection
+
+    def _get_persistent_connection_options(self, connection, variables, templar):
+        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+
+        option_vars = C.config.get_plugin_vars('connection', connection._load_name)
+        for plugin in connection._sub_plugins:
+            if plugin['type'] != 'external':
+                option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
+
+        options = {}
+        for k in option_vars:
+            if k in final_vars:
+                options[k] = templar.template(final_vars[k])
+
+        return options
 
     def _set_connection_options(self, variables, templar):
 
@@ -907,22 +936,20 @@ class TaskExecutor:
         '''
         Starts the persistent connection
         '''
-        master, slave = pty.openpty()
+        candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
+        candidate_paths.extend(os.environ['PATH'].split(os.pathsep))
+        for dirname in candidate_paths:
+            ansible_connection = os.path.join(dirname, 'ansible-connection')
+            if os.path.isfile(ansible_connection):
+                break
+        else:
+            raise AnsibleError("Unable to find location of 'ansible-connection'. "
+                               "Please set or check the value of ANSIBLE_CONNECTION_PATH")
 
         python = sys.executable
-
-        def find_file_in_path(filename):
-            # Check $PATH first, followed by same directory as sys.argv[0]
-            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
-            for dirname in paths:
-                fullpath = os.path.join(dirname, filename)
-                if os.path.isfile(fullpath):
-                    return fullpath
-
-            raise AnsibleError("Unable to find location of '%s'" % filename)
-
+        master, slave = pty.openpty()
         p = subprocess.Popen(
-            [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
+            [python, ansible_connection, to_text(os.getppid())],
             stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         os.close(slave)

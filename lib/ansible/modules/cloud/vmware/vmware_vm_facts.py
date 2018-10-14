@@ -20,6 +20,7 @@ module: vmware_vm_facts
 short_description: Return basic facts pertaining to a vSphere virtual machine guest
 description:
 - Return basic facts pertaining to a vSphere virtual machine guest.
+- Cluster name as fact is added in version 2.7.
 version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
@@ -84,6 +85,21 @@ virtual_machines:
   description: dictionary of virtual machines and their facts
   returned: success
   type: dict
+  sample:
+    {
+      "ubuntu_t": {
+        "cluster": null,
+        "esxi_hostname": "10.76.33.226",
+        "guest_fullname": "Ubuntu Linux (64-bit)",
+        "ip_address": "",
+        "mac_address": [
+            "00:50:56:87:a5:9a"
+        ],
+        "power_state": "poweredOff",
+        "uuid": "4207072c-edd8-3bd5-64dc-903fd3a0db04",
+        "vm_network": {}
+      }
+    }
 '''
 
 try:
@@ -135,8 +151,14 @@ class VmwareVmFacts(PyVmomi):
                             net_dict[device.macAddress]['ipv4'].append(ip_addr)
 
             esxi_hostname = None
+            esxi_parent = None
             if summary.runtime.host:
                 esxi_hostname = summary.runtime.host.summary.config.name
+                esxi_parent = summary.runtime.host.parent
+
+            cluster_name = None
+            if esxi_parent and isinstance(esxi_parent, vim.ClusterComputeResource):
+                cluster_name = summary.runtime.host.parent.name
 
             virtual_machine = {
                 summary.config.name: {
@@ -147,6 +169,7 @@ class VmwareVmFacts(PyVmomi):
                     "uuid": summary.config.uuid,
                     "vm_network": net_dict,
                     "esxi_hostname": esxi_hostname,
+                    "cluster": cluster_name,
                 }
             }
 

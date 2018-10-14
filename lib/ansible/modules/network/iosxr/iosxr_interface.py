@@ -74,7 +74,7 @@ options:
   aggregate:
     description:
       - List of Interface definitions. Include multiple interface configurations together,
-        one each on a seperate line
+        one each on a separate line
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -634,7 +634,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
-                         version='4 releases from v2.5')
+                         version='2.9')
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         if module.params['active'] == 'preconfigure':

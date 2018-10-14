@@ -262,7 +262,7 @@ dest:
     sample: "/etc/pam.d/system-auth"
 backupdest:
     description:
-    - "The file name of the the backup file, if created."
+    - "The file name of the backup file, if created."
     returned: success
     type: string
     version_added: 2.6
@@ -335,7 +335,7 @@ class PamdInclude(PamdLine):
 class PamdRule(PamdLine):
 
     valid_types = ['account', 'auth', 'password', 'session']
-    valid_simple_controls = ['required', 'requisite', 'sufficient', 'optional', 'include', 'substack']
+    valid_simple_controls = ['required', 'requisite', 'sufficient', 'optional', 'include', 'substack', 'definitive']
     valid_control_values = ['success', 'open_err', 'symbol_err', 'service_err', 'system_err', 'buf_err',
                             'perm_denied', 'auth_err', 'cred_insufficient', 'authinfo_unavail', 'user_unknown',
                             'maxtries', 'new_authtok_reqd', 'acct_expired', 'session_err', 'cred_unavail',

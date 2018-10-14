@@ -12,7 +12,7 @@ installed on the host running Ansible.
 
 .. code-block:: bash
 
-    $ pip install ansible[azure]
+    $ pip install 'ansible[azure]'
 
 If you are running Ansible from source, you can install the dependencies from the
 root directory of the Ansible repo.
@@ -244,7 +244,7 @@ virtual network already with an existing subnet, you can run the following to cr
       name: testvm10
       vm_size: Standard_D1
       admin_username: chouseknecht
-      ssh_password: false
+      ssh_password_enabled: false
       ssh_public_keys: "{{ ssh_keys }}"
       image:
         offer: CentOS

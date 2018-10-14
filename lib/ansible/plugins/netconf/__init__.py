@@ -102,7 +102,10 @@ class NetconfBase(AnsiblePlugin):
 
     def __init__(self, connection):
         self._connection = connection
-        self.m = self._connection._manager
+
+    @property
+    def m(self):
+        return self._connection._manager
 
     @ensure_connected
     def rpc(self, name):
@@ -111,8 +114,6 @@ class NetconfBase(AnsiblePlugin):
         :param name: Name of rpc in string format
         :return: Received rpc response from remote host
         """
-        """RPC to be execute on remote device
-           :name: Name of rpc in string format"""
         try:
             obj = to_ele(name)
             resp = self.m.rpc(obj)
@@ -155,7 +156,7 @@ class NetconfBase(AnsiblePlugin):
         return response
 
     @ensure_connected
-    def edit_config(self, config, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
+    def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
         """
         Loads all or part of the specified *config* to the *target* configuration datastore.
         :param config: Is the configuration, which must be rooted in the `config` element.
@@ -168,6 +169,8 @@ class NetconfBase(AnsiblePlugin):
                              The `"rollback-on-error"` *error_option* depends on the `:rollback-on-error` capability.
         :return: Returns xml string containing the RPC response received from remote host
         """
+        if config is None:
+            raise ValueError('config value must be provided')
         resp = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
                                   error_option=error_option)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
@@ -196,7 +199,7 @@ class NetconfBase(AnsiblePlugin):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def dispatch(self, rpc_command, source=None, filter=None):
+    def dispatch(self, rpc_command=None, source=None, filter=None):
         """
         Execute rpc on the remote device eg. dispatch('clear-arp-table')
         :param rpc_command: specifies rpc command to be dispatched either in plain text or in xml element format (depending on command)
@@ -204,9 +207,8 @@ class NetconfBase(AnsiblePlugin):
         :param filter: specifies the portion of the configuration to retrieve (by default entire configuration is retrieved)
         :return: Returns xml string containing the RPC response received from remote host
         """
-        """Execute operation on the remote device
-        :request: is the rpc request including attributes as XML string
-        """
+        if rpc_command is None:
+            raise ValueError('rpc_command value must be provided')
         req = fromstring(rpc_command)
         resp = self.m.dispatch(req, source=source, filter=filter)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
@@ -263,7 +265,7 @@ class NetconfBase(AnsiblePlugin):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
-    def get_schema(self, identifier, version=None, format=None):
+    def get_schema(self, identifier=None, version=None, format=None):
         """
         Retrieve a named schema, with optional revision and type.
         :param identifier: name of the schema to be retrieved
@@ -275,12 +277,17 @@ class NetconfBase(AnsiblePlugin):
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
+    def delete_config(self, target):
+        """
+        delete a configuration datastore
+        :param target: specifies the  name or URL of configuration datastore to delete
+        :return: Returns xml string containing the RPC response received from remote host
+        """
+        resp = self.m.delete_config(target)
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+
+    @ensure_connected
     def locked(self, target):
-        """
-        Returns a context manager for a lock on a datastore
-        :param target: Name of the configuration datastore to lock
-        :return: Locked context object
-        """
         return self.m.locked(target)
 
     @abstractmethod
@@ -341,6 +348,7 @@ class NetconfBase(AnsiblePlugin):
         operations['supports_startup'] = ':startup' in capabilities
         operations['supports_xpath'] = ':xpath' in capabilities
         operations['supports_writable_running'] = ':writable-running' in capabilities
+        operations['supports_validate'] = ':writable-validate' in capabilities
 
         operations['lock_datastore'] = []
         if operations['supports_writable_running']:

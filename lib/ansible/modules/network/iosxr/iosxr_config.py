@@ -186,47 +186,14 @@ backup_path:
 """
 import re
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.iosxr.iosxr import load_config, get_config, get_connection
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
-
-CONFIG_MISPLACED_CHILDREN = [
-    re.compile(r'^end-\s*(.+)$')
-]
-
-# Objects defined in Route-policy Language guide of IOS_XR.
-# Reconfiguring these objects replace existing configurations.
-# Hence these objects should be played direcly from candidate
-# configurations
-CONFIG_BLOCKS_FORCED_IN_DIFF = [
-    {
-        'start': re.compile(r'route-policy'),
-        'end': re.compile(r'end-policy')
-    },
-    {
-        'start': re.compile(r'prefix-set'),
-        'end': re.compile(r'end-set')
-    },
-    {
-        'start': re.compile(r'as-path-set'),
-        'end': re.compile(r'end-set')
-    },
-    {
-        'start': re.compile(r'community-set'),
-        'end': re.compile(r'end-set')
-    },
-    {
-        'start': re.compile(r'rd-set'),
-        'end': re.compile(r'end-set')
-    },
-    {
-        'start': re.compile(r'extcommunity-set'),
-        'end': re.compile(r'end-set')
-    }
-]
 
 
 def copy_file_to_node(module):
@@ -265,90 +232,22 @@ def check_args(module, warnings):
                         'removed in the future')
 
 
-# A list of commands like {end-set, end-policy, ...} are part of configuration
-# block like { prefix-set, as-path-set , ... } but they are not indented properly
-# to be included with their parent. sanitize_config will add indentation to
-# end-* commands so they are included with their parents
-def sanitize_config(config, force_diff_prefix=None):
-    conf_lines = config.split('\n')
-    for regex in CONFIG_MISPLACED_CHILDREN:
-        for index, line in enumerate(conf_lines):
-            m = regex.search(line)
-            if m and m.group(0):
-                if force_diff_prefix:
-                    conf_lines[index] = '  ' + m.group(0) + force_diff_prefix
-                else:
-                    conf_lines[index] = '  ' + m.group(0)
-    conf = ('\n').join(conf_lines)
-    return conf
-
-
-def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
-    conf_lines = config.split('\n')
-    candidate_lines = candidate.split('\n')
-
-    for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
-        block_index_start_end = []
-        for index, line in enumerate(candidate_lines):
-            startre = regex['start'].search(line)
-            if startre and startre.group(0):
-                start_index = index
-            else:
-                endre = regex['end'].search(line)
-                if endre and endre.group(0):
-                    end_index = index
-                    new_block = True
-                    for prev_start, prev_end in block_index_start_end:
-                        if start_index == prev_start:
-                            # This might be end-set of another regex
-                            # otherwise we would be having new start
-                            new_block = False
-                            break
-                    if new_block:
-                        block_index_start_end.append((start_index, end_index))
-
-        for start, end in block_index_start_end:
-            diff = False
-            if candidate_lines[start] in conf_lines:
-                run_conf_start_index = conf_lines.index(candidate_lines[start])
-            else:
-                diff = False
-                continue
-            for i in range(start, end + 1):
-                if conf_lines[run_conf_start_index] == candidate_lines[i]:
-                    run_conf_start_index = run_conf_start_index + 1
-                else:
-                    diff = True
-                    break
-            if diff:
-                run_conf_start_index = conf_lines.index(candidate_lines[start])
-                for i in range(start, end + 1):
-                    conf_lines[run_conf_start_index] = conf_lines[run_conf_start_index] + force_diff_prefix
-                    run_conf_start_index = run_conf_start_index + 1
-
-    conf = ('\n').join(conf_lines)
-    return conf
-
-
 def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
-    if module.params['src']:
-        contents = mask_config_blocks_from_diff(contents, module.params['src'], "ansible")
-        contents = sanitize_config(contents)
-    return NetworkConfig(indent=1, contents=contents)
+    return contents
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=1)
+    candidate = ''
     if module.params['src']:
-        config = module.params['src']
-        config = sanitize_config(config)
-        candidate.load(config)
+        candidate = module.params['src']
     elif module.params['lines']:
+        candidate_obj = NetworkConfig(indent=1)
         parents = module.params['parents'] or list()
-        candidate.add(module.params['lines'], parents=parents)
+        candidate_obj.add(module.params['lines'], parents=parents)
+        candidate = dumps(candidate_obj, 'raw')
     return candidate
 
 
@@ -367,28 +266,27 @@ def run(module, result):
 
     commands = None
     replace_file_path = None
+    connection = get_connection(module)
+    try:
+        response = connection.get_diff(candidate=candidate_config, running=running_config, diff_match=match, path=path, diff_replace=replace)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-    if match != 'none' and replace != 'config':
-        commands = candidate_config.difference(running_config, path=path, match=match, replace=replace)
-    elif replace_config:
-        can_config = candidate_config.difference(running_config, path=path, match=match, replace=replace)
-        candidate = dumps(can_config, 'commands').split('\n')
-        run_config = running_config.difference(candidate_config, path=path, match=match, replace=replace)
-        running = dumps(run_config, 'commands').split('\n')
+    config_diff = response.get('config_diff')
 
-        if len(candidate) > 1 or len(running) > 1:
+    if replace_config:
+        running_base_diff_resp = connection.get_diff(candidate=running_config, running=candidate_config, diff_match=match, path=path, diff_replace=replace)
+        if config_diff or running_base_diff_resp['config_diff']:
             ret = copy_file_to_node(module)
             if not ret:
                 module.fail_json(msg='Copy of config file to the node failed')
 
             commands = ['load harddisk:/ansible_config.txt']
             replace_file_path = 'harddisk:/ansible_config.txt'
-    else:
-        commands = candidate_config.items
 
-    if commands:
+    if config_diff or commands:
         if not replace_config:
-            commands = dumps(commands, 'commands').split('\n')
+            commands = config_diff.split('\n')
 
         if any((module.params['lines'], module.params['src'])):
             if module.params['before']:
@@ -463,7 +361,8 @@ def main():
     if module.params['backup']:
         result['__backup__'] = get_config(module)
 
-    run(module, result)
+    if any((module.params['src'], module.params['lines'])):
+        run(module, result)
 
     module.exit_json(**result)
 

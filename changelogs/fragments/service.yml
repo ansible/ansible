@@ -1,4 +1,0 @@
----
-bugfixes:
-- Fix glob path of rc.d
-  Some distribtuions like SUSE has the rc%.d directories under /etc/init.d

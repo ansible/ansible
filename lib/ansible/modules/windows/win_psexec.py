@@ -65,6 +65,13 @@ options:
     - Run the program so that it interacts with the desktop on the remote system.
     type: bool
     default: 'no'
+  session:
+    description:
+    - Specifies the session ID to use.
+    - This parameter works in conjunction with I(interactive).
+    - It has no effect when I(interactive) is set to C(no).
+    type: int
+    version_added: '2.7'
   limited:
     description:
     - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).

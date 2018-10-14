@@ -91,8 +91,8 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.8. Please update your playbooks accordingly.
 
-* :ref:`azure <azure_module>`, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine_module>`, which uses the new Resource Manager SDK.
-* :ref:`win_msi <win_msi_module>`, use :ref:`win_package <win_package_module>` instead
+* azure, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine_module>`, which uses the new Resource Manager SDK.
+* win_msi, use :ref:`win_package <win_package_module>` instead
 
 Noteworthy module changes
 -------------------------

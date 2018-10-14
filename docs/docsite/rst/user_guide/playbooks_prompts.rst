@@ -90,6 +90,16 @@ However, the only parameters accepted are 'salt' or 'salt_size'. You can use you
 'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt
 of size 8 will be generated.
 
+.. versionadded:: 2.7
+
+When Passlib is not installed the `crypt <https://docs.python.org/2/library/crypt.html>`_ library is used as fallback.
+Depending on your platform at most the following crypt schemes are supported:
+
+- *bcrypt* - BCrypt
+- *md5_crypt* - MD5 Crypt
+- *sha256_crypt* - SHA-256 Crypt
+- *sha512_crypt* - SHA-512 Crypt
+
 .. seealso::
 
    :doc:`playbooks`

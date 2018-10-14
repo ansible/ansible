@@ -58,7 +58,7 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             finally:
                 raise_from(TaskError(error_msg), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
-            sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
+            sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
             failure_counter += 1
 
@@ -67,8 +67,9 @@ def wait_for_vm_ip(content, vm, timeout=300):
     facts = dict()
     interval = 15
     while timeout > 0:
-        facts = gather_vm_facts(content, vm)
-        if facts['ipv4'] or facts['ipv6']:
+        _facts = gather_vm_facts(content, vm)
+        if _facts['ipv4'] or _facts['ipv6']:
+            facts = _facts
             break
         time.sleep(interval)
         timeout -= interval
@@ -76,28 +77,20 @@ def wait_for_vm_ip(content, vm, timeout=300):
     return facts
 
 
-def find_obj(content, vimtype, name, first=True):
-    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
-    obj_list = container.view
+def find_obj(content, vimtype, name, first=True, folder=None):
+    container = content.viewManager.CreateContainerView(folder or content.rootFolder, recursive=True, type=vimtype)
+    # Get all objects matching type (and name if given)
+    obj_list = [obj for obj in container.view if not name or to_text(obj.name) == to_text(name)]
     container.Destroy()
 
-    # Backward compatible with former get_obj() function
-    if name is None:
+    # Return first match or None
+    if first:
         if obj_list:
             return obj_list[0]
         return None
 
-    # Select the first match
-    if first is True:
-        for obj in obj_list:
-            if to_text(obj.name) == to_text(name):
-                return obj
-
-        # If no object found, return None
-        return None
-
-    # Return all matching objects if needed
-    return [obj for obj in obj_list if obj.name == name]
+    # Return all matching objects or empty list
+    return obj_list
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
@@ -295,6 +288,7 @@ def gather_vm_facts(content, vm):
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
+        'vnc': {},
     }
 
     # facts that may or may not exist
@@ -398,6 +392,8 @@ def gather_vm_facts(content, vm):
     if 'snapshots' in snapshot_facts:
         facts['snapshots'] = snapshot_facts['snapshots']
         facts['current_snapshot'] = snapshot_facts['current_snapshot']
+
+    facts['vnc'] = get_vnc_extraconfig(vm)
     return facts
 
 
@@ -441,6 +437,15 @@ def list_snapshots(vm):
         result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
     else:
         result['current_snapshot'] = dict()
+    return result
+
+
+def get_vnc_extraconfig(vm):
+    result = {}
+    for opts in vm.config.extraConfig:
+        for optkeyname in ['enabled', 'ip', 'port', 'password']:
+            if opts.key.lower() == "remotedisplay.vnc." + optkeyname:
+                result[optkeyname] = opts.value
     return result
 
 
@@ -970,7 +975,7 @@ class PyVmomi(object):
 
     def get_vm_or_template(self, template_name=None):
         """
-        Function to find the virtual machine or virtual machine template using name
+        Find the virtual machine or virtual machine template using name
         used for cloning purpose.
         Args:
             template_name: Name of virtual machine or virtual machine template
@@ -981,6 +986,10 @@ class PyVmomi(object):
         template_obj = None
 
         if template_name:
+            template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
+            if template_obj:
+                return template_obj
+
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             templates = []
 

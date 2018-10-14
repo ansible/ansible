@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import re
 import json
 
@@ -27,6 +26,7 @@ from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
@@ -75,7 +75,7 @@ class Cliconf(CliconfBase):
         requests = []
         self.send_command('configure')
         for cmd in to_list(candidate):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             results.append(self.send_command(**cmd))
@@ -105,14 +105,14 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
 
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:
@@ -199,7 +199,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -221,7 +221,7 @@ class Cliconf(CliconfBase):
         return {
             'supports_diff_replace': False,
             'supports_commit': True,
-            'supports_rollback': True,
+            'supports_rollback': False,
             'supports_defaults': False,
             'supports_onbox_diff': True,
             'supports_commit_comment': True,

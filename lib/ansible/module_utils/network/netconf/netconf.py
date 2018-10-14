@@ -18,11 +18,20 @@
 #
 import json
 
+from copy import deepcopy
 from contextlib import contextmanager
 
-from ansible.module_utils._text import to_text
+try:
+    from lxml.etree import fromstring, tostring
+except ImportError:
+    from xml.etree.ElementTree import fromstring, tostring
+
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.netconf import NetconfConnection
+
+
+IGNORE_XML_ATTRIBUTE = ()
 
 
 def get_connection(module):
@@ -114,3 +123,15 @@ def dispatch(module, request):
         module.fail_json(msg=to_text(e, errors='surrogate_then_replace').strip())
 
     return response
+
+
+def sanitize_xml(data):
+    tree = fromstring(to_bytes(deepcopy(data), errors='surrogate_then_replace'))
+    for element in tree.getiterator():
+        # remove attributes
+        attribute = element.attrib
+        if attribute:
+            for key in list(attribute):
+                if key not in IGNORE_XML_ATTRIBUTE:
+                    attribute.pop(key)
+    return to_text(tostring(tree), errors='surrogate_then_replace').strip()

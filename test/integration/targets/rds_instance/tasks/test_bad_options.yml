@@ -1,0 +1,41 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create a DB instance with an invalid engine
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: thisisnotavalidengine
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          <<: *aws_connection_info
+        register: result
+        ignore_errors: True
+
+      - assert:
+          that:
+            - result.failed
+            - '"DB engine thisisnotavalidengine should be one of" in result.msg'

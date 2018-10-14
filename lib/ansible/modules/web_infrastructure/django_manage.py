@@ -54,6 +54,13 @@ options:
     description:
       - The name of the table used for database-backed caching. Used by the 'createcachetable' command.
     required: false
+  clear:
+    description:
+      - Clear the existing files before trying to copy or link the original file.
+      - Used only with the 'collectstatic' command. The C(--noinput) argument will be added automatically.
+    required: false
+    default: no
+    type: bool
   database:
     description:
       - The database to target. Used by the 'createcachetable', 'flush', 'loaddata', and 'syncdb' commands.

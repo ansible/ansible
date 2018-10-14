@@ -7,6 +7,7 @@
       add_host:
         name: "foo{{item}}"
         groups: foo
+        ansible_connection: local
       loop: "{{ range(10)|list }}"
 
     # We expect all of the next 3 runs to succeeed
@@ -56,3 +57,16 @@
           - "{{ (result1.results|first) is successful }}"
           - "{{ (result2.results|first) is successful }}"
           - "{{ (result3.results|first) is successful }}"
+
+    - name: Set delegate
+      set_fact:
+        _delegate: '{{ groups.foo[0] }}'
+
+    - command: "true"
+      delegate_to: "{{ _delegate }}"
+      register: result
+
+    - assert:
+        that:
+          - result.stdout is defined
+          - result.results is undefined

@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -341,6 +341,7 @@ class ArgumentSpec(object):
 
 
 def main():
+    client = None
     spec = ArgumentSpec()
 
     module = AnsibleModule(
@@ -357,7 +358,8 @@ def main():
         cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
+        if client:
+            cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

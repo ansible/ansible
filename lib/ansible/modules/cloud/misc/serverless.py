@@ -71,7 +71,7 @@ options:
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
 requirements: [ "serverless", "yaml" ]
-author: "Ryan Scott Brown @ryansb"
+author: Ryan Scott Brown (@ryansb)
 '''
 
 EXAMPLES = """

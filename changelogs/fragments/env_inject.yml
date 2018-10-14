@@ -1,2 +1,0 @@
-bugfixes:
-    - allow gathering env exception to work even when injection is off

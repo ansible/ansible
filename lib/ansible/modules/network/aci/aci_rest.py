@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -69,7 +69,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a tenant using certifcate authentication
+- name: Add a tenant using certificate authentication
   aci_rest:
     host: apic
     username: admin

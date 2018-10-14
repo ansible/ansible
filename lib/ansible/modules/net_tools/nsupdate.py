@@ -212,7 +212,17 @@ class RecordManager(object):
         else:
             self.algorithm = module.params['key_algorithm']
 
+        if self.module.params['type'].lower() == 'txt':
+            self.value = list(map(self.txt_helper, self.module.params['value']))
+        else:
+            self.value = self.module.params['value']
+
         self.dns_rc = 0
+
+    def txt_helper(self, entry):
+        if entry[0] == '"' and entry[-1] == '"':
+            return entry
+        return '"{text}"'.format(text=entry)
 
     def __do_update(self, update):
         response = None
@@ -254,7 +264,7 @@ class RecordManager(object):
 
     def create_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        for entry in self.module.params['value']:
+        for entry in self.value:
             try:
                 update.add(self.module.params['record'],
                            self.module.params['ttl'],
@@ -271,7 +281,7 @@ class RecordManager(object):
     def modify_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
         update.delete(self.module.params['record'], self.module.params['type'])
-        for entry in self.module.params['value']:
+        for entry in self.value:
             try:
                 update.add(self.module.params['record'],
                            self.module.params['ttl'],
@@ -321,7 +331,7 @@ class RecordManager(object):
         if self.dns_rc == 0:
             if self.module.params['state'] == 'absent':
                 return 1
-            for entry in self.module.params['value']:
+            for entry in self.value:
                 try:
                     update.present(self.module.params['record'], self.module.params['type'], entry)
                 except AttributeError:
@@ -395,7 +405,7 @@ def main():
                                 record=module.params['record'],
                                 type=module.params['type'],
                                 ttl=module.params['ttl'],
-                                value=module.params['value'])
+                                value=record.value)
 
         module.exit_json(**result)
 

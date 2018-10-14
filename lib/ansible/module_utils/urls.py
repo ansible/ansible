@@ -822,6 +822,23 @@ def maybe_add_ssl_handler(url, validate_certs):
         return SSLValidationHandler(hostname, port)
 
 
+def rfc2822_date_string(timetuple, zone='-0000'):
+    """Accepts a timetuple and optional zone which defaults to ``-0000``
+    and returns a date string as specified by RFC 2822, e.g.:
+
+    Fri, 09 Nov 2001 01:08:47 -0000
+
+    Copied from email.utils.formatdate and modified for separate use
+    """
+    return '%s, %02d %s %04d %02d:%02d:%02d %s' % (
+        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][timetuple[6]],
+        timetuple[2],
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][timetuple[1] - 1],
+        timetuple[0], timetuple[3], timetuple[4], timetuple[5],
+        zone)
+
+
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
@@ -1037,7 +1054,7 @@ class Request:
             request.add_header('cache-control', 'no-cache')
         # or we do it if the original is more recent than our copy
         elif last_mod_time:
-            tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
+            tstamp = rfc2822_date_string(last_mod_time.timetuple())
             request.add_header('If-Modified-Since', tstamp)
 
         # user defined headers now, which may override things we've set above
@@ -1286,7 +1303,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
         # Try to add exception info to the output but don't fail if we can't
         try:
-            info.update(dict(**e.info()))
+            # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+            info.update(dict((k.lower(), v) for k, v in e.info().items()))
         except:
             pass
 
@@ -1306,3 +1324,40 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         tempfile.tempdir = old_tempdir
 
     return r, info
+
+
+def fetch_file(module, url, data=None, headers=None, method=None,
+               use_proxy=True, force=False, last_mod_time=None, timeout=10):
+    '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
+    This is basically a wrapper around fetch_url().
+
+    :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
+    :arg url:             The url to use.
+
+    :kwarg data:          The data to be sent (in case of POST/PUT).
+    :kwarg headers:       A dict with the request headers.
+    :kwarg method:        "POST", "PUT", etc.
+    :kwarg boolean use_proxy:     Default: True
+    :kwarg boolean force: If True: Do not get a cached copy (Default: False)
+    :kwarg last_mod_time: Default: None
+    :kwarg int timeout:   Default: 10
+
+    :returns: A string, the path to the downloaded file.
+    '''
+    # download file
+    bufsize = 65536
+    file_name, file_ext = os.path.splitext(str(url.rsplit('/', 1)[1]))
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
+    module.add_cleanup_file(fetch_temp_file.name)
+    try:
+        rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
+        if not rsp:
+            module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
+        data = rsp.read(bufsize)
+        while data:
+            fetch_temp_file.write(data)
+            data = rsp.read(bufsize)
+        fetch_temp_file.close()
+    except Exception as e:
+        module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
+    return fetch_temp_file.name

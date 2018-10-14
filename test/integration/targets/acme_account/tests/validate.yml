@@ -22,6 +22,11 @@
       - account_modified_idempotent is not changed
       - account_modified_idempotent.account_uri is not none
 
+- name: Make sure that with the wrong account URI, the account cannot be changed
+  assert:
+    that:
+      - account_modified_wrong_uri is failed
+
 - name: Validate that email address was cleared
   assert:
     that:
@@ -34,38 +39,11 @@
       - account_modified_2_idempotent is not changed
       - account_modified_2_idempotent.account_uri is not none
 
-# Note that pebble has no change key endpoint implemented yet!
-# When it has (and the container was updated), uncomment the
-# following validations, and delete the ones below the
-# out-commented ones:
-
-#- name: Validate that the account key was changed
-#  assert:
-#    that:
-#      - account_change_key is changed
-#      - account_change_key.account_uri is not none
-#
-#- name: Validate that the account was deactivated
-#  assert:
-#    that:
-#      - account_deactivate is changed
-#      - account_deactivate.account_uri is not none
-#
-#- name: Validate that the account was really deactivated (idempotency)
-#  assert:
-#    that:
-#      - account_deactivate_idempotent is not changed
-#      - account_deactivate_idempotent.account_uri is not none
-#
-#- name: Validate that the account is gone (new account key)
-#  assert:
-#    that:
-#      - account_not_created_2 is failed
-#
-#- name: Validate that the account is gone (old account key)
-#  assert:
-#    that:
-#      - account_not_created_3 is failed
+- name: Validate that the account key was changed
+  assert:
+    that:
+      - account_change_key is changed
+      - account_change_key.account_uri is not none
 
 - name: Validate that the account was deactivated
   assert:
@@ -79,7 +57,12 @@
       - account_deactivate_idempotent is not changed
       - account_deactivate_idempotent.account_uri is not none
 
-- name: Validate that the account is gone
+- name: Validate that the account is gone (new account key)
   assert:
     that:
       - account_not_created_2 is failed
+
+- name: Validate that the account is gone (old account key)
+  assert:
+    that:
+      - account_not_created_3 is failed

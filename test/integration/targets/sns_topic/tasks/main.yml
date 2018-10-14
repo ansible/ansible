@@ -1,0 +1,308 @@
+- block:
+
+    - name: set up AWS connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_secret_key: "{{ aws_secret_key|default() }}"
+          aws_access_key: "{{ aws_access_key|default() }}"
+          security_token: "{{ security_token|default() }}"
+          region: "{{ aws_region|default() }}"
+      no_log: yes
+
+    # This should exist, but there's no expectation that the test user should be able to
+    # create/update this role, merely validate that it's there.
+    # Use ansible -m iam_role -a 'name=ansible_lambda_role
+    # assume_role_policy_document={{ lookup("file", "test/integration/targets/sns_topic/files/lambda-trust-policy.json", convert_data=False) }}
+    # ' -vvv localhost
+    # to create this through more privileged credentials before running this test suite.
+    - name: create minimal lambda role
+      iam_role:
+        name: ansible_lambda_role
+        assume_role_policy_document: "{{ lookup('file', 'lambda-trust-policy.json', convert_data=False) }}"
+        create_instance_profile: no
+        <<: *aws_connection_info
+      register: iam_role
+
+    - name: pause if role was created
+      pause:
+        seconds: 10
+      when: iam_role is changed
+
+    - name: ensure lambda role policy exists
+      iam_policy:
+        policy_name: "ansible_lambda_role_policy"
+        iam_name: ansible_lambda_role
+        iam_type: role
+        policy_json: "{{ lookup('file', 'lambda-policy.json') }}"
+        state: present
+        <<: *aws_connection_info
+      register: iam_policy
+
+    - name: pause if policy was created
+      pause:
+        seconds: 10
+      when: iam_policy is changed
+
+    - name: create topic
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My topic name"
+        <<: *aws_connection_info
+      register: sns_topic_create
+
+    - name: assert that creation worked
+      assert:
+        that:
+          - sns_topic_create.changed
+
+    - name: set sns_arn fact
+      set_fact:
+        sns_arn: "{{ sns_topic_create.sns_arn }}"
+
+    - name: create topic again (expect changed=False)
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My topic name"
+        <<: *aws_connection_info
+      register: sns_topic_no_change
+
+    - name: assert that recreation had no effect
+      assert:
+        that:
+          - not sns_topic_no_change.changed
+          - sns_topic_no_change.sns_arn == sns_topic_create.sns_arn
+
+    - name: update display name
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        <<: *aws_connection_info
+      register: sns_topic_update_name
+
+    - name: assert that updating name worked
+      assert:
+        that:
+          - sns_topic_update_name.changed
+          - 'sns_topic_update_name.sns_topic.display_name == "My new topic name"'
+
+    - name: add policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        policy: "{{ lookup('template', 'initial-policy.json') }}"
+        <<: *aws_connection_info
+      register: sns_topic_add_policy
+
+    - name: assert that adding policy worked
+      assert:
+        that:
+          - sns_topic_add_policy.changed
+
+    - name: rerun same policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        policy: "{{ lookup('template', 'initial-policy.json') }}"
+        <<: *aws_connection_info
+      register: sns_topic_rerun_policy
+
+    - name: assert that rerunning policy had no effect
+      assert:
+        that:
+          - not sns_topic_rerun_policy.changed
+
+    - name: update policy
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        policy: "{{ lookup('template', 'updated-policy.json') }}"
+        <<: *aws_connection_info
+      register: sns_topic_update_policy
+
+    - name: assert that updating policy worked
+      assert:
+        that:
+          - sns_topic_update_policy.changed
+
+    - name: create temp dir
+      tempfile:
+        state: directory
+      register: tempdir
+
+    - name: ensure zip file exists
+      archive:
+        path: "{{ lookup('first_found', sns_topic_lambda_function) }}"
+        dest: "{{ tempdir.path }}/{{ sns_topic_lambda_function }}.zip"
+        format: zip
+
+    - name: create lambda for subscribing (only auto-subscribing target available)
+      lambda:
+        name: '{{ sns_topic_lambda_name }}'
+        state: present
+        zip_file: '{{ tempdir.path }}/{{ sns_topic_lambda_function }}.zip'
+        runtime: 'python2.7'
+        role: ansible_lambda_role
+        handler: '{{ sns_topic_lambda_function }}.handler'
+        <<: *aws_connection_info
+      register: lambda_result
+
+    - set_fact:
+        sns_topic_subscriber_arn: "{{ lambda_result.configuration.function_arn }}"
+
+    - name: subscribe to topic
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        purge_subscriptions: no
+        subscriptions: "{{ sns_topic_subscriptions }}"
+        <<: *aws_connection_info
+      register: sns_topic_subscribe
+
+    - name: assert that subscribing worked
+      assert:
+        that:
+          - sns_topic_subscribe.changed
+          - sns_topic_subscribe.sns_topic.subscriptions|length == 1
+
+    - name: run again with purge_subscriptions set to false
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        purge_subscriptions: no
+        <<: *aws_connection_info
+      register: sns_topic_no_purge
+
+    - name: assert that not purging subscriptions had no effect
+      assert:
+        that:
+          - not sns_topic_no_purge.changed
+          - sns_topic_no_purge.sns_topic.subscriptions|length == 1
+
+    - name: run again with purge_subscriptions set to true
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        display_name: "My new topic name"
+        purge_subscriptions: yes
+        <<: *aws_connection_info
+      register: sns_topic_purge
+
+    - name: assert that purging subscriptions worked
+      assert:
+        that:
+          - sns_topic_purge.changed
+          - sns_topic_purge.sns_topic.subscriptions|length == 0
+
+    - name: delete topic
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        state: absent
+        <<: *aws_connection_info
+
+    - name: no-op with third party topic (effectively get existing subscriptions)
+      sns_topic:
+        name: "{{ sns_topic_third_party_topic_arn }}"
+        <<: *aws_connection_info
+        region: "{{ sns_topic_third_party_region }}"
+      register: third_party_topic
+
+    - name: subscribe to third party topic
+      sns_topic:
+        name: "{{ sns_topic_third_party_topic_arn }}"
+        subscriptions: "{{ sns_topic_subscriptions }}"
+        <<: *aws_connection_info
+        region: "{{ sns_topic_third_party_region }}"
+      register: third_party_topic_subscribe
+
+    - name: assert that subscribing worked
+      assert:
+        that:
+          - third_party_topic_subscribe is changed
+          - (third_party_topic_subscribe.sns_topic.subscriptions|length) - (third_party_topic.sns_topic.subscriptions|length) == 1
+
+    - name: attempt to change name of third party topic
+      sns_topic:
+        name: "{{ sns_topic_third_party_topic_arn }}"
+        display_name: "This should not work"
+        subscriptions: "{{ sns_topic_subscriptions }}"
+        <<: *aws_connection_info
+        region: "{{ sns_topic_third_party_region }}"
+      ignore_errors: yes
+      register: third_party_name_change
+
+    - name: assert that attempting to change display name does not work
+      assert:
+        that:
+          - third_party_name_change is failed
+
+    - name: unsubscribe from third party topic (purge_subscription defaults to true)
+      sns_topic:
+        name: "{{ sns_topic_third_party_topic_arn }}"
+        subscriptions: "{{ third_party_topic.sns_topic.subscriptions }}"
+        <<: *aws_connection_info
+        region: "{{ sns_topic_third_party_region }}"
+      register: third_party_unsubscribe
+
+    - name: assert that unsubscribing from third party topic works
+      assert:
+        that:
+          - third_party_unsubscribe.changed
+          - third_party_topic.sns_topic.subscriptions|length == third_party_unsubscribe.sns_topic.subscriptions|length
+
+    - name: attempt to delete third party topic
+      sns_topic:
+        name: "{{ sns_topic_third_party_topic_arn }}"
+        state: absent
+        subscriptions: "{{ subscriptions }}"
+        <<: *aws_connection_info
+        region: "{{ sns_topic_third_party_region }}"
+      ignore_errors: yes
+      register: third_party_deletion
+
+    - name: no-op after third party deletion
+      sns_topic:
+        name: "{{ sns_topic_third_party_topic_arn }}"
+        <<: *aws_connection_info
+        region: "{{ sns_topic_third_party_region }}"
+      register: third_party_deletion_facts
+
+    - name: assert that attempting to delete third party topic does not work and preser
+      assert:
+        that:
+          - third_party_deletion is failed
+          - third_party_topic.sns_topic.subscriptions|length == third_party_deletion_facts.sns_topic.subscriptions|length
+
+  always:
+
+    - name: announce teardown start
+      debug:
+        msg: "************** TEARDOWN STARTS HERE *******************"
+
+    - name: remove topic
+      sns_topic:
+        name: "{{ sns_topic_topic_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: unsubscribe from third party topic
+      sns_topic:
+        name: "{{ sns_topic_third_party_topic_arn }}"
+        subscriptions: []
+        purge_subscriptions: yes
+        <<: *aws_connection_info
+        region: "{{ sns_topic_third_party_region }}"
+      ignore_errors: yes
+
+    - name: remove lambda
+      lambda:
+        name: '{{ sns_topic_lambda_name }}'
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove tempdir
+      file:
+        path: "{{ tempdir.path }}"
+        state: absent
+      when: tempdir is defined
+      ignore_errors: yes

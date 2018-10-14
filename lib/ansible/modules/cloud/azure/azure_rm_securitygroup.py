@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -82,7 +82,7 @@ options:
             source_address_prefix:
                 description:
                   - The CIDR or source IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
+                  - Asterisk C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - If this is an ingress rule, specifies where network traffic originates from.
                   - It can accept string type or a list of string type.
@@ -91,7 +91,7 @@ options:
                 description:
                   - The destination address prefix.
                   - CIDR or destination IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
+                  - Asterisk C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - It can accept string type or a list of string type.
                 default: "*"

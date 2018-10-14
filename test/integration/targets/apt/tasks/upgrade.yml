@@ -1,7 +1,7 @@
 ---
 #### Tests for upgrade/download functions in modules/packaging/os/apt.py ####
 - name: download and install old version of hello
-  apt: "deb=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb"
+  apt: "deb=https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/apt/hello_{{ hello_old_version }}_amd64.deb"
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'

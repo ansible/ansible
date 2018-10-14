@@ -203,7 +203,7 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
         try:
             response = list(self.web_client.app_service_plans.list())
         except CloudError as exc:
-            self.fail("Error listing app service plans: {1}".format(str(exc)))
+            self.fail("Error listing app service plans: {0}".format(str(exc)))
 
         results = []
         for item in response:

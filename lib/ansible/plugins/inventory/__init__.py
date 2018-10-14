@@ -24,12 +24,11 @@ import os
 import re
 import string
 
-from collections import Mapping
-
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
@@ -171,8 +170,13 @@ class BaseInventoryPlugin(AnsiblePlugin):
                  So only call this base class if you expect it to be a file.
         '''
 
+        valid = False
         b_path = to_bytes(path, errors='surrogate_or_strict')
-        return (os.path.exists(b_path) and os.access(b_path, os.R_OK))
+        if (os.path.exists(b_path) and os.access(b_path, os.R_OK)):
+            valid = True
+        else:
+            self.display.vvv('Skipping due to inventory source not existing or not being readable by the current user')
+        return valid
 
     def _populate_host_vars(self, hosts, variables, group=None, port=None):
         if not isinstance(variables, Mapping):
@@ -286,7 +290,7 @@ class Constructable(object):
                     composite = self._compose(compose[varname], variables)
                 except Exception as e:
                     if strict:
-                        raise AnsibleError("Could not set %s: %s" % (varname, to_native(e)))
+                        raise AnsibleError("Could not set %s for host %s: %s" % (varname, host, to_native(e)))
                     continue
                 self.inventory.set_variable(host, varname, composite)
 

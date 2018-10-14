@@ -260,6 +260,7 @@
     that:
       - binding_query_node_all is not changed
       - binding_query_node_all.current | length >= 1
+      - binding_query_node_all.current | selectattr("infraAccBndlGrp.attributes.lagT", "equalto", "link") | list == []
       - '"/api/class/infraAccBndlGrp.json" in binding_query_node_all.url'
 
 - name: Remove interface policy leaf policy group (VPC) - check mode

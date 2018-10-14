@@ -68,35 +68,26 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    authorize: yes
-    auth_pass: cisco
-    transport: cli
 
 ---
-- asa_command:
+- name: "Show the ASA version"
+  asa_command:
     commands:
       - show version
-    provider: "{{ cli }}"
 
-- asa_command:
+- name: "Show ASA drops and memory"
+  asa_command:
     commands:
       - show asp drop
       - show memory
-    provider: "{{ cli }}"
 
-- asa_command:
+- name: "Send repeat pings and wait for the result to pass 100%"
+  asa_command:
     commands:
-      - show version
-    provider: "{{ cli }}"
-    context: system
+      - ping 8.8.8.8 repeat 20 size 350
+    wait_for:
+      - result[0] contains 100
+    retries: 2
 """
 
 RETURN = """

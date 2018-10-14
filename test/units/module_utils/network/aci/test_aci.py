@@ -20,7 +20,7 @@
 
 import sys
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.network.aci.aci import ACIModule
 from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_native
@@ -261,8 +261,6 @@ class AciRest(unittest.TestCase):
             error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
         elif PY2:
             error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (line 1)"
-        elif sys.version_info >= (3, 7):
-            error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
         else:
             error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)"
 

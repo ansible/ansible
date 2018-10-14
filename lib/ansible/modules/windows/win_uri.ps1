@@ -36,8 +36,11 @@ $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bo
 $client_cert = Get-AnsibleParam -obj $params -name "client_cert" -type "path"
 $client_cert_password = Get-AnsibleParam -obj $params -name "client_cert_password" -type "str"
 
+$JSON_CANDIDATES = @('text', 'json', 'javascript')
+
 $result = @{
     changed = $false
+    elapsed = 0
     url = $url
 }
 
@@ -179,9 +182,12 @@ if ($null -ne $body) {
     }
 }
 
+$module_start = Get-Date
+
 try {
     $response = $client.GetResponse()
 } catch [System.Net.WebException] {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     $response = $null
     if ($_.Exception.PSObject.Properties.Name -match "Response") {
         # was a non-successful response but we at least have a response and
@@ -192,13 +198,17 @@ try {
     # in the case a response (or empty response) was on the exception like in
     # a timeout scenario, we should still fail
     if ($null -eq $response) {
+        $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
         Fail-Json -obj $result -message "WebException occurred when sending web request: $($_.Exception.Message)"
     }
 } catch [System.Net.ProtocolViolationException] {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     Fail-Json -obj $result -message "ProtocolViolationException when sending web request: $($_.Exception.Message)"
 } catch {
+    $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
     Fail-Json -obj $result -message "Unhandled exception occured when sending web request. Exception: $($_.Exception.Message)"
 }
+$result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 ForEach ($prop in $response.psobject.properties) {
     $result_key = Convert-StringToSnakeCase -string $prop.Name
@@ -232,8 +242,12 @@ if ($return_content -or $dest) {
             $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin)
             $content_bytes = $memory_st.ToArray()
             $result.content = [System.Text.Encoding]::UTF8.GetString($content_bytes)
-            if ($result.ContainsKey("content_type") -and $result.content_type -in @("application/json", "application/javascript")) {
-                $result.json = ConvertFrom-Json -InputObject $result.content
+            if ($result.ContainsKey("content_type") -and $result.content_type -Match ($JSON_CANDIDATES -join '|')) {
+                try {
+                    $result.json = ConvertFrom-Json -InputObject $result.content
+                } catch [System.ArgumentException] {
+                    # Simply continue, since 'text' might be anything
+                }
             }
         }
 
@@ -246,7 +260,7 @@ if ($return_content -or $dest) {
 
                 $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider
                 $content_checksum = [System.BitConverter]::ToString($sp.ComputeHash($memory_st)).Replace("-", "").ToLower()
-    
+
                 if ($actual_checksum -eq $content_checksum) {
                     $changed = $false
                 }

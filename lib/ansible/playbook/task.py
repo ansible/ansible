@@ -66,22 +66,26 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
-    _args = FieldAttribute(isa='dict', default=dict())
+    # NOTE: ONLY set defaults on task attributes that are not inheritable,
+    # inheritance is only triggered if the 'current value' is None,
+    # default can be set at play/top level object and inheritance will take it's course.
+
+    _args = FieldAttribute(isa='dict', default=dict)
     _action = FieldAttribute(isa='string')
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
-    _changed_when = FieldAttribute(isa='list', default=[])
+    _changed_when = FieldAttribute(isa='list', default=list)
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
-    _failed_when = FieldAttribute(isa='list', default=[])
+    _delegate_facts = FieldAttribute(isa='bool')
+    _failed_when = FieldAttribute(isa='list', default=list)
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
     _register = FieldAttribute(isa='string')
     _retries = FieldAttribute(isa='int', default=3)
-    _until = FieldAttribute(isa='list', default=[])
+    _until = FieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
@@ -226,10 +230,10 @@ class Task(Base, Conditional, Taggable, Become):
                 # pre-2.0 syntax allowed variables for include statements at the top level of the task,
                 # so we move those into the 'vars' dictionary here, and show a deprecation message
                 # as we will remove this at some point in the future.
-                if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
+                if action in ('include',) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                                       " for currently supported syntax regarding included files and variables", version="2.7")
+                                       " for currently supported syntax regarding included files and variables", version="2.12")
                     new_ds['vars'][k] = v
                 elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
@@ -247,6 +251,13 @@ class Task(Base, Conditional, Taggable, Become):
             )
 
         return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
+
+    def _validate_attributes(self, ds):
+        try:
+            super(Task, self)._validate_attributes(ds)
+        except AnsibleParserError as e:
+            e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
+            raise e
 
     def post_validate(self, templar):
         '''

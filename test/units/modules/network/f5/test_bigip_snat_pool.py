@@ -14,9 +14,9 @@ from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import Mock
+from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -94,7 +94,7 @@ class TestManager(unittest.TestCase):
             name='my-snat-pool',
             state='present',
             members=['10.10.10.10', '20.20.20.20'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -121,7 +121,7 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['1.1.1.1', '2.2.2.2'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -147,7 +147,7 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['30.30.30.30'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

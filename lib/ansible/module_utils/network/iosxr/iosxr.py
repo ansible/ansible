@@ -101,6 +101,41 @@ iosxr_top_spec = {
 }
 iosxr_argument_spec.update(iosxr_top_spec)
 
+CONFIG_MISPLACED_CHILDREN = [
+    re.compile(r'^end-\s*(.+)$')
+]
+
+# Objects defined in Route-policy Language guide of IOS_XR.
+# Reconfiguring these objects replace existing configurations.
+# Hence these objects should be played direcly from candidate
+# configurations
+CONFIG_BLOCKS_FORCED_IN_DIFF = [
+    {
+        'start': re.compile(r'route-policy'),
+        'end': re.compile(r'end-policy')
+    },
+    {
+        'start': re.compile(r'prefix-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'as-path-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'community-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'rd-set'),
+        'end': re.compile(r'end-set')
+    },
+    {
+        'start': re.compile(r'extcommunity-set'),
+        'end': re.compile(r'end-set')
+    }
+]
+
 
 def get_provider_argspec():
     return iosxr_provider_spec
@@ -458,3 +493,68 @@ def get_file(module, src, dst, proto='scp'):
         conn.get_file(source=src, destination=dst, proto=proto)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+
+# A list of commands like {end-set, end-policy, ...} are part of configuration
+# block like { prefix-set, as-path-set , ... } but they are not indented properly
+# to be included with their parent. sanitize_config will add indentation to
+# end-* commands so they are included with their parents
+def sanitize_config(config, force_diff_prefix=None):
+    conf_lines = config.split('\n')
+    for regex in CONFIG_MISPLACED_CHILDREN:
+        for index, line in enumerate(conf_lines):
+            m = regex.search(line)
+            if m and m.group(0):
+                if force_diff_prefix:
+                    conf_lines[index] = '  ' + m.group(0) + force_diff_prefix
+                else:
+                    conf_lines[index] = '  ' + m.group(0)
+    conf = ('\n').join(conf_lines)
+    return conf
+
+
+def mask_config_blocks_from_diff(config, candidate, force_diff_prefix):
+    conf_lines = config.split('\n')
+    candidate_lines = candidate.split('\n')
+
+    for regex in CONFIG_BLOCKS_FORCED_IN_DIFF:
+        block_index_start_end = []
+        for index, line in enumerate(candidate_lines):
+            startre = regex['start'].search(line)
+            if startre and startre.group(0):
+                start_index = index
+            else:
+                endre = regex['end'].search(line)
+                if endre and endre.group(0):
+                    end_index = index
+                    new_block = True
+                    for prev_start, prev_end in block_index_start_end:
+                        if start_index == prev_start:
+                            # This might be end-set of another regex
+                            # otherwise we would be having new start
+                            new_block = False
+                            break
+                    if new_block:
+                        block_index_start_end.append((start_index, end_index))
+
+        for start, end in block_index_start_end:
+            diff = False
+            if candidate_lines[start] in conf_lines:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+            else:
+                diff = False
+                continue
+            for i in range(start, end + 1):
+                if conf_lines[run_conf_start_index] == candidate_lines[i]:
+                    run_conf_start_index = run_conf_start_index + 1
+                else:
+                    diff = True
+                    break
+            if diff:
+                run_conf_start_index = conf_lines.index(candidate_lines[start])
+                for i in range(start, end + 1):
+                    conf_lines[run_conf_start_index] = conf_lines[run_conf_start_index] + force_diff_prefix
+                    run_conf_start_index = run_conf_start_index + 1
+
+    conf = ('\n').join(conf_lines)
+    return conf

@@ -136,24 +136,31 @@ options:
   api_username:
     required: true
     description:
-    - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
+    - The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
   api_password:
     required: true
     description:
-    - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
+    - The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
   api_url:
     required: true
     description:
-    - The url to the SANtricity WebServices Proxy or embedded REST API.
+    - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
     example:
     - https://prod-1.wahoo.acme.com/devmgr/v2
   validate_certs:
     required: false
     default: true
     description:
-    - Should https certificates be validated?
+        - Should https certificates be validated?
+    type: bool
   ssid:
     required: true
     description:
     - The ID of the array to manage. This value must be unique for each array.
+
+notes:
+  - The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage
+    the storage-system, or an E-Series storage-system that supports the Embedded Web Services API.
+  - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+  - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
     """

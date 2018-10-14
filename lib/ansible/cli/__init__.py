@@ -344,7 +344,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
 
         def _dep(which):
-            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.6')
+            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.9')
 
         if self.options.become:
             pass
@@ -583,13 +583,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             # optparse defaults does not do what's expected
             self.options.tags = ['all']
         if hasattr(self.options, 'tags') and self.options.tags:
-            if not C.MERGE_MULTIPLE_CLI_TAGS:
-                if len(self.options.tags) > 1:
-                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. '
-                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
-                                       version=2.5, removed=False)
-                    self.options.tags = [self.options.tags[-1]]
-
             tags = set()
             for tag_set in self.options.tags:
                 for tag in tag_set.split(u','):
@@ -598,13 +591,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # process skip_tags
         if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
-            if not C.MERGE_MULTIPLE_CLI_TAGS:
-                if len(self.options.skip_tags) > 1:
-                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. '
-                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
-                                       version=2.5, removed=False)
-                    self.options.skip_tags = [self.options.skip_tags[-1]]
-
             skip_tags = set()
             for tag_set in self.options.skip_tags:
                 for tag in tag_set.split(u','):

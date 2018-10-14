@@ -36,14 +36,7 @@ Cleaning Duty
 Engine Improvements
 -------------------
 
-- Make ``become`` plugin based. `pr #38861 <https://github.com/ansible/ansible/pull/38861>`_
-- Introduce a ``live`` keyword to provide modules the ability to push intermediate (live) updates `pr #13620 <https://github.com/ansible/ansible/pull/13620>`_
-- Add content_path for mazer installed content `pr #42867 <https://github.com/ansible/ansible/pull/42867/>`_
-- Investigate what it will take to utilise the work performed by Mitogen maintainers. `pr #41749 <https://github.com/ansible/ansible/pull/41749>`_, `branch <https://github.com/jimi-c/ansible/tree/abadger-ansiballz-one-interpreter>`_ and talk to jimi-c
-- Provide sane connection defaults by platform `ansible_platform` `proposal #77 <https://github.com/ansible/proposals/issues/77>`_
-- Refactor connection/shell/action/terminal/become plugins to allow looser coupling and more mix-and-match behaviour.(nitzmahone)
-- Investigate performance improvements in using threads as opposed to forks `branch from jimi-c
-  <https://github.com/ansible/ansible/tree/threading_plus_forking>`_
+- Performance improvement invoking Python modules `pr #41749 <https://github.com/ansible/ansible/pull/41749>`_
 - Jinja native types will allow for users to render a Python native type. `pr #32738 <https://github.com/ansible/ansible/pull/32738>`_
 
 
@@ -53,8 +46,7 @@ Core Modules
 - Include feature changes and improvements
 
   - Create new argument ``apply`` that will allow for included tasks to inherit explicitly provided attributes. `pr #39236 <https://github.com/ansible/ansible/pull/39236>`_
-  - Create "private" functionality for allowing vars/default sot be exposed outside of roles. `pr #41330 <https://github.com/ansible/ansible/pull/41330>`_
-
+  - Create "private" functionality for allowing vars/default to be exposed outside of roles. `pr #41330 <https://github.com/ansible/ansible/pull/41330>`_
 - Provide a parameter for the ``template`` module to output to different encoding formats `pr
   #42171 <https://github.com/ansible/ansible/pull/42171>`_
 - ``reboot`` module for Linux hosts (@samdoran) `pr #35205 <https://github.com/ansible/ansible/pull/35205>`_
@@ -72,14 +64,13 @@ AWS
 * Count support for `ec2_instance`
 * `aws_eks` module `pr #41183 <https://github.com/ansible/ansible/pull/41183>`_
 * Cloudformation stack sets support (`PR#41669 <https://github.com/ansible/ansible/pull/41669>`_)
-* RDS instance and snapshot modules `pr #39994 <https://github.com/ansible/ansible/pull/39994>`_ `issue #19524 <https://github.com/ansible/ansible/issues/19524>`_
-* Diff mode improvements for cloud modules `pr #37212 <https://github.com/ansible/ansible/pull/37212>`_
+* RDS instance and snapshot modules `pr #39994 <https://github.com/ansible/ansible/pull/39994>`_ `pr #43789 <https://github.com/ansible/ansible/pull/43789>`_
+* Diff mode improvements for cloud modules `pr #44533 <https://github.com/ansible/ansible/pull/44533>`_
 
 Azure
 =====
 
 * Azure inventory plugin `issue #42769 <https://github.com/ansible/ansible/issues/42769>`__
-* Azure stack support for modules `project tracker <https://github.com/nitzmahone/ansible/projects/2>`__
 
 
 Network
@@ -88,14 +79,16 @@ Network
 General
 =======
 
-* Refactor the APIs in cliconf (`issue #39056 <https://github.com/ansible/ansible/issues/39056>`_) and netconf (`issue #39160 <https://github.com/ansible/ansible/issues/39160>`_) plugins so that they have a uniform signature across supported network platforms.
+* Refactor the APIs in cliconf (`issue #39056 <https://github.com/ansible/ansible/issues/39056>`_) and netconf (`issue #39160 <https://github.com/ansible/ansible/issues/39160>`_) plugins so that they have a uniform signature across supported network platforms. **done**
+  (`PR #41846 <https://github.com/ansible/ansible/pull/41846>`_) (`PR #43643 <https://github.com/ansible/ansible/pull/43643>`_) (`PR #43837 <https://github.com/ansible/ansible/pull/43837>`_)
+  (`PR #43203 <https://github.com/ansible/ansible/pull/43203>`_) (`PR #42300 <https://github.com/ansible/ansible/pull/42300>`_) (`PR #44157 <https://github.com/ansible/ansible/pull/44157>`_)
 
 Modules
 =======
 
-* New ``cli_config`` module `issue #39228 <https://github.com/ansible/ansible/issues/39228>`_
+* New ``cli_config`` module `issue #39228 <https://github.com/ansible/ansible/issues/39228>`_ **done** `PR #42413 <https://github.com/ansible/ansible/pull/42413>`_.
 * New ``cli_command`` module `issue #39284 <https://github.com/ansible/ansible/issues/39284>`_
-* Refactor ``netconf_config`` module to add additional functionality. `proposal #104 <https://github.com/ansible/proposals/issues/104>`_
+* Refactor ``netconf_config`` module to add additional functionality. **done** `proposal #104 <https://github.com/ansible/proposals/issues/104>`_ (`PR #44379 <https://github.com/ansible/ansible/pull/44379>`_)
 
 Windows
 -------
@@ -103,13 +96,14 @@ Windows
 General
 =======
 
-* Investigate the cause of WinRM HTTPS read timeouts `issue #41145 <https://github.com/ansible/ansible/issues/41145>`__
-* WinRM connection persistence (improves performance) `pr #41729 <https://github.com/ansible/ansible/pull/41729>`__
-* Experiment with OpenSSH + powershell `pr #33074 <https://github.com/ansible/ansible/pull/33074>`_
+* Added new connection plugin that uses PSRP as the connection protocol `pr #41729 <https://github.com/ansible/ansible/pull/41729>`__
 
 Modules
 =======
 
-* `win_domain` and `win_domain_controller` action wrappers `issue #42764 <https://github.com/ansible/ansible/issues/42764>`__
-* Add link to `win_file` `issue #43060 <https://github.com/ansible/ansible/issues/43060>`__
-* Hostname change support for `win_domain` and `win_domain_controller` `issue #42768 <https://github.com/ansible/ansible/issues/42768>`__
+* Revamp Chocolatey to fix bugs and support offline installation `pr #43013 <https://github.com/ansible/ansible/pull/43013>`_.
+* Add Chocolatey modules that can manage the following Chocolatey features
+
+    * `Sources <https://chocolatey.org/docs/commands-sources>`_ `pr #42790 <https://github.com/ansible/ansible/pull/42790>`_
+    * `Features <https://chocolatey.org/docs/chocolatey-configuration#features>`_ `pr #42848 <https://github.com/ansible/ansible/pull/42848>`_
+    * `Config <https://chocolatey.org/docs/chocolatey-configuration#config-settings>`_ `pr #42915 <h*ttps://github.com/ansible/ansible/pull/42915>`_

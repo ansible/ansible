@@ -8,11 +8,9 @@ __metaclass__ = type
 import os
 import re
 
-from copy import deepcopy
-
 from ansible import constants as C
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import string_types
+from ansible.module_utils import six
 from ansible.plugins.loader import connection_loader
 
 try:
@@ -20,6 +18,53 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+
+def module_response_deepcopy(v):
+    """Function to create a deep copy of module response data
+
+    Designed to be used within the Ansible "engine" to improve performance
+    issues where ``copy.deepcopy`` was used previously, largely with CPU
+    and memory contention.
+
+    This only supports the following data types, and was designed to only
+    handle specific workloads:
+
+    * ``dict``
+    * ``list``
+
+    The data we pass here will come from a serialization such
+    as JSON, so we shouldn't have need for other data types such as
+    ``set`` or ``tuple``.
+
+    Take note that this function should not be used extensively as a
+    replacement for ``deepcopy`` due to the naive way in which this
+    handles other data types.
+
+    Do not expect uses outside of those listed below to maintain
+    backwards compatibility, in case we need to extend this function
+    to handle our specific needs:
+
+    * ``ansible.executor.task_result.TaskResult.clean_copy``
+    * ``ansible.vars.clean.clean_facts``
+    * ``ansible.vars.namespace_facts``
+    """
+    if isinstance(v, dict):
+        ret = v.copy()
+        items = six.iteritems(ret)
+    elif isinstance(v, list):
+        ret = v[:]
+        items = enumerate(ret)
+    else:
+        return v
+
+    for key, value in items:
+        if isinstance(value, (dict, list)):
+            ret[key] = module_response_deepcopy(value)
+        else:
+            ret[key] = value
+
+    return ret
 
 
 def strip_internal_keys(dirty, exceptions=None):
@@ -32,7 +77,7 @@ def strip_internal_keys(dirty, exceptions=None):
         exceptions = ()
     clean = dirty.copy()
     for k in dirty.keys():
-        if isinstance(k, string_types) and k.startswith('_ansible_'):
+        if isinstance(k, six.string_types) and k.startswith('_ansible_'):
             if k not in exceptions:
                 del clean[k]
         elif isinstance(dirty[k], dict):
@@ -57,7 +102,7 @@ def remove_internal_keys(data):
 
 def clean_facts(facts):
     ''' remove facts that can override internal keys or otherwise deemed unsafe '''
-    data = deepcopy(facts)
+    data = module_response_deepcopy(facts)
 
     remove_keys = set()
     fact_keys = set(data.keys())
@@ -113,8 +158,8 @@ def namespace_facts(facts):
     for k in facts:
         if k in ('ansible_local',):
             # exceptions to 'deprefixing'
-            deprefixed[k] = deepcopy(facts[k])
+            deprefixed[k] = module_response_deepcopy(facts[k])
         else:
-            deprefixed[k.replace('ansible_', '', 1)] = deepcopy(facts[k])
+            deprefixed[k.replace('ansible_', '', 1)] = module_response_deepcopy(facts[k])
 
     return {'ansible_facts': deprefixed}

@@ -22,7 +22,7 @@ import sys
 
 import pytest
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5
 from ansible.errors import AnsibleFilterError
 
@@ -76,7 +76,7 @@ class TestNetworkParseFilter(unittest.TestCase):
 
         with self.assertRaises(Exception) as e:
             parse_xml(output_xml, 'junk_path')
-        self.assertEqual("unable to locate parse_cli template: junk_path", str(e.exception))
+        self.assertEqual("unable to locate parse_xml template: junk_path", str(e.exception))
 
         with self.assertRaises(Exception) as e:
             parse_xml(output, spec_file_path)

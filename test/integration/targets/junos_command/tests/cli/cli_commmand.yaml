@@ -22,6 +22,7 @@
     loop:
       - configure
       - set system syslog file test any any
+      - rollback
       - exit
     register: result
 

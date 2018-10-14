@@ -30,6 +30,10 @@ options:
     description:
       - ID of the VLAN. Range 1-4094.
     required: true
+  l3_interface:
+    description:
+      -  Name of logical layer 3 interface.
+    version_added: "2.7"
   description:
     description:
       - Text description of VLANs.
@@ -65,6 +69,13 @@ EXAMPLES = """
   junos_vlan:
     vlan_name: test
     vlan_id: 20
+    name: test-vlan
+
+- name: Link to logical layer 3 interface
+  junos_vlan:
+    vlan_name: test
+    vlan_id: 20
+    l3-interface: vlan.20
     name: test-vlan
 
 - name: remove VLAN configuration
@@ -145,6 +156,7 @@ def main():
         vlan_id=dict(type='int'),
         description=dict(),
         interfaces=dict(),
+        l3_interface=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
@@ -182,6 +194,7 @@ def main():
     param_to_xpath_map.update([
         ('name', {'xpath': 'name', 'is_key': True}),
         ('vlan_id', 'vlan-id'),
+        ('l3_interface', 'l3-interface'),
         ('description', 'description')
     ])
 

@@ -6,6 +6,7 @@ when it comes to components like path separators and OS-specific tasks.
 This document covers details specific to using Ansible for Windows.
 
 .. contents:: Topics
+   :local:
 
 Use Cases
 `````````

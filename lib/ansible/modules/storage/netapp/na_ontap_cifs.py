@@ -9,10 +9,10 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
-author: "Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)"
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
   - "Create or destroy or modify(path) cifs-share on ONTAP"
 extends_documentation_fragment:
@@ -40,7 +40,7 @@ options:
       - "Whether the specified CIFS share should exist or not."
     required: false
     default: present
-short_description: "Manage NetApp cifs-share"
+short_description: "NetApp ONTAP manage cifs-share"
 version_added: "2.6"
 
 '''

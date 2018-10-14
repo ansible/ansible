@@ -28,7 +28,7 @@ import tempfile
 import traceback
 
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.urls import fetch_url as _fetch_url
+from ansible.module_utils.urls import fetch_url
 
 try:
     import cryptography
@@ -63,45 +63,8 @@ class ModuleFailException(Exception):
         module.fail_json(msg=self.msg, other=self.module_fail_args)
 
 
-def _lowercase_fetch_url(*args, **kwargs):
-    '''
-     Add lowercase representations of the header names as dict keys
-
-    '''
-    response, info = _fetch_url(*args, **kwargs)
-
-    info.update(dict((header.lower(), value) for (header, value) in info.items()))
-    return response, info
-
-
-fetch_url = _lowercase_fetch_url
-
-
 def nopad_b64(data):
     return base64.urlsafe_b64encode(data).decode('utf8').replace("=", "")
-
-
-def simple_get(module, url):
-    resp, info = fetch_url(module, url, method='GET')
-
-    result = {}
-    try:
-        content = resp.read()
-    except AttributeError:
-        content = info.get('body')
-
-    if content:
-        if info['content-type'].startswith('application/json'):
-            try:
-                result = module.from_json(content.decode('utf8'))
-            except ValueError:
-                raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(url, content))
-        else:
-            result = content
-
-    if info['status'] >= 400:
-        raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
-    return result
 
 
 def read_file(fn, mode='b'):
@@ -466,15 +429,15 @@ class ACMEDirectory(object):
     and allows to obtain a Replay-Nonce. The acme_directory URL
     needs to support unauthenticated GET requests; ACME endpoints
     requiring authentication are not supported.
-    https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.1
+    https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.1.1
     '''
 
-    def __init__(self, module):
+    def __init__(self, module, account):
         self.module = module
         self.directory_root = module.params['acme_directory']
         self.version = module.params['acme_version']
 
-        self.directory = simple_get(self.module, self.directory_root)
+        self.directory, dummy = account.get_request(self.directory_root)
 
         # Check whether self.version matches what we expect
         if self.version == 1:
@@ -512,9 +475,10 @@ class ACMEAccount(object):
         # account_key path and content are mutually exclusive
         self.key = module.params['account_key_src']
         self.key_content = module.params['account_key_content']
-        self.directory = ACMEDirectory(module)
 
-        self.uri = None
+        # Grab account URI from module parameters.
+        # Make sure empty string is treated as None.
+        self.uri = module.params.get('account_uri') or None
 
         self._openssl_bin = module.get_bin_path('openssl', True)
 
@@ -527,11 +491,16 @@ class ACMEAccount(object):
                 "alg": self.key_data['alg'],
                 "jwk": self.jwk,
             }
+            if self.uri:
+                # Make sure self.jws_header is updated
+                self.set_account_uri(self.uri)
+
+        self.directory = ACMEDirectory(module, self)
 
     def get_keyauthorization(self, token):
         '''
         Returns the key authorization for the given token
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-8.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-8.1
         '''
         accountkey_json = json.dumps(self.jwk, sort_keys=True, separators=(',', ':'))
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
@@ -561,11 +530,11 @@ class ACMEAccount(object):
         else:
             return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
-    def send_signed_request(self, url, payload, key_data=None, jws_header=None):
+    def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-6.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.2
         '''
         key_data = key_data or self.key_data
         jws_header = jws_header or self.jws_header
@@ -591,23 +560,50 @@ class ACMEAccount(object):
             except AttributeError:
                 content = info.get('body')
 
-            if content:
-                if info['content-type'].startswith('application/json') or 400 <= info['status'] < 600:
+            if content or not parse_json_result:
+                if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
                     try:
-                        result = self.module.from_json(content.decode('utf8'))
+                        decoded_result = self.module.from_json(content.decode('utf8'))
                         # In case of badNonce error, try again (up to 5 times)
-                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-6.6)
+                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.6)
                         if (400 <= info['status'] < 600 and
-                                result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
+                                decoded_result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
                                 failed_tries <= 5):
                             failed_tries += 1
                             continue
+                        if parse_json_result:
+                            result = decoded_result
                     except ValueError:
                         raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(url, content))
                 else:
                     result = content
 
             return result, info
+
+    def get_request(self, uri, parse_json_result=True, headers=None):
+        resp, info = fetch_url(self.module, uri, method='GET', headers=headers)
+
+        try:
+            content = resp.read()
+        except AttributeError:
+            content = info.get('body')
+
+        if parse_json_result:
+            result = {}
+            if content:
+                if info['content-type'].startswith('application/json'):
+                    try:
+                        result = self.module.from_json(content.decode('utf8'))
+                    except ValueError:
+                        raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(uri, content))
+                else:
+                    result = content
+        else:
+            result = content
+
+        if info['status'] >= 400:
+            raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
+        return result, info
 
     def set_account_uri(self, uri):
         '''
@@ -624,7 +620,7 @@ class ACMEAccount(object):
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3
         '''
         contact = [] if contact is None else contact
 
@@ -676,13 +672,17 @@ class ACMEAccount(object):
         if self.version == 1:
             data['resource'] = 'reg'
         result, info = self.send_signed_request(self.uri, data)
-        if info['status'] == 403 and result.get('type') == 'urn:ietf:params:acme:error:unauthorized':
+        if info['status'] in (400, 403) and result.get('type') == 'urn:ietf:params:acme:error:unauthorized':
+            # Returned when account is deactivated
+            return None
+        if info['status'] in (400, 404) and result.get('type') == 'urn:ietf:params:acme:error:accountDoesNotExist':
+            # Returned when account does not exist
             return None
         if info['status'] < 200 or info['status'] >= 300:
             raise ModuleFailException("Error getting account data from {2}: {0} {1}".format(info['status'], result, self.uri))
         return result
 
-    def init_account(self, contact, agreement=None, terms_agreed=False, allow_creation=True, update_contact=True):
+    def init_account(self, contact, agreement=None, terms_agreed=False, allow_creation=True, update_contact=True, remove_account_uri_if_not_exists=False):
         '''
         Create or update an account on the ACME server. For ACME v1,
         as the only way (without knowing an account URI) to test if an
@@ -702,13 +702,21 @@ class ACMEAccount(object):
         will be stored in self.uri; if it is None, the account does not
         exist.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3
         '''
 
         new_account = True
         changed = False
         if self.uri is not None:
             new_account = False
+            if not update_contact:
+                # Verify that the account key belongs to the URI.
+                # (If update_contact is True, this will be done below.)
+                if self.get_account_data() is None:
+                    if remove_account_uri_if_not_exists and not allow_creation:
+                        self.uri = None
+                        return False
+                    raise ModuleFailException("Account is deactivated or does not exist!")
         else:
             new_account = self._new_reg(
                 contact,
@@ -724,7 +732,7 @@ class ACMEAccount(object):
                 if not allow_creation:
                     self.uri = None
                     return False
-                raise ModuleFailException("Account is deactivated!")
+                raise ModuleFailException("Account is deactivated or does not exist!")
 
             # ...and check if update is necessary
             if result.get('contact', []) != contact:

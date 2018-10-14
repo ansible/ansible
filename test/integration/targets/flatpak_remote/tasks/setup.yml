@@ -1,0 +1,26 @@
+- name: Install flatpak on Fedora
+  dnf:
+    name: flatpak
+    state: present
+
+  when: ansible_distribution == 'Fedora'
+
+- block:
+  - name: Activate flatpak ppa on Ubuntu
+    apt_repository:
+      repo: "ppa:alexlarsson/flatpak"
+      state: present
+      mode: 0644
+
+  - name: Install flatpak package on Ubuntu
+    apt:
+      name: flatpak
+      state: present
+
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Install flatpak_remote for testing check mode
+  flatpak_remote:
+    name: check-mode-test-remote
+    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    state: present

@@ -21,6 +21,7 @@ options:
     api_password:
         description:
             - The password or token for XMLRPC authentication.
+              If not specified then the value of the ONE_PASSWORD environment variable, if any, is used.
         aliases:
             - api_token
     validate_certs:

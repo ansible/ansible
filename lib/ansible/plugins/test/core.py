@@ -21,10 +21,10 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
-from collections import MutableMapping, MutableSequence
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
+from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 
 try:
     from __main__ import display
@@ -43,6 +43,18 @@ def failed(result):
 def success(result):
     ''' Test if task result yields success '''
     return not failed(result)
+
+
+def unreachable(result):
+    ''' Test if task result yields unreachable '''
+    if not isinstance(result, MutableMapping):
+        raise errors.AnsibleFilterError("The 'unreachable' test expects a dictionary")
+    return result.get('unreachable', False)
+
+
+def reachable(result):
+    ''' Test if task result yields reachable '''
+    return not unreachable(result)
 
 
 def changed(result):
@@ -72,16 +84,30 @@ def skipped(result):
     return result.get('skipped', False)
 
 
+def started(result):
+    ''' Test if async task has started '''
+    if not isinstance(result, MutableMapping):
+        raise errors.AnsibleFilterError("The 'started' test expects a dictionary")
+    if 'started' in result:
+        # For async tasks, return status
+        # NOTE: The value of started is 0 or 1, not False or True :-/
+        return result.get('started', 0) == 1
+    else:
+        # For non-async tasks, warn user, but return as if started
+        display.warning("The 'started' test expects an async task, but a non-async task was tested")
+        return True
+
+
 def finished(result):
     ''' Test if async task has finished '''
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'finished' test expects a dictionary")
     if 'finished' in result:
-        # For async tasks return status
-        # NOTE: The value of finished it 0 or 1, not False or True :-/
+        # For async tasks, return status
+        # NOTE: The value of finished is 0 or 1, not False or True :-/
         return result.get('finished', 0) == 1
     else:
-        # For non-async tasks warn user, but return as finished
+        # For non-async tasks, warn user, but return as if finished
         display.warning("The 'finished' test expects an async task, but a non-async task was tested")
         return True
 
@@ -150,6 +176,8 @@ class TestModule(object):
             'succeeded': success,
             'success': success,
             'successful': success,
+            'reachable': reachable,
+            'unreachable': unreachable,
 
             # changed testing
             'changed': changed,
@@ -161,6 +189,7 @@ class TestModule(object):
 
             # async testing
             'finished': finished,
+            'started': started,
 
             # regex
             'match': match,

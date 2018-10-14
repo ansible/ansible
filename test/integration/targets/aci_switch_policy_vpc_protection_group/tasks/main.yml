@@ -58,9 +58,8 @@
     that:
     - cm_add_vpc_prot_grp is changed
     - nm_add_vpc_prot_grp is changed
-    # FIXME: Not idempotent !
-    #- cm_add_vpc_prot_grp_again is not changed
-    #- nm_add_vpc_prot_grp_again is not changed
+    - cm_add_vpc_prot_grp_again is not changed
+    - nm_add_vpc_prot_grp_again is not changed
 
 
 # CHANGE VPC PROTECTION GROUP
@@ -95,9 +94,8 @@
     that:
     - cm_add_vpc_prot_grp_pol is changed
     - nm_add_vpc_prot_grp_pol is changed
-    # FIXME: Not idempotent !!
-    #- cm_add_vpc_prot_grp_pol_again is not changed
-    #- nm_add_vpc_prot_grp_pol_again is not changed
+    - cm_add_vpc_prot_grp_pol_again is not changed
+    - nm_add_vpc_prot_grp_pol_again is not changed
 
 
 # ADD FABRIC NODE AGAIN
@@ -113,9 +111,8 @@
 - name: Verify add_vpc_prot_grp_again_no_pol
   assert:
     that:
-    # FIXME: Not idempoten !!
-    #- cm_add_vpc_prot_grp_again_no_pol is not changed
-    #- nm_add_vpc_prot_grp_again_no_pol is not changed
+    - cm_add_vpc_prot_grp_again_no_pol is not changed
+    - nm_add_vpc_prot_grp_again_no_pol is not changed
 
 
 # QUERY ALL VPC PROTECTION GROUPS

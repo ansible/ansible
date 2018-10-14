@@ -15,9 +15,9 @@ from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import Mock
+from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -126,7 +126,7 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo.baz.bar',
             lb_method='round-robin',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -164,7 +164,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='round-robin',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -196,7 +196,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='round_robin',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -228,7 +228,7 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='global_availability',
             type='a',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -266,7 +266,7 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -304,7 +304,7 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -344,7 +344,7 @@ class TestTypedManager(unittest.TestCase):
                     ratio=100
                 )
             ],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

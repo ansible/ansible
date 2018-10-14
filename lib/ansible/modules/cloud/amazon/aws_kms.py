@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -61,7 +61,7 @@ options:
     type: bool
     default: true
 
-author: tedder
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2

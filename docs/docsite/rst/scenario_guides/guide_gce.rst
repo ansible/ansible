@@ -24,7 +24,7 @@ and make them automatically available in your Ansible inventory.
 You may see a collection of other GCP modules that do not conform to this
 naming convention. These are the original modules primarily developed by the
 Ansible community. You will find some overlapping functionality such as with
-the the "gce" module and the new "gcp_compute_instance" module. Either can be
+the "gce" module and the new "gcp_compute_instance" module. Either can be
 used, but you may experience issues trying to use them together.
 
 While the community GCP modules are not going away, Google is investing effort

@@ -24,8 +24,8 @@ import passlib
 from passlib.handlers import pbkdf2
 from units.mock.loader import DictDataLoader
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import mock_open, patch
+from units.compat import unittest
+from units.compat.mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins
@@ -290,15 +290,6 @@ class TestRandomPassword(unittest.TestCase):
                 self.assertIn(char, candidate_chars,
                               msg='%s not found in %s from chars spect %s' %
                               (char, candidate_chars, params['chars']))
-
-
-class TestRandomSalt(unittest.TestCase):
-    def test(self):
-        res = password._random_salt()
-        expected_salt_candidate_chars = u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./'
-        self.assertEquals(len(res), 8)
-        for res_char in res:
-            self.assertIn(res_char, expected_salt_candidate_chars)
 
 
 class TestParseContent(unittest.TestCase):

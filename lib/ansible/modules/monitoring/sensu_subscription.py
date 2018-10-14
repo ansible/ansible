@@ -44,7 +44,7 @@ options:
     required: false
     default: no
 requirements: [ ]
-author: Anders Ingemann
+author: Anders Ingemann (@andsens)
 '''
 
 RETURN = '''

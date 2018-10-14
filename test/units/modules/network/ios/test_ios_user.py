@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ios import ios_user
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
@@ -61,10 +61,7 @@ class TestIosUserModule(TestIosModule):
             {
                 "command": "no username ansible", "answer": "y", "newline": False,
                 "prompt": "This operation will remove all username related configurations with same name",
-            },
-            'ip ssh pubkey-chain',
-            ' no username ansible',
-            ' exit'
+            }
         ]
 
         result_cmd = []
@@ -124,11 +121,10 @@ class TestIosUserModule(TestIosModule):
         set_module_args(dict(name='ansible', sshkey='dGVzdA=='))
         commands = [
             'ip ssh pubkey-chain',
-            ' no username ansible',
-            ' username ansible',
-            '  key-hash ssh-rsa 098F6BCD4621D373CADE4E832627B4F6',
-            '  exit',
-            ' exit'
+            'username ansible',
+            'key-hash ssh-rsa 098F6BCD4621D373CADE4E832627B4F6',
+            'exit',
+            'exit'
         ]
         result = self.execute_module(changed=True, commands=commands)
         self.assertEqual(result['commands'], commands)

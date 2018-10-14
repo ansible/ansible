@@ -28,13 +28,6 @@ from lib.docker_util import (
     get_docker_container_id,
 )
 
-try:
-    # noinspection PyPep8Naming
-    import ConfigParser as configparser
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import configparser
-
 
 class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""
@@ -50,7 +43,7 @@ class ACMEProvider(CloudProvider):
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
         else:
-            self.image = 'quay.io/ansible/acme-test-container:1.2.0'
+            self.image = 'quay.io/ansible/acme-test-container:1.3.0'
         self.container_name = ''
 
     def _wait_for_service(self, protocol, acme_host, port, local_part, name):

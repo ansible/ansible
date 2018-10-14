@@ -131,7 +131,7 @@ options:
     version_added: "2.0"
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc.  Otherwise assumes AWS
+      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
     aliases: [ S3_URL ]
   dualstack:
     description:
@@ -701,9 +701,6 @@ def main():
                      ['mode', 'getstr', ['object']],
                      ['mode', 'geturl', ['object']]],
     )
-
-    if module._name == 's3':
-        module.deprecate("The 's3' module is being renamed 'aws_s3'", version=2.7)
 
     bucket = module.params.get('bucket')
     encrypt = module.params.get('encrypt')

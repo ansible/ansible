@@ -15,9 +15,10 @@ from lib.util import (
     run_command,
     import_plugins,
     load_plugins,
-    parse_to_dict,
+    parse_to_list_of_dict,
     ABC,
     is_binary_file,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (
@@ -57,7 +58,7 @@ def command_sanity(args):
     :type args: SanityConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     targets = SanityTargets(args.include, args.exclude, require)
 
     if not targets.include:
@@ -134,8 +135,8 @@ def collect_code_smell_tests():
     """
     :rtype: tuple[SanityCodeSmellTest]
     """
-    with open('test/sanity/code-smell/skip.txt', 'r') as skip_fd:
-        skip_tests = skip_fd.read().splitlines()
+    skip_file = 'test/sanity/code-smell/skip.txt'
+    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True)
 
     paths = glob.glob('test/sanity/code-smell/*')
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
@@ -304,7 +305,7 @@ class SanityCodeSmellTest(SanityTest):
 
         if stdout and not stderr:
             if pattern:
-                matches = [parse_to_dict(pattern, line) for line in stdout.splitlines()]
+                matches = parse_to_list_of_dict(pattern, stdout)
 
                 messages = [SanityMessage(
                     message=m['message'],

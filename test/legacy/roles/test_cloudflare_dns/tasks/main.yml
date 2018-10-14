@@ -59,6 +59,7 @@
 - include: cname_record.yml
 - include: txt_record.yml
 - include: ns_record.yml
+- include: ds_record.yml
 - include: spf_record.yml
 - include: mx_record.yml
 - include: srv_record.yml

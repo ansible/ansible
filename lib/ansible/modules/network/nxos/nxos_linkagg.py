@@ -139,6 +139,19 @@ def search_obj_in_list(group, lst):
             return o
 
 
+def get_diff(w, obj):
+    c = deepcopy(w)
+    o = deepcopy(obj)
+
+    if o['group'] == c['group'] and o.get('members') == c.get('members'):
+        if 'members' in o:
+            del o['members']
+        if 'members' in c:
+            del c['members']
+        diff_dict = dict(set(c.items()) - set(o.items()))
+        return diff_dict
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
@@ -208,6 +221,18 @@ def map_obj_to_commands(updates, module):
                             commands.append('exit')
                             commands.append('interface {0}'.format(m))
                             commands.append('no channel-group {0}'.format(group))
+
+                    else:
+                        diff = get_diff(w, obj_in_have)
+                        if diff and 'mode' in diff:
+                            mode = diff['mode']
+                            for i in members:
+                                commands.append('interface {0}'.format(i))
+                                if force:
+                                    commands.append('channel-group {0} force mode {1}'.format(group, mode))
+                                else:
+                                    commands.append('channel-group {0} mode {1}'.format(group, mode))
+
     if purge:
         for h in have:
             obj_in_want = search_obj_in_list(h['group'], want)
@@ -310,7 +335,7 @@ def parse_channel_options(module, output, channel):
 
     group = channel['group']
     obj['group'] = group
-    obj['min-links'] = parse_min_links(module, group)
+    obj['min_links'] = parse_min_links(module, group)
     members = parse_members(output, group)
     obj['members'] = members
     for m in members:
@@ -389,7 +414,16 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            resp = load_config(module, commands, True)
+            if resp:
+                for item in resp:
+                    if item:
+                        if isinstance(item, dict):
+                            err_str = item['clierror']
+                        else:
+                            err_str = item
+                        if 'cannot add' in err_str.lower():
+                            module.fail_json(msg=err_str)
         result['changed'] = True
 
     module.exit_json(**result)

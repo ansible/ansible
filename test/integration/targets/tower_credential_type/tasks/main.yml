@@ -1,0 +1,23 @@
+---
+- name: Add Tower credential type
+  tower_credential_type:
+    description: Credential type for Test
+    name: test-credential-type
+    kind: cloud
+    inputs: '{"fields": [{"type": "string", "id": "username", "label": "Username"}, {"secret": True, "type": "string", "id": "password", "label": "Password"}], "required": ["username", "password"]}'
+    injectors: '{"extra_vars": {"test": "foo"}}'
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Remove a Tower credential type
+  tower_credential_type:
+    name: test-credential-type
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

@@ -24,6 +24,13 @@ notes:
   - For Windows targets, use the M(win_user) module instead.
   - On SunOS platforms, the shadow file is backed up automatically since this module edits it directly.
     On other platforms, the shadow file is backed up by the underlying tools used by this module.
+  - On macOS, this module uses C(dscl) to create, modify, and delete accounts. C(dseditgroup) is used to
+    modify group membership. Accounts are hidden from the login window by modifying
+    C(/Library/Preferences/com.apple.loginwindow.plist).
+  - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
+    C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
+    C(userdel) to remove accounts.
 description:
     - Manage user accounts and user attributes.
     - For Windows targets, use the M(win_user) module instead.
@@ -78,6 +85,8 @@ options:
             - Optionally set the user's shell.
             - On macOS, before version 2.5, the default shell for non-system users was /usr/bin/false.
               Since 2.5, the default shell for non-system users on macOS is /bin/bash.
+            - On other operating systems, the default shell is determined by the underlying tool being
+              used. See Notes for details.
     home:
         description:
             - Optionally set the user's home directory.
@@ -560,7 +569,10 @@ class User(object):
 
         if self.expires is not None:
             cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            if self.expires < time.gmtime(0):
+                cmd.append('')
+            else:
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password is not None:
             cmd.append('-p')
@@ -1008,7 +1020,10 @@ class FreeBsdUser(User):
 
         if self.expires is not None:
             cmd.append('-e')
-            cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+            if self.expires < time.gmtime(0):
+                cmd.append('0')
+            else:
+                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user

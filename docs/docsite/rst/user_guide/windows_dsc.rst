@@ -2,6 +2,7 @@ Desired State Configuration
 ===========================
 
 .. contents:: Topics
+   :local:
 
 What is Desired State Configuration?
 ````````````````````````````````````
@@ -60,7 +61,7 @@ The ``win_dsc`` module takes in a free-form of options so that it changes
 according to the resource it is managing. A list of built in resources can be
 found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
 
-Using the the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
+Using the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
 resource as an example, this is the DSC definition as documented by Microsoft::
 
     Registry [string] #ResourceName
@@ -387,7 +388,7 @@ Setup IIS Website
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `List of Windows Modules :ref:`<windows_modules>`
+   :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

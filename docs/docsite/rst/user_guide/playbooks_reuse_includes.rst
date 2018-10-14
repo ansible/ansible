@@ -9,7 +9,7 @@ Includes vs. Imports
 As noted in :doc:`playbooks_reuse`, include and import statements are very similar, however the Ansible executor engine treats them very differently.
 
 - All ``import*`` statements are pre-processed at the time playbooks are parsed.
-- All ``include*`` statements are processed as they encountered during the execution of the playbook.
+- All ``include*`` statements are processed as they are encountered during the execution of the playbook.
 
 Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
 
@@ -75,7 +75,9 @@ Includes and imports can also be used in the ``handlers:`` section. For instance
 
    # more_handlers.yml
    - name: restart apache
-     service: name=apache state=restarted
+     service:
+       name: apache
+       state: restarted
 
 And in your main playbook file::
 

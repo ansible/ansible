@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -51,6 +51,7 @@ options:
             - Premium_LRS
             - Standard_GRS
             - Standard_LRS
+            - StandardSSD_LRS
             - Standard_RAGRS
             - Standard_ZRS
         aliases:
@@ -158,7 +159,8 @@ class AzureRMStorageAccount(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            account_type=dict(type='str', choices=[], aliases=['type']),
+            account_type=dict(type='str', choices=['Premium_LRS', 'Standard_GRS', 'Standard_LRS', 'StandardSSD_LRS', 'Standard_RAGRS', 'Standard_ZRS'],
+                              aliases=['type']),
             custom_domain=dict(type='dict'),
             location=dict(type='str'),
             name=dict(type='str', required=True),
@@ -172,7 +174,8 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
         if HAS_AZURE:
             for key in self.storage_models.SkuName:
-                self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
+                if getattr(key, 'value') not in self.module_arg_spec['account_type']['choices']:
+                    self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,
