@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2018, David Gomez (@amb1s1) <david.gomez@networktocode.com>
 # Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
+# Copyright: (c) 2018, David Gomez (@amb1s1) <david.gomez@networktocode.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 __metaclass__ = type

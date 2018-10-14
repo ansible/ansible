@@ -1,0 +1,47 @@
+Sanity Tests
+============
+
+The following sanity tests are available as ``--test`` options for ``ansible-test sanity``.
+This list is also available using ``ansible-test sanity --list-tests``.
+
+.. toctree::
+   :maxdepth: 1
+
+   ansible-doc
+   azure-requirements
+   boilerplate
+   botmeta
+   changelog
+   compile
+   configure-remoting-ps1
+   empty-init
+   import
+   integration-aliases
+   line-endings
+   no-assert
+   no-basestring
+   no-dict-iteritems
+   no-dict-iterkeys
+   no-dict-itervalues
+   no-get-exception
+   no-illegal-filenames
+   no-smart-quotes
+   no-tests-as-filters
+   no-underscore-variable
+   no-unicode-literals
+   pep8
+   pslint
+   pylint
+   replace-urlopen
+   required-and-default-attributes
+   rstcheck
+   sanity-docs
+   shebang
+   shellcheck
+   symlinks
+   test-constraints
+   use-argspec-type-path
+   use-compat-six
+   validate-modules
+   yamllint
+

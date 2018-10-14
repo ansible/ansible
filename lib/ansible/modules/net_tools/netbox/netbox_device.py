@@ -43,10 +43,10 @@ options:
           - The name of the device
       device_type:
         description:
-          - required if state is C(present)
+          - Required if I(state=present)
       device_role:
         description:
-          - required if state is C(present))
+          - Required if I(state=present)
       tenant:
         description:
           - The tenant that the device will be assigned to
@@ -61,7 +61,7 @@ options:
           - Asset tag that is associated to the device
       site:
         description:
-          - required if state is C(present)
+          - Required if I(state=present)
       rack:
         description:
           - The name of the rack to assign the device to
@@ -70,7 +70,7 @@ options:
           - The position of the device in the rack defined above
       face:
         description:
-          - required if rack is defined
+          - Required if I(rack) is defined
       status:
         description:
           - The status of the device
