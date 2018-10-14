@@ -43,7 +43,7 @@ options:
           filters
      required: false
      default: None
-     version_added: "2.4"
+     version_added: "2.8"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
