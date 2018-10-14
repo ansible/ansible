@@ -37,23 +37,33 @@ options:
   data:
     description:
       - Defines the device configuration
-    choices:
-      - name
-      - device_type (required if state is C(present))
-      - device_role (required if state is C(present))
-      - tenant
-      - platform
-      - serial
-      - asset_tag
-      - site (required if state is C(present))
-      - rack
-      - position
-      - face
-      - status
-      - cluster
-      - comments
-      - tags
-      - custom_fields (must exist in Netbox)
+    suboptions:
+      name:
+      device_type:
+        description:
+          - required if state is C(present)
+      device_role:
+        description:
+          - required if state is C(present))
+      tenant:     
+      platform:
+      serial:
+      asset_tag:
+      site:
+        description:
+          - required if state is C(present)
+      rack:
+      position:
+      face:
+        description:
+          - required if rack is defined
+      status:
+      cluster:
+      comments:
+      tags:
+      custom_fields:
+        description:
+          - must exist in Netbox
     required: true
   state:
     description:
