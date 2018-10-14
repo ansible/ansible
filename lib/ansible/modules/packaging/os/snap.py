@@ -169,7 +169,7 @@ def install_snaps(module, snap_names):
     exit_kwargs = {
         'classic': module.params['classic'],
         'channel': module.params['channel'],
-    }
+    } if module.params['state'] == 'present' else {}
 
     actionable_snaps = get_snap_for_action(module)
     if not actionable_snaps:
