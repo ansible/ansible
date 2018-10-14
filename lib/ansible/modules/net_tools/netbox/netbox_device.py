@@ -44,7 +44,7 @@ options:
           - required if state is C(present)
       device_role:
         description:
-          - required if state is C(present))
+          - required if state is C(present)
       tenant:     
       platform:
       serial:
