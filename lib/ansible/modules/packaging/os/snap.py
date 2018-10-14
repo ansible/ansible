@@ -148,15 +148,19 @@ def install_snaps(module, snap_names):
     exit_kwargs = {
         'classic': module.params['classic'],
         'channel': module.params['channel'],
-        'changed': False,
     }
 
     actionable_snaps = get_snap_for_action(module)
     if not actionable_snaps:
-        module.exit_json(**exit_kwargs)
+        module.exit_json(changed=False, **exit_kwargs)
+
+    changed_def_args = {
+        'changed': True,
+        'snaps_installed': actionable_snaps,
+    }
 
     if module.check_mode:
-        module.exit_json(changed=True, snaps_installed=actionable_snaps, **exit_kwargs)
+        module.exit_json(**changed_def_args, **exit_kwargs)
 
     classic = ['--classic'] if module.params['classic'] else []
     channel = ['--channel ', module.params['channel']]
@@ -175,7 +179,7 @@ def install_snaps(module, snap_names):
     }
 
     if rc == 0:
-        module.exit_json(changed=True, snaps_installed=actionable_snaps, **cmd_out_args, **exit_kwargs)
+        module.exit_json(**changed_def_args, **cmd_out_args, **exit_kwargs)
     else:
         msg = "Ooops! Snap installation failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         m = re.match(r'^error: This revision of snap "(?P<package_name>\w+)" was published using classic confinement', err)
@@ -190,8 +194,13 @@ def remove_snaps(module, snap_names):
     if not actionable_snaps:
         module.exit_json(changed=False)
 
+    changed_def_args = {
+        'changed': True,
+        'snaps_removed': actionable_snaps,
+    }
+
     if module.check_mode:
-        module.exit_json(changed=True, snaps_removed=actionable_snaps)
+        module.exit_json(**changed_def_args)
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'remove'] + actionable_snaps
@@ -207,7 +216,7 @@ def remove_snaps(module, snap_names):
     }
 
     if rc == 0:
-        module.exit_json(changed=True, snaps_removed=actionable_snaps, **cmd_out_args)
+        module.exit_json(**changed_def_args, **cmd_out_args)
     else:
         msg = "Ooops! Snap removal failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         module.fail_json(msg=msg, **cmd_out_args)
