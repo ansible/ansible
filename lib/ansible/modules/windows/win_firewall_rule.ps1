@@ -221,7 +221,7 @@ try {
                        -edgeTraversalOptions $edge `
                        -secureFlags $security
 
-    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
+    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','Protocol','LocalPorts','RemotePorts','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
 
     if ($state -eq "absent") {
         if ($existingRule -eq $null) {
