@@ -488,7 +488,7 @@ class Host(object):
 
         # Check whether the visible_name has changed; Zabbix defaults to the technical hostname if not set.
         if visible_name:
-            if host['name'] != visible_name and host['name'] != host_name:
+            if host['name'] != visible_name and visible_name != host_name:
                 return True
 
         # Only compare description if it is given as a module parameter
