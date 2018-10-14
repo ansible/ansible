@@ -1,0 +1,170 @@
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: Create a VM with one disk controller
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: one_ctl_test
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0]|basename }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+  register: one_scsi_disk_vm
+
+- debug: var=one_scsi_disk_vm
+
+- name: assert that VM was deployed
+  assert:
+    that:
+        - "one_scsi_disk_vm.failed == false"
+        - "one_scsi_disk_vm.changed == true"
+
+- name: create a new VM with multiple disk controllers
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: multi_ctl_test
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0]|basename }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+    diskcontrollers:
+    - scsi: lsilogicsas
+      disks:
+      - size_gb: 1
+        type: eagerzeroedthick
+      - size_gb: 1
+        type: thin
+    - scsi: paravirtual
+      disks:
+      - size_gb: 1
+        type: thin
+      - size_gb: 1
+        type: eagerzeroedthick
+  register: multi_scsi_disk_vm
+
+- debug: var=multi_scsi_disk_vm
+
+- name: assert that VM was deployed
+  assert:
+    that:
+        - "multi_scsi_disk_vm.failed == false"
+        - "multi_scsi_disk_vm.changed == true"
+
+- name: reconfig above VM with more disk controllers
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: multi_ctl_test
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    diskcontrollers:
+    - scsi: lsilogicsas
+      status: new
+      disks:
+      - size_gb: 1
+        type: eagerzeroedthick
+      - size_gb: 1
+        type: thin
+    - scsi: paravirtual
+      status: new
+      disks:
+      - size_gb: 1
+        type: thin
+      - size_gb: 1
+        type: eagerzeroedthick
+    state: present
+  register: reconfig_scsi_disk_vm
+
+- debug: var=reconfig_scsi_disk_vm
+
+- name: assert that VM was reconfigured
+  assert:
+    that:
+        - "reconfig_scsi_disk_vm.failed == false"
+        - "reconfig_scsi_disk_vm.changed == true"
+
+- name: create a new VM "disk" takes precedence
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: disk_para_test
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0]|basename }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_gb: 1
+      type: thin
+    - size_gb: 1
+      type: eagerzeroedthick
+    diskcontrollers:
+    - scsi: lsilogicsas
+      disks:
+      - size_gb: 1
+        type: thin
+    - scsi: paravirtual
+      disks:
+      - size_gb: 1
+        type: thin
+  register: one_scsi_disk_vm
+
+- debug: var=one_scsi_disk_vm
+
+- name: assert that VM was deployed
+  assert:
+    that:
+        - "one_scsi_disk_vm.failed == false"
+        - "one_scsi_disk_vm.changed == true"
