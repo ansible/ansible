@@ -106,22 +106,7 @@
     - output is success
     - output is changed
 
-- name: delete sample service again
-  register: output
-  docker_swarm_service:
-    name: test_service
-    state: absent
-
-- name: assert service deletion returns unchanged
-  assert:
-    that:
-    - output is success
-    - output is not changed
-
 - name: Remove a Swarm cluster
-  retries: 5
-  until: output is succeeded
-  register: output
   docker_swarm:
     state: absent
     force: true
