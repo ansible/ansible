@@ -39,28 +39,57 @@ options:
       - Defines the device configuration
     suboptions:
       name:
+        description:
+          - The name of the device
       device_type:
         description:
           - required if state is C(present)
       device_role:
         description:
-          - required if state is C(present)
-      tenant:     
+          - required if state is C(present))
+      tenant:
+        description:
+          - The tenant that the device will be assigned to
       platform:
+        description:
+          - The platform of the device
       serial:
+        description:
+          - Serial number of the device
       asset_tag:
+        description:
+          - Asset tag that is associated to the device
       site:
         description:
           - required if state is C(present)
       rack:
+        description:
+          - The name of the rack to assign the device to
       position:
+        description:
+          - The position of the device in the rack defined above
       face:
         description:
           - required if rack is defined
       status:
+        description:
+          - The status of the device
+        choices:
+          - Active
+          - Offline
+          - Planned
+          - Staged
+          - Failed
+          - Inventory
       cluster:
+        description:
+          - Cluster that the device will be assigned to
       comments:
+        description:
+          - Comments that may include additional information in regards to the device
       tags:
+        description:
+          - Any tags that the device may need to be associated with
       custom_fields:
         description:
           - must exist in Netbox
