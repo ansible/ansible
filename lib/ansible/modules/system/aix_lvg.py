@@ -22,12 +22,12 @@ module: aix_lvg
 short_description: Configure LVM volume groups for AIX.
 description:
   - This module creates, removes or resize volume groups on AIX LVM.
-version_added: "2.5"
+version_added: "2.8"
 options:
   force:
     description:
       - Forces volume group creation.
-    choices: ["yes", "no"]
+    choices: [True, False]
     default: "no"
   pp_size:
     description:
