@@ -44,6 +44,7 @@ PYLINT_IGNORE_PATH = 'test/sanity/pylint/ignore.txt'
 
 UNSUPPORTED_PYTHON_VERSIONS = (
     '2.6',
+    '2.7',
 )
 
 
