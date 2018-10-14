@@ -151,18 +151,18 @@ def install_snaps(module, snap_names):
         'changed': False,
     }
 
-    snaps_not_installed = get_snap_for_action(module)
-    if not snaps_not_installed:
+    actionable_snaps = get_snap_for_action(module)
+    if not actionable_snaps:
         module.exit_json(**exit_kwargs)
 
     if module.check_mode:
-        module.exit_json(changed=True, snaps_installed=snaps_not_installed, **exit_kwargs)
+        module.exit_json(changed=True, snaps_installed=actionable_snaps, **exit_kwargs)
 
     classic = ['--classic'] if module.params['classic'] else []
     channel = ['--channel ', module.params['channel']]
 
     snap_path = module.get_bin_path("snap", True)
-    cmd_parts = [snap_path, 'install'] + snaps_not_installed + classic + channel
+    cmd_parts = [snap_path, 'install'] + actionable_snaps + classic + channel
     cmd = ' '.join(cmd_parts)
 
     # Actually install the snaps
@@ -175,8 +175,7 @@ def install_snaps(module, snap_names):
     }
 
     if rc == 0:
-        exit_kwargs['snaps_installed'] = snaps_not_installed
-        module.exit_json(changed=True, **cmd_out_args, **exit_kwargs)
+        module.exit_json(changed=True, snaps_installed=actionable_snaps, **cmd_out_args, **exit_kwargs)
     else:
         msg = "Ooops! Snap installation failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         m = re.match(r'^error: This revision of snap "(?P<package_name>\w+)" was published using classic confinement', err)
@@ -187,15 +186,15 @@ def install_snaps(module, snap_names):
 
 
 def remove_snaps(module, snap_names):
-    snaps_installed = get_snap_for_action(module)
-    if not snaps_installed:
+    actionable_snaps = get_snap_for_action(module)
+    if not actionable_snaps:
         module.exit_json(changed=False)
 
     if module.check_mode:
-        module.exit_json(changed=True, snaps_removed=snaps_installed)
+        module.exit_json(changed=True, snaps_removed=actionable_snaps)
 
     snap_path = module.get_bin_path("snap", True)
-    cmd_parts = [snap_path, 'remove'] + snaps_installed
+    cmd_parts = [snap_path, 'remove'] + actionable_snaps
     cmd = ' '.join(cmd_parts)
 
     # Actually remove the snaps
@@ -208,7 +207,7 @@ def remove_snaps(module, snap_names):
     }
 
     if rc == 0:
-        module.exit_json(changed=True, snaps_removed=snaps_installed, **cmd_out_args)
+        module.exit_json(changed=True, snaps_removed=actionable_snaps, **cmd_out_args)
     else:
         msg = "Ooops! Snap removal failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         module.fail_json(msg=msg, **cmd_out_args)
