@@ -144,6 +144,27 @@ def get_snap_for_action(module):
     return [s for s in snaps if predicate(s)]
 
 
+def get_cmd_parts(module, snap_names):
+    action_map = {
+        'present': 'install',
+        'absent': 'remove',
+    }
+    
+    state = module.params['state']
+
+    classic = ['--classic'] if module.params['classic'] else []
+    channel = ['--channel ', module.params['channel']]
+
+    snap_path = module.get_bin_path("snap", True)
+    snap_action = action_map[state]
+
+    cmd_parts = [snap_path, snap_action] + actionable_snaps
+    if snap_action == 'install':
+        cmd_parts += classic + channel
+
+    return cmd_parts
+
+
 def install_snaps(module, snap_names):
     exit_kwargs = {
         'classic': module.params['classic'],
@@ -162,11 +183,7 @@ def install_snaps(module, snap_names):
     if module.check_mode:
         module.exit_json(**changed_def_args, **exit_kwargs)
 
-    classic = ['--classic'] if module.params['classic'] else []
-    channel = ['--channel ', module.params['channel']]
-
-    snap_path = module.get_bin_path("snap", True)
-    cmd_parts = [snap_path, 'install'] + actionable_snaps + classic + channel
+    cmd_parts = get_cmd_parts(module, actionable_snaps)
     cmd = ' '.join(cmd_parts)
 
     # Actually install the snaps
@@ -202,8 +219,7 @@ def remove_snaps(module, snap_names):
     if module.check_mode:
         module.exit_json(**changed_def_args)
 
-    snap_path = module.get_bin_path("snap", True)
-    cmd_parts = [snap_path, 'remove'] + actionable_snaps
+    cmd_parts = get_cmd_parts(module, actionable_snaps)
     cmd = ' '.join(cmd_parts)
 
     # Actually remove the snaps
