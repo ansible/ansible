@@ -106,7 +106,17 @@
     - output is success
     - output is changed
 
-- name: Remove a Swarm cluster
+- name: Remove the Swarm cluster
+  docker_swarm:
+    state: absent
+    force: true
+
+- name: Try reitializing the swarm cluster
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address}}"
+
+- name: Clean the docker daemon status
   docker_swarm:
     state: absent
     force: true
