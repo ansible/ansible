@@ -99,7 +99,7 @@ class PylintTest(SanitySingleVersion):
                     invalid_ignores.append((line, 'Invalid version: %s' % version))
                     continue
 
-                if version != args.python_version and version != args.python_version.split('.')[0]:
+                if version not in (args.python_version, args.python_version.split('.')[0]):
                     continue  # ignore version specific entries for other versions
 
             ignore[path][code] = line
@@ -121,12 +121,26 @@ class PylintTest(SanitySingleVersion):
             contexts[context_name] = sorted(filtered_paths)
             available_paths -= filtered_paths
 
-        add_context(remaining_paths, 'ansible-test', lambda p: p.startswith('test/runner/'))
-        add_context(remaining_paths, 'units', lambda p: p.startswith('test/units/'))
-        add_context(remaining_paths, 'test', lambda p: p.startswith('test/'))
-        add_context(remaining_paths, 'hacking', lambda p: p.startswith('hacking/'))
-        add_context(remaining_paths, 'modules', lambda p: p.startswith('lib/ansible/modules/'))
-        add_context(remaining_paths, 'module_utils', lambda p: p.startswith('lib/ansible/module_utils/'))
+        def filter_path(path_filter=None):
+            """
+            :type path_filter: str
+            :rtype: (str) -> bool
+            """
+            def context_filter(path_to_filter):
+                """
+                :type path_to_filter: str
+                :rtype: bool
+                """
+                return path_to_filter.startswith(path_filter)
+
+            return context_filter
+
+        add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
+        add_context(remaining_paths, 'units', filter_path('test/units/'))
+        add_context(remaining_paths, 'test', filter_path('test/'))
+        add_context(remaining_paths, 'hacking', filter_path('hacking/'))
+        add_context(remaining_paths, 'modules', filter_path('lib/ansible/modules/'))
+        add_context(remaining_paths, 'module_utils', filter_path('lib/ansible/module_utils/'))
         add_context(remaining_paths, 'ansible', lambda p: True)
 
         messages = []
