@@ -189,7 +189,7 @@ def execute_action(module):
     }
 
     if module.check_mode:
-        module.exit_json(**changed_def_args, **exit_kwargs)
+        module.exit_json(**dict(changed_def_args, **exit_kwargs))
 
     cmd_parts = get_cmd_parts(module, actionable_snaps)
     cmd = ' '.join(cmd_parts)
@@ -204,7 +204,7 @@ def execute_action(module):
     }
 
     if rc == 0:
-        module.exit_json(**changed_def_args, **cmd_out_args, **exit_kwargs)
+        module.exit_json(**dict(changed_def_args, **dict(cmd_out_args, **exit_kwargs)))
     else:
         msg = "Ooops! Snap installation failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         if is_install_mode:
@@ -212,7 +212,7 @@ def execute_action(module):
             if m is not None:
                 err_pkg = m.group('package_name')
                 msg = "Couldn't install {name} because it requires classic confinement".format(name=err_pkg)
-        module.fail_json(msg=msg, **cmd_out_args, **exit_kwargs)
+        module.fail_json(msg=msg, **dict(cmd_out_args, **exit_kwargs))
 
 
 def main():
