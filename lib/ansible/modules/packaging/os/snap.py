@@ -165,7 +165,7 @@ def get_cmd_parts(module, snap_names):
     snap_path = module.get_bin_path("snap", True)
     snap_action = action_map[state]
 
-    cmd_parts = [snap_path, snap_action] + actionable_snaps
+    cmd_parts = [snap_path, snap_action] + snap_names
     if snap_action == 'install':
         cmd_parts += classic + channel
 
