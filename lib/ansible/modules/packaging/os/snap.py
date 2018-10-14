@@ -219,7 +219,6 @@ def main():
         argument_spec=module_args,
         supports_check_mode=True,
     )
-    state = module.params['state']
 
     # Check if snaps are valid
     for snap_name in module.params['name']:
