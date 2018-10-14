@@ -97,6 +97,14 @@ cmd:
     description: The command that was executed on the host
     type: string
     returned: When changed is true
+snaps_installed:
+    description: The list of actually installed snaps
+    type: list
+    returned: When any snaps have been installed
+snaps_removed:
+    description: The list of actually removed snaps
+    type: list
+    returned: When any snaps have been removed
 '''
 
 import operator
@@ -149,6 +157,7 @@ def install_snaps(module, snap_names):
 
     if module.check_mode:
         exit_kwargs['changed'] = True
+        exit_kwargs['snaps_installed'] = snaps_not_installed
         module.exit_json(**exit_kwargs)
 
     classic = ['--classic'] if module.params['classic'] else []
@@ -163,6 +172,7 @@ def install_snaps(module, snap_names):
 
     if rc == 0:
         exit_kwargs['changed'] = True
+        exit_kwargs['snaps_installed'] = snaps_not_installed
         module.exit_json(cmd=cmd, stdout=out, stderr=err, **exit_kwargs)
     else:
         msg = "Ooops! Snap installation failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
@@ -179,7 +189,7 @@ def remove_snaps(module, snap_names):
         module.exit_json(changed=False)
 
     if module.check_mode:
-        module.exit_json(changed=True)
+        module.exit_json(changed=True, snaps_removed=snaps_installed)
 
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'remove'] + snaps_installed
@@ -189,7 +199,7 @@ def remove_snaps(module, snap_names):
     rc, out, err = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
-        module.exit_json(changed=True, cmd=cmd, stdout=out, stderr=err)
+        module.exit_json(changed=True, snaps_removed=snaps_installed, cmd=cmd, stdout=out, stderr=err)
     else:
         msg = "Ooops! Snap removal failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         module.fail_json(msg=msg, cmd=cmd, stdout=out, stderr=err)
