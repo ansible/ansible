@@ -156,9 +156,7 @@ def install_snaps(module, snap_names):
         module.exit_json(**exit_kwargs)
 
     if module.check_mode:
-        exit_kwargs['changed'] = True
-        exit_kwargs['snaps_installed'] = snaps_not_installed
-        module.exit_json(**exit_kwargs)
+        module.exit_json(changed=True, snaps_installed=snaps_not_installed, **exit_kwargs)
 
     classic = ['--classic'] if module.params['classic'] else []
     channel = ['--channel ', module.params['channel']]
@@ -169,18 +167,23 @@ def install_snaps(module, snap_names):
 
     # Actually install the snaps
     rc, out, err = module.run_command(cmd, check_rc=False)
+    cmd_out_args = {
+        'cmd': cmd,
+        'rc': rc,
+        'stdout': out,
+        'stderr': err,
+    }
 
     if rc == 0:
-        exit_kwargs['changed'] = True
         exit_kwargs['snaps_installed'] = snaps_not_installed
-        module.exit_json(cmd=cmd, stdout=out, stderr=err, **exit_kwargs)
+        module.exit_json(changed=True, **cmd_out_args, **exit_kwargs)
     else:
         msg = "Ooops! Snap installation failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
         m = re.match(r'^error: This revision of snap "(?P<package_name>\w+)" was published using classic confinement', err)
         if m is not None:
             err_pkg = m.group('package_name')
             msg = "Couldn't install {name} because it requires classic confinement".format(name=err_pkg)
-        module.fail_json(msg=msg, cmd=cmd, stdout=out, stderr=err, **exit_kwargs)
+        module.fail_json(msg=msg, **cmd_out_args, **exit_kwargs)
 
 
 def remove_snaps(module, snap_names):
@@ -197,12 +200,18 @@ def remove_snaps(module, snap_names):
 
     # Actually remove the snaps
     rc, out, err = module.run_command(cmd, check_rc=False)
+    cmd_out_args = {
+        'cmd': cmd,
+        'rc': rc,
+        'stdout': out,
+        'stderr': err,
+    }
 
     if rc == 0:
-        module.exit_json(changed=True, snaps_removed=snaps_installed, cmd=cmd, stdout=out, stderr=err)
+        module.exit_json(changed=True, snaps_removed=snaps_installed, **cmd_out_args)
     else:
         msg = "Ooops! Snap removal failed while executing '{cmd}', please examine logs and error output for more details.".format(cmd=cmd)
-        module.fail_json(msg=msg, cmd=cmd, stdout=out, stderr=err)
+        module.fail_json(msg=msg, **cmd_out_args)
 
 
 def main():
