@@ -108,7 +108,10 @@ class PylintTest(SanitySingleVersion):
 
         paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
-        contexts = {}
+        module_paths = [p.split(os.path.sep) for p in paths if p.startswith('lib/ansible/modules/')]
+        module_dirs = sorted(set([p[3] for p in module_paths if len(p) > 4]))
+
+        contexts = []
         remaining_paths = set(paths)
 
         def add_context(available_paths, context_name, context_filter):
@@ -118,7 +121,7 @@ class PylintTest(SanitySingleVersion):
             :type context_filter: (str) -> bool
             """
             filtered_paths = set(p for p in available_paths if context_filter(p))
-            contexts[context_name] = sorted(filtered_paths)
+            contexts.append((context_name, sorted(filtered_paths)))
             available_paths -= filtered_paths
 
         def filter_path(path_filter=None):
@@ -139,6 +142,10 @@ class PylintTest(SanitySingleVersion):
         add_context(remaining_paths, 'units', filter_path('test/units/'))
         add_context(remaining_paths, 'test', filter_path('test/'))
         add_context(remaining_paths, 'hacking', filter_path('hacking/'))
+
+        for module_dir in module_dirs:
+            add_context(remaining_paths, 'modules/%s' % module_dir, filter_path('lib/ansible/modules/%s/' % module_dir))
+
         add_context(remaining_paths, 'modules', filter_path('lib/ansible/modules/'))
         add_context(remaining_paths, 'module_utils', filter_path('lib/ansible/module_utils/'))
         add_context(remaining_paths, 'ansible', lambda p: True)
@@ -148,9 +155,7 @@ class PylintTest(SanitySingleVersion):
 
         test_start = datetime.datetime.utcnow()
 
-        for context in sorted(contexts):
-            context_paths = contexts[context]
-
+        for context, context_paths in sorted(contexts):
             if not context_paths:
                 continue
 
@@ -249,7 +254,7 @@ class PylintTest(SanitySingleVersion):
         :type paths: list[str]
         :rtype: list[dict[str, str]]
         """
-        rcfile = 'test/sanity/pylint/config/%s' % context
+        rcfile = 'test/sanity/pylint/config/%s' % context.split('/')[0]
 
         if not os.path.exists(rcfile):
             rcfile = 'test/sanity/pylint/config/default'
@@ -280,6 +285,8 @@ class PylintTest(SanitySingleVersion):
         env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, self.plugin_dir)
 
         if paths:
+            display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
+
             try:
                 stdout, stderr = run_command(args, cmd, env=env, capture=True)
                 status = 0
