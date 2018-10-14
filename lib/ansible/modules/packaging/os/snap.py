@@ -119,7 +119,7 @@ def validate_input_snaps(module):
         if not snap_exists(module, snap_name):
             module.fail_json(msg="No snap matching '%s' available." % snap_name)
 
-            
+
 def snap_exists(module, snap_name):
     snap_path = module.get_bin_path("snap", True)
     cmd_parts = [snap_path, 'info', snap_name]
@@ -156,7 +156,7 @@ def get_cmd_parts(module, snap_names):
         'present': 'install',
         'absent': 'remove',
     }
-    
+
     state = module.params['state']
 
     classic = ['--classic'] if module.params['classic'] else []
