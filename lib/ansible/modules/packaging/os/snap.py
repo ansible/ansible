@@ -165,7 +165,7 @@ def get_cmd_parts(module, snap_names):
     return cmd_parts
 
 
-def install_snaps(module, snap_names):
+def install_snaps(module):
     exit_kwargs = {
         'classic': module.params['classic'],
         'channel': module.params['channel'],
@@ -206,7 +206,7 @@ def install_snaps(module, snap_names):
         module.fail_json(msg=msg, **cmd_out_args, **exit_kwargs)
 
 
-def remove_snaps(module, snap_names):
+def remove_snaps(module):
     actionable_snaps = get_snap_for_action(module)
     if not actionable_snaps:
         module.exit_json(changed=False)
