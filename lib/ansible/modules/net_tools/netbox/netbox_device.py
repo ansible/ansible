@@ -163,6 +163,7 @@ RETURN = r'''
 meta:
   description: Message indicating failure or returns results with the object created within Netbox
   returned: always
+  type: list
 '''
 
 from ansible.module_utils.basic import AnsibleModule
