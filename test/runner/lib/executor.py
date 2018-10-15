@@ -569,7 +569,8 @@ def command_windows_integration(args):
                 manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
 
                 # need to use -Command as we cannot pass an array of values with -File
-                script = "powershell.exe -NoProfile -Command .\\%s -Hosts %s" % (watcher_path, ", ".join(HTTPTESTER_HOSTS))
+                script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command .\\%s -Hosts %s" \
+                         % (watcher_path, ", ".join(HTTPTESTER_HOSTS))
                 if args.verbosity > 3:
                     script += " -Verbose"
                 manage.ssh(script, options=ssh_options, force_pty=False)
