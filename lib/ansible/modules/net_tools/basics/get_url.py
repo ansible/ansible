@@ -154,9 +154,6 @@ options:
         client authentication. If C(client_cert) contains both the certificate
         and key, this option is not required.
     version_added: '2.4'
-  others:
-    description:
-      - all arguments accepted by the M(file) module also work here
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
