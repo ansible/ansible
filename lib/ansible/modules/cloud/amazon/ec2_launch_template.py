@@ -109,10 +109,8 @@ options:
     - For more information, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html)
     suboptions:
       core_count:
-        type: integer
         description: The number of CPU cores for the instance.
       threads_per_core:
-        type: integer
         description: >
           The number of threads per CPU core. To disable Intel Hyper-Threading
           Technology for the instance, specify a value of 1. Otherwise, specify
@@ -167,7 +165,6 @@ options:
         description: Spot-market specific settings
         suboptions:
           block_duration_minutes:
-            type: integer
             description: >
               The required duration for the Spot Instances (also known as Spot
               blocks), in minutes. This value must be a multiple of 60 (60,
