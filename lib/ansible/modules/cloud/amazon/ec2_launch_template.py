@@ -92,7 +92,10 @@ options:
               General Purpose SSD baseline performance, I/O credits, and
               bursting, see Amazon EBS Volume Types in the Amazon Elastic
               Compute Cloud User Guide.
-            - 'Condition: This parameter is required for requests to create io1 volumes; it is not used in requests to create gp2, st1, sc1, or standard volumes.'
+            - >
+              Condition: This parameter is required for requests to create io1
+              volumes; it is not used in requests to create gp2, st1, sc1, or
+              standard volumes.
           kms_key_id:
             description: The ARN of the AWS Key Management Service (AWS KMS) CMK used for encryption.
           snapshot_id:
