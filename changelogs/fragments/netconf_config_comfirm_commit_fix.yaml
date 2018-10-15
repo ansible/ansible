@@ -1,0 +1,3 @@
+---
+bugfixes:
+- netconf_config - Fix in confirmed_commit capability in netconf_config modules  (https://github.com/ansible/ansible/pull/46778)
