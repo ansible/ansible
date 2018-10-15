@@ -485,6 +485,8 @@ class ModuleParameters(Parameters):
                 result += [('vlan', fq_name(self.partition, x['vlan']))]
             elif 'port' in x and x['port'] is not None:
                 result += [('port', str(x['port']))]
+            elif 'port_range' in x and x['port_range'] is not None:
+                result += [('port', x['port_range'])]
             elif 'port_list' in x and x['port_list'] is not None:
                 result += [('port_list', fq_name(self.partition, x['port_list']))]
         if result:
@@ -507,6 +509,8 @@ class ModuleParameters(Parameters):
                 result += [('geo', x['country'])]
             elif 'port' in x and x['port'] is not None:
                 result += [('port', str(x['port']))]
+            elif 'port_range' in x and x['port_range'] is not None:
+                result += [('port', x['port_range'])]
             elif 'port_list' in x and x['port_list'] is not None:
                 result += [('port_list', fq_name(self.partition, x['port_list']))]
         if result:
