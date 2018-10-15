@@ -30,6 +30,15 @@ def main():
         'test/utils/shippable/timing.py',
     ])
 
+    # see https://unicode.org/faq/utf_bom.html#bom1
+    byte_order_marks = (
+        (b'\x00\x00\xFE\xFF', 'UTF-32 (BE)'),
+        (b'\xFF\xFE\x00\x00', 'UTF-32 (LE)'),
+        (b'\xFE\xFF', 'UTF-16 (BE)'),
+        (b'\xFF\xFE', 'UTF-16 (LE)'),
+        (b'\xEF\xBB\xBF', 'UTF-8'),
+    )
+
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         if path in skip:
             continue
@@ -42,6 +51,11 @@ def main():
             if not shebang or not shebang.startswith(b'#!'):
                 if executable:
                     print('%s:%d:%d: file without shebang should not be executable' % (path, 0, 0))
+
+                for mark, name in byte_order_marks:
+                    if shebang.startswith(mark):
+                        print('%s:%d:%d: file starts with a %s byte order mark' % (path, 0, 0, name))
+                        break
 
                 continue
 
