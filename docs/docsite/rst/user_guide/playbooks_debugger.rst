@@ -246,7 +246,7 @@ Then the task runs again with new ``task_vars``.
 .. _update_task_command:
 
 u(pdate_task)
-```````````
+`````````````
 
 This command re-creates the task from the original task data structure, and templates with updated ``task_vars``
 
