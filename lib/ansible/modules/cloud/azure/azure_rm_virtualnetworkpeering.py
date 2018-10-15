@@ -222,13 +222,13 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                 if existing_vnet['resource_group'] != self.virtual_network['resource_group'] or \
                    existing_vnet['name'] != self.virtual_network['name']:
                     self.fail("Cannot update virtual_network of Virtual Network Peering!")
-                
+
                 # check remote vnet id not changed
                 exisiting_remote_vnet = self.parse_resource_to_dict(response['remote_virtual_network'])
                 if exisiting_remote_vnet['resource_group'] != self.remote_virtual_network['resource_group'] or \
                    exisiting_remote_vnet['name'] != self.remote_virtual_network['name']:
                     self.fail("Cannot update remote_virtual_network of Virtual Network Peering!")
-                
+
                 # check if update
                 to_be_updated = self.check_update(response)
 
@@ -239,7 +239,7 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                 # check if vnet exists
                 virtual_network = self.get_vnet(self.virtual_network['resource_group'], self.virtual_network['name'])
                 if not virtual_network:
-                    self.fail("Virtual network {0} in resource group {1} not exits!".format(self.virtual_network['name'], 
+                    self.fail("Virtual network {0} in resource group {1} not exits!".format(self.virtual_network['name'],
                                                                                             self.virtual_network['resource_group']))
 
                 # check if remote vnet exists
@@ -305,16 +305,16 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
         '''
         self.log("Creating or Updating the Azure Virtual Network Peering {0}".format(self.name))
 
-        vnet_id=format_resource_id(self.virtual_network['name'],
-                                   self.subscription_id,
-                                   'Microsoft.Network',
-                                   'virtualNetworks',
-                                   self.virtual_network['resource_group'])
-        remote_vnet_id=format_resource_id(self.remote_virtual_network['name'],
-                                          self.subscription_id,
-                                          'Microsoft.Network',
-                                          'virtualNetworks',
-                                          self.remote_virtual_network['resource_group'])
+        vnet_id = format_resource_id(self.virtual_network['name'],
+                                     self.subscription_id,
+                                     'Microsoft.Network',
+                                     'virtualNetworks',
+                                     self.virtual_network['resource_group'])
+        remote_vnet_id = format_resource_id(self.remote_virtual_network['name'],
+                                            self.subscription_id,
+                                            'Microsoft.Network',
+                                            'virtualNetworks',
+                                            self.remote_virtual_network['resource_group'])
         peering = self.network_models.VirtualNetworkPeering(
             id=vnet_id,
             name=self.name,
@@ -326,9 +326,9 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
 
         try:
             response = self.network_client.virtual_network_peerings.create_or_update(self.resource_group,
-                                                                                   self.virtual_network['name'],
-                                                                                   self.name,
-                                                                                   peering)
+                                                                                     self.virtual_network['name'],
+                                                                                     self.name,
+                                                                                     peering)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
             return vnetpeering_to_dict(response)
@@ -361,8 +361,8 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
             "Checking if Virtual Network Peering {0} is present".format(self.name))
         try:
             response = self.network_client.virtual_network_peerings.get(self.resource_group,
-                                                                       self.virtual_network['name'],
-                                                                       self.name)
+                                                                        self.virtual_network['name'],
+                                                                        self.name)
             self.log("Response : {0}".format(response))
             return vnetpeering_to_dict(response)
         except CloudError:
