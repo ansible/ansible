@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 from pyVmomi import vim
 
 from ansible.plugins.connection.vmware_tools import Connection as VMwareToolsConnection
+from ansible.module_utils._text import to_native
 
 __metaclass__ = type
 
@@ -109,7 +110,7 @@ class Connection(VMwareToolsConnection):
         cmd_parts = self._shell._encode_script(cmd, as_list=False, strict_mode=False, preserve_rc=False)
 
         program_path = "cmd.exe"
-        arguments = "/c {}".format(cmd_parts)
+        arguments = "/c %s" % cmd_parts
 
         return program_path, arguments
 

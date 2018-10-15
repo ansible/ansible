@@ -146,19 +146,19 @@ class Connection(ConnectionBase):
         except SSLError:
             raise AnsibleError("SSL Error: Certificate verification failed.")
         except (gaierror, SSLEOFError):
-            raise AnsibleError("Connection Error: Unable to connect to '{}'.".format(connection_kwargs["host"]))
+            raise AnsibleError("Connection Error: Unable to connect to '%s'." % to_native(connection_kwargs["host"]))
         except vim.fault.InvalidLogin as e:
-            raise AnsibleError("Connection Login Error: {}".format(e.msg))
+            raise AnsibleError("Connection Login Error: %s" % to_native(e.msg))
 
     def _establish_vm(self):
         searchIndex = self._si.content.searchIndex
         self.vm = searchIndex.FindByInventoryPath(self.get_option("vm_path"))
 
         if self.vm is None:
-            raise AnsibleError("Unable to find VM by path '{}'".format(self.get_option("vm_path")))
+            raise AnsibleError("Unable to find VM by path '%s'" % to_native(self.get_option("vm_path")))
 
         if not self.supported_guest_family:
-            raise AnsibleError("Unsupported guest family: {}".format(self.vm.guest.guestFamily))
+            raise AnsibleError("Unsupported guest family: %s" % to_native(self.vm.guest.guestFamily))
 
         self.vm_auth = vim.NamePasswordAuthentication(
             username=self.get_option("vm_username"), password=self.get_option("vm_password"), interactiveSession=False
@@ -167,7 +167,7 @@ class Connection(ConnectionBase):
         try:
             self.authManager.ValidateCredentialsInGuest(vm=self.vm, auth=self.vm_auth)
         except vim.fault.InvalidGuestLogin as e:
-            raise AnsibleError("VM Login Error: {}".format(e.msg))
+            raise AnsibleError("VM Login Error: %s" % to_native(e.msg))
 
     def _connect(self):
         super(Connection, self)._connect()
@@ -200,7 +200,7 @@ class Connection(ConnectionBase):
 
     def _get_program_spec_program_path_and_arguments(self, cmd):
         program_path = self._play_context.executable
-        arguments = re.sub(r"^{}\s*".format(program_path), "", cmd)
+        arguments = re.sub(r"^%s\s*" % program_path, "", cmd)
 
         return program_path, arguments
 
@@ -209,7 +209,7 @@ class Connection(ConnectionBase):
 
         program_path, arguments = self._get_program_spec_program_path_and_arguments(cmd)
 
-        arguments += " 1> {} 2> {}".format(stdout, stderr)
+        arguments += " 1> %s 2> %s" % (stdout, stderr)
 
         guest_program_spec.programPath = program_path
         guest_program_spec.arguments = arguments
@@ -246,7 +246,7 @@ class Connection(ConnectionBase):
         try:
             pid = self.processManager.StartProgramInGuest(vm=self.vm, auth=self.vm_auth, spec=guest_program_spec)
         except vim.fault.FileNotFound as e:
-            raise AnsibleError("StartProgramInGuest Error: {}".format(e.msg))
+            raise AnsibleError("StartProgramInGuest Error: %s" % to_native(e.msg))
 
         pid_info = self.get_pid_info(pid)
 
@@ -283,7 +283,7 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
 
         if not exists(to_bytes(in_path, errors="surrogate_or_strict")):
-            raise AnsibleFileNotFound("file or module does not exist: '{}'".format(to_native(in_path)))
+            raise AnsibleFileNotFound("file or module does not exist: '%s'" % to_native(in_path))
 
         put_url = self.fileManager.InitiateFileTransferToGuest(
             vm=self.vm, auth=self.vm_auth, guestFilePath=out_path, fileAttributes=self.guestFileAttributes(), fileSize=getsize(in_path), overwrite=True
