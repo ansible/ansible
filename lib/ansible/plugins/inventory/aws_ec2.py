@@ -422,31 +422,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._add_hosts(hosts=groups[group], group=group, hostnames=hostnames)
             self.inventory.add_child('all', group)
 
-    def _populate_from_source(self, source_data):
-        hostvars = source_data.pop('_meta', {}).get('hostvars', {})
-        for group in source_data:
-            if group == 'all':
-                continue
-            else:
-                self.inventory.add_group(group)
-                hosts = source_data[group].get('hosts', [])
-                for host in hosts:
-                    self._populate_host_vars([host], hostvars.get(host, {}), group)
-                self.inventory.add_child('all', group)
-
-    def _format_inventory(self, groups, hostnames):
-        results = {'_meta': {'hostvars': {}}}
-        for group in groups:
-            results[group] = {'hosts': []}
-            for host in groups[group]:
-                hostname = self._get_hostname(host, hostnames)
-                if not hostname:
-                    continue
-                results[group]['hosts'].append(hostname)
-                h = self.inventory.get_host(hostname)
-                results['_meta']['hostvars'][h.name] = h.vars
-        return results
-
     def _add_hosts(self, hosts, group, hostnames):
         '''
             :param hosts: a list of hosts to be added to a group
