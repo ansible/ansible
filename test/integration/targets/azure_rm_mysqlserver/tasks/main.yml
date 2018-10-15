@@ -261,7 +261,87 @@
       - output.changed == false
 
 #
-# azure_rm_mysqlserver continuation / clean up
+# azure_rm_firewallrule tests below
+#
+- name: Create instance of Firewall Rule -- check mode
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete instance of Firewall Rule -- check mode
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+#
+# clean up azure_rm_mysqlserver test
 #
 
 - name: Delete instance of MySQL Server -- check mode
