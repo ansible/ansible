@@ -48,6 +48,19 @@ EXAMPLES = '''
     ipa_host: localhost
     ipa_user: admin
     ipa_pass: supersecret
+
+# Ensure the group object classes are configured correctly.
+- ipa_config:
+    ipagroupobjectclasses:
+        - top
+        - groupofnames
+        - nestedgroup
+        - ipausergroup
+        - ipaobject
+        - groupOfUniqueNames
+    ipa_host: localhost
+    ipa_user: admin
+    ipa_pass: supersecret
 '''
 
 RETURN = '''
