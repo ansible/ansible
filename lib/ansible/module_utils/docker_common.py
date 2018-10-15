@@ -157,7 +157,8 @@ class DockerBaseClass(object):
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
-                 required_together=None, required_if=None):
+                 required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
+                 min_docker_api_version=None):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -191,9 +192,9 @@ class AnsibleDockerClient(Client):
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
 
-        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
+        if LooseVersion(docker_version) < LooseVersion(min_docker_version):
             self.fail("Error: docker / docker-py version is %s. Minimum version required is %s." % (docker_version,
-                                                                                                    MIN_DOCKER_VERSION))
+                                                                                                    min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -205,6 +206,11 @@ class AnsibleDockerClient(Client):
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
+
+        if min_docker_api_version is not None:
+            docker_api_version = self.version()['ApiVersion']
+            if LooseVersion(docker_api_version) < LooseVersion(min_docker_api_version):
+                self.fail('docker API version is %s. Minimum version required is %s.' % (docker_api_version, min_docker_api_version))
 
     def log(self, msg, pretty_print=False):
         pass

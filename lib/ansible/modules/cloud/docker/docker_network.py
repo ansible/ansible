@@ -384,6 +384,7 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True
+        # "The docker server >= 1.9.0"
     )
 
     cm = DockerNetworkManager(client)
