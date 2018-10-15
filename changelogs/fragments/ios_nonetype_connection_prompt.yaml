@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - To resolve code exception for Nonetype connection prompt.
+    (https://github.com/ansible/ansible/pull/46677)
