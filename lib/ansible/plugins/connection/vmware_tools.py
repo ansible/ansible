@@ -90,6 +90,7 @@ DOCUMENTATION = """
       file_chunk_size:
         description:
           - File chunk size.
+          - (Applicable when writing a file to disk, example: using the C(fetch) module.)
         vars:
           - name: ansible_vmware_tools_file_chunk_size
         default: 128
