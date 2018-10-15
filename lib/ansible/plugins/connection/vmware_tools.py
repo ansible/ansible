@@ -9,13 +9,21 @@ from time import sleep
 
 import requests
 import urllib3
-from pyVim.connect import Disconnect, SmartConnect, SmartConnectNoSSL
-from pyVmomi import vim
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
+
+try:
+    from pyVim.connect import Disconnect, SmartConnect, SmartConnectNoSSL
+    from pyVmomi import vim
+
+    HAS_PYVMOMI = True
+except ImportError as e:
+    HAS_PYVMOMI = False
+    PYVMOMI_IMPORT_ERROR = e
+
 
 __metaclass__ = type
 
@@ -171,6 +179,9 @@ class Connection(ConnectionBase):
             raise AnsibleError("VM Login Error: %s" % to_native(e.msg))
 
     def _connect(self):
+        if not HAS_PYVMOMI:
+            raise AnsibleError("missing 'pyvmomi' or dependencies: %s" % to_native(PYVMOMI_IMPORT_ERROR))
+
         super(Connection, self)._connect()
 
         if self.connected:

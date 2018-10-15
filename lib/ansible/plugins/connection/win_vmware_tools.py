@@ -1,10 +1,16 @@
 """Docstring for public module."""
 from __future__ import absolute_import, division, print_function
 
-from pyVmomi import vim
-
 from ansible.plugins.connection.vmware_tools import Connection as VMwareToolsConnection
-from ansible.module_utils._text import to_native
+
+try:
+    from pyVmomi import vim
+
+    HAS_PYVMOMI = True
+except ImportError as e:
+    HAS_PYVMOMI = False
+    PYVMOMI_IMPORT_ERROR = e
+
 
 __metaclass__ = type
 
