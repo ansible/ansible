@@ -35,6 +35,11 @@ options:
         description:
             - The name of the portgroup that is to be created or deleted.
         required: True
+    portgroup_description:
+        description:
+            - The description of the portgroup that is to be created.
+        required: False
+        version_added: '2.8'
     switch_name:
         description:
             - The name of the distributed vSwitch the port group should be created on.
@@ -96,13 +101,17 @@ options:
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
+            - '- C(active_uplinkport) (list): List of active uplink ports used for load balancing. (default: [])'
+            - '- C(standby_uplinkport) (list): List of standby uplink ports used for failover. (default: [])'
         required: False
         version_added: '2.5'
         default: {
             'notify_switches': True,
             'load_balance_policy': 'loadbalance_srcid',
             'inbound_policy': False,
-            'rolling_order': False
+            'rolling_order': False,
+            'active_uplinkport': [],
+            'standby_uplinkport': []
         }
     port_policy:
         description:
@@ -134,7 +143,6 @@ options:
             'vlan_override': False,
             'ipfix_override': False
         }
-
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -252,6 +260,7 @@ class VMwareDvsPortgroup(PyVmomi):
         # Basic config
         config.name = self.module.params['portgroup_name']
         config.numPorts = self.module.params['num_ports']
+        config.description = self.module.params['portgroup_description']
 
         # Default port config
         config.defaultPortConfig = vim.dvs.VmwareDistributedVirtualSwitch.VmwarePortConfigPolicy()
@@ -274,6 +283,10 @@ class VMwareDvsPortgroup(PyVmomi):
         teamingPolicy.reversePolicy = vim.BoolPolicy(value=self.module.params['teaming_policy']['inbound_policy'])
         teamingPolicy.notifySwitches = vim.BoolPolicy(value=self.module.params['teaming_policy']['notify_switches'])
         teamingPolicy.rollingOrder = vim.BoolPolicy(value=self.module.params['teaming_policy']['rolling_order'])
+        if self.module.params['teaming_policy']['active_uplinkport']:
+            teamingPolicy.uplinkPortOrder = vim.dvs.VmwareDistributedVirtualSwitch.UplinkPortOrderPolicy()
+            teamingPolicy.uplinkPortOrder.activeUplinkPort = self.module.params['teaming_policy']['active_uplinkport']
+            teamingPolicy.uplinkPortOrder.standbyUplinkPort = self.module.params['teaming_policy']['standby_uplinkport']
         config.defaultPortConfig.uplinkTeamingPolicy = teamingPolicy
 
         # PG policy (advanced_policy)
@@ -338,6 +351,7 @@ def main():
     argument_spec.update(
         dict(
             portgroup_name=dict(required=True, type='str'),
+            portgroup_description=dict(required=False, type='str'),
             switch_name=dict(required=True, type='str'),
             vlan_id=dict(required=True, type='str'),
             num_ports=dict(required=True, type='int'),
@@ -370,15 +384,19 @@ def main():
                                                  'loadbalance_srcmac',
                                                  'loadbalance_srcid',
                                                  'loadbalance_loadbased',
-                                                 'failover_explicit',
-                                             ],
-                                             )
+                                                 'failover_explicit'
+                                             ]
+                                             ),
+                    active_uplinkport=dict(type='list', default=[]),
+                    standby_uplinkport=dict(type='list', default=[])
                 ),
                 default=dict(
                     inbound_policy=False,
                     notify_switches=True,
                     rolling_order=False,
                     load_balance_policy='loadbalance_srcid',
+                    active_uplinkport=[],
+                    standby_uplinkport=[]
                 ),
             ),
             port_policy=dict(
