@@ -19,7 +19,7 @@ import yaml
 from pprint import pprint
 
 import ansible.plugins
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 from ansible.plugins.action.synchronize import ActionModule
 
 

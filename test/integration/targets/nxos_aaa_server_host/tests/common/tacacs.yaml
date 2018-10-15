@@ -133,6 +133,29 @@
 
   - assert: *false
 
+  - name: "Configure tacacs server with new type 7 encryption key"
+    nxos_aaa_server_host: &configure_tacacs_new_type7
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: 25
+      tacacs_port: 89
+      encrypt_type: 7
+      key: helloback
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'key 7' in result.updates[0]"
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_tacacs_new_type7
+    register: result
+
+  - assert: *false
+
   - name: "Configure tacacs server with default key"
     nxos_aaa_server_host: &configure_tacacs_defkey
       server_type: tacacs

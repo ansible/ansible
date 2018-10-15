@@ -235,7 +235,7 @@ def parse_show_install(data):
             break
 
         # Check for potentially transient conditions
-        if re.search(r'Another install procedure may be in progress', x):
+        if re.search(r'Another install procedure may\s*be in progress', x):
             ud['install_in_progress'] = True
             break
         if re.search(r'Backend processing error', x):

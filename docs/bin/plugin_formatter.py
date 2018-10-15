@@ -56,6 +56,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
+from ansible.utils._build_helpers import update_file_if_different
 
 
 #####################################################################################
@@ -183,8 +184,8 @@ def write_data(text, output_dir, outputname, module=None):
             os.makedirs(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
-        with open(fname, 'wb') as f:
-            f.write(to_bytes(text))
+
+        update_file_if_different(fname, to_bytes(text))
     else:
         print(text)
 
@@ -573,7 +574,7 @@ def process_support_levels(plugin_info, templates, output_dir, plugin_type):
                                                       " Ansible Network Team<network_maintained>` in"
                                                       " a relationship similar to how the Ansible Core Team"
                                                       " maintains the Core modules."},
-                    'Ansible Partners': {'slug': 'partner_supported',
+                    'Ansible Partners': {'slug': 'certified_supported',
                                          'modules': [],
                                          'output': 'partner_maintained.rst',
                                          'blurb': """
@@ -688,7 +689,7 @@ def main():
             display.vv(key)
             display.vvvvv(pp.pformat(('record', record)))
             if record.get('doc', None):
-                short_desc = record['doc']['short_description']
+                short_desc = record['doc']['short_description'].rstrip('.')
                 if short_desc is None:
                     display.warning('short_description for %s is None' % key)
                     short_desc = ''

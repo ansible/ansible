@@ -31,7 +31,7 @@ ansible_play_hosts_all
 ansible_playbook_python
     The path to the python interpreter being used by Ansible on the controller
 
-ansible_serach_path
+ansible_search_path
     Current search path for action plugins and lookups, i.e where we search for relative paths when you do ``template: src=myfile``
 
 ansible_verbosity

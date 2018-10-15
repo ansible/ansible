@@ -303,7 +303,6 @@ options:
         choices:
             - absent
             - present
-        required: false
 
 extends_documentation_fragment:
     - azure
@@ -577,6 +576,12 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
                                                   kwargs['name'],
                                                   item['frontend_port'])
                             item['frontend_port'] = {'id': id}
+                        if 'ssl_certificate' in item:
+                            id = ssl_certificate_id(self.subscription_id,
+                                                    kwargs['resource_group'],
+                                                    kwargs['name'],
+                                                    item['ssl_certificate'])
+                            item['ssl_certificate'] = {'id': id}
                         if 'protocol' in item:
                             item['protocol'] = _snake_to_camel(item['protocol'], True)
                         ev[i] = item
@@ -777,6 +782,16 @@ def frontend_port_id(subscription_id, resource_group_name, appgateway_name, name
         subscription_id,
         resource_group_name,
         appgateway_name,
+        name
+    )
+
+
+def ssl_certificate_id(subscription_id, resource_group_name, ssl_certificate_name, name):
+    """Generate the id for a frontend port"""
+    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/applicationGateways/{2}/sslCertificates/{3}'.format(
+        subscription_id,
+        resource_group_name,
+        ssl_certificate_name,
         name
     )
 

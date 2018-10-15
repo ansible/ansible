@@ -37,7 +37,7 @@ description:
     an implementation for working with CNOS configuration sections in
     a deterministic way.
 notes:
-  - Tested against CNOS 10.8.0.42
+  - Tested against CNOS 10.8.1
 options:
   provider:
     version_added: "2.6"

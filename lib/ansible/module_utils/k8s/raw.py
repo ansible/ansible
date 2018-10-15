@@ -210,18 +210,19 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if self.check_mode:
                 k8s_obj = dict_merge(existing.to_dict(), definition)
             else:
-                if self.params['merge_type']:
-                    from distutils.version import LooseVersion
-                    if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
+                from distutils.version import LooseVersion
+                if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
+                    if self.params['merge_type']:
                         self.fail_json(msg="openshift >= 0.6.2 is required for merge_type")
-                    for merge_type in self.params['merge_type']:
+                    else:
+                        k8s_obj, error = self.patch_resource(resource, definition, existing, name,
+                                                             namespace)
+                else:
+                    for merge_type in self.params['merge_type'] or ['strategic-merge', 'merge']:
                         k8s_obj, error = self.patch_resource(resource, definition, existing, name,
                                                              namespace, merge_type=merge_type)
                         if not error:
                             break
-                else:
-                    k8s_obj, error = self.patch_resource(resource, definition, existing, name,
-                                                         namespace)
                 if error:
                     self.fail_json(**error)
 

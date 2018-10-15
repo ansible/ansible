@@ -18,7 +18,7 @@ def test_module_response_deepcopy_basic():
 
 def test_module_response_deepcopy_atomic():
     tests = [None, 42, 2**100, 3.14, True, False, 1j,
-             "hello", "hello\u1234"]
+             "hello", u"hello\u1234"]
     for x in tests:
         assert module_response_deepcopy(x) is x
 

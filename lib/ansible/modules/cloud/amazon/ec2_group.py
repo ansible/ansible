@@ -292,6 +292,8 @@ owner_id:
 
 import json
 import re
+import itertools
+from copy import deepcopy
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
@@ -317,7 +319,13 @@ current_account_id = None
 def rule_cmp(a, b):
     """Compare rules without descriptions"""
     for prop in ['port_range', 'protocol', 'target', 'target_type']:
-        if getattr(a, prop) != getattr(b, prop):
+        if prop == 'port_range' and to_text(a.protocol) == to_text(b.protocol):
+            # equal protocols can interchange `(-1, -1)` and `(None, None)`
+            if a.port_range in ((None, None), (-1, -1)) and b.port_range in ((None, None), (-1, -1)):
+                continue
+            elif getattr(a, prop) != getattr(b, prop):
+                return False
+        elif getattr(a, prop) != getattr(b, prop):
             return False
     return True
 
@@ -349,10 +357,10 @@ def to_permission(rule):
             pair = {}
             if rule.target[0]:
                 pair['UserId'] = rule.target[0]
-            # groupid/groupname are mutually exclusive
-            if rule.target[1] and not rule.target[2]:
+            # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
+            if rule.target[1]:
                 pair['GroupId'] = rule.target[1]
-            if rule.target[2]:
+            elif rule.target[2]:
                 pair['GroupName'] = rule.target[2]
             perm['UserIdGroupPairs'] = [pair]
         else:
@@ -390,7 +398,7 @@ def rule_from_group_permission(perm):
             # there may be several IP ranges here, which is ok
             yield Rule(
                 ports_from_permission(perm),
-                perm['IpProtocol'],
+                to_text(perm['IpProtocol']),
                 r[target_subkey],
                 target_type,
                 r.get('Description')
@@ -398,12 +406,6 @@ def rule_from_group_permission(perm):
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
         for pair in perm['UserIdGroupPairs']:
             target = pair['GroupId']
-            if pair.get('UserId') and pair['UserId'] != current_account_id:
-                target = (
-                    pair.get('UserId', None),
-                    pair.get('GroupId', None),
-                    pair.get('GroupName', None),
-                )
             if pair.get('UserId', '').startswith('amazon-'):
                 # amazon-elb and amazon-prefix rules don't need
                 # group-id specified, so remove it when querying
@@ -413,10 +415,16 @@ def rule_from_group_permission(perm):
                     None,
                     target[2],
                 )
+            elif 'VpcPeeringConnectionId' in pair or pair['UserId'] != current_account_id:
+                target = (
+                    pair.get('UserId', None),
+                    pair.get('GroupId', None),
+                    pair.get('GroupName', None),
+                )
 
             yield Rule(
                 ports_from_permission(perm),
-                perm['IpProtocol'],
+                to_text(perm['IpProtocol']),
                 target,
                 'group',
                 pair.get('Description')
@@ -485,14 +493,15 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     target_group_created = False
 
     validate_rule(module, rule)
-    if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']) and current_account_id not in rule['group_id']:
+    if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
         group_instance = dict(UserId=owner_id, GroupId=group_id, GroupName=group_name)
         groups[group_id] = group_instance
         groups[group_name] = group_instance
+        # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
         if group_id and group_name:
-            group_id = None
+            group_name = None
         return 'group', (owner_id, group_id, group_name), False
     elif 'group_id' in rule:
         return 'group', rule['group_id'], False
@@ -803,6 +812,15 @@ def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, pu
             current_rules = set(sum([list(rule_from_group_permission(p)) for p in group[rule_key]], []))
             if purge and len(current_rules ^ set(desired_rules)) == 0:
                 return group
+            elif purge:
+                conflicts = current_rules ^ set(desired_rules)
+                # For cases where set comparison is equivalent, but invalid port/proto exist
+                for a, b in itertools.combinations(conflicts, 2):
+                    if rule_cmp(a, b):
+                        conflicts.discard(a)
+                        conflicts.discard(b)
+                if not len(conflicts):
+                    return group
             elif current_rules.issuperset(desired_rules) and not purge:
                 return group
             sleep(10)
@@ -837,6 +855,9 @@ def group_exists(client, module, vpc_id, group_id, name):
     if security_groups:
         groups = dict((group['GroupId'], group) for group in all_groups)
         groups.update(dict((group['GroupName'], group) for group in all_groups))
+        if vpc_id:
+            vpc_wins = dict((group['GroupName'], group) for group in all_groups if group.get('VpcId') and group['VpcId'] == vpc_id)
+            groups.update(vpc_wins)
         # maintain backwards compatibility by using the last matching group
         return security_groups[-1], groups
     return None, {}
@@ -873,6 +894,7 @@ def get_diff_final_resource(client, module, security_group):
             final_rules = []
         else:
             final_rules = list(security_group_rules)
+        specified_rules = flatten_nested_targets(module, deepcopy(specified_rules))
         for rule in specified_rules:
             format_rule = {
                 'from_port': None, 'to_port': None, 'ip_protocol': rule.get('proto', 'tcp'),
@@ -883,7 +905,7 @@ def get_diff_final_resource(client, module, security_group):
                 format_rule.pop('from_port')
                 format_rule.pop('to_port')
             elif rule.get('ports'):
-                if rule.get('ports') and isinstance(rule.get('ports'), string_types):
+                if rule.get('ports') and (isinstance(rule['ports'], string_types) or isinstance(rule['ports'], int)):
                     rule['ports'] = [rule['ports']]
                 for port in rule.get('ports'):
                     if isinstance(port, string_types) and '-' in port:
@@ -899,7 +921,9 @@ def get_diff_final_resource(client, module, security_group):
                     if rule.get('rule_desc'):
                         format_rule[rule_key] = [{source_type: rule[source_type], 'description': rule['rule_desc']}]
                     else:
-                        format_rule[rule_key] = [{source_type: rule[source_type]}]
+                        if not isinstance(rule[source_type], list):
+                            rule[source_type] = [rule[source_type]]
+                        format_rule[rule_key] = [{source_type: target} for target in rule[source_type]]
             if rule.get('group_id') or rule.get('group_name'):
                 rule_sg = camel_dict_to_snake_dict(group_exists(client, module, module.params['vpc_id'], rule.get('group_id'), rule.get('group_name'))[0])
                 format_rule['user_id_group_pairs'] = [{
@@ -935,6 +959,27 @@ def get_diff_final_resource(client, module, security_group):
         'vpc_id': security_group.get('vpc_id', module.params['vpc_id'])}
 
 
+def flatten_nested_targets(module, rules):
+    def _flatten(targets):
+        for target in targets:
+            if isinstance(target, list):
+                for t in _flatten(target):
+                    yield t
+            elif isinstance(target, string_types):
+                yield target
+
+    if rules is not None:
+        for rule in rules:
+            target_list_type = None
+            if isinstance(rule.get('cidr_ip'), list):
+                target_list_type = 'cidr_ip'
+            elif isinstance(rule.get('cidr_ipv6'), list):
+                target_list_type = 'cidr_ipv6'
+            if target_list_type is not None:
+                rule[target_list_type] = list(_flatten(rule[target_list_type]))
+    return rules
+
+
 def main():
     argument_spec = dict(
         name=dict(),
@@ -960,8 +1005,10 @@ def main():
     group_id = module.params['group_id']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
-    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules'])))
-    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(module.params['rules_egress'])))
+    rules = flatten_nested_targets(module, deepcopy(module.params['rules']))
+    rules_egress = flatten_nested_targets(module, deepcopy(module.params['rules_egress']))
+    rules = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(rules)))
+    rules_egress = deduplicate_rules_args(rules_expand_sources(rules_expand_ports(rules_egress)))
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
@@ -1039,11 +1086,19 @@ def main():
                     rule['proto'] = '-1'
                     rule['from_port'] = None
                     rule['to_port'] = None
+                try:
+                    int(rule.get('proto', 'tcp'))
+                    rule['proto'] = to_text(rule.get('proto', 'tcp'))
+                    rule['from_port'] = None
+                    rule['to_port'] = None
+                except ValueError:
+                    # rule does not use numeric protocol spec
+                    pass
 
                 named_tuple_rule_list.append(
                     Rule(
                         port_range=(rule['from_port'], rule['to_port']),
-                        protocol=rule.get('proto', 'tcp'),
+                        protocol=to_text(rule.get('proto', 'tcp')),
                         target=target, target_type=target_type,
                         description=rule.get('rule_desc'),
                     )

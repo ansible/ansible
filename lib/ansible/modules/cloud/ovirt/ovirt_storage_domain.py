@@ -439,7 +439,7 @@ class StorageDomainModule(BaseModule):
             else:
                 raise Exception(
                     "Can't bring storage to state `%s`, because Datacenter "
-                    "%s is not UP"
+                    "%s is not UP" % (self.param('state'), dc.name)
                 )
 
     def _attached_sds_service(self, dc_name):
@@ -625,9 +625,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_storage_domains':
-        module.deprecate("The 'ovirt_storage_domains' module is being renamed 'ovirt_storage_domain'", version=2.8)
 
     check_sdk(module)
 

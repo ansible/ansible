@@ -1,4 +1,4 @@
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.modules.monitoring import pagerduty_alert
 
 from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode, urlunparse

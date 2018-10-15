@@ -496,13 +496,13 @@ def main():
     try:  # user data
         pw = pwd.getpwuid(st.st_uid)
         output['pw_name'] = pw.pw_name
-    except:
+    except (TypeError, KeyError):
         pass
 
     try:  # group data
         grp_info = grp.getgrgid(st.st_gid)
         output['gr_name'] = grp_info.gr_name
-    except:
+    except (KeyError, ValueError, OverflowError):
         pass
 
     # checksums

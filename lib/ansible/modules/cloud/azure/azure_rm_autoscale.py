@@ -326,6 +326,7 @@ state:
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
+from ansible.module_utils._text import to_native
 from datetime import timedelta
 
 try:
@@ -333,12 +334,12 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.monitor.models import WebhookNotification, EmailNotification, AutoscaleNotification, RecurrentSchedule, MetricTrigger, \
         ScaleAction, AutoscaleSettingResource, AutoscaleProfile, ScaleCapacity, TimeWindow, Recurrence, ScaleRule
-    from ansible.module_utils._text import to_native
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
+# duplicated in azure_rm_autoscale_facts
 def timedelta_to_minutes(time):
     if not time:
         return 0
@@ -521,11 +522,11 @@ class AzureRMAutoScale(AzureRMModuleBase):
 
             resource_id = self.target
             if isinstance(self.target, dict):
-                resource_id = format_resource_id(val=self.target.name,
-                                                 subscription_id=self.target.subscription_id or self.subscription_id,
-                                                 namespace=self.target.namespace,
-                                                 types=self.target.types,
-                                                 resource_group=self.target.resource_group or self.resource_group)
+                resource_id = format_resource_id(val=self.target['name'],
+                                                 subscription_id=self.target.get('subscription_id') or self.subscription_id,
+                                                 namespace=self.target['namespace'],
+                                                 types=self.target['types'],
+                                                 resource_group=self.target.get('resource_group') or self.resource_group)
             self.target = resource_id
             resource_name = self.name
 

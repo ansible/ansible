@@ -64,6 +64,12 @@ servers:
             returned: always
             type: str
             sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testresourcegroup
         name:
             description:
                 - Resource name.
@@ -118,6 +124,10 @@ servers:
             returned: always
             type: str
             sample: postgreabdud1223.postgres.database.azure.com
+        tags:
+            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            type: dict
+            sample: { tag1: abc }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -211,7 +221,8 @@ class AzureRMServersFacts(AzureRMModuleBase):
             'enforce_ssl': (d['ssl_enforcement'] == 'Enabled'),
             'admin_username': d['administrator_login'],
             'user_visible_state': d['user_visible_state'],
-            'fully_qualified_domain_name': d['fully_qualified_domain_name']
+            'fully_qualified_domain_name': d['fully_qualified_domain_name'],
+            'tags': d.get('tags')
         }
 
         return d

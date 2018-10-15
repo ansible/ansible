@@ -363,6 +363,12 @@ options:
         type: bool
         version_added: "2.5"
         aliases: [ 'sysprep_persist' ]
+    kernel_params_persist:
+        description:
+            - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
+               if I(False) it will be used for run once."
+        type: bool
+        version_added: "2.8"
     kernel_path:
         description:
             - Path to a kernel image used to boot the virtual machine.
@@ -680,6 +686,11 @@ EXAMPLES = '''
         bootable: True
     nics:
       - name: nic1
+
+# Change VM Name
+- ovirt_vm:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_vm_name"
 
 - name: Run VM with cloud init
   ovirt_vm:
@@ -1076,8 +1087,11 @@ class VmsModule(BaseModule):
                         otypes.BootDevice(dev) for dev in self.param('boot_devices')
                     ],
                 ) if self.param('boot_devices') else None,
+                cmdline=self.param('kernel_params') if self.param('kernel_params_persist') else None,
+                initrd=self.param('initrd_path') if self.param('kernel_params_persist') else None,
+                kernel=self.param('kernel_path') if self.param('kernel_params_persist') else None,
             ) if (
-                self.param('operating_system') or self.param('boot_devices')
+                self.param('operating_system') or self.param('boot_devices') or self.param('kernel_params_persist')
             ) else None,
             type=otypes.VmType(
                 self.param('type')
@@ -1176,6 +1190,7 @@ class VmsModule(BaseModule):
             check_custom_properties() and
             check_host() and
             not self.param('cloud_init_persist') and
+            not self.param('kernel_params_persist') and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
@@ -1184,6 +1199,7 @@ class VmsModule(BaseModule):
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
             equal(self.param('cpu_mode'), str(cpu_mode) if cpu_mode else None) and
             equal(self.param('type'), str(entity.type)) and
+            equal(self.param('name'), str(entity.name)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
@@ -1941,6 +1957,7 @@ def main():
         cloud_init=dict(type='dict'),
         cloud_init_nics=dict(type='list', default=[]),
         cloud_init_persist=dict(type='bool', default=False, aliases=['sysprep_persist']),
+        kernel_params_persist=dict(type='bool', default=False),
         sysprep=dict(type='dict'),
         host=dict(type='str'),
         clone=dict(type='bool', default=False),
@@ -1980,9 +1997,6 @@ def main():
         required_one_of=[['id', 'name']],
     )
 
-    if module._name == 'ovirt_vms':
-        module.deprecate("The 'ovirt_vms' module is being renamed 'ovirt_vm'", version=2.8)
-
     check_sdk(module)
     check_params(module)
 
@@ -2018,6 +2032,11 @@ def main():
             vms_module.post_present(ret['id'])
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
+                def kernel_persist_check():
+                    return (module.params.get('kernel_params') or
+                            module.params.get('initrd_path') or
+                            module.params.get('kernel_path')
+                            and not module.params.get('cloud_init_persist'))
                 initialization = vms_module.get_initialization()
                 ret = vms_module.action(
                     action='start',
@@ -2045,17 +2064,12 @@ def main():
                             cmdline=module.params.get('kernel_params'),
                             initrd=module.params.get('initrd_path'),
                             kernel=module.params.get('kernel_path'),
-                        ) if (
-                            module.params.get('kernel_params') or
-                            module.params.get('initrd_path') or
-                            module.params.get('kernel_path')
-                        ) else None,
+                        ) if (kernel_persist_check()) else None,
                     ) if (
-                        module.params.get('kernel_params') or
-                        module.params.get('initrd_path') or
-                        module.params.get('kernel_path') or
+                        kernel_persist_check() or
                         module.params.get('host') or
-                        initialization is not None and not module.params.get('cloud_init_persist')
+                        initialization is not None
+                        and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
 

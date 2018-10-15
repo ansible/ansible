@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -119,7 +119,7 @@ EXAMPLES = r'''
         port: 8080
     inbound_virtual:
       name: foo
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 53
     provider:
@@ -177,7 +177,6 @@ servers:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 
 try:
     from library.module_utils.network.f5.bigiq import F5RestClient

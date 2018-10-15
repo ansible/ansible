@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# Copyright: (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -58,7 +58,8 @@ options:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
     ssh_key_data:
       description:
-        - Path to SSH private key.
+        - SSH private key content. To extract the content from a file path, use the lookup function (see examples).
+      required: False
     ssh_key_unlock:
       description:
         - Unlock password for ssh_key. Use ASK for prompting.
@@ -73,13 +74,9 @@ options:
     client:
       description:
         - Client or application ID for azure_rm type.
-      required: False
-      default: null
     security_token:
       description:
         - STS token for aws type.
-      required: False
-      default: null
       version_added: "2.6"
     secret:
       description:
@@ -123,6 +120,17 @@ EXAMPLES = '''
     organization: test-org
     state: present
     tower_config_file: "~/tower_cli.cfg"
+
+- name: Create a valid SCM credential from a private_key file
+  tower_credential:
+    name: SCM Credential
+    organization: Default
+    state: present
+    kind: scm
+    username: joe
+    password: secret
+    ssh_key_data: "{{ lookup('file', '/tmp/id_rsa') }}"
+    ssh_key_unlock: "passphrase"
 '''
 
 import os
@@ -187,7 +195,7 @@ def main():
         host=dict(),
         username=dict(),
         password=dict(no_log=True),
-        ssh_key_data=dict(no_log=True, type='path'),
+        ssh_key_data=dict(no_log=True, type='str'),
         ssh_key_unlock=dict(no_log=True),
         authorize=dict(type='bool', default=False),
         authorize_password=dict(no_log=True),
@@ -254,13 +262,18 @@ def main():
                 params['team'] = team['id']
 
             if module.params.get('ssh_key_data'):
-                filename = module.params.get('ssh_key_data')
-                if not os.path.exists(filename):
-                    module.fail_json(msg='file not found: %s' % filename)
-                if os.path.isdir(filename):
-                    module.fail_json(msg='attempted to read contents of directory: %s' % filename)
-                with open(filename, 'rb') as f:
-                    module.params['ssh_key_data'] = to_text(f.read())
+                data = module.params.get('ssh_key_data')
+                if os.path.exists(data):
+                    module.deprecate(
+                        msg='ssh_key_data should be a string, not a path to a file. Use lookup(\'file\', \'/path/to/file\') instead',
+                        version="2.12"
+                    )
+                    if os.path.isdir(data):
+                        module.fail_json(msg='attempted to read contents of directory: %s' % data)
+                    with open(data, 'rb') as f:
+                        module.params['ssh_key_data'] = to_text(f.read())
+                else:
+                    module.params['ssh_key_data'] = data
 
             for key in ('authorize', 'authorize_password', 'client',
                         'security_token', 'secret', 'tenant', 'subscription',

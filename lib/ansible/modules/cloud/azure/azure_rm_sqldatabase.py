@@ -345,7 +345,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                         ev = 'AdventureWorksLT'
                     self.parameters["sample_name"] = ev
                 elif key == "zone_redundant":
-                    self.parameters["zone_redundant"] = 'Enabled' if kwargs[key] else 'Disabled'
+                    self.parameters["zone_redundant"] = True if kwargs[key] else False
 
         old_response = None
         response = None

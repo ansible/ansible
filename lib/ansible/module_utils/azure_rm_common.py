@@ -14,12 +14,9 @@ import json
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
-try:
-    from ansible.release import __version__ as ANSIBLE_VERSION
-except ImportError:
-    ANSIBLE_VERSION = 'unknown'
 
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
@@ -67,7 +64,9 @@ AZURE_API_PROFILES = {
         'NetworkManagementClient': '2017-11-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
-        'WebsiteManagementClient': '2016-08-01'
+        'WebsiteManagementClient': '2016-08-01',
+        'PostgreSQLManagementClient': '2017-12-01',
+        'MySQLManagementClient': '2017-12-01'
     },
 
     '2017-03-09-profile': {
@@ -154,6 +153,7 @@ try:
     from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
     from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
+    from azure.storage.blob import PageBlobService, BlockBlobService
     from adal.authentication_context import AuthenticationContext
     from azure.mgmt.sql import SqlManagementClient
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
@@ -204,7 +204,7 @@ AZURE_PKG_VERSIONS = {
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '2.1.0'
+        'expected_version': '3.0.0'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
@@ -533,9 +533,13 @@ class AzureRMModuleBase(object):
         try:
             self.log('Create blob service')
             if storage_blob_type == 'page':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_page_blob_service()
+                return PageBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
+                                       account_name=storage_account_name,
+                                       account_key=account_keys.keys[0].value)
             elif storage_blob_type == 'block':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
+                return BlockBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
+                                        account_name=storage_account_name,
+                                        account_key=account_keys.keys[0].value)
             else:
                 raise Exception("Invalid storage blob type defined.")
         except Exception as exc:

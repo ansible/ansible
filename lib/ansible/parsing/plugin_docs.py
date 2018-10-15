@@ -39,8 +39,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     }
 
     try:
-        b_module_data = open(filename, 'rb').read()
-        M = ast.parse(b_module_data)
+        with open(filename, 'rb') as b_module_data:
+            M = ast.parse(b_module_data.read())
 
         for child in M.body:
             if isinstance(child, ast.Assign):
@@ -103,6 +103,7 @@ def read_docstub(filename):
             capturing = True
             doc_stub.append(line)
 
-    data = AnsibleLoader(r"".join(doc_stub), file_name=filename).get_single_data()
+    short_description = r''.join(doc_stub).strip().rstrip('.')
+    data = AnsibleLoader(short_description, file_name=filename).get_single_data()
 
     return data

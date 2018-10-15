@@ -751,8 +751,8 @@ class TaskExecutor:
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
-        normal_handler = self._shared_loader_obj.action_loader.get(
-            'normal',
+        async_handler = self._shared_loader_obj.action_loader.get(
+            'async_status',
             task=async_task,
             connection=self._connection,
             play_context=self._play_context,
@@ -766,7 +766,7 @@ class TaskExecutor:
             time.sleep(self._task.poll)
 
             try:
-                async_result = normal_handler.run(task_vars=task_vars)
+                async_result = async_handler.run(task_vars=task_vars)
                 # We do not bail out of the loop in cases where the failure
                 # is associated with a parsing error. The async_runner can
                 # have issues which result in a half-written/unparseable result
@@ -783,7 +783,7 @@ class TaskExecutor:
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
-                    normal_handler._connection.reset()
+                    async_handler._connection.reset()
                 except AttributeError:
                     pass
 
@@ -842,13 +842,28 @@ class TaskExecutor:
             self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
-            # We don't need to send the entire contents of variables to ansible-connection
-            filtered_vars = dict((key, value) for key, value in variables.items() if key.startswith('ansible'))
-            socket_path = self._start_connection(filtered_vars)
+
+            options = self._get_persistent_connection_options(connection, variables, templar)
+            socket_path = self._start_connection(options)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
         return connection
+
+    def _get_persistent_connection_options(self, connection, variables, templar):
+        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+
+        option_vars = C.config.get_plugin_vars('connection', connection._load_name)
+        for plugin in connection._sub_plugins:
+            if plugin['type'] != 'external':
+                option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
+
+        options = {}
+        for k in option_vars:
+            if k in final_vars:
+                options[k] = templar.template(final_vars[k])
+
+        return options
 
     def _set_connection_options(self, variables, templar):
 
@@ -921,22 +936,20 @@ class TaskExecutor:
         '''
         Starts the persistent connection
         '''
-        master, slave = pty.openpty()
+        candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
+        candidate_paths.extend(os.environ['PATH'].split(os.pathsep))
+        for dirname in candidate_paths:
+            ansible_connection = os.path.join(dirname, 'ansible-connection')
+            if os.path.isfile(ansible_connection):
+                break
+        else:
+            raise AnsibleError("Unable to find location of 'ansible-connection'. "
+                               "Please set or check the value of ANSIBLE_CONNECTION_PATH")
 
         python = sys.executable
-
-        def find_file_in_path(filename):
-            # Check $PATH first, followed by same directory as sys.argv[0]
-            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
-            for dirname in paths:
-                fullpath = os.path.join(dirname, filename)
-                if os.path.isfile(fullpath):
-                    return fullpath
-
-            raise AnsibleError("Unable to find location of '%s'" % filename)
-
+        master, slave = pty.openpty()
         p = subprocess.Popen(
-            [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
+            [python, ansible_connection, to_text(os.getppid())],
             stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         os.close(slave)

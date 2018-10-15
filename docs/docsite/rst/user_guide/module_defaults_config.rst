@@ -1,7 +1,10 @@
+:orphan:
+
 .. _module_defaults_config:
 
+*****************************
 Module Defaults Configuration
-=============================
+*****************************
 
 Ansible 2.7 adds a preview-status feature to group together modules that share common sets of parameters. This makes
 it easier to author playbooks making heavy use of API-based modules such as cloud modules. By default Ansible ships

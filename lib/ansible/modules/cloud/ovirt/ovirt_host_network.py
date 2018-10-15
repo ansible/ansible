@@ -74,7 +74,7 @@ options:
         type: bool
     save:
         description:
-            - "If I(true) network configuration will be persistent, by default they are temporary."
+            - "If I(true) network configuration will be persistent, by default they are temporarily."
         type: bool
 extends_documentation_fragment: ovirt
 '''
@@ -83,10 +83,11 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Create bond on eth0 and eth1 interface, and put 'myvlan' network on top of it:
+# Create bond on eth0 and eth1 interface, and put 'myvlan' network on top of it and persist the new configuration:
 - name: Bonds
   ovirt_host_network:
     name: myhost
+    save: yes
     bond:
       name: bond0
       mode: 2
@@ -101,7 +102,7 @@ EXAMPLES = '''
         gateway: 1.2.3.4
         version: v4
 
-# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon:
+# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon temporarily:
 - name: Bonds
   ovirt_host_network:
     name: myhost
@@ -114,14 +115,14 @@ EXAMPLES = '''
         - eth1
         - eth2
 
-# Remove bond0 bond from host interfaces:
+# Remove bond0 bond from host interfaces temporarily:
 - ovirt_host_network:
     state: absent
     name: myhost
     bond:
       name: bond0
 
-# Assign myvlan1 and myvlan2 vlans to host eth0 interface:
+# Assign myvlan1 and myvlan2 vlans to host eth0 interface temporarily:
 - ovirt_host_network:
     name: myhost
     interface: eth0
@@ -129,7 +130,7 @@ EXAMPLES = '''
       - name: myvlan1
       - name: myvlan2
 
-# Remove myvlan2 vlan from host eth0 interface:
+# Remove myvlan2 vlan from host eth0 interface temporarily:
 - ovirt_host_network:
     state: absent
     name: myhost
@@ -137,7 +138,7 @@ EXAMPLES = '''
     networks:
       - name: myvlan2
 
-# Remove all networks/vlans from host eth0 interface:
+# Remove all networks/vlans from host eth0 interface temporarily:
 - ovirt_host_network:
     state: absent
     name: myhost
@@ -333,9 +334,6 @@ def main():
         save=dict(default=None, type='bool'),
     )
     module = AnsibleModule(argument_spec=argument_spec)
-
-    if module._name == 'ovirt_host_networks':
-        module.deprecate("The 'ovirt_host_networks' module is being renamed 'ovirt_host_network'", version=2.8)
 
     check_sdk(module)
 

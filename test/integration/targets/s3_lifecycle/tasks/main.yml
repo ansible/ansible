@@ -30,7 +30,7 @@
       s3_lifecycle:
         name: "{{ resource_prefix }}-testbucket-ansible"
         expiration_days: 300
-        prefix: /pre
+        prefix: ''
         <<: *aws_connection_info
       register: output
 
@@ -42,7 +42,6 @@
       s3_lifecycle:
         name: "{{ resource_prefix }}-testbucket-ansible"
         expiration_days: 300
-        prefix: /pre
         <<: *aws_connection_info
       register: output
 

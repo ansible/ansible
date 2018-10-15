@@ -109,6 +109,7 @@ class HttpApi(HttpApiBase):
         try:
             self.refresh_token = response['refresh_token']
             self.access_token = response['access_token']
+            self.connection._auth = {'Authorization': 'Bearer %s' % self.access_token}
         except KeyError:
             raise ConnectionError(
                 'Server returned response without token info during connection authentication: %s' % response)
@@ -121,7 +122,7 @@ class HttpApi(HttpApiBase):
         }
         self.connection.send(
             self._get_api_token_path(), json.dumps(auth_payload), method=HTTPMethod.POST,
-            headers=self._authorized_headers()
+            headers=BASE_HEADERS
         )
         self.refresh_token = None
         self.access_token = None
@@ -134,10 +135,7 @@ class HttpApi(HttpApiBase):
         url = construct_url_path(url_path, path_params, query_params)
         data = json.dumps(body_params) if body_params else None
         try:
-            response, response_data = self.connection.send(
-                url, data, method=http_method,
-                headers=self._authorized_headers()
-            )
+            response, response_data = self.connection.send(url, data, method=http_method, headers=BASE_HEADERS)
             return {
                 ResponseParams.SUCCESS: True,
                 ResponseParams.STATUS_CODE: response.getcode(),
@@ -159,7 +157,7 @@ class HttpApi(HttpApiBase):
             rf.make_multipart()
             body, content_type = encode_multipart_formdata([rf])
 
-            headers = self._authorized_headers()
+            headers = dict(BASE_HEADERS)
             headers['Content-Type'] = content_type
             headers['Content-Length'] = len(body)
 
@@ -168,10 +166,7 @@ class HttpApi(HttpApiBase):
 
     def download_file(self, from_url, to_path, path_params=None):
         url = construct_url_path(from_url, path_params=path_params)
-        response, response_data = self.connection.send(
-            url, data=None, method=HTTPMethod.GET,
-            headers=self._authorized_headers()
-        )
+        response, response_data = self.connection.send(url, data=None, method=HTTPMethod.GET, headers=BASE_HEADERS)
 
         if os.path.isdir(to_path):
             filename = extract_filename_from_headers(response.info())
@@ -187,11 +182,6 @@ class HttpApi(HttpApiBase):
             return True
         # None means that the exception will be passed further to the caller
         return None
-
-    def _authorized_headers(self):
-        headers = dict(BASE_HEADERS)
-        headers['Authorization'] = 'Bearer %s' % self.access_token
-        return headers
 
     def _get_api_spec_path(self):
         return self.get_option('spec_path')

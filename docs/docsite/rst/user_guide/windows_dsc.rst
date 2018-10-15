@@ -2,6 +2,7 @@ Desired State Configuration
 ===========================
 
 .. contents:: Topics
+   :local:
 
 What is Desired State Configuration?
 ````````````````````````````````````
@@ -387,7 +388,7 @@ Setup IIS Website
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `List of Windows Modules :ref:`<windows_modules>`
+   :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

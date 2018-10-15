@@ -46,9 +46,9 @@ Other YAML files may be included in certain directories. For example, it is comm
     # roles/example/tasks/main.yml
     - name: added in 2.4, previously you used 'include'
       import_tasks: redhat.yml
-      when: ansible_os_family|lower == 'redhat'
+      when: ansible_facts['os_family']|lower == 'redhat'
     - import_tasks: debian.yml
-      when: ansible_os_family|lower == 'debian'
+      when: ansible_facts['os_family']|lower == 'debian'
 
     # roles/example/tasks/redhat.yml
     - yum:
@@ -163,7 +163,7 @@ You can conditionally import a role and execute it's tasks::
       tasks:
       - include_role:
           name: some_role
-        when: "ansible_os_family == 'RedHat'"
+        when: "ansible_facts['os_family'] == 'RedHat'"
 
 
 

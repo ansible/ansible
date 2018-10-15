@@ -1,0 +1,16 @@
+                   uptime: 3h28m52s
+                  version: 6.42.5 (stable)
+               build-time: Jun/26/2018 12:12:08
+              free-memory: 988.3MiB
+             total-memory: 1010.8MiB
+                      cpu: Intel(R)
+                cpu-count: 2
+            cpu-frequency: 2496MHz
+                 cpu-load: 0%
+           free-hdd-space: 63.4GiB
+          total-hdd-space: 63.5GiB
+  write-sect-since-reboot: 4576
+         write-sect-total: 4576
+        architecture-name: x86
+               board-name: x86
+                 platform: MikroTik

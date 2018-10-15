@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -141,6 +141,16 @@ performance_mode:
     returned: always
     type: str
     sample: "generalPurpose"
+throughput_mode:
+    description: mode of throughput for the file system
+    returned: when botocore >= 1.10.57
+    type: str
+    sample: "bursting"
+provisioned_throughput_in_mibps:
+    description: throughput provisioned in Mibps
+    returned: when botocore >= 1.10.57 and throughput_mode is set to "provisioned"
+    type: float
+    sample: 15.0
 tags:
     description: tags on the efs instance
     returned: always
@@ -260,7 +270,7 @@ class EFSConnection(object):
             AWS updated it and now there is no need to add a suffix. MountPoint is left for back-compatibility purpose
             And new FilesystemAddress variable is introduced for direct use with other modules (e.g. mount)
             AWS documentation is available here:
-            http://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
+            U(https://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html)
             """
             item['MountPoint'] = '.%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
             item['FilesystemAddress'] = '%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)

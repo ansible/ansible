@@ -21,9 +21,10 @@ __metaclass__ = type
 
 import os
 import json
+import tempfile
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 
@@ -59,6 +60,15 @@ class AnsibleFailJson(Exception):
 
 
 class TestCnosModule(unittest.TestCase):
+    def setUp(self):
+        super(TestCnosModule, self).setUp()
+
+        self.test_log = tempfile.mkstemp(prefix='ansible-test-cnos-module-', suffix='.log')[1]
+
+    def tearDown(self):
+        super(TestCnosModule, self).tearDown()
+
+        os.remove(self.test_log)
 
     def execute_module(self, failed=False, changed=False, commands=None,
                        sort=True, defaults=False):
