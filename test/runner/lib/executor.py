@@ -1213,7 +1213,7 @@ def command_units(args):
         raise AllTargetsSkipped()
 
     if args.delegate:
-        raise Delegate(require=changes)
+        raise Delegate(require=changes, exclude=args.exclude)
 
     version_commands = []
 
