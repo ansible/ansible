@@ -25,6 +25,11 @@ options:
   ipadefaultemaildomain:
     description: Default e-mail domain for new users.
     aliases: ["emaildomain"]
+  ipagroupobjectclasses:
+    description: list of ipa group object classes
+    aliases: ["groupobjectclasses"]
+    type: list
+    version_added: "2.8"
 extends_documentation_fragment: ipa.documentation
 version_added: "2.7"
 '''
@@ -64,18 +69,28 @@ class ConfigIPAClient(IPAClient):
         super(ConfigIPAClient, self).__init__(module, host, port, protocol)
 
     def config_show(self):
-        return self._post_json(method='config_show', name=None)
+        return self._post_json(
+            method='config_show',
+            name=None,
+            item={'all': True}
+        )
 
     def config_mod(self, name, item):
         return self._post_json(method='config_mod', name=name, item=item)
 
 
-def get_config_dict(ipadefaultloginshell=None, ipadefaultemaildomain=None):
+def get_config_dict(
+    ipadefaultloginshell=None,
+    ipadefaultemaildomain=None,
+    ipagroupobjectclasses=None,
+):
     config = {}
     if ipadefaultloginshell is not None:
         config['ipadefaultloginshell'] = ipadefaultloginshell
     if ipadefaultemaildomain is not None:
         config['ipadefaultemaildomain'] = ipadefaultemaildomain
+    if ipagroupobjectclasses is not None:
+        config['ipagroupobjectclasses'] = ipagroupobjectclasses
 
     return config
 
@@ -110,6 +125,7 @@ def main():
     argument_spec.update(
         ipadefaultloginshell=dict(type='str', aliases=['loginshell']),
         ipadefaultemaildomain=dict(type='str', aliases=['emaildomain']),
+        ipagroupobjectclasses=dict(type='list', aliases=['groupobjectclasses'])
     )
 
     module = AnsibleModule(
