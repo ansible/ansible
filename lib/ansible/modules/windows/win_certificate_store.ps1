@@ -3,28 +3,31 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Basic
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
 $store_name_values = ([System.Security.Cryptography.X509Certificates.StoreName]).GetEnumValues() | ForEach-Object { $_.ToString() }
 $store_location_values = ([System.Security.Cryptography.X509Certificates.StoreLocation]).GetEnumValues() | ForEach-Object { $_.ToString() }
 
 $spec = @{
-    state = @{ type = "str"; default = "present"; choices = "absent", "exported", "present" }
-    path = @{ type = "path" }
-    thumbprint = @{ type = "str" }
-    store_name = @{ type = "str"; default = "My"; choices = $store_name_values }
-    store_location = @{ type = "str"; default = "LocalMachine"; choices = $store_location_values }
-    password = @{ type = "str"; no_log = $true }
-    key_exportable = @{ type = "bool"; default = $true }
-    key_storage = @{ type = "str"; default = "default"; choices = "default", "machine", "user" }
-    file_type = @{ type = "str"; default = "der"; choices = "der", "pem", "pkcs12" }
+    options = @{
+        state = @{ type = "str"; default = "present"; choices = "absent", "exported", "present" }
+        path = @{ type = "path" }
+        thumbprint = @{ type = "str" }
+        store_name = @{ type = "str"; default = "My"; choices = $store_name_values }
+        store_location = @{ type = "str"; default = "LocalMachine"; choices = $store_location_values }
+        password = @{ type = "str"; no_log = $true }
+        key_exportable = @{ type = "bool"; default = $true }
+        key_storage = @{ type = "str"; default = "default"; choices = "default", "machine", "user" }
+        file_type = @{ type = "str"; default = "der"; choices = "der", "pem", "pkcs12" }
+    }
+    required_if = @(
+        @("state", "absent", @("path", "thumbprint"), $true),
+        @("state", "exported", @("path", "thumbprint")),
+        @("state", "present", @("path"))
+    )
+    supports_check_mode = $true
 }
-$required_if = @(
-    @("state", "absent", @("path", "thumbprint"), $true),
-    @("state", "exported", @("path", "thumbprint")),
-    @("state", "present", @("path"))
-)
-$module = Get-AnsibleModule -Arguments $args -ArgumentSpec $spec -SupportsCheckMode -RequiredIf $required_if
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 Function Get-CertFile($module, $path, $password, $key_exportable, $key_storage) {
     # parses a certificate file and returns X509Certificate2Collection

@@ -2,12 +2,15 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Basic
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
 $spec = @{
-    data = @{ type = "str"; default = "pong" }
+    options = @{
+        data = @{ type = "str"; default = "pong" }
+    }
+    supports_check_mode = $true
 }
-$module = Get-AnsibleModule -Arguments $args -ArgumentSpec $spec -SupportsCheckMode
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $data = $module.Params.data
 
 if ($data -eq "crash") {

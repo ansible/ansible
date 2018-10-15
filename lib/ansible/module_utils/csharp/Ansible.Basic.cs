@@ -23,9 +23,6 @@ namespace Ansible.Basic
 
         private string remoteTmp = Path.GetTempPath();
         private string tmpdir = null;
-
-        private Dictionary<string, string> aliases = new Dictionary<string, string>();
-        private List<string> legalInputs = new List<string>();
         private HashSet<string> noLogValues = new HashSet<string>();
         private List<string> optionsContext = new List<string>();
         private List<string> warnings = new List<string>();
@@ -34,6 +31,7 @@ namespace Ansible.Basic
 
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
+            // null values means no mapping, not used in Ansible.Basic.AnsibleModule
             { "check_mode", "CheckMode" },
             { "debug", "DebugMode" },
             { "diff", "DiffMode" },
@@ -41,28 +39,33 @@ namespace Ansible.Basic
             { "module_name", "ModuleName" },
             { "no_log", "NoLog" },
             { "remote_tmp", "remoteTmp" },
+            { "selinux_special_fs", null },
+            { "shell_executable", null },
+            { "socket", null },
+            { "syslog_facility", null },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
         };
         private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "no_log" };
-        private Dictionary<string, List<object>> metadataDefaults = new Dictionary<string, List<object>>()
+        private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
         {
             // key - (default, type) - null is freeform
-            { "apply_defaults", new List<object>() { false, typeof(bool)} },
+            { "apply_defaults", new List<object>() { false, typeof(bool) } },
             { "aliases", new List<object>() { typeof(List<string>), typeof(List<string>) } },
             { "choices", new List<object>() { typeof(List<object>), typeof(List<object>) } },
             { "default", new List<object>() { null, null } },
-            { "elements", new List<object>() { null, typeof(string) } },
+            { "elements", new List<object>() { null, null } },
             { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), typeof(List<List<string>>) } },
             { "no_log", new List<object>() { false, typeof(bool) } },
             { "options", new List<object>() { null, typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
             { "required", new List<object>() { false, typeof(bool) } },
-            { "required_if", new List<object>() { typeof(List<List<object>>), typeof(List<List<object>>) } },
+            { "required_if", new List<object>() { typeof(List<List<object>>), null } },
             { "required_one_of", new List<object>() { typeof(List<List<string>>), typeof(List<List<string>>) } },
             { "required_together", new List<object>() { typeof(List<List<string>>), typeof(List<List<string>>) } },
-            { "type", new List<object>() { "str", typeof(string) } },
+            { "supports_check_mode", new List<object>() { false, typeof(bool) } },
+            { "type", new List<object>() { "str", null } },
         };
         private Dictionary<string, Delegate> optionTypes = new Dictionary<string, Delegate>()
         {
@@ -79,7 +82,7 @@ namespace Ansible.Basic
         };
 
         public Dictionary<string, object> Diff = new Dictionary<string, object>();
-        public Dictionary<string, object> Params = new Dictionary<string, object>();
+        public IDictionary Params = null;
         public Dictionary<string, object> Result = new Dictionary<string, object>() { { "changed", false } };
 
         public bool CheckMode { get; private set; }
@@ -147,28 +150,11 @@ namespace Ansible.Basic
             }
         }
 
-        public AnsibleModule(string[] args, Hashtable argumentSpec, bool supportsCheckMode, bool noLog,
-            List<List<string>> mutuallyExclusive, List<List<string>> requiredTogether, List<List<string>> requiredOneOf,
-            List<List<object>> requiredIf, Dictionary<string, Delegate> extraTypes)
+        public AnsibleModule(string[] args, IDictionary argumentSpec)
         {
-            // Initialise public properties to the defaults
-            CheckMode = false;
-            DebugMode = false;
-            DiffMode = false;
-            KeepRemoteFiles = false;
-            ModuleName = "undefined win module";
-            NoLog = noLog;
-            Verbosity = 0;
-
-            // Add any extra types defined by the user
-            if (extraTypes != null)
-                foreach (KeyValuePair<string, Delegate> type in extraTypes)
-                    optionTypes[type.Key] = type.Value;
-            legalInputs = passVars.Keys.Select(v => "_ansible_" + v).ToList();
-            AppDomain.CurrentDomain.ProcessExit += CleanupFiles;
-
             // NoLog is not set yet, we cannot rely on FailJson to sanitize the output
             // Do the minimum amount to get this running before we actually parse the params
+            Dictionary<string, string> aliases = new Dictionary<string, string>();
             try
             {
                 ValidateArgumentSpec(argumentSpec);
@@ -188,21 +174,44 @@ namespace Ansible.Basic
                 Exit(1);
             }
 
-            CheckArguments(argumentSpec, Params, legalInputs, supportsCheckMode, mutuallyExclusive, requiredTogether, requiredOneOf, requiredIf);
+            // Initialise public properties to the defaults before we parse the actual inputs
+            CheckMode = false;
+            DebugMode = false;
+            DiffMode = false;
+            KeepRemoteFiles = false;
+            ModuleName = "undefined win module";
+            NoLog = (bool)argumentSpec["no_log"];
+            Verbosity = 0;
+            AppDomain.CurrentDomain.ProcessExit += CleanupFiles;
+
+            List<string> legalInputs = passVars.Keys.Select(v => "_ansible_" + v).ToList();
+            legalInputs.AddRange(((IDictionary)argumentSpec["options"]).Keys.Cast<string>().ToList());
+            legalInputs.AddRange(aliases.Keys.Cast<string>().ToList());
+            CheckArguments(argumentSpec, Params, legalInputs);
+
+            // Set a Ansible friendly invocation value in the result object
+            Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
+            Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+
             if (!NoLog)
-                Log(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
+                LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
+        }
+
+        public static AnsibleModule Create(string[] args, IDictionary argumentSpec)
+        {
+            return new AnsibleModule(args, argumentSpec);
         }
 
         public void Debug(string message)
         {
             if (DebugMode)
-                Log(String.Format("[DEBUG] {0}", message));
+                LogEvent(String.Format("[DEBUG] {0}", message));
         }
 
         public void Deprecate(string message, string version)
         {
             deprecations.Add(new Dictionary<string, string>() { { "message", message }, { "version", version } });
-            Log(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
         }
 
         public void ExitJson()
@@ -239,7 +248,7 @@ namespace Ansible.Basic
             Exit(1);
         }
 
-        public void Log(string message, EventLogEntryType logEntryType = EventLogEntryType.Information, bool sanitise = true)
+        public void LogEvent(string message, EventLogEntryType logEntryType = EventLogEntryType.Information, bool sanitise = true)
         {
             if (NoLog)
                 return;
@@ -278,7 +287,7 @@ namespace Ansible.Basic
         public void Warn(string message)
         {
             warnings.Add(message);
-            Log(String.Format("[WARNING] {0}", message), EventLogEntryType.Warning);
+            LogEvent(String.Format("[WARNING] {0}", message), EventLogEntryType.Warning);
         }
 
         public static Dictionary<string, object> FromJson(string json) { return FromJson<Dictionary<string, object>>(json); }
@@ -298,7 +307,7 @@ namespace Ansible.Basic
             return jss.Serialize(obj);
         }
 
-        public static Dictionary<string, object> GetParams(string[] args)
+        public static IDictionary GetParams(string[] args)
         {
             if (args.Length > 0)
             {
@@ -306,13 +315,13 @@ namespace Ansible.Basic
                 Dictionary<string, object> rawParams = FromJson(inputJson);
                 if (!rawParams.ContainsKey("ANSIBLE_MODULE_ARGS"))
                     throw new ArgumentException("Module was unable to get ANSIBLE_MODULE_ARGS value from the argument path json");
-                return (Dictionary<string, object>)rawParams["ANSIBLE_MODULE_ARGS"];
+                return (IDictionary)rawParams["ANSIBLE_MODULE_ARGS"];
             }
             else
             {
+                // $complex_args is already a Hashtable, no need to waste time converting to a dictionary
                 PSObject rawArgs = ScriptBlock.Create("$complex_args").Invoke()[0];
-                Hashtable test = rawArgs.BaseObject as Hashtable;
-                return test.Cast<DictionaryEntry>().ToDictionary(kvp => (string)kvp.Key, kvp => (object)kvp.Value);
+                return rawArgs.BaseObject as Hashtable;
             }
         }
 
@@ -342,7 +351,7 @@ namespace Ansible.Basic
             if (valueType.IsGenericType && valueType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
                 return (Dictionary<string, object>)value;
             else if (valueType == typeof(Hashtable))
-                return (Dictionary<string, object>)value;
+                return ((Hashtable)value).Cast<DictionaryEntry>().ToDictionary(kvp => (string)kvp.Key, kvp => kvp.Value);
             else if (valueType == typeof(string))
             {
                 string stringValue = (string)value;
@@ -482,116 +491,133 @@ namespace Ansible.Basic
 
         public static string ParseStr(object value) { return value.ToString(); }
 
-        private void ValidateArgumentSpec(Hashtable argumentSpec)
+        private void ValidateArgumentSpec(IDictionary argumentSpec)
         {
+            Dictionary<string, object> changedValues = new Dictionary<string, object>();
             foreach (DictionaryEntry entry in argumentSpec)
             {
-                Hashtable metadata = (Hashtable)entry.Value;
+                string key = (string)entry.Key;
 
-                Dictionary<string, object> changedValues = new Dictionary<string, object>();
-                foreach (DictionaryEntry metadataEntry in metadata)
+                // validate the key is a valid argument spec key
+                if (!specDefaults.ContainsKey(key))
                 {
-                    string key = (string)metadataEntry.Key;
-                    if (!metadataDefaults.ContainsKey(key))
+                    string msg = String.Format("argument spec entry '{0}' contains an invalid key '{1}', valid keys: {2}",
+                        (string)entry.Key, key, String.Join(", ", specDefaults.Keys));
+                    if (optionsContext.Count > 0)
+                        msg += String.Format(" - found in {0}.", String.Join(" -> ", optionsContext));
+                    throw new ArgumentException(msg);
+                }
+
+                // ensure the value is casted to the type we expect
+                Type optionType = null;
+                if (entry.Value != null)
+                    optionType = (Type)specDefaults[key][1];
+                if (optionType != null)
+                {
+                    Type actualType = entry.Value.GetType();
+                    bool invalid = false;
+                    if (optionType.IsGenericType && optionType.GetGenericTypeDefinition() == typeof(List<>))
                     {
-                        string msg = String.Format("argument spec entry '{0}' contains an invalid key '{1}', valid keys: {2}",
-                            (string)entry.Key, key, String.Join(", ", metadataDefaults.Keys));
+                        // verify the actual type is not just a single value of the list type
+                        Type entryType = optionType.GetGenericArguments()[0];
+
+                        bool isArray = actualType.IsArray && (actualType.GetElementType() == entryType || actualType.GetElementType() == typeof(object));
+                        if (actualType == entryType || isArray)
+                        {
+                            object[] rawArray;
+                            if (isArray)
+                                rawArray = (object[])entry.Value;
+                            else
+                                rawArray = new object[1] { entry.Value };
+
+                            MethodInfo castMethod = typeof(Enumerable).GetMethod("Cast").MakeGenericMethod(entryType);
+                            MethodInfo toListMethod = typeof(Enumerable).GetMethod("ToList").MakeGenericMethod(entryType);
+
+                            var enumerable = castMethod.Invoke(null, new object[1] { rawArray });
+                            var newList = toListMethod.Invoke(null, new object[1] { enumerable });
+                            changedValues.Add(key, newList);
+                        }
+                        else if (actualType != optionType && !(actualType == typeof(List<object>)))
+                            invalid = true;
+                    }
+                    else
+                        invalid = actualType != optionType;
+
+                    if (invalid)
+                    {
+                        string msg = String.Format("argument spec for '{0}' did not match expected type {1}: actual type {2}",
+                            key, optionType.FullName, actualType.FullName);
                         if (optionsContext.Count > 0)
                             msg += String.Format(" - found in {0}.", String.Join(" -> ", optionsContext));
                         throw new ArgumentException(msg);
                     }
+                }
 
-                    if (metadataEntry.Value != null)
+                // recursively validate the spec
+                if (key == "options" && entry.Value != null)
+                {
+                    IDictionary optionsSpec = (IDictionary)entry.Value;
+                    foreach (DictionaryEntry optionEntry in optionsSpec)
                     {
-                        Type optionType = (Type)metadataDefaults[key][1];
-                        if (optionType == null)
-                            continue;
-
-                        Type actualType = metadataEntry.Value.GetType();
-                        bool invalid = false;
-                        if (optionType.IsGenericType && optionType.GetGenericTypeDefinition() == typeof(List<>))
-                        {
-                            // verify the actual type is not just a single value of the list type
-                            Type entryType = optionType.GetGenericArguments()[0];
-
-                            bool isArray = actualType.IsArray && (actualType.GetElementType() == entryType || actualType.GetElementType() == typeof(object));
-                            if (actualType == entryType || isArray)
-                            {
-                                object[] rawArray;
-                                if (isArray)
-                                    rawArray = (object[])metadataEntry.Value;
-                                else
-                                    rawArray = new object[1] { metadataEntry.Value };
-
-                                MethodInfo castMethod = typeof(Enumerable).GetMethod("Cast").MakeGenericMethod(entryType);
-                                MethodInfo toListMethod = typeof(Enumerable).GetMethod("ToList").MakeGenericMethod(entryType);
-
-                                var enumerable = castMethod.Invoke(null, new object[1] { rawArray });
-                                var newList = toListMethod.Invoke(null, new object[1] { enumerable });
-                                changedValues.Add(key, newList);
-                            }
-                            else if (actualType != optionType && !(actualType == typeof(List<object>)))
-                                invalid = true;
-                        }
-                        else
-                            invalid = actualType != optionType;
-
-                        if (invalid)
-                        {
-                            string msg = String.Format("argument spec for '{0}' entry '{1}' did not match expected type {2}: actual type {3}",
-                                (string)entry.Key, key, optionType.FullName, actualType.FullName);
-                            if (optionsContext.Count > 0)
-                                msg += String.Format(" - found in {0}.", String.Join(" -> ", optionsContext));
-                            throw new ArgumentException(msg);
-                        }
-                    }
-
-                    if (key == "options" && metadataEntry.Value != null)
-                    {
-                        optionsContext.Add((string)entry.Key);
-                        ValidateArgumentSpec((Hashtable)metadataEntry.Value);
+                        optionsContext.Add((string)optionEntry.Key);
+                        IDictionary optionMeta = (IDictionary)optionEntry.Value;
+                        ValidateArgumentSpec(optionMeta);
                         optionsContext.RemoveAt(optionsContext.Count - 1);
                     }
+                }
 
-                    if (key == "type" || key == "elements" && metadataEntry.Value != null)
+                // validate the type and elements key type values are known types
+                if (key == "type" || key == "elements" && entry.Value != null)
+                {
+                    Type valueType = entry.Value.GetType();
+                    if (valueType == typeof(string))
                     {
-                        string typeValue = (string)metadataEntry.Value;
+                        string typeValue = (string)entry.Value;
                         if (!optionTypes.ContainsKey(typeValue))
                         {
-                            string msg = String.Format("{0} '{1}' for '{2}' is unsupported", key, typeValue, (string)entry.Key);
+                            string msg = String.Format("{0} '{1}' is unsupported", key, typeValue);
                             if (optionsContext.Count > 0)
                                 msg += String.Format(" - found in {0}", String.Join(" -> ", optionsContext));
                             msg += String.Format(". Valid types are: {0}", String.Join(", ", optionTypes.Keys));
                             throw new ArgumentException(msg);
                         }
                     }
+                    else if (!(entry.Value is Delegate))
+                    {
+                        string msg = String.Format("{0} must either be a string or delegate, was: {1}", key, valueType.FullName);
+                        if (optionsContext.Count > 0)
+                            msg += String.Format(" - found in {0}", String.Join(" -> ", optionsContext));
+                        throw new ArgumentException(msg);
+                    }
                 }
-                foreach (KeyValuePair<string, object> changedValue in changedValues)
-                    metadata[changedValue.Key] = changedValue.Value;
+            }
 
-                foreach (KeyValuePair<string, List<object>> metadataEntry in metadataDefaults)
-                {
-                    List<object> defaults = metadataEntry.Value;
-                    object defaultValue = defaults[0];
-                    if (defaultValue != null && defaultValue.GetType() == typeof(Type).GetType())
-                        defaultValue = Activator.CreateInstance((Type)defaultValue);
+            // Outside of the spec iterator, change the values that were casted above
+            foreach (KeyValuePair<string, object> changedValue in changedValues)
+                argumentSpec[changedValue.Key] = changedValue.Value;
 
-                    if (!metadata.ContainsKey(metadataEntry.Key))
-                        metadata[metadataEntry.Key] = defaultValue;
-                }
+            // Now make sure all the metadata keys are set to their defaults
+            foreach (KeyValuePair<string, List<object>> metadataEntry in specDefaults)
+            {
+                List<object> defaults = metadataEntry.Value;
+                object defaultValue = defaults[0];
+                if (defaultValue != null && defaultValue.GetType() == typeof(Type).GetType())
+                    defaultValue = Activator.CreateInstance((Type)defaultValue);
+
+                if (!argumentSpec.Contains(metadataEntry.Key))
+                    argumentSpec[metadataEntry.Key] = defaultValue;
             }
         }
 
-        private Dictionary<string, string> GetAliases(Hashtable argumentSpec, Dictionary<string, object> parameters)
+        private Dictionary<string, string> GetAliases(IDictionary argumentSpec, IDictionary parameters)
         {
             Dictionary<string, string> aliasResults = new Dictionary<string, string>();
 
-            foreach (DictionaryEntry entry in argumentSpec)
+            foreach (DictionaryEntry entry in (IDictionary)argumentSpec["options"])
             {
                 string k = (string)entry.Key;
                 Hashtable v = (Hashtable)entry.Value;
 
-                legalInputs.Add(k);
                 List<string> aliases = (List<string>)v["aliases"];
                 object defaultValue = v["default"];
                 bool required = (bool)v["required"];
@@ -601,9 +627,8 @@ namespace Ansible.Basic
 
                 foreach (string alias in aliases)
                 {
-                    legalInputs.Add(alias);
                     aliasResults.Add(alias, k);
-                    if (parameters.ContainsKey(alias))
+                    if (parameters.Contains(alias))
                         parameters[k] = parameters[alias];
                 }
             }
@@ -611,63 +636,75 @@ namespace Ansible.Basic
             return aliasResults;
         }
 
-        private void SetNoLogValues(Hashtable argumentSpec, Dictionary<string, object> parameters)
+        private void SetNoLogValues(IDictionary argumentSpec, IDictionary parameters)
         {
-            foreach (DictionaryEntry entry in argumentSpec)
+            foreach (DictionaryEntry entry in (IDictionary)argumentSpec["options"])
             {
                 string k = (string)entry.Key;
                 Hashtable v = (Hashtable)entry.Value;
 
                 if ((bool)v["no_log"])
                 {
-                    object noLogObject = parameters.ContainsKey(k) ? parameters[k] : null;
+                    object noLogObject = parameters.Contains(k) ? parameters[k] : null;
                     if (noLogObject != null)
                         noLogValues.Add(noLogObject.ToString());
                 }
 
                 object removedInVersion = v["removed_in_version"];
-                if (removedInVersion != null && parameters.ContainsKey(k))
+                if (removedInVersion != null && parameters.Contains(k))
                     Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedInVersion.ToString());
             }
         }
 
-        private void CheckArguments(Hashtable spec, Dictionary<string, object> param, List<string> legalInputs, bool supportsCheckMode,
-            List<List<string>> mutuallyExclusive, List<List<string>> requiredTogether, List<List<string>> requiredOneOf, List<List<object>> requiredIf)
+        private void CheckArguments(IDictionary spec, IDictionary param, List<string> legalInputs)
         {
             // initially parse the params and check for unsupported ones and set internal vars
-            CheckUnsupportedArguments(spec, param);
+            CheckUnsupportedArguments(param, legalInputs);
 
-            if (CheckMode && !supportsCheckMode)
+            if (CheckMode && !(bool)spec["supports_check_mode"])
             {
                 Result["skipped"] = true;
                 Result["msg"] = String.Format("remote module ({0}) does not support check mode", ModuleName);
                 ExitJson();
             }
+            IDictionary optionSpec = (IDictionary)spec["options"];
 
-            if (mutuallyExclusive != null)
-                CheckMutuallyExclusive(param, mutuallyExclusive);
-            CheckRequiredArguments(spec, param);
+            CheckMutuallyExclusive(param, (IList)spec["mutually_exclusive"]);
+            CheckRequiredArguments(optionSpec, param);
 
             // set the parameter types based on the type spec value
-            foreach (DictionaryEntry entry in spec)
+            foreach (DictionaryEntry entry in optionSpec)
             {
                 string k = (string)entry.Key;
                 Hashtable v = (Hashtable)entry.Value;
 
-                object value = param.ContainsKey(k) ? param[k] : null;
+                object value = param.Contains(k) ? param[k] : null;
                 if (value != null)
                 {
                     // convert the current value to the wanted type
-                    string type = (string)v["type"];
-                    Delegate typeConverter = optionTypes[type];
+                    Delegate typeConverter;
+                    string type;
+                    if (v["type"].GetType() == typeof(string))
+                    {
+                        type = (string)v["type"];
+                        typeConverter = optionTypes[type];
+                    }
+                    else
+                    {
+                        type = "delegate";
+                        typeConverter = (Delegate)v["type"];
+                    }
+
                     try
                     {
                         value = typeConverter.DynamicInvoke(value);
                         param[k] = value;
-
                     }
                     catch (Exception e)
                     {
+                        if (type == "delegate")
+                            e = e.InnerException;
+
                         string msg = String.Format("argument for {0} is of type {1} and we were unable to convert to {2}: {3}",
                             k, value.GetType(), type, e.Message);
                         if (optionsContext.Count > 0)
@@ -703,39 +740,41 @@ namespace Ansible.Basic
                 }
             }
 
-            if (requiredTogether != null)
-                CheckRequiredTogether(param, requiredTogether);
-            if (requiredOneOf != null)
-                CheckRequiredOneOf(param, requiredOneOf);
-            if (requiredIf != null)
-                CheckRequiredIf(param, requiredIf);
+            CheckRequiredTogether(param, (IList)spec["required_together"]);
+            CheckRequiredOneOf(param, (IList)spec["required_one_of"]);
+            CheckRequiredIf(param, (IList)spec["required_if"]);
 
             // finally ensure all missing parameters are set to null and handle sub options
-            foreach (DictionaryEntry entry in spec)
+            foreach (DictionaryEntry entry in optionSpec)
             {
                 string k = (string)entry.Key;
-                Hashtable v = (Hashtable)entry.Value;
+                IDictionary v = (IDictionary)entry.Value;
 
-                if (!param.ContainsKey(k))
+                if (!param.Contains(k))
                     param[k] = null;
 
                 CheckSubOption(param, k, v);
             }
         }
 
-        private void CheckUnsupportedArguments(Hashtable spec, Dictionary<string, object> param)
+        private void CheckUnsupportedArguments(IDictionary param, List<string> legalInputs)
         {
             HashSet<string> unsupportedParameters = new HashSet<string>();
             List<string> removedParameters = new List<string>();
 
-            foreach (KeyValuePair<string, object> entry in param)
+            foreach (DictionaryEntry entry in param)
             {
-                if (entry.Key.StartsWith("_ansible_"))
+                string paramKey = (string)entry.Key;
+                if (!legalInputs.Contains(paramKey))
+                    unsupportedParameters.Add(paramKey);
+
+                if (paramKey.StartsWith("_ansible_"))
                 {
-                    removedParameters.Add(entry.Key);
-                    string key = entry.Key.Replace("_ansible_", "");
+                    removedParameters.Add(paramKey);
+                    string key = paramKey.Replace("_ansible_", "");
                     // skip setting NoLog if NoLog is already set to true (set by the module)
-                    if (!passVars.ContainsKey(key) || (key == "no_log" && NoLog == true))
+                    // or there's no mapping for this key
+                    if ((key == "no_log" && NoLog == true) || (passVars[key] == null))
                         continue;
 
                     object value = entry.Value;
@@ -746,40 +785,43 @@ namespace Ansible.Basic
                     PropertyInfo property = typeof(AnsibleModule).GetProperty(propertyName);
                     FieldInfo field = typeof(AnsibleModule).GetField(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
                     if (property != null)
-                        property.SetValue(this, value);
+                        property.SetValue(this, value, null);
                     else if (field != null)
                         field.SetValue(this, value);
                     else
                         FailJson(String.Format("implementation error: unknown AnsibleModule property {0}", propertyName));
                 }
-                else if (!legalInputs.Contains(entry.Key))
-                    unsupportedParameters.Add(entry.Key);
             }
             foreach (string parameter in removedParameters)
                 param.Remove(parameter);
 
             if (unsupportedParameters.Count > 0)
             {
+                legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
                 string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
                 if (optionsContext.Count > 0)
-                    msg += String.Format(" found in {0}.", String.Join(" -> ", optionsContext));
-                msg += String.Format(" Supported parameters include: {0}", String.Join(", ", spec.Keys.Cast<string>().ToList()));
+                    msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
+                msg += String.Format(". Supported parameters include: {0}", String.Join(", ", legalInputs));
                 FailJson(msg);
             }
         }
 
-        private void CheckMutuallyExclusive(Dictionary<string, object> param, List<List<string>> mutuallyExclusive)
+        private void CheckMutuallyExclusive(IDictionary param, IList mutuallyExclusive)
         {
-            foreach (List<string> check in mutuallyExclusive)
+            if (mutuallyExclusive == null)
+                return;
+
+            foreach (object check in mutuallyExclusive)
             {
+                List<string> mutualCheck = ((IList)check).Cast<string>().ToList();
                 int count = 0;
-                foreach (string entry in check)
-                    if (param.ContainsKey(entry))
+                foreach (string entry in mutualCheck)
+                    if (param.Contains(entry))
                         count++;
 
                 if (count > 1)
                 {
-                    string msg = String.Format("parameters are mutually exclusive: {0}", String.Join(", ", check));
+                    string msg = String.Format("parameters are mutually exclusive: {0}", String.Join(", ", mutualCheck));
                     if (optionsContext.Count > 0)
                         msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
                     FailJson(msg);
@@ -787,7 +829,7 @@ namespace Ansible.Basic
             }
         }
 
-        private void CheckRequiredArguments(Hashtable spec, Dictionary<string, object> param)
+        private void CheckRequiredArguments(IDictionary spec, IDictionary param)
         {
             List<string> missing = new List<string>();
             foreach (DictionaryEntry entry in spec)
@@ -797,12 +839,12 @@ namespace Ansible.Basic
 
                 // set defaults for values not already set
                 object defaultValue = v["default"];
-                if (defaultValue != null && !param.ContainsKey(k))
+                if (defaultValue != null && !param.Contains(k))
                     param[k] = defaultValue;
 
                 // check required arguments
                 bool required = (bool)v["required"];
-                if (required && !param.ContainsKey(k))
+                if (required && !param.Contains(k))
                     missing.Add(k);
             }
             if (missing.Count > 0)
@@ -814,20 +856,24 @@ namespace Ansible.Basic
             }
         }
 
-        private void CheckRequiredTogether(Dictionary<string, object> param, List<List<string>> requiredTogether)
+        private void CheckRequiredTogether(IDictionary param, IList requiredTogether)
         {
-            foreach (List<string> check in requiredTogether)
+            if (requiredTogether == null)
+                return;
+
+            foreach (object check in requiredTogether)
             {
+                List<string> requiredCheck = ((IList)check).Cast<string>().ToList();
                 List<bool> found = new List<bool>();
-                foreach (string field in check)
-                    if (param.ContainsKey(field))
+                foreach (string field in requiredCheck)
+                    if (param.Contains(field))
                         found.Add(true);
                     else
                         found.Add(false);
 
                 if (found.Contains(true) && found.Contains(false))
                 {
-                    string msg = String.Format("parameters are required together: {0}", String.Join(", ", check));
+                    string msg = String.Format("parameters are required together: {0}", String.Join(", ", requiredCheck));
                     if (optionsContext.Count > 0)
                         msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
                     FailJson(msg);
@@ -835,18 +881,22 @@ namespace Ansible.Basic
             }
         }
 
-        private void CheckRequiredOneOf(Dictionary<string, object> param, List<List<string>> requiredOneOf)
+        private void CheckRequiredOneOf(IDictionary param, IList requiredOneOf)
         {
-            foreach (List<string> check in requiredOneOf)
+            if (requiredOneOf == null)
+                return;
+
+            foreach (object check in requiredOneOf)
             {
+                List<string> requiredCheck = ((IList)check).Cast<string>().ToList();
                 int count = 0;
-                foreach (string field in check)
-                    if (param.ContainsKey(field))
+                foreach (string field in requiredCheck)
+                    if (param.Contains(field))
                         count++;
 
                 if (count == 0)
                 {
-                    string msg = String.Format("one of the following is required: {0}", String.Join(", ", check));
+                    string msg = String.Format("one of the following is required: {0}", String.Join(", ", requiredCheck));
                     if (optionsContext.Count > 0)
                         msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
                     FailJson(msg);
@@ -854,23 +904,27 @@ namespace Ansible.Basic
             }
         }
 
-        private void CheckRequiredIf(Dictionary<string, object> param, List<List<object>> requiredIf)
+        private void CheckRequiredIf(IDictionary param, IList requiredIf)
         {
-            List<string> missing = new List<string>();
-            foreach (List<object> check in requiredIf)
+            if (requiredIf == null)
+                return;
+
+            foreach (object check in requiredIf)
             {
+                IList requiredCheck = (IList)check;
+                List<string> missing = new List<string>();
                 List<string> missingFields = new List<string>();
                 int maxMissingCount = 1;
                 bool oneRequired = false;
 
-                if (check.Count < 3 && check.Count < 4)
-                    FailJson(String.Format("internal error: invalid required if value count of {0}, expecting 3 or 4 entries", check.Count));
-                else if (check.Count == 4)
-                    oneRequired = (bool)check[3];
+                if (requiredCheck.Count < 3 && requiredCheck.Count < 4)
+                    FailJson(String.Format("internal error: invalid required if value count of {0}, expecting 3 or 4 entries", requiredCheck.Count));
+                else if (requiredCheck.Count == 4)
+                    oneRequired = (bool)requiredCheck[3];
 
-                string key = (string)check[0];
-                object val = check[1];
-                List<string> requirements = (List<string>)check[2];
+                string key = (string)requiredCheck[0];
+                object val = requiredCheck[1];
+                IList requirements = (IList)requiredCheck[2];
 
                 if (ParseStr(param[key]) != ParseStr(val))
                     continue;
@@ -882,8 +936,8 @@ namespace Ansible.Basic
                     term = "any";
                 }
 
-                foreach (string required in requirements)
-                    if (!param.ContainsKey(required))
+                foreach (string required in requirements.Cast<string>())
+                    if (!param.Contains(required))
                         missing.Add(required);
 
                 if (missing.Count >= maxMissingCount)
@@ -897,9 +951,13 @@ namespace Ansible.Basic
             }
         }
 
-        private void CheckSubOption(Dictionary<string, object> param, string key, Hashtable spec)
+        private void CheckSubOption(IDictionary param, string key, IDictionary spec)
         {
-            string type = (string)spec["type"];
+            string type;
+            if (spec["type"].GetType() == typeof(string))
+                type = (string)spec["type"];
+            else
+                type = "delegate";
             string elements = (string)spec["elements"];
             object value = param[key];
 
@@ -942,18 +1000,18 @@ namespace Ansible.Basic
                 param[key] = ParseSubSpec(spec, value, key);
         }
 
-        private object ParseSubSpec(Hashtable options, object value, string context)
+        private object ParseSubSpec(IDictionary spec, object value, string context)
         {
-            Hashtable spec = (Hashtable)options["options"];
-            if (options == null)
+            IDictionary optionsSpec = (IDictionary)spec["options"];
+            if (spec == null)
                 return value;
 
-            bool applyDefaults = (bool)options["apply_defaults"];
+            bool applyDefaults = (bool)spec["apply_defaults"];
 
             // set entry to an empty dict if apply_defaults is set
-            if (applyDefaults && options != null && value == null)
+            if (applyDefaults && spec != null && value == null)
                 value = new Dictionary<string, object>();
-            else if (options == null || value == null)
+            else if (spec == null || value == null)
                 return value;
 
             optionsContext.Add(context);
@@ -961,13 +1019,10 @@ namespace Ansible.Basic
             Dictionary<string, string> aliases = GetAliases(spec, newValue);
             SetNoLogValues(spec, newValue);
 
-            List<string> subLegalInputs = spec.Keys.Cast<string>().ToList();
+            List<string> subLegalInputs = optionsSpec.Keys.Cast<string>().ToList();
             subLegalInputs.AddRange(aliases.Keys.Cast<string>().ToList());
 
-            CheckArguments(spec, newValue, subLegalInputs, true, (List<List<string>>)options["mutually_exclusive"],
-                (List<List<string>>)options["required_together"], (List<List<string>>)options["required_one_of"],
-                (List<List<object>>)options["required_if"]);
-
+            CheckArguments(spec, newValue, subLegalInputs);
             optionsContext.RemoveAt(optionsContext.Count - 1);
             return newValue;
         }
@@ -1064,19 +1119,12 @@ namespace Ansible.Basic
 
             Type valueType = value.GetType();
             HashSet<Type> numericTypes = new HashSet<Type>
-        {
-            typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
-            typeof(long), typeof(ulong), typeof(decimal), typeof(double), typeof(float)
-        };
-
-            if (valueType == typeof(string))
             {
-                if (noLogStrings.Contains((string)value))
-                    return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
-                foreach (string omitMe in noLogStrings)
-                    return ((string)value).Replace(omitMe, new String('*', omitMe.Length));
-            }
-            else if (numericTypes.Contains(valueType) || valueType == typeof(bool))
+                typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
+                typeof(long), typeof(ulong), typeof(decimal), typeof(double), typeof(float)
+            };
+
+            if (numericTypes.Contains(valueType) || valueType == typeof(bool))
             {
                 string valueString = ParseStr(value);
                 if (noLogStrings.Contains(valueString))
@@ -1126,8 +1174,14 @@ namespace Ansible.Basic
                 value = newValue;
             }
             else
-                throw new ArgumentException(String.Format("Value of unsupported type: {0}, {1}", valueType.FullName, value.ToString()));
-
+            {
+                string stringValue = value.ToString();
+                if (noLogStrings.Contains(stringValue))
+                    return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
+                foreach (string omitMe in noLogStrings)
+                    return (stringValue).Replace(omitMe, new String('*', omitMe.Length));
+                value = stringValue;
+            }
             return value;
         }
 
@@ -1154,9 +1208,15 @@ namespace Ansible.Basic
             if (Runspace.DefaultRunspace != null)
                 ScriptBlock.Create("Set-Variable -Name LASTEXITCODE -Value $args[0] -Scope Global; exit $args[0]").Invoke(rc);
             else
+            {
+                // Used for local debugging in Visual Studio
                 if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    Console.WriteLine("Press enter to continue...");
                     Console.ReadLine();
+                }
                 Environment.Exit(rc);
+            }
         }
 
         private static void WriteLine(string line)

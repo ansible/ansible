@@ -1,2 +1,2 @@
 minor_changes:
-- Added Ansible.ModuleUtils.Basic that contains a module wrapper and handles common functions like argument parsing and module return
+- Added Ansible.Basic C# util that contains a module wrapper and handles common functions like argument parsing and module return
