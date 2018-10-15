@@ -30,24 +30,33 @@ extends_documentation_fragment:
 author:
   - Ryan Scott Brown (@ryansb)
 options:
+  template_id:
+    description: The ID for the launch template, can be used for all cases except creating a new Launch Template.
+    aliases: [id]
+  template_name:
+    description: The template name. This must be unique in the region-account combination you are using.
+    aliases: [name]
+  default_version:
+    description: Which version should be the default when users spin up new instances based on this template? By default, the latest version will be made the default.
+    default: latest
   state:
-      description:
-      - Whether the launch template should exist or not. To delete only a
-        specific version of a launch template, combine I(state=absent) with
-        the I(version) option. By default, I(state=absent) will remove all
-        versions of the template.
-      choices: [present, absent]
-      default: present
+    description:
+    - Whether the launch template should exist or not. To delete only a
+      specific version of a launch template, combine I(state=absent) with
+      the I(version) option. By default, I(state=absent) will remove all
+      versions of the template.
+    choices: [present, absent]
+    default: present
   cpu_options:
     description:
     - Choose CPU settings for the EC2 instances that will be created with this template.
     - For more information, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html)
     suboptions:
       core_count:
-        type: int
+        type: integer
         description: The number of CPU cores for the instance.
       threads_per_core:
-        type: int
+        type: integer
         description: >
           The number of threads per CPU core. To disable Intel Hyper-Threading
           Technology for the instance, specify a value of 1. Otherwise, specify
@@ -66,7 +75,7 @@ options:
       you can't terminate the instance using the Amazon EC2 console, CLI, or
       API. To change this attribute to false after launch, use
       I(ModifyInstanceAttribute).
-    type: bool
+    type: boolean
   ebs_optimized:
     description: >
       Indicates whether the instance is optimized for Amazon EBS I/O. This
@@ -74,7 +83,7 @@ options:
       configuration stack to provide optimal Amazon EBS I/O performance. This
       optimization isn't available with all instance types. Additional usage
       charges apply when using an EBS-optimized instance.
-    type: bool
+    type: boolean
   elastic_gpu_specifications:
     description: Settings for Elastic GPU attachments. See U(https://aws.amazon.com/ec2/elastic-gpus/) for details.
     suboptions:
@@ -93,11 +102,77 @@ options:
       Indicates whether an instance stops or terminates when you initiate
       shutdown from the instance using the operating system shutdown command.
     choices: [stop, terminate]
-    default: stop
+  instance_market_options:
+    description: Options for alternative instance markets, currently only the spot market is supported.
+    suboptions:
+      market_type:
+        description: The market type. This should always be 'spot'.
+      spot_options:
+        description: Spot-market specific settings
+        type: dict
+        suboptions:
+          block_duration_minutes:
+            type: integer
+            description: >
+              The required duration for the Spot Instances (also known as Spot
+              blocks), in minutes. This value must be a multiple of 60 (60,
+              120, 180, 240, 300, or 360).
+          instance_interruption_behavior:
+            description: The behavior when a Spot Instance is interrupted. The default is I(terminate)
+            choices: [hibernate, stop, terminate]
+          max_price:
+            description: The highest hourly price you're willing to pay for this Spot Instance.
+          spot_instance_type:
+            description: The request type to send.
+            choices: [one-time, persistent]
+    type: dict
   instance_type:
     description: >
       The instance type, such as I(c5.2xlarge). For a full list of instance types, see
       http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
+  kernel_id:
+    description: >
+      The ID of the kernel. We recommend that you use PV-GRUB instead of
+      kernels and RAM disks. For more information, see
+      U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UserProvidedkernels.html)
+  key_name:
+    description:
+    - The name of the key pair. You can create a key pair using
+      I(CreateKeyPair) or I(ImportKeyPair).
+    - If you do not specify a key pair, you can't connect to the instance
+      unless you choose an AMI that is configured to allow users another way to
+      log in.
+  monnitoring:
+    description: Settings for instance monitoring
+    suboptions:
+      enabled:
+        type: bool
+        description: Whether to turn on detailed monitoring for new instances. This will incur extra charges.
+  ram_disk_id:
+    description: >
+      The ID of the RAM disk to launch the instance with. We recommend that you
+      use PV-GRUB instead of kernels and RAM disks. For more information, see
+      U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UserProvidedkernels.html)
+  security_group_ids:
+    description: A list of security group IDs (VPC or EC2-Classic) that the new instances will be added to.
+    type: list
+  security_groups:
+    description: A list of security group names (VPC or EC2-Classic) that the new instances will be added to.
+    type: list
+  tags:
+    type: dict
+    description:
+    - A set of key-value pairs to be applied to resources when this Launch Template is used.
+    - Tag key constraints: Tag keys are case-sensitive and accept a maximum of
+      127 Unicode characters. May not begin with I(aws:)
+    - Tag value constraints: Tag values are case-sensitive and accept a maximum
+      of 255 Unicode characters.
+  user_data:
+    description: >
+      The Base64-encoded user data to make available to the instance. For more information, see the Linux
+      U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) and Windows
+      U(http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-instance-metadata.html#instancedata-add-user-data)
+      documentation on user-data.
 '''
 
 RETURN = '''
@@ -346,19 +421,19 @@ def main():
         image_id=dict(),
         instance_initiated_shutdown_behavior=dict(choices=['stop', 'terminate']),
         instance_market_options=dict(
+            type='dict',
             options=dict(
                 market_type=dict(),
                 spot_options=dict(
+                    type='dict',
                     options=dict(
                         block_duration_minutes=dict(type='int'),
-                        instance_interruption_behavior=dict(),
+                        instance_interruption_behavior=dict(choices=['hibernate', 'stop', 'terminate']),
                         max_price=dict(),
-                        spot_instance_type=dict(),
+                        spot_instance_type=dict(choices=['one-time', 'persistent']),
                     ),
-                    type='dict',
                 ),
             ),
-            type='dict',
         ),
         instance_type=dict(),
         kernel_id=dict(),
