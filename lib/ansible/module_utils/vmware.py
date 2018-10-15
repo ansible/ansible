@@ -984,8 +984,16 @@ class PyVmomi(object):
 
         """
         template_obj = None
+        if not template_name:
+            return template_obj
 
-        if template_name:
+        if "/" in template_name:
+            vm_obj_path = os.path.dirname(template_name)
+            vm_obj_name = os.path.basename(template_name)
+            template_obj = find_vm_by_id(self.content, vm_obj_name, vm_id_type="inventory_path", folder=vm_obj_path)
+            if template_obj:
+                return template_obj
+        else:
             template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
             if template_obj:
                 return template_obj
@@ -1006,6 +1014,7 @@ class PyVmomi(object):
                 self.module.fail_json(msg="Multiple virtual machines or templates with same name [%s] found." % template_name)
             elif templates:
                 template_obj = templates[0]
+
         return template_obj
 
     # Cluster related functions
