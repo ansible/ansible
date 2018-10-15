@@ -117,7 +117,7 @@ def delegate_tox(args, exclude, require, integration_targets):
     :type integration_targets: tuple[IntegrationTarget]
     """
     if args.python:
-        versions = args.python_version,
+        versions = (args.python_version,)
 
         if args.python_version not in SUPPORTED_PYTHON_VERSIONS:
             raise ApplicationError('tox does not support Python version %s' % args.python_version)

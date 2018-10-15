@@ -117,7 +117,7 @@ class AnsibleCoreCI(object):
                 region = 'us-east-1'
 
             self.path = "%s-%s" % (self.path, region)
-            self.endpoints = AWS_ENDPOINTS[region],
+            self.endpoints = (AWS_ENDPOINTS[region],)
             self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
@@ -192,7 +192,7 @@ class AnsibleCoreCI(object):
         if self.started:
             display.info('Skipping started %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                          verbosity=1)
-            return
+            return None
 
         if is_shippable():
             return self.start_shippable()
