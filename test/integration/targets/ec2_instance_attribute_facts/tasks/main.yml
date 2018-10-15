@@ -1,0 +1,49 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "us-east-1"
+  no_log: true
+
+- block:
+    - set_fact:
+        userData: |
+          #cloud-config
+          hostname: test.local
+    - name: Create instance with userData
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-instance-facts"
+        image_id: 'ami-ae7bfdb8'
+        security_group: sg-5dd50928
+        wait: no
+        instance_type: t2.nano
+        user_data: "{{ userData }}"
+        <<: *aws_connection_info
+      register: instance
+
+    - name: Get userData from instance
+      ec2_instance_attribute_facts:
+        instance_id: "{{instance.instance_ids[0]}}"
+        attribute: "user_data"
+        <<: *aws_connection_info
+      register: userDataFact
+
+    - set_fact:
+        decoded: "{{ userDataFact.attributes.user_data.value | b64decode }}"
+
+    - assert:
+        that:
+          - decoded == userData
+
+  always:
+    - name: Terminate instance
+      ec2_instance:
+        instance_ids: "{{ instance.instance_ids }}"
+        state: terminated
+        wait: false
+        <<: *aws_connection_info
+      register: removed
+
+    - debug: var=removed
