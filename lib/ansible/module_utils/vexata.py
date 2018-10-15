@@ -43,13 +43,14 @@ VXOS_VERSION = None
 
 def get_version(iocs_json):
     if not iocs_json:
-        raise
+        raise Exception('Invalid IOC json')
     active = filter(lambda x: x['mgmtRole'], iocs_json)
     if not active:
-        raise
+        raise Exception('Unable to detect active IOC')
     active = active[0]
     ver = active['swVersion']
-    assert ver[0] == 'v'
+    if ver[0] != 'v':
+        raise Exception('Illegal version string')
     ver = ver[1:ver.find('-')]
     ver = map(int, ver.split('.'))
     return tuple(ver)
@@ -69,17 +70,17 @@ def get_array(module):
         password = environ.get('VEXATA_PASSWORD')
         system = VexataAPIProxy(array, user, password, verify_cert=False)
     else:
-        module.fail_json(msg="The user/password are required to be passed in to "
-                             "the module as arguments or by setting the "
-                             "VEXATA_USER and VEXATA_PASSWORD environment variables.")
+        module.fail_json(msg='The user/password are required to be passed in to '
+                             'the module as arguments or by setting the '
+                             'VEXATA_USER and VEXATA_PASSWORD environment variables.')
     try:
         if system.test_connection():
             VXOS_VERSION = get_version(system.iocs())
             return system
         else:
-            raise
-    except Exception:
-        module.fail_json(msg="Vexata API access failed. Check the credentials.")
+            module.fail_json(msg='Test connection to array failed.')
+    except Exception as e:
+        module.fail_json(msg='Vexata API access failed: {0}'.format(str(e)))
 
 
 def argument_spec():
