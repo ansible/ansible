@@ -1,0 +1,2 @@
+bugfixes:
+- dynamic includes - Use the copied and merged task for calculating task vars in the free strategy (https://github.com/ansible/ansible/issues/47024)
