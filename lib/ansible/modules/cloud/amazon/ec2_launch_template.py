@@ -31,13 +31,16 @@ author:
   - Ryan Scott Brown (@ryansb)
 options:
   template_id:
-    description: The ID for the launch template, can be used for all cases except creating a new Launch Template.
+    description:
+    - The ID for the launch template, can be used for all cases except creating a new Launch Template.
     aliases: [id]
   template_name:
-    description: The template name. This must be unique in the region-account combination you are using.
+    description:
+    - The template name. This must be unique in the region-account combination you are using.
     aliases: [name]
   default_version:
-    description: Which version should be the default when users spin up new instances based on this template? By default, the latest version will be made the default.
+    description:
+    - Which version should be the default when users spin up new instances based on this template? By default, the latest version will be made the default.
     default: latest
   state:
     description:
@@ -47,6 +50,59 @@ options:
       versions of the template.
     choices: [present, absent]
     default: present
+  block_device_mappings:
+    description:
+    - The block device mapping. Supplying both a snapshot ID and an encryption
+      value as arguments for block-device mapping results in an error. This is
+      because only blank volumes can be encrypted on start, and these are not
+      created from a snapshot. If a snapshot is the basis for the volume, it
+      contains data by definition and its encryption status cannot be changed
+      using this action.
+    suboptions:
+      device_name:
+        description: The device name (for example, /dev/sdh or xvdh).
+      no_device:
+        description: Suppresses the specified device included in the block device mapping of the AMI.
+      virtual_name:
+        description: >
+          The virtual device name (ephemeralN). Instance store volumes are
+          numbered starting from 0. An instance type with 2 available instance
+          store volumes can specify mappings for ephemeral0 and ephemeral1. The
+          number of available instance store volumes depends on the instance
+          type. After you connect to the instance, you must mount the volume.
+      ebs:
+        description: Parameters used to automatically set up EBS volumes when the instance is launched.
+        suboptions:
+          delete_on_termintation:
+            description: Indicates whether the EBS volume is deleted on instance termination.
+            type: bool
+          encrypted:
+            description: >
+              Indicates whether the EBS volume is encrypted. Encrypted volumes
+              can only be attached to instances that support Amazon EBS
+              encryption. If you are creating a volume from a snapshot, you
+              can't specify an encryption value.
+          iops:
+            description:
+            - The number of I/O operations per second (IOPS) that the volume
+              supports. For io1, this represents the number of IOPS that are
+              provisioned for the volume. For gp2, this represents the baseline
+              performance of the volume and the rate at which the volume
+              accumulates I/O credits for bursting. For more information about
+              General Purpose SSD baseline performance, I/O credits, and
+              bursting, see Amazon EBS Volume Types in the Amazon Elastic
+              Compute Cloud User Guide.
+            - 'Condition: This parameter is required for requests to create io1 volumes; it is not used in requests to create gp2, st1, sc1, or standard volumes.'
+          kms_key_id:
+            description: The ARN of the AWS Key Management Service (AWS KMS) CMK used for encryption.
+          snapshot_id:
+            description: The ID of the snapshot to create the volume from
+          volume_size:
+            description:
+            - The size of the volume, in GiB.
+            - "Default: If you're creating the volume from a snapshot and don't specify a volume size, the default is the snapshot size."
+          volume_type:
+            description: The volume type
   cpu_options:
     description:
     - Choose CPU settings for the EC2 instances that will be created with this template.
@@ -75,7 +131,7 @@ options:
       you can't terminate the instance using the Amazon EC2 console, CLI, or
       API. To change this attribute to false after launch, use
       I(ModifyInstanceAttribute).
-    type: boolean
+    type: bool
   ebs_optimized:
     description: >
       Indicates whether the instance is optimized for Amazon EBS I/O. This
@@ -83,7 +139,7 @@ options:
       configuration stack to provide optimal Amazon EBS I/O performance. This
       optimization isn't available with all instance types. Additional usage
       charges apply when using an EBS-optimized instance.
-    type: boolean
+    type: bool
   elastic_gpu_specifications:
     description: Settings for Elastic GPU attachments. See U(https://aws.amazon.com/ec2/elastic-gpus/) for details.
     suboptions:
@@ -109,7 +165,6 @@ options:
         description: The market type. This should always be 'spot'.
       spot_options:
         description: Spot-market specific settings
-        type: dict
         suboptions:
           block_duration_minutes:
             type: integer
@@ -142,12 +197,69 @@ options:
     - If you do not specify a key pair, you can't connect to the instance
       unless you choose an AMI that is configured to allow users another way to
       log in.
-  monnitoring:
+  monitoring:
     description: Settings for instance monitoring
     suboptions:
       enabled:
         type: bool
         description: Whether to turn on detailed monitoring for new instances. This will incur extra charges.
+  network_interfaces:
+    description: One or more network interfaces.
+    suboptions:
+      associate_public_ip_address:
+        description: Associates a public IPv4 address with eth0 for a new network interface.
+        type: bool
+      delete_on_termination:
+        description: Indicates whether the network interface is deleted when the instance is terminated.
+        type: bool
+      description:
+        description: A description for the network interface.
+      device_index:
+        description: The device index for the network interface attachment.
+      groups:
+        description: List of security group IDs to include on this instance
+      ipv6_address_count:
+        description: >
+          The number of IPv6 addresses to assign to a network interface. Amazon
+          EC2 automatically selects the IPv6 addresses from the subnet range.
+          You can't use this option if specifying the I(ipv6_addresses) option.
+      ipv6_addresses:
+        description: >
+          A list of one or more specific IPv6 addresses from the IPv6 CIDR
+          block range of your subnet. You can't use this option if you're
+          specifying the I(ipv6_address_count) option.
+      network_interface_id:
+        description: The eni ID of a network interface to attach.
+      private_ip_address:
+        description: The primary private IPv4 address of the network interface.
+      private_ip_addresses:
+        description: One or more private IPv4 addresses.
+        suboptions:
+          primary:
+            description: >
+              Indicates whether the private IPv4 address is the primary private
+              IPv4 address. Only one IPv4 address can be designated as primary.
+          private_ip_address:
+            description: The primary private IPv4 address of the network interface.
+      subnet_id:
+        description: The ID of the subnet for the network interface.
+      secondary_private_ip_address_count:
+        description: The number of secondary private IPv4 addresses to assign to a network interface.
+  placement:
+    description: The placement group settings for the instance.
+    suboptions:
+      affinity:
+        description: The affinity setting for an instance on a Dedicated Host.
+      availability_zone:
+        description: The Availability Zone for the instance.
+      group_name:
+        description: The name of the placement group for the instance.
+      host_id:
+        description: The ID of the Dedicated Host for the instance.
+      tenancy:
+        description: >
+          The tenancy of the instance (if the instance is running in a VPC). An
+          instance with a tenancy of dedicated runs on single-tenant hardware.
   ram_disk_id:
     description: >
       The ID of the RAM disk to launch the instance with. We recommend that you
@@ -163,16 +275,35 @@ options:
     type: dict
     description:
     - A set of key-value pairs to be applied to resources when this Launch Template is used.
-    - Tag key constraints: Tag keys are case-sensitive and accept a maximum of
-      127 Unicode characters. May not begin with I(aws:)
-    - Tag value constraints: Tag values are case-sensitive and accept a maximum
-      of 255 Unicode characters.
+    - "Tag key constraints: Tag keys are case-sensitive and accept a maximum of 127 Unicode characters. May not begin with I(aws:)"
+    - "Tag value constraints: Tag values are case-sensitive and accept a maximum of 255 Unicode characters."
   user_data:
     description: >
       The Base64-encoded user data to make available to the instance. For more information, see the Linux
       U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) and Windows
       U(http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-instance-metadata.html#instancedata-add-user-data)
       documentation on user-data.
+'''
+
+EXAMPLES = '''
+- name: Make instance with an instance_role
+  ec2_launch_template:
+    name: "test-with-instance-role"
+    image_id: "ami-foobarbaz"
+    key_name: my_ssh_key
+    instance_type: t2.micro
+    iam_instance_profile: myTestProfile
+    disable_api_termination: true
+
+- name: Make one with a different instance type, but leave the older version as default
+  ec2_launch_template:
+    name: "test-with-instance-role"
+    image_id: "ami-foobarbaz"
+    default_version: 1
+    key_name: my_ssh_key
+    instance_type: c5.4xlarge
+    iam_instance_profile: myTestProfile
+    disable_api_termination: true
 '''
 
 RETURN = '''
@@ -453,10 +584,7 @@ def main():
                 device_index=dict(type='int'),
                 groups=dict(type='list'),
                 ipv6_address_count=dict(type='int'),
-                ipv6_addresses=dict(
-                    options=dict(ipv6_address=dict()),
-                    type='list'
-                ),
+                ipv6_addresses=dict(type='list'),
                 network_interface_id=dict(),
                 private_ip_address=dict(),
                 subnet_id=dict(),
@@ -468,7 +596,6 @@ def main():
                 availability_zone=dict(),
                 group_name=dict(),
                 host_id=dict(),
-                spread_domain=dict(),
                 tenancy=dict(),
             ),
             type='dict',
@@ -499,6 +626,10 @@ def main():
 
     if not module.boto3_at_least('1.6.0'):
         module.fail_json(msg="ec2_launch_template requires boto3 >= 1.6.0")
+
+    for interface in (module.params.get('network_interfaces') or []):
+        if interface.get('ipv6_addresses'):
+            interface['ipv6_addresses'] = [{'ipv6_address': x} for x in interface['ipv6_addresses']]
 
     if module.params.get('state') == 'present':
         out = create_or_update(module, template_options)
