@@ -186,7 +186,7 @@ def netbox_create_device(nb, nb_endpoint, data):
     try:
         return nb_endpoint.create([norm_data])
     except pynetbox.RequestError as e:
-        return e.error
+        return [e.error]
 
 
 def netbox_delete_device(nb_endpoint, data):
@@ -194,9 +194,9 @@ def netbox_delete_device(nb_endpoint, data):
     endpoint = nb_endpoint.get(name=norm_data["name"])
     try:
         if endpoint.delete():
-            return 'SUCCESS: %s deleted from Netbox' % (norm_data["name"])
+            return ['SUCCESS: %s deleted from Netbox' % (norm_data["name"])]
     except AttributeError:
-        return 'FAILED: %s not found' % (norm_data["name"])
+        return ['FAILED: %s not found' % (norm_data["name"])]
 
 
 def main():
