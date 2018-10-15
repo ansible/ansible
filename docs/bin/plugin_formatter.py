@@ -574,7 +574,7 @@ def process_support_levels(plugin_info, templates, output_dir, plugin_type):
                                                       " Ansible Network Team<network_maintained>` in"
                                                       " a relationship similar to how the Ansible Core Team"
                                                       " maintains the Core modules."},
-                    'Ansible Partners': {'slug': 'partner_supported',
+                    'Ansible Partners': {'slug': 'certified_supported',
                                          'modules': [],
                                          'output': 'partner_maintained.rst',
                                          'blurb': """
