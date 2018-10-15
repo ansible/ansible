@@ -11,6 +11,7 @@ matrix:
     - env: T=sanity/1
     - env: T=sanity/2
     - env: T=sanity/3
+    - env: T=sanity/4
 
     - env: T=units/2.6
     - env: T=units/2.7
