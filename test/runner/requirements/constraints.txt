@@ -17,6 +17,7 @@ openshift >= 0.6.2 # merge_type support
 virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
 pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
 pyfmg == 0.6.1 # newer versions do not pass current unit tests
+pycparser < 2.19 ; python_version < '2.7' # pycparser 2.19 and later require python 2.7 or later
 
 # freeze pylint and its requirements for consistent test results
 astroid == 2.0.4
