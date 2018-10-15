@@ -12,34 +12,92 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: rds_instance
+module: ec2_launch_template
 version_added: "2.8"
 short_description: Manage EC2 launch templates
 description:
-    - Create, modify, and delete EC2 Launch Templates, which can be used to
-      create individual instances or with Autoscaling Groups.
-    - The I(ec2_instance) and I(ec2_asg) modules can, instead of specifying all
-      parameters on those tasks, be passed a Launch Template which contains
-      settings like instance size, disk type, subnet, and more.
-
+  - Create, modify, and delete EC2 Launch Templates, which can be used to
+    create individual instances or with Autoscaling Groups.
+  - The I(ec2_instance) and I(ec2_asg) modules can, instead of specifying all
+    parameters on those tasks, be passed a Launch Template which contains
+    settings like instance size, disk type, subnet, and more.
 requirements:
-    - botocore
-    - boto3 >= 1.6.0
+  - botocore
+  - boto3 >= 1.6.0
 extends_documentation_fragment:
-    - aws
-    - ec2
+  - aws
+  - ec2
 author:
-    - Ryan Scott Brown (@ryansb)
-
+  - Ryan Scott Brown (@ryansb)
 options:
-    state:
-        description:
-          - Whether the launch template should exist or not. To delete only a
-            specific version of a launch template, combine I(state=absent) with
-            the I(version) option. By default, I(state=absent) will remove all
-            versions of the template.
-        choices: [present, absent]
-        default: present
+  state:
+      description:
+      - Whether the launch template should exist or not. To delete only a
+        specific version of a launch template, combine I(state=absent) with
+        the I(version) option. By default, I(state=absent) will remove all
+        versions of the template.
+      choices: [present, absent]
+      default: present
+  cpu_options:
+    description:
+    - Choose CPU settings for the EC2 instances that will be created with this template.
+    - For more information, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html)
+    suboptions:
+      core_count:
+        type: int
+        description: The number of CPU cores for the instance.
+      threads_per_core:
+        type: int
+        description: >
+          The number of threads per CPU core. To disable Intel Hyper-Threading
+          Technology for the instance, specify a value of 1. Otherwise, specify
+          the default value of 2.
+  credit_specification:
+    description: The credit option for CPU usage of the instance. Valid for T2 or T3 instances only.
+    suboptions:
+      cpu_credits:
+        description: >
+          The credit option for CPU usage of a T2 or T3 instance. Valid values
+          are I(standard) and I(unlimited).
+        choices: [standard, unlimited]
+  disable_api_termination:
+    description: >
+      This helps protect instances from accidental termination. If set to true,
+      you can't terminate the instance using the Amazon EC2 console, CLI, or
+      API. To change this attribute to false after launch, use
+      I(ModifyInstanceAttribute).
+    type: bool
+  ebs_optimized:
+    description: >
+      Indicates whether the instance is optimized for Amazon EBS I/O. This
+      optimization provides dedicated throughput to Amazon EBS and an optimized
+      configuration stack to provide optimal Amazon EBS I/O performance. This
+      optimization isn't available with all instance types. Additional usage
+      charges apply when using an EBS-optimized instance.
+    type: bool
+  elastic_gpu_specifications:
+    description: Settings for Elastic GPU attachments. See U(https://aws.amazon.com/ec2/elastic-gpus/) for details.
+    suboptions:
+      type:
+        description: The type of Elastic GPU to attach
+  iam_instance_profile:
+    description: >
+      The name or ARN of an IAM instance profile. Requires permissions to
+      describe existing instance roles to confirm ARN is properly formed.
+  image_id:
+    description: >
+      The AMI ID to use for new instances launched with this template. This
+      value is region-dependent since AMIs are not global resources.
+  instance_initiated_shutdown_behavior:
+    description: >
+      Indicates whether an instance stops or terminates when you initiate
+      shutdown from the instance using the operating system shutdown command.
+    choices: [stop, terminate]
+    default: stop
+  instance_type:
+    description: >
+      The instance type, such as I(c5.2xlarge). For a full list of instance types, see
+      http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
 '''
 
 RETURN = '''
@@ -73,9 +131,9 @@ def determine_iam_role(module, name_or_arn):
     try:
         role = iam.get_instance_profile(InstanceProfileName=name_or_arn, aws_retry=True)
         return {'arn': role['InstanceProfile']['Arn']}
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == 'NoSuchEntity':
-            module.fail_json_aws(e, msg="Could not find instance_role {0}".format(name_or_arn))
+    except is_boto3_error_code('NoSuchEntity') as e:
+        module.fail_json_aws(e, msg="Could not find instance_role {0}".format(name_or_arn))
+    except (BotoCoreError, ClientError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="An error occurred while searching for instance_role {0}. Please try supplying the full ARN.".format(name_or_arn))
 
 
@@ -90,11 +148,14 @@ def existing_templates(module):
     except is_boto3_error_code('InvalidLaunchTemplateName.NotFoundException') as e:
         # no named template was found, return nothing/empty versions
         return None, []
-    except is_boto3_error_code('InvalidLaunchTemplateId.Malformed') as e:
-        module.fail_json_aws(e, msg='Launch template with ID {0} is not a valid ID. It should start with `lt-....`'.format(module.params.get('launch_template_id')))
-    except is_boto3_error_code('InvalidLaunchTemplateId.NotFoundException') as e:
-        module.fail_json_aws(e, msg='Launch template with ID {0} could not be found, please supply a name instead so that a new template can be created'.format(module.params.get('launch_template_id')))
-    except (ClientError, BotoCoreError, WaiterError) as e:
+    except is_boto3_error_code('InvalidLaunchTemplateId.Malformed') as e:  # pylint: disable=duplicate-except
+        module.fail_json_aws(e, msg='Launch template with ID {0} is not a valid ID. It should start with `lt-....`'.format(
+            module.params.get('launch_template_id')))
+    except is_boto3_error_code('InvalidLaunchTemplateId.NotFoundException') as e:  # pylint: disable=duplicate-except
+        module.fail_json_aws(
+            e, msg='Launch template with ID {0} could not be found, please supply a name '
+            'instead so that a new template can be created'.format(module.params.get('launch_template_id')))
+    except (ClientError, BotoCoreError, WaiterError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg='Could not check existing launch templates. This may be an IAM permission problem.')
     else:
         template = matches['LaunchTemplates'][0]
@@ -103,6 +164,7 @@ def existing_templates(module):
             return template, ec2.describe_launch_template_versions(LaunchTemplateId=template_id)['LaunchTemplateVersions']
         except (ClientError, BotoCoreError, WaiterError) as e:
             module.fail_json_aws(e, msg='Could not find launch template versions for {0} (ID: {1}).'.format(template['LaunchTemplateName'], template_id))
+
 
 def params_to_launch_data(module, template_params):
     if template_params.get('tags'):
@@ -215,6 +277,7 @@ def create_or_update(module, template_options):
         out['changed'] = True
     return out
 
+
 def format_module_output(module):
     output = {}
     template, template_versions = existing_templates(module)
@@ -224,11 +287,16 @@ def format_module_output(module):
         for ts in (v['launch_template_data'].get('tag_specifications') or []):
             ts['tags'] = boto3_tag_list_to_ansible_dict(ts.pop('tags'))
     output.update(dict(template=template, versions=template_versions))
-    output['default_template'] = [v for v in template_versions
+    output['default_template'] = [
+        v for v in template_versions
         if v.get('default_version')
     ][0]
-    output['latest_template'] = [v for v in template_versions
-        if v.get('version_number') and int(v['version_number']) == int(template['latest_version_number'])
+    output['latest_template'] = [
+        v for v in template_versions
+        if (
+            v.get('version_number') and
+            int(v['version_number']) == int(template['latest_version_number'])
+        )
     ][0]
     return output
 
