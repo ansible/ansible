@@ -74,26 +74,30 @@ author:
 
 EXAMPLES = '''
     - name: Create virtual network peering
-      azure_rm_cdnprofile:
-          resource_group: Testing
-          name: cdntest
-          sku: Standard_Akamai
-          tags:
-              testing: testing
+      azure_rm_virtualnetworkpeering:
+        resource_group: myResourceGroup1
+        name: vnet_peer1
+        virtual_network: myVnet1
+        remote_virtual_network:
+          resource_group: myResourceGroup2
+          name: myVnet2
+        allow_virtual_network_access: false
+        allow_forwarded_traffic: true
 
     - name: Delete the virtual network peering
-      azure_rm_cdnprofile:
-        resource_group: Testing
-        name: cdntest
+      azure_rm_virtualnetworkpeering:
+        resource_group: myResourceGroup1
+        name: vnet_peer1
+        virtual_network: myVnet1
         state: absent
 '''
 RETURN = '''
 id:
-    description: Current state of the CDN profile
+    description: Id of the Azure virtual network peering
     returned: always
     type: dict
     example:
-            id: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+        id: /subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.Network/virtualNetworks/xxxx/virtualNetworkPeerings/peer1
 '''
 
 try:
