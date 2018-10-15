@@ -65,7 +65,7 @@ def command_sanity(args):
         raise AllTargetsSkipped()
 
     if args.delegate:
-        raise Delegate(require=changes)
+        raise Delegate(require=changes, exclude=args.exclude)
 
     install_command_requirements(args)
 
