@@ -609,7 +609,6 @@ lib/ansible/modules/monitoring/sensu_client.py E324
 lib/ansible/modules/monitoring/sensu_handler.py E326
 lib/ansible/modules/monitoring/zabbix/zabbix_maintenance.py E317
 lib/ansible/modules/net_tools/basics/get_url.py E322
-lib/ansible/modules/net_tools/basics/get_url.py E323
 lib/ansible/modules/net_tools/basics/get_url.py E324
 lib/ansible/modules/net_tools/basics/slurp.py E322
 lib/ansible/modules/net_tools/basics/uri.py E322
