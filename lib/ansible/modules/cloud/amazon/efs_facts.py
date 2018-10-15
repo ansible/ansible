@@ -16,44 +16,42 @@ DOCUMENTATION = '''
 module: efs_facts
 short_description: Get information about Amazon EFS file systems
 description:
-    - Module searches Amazon EFS file systems
+    - This module can be used to search Amazon EFS file systems.
 version_added: "2.2"
 requirements: [ boto3 ]
 author:
     - "Ryan Sydnor (@ryansydnor)"
 options:
     name:
-        description:
-            - Creation Token of Amazon EFS file system.
+      description:
+      - Creation Token of Amazon EFS file system.
+      aliases: [ creation_token ]
     id:
-        description:
-            - ID of Amazon EFS.
+      description:
+      - ID of Amazon EFS.
     tags:
-        description:
-            - List of tags of Amazon EFS. Should be defined as dictionary
+      description:
+      - List of tags of Amazon EFS. Should be defined as dictionary.
     targets:
-        description:
-          - list of targets on which to filter the returned results
-          - result must match all of the specified targets, each of which can be
-            a security group ID, a subnet ID or an IP address
+      description:
+      - List of targets on which to filter the returned results.
+      - Result must match all of the specified targets, each of which can be a security group ID, a subnet ID or an IP address.
 extends_documentation_fragment:
   - aws
   - ec2
 '''
 
 EXAMPLES = '''
-# find all existing efs
-- efs_facts:
+- name: Find all existing efs
+  efs_facts:
   register: result
 
-- efs_facts:
-    name: myTestNameTag
-
-- efs_facts:
+- name: Find efs using id
+  efs_facts:
     id: fs-1234abcd
 
-# Searching all EFS instances with tag Name = 'myTestNameTag', in subnet 'subnet-1a2b3c4d' and with security group 'sg-4d3c2b1a'
-- efs_facts:
+- name: Searching all EFS instances with tag Name = 'myTestNameTag', in subnet 'subnet-1a2b3c4d' and with security group 'sg-4d3c2b1a'
+  efs_facts:
     tags:
         name: myTestNameTag
     targets:
@@ -174,6 +172,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
+from ansible.module_utils._text import to_native
 
 
 class EFSConnection(object):
@@ -189,14 +188,14 @@ class EFSConnection(object):
                                          **aws_connect_params)
             self.module = module
         except Exception as e:
-            module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
+            module.fail_json(msg="Failed to connect to AWS: %s" % to_native(e))
 
         self.region = region
 
     @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def list_file_systems(self, **kwargs):
         """
-         Returns generator of file systems including all attributes of FS
+        Returns generator of file systems including all attributes of FS
         """
         paginator = self.connection.get_paginator('describe_file_systems')
         return paginator.paginate(**kwargs).build_full_result()['FileSystems']
@@ -204,7 +203,7 @@ class EFSConnection(object):
     @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_tags(self, file_system_id):
         """
-         Returns tag list for selected instance of EFS
+        Returns tag list for selected instance of EFS
         """
         paginator = self.connection.get_paginator('describe_tags')
         return boto3_tag_list_to_ansible_dict(paginator.paginate(FileSystemId=file_system_id).build_full_result()['Tags'])
@@ -212,7 +211,7 @@ class EFSConnection(object):
     @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_mount_targets(self, file_system_id):
         """
-         Returns mount targets for selected instance of EFS
+        Returns mount targets for selected instance of EFS
         """
         paginator = self.connection.get_paginator('describe_mount_targets')
         return paginator.paginate(FileSystemId=file_system_id).build_full_result()['MountTargets']
@@ -220,7 +219,7 @@ class EFSConnection(object):
     @AWSRetry.jittered_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_security_groups(self, mount_target_id):
         """
-         Returns security groups for selected instance of EFS
+        Returns security groups for selected instance of EFS
         """
         return self.connection.describe_mount_target_security_groups(MountTargetId=mount_target_id)['SecurityGroups']
 
@@ -292,7 +291,7 @@ class EFSConnection(object):
 
 def prefix_to_attr(attr_id):
     """
-     Helper method to convert ID prefix to mount target attribute
+    Helper method to convert ID prefix to mount target attribute
     """
     attr_by_prefix = {
         'fsmt-': 'mount_target_id',
@@ -306,7 +305,7 @@ def prefix_to_attr(attr_id):
 
 def first_or_default(items, default=None):
     """
-     Helper method to fetch first element of list (if exists)
+    Helper method to fetch first element of list (if exists)
     """
     for item in items:
         return item
@@ -336,7 +335,7 @@ def has_targets(available, required):
 
 def group_list_of_dict(array):
     """
-     Helper method to group list of dict to dict with all possible values
+    Helper method to group list of dict to dict with all possible values
     """
     result = defaultdict(list)
     for item in array:
@@ -347,12 +346,12 @@ def group_list_of_dict(array):
 
 def main():
     """
-     Module action handler
+    Module action handler
     """
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         id=dict(),
-        name=dict(),
+        name=dict(aliases=['creation_token']),
         tags=dict(type="dict", default={}),
         targets=dict(type="list", default=[])
     ))
