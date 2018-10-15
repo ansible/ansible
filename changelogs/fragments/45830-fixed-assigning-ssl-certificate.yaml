@@ -1,0 +1,4 @@
+bugfixes:
+- "Fixed: Appropriate code to expand value was missing so assigning SSL
+   certificate is not working as described in the documentation.
+   https://github.com/ansible/ansible/pull/45830"
