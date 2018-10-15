@@ -44,18 +44,23 @@ options:
     allow_virtual_network_access:
         description:
             - Allows VMs in the remote VNet to access all VMs in the local VNet.
+        type: bool
         default: false
     allow_forwarded_traffic:
         description:
             - Allows forwarded traffic from the VMs in the remote VNet.
+        type: bool
         default: false
     use_remote_gateways:
         description:
             - Name of the remote virtual network to be peered.
+        type: bool
+        default: false
     allow_gateway_transit:
         description:
             - Allows VNet to use the remote VNet's gateway. Remote VNet gateway must have --allow-gateway-transit enabled for remote peering.
             - Only 1 peering can have this flag enabled. Cannot be set if the VNet already has a gateway.
+        type: bool
         default: false
     state:
         description:
@@ -171,10 +176,6 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                 type='str',
                 default='present',
                 choices=['present', 'absent']
-            ),
-            sku=dict(
-                type='str',
-                choices=['standard_verizon', 'premium_verizon', 'custom_verizon', 'standard_akamai', 'standard_chinacdn']
             )
         )
 
