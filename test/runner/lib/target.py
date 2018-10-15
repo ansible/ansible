@@ -448,7 +448,7 @@ class TestTarget(CompletionTarget):
 
         if module_path and path.startswith(module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
             self.module = name[len(module_prefix or ''):].lstrip('_')
-            self.modules = self.module,
+            self.modules = (self.module,)
         else:
             self.module = None
             self.modules = tuple()
