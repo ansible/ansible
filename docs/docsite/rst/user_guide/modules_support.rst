@@ -4,14 +4,14 @@
 Module Maintenance & Support
 ****************************
 
-..contents::
+.. contents::
   :depth: 2
   :local:
 
 Maintenance
 ===========
 
-To help identify maintainers and understand how the included modules are officially supported, each module now has associated metadata that provides additional clarity for maintenance and support.
+To clarify who maintains each included module, adding features and fixing bugs, each included module now has associated metadata that provides information about maintenance.
 
 Core
 ----
