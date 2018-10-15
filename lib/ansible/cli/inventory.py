@@ -399,7 +399,7 @@ class InventoryCLI(CLI):
 
     def toml_inventory(self, top):
         seen = set()
-        has_ungrouped = bool([g.hosts for g in top.child_groups if g.name == 'ungrouped'][0])
+        has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
 
         def format_group(group):
             results = {}
