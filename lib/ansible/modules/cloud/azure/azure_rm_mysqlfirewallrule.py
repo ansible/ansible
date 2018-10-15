@@ -42,7 +42,7 @@ options:
             - The end IP address of the MySQL firewall rule. Must be IPv4 format.
     state:
         description:
-            - Assert the state of the MySQL Database. Use 'present' to create or update a database and 'absent' to delete it.
+            - Assert the state of the MySQL firewall rule. Use 'present' to create or update a rule and 'absent' to ensure it is not present.
         default: present
         choices:
             - absent
