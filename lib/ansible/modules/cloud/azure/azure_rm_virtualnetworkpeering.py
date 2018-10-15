@@ -113,7 +113,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-from ansible.modules.cloud.azure.azure_rm_virtualnetwork import virtual_network_to_dict
+from ansible.modules.cloud.azure import virtual_network_to_dict
 
 
 def vnetpeering_to_dict(vnetpeering):
