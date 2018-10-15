@@ -10,10 +10,10 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     author: Deric Crago <deric.crago@gmail.com>
-    connection: vmware_tools
-    short_description: Execute modules via VMware Tools.
+    connection: win_vmware_tools
+    short_description: Execute Windows modules via VMware Tools.
     description:
-      - Execute modules via VMware Tools.
+      - Execute Windows modules via VMware Tools.
     version_added: "2.8"
     requirements:
       - pyvmomi (python library)
