@@ -242,7 +242,7 @@ class RabbitMqBinding(object):
                                                   urllib_parse.quote(self.destination, safe=''))
         self.api_result = self.request.post(self.url,
                                             auth=self.authentication,
-                                            verify=self.cacert,
+                                            verify=self.verify,
                                             cert=(self.cert, self.key),
                                             headers={"content-type": "application/json"},
                                             data=json.dumps({
