@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlfirewallrule_facts
-version_added: "2.5"
-short_description: Get PostgreSQL Firewall Rule facts.
+version_added: "2.8"
+short_description: Get Azure PostgreSQL Firewall Rule facts.
 description:
     - Get facts of PostgreSQL Firewall Rule.
 
@@ -123,7 +123,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.firewall_rule_name = None
-        super(AzureRMFirewallRulesFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMFirewallRulesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
