@@ -252,3 +252,9 @@
   loop: "{{ fake_var }}"
   register: result
   failed_when: result is not skipped
+
+- name: Loop on literal empty list
+  debug:
+  loop: []
+  register: literal_empty_list
+  failed_when: literal_empty_list is not skipped
