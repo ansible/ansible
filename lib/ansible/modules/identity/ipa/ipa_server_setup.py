@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: ipa_server_install 
+module: ipa_server_setup
 
 short_description: Setup an ipa_server
 
