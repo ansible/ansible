@@ -43,7 +43,7 @@ extends_documentation_fragment:
 options:
   merge_type:
     description:
-    - Whether to override the default patch merge approach with a specific type. By the default, the strategic
+    - Whether to override the default patch merge approach with a specific type. By default, the strategic
       merge will typically be used.
     - For example, Custom Resource Definitions typically aren't updatable by the usual strategic merge. You may
       want to use C(merge) if you see "strategic merge patch format is not supported"
