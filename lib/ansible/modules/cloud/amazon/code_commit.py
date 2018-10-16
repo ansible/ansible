@@ -44,77 +44,77 @@ extends_documentation_fragment:
 
 RETURN = '''
 repository_metadata:
-  description: ""
+  description: "Information about the repository."
   returned: always
   type: complex
   contains:
     account_id:
-      description: ""
-      returned: always
+      description: "The ID of the AWS account associated with the repository."
+      returned: when state is present
       type: string
       sample: "268342293637"
     arn:
-      description: ""
-      returned: always
+      description: "The Amazon Resource Name (ARN) of the repository."
+      returned: when state is present
       type: string
       sample: "arn:aws:codecommit:ap-northeast-1:268342293637:username"
     clone_url_http:
-      description: ""
-      returned: always
+      description: "The URL to use for cloning the repository over HTTPS."
+      returned: when state is present
       type: string
       sample: "https://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
     clone_url_ssh:
-      description: ""
-      returned: always
+      description: "The URL to use for cloning the repository over SSH."
+      returned: when state is present
       type: string
       sample: "ssh://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
     creation_date:
-      description: ""
-      returned: always
-      type: string
+      description: "The date and time the repository was created, in timestamp format."
+      returned: when state is present
+      type: datetime
       sample: "2018-10-16T13:21:41.261000+09:00"
     last_modified_date:
-      description: ""
-      returned: always
+      description: "The date and time the repository was last modified, in timestamp format."
+      returned: when state is present
       type: string
       sample: "2018-10-16T13:21:41.261000+09:00"
     repository_description:
-      description: ""
-      returned: always
+      description: "A comment or description about the repository."
+      returned: when state is present
       type: string
       sample: "test from ptux"
     repository_id:
-      description: ""
+      description: "The ID of the repository that was created or deleted"
       returned: always
       type: string
       sample: "e62a5c54-i879-497b-b62f-9f99e4ebfk8e"
     repository_name:
-      description: ""
-      returned: always
+      description: "The repository's name."
+      returned: when state is present
       type: string
       sample: "reponame"
 
 response_metadata:
-  description: ""
+  description: "Information about the response."
   returned: always
   type: complex
   contains:
     http_headers:
-      description: ""
+      description: "http headers of http response"
       returned: always
       type: complex
     http_status_code:
-      description: ""
+      description: ""http status code of http response""
       returned: always
       type: string
       sample: "200"
     request_id:
-      description: ""
+      description: "http request id"
       returned: always
       type: string
       sample: "fb49cfca-d0fa-11e8-85cb-b3cc4b5045ef"
     retry_attempts:
-      description: ""
+      description: "numbers of retry attempts"
       returned: always
       type: string
       sample: "0"
@@ -126,6 +126,10 @@ EXAMPLES = '''
 - code_commit:
     name: repo
     state: present
+# Delete a repository
+- code_commit:
+    name: repo
+    state: absent
 '''
 
 try:
