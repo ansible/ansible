@@ -148,7 +148,7 @@ EXAMPLES = r'''
     - KB4056892
     - KB4073117
 
-- name: Exlude updates based on the update title
+- name: Exclude updates based on the update title
   win_updates:
     category_name:
     - SecurityUpdates
