@@ -448,7 +448,10 @@ def create_or_update(module, template_options):
         template, template_versions = existing_templates(module)
         out['changed'] = True
     elif template and template_versions:
-        # TODO diff current state with params
+        most_recent = sorted(template_versions, key=lambda x: x['VersionNumber'])[-1]
+        if lt_data == most_recent['LaunchTemplateData']:
+            out['changed'] = False
+            return out
         try:
             resp = ec2.create_launch_template_version(
                 LaunchTemplateId=template['LaunchTemplateId'],
