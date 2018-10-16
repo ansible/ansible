@@ -57,7 +57,7 @@ EXAMPLES = '''
 
 RETURN = '''
 firewall_rules:
-    description: A list of dict results where the key is the name of the PostgreSQL Firewall Rule and the values are the facts for that PostgreSQL Firewall Rule.
+    description: A list of dictionaries containing facts for that PostgreSQL Firewall Rule.
     returned: always
     type: complex
     contains:
@@ -185,5 +185,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
 def main():
     AzureRMFirewallRulesFacts()
+
+
 if __name__ == '__main__':
     main()
