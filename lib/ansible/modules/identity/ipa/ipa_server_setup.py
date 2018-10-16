@@ -6,10 +6,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-import subprocess
-import re
-from ansible.module_utils.basic import AnsibleModule
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -21,7 +17,7 @@ module: ipa_server_setup
 
 short_description: Setup an ipa_server
 
-version_added: "2.4"
+version_added: "2.8"
 
 description:
     - "After installing the ipa-server package, use this module to ipa-server configured and running"
@@ -113,6 +109,10 @@ change:
     returned: success or failed
     type: bool
 '''
+
+import subprocess
+import re
+from ansible.module_utils.basic import AnsibleModule
 
 
 def ipa_stuff(params):
