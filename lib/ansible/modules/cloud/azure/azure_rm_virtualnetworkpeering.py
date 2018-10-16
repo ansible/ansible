@@ -113,8 +113,29 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-from azure_rm_virtualnetwork import virtual_network_to_dict
 
+def virtual_network_to_dict(vnet):
+    '''
+    Convert a virtual network object to a dict.
+    '''
+    results = dict(
+        id=vnet.id,
+        name=vnet.name,
+        location=vnet.location,
+        type=vnet.type,
+        tags=vnet.tags,
+        provisioning_state=vnet.provisioning_state,
+        etag=vnet.etag
+    )
+    if vnet.dhcp_options and len(vnet.dhcp_options.dns_servers) > 0:
+        results['dns_servers'] = []
+        for server in vnet.dhcp_options.dns_servers:
+            results['dns_servers'].append(server)
+    if vnet.address_space and len(vnet.address_space.address_prefixes) > 0:
+        results['address_prefixes'] = []
+        for space in vnet.address_space.address_prefixes:
+            results['address_prefixes'].append(space)
+    return results
 
 def vnetpeering_to_dict(vnetpeering):
     '''
