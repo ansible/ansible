@@ -174,7 +174,7 @@ class Connection(object):
             params = list(args) + ['{0}={1}'.format(k, v) for k, v in iteritems(kwargs)]
             params = ', '.join(params)
             raise ConnectionError(
-                "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, data)
+                "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, out)
             )
 
         if response['id'] != reqid:
