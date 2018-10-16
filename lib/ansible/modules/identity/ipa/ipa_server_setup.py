@@ -1,20 +1,19 @@
 #!/usr/bin/python
 """ Configure ipa-server """
+
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2017, Ansible Project
+# Copyright: (c) 2018  Ben Lewis <canustralian@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 import subprocess
 import re
 from ansible.module_utils.basic import AnsibleModule
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
 
 DOCUMENTATION = '''
 ---
@@ -32,39 +31,39 @@ options:
     description:
       - Hostname of the ipa server you wish to configure.
     required: true
-    type: string
+    type: str
   adminpass:
     description:
       - Kerberos admin user password
     required: true
-    type: string
+    type: str
   dmpass:
     description:
       - Directory manager admin user password
     required: true
-    type: string
+    type: str
   realmname:
     description:
       - Kerberos realm domain name
     required: true
-    type: string
+    type: str
   domainname:
     description:
       - DNS domain name
     required: true
-    type: string
+    type: str
   setupdns:
     description:
       - Setup a DNS server
       - True or False value
     required: true
-    type: boolean
+    type: bool
   forwarder:
     description:
       - Configure DNS forwarders
       - only required if setupdns is set to True
     required: false
-    type: string
+    type: str
 
 author:
     - Ben Lewis
@@ -101,11 +100,18 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
-    type: str
 message:
-    description: The output message that the sample module generates
+    description: message returned from command, or on fail a useful error
+    returned: success or failed
+    type: str
+rc:
+    description: rc returned from ipa config command. will be 0 or 1
+    returned: success or failed
+    type: str
+change:
+    description: did the module make any changes to the system? T or F
+    returned: success or failed
+    type: bool
 '''
 
 
