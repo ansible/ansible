@@ -131,6 +131,9 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_failed(self, result):
         self.v2_runner_on_failed(result)
 
+    def v2_runner_item_on_ok(self, result):
+        self.v2_runner_on_ok(result)
+
     def v2_runner_on_unreachable(self, result):
         msg = "unreachable"
         display_color = C.COLOR_UNREACHABLE
