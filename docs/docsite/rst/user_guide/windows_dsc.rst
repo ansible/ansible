@@ -341,7 +341,7 @@ Setup IIS Website
         resource_name: WindowsFeature
         Name: '{{item}}'
         Ensure: Present
-      with_items:
+      loop:
       - Web-Server
       - Web-Asp-Net45
 
