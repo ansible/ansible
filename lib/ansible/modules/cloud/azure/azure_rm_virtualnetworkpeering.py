@@ -114,6 +114,7 @@ except ImportError:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
+
 def virtual_network_to_dict(vnet):
     '''
     Convert a virtual network object to a dict.
@@ -136,6 +137,7 @@ def virtual_network_to_dict(vnet):
         for space in vnet.address_space.address_prefixes:
             results['address_prefixes'].append(space)
     return results
+
 
 def vnetpeering_to_dict(vnetpeering):
     '''
