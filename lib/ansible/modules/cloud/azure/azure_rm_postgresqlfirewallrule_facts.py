@@ -139,7 +139,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
     def get(self):
         response = None
-        results = {}
+        results = []
         try:
             response = self.mgmt_client.firewall_rules.get(resource_group_name=self.resource_group,
                                                            server_name=self.server_name,
