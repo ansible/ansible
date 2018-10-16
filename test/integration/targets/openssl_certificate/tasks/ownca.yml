@@ -8,6 +8,9 @@
     privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     subject:
       commonName: Example CA
+    basic_constraints:
+    - 'CA:TRUE'
+    basic_constraints_critical: yes
 
 - name: Generate selfsigned CA certificate
   openssl_certificate:
