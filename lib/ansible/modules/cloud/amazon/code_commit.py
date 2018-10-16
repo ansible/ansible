@@ -43,10 +43,81 @@ extends_documentation_fragment:
 '''
 
 RETURN = '''
-result:
-    description: A complex type that contains information about result
-    returned: changed
-    type: dict
+repository_metadata:
+  description: ""
+  returned: always
+  type: complex
+  contains:
+    account_id:
+      description: ""
+      returned: always
+      type: string
+      sample: "268342293637"
+    arn:
+      description: ""
+      returned: always
+      type: string
+      sample: "arn:aws:codecommit:ap-northeast-1:268342293637:username"
+    clone_url_http:
+      description: ""
+      returned: always
+      type: string
+      sample: "https://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
+    clone_url_ssh:
+      description: ""
+      returned: always
+      type: string
+      sample: "ssh://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
+    creation_date:
+      description: ""
+      returned: always
+      type: string
+      sample: "2018-10-16T13:21:41.261000+09:00"
+    last_modified_date:
+      description: ""
+      returned: always
+      type: string
+      sample: "2018-10-16T13:21:41.261000+09:00"
+    repository_description:
+      description: ""
+      returned: always
+      type: string
+      sample: "test from ptux"
+    repository_id:
+      description: ""
+      returned: always
+      type: string
+      sample: "e62a5c54-i879-497b-b62f-9f99e4ebfk8e"
+    repository_name:
+      description: ""
+      returned: always
+      type: string
+      sample: "reponame"
+
+response_metadata
+  description: ""
+  returned: always
+  type: complex
+  contains:
+    http_headers:
+      description: ""
+      returned: always
+      type: complex
+    http_status_code:
+      description: ""
+      returned: always
+      type: string
+      sample: "200"
+    request_id:
+      description: ""
+      returned: always
+      type: string
+      sample: "fb49cfca-d0fa-11e8-85cb-b3cc4b5045ef"
+    retry_attempts: 0
+      description: ""
+      returned: always
+      type: string
+      sample: "0"
 
 '''
 
