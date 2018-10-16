@@ -19,38 +19,38 @@ description:
 
 options:
   hostname:
-    description: 
+    description:
       - Hostname of the ipa server you wish to configure.
     required: true
     type: string
   adminpass:
-    description: 
+    description:
       - Kerberos admin user password
     required: true
     type: string
   dmpass:
-    description: 
+    description:
       - Directory manager admin user password
     required: true
     type: string
   realmname:
-    description: 
+    description:
       - Kerberos realm domain name
     required: true
     type: string
   domainname:
-    description: 
+    description:
       - DNS domain name
     required: true
     type: string
   setupdns:
-    description: 
+    description:
       - Setup a DNS server
       - True or False value
     required: true
     type: boolean
   forwarder:
-    description: 
+    description:
       - Configure DNS forwarders
       - only required if setupdns is set to True
     required: false
@@ -85,7 +85,7 @@ EXAMPLES = '''
     dmpass: "{{ admin_pass }}"
     realmname: ben.home
     domainname: ben.home
-    setupdns: False 
+    setupdns: False
   no_log: true
 
 '''
@@ -113,7 +113,7 @@ def ipa_stuff(params):
     domainname = params["domainname"]
     realmname = params["realmname"]
     setupdns = params["setupdns"]
-    #forwarder = "--forwarder=" + params["forwarder"] 
+    #forwarder = "--forwarder=" + params["forwarder"]
     # define output dict with some sane defaults
     results = {
         "output": "",
@@ -125,12 +125,12 @@ def ipa_stuff(params):
 
     # check if DNS is being configured
     if setupdns:
-        forwarder = "--forwarder=" + params["forwarder"] 
+        forwarder = "--forwarder=" + params["forwarder"]
         config_array.append("--setup-dns")
         config_array.append(forwarder)
 
-    # 
-    # attempt to run the IPA install 
+    #
+    # attempt to run the IPA install
     #
     try:
         #
@@ -140,7 +140,7 @@ def ipa_stuff(params):
         results["rc"] = 0
         results["change"] = True
     #
-    # catch any exceptions 
+    # catch any exceptions
     #
     except subprocess.CalledProcessError as e:
         #
@@ -166,7 +166,7 @@ def ipa_stuff(params):
             # if failure is due to zone already being managed by a DNS master do some more checks
             #
             if regexpgroup:
-                # 
+                #
                 # check hostname of ipa server
                 #
                 hostname = subprocess.check_output("hostname").rstrip()
@@ -187,11 +187,11 @@ def ipa_stuff(params):
                 results["change"] = False
 
     #
-    # return result dict 
+    # return result dict
     #
     return results
-      
-  
+
+
 def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
@@ -204,7 +204,7 @@ def run_module():
         setupdns=dict(type='bool', required=True),
         forwarder=dict(type='str', required=False)
     )
-   
+
     # seed the result dict in the object
     # we primarily care about changed and state
     # change is if this module effectively modified the target
@@ -223,7 +223,7 @@ def run_module():
         argument_spec=module_args,
         supports_check_mode=True
     )
-   
+
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
