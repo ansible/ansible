@@ -1597,7 +1597,7 @@ code.code-large,.rst-content tt.code-large{font-size:90%}
 .wy-menu-vertical li.divide-top{border-top:solid 1px #404040}
 .wy-menu-vertical li.divide-bottom{border-bottom:solid 1px #404040}
 .wy-menu-vertical li.current{background:#e3e3e3}
-.wy-menu-vertical li.current a{color:gray;border-right:solid 1px #c9c9c9;padding:.4045em 2.427em}
+.wy-menu-vertical li.current a{color:gray;border-right:solid 1px #c9c9c9}
 .wy-menu-vertical li.current a:hover{background:#d6d6d6}
 .wy-menu-vertical li code,.wy-menu-vertical li .rst-content tt,.rst-content .wy-menu-vertical li tt{border:none;background:inherit;color:inherit;padding-left:0;padding-right:0}
 .wy-menu-vertical li span.toctree-expand{display:block;float:left;margin-left:-1.2em;font-size:.8em;line-height:1.6em;color:#4d4d4d}
