@@ -83,7 +83,6 @@ class DistributionFiles:
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT',
-        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
@@ -374,6 +373,20 @@ class DistributionFiles:
             return False, coreos_facts  # TODO: remove if tested without this
 
         return True, coreos_facts
+
+    def parse_distribution_file_ClearLinux(self, name, data, path, collected_facts):
+        clear_facts = {}
+        if "clearlinux" not in name.lower():
+            return False, clear_facts
+
+        version = re.search('VERSION_ID=(.*)', data)
+        if version:
+            clear_facts['distribution_major_version'] = version.groups()[0]
+            clear_facts['distribution_version'] = version.groups()[0]
+        release = re.search('ID=(.*)', data)
+        if release:
+            clear_facts['distribution_release'] = release.groups()[0]
+        return True, clear_facts
 
 
 class Distribution(object):
