@@ -89,7 +89,7 @@ commands:
 import re
 from copy import deepcopy
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
@@ -100,7 +100,7 @@ def reconcile_candidate(module, candidate, prefix, w):
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     state = w['state']
 
-    set_command = set_route_command(prefix, w)
+    set_command = set_route_command(prefix, w, module)
     remove_command = remove_route_command(prefix, w)
 
     parents = []
@@ -143,10 +143,29 @@ def reconcile_candidate(module, candidate, prefix, w):
 def remove_route_command(prefix, w):
     return 'no ip route {0} {1}'.format(prefix, w['next_hop'])
 
+def get_configured_track(module, ctrack):
+    check_track = 'Track {0}'.format(ctrack)
+    track_exists = False
+    command = 'show track | awk "/Track/" | no-more'
+    try:
+        body = run_commands(module, [command])
+    except IndexError:
+        return None
+    if check_track in body[0].split('\n'):
+        track_exists = True
+    return track_exists
 
-def set_route_command(prefix, w):
+def set_route_command(prefix, w, module):
     route_cmd = 'ip route {0} {1}'.format(prefix, w['next_hop'])
 
+    if w['track']:
+        if w['track'] in range(1, 512):
+            if get_configured_track(module, w['track']):
+                route_cmd += ' track {0}'.format(w['track'])
+            else:
+                module.fail_json(msg='Track {0} not configured on device'.format(w['track']))
+        else:
+            module.fail_json(msg='Invalid track number, valid range is 1-512.')
     if w['route_name'] and w['route_name'] != 'default':
         route_cmd += ' name {0}'.format(w['route_name'])
     if w['tag']:
@@ -233,7 +252,8 @@ def map_params_to_obj(module):
             'tag': module.params['tag'],
             'route_name': module.params['route_name'],
             'pref': module.params['pref'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'track': module.params['track']
         })
 
     return obj
@@ -248,6 +268,7 @@ def main():
         route_name=dict(type='str'),
         pref=dict(type='str', aliases=['admin_distance']),
         state=dict(choices=['absent', 'present'], default='present'),
+        track=dict(type='int'),
     )
 
     aggregate_spec = deepcopy(element_spec)
