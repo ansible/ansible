@@ -158,13 +158,13 @@ options:
     vars:
       - name: ansible_command_timeout
   persistent_buffer_read_timeout:
-    type: int
+    type: float
     description:
       - Configures, in seconds, the amount of time to wait for the data to be read
         from Paramiko channel after the command prompt is matched. This timeout
         value ensure that command prompt matched is correct and there is no more data
         left to be received from remote host.
-    default: 1
+    default: 0.1
     ini:
       - section: persistent_connection
         key: buffer_read_timeout
@@ -375,10 +375,9 @@ class Connection(NetworkConnectionBase):
             if command_prompt_matched:
                 try:
                     signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
-                    signal.alarm(self.get_option('persistent_buffer_read_timeout'))
+                    signal.setitimer(signal.ITIMER_REAL, self.get_option('persistent_buffer_read_timeout'))
                     data = self._ssh_shell.recv(256)
                     signal.alarm(0)
-
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
                     # remaining response.
