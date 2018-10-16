@@ -318,9 +318,9 @@
   assert:
     that:
       - output.changed == False
-      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
-      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
-      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
+      - output.firewall_rules[0].id != None
+      - output.firewall_rules[0].name != None
+      - output.firewall_rules[0].type != None
 
 - name: Gather facts PostgreSQL Firewall Rule
   azure_rm_postgresqlfirewallrule_facts:
@@ -331,12 +331,12 @@
   assert:
     that:
       - output.changed == False
-      - output.firewall_rules.firewallrule{{ rpfx }}.id != None
-      - output.firewall_rules.firewallrule{{ rpfx }}.name != None
-      - output.firewall_rules.firewallrule{{ rpfx }}.type != None
-      - output.firewall_rules.firewallrule{{ rpfx }}second.id != None
-      - output.firewall_rules.firewallrule{{ rpfx }}second.name != None
-      - output.firewall_rules.firewallrule{{ rpfx }}second.type != None
+      - output.firewall_rules[0].id != None
+      - output.firewall_rules[0].name != None
+      - output.firewall_rules[0].type != None
+      - output.firewall_rules[1].id != None
+      - output.firewall_rules[1].name != None
+      - output.firewall_rules[1].type != None
 
 - name: Delete instance of Firewall Rule -- check mode
   azure_rm_postgresqlfirewallrule:
@@ -388,12 +388,11 @@
     server_name: postgresqlsrv{{ rpfx }}
     firewall_rule_name: firewallrule{{ rpfx }}
   register: output
-- name: Assert that empty dictionary was returned
+- name: Assert that empty list was returned
   assert:
     that:
       - output.changed == False
-      - "'firewallrule{{ rpfx }}' not in output.firewall_rules"
-      - "'firewallrule{{ rpfx }}second' not in output.firewall_rules"
+      - "output.firewall_rules | length == 0"
 
 #
 # azure_rm_postgresqlserver continuation / clean up
