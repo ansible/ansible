@@ -143,7 +143,7 @@ def get_snap_for_action(module):
     snaps = module.params['name']
 
     is_present_state = module.params['state'] == 'present'
-    negation_predicate = bool if is_present_state else operator.not_
+    negation_predicate = operator.not_ if is_present_state else bool
 
     def predicate(s):
         return negation_predicate(is_snap_installed(module, s))
