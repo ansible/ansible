@@ -19,12 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import json
 import re
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
@@ -170,14 +170,14 @@ class Cliconf(CliconfBase):
         if replace:
             device_info = self.get_device_info()
             if '9K' not in device_info.get('network_os_platform', ''):
-                raise ConnectionError(msg=u'replace is supported only on Nexus 9K devices')
+                raise ConnectionError(message=u'replace is supported only on Nexus 9K devices')
             candidate = 'config replace {0}'.format(replace)
 
         if commit:
             self.send_command('configure terminal')
 
             for line in to_list(candidate):
-                if not isinstance(line, collections.Mapping):
+                if not isinstance(line, Mapping):
                     line = {'command': line}
 
                 cmd = line['command']
@@ -204,7 +204,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -222,7 +222,7 @@ class Cliconf(CliconfBase):
                 try:
                     out = to_text(out, errors='surrogate_or_strict').strip()
                 except UnicodeError:
-                    raise ConnectionError(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+                    raise ConnectionError(message=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
                 try:
                     out = json.loads(out)

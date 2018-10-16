@@ -1,5 +1,6 @@
-from ansible.compat.tests import unittest
+from ansible.compat import unittest
 from ansible.modules.monitoring import pagerduty_maintenance_window
+
 
 import json
 

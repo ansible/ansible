@@ -60,6 +60,8 @@ from lib.util import (
 from lib.docker_util import (
     docker_pull,
     docker_run,
+    docker_available,
+    docker_rm,
     get_docker_container_id,
     get_docker_container_ip,
 )
@@ -507,6 +509,9 @@ def command_windows_integration(args):
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
     instances = []  # type: list [lib.thread.WrappedThread]
+    pre_target = None
+    post_target = None
+    httptester_id = None
 
     if args.windows:
         get_coverage_path(args)  # initialize before starting threads
@@ -533,12 +538,74 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
+        use_httptester = args.httptester and any('needs/httptester/' in t.aliases for t in internal_targets)
+        # if running under Docker delegation, the httptester may have already been started
+        docker_httptester = bool(os.environ.get("HTTPTESTER", False))
+
+        if use_httptester and not docker_available() and not docker_httptester:
+            display.warning('Assuming --disable-httptester since `docker` is not available.')
+        elif use_httptester:
+            if docker_httptester:
+                # we are running in a Docker container that is linked to the httptester container, we just need to
+                # forward these requests to the linked hostname
+                first_host = HTTPTESTER_HOSTS[0]
+                ssh_options = ["-R", "8080:%s:80" % first_host, "-R", "8443:%s:443" % first_host]
+            else:
+                # we are running directly and need to start the httptester container ourselves and forward the port
+                # from there manually set so HTTPTESTER env var is set during the run
+                args.inject_httptester = True
+                httptester_id, ssh_options = start_httptester(args)
+
+            # to get this SSH command to run in the background we need to set to run in background (-f) and disable
+            # the pty allocation (-T)
+            ssh_options.insert(0, "-fT")
+
+            # create a script that will continue to run in the background until the script is deleted, this will
+            # cleanup and close the connection
+            def forward_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
+                if 'needs/httptester/' not in target.aliases:
+                    return
+
+                for remote in [r for r in remotes if r.version != '2008']:
+                    manage = ManageWindowsCI(remote)
+                    manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
+
+                    # need to use -Command as we cannot pass an array of values with -File
+                    script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command .\\%s -Hosts %s" \
+                             % (watcher_path, ", ".join(HTTPTESTER_HOSTS))
+                    if args.verbosity > 3:
+                        script += " -Verbose"
+                    manage.ssh(script, options=ssh_options, force_pty=False)
+
+            def cleanup_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
+                if 'needs/httptester/' not in target.aliases:
+                    return
+
+                for remote in [r for r in remotes if r.version != '2008']:
+                    # delete the tmp file that keeps the http-tester alive
+                    manage = ManageWindowsCI(remote)
+                    manage.ssh("del %s /F /Q" % watcher_path)
+
+            watcher_path = "ansible-test-http-watcher-%s.ps1" % time.time()
+            pre_target = forward_ssh_ports
+            post_target = cleanup_ssh_ports
+
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets)
+        command_integration_filtered(args, internal_targets, all_targets, pre_target=pre_target,
+                                     post_target=post_target)
         success = True
     finally:
+        if httptester_id:
+            docker_rm(args, httptester_id)
+
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             for instance in instances:
                 instance.result.stop()
@@ -695,11 +762,13 @@ def command_integration_filter(args, targets, init_callback=None):
     return internal_targets
 
 
-def command_integration_filtered(args, targets, all_targets):
+def command_integration_filtered(args, targets, all_targets, pre_target=None, post_target=None):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     :type all_targets: tuple[IntegrationTarget]
+    :type pre_target: (IntegrationTarget) -> None | None
+    :type post_target: (IntegrationTarget) -> None | None
     """
     found = False
     passed = []
@@ -736,7 +805,8 @@ def command_integration_filtered(args, targets, all_targets):
                 display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
                 time.sleep(seconds)
 
-    if args.inject_httptester:
+    # Windows is different as Ansible execution is done locally but the host is remote
+    if args.inject_httptester and not isinstance(args, WindowsIntegrationConfig):
         inject_httptester(args)
 
     start_at_task = args.start_at_task
@@ -785,11 +855,18 @@ def command_integration_filtered(args, targets, all_targets):
                         remove_tree(test_dir)
                         make_dirs(test_dir)
 
-                    if target.script_path:
-                        command_integration_script(args, target)
-                    else:
-                        command_integration_role(args, target, start_at_task)
-                        start_at_task = None
+                    if pre_target:
+                        pre_target(target)
+
+                    try:
+                        if target.script_path:
+                            command_integration_script(args, target, test_dir)
+                        else:
+                            command_integration_role(args, target, start_at_task, test_dir)
+                            start_at_task = None
+                    finally:
+                        if post_target:
+                            post_target(target)
 
                     end_time = time.time()
 
@@ -1010,18 +1087,19 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
             make_dirs(test_dir)
 
         if target.script_path:
-            command_integration_script(args, target)
+            command_integration_script(args, target, test_dir)
         else:
-            command_integration_role(args, target, None)
+            command_integration_role(args, target, None, test_dir)
 
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, cmd):
+def integration_environment(args, target, cmd, test_dir):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type cmd: list[str]
+    :type test_dir: str
     :rtype: dict[str, str]
     """
     env = ansible_environment(args)
@@ -1035,6 +1113,7 @@ def integration_environment(args, target, cmd):
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST='junit',
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        OUTPUT_DIR=test_dir,
     )
 
     if args.debug_strategy:
@@ -1056,10 +1135,11 @@ def integration_environment(args, target, cmd):
     return env
 
 
-def command_integration_script(args, target):
+def command_integration_script(args, target, test_dir):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
+    :type test_dir: str
     """
     display.info('Running %s integration test script' % target.name)
 
@@ -1068,17 +1148,18 @@ def command_integration_script(args, target):
     if args.verbosity:
         cmd.append('-' + ('v' * args.verbosity))
 
-    env = integration_environment(args, target, cmd)
+    env = integration_environment(args, target, cmd, test_dir)
     cwd = target.path
 
     intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
-def command_integration_role(args, target, start_at_task):
+def command_integration_role(args, target, start_at_task, test_dir):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type start_at_task: str | None
+    :type test_dir: str
     """
     display.info('Running %s integration test role' % target.name)
 
@@ -1138,7 +1219,7 @@ def command_integration_role(args, target, start_at_task):
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, cmd)
+        env = integration_environment(args, target, cmd, test_dir)
         cwd = 'test/integration'
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
@@ -1158,7 +1239,7 @@ def command_units(args):
         raise AllTargetsSkipped()
 
     if args.delegate:
-        raise Delegate(require=changes)
+        raise Delegate(require=changes, exclude=args.exclude)
 
     version_commands = []
 
@@ -1406,6 +1487,40 @@ def common_integration_filter(args, targets, exclude):
             display.warning('Excluding tests marked "%s" which require --allow-unstable or prefixing with "unstable/": %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    # only skip a Windows test if using --windows and all the --windows versions are defined in the aliases as skip/windows/%s
+    if isinstance(args, WindowsIntegrationConfig) and args.windows:
+        all_skipped = []
+        not_skipped = []
+
+        for target in targets:
+            if "skip/windows/" not in target.aliases:
+                continue
+
+            skip_valid = []
+            skip_missing = []
+            for version in args.windows:
+                if "skip/windows/%s/" % version in target.aliases:
+                    skip_valid.append(version)
+                else:
+                    skip_missing.append(version)
+
+            if skip_missing and skip_valid:
+                not_skipped.append((target.name, skip_valid, skip_missing))
+            elif skip_valid:
+                all_skipped.append(target.name)
+
+        if all_skipped:
+            exclude.extend(all_skipped)
+            skip_aliases = ["skip/windows/%s/" % w for w in args.windows]
+            display.warning('Excluding tests marked "%s" which are set to skip with --windows %s: %s'
+                            % ('", "'.join(skip_aliases), ', '.join(args.windows), ', '.join(all_skipped)))
+
+        if not_skipped:
+            for target, skip_valid, skip_missing in not_skipped:
+                # warn when failing to skip due to lack of support for skipping only some versions
+                display.warning('Including test "%s" which was marked to skip for --windows %s but not %s.'
+                                % (target, ', '.join(skip_valid), ', '.join(skip_missing)))
+
 
 def get_integration_local_filter(args, targets):
     """
@@ -1478,7 +1593,7 @@ def get_integration_docker_filter(args, targets):
 
     python_version = 2  # images are expected to default to python 2 unless otherwise specified
 
-    python_version = int(get_docker_completion().get(args.docker_raw).get('python', str(python_version)))
+    python_version = int(get_docker_completion().get(args.docker_raw, {}).get('python', str(python_version)))
 
     if args.python:  # specifying a numeric --python option overrides the default python
         if args.python.startswith('3'):

@@ -3109,7 +3109,7 @@
     state: started
     volumes:
     - "/tmp:/tmp"
-    - "/:/whatever"
+    - "/:/whatever:rw,z"
   register: volumes_1
 
 - name: volumes (idempotency)
@@ -3119,7 +3119,7 @@
     name: "{{ cname }}"
     state: started
     volumes:
-    - "/:/whatever"
+    - "/:/whatever:rw,z"
     - "/tmp:/tmp"
   register: volumes_2
 
@@ -3141,9 +3141,21 @@
     state: started
     volumes:
     - "/tmp:/tmp"
-    - "/tmp:/somewhereelse:ro"
+    - "/tmp:/somewhereelse:ro,Z"
     stop_timeout: 1
   register: volumes_4
+
+- name: volumes (different modes)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    volumes:
+    - "/tmp:/tmp"
+    - "/tmp:/somewhereelse:ro"
+    stop_timeout: 1
+  register: volumes_5
 
 - name: cleanup
   docker_container:
@@ -3157,6 +3169,7 @@
     - volumes_2 is not changed
     - volumes_3 is not changed
     - volumes_4 is changed
+    - volumes_5 is changed
 
 ####################################################################
 ## volumes_from ####################################################

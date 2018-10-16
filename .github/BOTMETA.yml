@@ -39,6 +39,8 @@ files:
     labels: botmeta
     # Changes to BOTMETA MUST always be reviewed by Core Team
     support: core
+  changelogs/fragments/:
+    support: community
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph
   $modules/cloud/amazon/aws_api_gateway.py: willthames
@@ -111,7 +113,7 @@ files:
     maintainers: rambleraptor erjohnso
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
-  $modules/cloud/linode/linode.py: intheclouddan lwm
+  $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: analbeard
   $modules/cloud/misc/ovirt.py:
@@ -382,11 +384,13 @@ files:
     labels:
       - cloud
     support: community
-  contrib/inventory/linode.py:
+  contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
-    maintainers: intheclouddan lwm zbal
-    labels: cloud
+    maintainers: $team_linode
+    labels:
+      - cloud
+      - linode
   contrib/inventory/openstack_inventory.py:
     keywords:
       - openstack dynamic inventory script
@@ -876,6 +880,16 @@ files:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
+  lib/ansible/plugins/inventory/linode.py:
+    keywords:
+      - linode dynamic inventory script
+    maintainers: $team_linode
+    labels:
+      - cloud
+      - linode
+  lib/ansible/plugins/inventory/netbox.py:
+    support: community
+    maintainers: $team_netbox
   lib/ansible/plugins/inventory/openshift.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
@@ -1085,24 +1099,26 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
-  team_cloudstack: resmo dpassante
+  team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
+  team_linode: intheclouddan lwm displague rmcintosh
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
+  team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi
   team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
   team_onyx: samerd
-  team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello
+  team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello mnaser
   team_openswitch: Qalthos gdpak
-  team_purestorage: sdodsley
+  team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt flossware vritant

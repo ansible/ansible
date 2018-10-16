@@ -352,12 +352,10 @@ except ImportError:
     transaction_helpers = False
 
 from contextlib import contextmanager
+from ansible.module_utils.urls import fetch_file
 
 def_qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
-
-# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
-BUFSIZE = 65536
 
 
 class YumModule(YumDnf):
@@ -383,28 +381,6 @@ class YumModule(YumDnf):
 
         self.pkg_mgr_name = "yum"
         self.lockfile = '/var/run/yum.pid'
-
-    def fetch_rpm_from_url(self, spec):
-        # FIXME: Remove this once this PR is merged:
-        #   https://github.com/ansible/ansible/pull/19172
-
-        # download package so that we can query it
-        package_name, dummy = os.path.splitext(str(spec.rsplit('/', 1)[1]))
-        package_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, prefix=package_name, suffix='.rpm', delete=False)
-        self.module.add_cleanup_file(package_file.name)
-        try:
-            rsp, info = fetch_url(self.module, spec)
-            if not rsp:
-                self.module.fail_json(msg="Failure downloading %s, %s" % (spec, info['msg']))
-            data = rsp.read(BUFSIZE)
-            while data:
-                package_file.write(data)
-                data = rsp.read(BUFSIZE)
-            package_file.close()
-        except Exception as e:
-            self.module.fail_json(msg="Failure downloading %s, %s" % (spec, to_native(e)))
-
-        return package_file.name
 
     def yum_base(self):
         my = yum.YumBase()
@@ -725,20 +701,27 @@ class YumModule(YumDnf):
         # setting system proxy environment and saving old, if exists
         my = self.yum_base()
         namepass = ""
+        proxy_url = ""
         scheme = ["http", "https"]
         old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
         try:
             if my.conf.proxy:
                 if my.conf.proxy_username:
                     namepass = namepass + my.conf.proxy_username
+                    proxy_url = my.conf.proxy
                     if my.conf.proxy_password:
                         namepass = namepass + ":" + my.conf.proxy_password
-                namepass = namepass + '@'
-                for item in scheme:
-                    os.environ[item + "_proxy"] = re.sub(
-                        r"(http://)",
-                        r"\1" + namepass, my.conf.proxy
-                    )
+                elif '@' in my.conf.proxy:
+                    namepass = my.conf.proxy.split('@')[0].split('//')[-1]
+                    proxy_url = my.conf.proxy.replace("{0}@".format(namepass), "")
+
+                if namepass:
+                    namepass = namepass + '@'
+                    for item in scheme:
+                        os.environ[item + "_proxy"] = re.sub(
+                            r"(http://)",
+                            r"\1" + namepass, proxy_url
+                        )
             yield
         except yum.Errors.YumBaseError:
             raise
@@ -884,7 +867,7 @@ class YumModule(YumDnf):
 
                 if '://' in spec:
                     with self.set_env_proxy():
-                        package = self.fetch_rpm_from_url(spec)
+                        package = fetch_file(self.module, spec)
                 else:
                     package = spec
 
@@ -1205,7 +1188,7 @@ class YumModule(YumDnf):
                 elif '://' in spec:
                     # download package so that we can check if it's already installed
                     with self.set_env_proxy():
-                        package = self.fetch_rpm_from_url(spec)
+                        package = fetch_file(self.module, spec)
                     envra = self.local_envra(package)
 
                     if envra is None:
@@ -1330,8 +1313,8 @@ class YumModule(YumDnf):
         if self.conf_file and os.path.exists(self.conf_file):
             self.yum_basecmd += ['-c', self.conf_file]
 
-        if repoq:
-            repoq += ['-c', self.conf_file]
+            if repoq:
+                repoq += ['-c', self.conf_file]
 
         if self.skip_broken:
             self.yum_basecmd.extend(['--skip-broken'])
@@ -1460,6 +1443,23 @@ class YumModule(YumDnf):
 
         if error_msgs:
             self.module.fail_json(msg='. '.join(error_msgs))
+
+        if self.update_cache and not self.names and not self.list:
+            rc, stdout, stderr = self.module.run_command(self.yum_basecmd + ['clean', 'expire-cache'])
+            if rc == 0:
+                self.module.exit_json(
+                    changed=False,
+                    msg="Cache updated",
+                    rc=rc,
+                    results=[]
+                )
+            else:
+                self.module.exit_json(
+                    changed=False,
+                    msg="Failed to update cache",
+                    rc=rc,
+                    results=[stderr],
+                )
 
         # fedora will redirect yum to dnf, which has incompatibilities
         # with how this module expects yum to operate. If yum-deprecated

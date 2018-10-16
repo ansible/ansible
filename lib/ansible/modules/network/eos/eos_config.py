@@ -216,10 +216,10 @@ EXAMPLES = """
 - name: load an acl into the device
   eos_config:
     lines:
-      - 10 permit ip 192.0.2.1/32 any log
-      - 20 permit ip 192.0.2.2/32 any log
-      - 30 permit ip 192.0.2.3/32 any log
-      - 40 permit ip 192.0.2.4/32 any log
+      - 10 permit ip host 192.0.2.1 any log
+      - 20 permit ip host 192.0.2.2 any log
+      - 30 permit ip host 192.0.2.3 any log
+      - 40 permit ip host 192.0.2.4 any log
     parents: ip access-list test
     before: no ip access-list test
     replace: block
@@ -227,6 +227,11 @@ EXAMPLES = """
 - name: load configuration from file
   eos_config:
     src: eos.cfg
+
+- name: render a Jinja2 template onto an Arista switch
+  eos_config:
+    backup: yes
+    src: eos_template.j2
 
 - name: diff the running config against a master config
   eos_config:

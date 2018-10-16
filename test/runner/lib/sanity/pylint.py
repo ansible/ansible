@@ -44,6 +44,7 @@ PYLINT_IGNORE_PATH = 'test/sanity/pylint/ignore.txt'
 
 UNSUPPORTED_PYTHON_VERSIONS = (
     '2.6',
+    '2.7',
 )
 
 
@@ -99,7 +100,7 @@ class PylintTest(SanitySingleVersion):
                     invalid_ignores.append((line, 'Invalid version: %s' % version))
                     continue
 
-                if version != args.python_version and version != args.python_version.split('.')[0]:
+                if version not in (args.python_version, args.python_version.split('.')[0]):
                     continue  # ignore version specific entries for other versions
 
             ignore[path][code] = line
@@ -108,7 +109,10 @@ class PylintTest(SanitySingleVersion):
 
         paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
 
-        contexts = {}
+        module_paths = [p.split(os.path.sep) for p in paths if p.startswith('lib/ansible/modules/')]
+        module_dirs = sorted(set([p[3] for p in module_paths if len(p) > 4]))
+
+        contexts = []
         remaining_paths = set(paths)
 
         def add_context(available_paths, context_name, context_filter):
@@ -118,15 +122,33 @@ class PylintTest(SanitySingleVersion):
             :type context_filter: (str) -> bool
             """
             filtered_paths = set(p for p in available_paths if context_filter(p))
-            contexts[context_name] = sorted(filtered_paths)
+            contexts.append((context_name, sorted(filtered_paths)))
             available_paths -= filtered_paths
 
-        add_context(remaining_paths, 'ansible-test', lambda p: p.startswith('test/runner/'))
-        add_context(remaining_paths, 'units', lambda p: p.startswith('test/units/'))
-        add_context(remaining_paths, 'test', lambda p: p.startswith('test/'))
-        add_context(remaining_paths, 'hacking', lambda p: p.startswith('hacking/'))
-        add_context(remaining_paths, 'modules', lambda p: p.startswith('lib/ansible/modules/'))
-        add_context(remaining_paths, 'module_utils', lambda p: p.startswith('lib/ansible/module_utils/'))
+        def filter_path(path_filter=None):
+            """
+            :type path_filter: str
+            :rtype: (str) -> bool
+            """
+            def context_filter(path_to_filter):
+                """
+                :type path_to_filter: str
+                :rtype: bool
+                """
+                return path_to_filter.startswith(path_filter)
+
+            return context_filter
+
+        add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
+        add_context(remaining_paths, 'units', filter_path('test/units/'))
+        add_context(remaining_paths, 'test', filter_path('test/'))
+        add_context(remaining_paths, 'hacking', filter_path('hacking/'))
+
+        for module_dir in module_dirs:
+            add_context(remaining_paths, 'modules/%s' % module_dir, filter_path('lib/ansible/modules/%s/' % module_dir))
+
+        add_context(remaining_paths, 'modules', filter_path('lib/ansible/modules/'))
+        add_context(remaining_paths, 'module_utils', filter_path('lib/ansible/module_utils/'))
         add_context(remaining_paths, 'ansible', lambda p: True)
 
         messages = []
@@ -134,9 +156,7 @@ class PylintTest(SanitySingleVersion):
 
         test_start = datetime.datetime.utcnow()
 
-        for context in sorted(contexts):
-            context_paths = contexts[context]
-
+        for context, context_paths in sorted(contexts):
             if not context_paths:
                 continue
 
@@ -235,7 +255,7 @@ class PylintTest(SanitySingleVersion):
         :type paths: list[str]
         :rtype: list[dict[str, str]]
         """
-        rcfile = 'test/sanity/pylint/config/%s' % context
+        rcfile = 'test/sanity/pylint/config/%s' % context.split('/')[0]
 
         if not os.path.exists(rcfile):
             rcfile = 'test/sanity/pylint/config/default'
@@ -266,6 +286,8 @@ class PylintTest(SanitySingleVersion):
         env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, self.plugin_dir)
 
         if paths:
+            display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
+
             try:
                 stdout, stderr = run_command(args, cmd, env=env, capture=True)
                 status = 0

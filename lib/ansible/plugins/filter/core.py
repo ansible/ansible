@@ -34,7 +34,6 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
@@ -46,6 +45,7 @@ from ansible.module_utils.six import iteritems, string_types, integer_types, rer
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.encrypt import passlib_or_crypt
@@ -440,8 +440,8 @@ def flatten(mylist, levels=None):
             if levels is None:
                 ret.extend(flatten(element))
             elif levels >= 1:
-                levels = int(levels) - 1
-                ret.extend(flatten(element, levels=levels))
+                # decrement as we go down the stack
+                ret.extend(flatten(element, levels=(int(levels) - 1)))
             else:
                 ret.append(element)
         else:

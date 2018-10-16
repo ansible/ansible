@@ -301,8 +301,13 @@ options:
       - List of ports to publish from the container to the host.
       - "Use docker CLI syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000), where 8000 is a
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
+      - Port ranges can be used for source and destination ports. If two ranges with
+        different lengths are specified, the shorter range will be used.
+      - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are I(not) allowed. This
+        is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
+        to resolve hostnames."
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
-      - A value of all will publish all exposed container ports to random host ports, ignoring
+      - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
         a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
@@ -435,9 +440,13 @@ options:
     description:
       - List of volumes to mount within the container.
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
-      - You can specify a read mode for the mount with either C(ro) or C(rw).
+      - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
+        C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
+        Note that docker might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
+      - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
+        C(z), and C(Z)."
   volume_driver:
     description:
       - The container volume driver.
@@ -724,7 +733,57 @@ REQUIRES_CONVERSION_TO_BYTES = [
     'shm_size'
 ]
 
-VOLUME_PERMISSIONS = ('rw', 'ro', 'z', 'Z')
+
+def is_volume_permissions(input):
+    for part in input.split(','):
+        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave'):
+            return False
+    return True
+
+
+def parse_port_range(range_or_port, module):
+    '''
+    Parses a string containing either a single port or a range of ports.
+
+    Returns a list of integers for each port in the list.
+    '''
+    if '-' in range_or_port:
+        start, end = [int(port) for port in range_or_port.split('-')]
+        if end < start:
+            module.fail_json(msg='Invalid port range: {0}'.format(range_or_port))
+        return list(range(start, end + 1))
+    else:
+        return [int(range_or_port)]
+
+
+def split_colon_ipv6(input, module):
+    '''
+    Split string by ':', while keeping IPv6 addresses in square brackets in one component.
+    '''
+    if '[' not in input:
+        return input.split(':')
+    start = 0
+    result = []
+    while start < len(input):
+        i = input.find('[', start)
+        if i < 0:
+            result.extend(input[start:].split(':'))
+            break
+        j = input.find(']', i)
+        if j < 0:
+            module.fail_json(msg='Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(input, i + 1))
+        result.extend(input[start:i].split(':'))
+        k = input.find(':', j)
+        if k < 0:
+            result[-1] += input[i:]
+            start = len(input)
+        else:
+            result[-1] += input[i:k]
+            if k == len(input):
+                result.append('')
+                break
+            start = k + 1
+    return result
 
 
 class TaskParameters(DockerBaseClass):
@@ -964,13 +1023,15 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
+                    if not is_volume_permissions(mode):
+                        self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if re.match(r'[.~]', host):
                         host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
                 elif len(vol.split(':')) == 2:
                     parts = vol.split(':')
-                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[.~]', parts[0]):
+                    if not is_volume_permissions(parts[1]) and re.match(r'[.~]', parts[0]):
                         host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
                         continue
@@ -992,7 +1053,7 @@ class TaskParameters(DockerBaseClass):
                         continue
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             result.append(parts[1])
                             continue
                 result.append(vol)
@@ -1096,31 +1157,41 @@ class TaskParameters(DockerBaseClass):
 
         binds = {}
         for port in self.published_ports:
-            parts = str(port).split(':')
+            parts = split_colon_ipv6(str(port), self.client.module)
             container_port = parts[-1]
-            if '/' not in container_port:
-                container_port = int(parts[-1])
+            protocol = ''
+            if '/' in container_port:
+                container_port, protocol = parts[-1].split('/')
+            container_ports = parse_port_range(container_port, self.client.module)
 
             p_len = len(parts)
             if p_len == 1:
-                bind = (default_ip,)
+                port_binds = len(container_ports) * [(default_ip,)]
             elif p_len == 2:
-                bind = (default_ip, int(parts[0]))
+                port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client.module)]
             elif p_len == 3:
-                bind = (parts[0], int(parts[1])) if parts[1] else (parts[0],)
-
-            if container_port in binds:
-                old_bind = binds[container_port]
-                if isinstance(old_bind, list):
-                    old_bind.append(bind)
+                # We only allow IPv4 and IPv6 addresses for the bind address
+                if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', parts[0]):
+                    self.fail(('Bind addresses for published ports must be IPv4 or IPv6 addresses, not hostnames. '
+                               'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(parts[0]))
+                if parts[1]:
+                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client.module)]
                 else:
-                    binds[container_port] = [binds[container_port], bind]
-            else:
-                binds[container_port] = bind
+                    port_binds = len(container_ports) * [(parts[0],)]
+
+            for bind, container_port in zip(port_binds, container_ports):
+                idx = '{0}/{1}'.format(container_port, protocol) if protocol else container_port
+                if idx in binds:
+                    old_bind = binds[idx]
+                    if isinstance(old_bind, list):
+                        old_bind.append(bind)
+                    else:
+                        binds[idx] = [old_bind, bind]
+                else:
+                    binds[idx] = bind
         return binds
 
-    @staticmethod
-    def _get_volume_binds(volumes):
+    def _get_volume_binds(self, volumes):
         '''
         Extract host bindings, if any, from list of volume mapping strings.
 
@@ -1133,9 +1204,11 @@ class TaskParameters(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = (vol.split(':') + ['rw'])
                 if host is not None:
                     result[host] = dict(
@@ -1314,7 +1387,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_env = None
         self.parameters_map = dict()
         self.parameters_map['expected_links'] = 'links'
-        self.parameters_map['expected_ports'] = 'published_ports'
+        self.parameters_map['expected_ports'] = 'expected_ports'
         self.parameters_map['expected_exposed'] = 'exposed_ports'
         self.parameters_map['expected_volumes'] = 'volumes'
         self.parameters_map['expected_ulimits'] = 'ulimits'
@@ -1500,7 +1573,8 @@ class Container(DockerBaseClass):
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            working_dir=config.get('WorkingDir')
+            working_dir=config.get('WorkingDir'),
+            publish_all_ports=host_config.get('PublishAllPorts'),
         )
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
@@ -1746,9 +1820,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 if host:
                     param_vols.append("%s:%s:%s" % (host, container, mode))
@@ -1795,9 +1871,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 new_vol = dict()
                 if container:
@@ -2291,6 +2369,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                     comparisons[key_main]['comparison'] = value
                 else:
                     self.fail("Unknown comparison mode '%s'!" % value)
+        # Add implicit options
+        comparisons['publish_all_ports'] = dict(type='value', comparison='strict', name='published_ports')
+        comparisons['expected_ports'] = dict(type='dict', comparison=comparisons['published_ports']['comparison'], name='expected_ports')
         # Check legacy values
         if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
             self.module.warn('The ignore_image option has been overridden by the comparisons option!')

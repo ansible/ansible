@@ -18,10 +18,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 BASE_PARAMS = {'vdirect_ip': None, 'vdirect_user': None, 'vdirect_password': None,
                'vdirect_wait': None, 'vdirect_secondary_ip': None,

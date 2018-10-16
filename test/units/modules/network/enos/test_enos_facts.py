@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from .enos_module import TestEnosModule, load_fixture
 from ansible.modules.network.enos import enos_facts
 from units.modules.utils import set_module_args

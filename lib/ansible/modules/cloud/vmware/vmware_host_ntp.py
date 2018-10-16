@@ -131,8 +131,11 @@ class VmwareNtpConfigManager(PyVmomi):
             date_config_spec = vim.host.DateTimeConfig()
             date_config_spec.ntpConfig = ntp_config_spec
             try:
-                host_date_time_manager.UpdateDateTimeConfig(date_config_spec)
-                self.results[host.name]['after_change_ntp_servers'] = host_date_time_manager.dateTimeInfo.ntpConfig.server
+                if self.module.check_mode:
+                    self.results[host.name]['after_change_ntp_servers'] = available_ntp_servers
+                else:
+                    host_date_time_manager.UpdateDateTimeConfig(date_config_spec)
+                    self.results[host.name]['after_change_ntp_servers'] = host_date_time_manager.dateTimeInfo.ntpConfig.server
                 changed = True
             except vim.fault.HostConfigFault as e:
                 self.results[host.name]['error'] = to_native(e.msg)
@@ -195,7 +198,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_host_ntp_config = VmwareNtpConfigManager(module)

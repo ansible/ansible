@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -137,7 +137,7 @@ options:
             - storage_container
     storage_blob_name:
         description:
-            - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
+            - Name of the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
               the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
         aliases:
             - storage_blob

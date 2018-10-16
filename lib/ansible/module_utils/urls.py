@@ -1324,3 +1324,40 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         tempfile.tempdir = old_tempdir
 
     return r, info
+
+
+def fetch_file(module, url, data=None, headers=None, method=None,
+               use_proxy=True, force=False, last_mod_time=None, timeout=10):
+    '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
+    This is basically a wrapper around fetch_url().
+
+    :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
+    :arg url:             The url to use.
+
+    :kwarg data:          The data to be sent (in case of POST/PUT).
+    :kwarg headers:       A dict with the request headers.
+    :kwarg method:        "POST", "PUT", etc.
+    :kwarg boolean use_proxy:     Default: True
+    :kwarg boolean force: If True: Do not get a cached copy (Default: False)
+    :kwarg last_mod_time: Default: None
+    :kwarg int timeout:   Default: 10
+
+    :returns: A string, the path to the downloaded file.
+    '''
+    # download file
+    bufsize = 65536
+    file_name, file_ext = os.path.splitext(str(url.rsplit('/', 1)[1]))
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
+    module.add_cleanup_file(fetch_temp_file.name)
+    try:
+        rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
+        if not rsp:
+            module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
+        data = rsp.read(bufsize)
+        while data:
+            fetch_temp_file.write(data)
+            data = rsp.read(bufsize)
+        fetch_temp_file.close()
+    except Exception as e:
+        module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
+    return fetch_temp_file.name

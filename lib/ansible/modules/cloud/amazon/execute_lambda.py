@@ -74,7 +74,7 @@ options:
     description:
       - Which version/alias of the function to run. This defaults to the
         C(LATEST) revision, but can be set to any existing version or alias.
-        See https;//docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html
+        See U(https://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html)
         for details.
     default: LATEST
   payload:

@@ -14,6 +14,8 @@ DOCUMENTATION = '''
     short_description: NetBox inventory source
     description:
         - Get inventory hosts from NetBox
+    extends_documentation_fragment:
+        - constructed
     options:
         plugin:
             description: token that ensures this is a source file for the 'netbox' plugin.
@@ -51,10 +53,15 @@ DOCUMENTATION = '''
         query_filters:
             description: List of parameters passed to the query string (Multiple values may be separated by commas)
             type: list
+            default: []
         timeout:
             description: Timeout for Netbox requests in seconds
             type: int
             default: 60
+        compose:
+            description: List of custom ansible host vars to create from the device object fetched from NetBox
+            default: {}
+            type: dict
 '''
 
 EXAMPLES = '''
@@ -83,21 +90,30 @@ query_filters:
 
 query_filters:
   - cf_foo: bar
+
+# NetBox inventory plugin also supports Constructable semantics
+# You can fill your hosts vars using the compose option:
+
+plugin: netbox
+compose:
+  foo: last_updated
+  bar: display_name
+  nested_variable: rack.display_name
 '''
 
 import json
 import uuid
 from sys import version as python_version
 from threading import Thread
+from itertools import chain
 
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urljoin, urlencode
 from ansible.module_utils.compat.ipaddress import ip_interface
-
 
 ALLOWED_DEVICE_QUERY_PARAMETERS = (
     "asset_tag",
@@ -131,7 +147,7 @@ ALLOWED_DEVICE_QUERY_PARAMETERS = (
 )
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
     NAME = 'netbox'
 
     def _fetch_information(self, url):
@@ -174,10 +190,22 @@ class InventoryModule(BaseInventoryPlugin):
             "tenants": self.extract_tenant,
             "racks": self.extract_rack,
             "tags": self.extract_tags,
+            "disk": self.extract_disk,
+            "memory": self.extract_memory,
+            "vcpus": self.extract_vcpus,
             "device_roles": self.extract_device_role,
             "device_types": self.extract_device_type,
             "manufacturers": self.extract_manufacturer
         }
+
+    def extract_disk(self, host):
+        return host.get("disk")
+
+    def extract_vcpus(self, host):
+        return host.get("vcpus")
+
+    def extract_memory(self, host):
+        return host.get("memory")
 
     def extract_device_type(self, host):
         try:
@@ -303,7 +331,8 @@ class InventoryModule(BaseInventoryPlugin):
         v = tuple(x.values())[0]
 
         if not (k in ALLOWED_DEVICE_QUERY_PARAMETERS or k.startswith("cf_")):
-            self.display.warning("Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS))
+            msg = "Warning: %s not in %s or starting with cf (Custom field)" % (k, ALLOWED_DEVICE_QUERY_PARAMETERS)
+            self.display.warning(msg=msg)
             return
         return k, v
 
@@ -312,9 +341,16 @@ class InventoryModule(BaseInventoryPlugin):
         query_parameters.extend(filter(lambda x: x,
                                        map(self.validate_query_parameters, self.query_filters)))
         self.device_url = self.api_endpoint + "/api/dcim/devices/" + "?" + urlencode(query_parameters)
+        self.virtual_machines_url = "".join([self.api_endpoint,
+                                             "/api/virtualization/virtual-machines/",
+                                             "?",
+                                             urlencode(query_parameters)])
 
     def fetch_hosts(self):
-        return self.get_resource_list(self.device_url)
+        return chain(
+            self.get_resource_list(self.device_url),
+            self.get_resource_list(self.virtual_machines_url),
+        )
 
     def extract_name(self, host):
         # An host in an Ansible inventory requires an hostname.
@@ -358,6 +394,16 @@ class InventoryModule(BaseInventoryPlugin):
             hostname = self.extract_name(host=host)
             self.inventory.add_host(host=hostname)
             self._fill_host_variables(host=host, hostname=hostname)
+
+            strict = self.get_option("strict")
+
+            # Composed variables
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
+
+            # Create groups based on variable values and add the corresponding hosts to it
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
             self.add_host_to_groups(host=host, hostname=hostname)
 
     def parse(self, inventory, loader, path, cache=True):

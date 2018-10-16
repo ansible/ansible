@@ -1,0 +1,53 @@
+- name: set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_secret_key: "{{ aws_secret_key }}"
+      aws_access_key: "{{ aws_access_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+    - name: Create an SNS topic
+      sns_topic:
+        name: "{{ sns_topic_name }}"
+        display_name: "Test topic"
+        <<: *aws_connection_info
+      register: sns_topic
+
+    - name: Publish to the topic by name
+      sns:
+        topic: "{{ sns_topic_name }}"
+        subject: Test message
+        msg: Default test message
+        http: Test message for HTTP
+        https: Test message for HTTPS
+        email: Test message for email
+        email_json: Test message for email-json
+        sms: Short test message for SMS
+        sqs: Test message for SQS
+        application: Test message for apps
+        lambda: Test message for Lambda
+        <<: *aws_connection_info
+      register: result
+
+    - name: Check for expected result structure
+      assert:
+        that:
+          - result is not changed
+          - "'message_id' in result"
+
+    - name: Publish to the topic by ARN
+      sns:
+        topic: "{{ sns_topic.sns_arn }}"
+        subject: Second test message
+        msg: Simple test message
+        <<: *aws_connection_info
+
+  always:
+    - name: Remove topic
+      sns_topic:
+        name: "{{ sns_topic_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes

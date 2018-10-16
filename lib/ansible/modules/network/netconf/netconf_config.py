@@ -123,7 +123,7 @@ options:
   commit:
     description:
       - This boolean flag controls if the configuration changes should be committed or not after editing the
-        candidate datastore. This oprion is supported only if remote Netconf server supports :candidate
+        candidate datastore. This option is supported only if remote Netconf server supports :candidate
         capability. If the value is set to I(False) commit won't be issued after edit-config operation
         and user needs to handle commit or discard-changes explicitly.
     type: bool
@@ -305,8 +305,8 @@ def main():
     if confirm_commit and not operations.get('supports_confirm_commit', False):
         module.fail_json(msg='confirm commit is not supported by Netconf server')
 
-    if confirm_commit or (confirm > 0) and not operations.get('supports_confirm_commit', False):
-        module.fail_json(msg='confirm commit is not supported by this netconf server')
+    if (confirm > 0) and not operations.get('supports_confirm_commit', False):
+        module.fail_json(msg='confirm commit is not supported by this netconf server, given confirm timeout: %d' % confirm)
 
     if validate and not operations.get('supports_validate', False):
         module.fail_json(msg='validate is not supported by this netconf server')
@@ -323,6 +323,7 @@ def main():
 
     result = {'changed': False, 'server_capabilities': capabilities.get('server_capabilities', [])}
     before = None
+    after = None
     locked = False
     try:
         if module.params['backup']:
@@ -349,7 +350,7 @@ def main():
                 result['changed'] = True
                 module.exit_json(**result)
 
-            if lock:
+            if execute_lock:
                 conn.lock(target=target)
                 locked = True
             if before is None:
@@ -362,15 +363,20 @@ def main():
                 'error_option': module.params['error_option'],
                 'format': module.params['format'],
             }
+
             conn.edit_config(**kwargs)
+
             if supports_commit and module.params['commit']:
+                after = to_text(conn.get_config(source='candidate'), errors='surrogate_then_replace').strip()
                 if not module.check_mode:
-                    timeout = confirm if confirm > 0 else None
-                    conn.commit(confirmed=confirm_commit, timeout=timeout)
+                    confirm_timeout = confirm if confirm > 0 else None
+                    confirmed_commit = True if confirm_timeout else False
+                    conn.commit(confirmed=confirmed_commit, timeout=confirm_timeout)
                 else:
                     conn.discard_changes()
 
-            after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
+            if after is None:
+                after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
 
             sanitized_before = sanitize_xml(before)
             sanitized_after = sanitize_xml(after)

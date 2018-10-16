@@ -13,10 +13,10 @@ __metaclass__ = type
 
 import os
 import sys
-from collections import MutableMapping
 
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 __all__ = ('environ',)
 
