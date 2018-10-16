@@ -64,6 +64,10 @@ options:
   aggregate:
     description: List of static route definitions
     version_added: 2.5
+  track:
+    description:
+      - Track value (range 1 - 512). Track must already be configured on the device before adding the route.
+    version_added: "2.8"
   state:
     description:
       - Manage the state of the resource.
