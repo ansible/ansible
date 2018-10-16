@@ -563,6 +563,9 @@ def command_windows_integration(args):
             # create a script that will continue to run in the background until the script is deleted, this will
             # cleanup and close the connection
             def forward_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
                 if 'needs/httptester/' not in target.aliases:
                     return
 
@@ -578,6 +581,9 @@ def command_windows_integration(args):
                     manage.ssh(script, options=ssh_options, force_pty=False)
 
             def cleanup_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
                 if 'needs/httptester/' not in target.aliases:
                     return
 
@@ -831,9 +837,6 @@ def command_integration_filtered(args, targets, all_targets, pre_target=None, po
         display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
 
         try:
-            if pre_target:
-                pre_target(target)
-
             while tries:
                 tries -= 1
 
@@ -852,11 +855,18 @@ def command_integration_filtered(args, targets, all_targets, pre_target=None, po
                         remove_tree(test_dir)
                         make_dirs(test_dir)
 
-                    if target.script_path:
-                        command_integration_script(args, target, test_dir)
-                    else:
-                        command_integration_role(args, target, start_at_task, test_dir)
-                        start_at_task = None
+                    if pre_target:
+                        pre_target(target)
+
+                    try:
+                        if target.script_path:
+                            command_integration_script(args, target, test_dir)
+                        else:
+                            command_integration_role(args, target, start_at_task, test_dir)
+                            start_at_task = None
+                    finally:
+                        if post_target:
+                            post_target(target)
 
                     end_time = time.time()
 
@@ -896,9 +906,6 @@ def command_integration_filtered(args, targets, all_targets, pre_target=None, po
             results[target.name]['validation_seconds'] = int(end_time - start_time)
 
             passed.append(target)
-
-            if post_target:
-                post_target(target)
         except Exception as ex:
             failed.append(target)
 
