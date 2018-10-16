@@ -104,7 +104,7 @@ def read_docstub(filename):
             elif capturing and not line.startswith(indent_detection):
                 break
 
-            elif line.lstrip().startswith('short_description: '):
+            elif line.lstrip().startswith('short_description:'):
                 capturing = True
                 # Detect that the short_description continues on the next line if it's indented more
                 # than short_description itself.
