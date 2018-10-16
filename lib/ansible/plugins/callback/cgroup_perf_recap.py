@@ -70,6 +70,13 @@ from ansible.module_utils.six import with_metaclass
 from ansible.plugins.callback import CallbackBase
 
 
+def dict_fromkeys(keys, default=None):
+    d = {}
+    for key in keys:
+        d[key] = default() if callable(default) else default
+    return d
+
+
 class BaseProf(with_metaclass(ABCMeta, threading.Thread)):
     def __init__(self, path, obj=None, csvwriter=None):
         threading.Thread.__init__(self)  # pylint: disable=non-parent-init-called
@@ -160,12 +167,7 @@ class CallbackModule(CallbackBase):
             'pids': '',
         }
 
-        self.task_results = {
-            'memory': [],
-            'cpu': [],
-            'pids': [],
-        }
-
+        self.task_results = dict_fromkeys(self._features, default=list)
         self._profilers = dict.fromkeys(self._features)
         self._csv_files = dict.fromkeys(self._features)
         self._csv_writers = dict.fromkeys(self._features)
