@@ -32,7 +32,7 @@ author:
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
 short_description: Manage SSL and SSH security profiles in FortiManager
-description: 
+description:
   -  Manage SSL and SSH security profiles in FortiManager via the FMG API
 
 options:
@@ -149,9 +149,9 @@ options:
   ftps:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -208,9 +208,9 @@ options:
   https:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -268,9 +268,9 @@ options:
   imaps:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -327,9 +327,9 @@ options:
   pop3s:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -386,9 +386,9 @@ options:
   smtps:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -445,9 +445,9 @@ options:
   ssh:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -509,9 +509,9 @@ options:
   ssl:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -564,9 +564,9 @@ options:
   ssl_exempt:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -611,9 +611,9 @@ options:
   ssl_server:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
