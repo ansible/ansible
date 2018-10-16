@@ -194,7 +194,7 @@ class LookupModule(LookupBase):
                 else:
                     return False
             else:
-                raise AnsibleError(e)
+                raise AnsibleError('exit code {0} while running {1}. Error output: {2}'.format(e.returncode, e.cmd, e.output))
         return True
 
     def get_newpass(self):
@@ -216,7 +216,7 @@ class LookupModule(LookupBase):
         try:
             check_output2(['pass', 'insert', '-f', '-m', self.passname], input=msg)
         except (subprocess.CalledProcessError) as e:
-            raise AnsibleError(e)
+            raise AnsibleError('exit code {0} while running {1}. Error output: {2}'.format(e.returncode, e.cmd, e.output))
         return newpass
 
     def generate_password(self):
@@ -228,7 +228,7 @@ class LookupModule(LookupBase):
         try:
             check_output2(['pass', 'insert', '-f', '-m', self.passname], input=msg)
         except (subprocess.CalledProcessError) as e:
-            raise AnsibleError(e)
+            raise AnsibleError('exit code {0} while running {1}. Error output: {2}'.format(e.returncode, e.cmd, e.output))
         return newpass
 
     def get_passresult(self):
