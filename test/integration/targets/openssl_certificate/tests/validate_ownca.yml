@@ -20,7 +20,8 @@
       - ownca_verify_ca.stdout == 'OK'
       - ownca_cert_modulus.stdout == privatekey_modulus.stdout
       - ownca_cert_version.stdout == '3'
-      - ownca_cert_issuer.stdout == 'CN=Example CA'
+      # openssl 1.1.x adds a space between the output
+      - ownca_cert_issuer.stdout in ['CN=Example CA', 'CN = Example CA']
 
 - name: Validate ownca certificate idempotence
   assert:
