@@ -65,6 +65,9 @@ EXAMPLES = '''
   args:
     executable: /bin/bash
 
-- name: safely use templated variables. Always use quote filter to avoid injection issues.
+- name: Safely use templated variables. Always use quote filter to avoid injection issues.
   raw: "{{package_mgr|quote}} {{pkg_flags|quote}} install {{python|quote}}"
+  
+- name: Perform shutdown of Windows OS using Microsoft.PowerShell.Management module (without forcing it)
+  raw: "stop-computer"
 '''
