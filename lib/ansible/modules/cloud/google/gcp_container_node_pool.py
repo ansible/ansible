@@ -225,7 +225,7 @@ EXAMPLES = '''
 
 - name: create a node pool
   gcp_container_node_pool:
-      name: "test_object"
+      name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
       zone: us-central1-a

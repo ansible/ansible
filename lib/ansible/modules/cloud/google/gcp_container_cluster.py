@@ -258,7 +258,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a cluster
   gcp_container_cluster:
-      name: "test_object"
+      name: my-cluster
       initial_node_count: 2
       master_auth:
         username: cluster_admin

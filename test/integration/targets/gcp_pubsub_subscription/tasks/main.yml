@@ -60,7 +60,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['items'] | length >= 1
 # ----------------------------------------------------------------------------
 - name: create a subscription that already exists
   gcp_pubsub_subscription:
