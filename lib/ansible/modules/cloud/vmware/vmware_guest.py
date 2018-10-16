@@ -1516,7 +1516,7 @@ class PyVmomiHelper(PyVmomi):
             if 'timezone' in self.params['customization']:
                 # Check if timezone value is a int before proceeding.
                 if (self.params['customization']['timezone']).isdigit():
-                    ident.guiUnattended.timeZone = self.params['customization']['timezone']
+                    ident.guiUnattended.timeZone = int(self.params['customization']['timezone'])
 
             ident.identification = vim.vm.customization.Identification()
 
