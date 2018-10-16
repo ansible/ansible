@@ -98,6 +98,15 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.enablerepo = self.listify_comma_sep_strings_in_list(self.enablerepo)
         self.exclude = self.listify_comma_sep_strings_in_list(self.exclude)
 
+        # Fail if someone passed a space separated string
+        # https://github.com/ansible/ansible/issues/46301
+        if any((' ' in name for name in self.names)):
+            module.fail_json(
+                msg='It appears that a space separated string of packages was passed in '
+                    'as an argument. To operate on several packages, pass a comma separated '
+                    'string of packages or a list of packages.'
+            )
+
         # This should really be redefined by both the yum and dnf module but a
         # default isn't a bad idea
         self.lockfile = '/var/run/yum.pid'
