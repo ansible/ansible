@@ -32,7 +32,7 @@ author:
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
 short_description: Manage web filter security profiles in FortiManager
-description: 
+description:
   -  Manage web filter security profiles in FortiManager through playbooks using the FMG API
 
 options:
@@ -246,7 +246,7 @@ options:
       - flag | fortiguard-wf-override | FortiGuard Web Filter override.
       - flag | contenttype-check-override | Content-type header override.
     required: false
-    choices: 
+    choices:
     ["bannedword-override",
     "urlfilter-override",
     "fortiguard-wf-override",
@@ -269,7 +269,7 @@ options:
       - flag | cookiefilter | Cookie filter.
       - flag | javafilter | Java applet filter.
     required: false
-    choices: 
+    choices:
     ["block-invalid-url",
     "jscript",
     "js",
@@ -328,9 +328,9 @@ options:
   ftgd_wf:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -489,9 +489,9 @@ options:
   override:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -565,7 +565,7 @@ options:
       - choice | Acct-Session-Id | Use this attribute.
       - choice | Acct-Multi-Session-Id | Use this attribute.
     required: false
-    choices: 
+    choices:
     ["User-Name",
     "NAS-IP-Address",
     "Framed-IP-Address",
@@ -600,9 +600,9 @@ options:
   url_extraction:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -642,9 +642,9 @@ options:
   web:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -711,7 +711,7 @@ options:
       - flag | exempt-rangeblock | Exempt RangeBlock.
       - flag | extended-log-others | Support extended log.
     required: false
-    choices: 
+    choices:
     ["exempt-av",
     "exempt-webcontent",
     "exempt-activex-java-cookie",
@@ -731,9 +731,9 @@ options:
   youtube_channel_filter:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
-      - List of multiple child objects to be added. Expects a list of dictionaries. 
+      - List of multiple child objects to be added. Expects a list of dictionaries.
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
-      - If submitted, all other prefixed sub-parameters ARE IGNORED. 
+      - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
       - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
@@ -1184,15 +1184,15 @@ def main():
             "rate-image-urls": module.params["ftgd_wf_rate_image_urls"],
             "rate-javascript-urls": module.params["ftgd_wf_rate_javascript_urls"],
             "filters": {
-                    "action": module.params["ftgd_wf_filters_action"],
-                    "auth-usr-grp": module.params["ftgd_wf_filters_auth_usr_grp"],
-                    "category": module.params["ftgd_wf_filters_category"],
-                    "log": module.params["ftgd_wf_filters_log"],
-                    "override-replacemsg": module.params["ftgd_wf_filters_override_replacemsg"],
-                    "warn-duration": module.params["ftgd_wf_filters_warn_duration"],
-                    "warning-duration-type": module.params["ftgd_wf_filters_warning_duration_type"],
-                    "warning-prompt": module.params["ftgd_wf_filters_warning_prompt"],
-                },
+                "action": module.params["ftgd_wf_filters_action"],
+                "auth-usr-grp": module.params["ftgd_wf_filters_auth_usr_grp"],
+                "category": module.params["ftgd_wf_filters_category"],
+                "log": module.params["ftgd_wf_filters_log"],
+                "override-replacemsg": module.params["ftgd_wf_filters_override_replacemsg"],
+                "warn-duration": module.params["ftgd_wf_filters_warn_duration"],
+                "warning-duration-type": module.params["ftgd_wf_filters_warning_duration_type"],
+                "warning-prompt": module.params["ftgd_wf_filters_warning_prompt"],
+            },
             "quota": {
                 "category": module.params["ftgd_wf_quota_category"],
                 "duration": module.params["ftgd_wf_quota_duration"],
@@ -1200,7 +1200,7 @@ def main():
                 "type": module.params["ftgd_wf_quota_type"],
                 "unit": module.params["ftgd_wf_quota_unit"],
                 "value": module.params["ftgd_wf_quota_value"],
-                },
+            },
         },
         "override": {
             "ovrd-cookie": module.params["override_ovrd_cookie"],

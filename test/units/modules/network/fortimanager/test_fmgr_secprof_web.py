@@ -31,7 +31,11 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(
+        os.path.dirname(__file__),
+        'fixtures') + "/{filename}.json".format(
+        filename=os.path.splitext(
+            os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -53,17 +57,25 @@ def test_fmgr_webfilter_profile_addsetdelete(fixture_data, mocker):
     ##################################################
     # comment: None
     # web-extended-all-action-log: None
-    # url-extraction: {'status': None, 'redirect-url': None, 'server-fqdn': None, 'redirect-header': None, 'redirect-no-content': None}
-    # ftgd-wf: {'filters': {'category': None, 'log': None, 'override-replacemsg': None, 'warning-duration-type': None, 'warn-duration': None, 'auth-usr-grp': None, 'action': None, 'warning-prompt': None}, 'ovrd': None, 'rate-image-urls': None, 'quota': {'category': None, 'value': None, 'override-replacemsg': None, 'duration': None, 'type': None, 'unit': None}, 'options': None, 'rate-javascript-urls': None, 'max-quota-timeout': None, 'rate-css-urls': None, 'exempt-quota': None, 'rate-crl-urls': None}
+    # url-extraction: {'status': None, 'redirect-url': None, 'server-fqdn': None, 'redirect-header': None,
+    #  'redirect-no-content': None}
+    # ftgd-wf: {'filters': {'category': None, 'log': None, 'override-replacemsg': None, 'warning-duration-type': None,
+    #  'warn-duration': None, 'auth-usr-grp': None, 'action': None, 'warning-prompt': None}, 'ovrd': None,
+    #  'rate-image-urls': None, 'quota': {'category': None, 'value': None, 'override-replacemsg': None,
+    #  'duration': None, 'type': None, 'unit': None}, 'options': None, 'rate-javascript-urls': None,
+    #  'max-quota-timeout': None, 'rate-css-urls': None, 'exempt-quota': None, 'rate-crl-urls': None}
     # log-all-url: None
     # extended-log: None
     # web-filter-cookie-removal-log: None
     # https-replacemsg: None
-    # web: {'log-search': None, 'bword-threshold': None, 'bword-table': None, 'whitelist': None, 'youtube-restrict': None, 'safe-search': None, 'blacklist': None, 'keyword-match': None, 'urlfilter-table': None, 'content-header-list': None}
+    # web: {'log-search': None, 'bword-threshold': None, 'bword-table': None, 'whitelist': None,
+    #  'youtube-restrict': None, 'safe-search': None, 'blacklist': None, 'keyword-match': None,
+    #  'urlfilter-table': None, 'content-header-list': None}
     # wisp: None
     # web-filter-vbs-log: None
     # youtube-channel-filter: {'comment': None, 'channel-id': None}
-    # override: {'profile': None, 'ovrd-scope': None, 'ovrd-dur-mode': None, 'profile-attribute': None, 'ovrd-dur': None, 'profile-type': None, 'ovrd-user-group': None, 'ovrd-cookie': None}
+    # override: {'profile': None, 'ovrd-scope': None, 'ovrd-dur-mode': None, 'profile-attribute': None,
+    #  'ovrd-dur': None, 'profile-type': None, 'ovrd-user-group': None, 'ovrd-cookie': None}
     # ovrd-perm: None
     # mode: delete
     # web-content-log: None
@@ -95,7 +107,11 @@ def test_fmgr_webfilter_profile_addsetdelete(fixture_data, mocker):
     # web-invalid-domain-log: enable
     # web-extended-all-action-log: enable
     # adom: root
-    # ftgd-wf: {'rate-javascript-urls': None, 'quota': {'category': None, 'value': None, 'override-replacemsg': None, 'duration': None, 'type': None, 'unit': None}, 'rate-image-urls': None, 'filters': {'category': None, 'auth-usr-grp': None, 'log': None, 'warning-prompt': None, 'override-replacemsg': None, 'action': None, 'warn-duration': None, 'warning-duration-type': None}, 'rate-css-urls': None, 'ovrd': None, 'exempt-quota': None, 'max-quota-timeout': None, 'rate-crl-urls': None, 'options': None}
+    # ftgd-wf: {'rate-javascript-urls': None, 'quota': {'category': None, 'value': None, 'override-replacemsg': None,
+    #  'duration': None, 'type': None, 'unit': None}, 'rate-image-urls': None, 'filters': {'category': None,
+    #  'auth-usr-grp': None, 'log': None, 'warning-prompt': None, 'override-replacemsg': None, 'action': None,
+    #  'warn-duration': None, 'warning-duration-type': None}, 'rate-css-urls': None, 'ovrd': None,
+    #  'exempt-quota': None, 'max-quota-timeout': None, 'rate-crl-urls': None, 'options': None}
     # web-content-log: enable
     # web-filter-referer-log: enable
     # log-all-url: enable
@@ -105,13 +121,16 @@ def test_fmgr_webfilter_profile_addsetdelete(fixture_data, mocker):
     # post-action: block
     # web-filter-activex-log: enable
     # web-filter-cookie-log: enable
-    # web: {'blacklist': None, 'log-search': None, 'keyword-match': None, 'urlfilter-table': None, 'bword-table': None, 'safe-search': None, 'whitelist': None, 'content-header-list': None, 'youtube-restrict': None, 'bword-threshold': None}
+    # web: {'blacklist': None, 'log-search': None, 'keyword-match': None, 'urlfilter-table': None, 'bword-table': None,
+    #  'safe-search': None, 'whitelist': None, 'content-header-list': None, 'youtube-restrict': None,
+    #  'bword-threshold': None}
     # web-filter-applet-log: enable
     # web-ftgd-err-log: enable
     # replacemsg-group: None
     # web-filter-jscript-log: enable
     # web-ftgd-quota-usage: enable
-    # url-extraction: {'status': None, 'server-fqdn': None, 'redirect-url': None, 'redirect-header': None, 'redirect-no-content': None}
+    # url-extraction: {'status': None, 'server-fqdn': None, 'redirect-url': None, 'redirect-header': None,
+    #  'redirect-no-content': None}
     # web-filter-js-log: enable
     # youtube-channel-filter: {'comment': None, 'channel-id': None}
     # name: Ansible_Web_Filter_Profile
@@ -120,7 +139,8 @@ def test_fmgr_webfilter_profile_addsetdelete(fixture_data, mocker):
     # web-filter-unknown-log: enable
     # mode: set
     # youtube-channel-status: blacklist
-    # override: {'profile': None, 'ovrd-user-group': None, 'ovrd-scope': None, 'ovrd-cookie': None, 'ovrd-dur-mode': None, 'profile-attribute': None, 'ovrd-dur': None, 'profile-type': None}
+    # override: {'profile': None, 'ovrd-user-group': None, 'ovrd-scope': None, 'ovrd-cookie': None,
+    #  'ovrd-dur-mode': None, 'profile-attribute': None, 'ovrd-dur': None, 'profile-type': None}
     # web-url-log: enable
     # ovrd-perm: bannedword-override
     # https-replacemsg: None
@@ -135,4 +155,3 @@ def test_fmgr_webfilter_profile_addsetdelete(fixture_data, mocker):
     # Test using fixture 2 #
     output = fmgr_secprof_web.fmgr_webfilter_profile_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
-
