@@ -104,7 +104,7 @@ response_metadata:
       returned: always
       type: complex
     http_status_code:
-      description: ""http status code of http response""
+      description: "http status code of http response"
       returned: always
       type: string
       sample: "200"
@@ -118,7 +118,6 @@ response_metadata:
       returned: always
       type: string
       sample: "0"
-
 '''
 
 EXAMPLES = '''
@@ -126,6 +125,7 @@ EXAMPLES = '''
 - code_commit:
     name: repo
     state: present
+
 # Delete a repository
 - code_commit:
     name: repo
