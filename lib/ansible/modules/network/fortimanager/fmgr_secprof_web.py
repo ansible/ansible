@@ -246,11 +246,7 @@ options:
       - flag | fortiguard-wf-override | FortiGuard Web Filter override.
       - flag | contenttype-check-override | Content-type header override.
     required: false
-    choices:
-    ["bannedword-override",
-    "urlfilter-override",
-    "fortiguard-wf-override",
-    "contenttype-check-override"]
+    choices: ["bannedword-override","urlfilter-override","fortiguard-wf-override","contenttype-check-override"]
 
   options:
     description:
@@ -269,19 +265,10 @@ options:
       - flag | cookiefilter | Cookie filter.
       - flag | javafilter | Java applet filter.
     required: false
-    choices:
-    ["block-invalid-url",
-    "jscript",
-    "js",
-    "vbs",
-    "unknown",
-    "wf-referer",
-    "intrinsic",
-    "wf-cookie",
-    "per-user-bwl",
-    "activexfilter",
-    "cookiefilter",
-    "javafilter"]
+    choices: ["block-invalid-url","jscript","js","vbs","unknown","wf-referer","intrinsic","wf-cookie","per-user-bwl",
+        "activexfilter",
+        "cookiefilter",
+        "javafilter"]
 
   name:
     description:
@@ -565,29 +552,23 @@ options:
       - choice | Acct-Session-Id | Use this attribute.
       - choice | Acct-Multi-Session-Id | Use this attribute.
     required: false
-    choices:
-    ["User-Name",
-    "NAS-IP-Address",
-    "Framed-IP-Address",
-    "Framed-IP-Netmask",
-    "Filter-Id",
-    "Login-IP-Host",
-    "Reply-Message",
-    "Callback-Number",
-    "Callback-Id",
-    "Framed-Route",
-    "Framed-IPX-Network",
-    "Class",
-    "Called-Station-Id",
-    "Calling-Station-Id",
-    "NAS-Identifier",
-    "Proxy-State",
-    "Login-LAT-Service",
-    "Login-LAT-Node",
-    "Login-LAT-Group",
-    "Framed-AppleTalk-Zone",
-    "Acct-Session-Id",
-    "Acct-Multi-Session-Id"]
+    choices:["User-Name","NAS-IP-Address","Framed-IP-Address","Framed-IP-Netmask","Filter-Id","Login-IP-Host",
+        "Reply-Message",
+        "Callback-Number",
+        "Callback-Id",
+        "Framed-Route",
+        "Framed-IPX-Network",
+        "Class",
+        "Called-Station-Id",
+        "Calling-Station-Id",
+        "NAS-Identifier",
+        "Proxy-State",
+        "Login-LAT-Service",
+        "Login-LAT-Node",
+        "Login-LAT-Group",
+        "Framed-AppleTalk-Zone",
+        "Acct-Session-Id",
+        "Acct-Multi-Session-Id"]
 
   override_profile_type:
     description:
@@ -711,13 +692,8 @@ options:
       - flag | exempt-rangeblock | Exempt RangeBlock.
       - flag | extended-log-others | Support extended log.
     required: false
-    choices:
-    ["exempt-av",
-    "exempt-webcontent",
-    "exempt-activex-java-cookie",
-    "exempt-dlp",
-    "exempt-rangeblock",
-    "extended-log-others"]
+    choices:["exempt-av","exempt-webcontent","exempt-activex-java-cookie","exempt-dlp","exempt-rangeblock",
+        "extended-log-others"]
 
   web_youtube_restrict:
     description:
