@@ -131,21 +131,13 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.resource_group is not None and
-                self.server_name is not None and
-                self.firewall_rule_name is not None):
+        if (self.firewall_rule_name is not None):
             self.results['firewall_rules'] = self.get()
-        elif (self.resource_group is not None and
-              self.server_name is not None):
+        else:
             self.results['firewall_rules'] = self.list_by_server()
         return self.results
 
     def get(self):
-        '''
-        Gets facts of the specified PostgreSQL Firewall Rule.
-
-        :return: deserialized PostgreSQL Firewall Ruleinstance state dictionary
-        '''
         response = None
         results = {}
         try:
@@ -157,18 +149,13 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
             self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
-            results[response.name] = response.as_dict()
+            results.append(response.as_dict())
 
         return results
 
     def list_by_server(self):
-        '''
-        Gets facts of the specified PostgreSQL Firewall Rule.
-
-        :return: deserialized PostgreSQL Firewall Ruleinstance state dictionary
-        '''
         response = None
-        results = {}
+        results = []
         try:
             response = self.mgmt_client.firewall_rules.list_by_server(resource_group_name=self.resource_group,
                                                                       server_name=self.server_name)
@@ -178,7 +165,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results[item.name] = item.as_dict()
+                results.append(item.as_dict())
 
         return results
 
