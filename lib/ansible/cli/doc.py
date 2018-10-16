@@ -340,11 +340,13 @@ class DocCLI(CLI):
                 if not doc or not isinstance(doc, dict):
                     with open(filename) as f:
                         metadata = extract_metadata(module_data=f.read())
-                    if metadata[0] and 'removed' not in metadata[0].get('status', []):
-                        desc = 'UNDOCUMENTED'
-                        display.warning("%s parsing did not produce documentation." % plugin)
+                    if metadata[0]:
+                        if 'removed' not in metadata[0].get('status', []):
+                            display.warning("%s parsing did not produce documentation." % plugin)
+                        else:
+                            continue
                     else:
-                        continue
+                        desc = 'UNDOCUMENTED'
                 else:
                     desc = self.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
 
