@@ -94,7 +94,7 @@ repository_metadata:
       type: string
       sample: "reponame"
 
-response_metadata
+response_metadata:
   description: ""
   returned: always
   type: complex
