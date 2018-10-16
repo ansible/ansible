@@ -42,12 +42,14 @@ options:
             - Confinement policy. The classic confinment allows a snap to have
               the same level of access to the system as "classic" packages,
               like those managed by APT. This option corresponds to the --classic argument.
+              This option can only be specified if there is a single snap in the task.
         type: bool
         required: false
         default: False
     channel:
         description:
             - Define which release of a snap is installed and tracked for updates.
+              This option can only be specified if there is a single snap in the task.
         type: str
         required: false
         default: stable
@@ -160,7 +162,7 @@ def get_cmd_parts(module, snap_names):
     state = module.params['state']
 
     classic = ['--classic'] if module.params['classic'] else []
-    channel = ['--channel', module.params['channel']]
+    channel = ['--channel', module.params['channel']] if module.params['channel'] != 'stable' else []
 
     snap_path = module.get_bin_path("snap", True)
     snap_action = action_map[state]
