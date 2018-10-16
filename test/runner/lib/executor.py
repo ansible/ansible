@@ -509,7 +509,8 @@ def command_windows_integration(args):
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
     instances = []  # type: list [lib.thread.WrappedThread]
-    use_httptester = False
+    pre_target = None
+    post_target = None
     httptester_id = None
 
     if args.windows:
@@ -543,9 +544,7 @@ def command_windows_integration(args):
 
         if use_httptester and not docker_available() and not docker_httptester:
             display.warning('Assuming --disable-httptester since `docker` is not available.')
-            use_httptester = False
-
-        if use_httptester:
+        elif use_httptester:
             if docker_httptester:
                 # we are running in a Docker container that is linked to the httptester container, we just need to
                 # forward these requests to the linked hostname
@@ -563,32 +562,49 @@ def command_windows_integration(args):
 
             # create a script that will continue to run in the background until the script is deleted, this will
             # cleanup and close the connection
-            watcher_path = "ansible-test-http-watcher-%s.ps1" % time.time()
-            for remote in [r for r in remotes if r.version != '2008']:
-                manage = ManageWindowsCI(remote)
-                manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
+            def forward_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
+                if 'needs/httptester/' not in target.aliases:
+                    return
 
-                # need to use -Command as we cannot pass an array of values with -File
-                script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command .\\%s -Hosts %s" \
-                         % (watcher_path, ", ".join(HTTPTESTER_HOSTS))
-                if args.verbosity > 3:
-                    script += " -Verbose"
-                manage.ssh(script, options=ssh_options, force_pty=False)
+                for remote in [r for r in remotes if r.version != '2008']:
+                    manage = ManageWindowsCI(remote)
+                    manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
+
+                    # need to use -Command as we cannot pass an array of values with -File
+                    script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command .\\%s -Hosts %s" \
+                             % (watcher_path, ", ".join(HTTPTESTER_HOSTS))
+                    if args.verbosity > 3:
+                        script += " -Verbose"
+                    manage.ssh(script, options=ssh_options, force_pty=False)
+
+            def cleanup_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
+                if 'needs/httptester/' not in target.aliases:
+                    return
+
+                for remote in [r for r in remotes if r.version != '2008']:
+                    # delete the tmp file that keeps the http-tester alive
+                    manage = ManageWindowsCI(remote)
+                    manage.ssh("del %s /F /Q" % watcher_path)
+
+            watcher_path = "ansible-test-http-watcher-%s.ps1" % time.time()
+            pre_target = forward_ssh_ports
+            post_target = cleanup_ssh_ports
 
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets)
+        command_integration_filtered(args, internal_targets, all_targets, pre_target=pre_target,
+                                     post_target=post_target)
         success = True
     finally:
-        if use_httptester:
-            if httptester_id:
-                docker_rm(args, httptester_id)
-
-            for remote in [r for r in remotes if r.version != '2008']:
-                # delete the tmp file that keeps the http-tester alive
-                manage = ManageWindowsCI(remote)
-                manage.ssh("del %s /F /Q" % watcher_path)
+        if httptester_id:
+            docker_rm(args, httptester_id)
 
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             for instance in instances:
@@ -746,11 +762,13 @@ def command_integration_filter(args, targets, init_callback=None):
     return internal_targets
 
 
-def command_integration_filtered(args, targets, all_targets):
+def command_integration_filtered(args, targets, all_targets, pre_target=None, post_target=None):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     :type all_targets: tuple[IntegrationTarget]
+    :type pre_target: (IntegrationTarget) -> None | None
+    :type post_target: (IntegrationTarget) -> None | None
     """
     found = False
     passed = []
@@ -837,11 +855,18 @@ def command_integration_filtered(args, targets, all_targets):
                         remove_tree(test_dir)
                         make_dirs(test_dir)
 
-                    if target.script_path:
-                        command_integration_script(args, target)
-                    else:
-                        command_integration_role(args, target, start_at_task)
-                        start_at_task = None
+                    if pre_target:
+                        pre_target(target)
+
+                    try:
+                        if target.script_path:
+                            command_integration_script(args, target)
+                        else:
+                            command_integration_role(args, target, start_at_task)
+                            start_at_task = None
+                    finally:
+                        if post_target:
+                            post_target(target)
 
                     end_time = time.time()
 
