@@ -110,11 +110,11 @@ options:
      default: 'no'
    files:
      description:
-       - Files to insert into the instance.
-         Equivalent of files= option in nova boot for personality
+        - Files to insert into the instance.
+          Equivalent of files= option in nova boot for personality
      required: false
      default: null
-     version_added: "2.4"
+     version_added: "2.8"
    userdata:
      description:
         - Opaque blob of data which is made available to the instance
