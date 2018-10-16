@@ -23,6 +23,8 @@ import textwrap
 import traceback
 import yaml
 
+import ansible.plugins.loader as plugin_loader
+
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -32,8 +34,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
-    vars_loader, connection_loader, strategy_loader, inventory_loader, shell_loader, fragment_loader
+from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
 try:
@@ -56,18 +57,6 @@ class DocCLI(CLI):
 
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
-
-        self.loader_map = {
-            'cache': cache_loader,
-            'callback': callback_loader,
-            'connection': connection_loader,
-            'lookup': lookup_loader,
-            'strategy': strategy_loader,
-            'vars': vars_loader,
-            'inventory': inventory_loader,
-            'shell': shell_loader,
-            'module': module_loader,
-        }
 
     def parse(self):
 
@@ -103,7 +92,11 @@ class DocCLI(CLI):
         super(DocCLI, self).run()
 
         plugin_type = self.options.type
-        loader = self.loader_map.get(plugin_type, self.loader_map['module'])
+
+        if plugin_type in C.DOCUMENTABLE_PLUGINS:
+            loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+        else:
+            raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
 
         # add to plugin path from command line
         if self.options.module_path:
@@ -136,16 +129,16 @@ class DocCLI(CLI):
 
         # process all plugins of type
         if self.options.all_plugins:
-            self.args = self.get_all_plugins_of_type(plugin_type)
+            self.args = self.get_all_plugins_of_type(plugin_type, loader)
 
         # dump plugin metadata as JSON
         if self.options.json_dump:
             plugin_data = {}
-            for plugin_type in self.loader_map.keys():
+            for plugin_type in C.DOCUMENTABLE_PLUGINS:
                 plugin_data[plugin_type] = dict()
-                plugin_names = self.get_all_plugins_of_type(plugin_type)
+                plugin_names = self.get_all_plugins_of_type(plugin_type, loader)
                 for plugin_name in plugin_names:
-                    plugin_info = self.get_plugin_metadata(plugin_type, plugin_name)
+                    plugin_info = self.get_plugin_metadata(plugin_type, plugin_name, loader)
                     if plugin_info is not None:
                         plugin_data[plugin_type][plugin_name] = plugin_info
 
@@ -169,8 +162,7 @@ class DocCLI(CLI):
 
         return 0
 
-    def get_all_plugins_of_type(self, plugin_type):
-        loader = self.loader_map[plugin_type]
+    def get_all_plugins_of_type(self, plugin_type, loader):
         plugin_list = set()
         paths = loader._get_paths()
         for path in paths:
@@ -178,9 +170,8 @@ class DocCLI(CLI):
             plugin_list.update(plugins_to_add)
         return sorted(set(plugin_list))
 
-    def get_plugin_metadata(self, plugin_type, plugin_name):
+    def get_plugin_metadata(self, plugin_type, plugin_name, loader):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        loader = self.loader_map[plugin_type]
         filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if filename is None:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
@@ -349,7 +340,7 @@ class DocCLI(CLI):
                 if not doc or not isinstance(doc, dict):
                     with open(filename) as f:
                         metadata = extract_metadata(module_data=f.read())
-                    if 'removed' not in metadata[0].get('status', []):
+                    if metadata[0] and 'removed' not in metadata[0].get('status', []):
                         desc = 'UNDOCUMENTED'
                         display.warning("%s parsing did not produce documentation." % plugin)
                     else:
@@ -365,7 +356,7 @@ class DocCLI(CLI):
                 else:
                     text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
             except Exception as e:
-                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
         if len(deprecated) > 0:
             text.append("\nDEPRECATED:")
@@ -394,7 +385,7 @@ class DocCLI(CLI):
                 text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
 
             except Exception as e:
-                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
         return "\n".join(text)
 
