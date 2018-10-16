@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os
+""" Configure ipa-server """
 import subprocess
 import re
 from ansible.module_utils.basic import AnsibleModule
@@ -104,6 +104,7 @@ message:
 '''
 
 def ipa_stuff(params):
+    """ Run IPA server install using passed in params """
     #
     # get parameters from args dict
     #
@@ -113,7 +114,6 @@ def ipa_stuff(params):
     domainname = params["domainname"]
     realmname = params["realmname"]
     setupdns = params["setupdns"]
-    #forwarder = "--forwarder=" + params["forwarder"]
     # define output dict with some sane defaults
     results = {
         "output": "",
@@ -121,7 +121,19 @@ def ipa_stuff(params):
         "change": True,
     }
 
-    config_array = ["/sbin/ipa-server-install", "-p", dmpass, "-a", adminpass, ipahostname, "-n", domainname, "-r", realmname, "-U"]
+    config_array = [
+        "/sbin/ipa-server-install",
+        "-p",
+        dmpass,
+        "-a",
+        adminpass,
+        ipahostname,
+        "-n",
+        domainname,
+        "-r",
+        realmname,
+        "-U"
+    ]
 
     # check if DNS is being configured
     if setupdns:
@@ -142,11 +154,11 @@ def ipa_stuff(params):
     #
     # catch any exceptions
     #
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError as error:
         #
         # place the error in the dict, set change to false and change return code to error (1)
         #
-        results["output"] = e.output
+        results["output"] = error.output
         results["change"] = False
         results["rc"] = 1
         #
@@ -156,12 +168,12 @@ def ipa_stuff(params):
         #
         # iterate through array
         #
-        for x in search_output:
+        for line in search_output:
             #
             # check if error is due to ipa already being configured
             #
-            regexpgroup = re.search('^.*already exists in DNS.*(server\(s\))\:\s(.+)\.$', x)
-            regexpgroup2 = re.search('^.*IPA server is already configured.*$', x)
+            regexpgroup = re.search(r'^.*already exists in DNS.*(server\(s\))\:\s(.+)\.$', line)
+            regexpgroup2 = re.search(r'^.*IPA server is already configured.*$', line)
             #
             # if failure is due to zone already being managed by a DNS master do some more checks
             #
@@ -193,6 +205,7 @@ def ipa_stuff(params):
 
 
 def run_module():
+    """ Get arguments from input, verify parameters """
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
@@ -244,13 +257,13 @@ def run_module():
     }
 
     # if dns configured, add forwarders to ipa_params dict.
-    if module.params["setupdns"] == True:
-        # check if forwarder passed in
+    if module.params["setupdns"]:
         if module.params["forwarder"]:
             ipa_params["forwarder"] = module.params["forwarder"]
         # if no forwarder configured, throw a useful error and exit
         else:
-            result['message'] = "Error: no dns forwarder configured, required forwarder: XXX.XXX.XXX.XXX parameter"
+            msg = "Error: no dns forwarder configured, required forwarder: XXX.XXX.XXX.XXX"
+            result['message'] = msg
             result['rc'] = 1
             result['changed'] = False
             module.exit_json(**result)
@@ -275,6 +288,7 @@ def run_module():
     module.exit_json(**result)
 
 def main():
+    """ main function """
     run_module()
 
 if __name__ == '__main__':
