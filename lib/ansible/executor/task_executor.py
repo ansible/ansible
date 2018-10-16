@@ -236,7 +236,7 @@ class TaskExecutor:
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
-        elif self._task.loop:
+        elif self._task.loop is not None:
             items = templar.template(self._task.loop)
             if not isinstance(items, list):
                 raise AnsibleError(
