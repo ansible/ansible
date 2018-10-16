@@ -342,6 +342,7 @@ class DocCLI(CLI):
                         metadata = extract_metadata(module_data=f.read())
                     if metadata[0]:
                         if 'removed' not in metadata[0].get('status', []):
+                            desc = 'UNDOCUMENTED'
                             display.warning("%s parsing did not produce documentation." % plugin)
                         else:
                             continue
