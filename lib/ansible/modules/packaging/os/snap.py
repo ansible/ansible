@@ -160,7 +160,7 @@ def get_cmd_parts(module, snap_names):
     state = module.params['state']
 
     classic = ['--classic'] if module.params['classic'] else []
-    channel = ['--channel ', module.params['channel']]
+    channel = ['--channel', module.params['channel']]
 
     snap_path = module.get_bin_path("snap", True)
     snap_action = action_map[state]
