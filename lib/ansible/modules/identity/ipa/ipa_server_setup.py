@@ -1,5 +1,10 @@
 #!/usr/bin/python
 """ Configure ipa-server """
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 import subprocess
 import re
 from ansible.module_utils.basic import AnsibleModule
@@ -102,6 +107,7 @@ original_message:
 message:
     description: The output message that the sample module generates
 '''
+
 
 def ipa_stuff(params):
     """ Run IPA server install using passed in params """
@@ -245,7 +251,6 @@ def run_module():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    #result['message'] = 'goodbye'
 
     ipa_params = {
         "hostname": module.params["hostname"],
@@ -287,9 +292,11 @@ def run_module():
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
+
 def main():
     """ main function """
     run_module()
+
 
 if __name__ == '__main__':
     main()
