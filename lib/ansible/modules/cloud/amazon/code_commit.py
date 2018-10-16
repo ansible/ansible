@@ -113,7 +113,7 @@ response_metadata:
       returned: always
       type: string
       sample: "fb49cfca-d0fa-11e8-85cb-b3cc4b5045ef"
-    retry_attempts: 0
+    retry_attempts:
       description: ""
       returned: always
       type: string
