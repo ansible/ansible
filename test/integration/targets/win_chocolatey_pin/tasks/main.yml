@@ -4,11 +4,10 @@
     name: chocolatey
     state: present
 
-- name: ensure firefox is installed
+- name: ensure notepadplusplus is installed
   win_chocolatey:
-    name: firefox
+    name: notepadplusplus
     state: present
-    version: 61.0.2.0
 
 - block:
   - name: run tests
