@@ -1,4 +1,9 @@
 #!/usr/bin/python
+import os
+import subprocess
+import re
+from ansible.module_utils.basic import AnsibleModule
+
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -97,11 +102,6 @@ original_message:
 message:
     description: The output message that the sample module generates
 '''
-
-from ansible.module_utils.basic import AnsibleModule
-import os
-import subprocess
-import re
 
 def ipa_stuff(params):
     #
