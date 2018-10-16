@@ -185,7 +185,9 @@ def execute_action(module):
 
     changed_def_args = {
         'changed': True,
-        'snaps_installed': actionable_snaps,
+        'snaps_{}'.
+        format('installed' if is_install_mode
+               else 'removed'): actionable_snaps,
     }
 
     if module.check_mode:
