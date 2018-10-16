@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: cpm_plugs
-version_added: "2.7"
+version_added: "2.8"
 author: "Western Telematic Inc. (@wtinetworkgear)"
 short_description: Get and Set Plug actions on WTI OOB and PDU devices
 description:
@@ -123,12 +123,12 @@ data:
 """
 
 import base64
+import json
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
-from ansible.errors import AnsibleError
 
 
 def assemble_json(cpmmodule, cpmresult):
@@ -201,15 +201,19 @@ def run_module():
             result['changed'] = True
 
     except HTTPError as e:
-        raise AnsibleError("Received HTTP error for %s : %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Received HTTP error for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except URLError as e:
-        raise AnsibleError("Failed lookup url for %s : %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Failed lookup url for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except SSLValidationError as e:
-        raise AnsibleError("Error validating the server's certificate for %s: %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except ConnectionError as e:
-        raise AnsibleError("Error connecting to %s: %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Error connecting to  for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
 
-    result['data'] = to_text(response.read())
+    result['data'] = json.loads(response.read())
 
     module.exit_json(**result)
 
