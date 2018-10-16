@@ -17,7 +17,7 @@ DOCUMENTATION = '''
       - whitelist in configuration
       - cgroups
     short_description: Profiles system activity of tasks and full execution using cgroups
-    version_added: "2.6"
+    version_added: "2.8"
     description:
         - This is an ansible callback plugin utilizes cgroups to profile system activity of ansible and
           individual tasks, and display a recap at the end of the playbook execution
