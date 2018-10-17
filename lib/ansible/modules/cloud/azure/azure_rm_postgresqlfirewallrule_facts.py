@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -30,7 +30,7 @@ options:
         description:
             - The name of the server.
         required: True
-    firewall_rule_name:
+    name:
         description:
             - The name of the server firewall rule.
 
@@ -47,7 +47,7 @@ EXAMPLES = '''
     azure_rm_postgresqlfirewallrule_facts:
       resource_group: resource_group_name
       server_name: server_name
-      firewall_rule_name: firewall_rule_name
+      name: firewall_rule_name
 
   - name: List instances of PostgreSQL Firewall Rule
     azure_rm_postgresqlfirewallrule_facts:
@@ -56,7 +56,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-firewall_rules:
+rules:
     description: A list of dictionaries containing facts for that PostgreSQL Firewall Rule.
     returned: always
     type: complex
@@ -110,19 +110,18 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            firewall_rule_name=dict(
+            name=dict(
                 type='str'
             )
         )
         # store the results of the module operation
         self.results = dict(
-            changed=False,
-            ansible_facts=dict()
+            changed=False
         )
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.firewall_rule_name = None
+        self.name = None
         super(AzureRMFirewallRulesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -131,10 +130,10 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.firewall_rule_name is not None):
-            self.results['firewall_rules'] = self.get()
+        if (self.name is not None):
+            self.results['rules'] = self.get()
         else:
-            self.results['firewall_rules'] = self.list_by_server()
+            self.results['rules'] = self.list_by_server()
         return self.results
 
     def get(self):
@@ -143,7 +142,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         try:
             response = self.mgmt_client.firewall_rules.get(resource_group_name=self.resource_group,
                                                            server_name=self.server_name,
-                                                           firewall_rule_name=self.firewall_rule_name)
+                                                           firewall_rule_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for FirewallRules.')
