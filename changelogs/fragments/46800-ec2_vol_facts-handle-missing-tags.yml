@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Only access EC2 volume tags when set
