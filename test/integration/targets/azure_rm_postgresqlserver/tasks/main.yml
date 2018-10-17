@@ -503,6 +503,49 @@
       - "output.rules | length == 0"
 
 #
+# azure_rm_postgresql_configuration
+#
+- name: Create instance of Configuration -- check mode
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    value: 2000
+    source: user-override
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Configuration
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    value: 2000
+    source: user-override
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Configuration
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    value: 2000
+    source: user-override
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+#
 # azure_rm_postgresqlserver continuation / clean up
 #
 
