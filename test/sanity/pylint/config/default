@@ -18,7 +18,6 @@ disable=
     cell-var-from-loop,
     chained-comparison,
     comparison-with-callable,
-    comparison-with-itself,
     consider-iterating-dictionary,
     consider-merging-isinstance,
     consider-using-dict-comprehension,
