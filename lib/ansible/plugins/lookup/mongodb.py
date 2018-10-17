@@ -202,7 +202,7 @@ class LookupModule(LookupBase):
 
   tasks:
     - debug: msg="Mongo has already started with the following PID [{{ item.pid }}] - full_data {{ item }} "
-      with_items:
+      loop:
       - "{{ lookup('mongodb', mongodb_parameters) }}"
 -------------------------------------------------------------------------------
             '''
