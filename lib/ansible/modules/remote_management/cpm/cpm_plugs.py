@@ -70,7 +70,7 @@ options:
   plug_id:
     description:
       - This is the plug number or the plug name that is to be manipulated
-        For the plugget command, the plug_id 'all' will return the status of all the plugs ther
+        For the plugget command, the plug_id 'all' will return the status of all the plugs the
         user has rights to access.
     required: true
   plug_state:
