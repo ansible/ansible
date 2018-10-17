@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - s3_bucket - Prior to 2.6 using non-text tags worked, although was not idempotent. In 2.6
+    waiters were introduced causing non-text tags to be fatal to the module's completion.
+    This fixes the module failure as well as idempotence using integers as tags.
