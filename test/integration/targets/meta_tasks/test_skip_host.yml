@@ -1,0 +1,14 @@
+- name: "Testing skip_host with strategy={{ test_strategy | default('linear') }}"
+  hosts:
+    - testhost
+    - testhost2
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+    - debug:
+
+    - meta: skip_host
+      when: "host_var_role_name == 'role2'"  # skip testhost2, see test/integration/inventory
+
+    - debug:
+        msg: "{{ inventory_hostname }} not skipped"

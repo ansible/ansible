@@ -1,0 +1,2 @@
+minor_changes:
+    - Add new meta task skip_host - https://github.com/ansible/ansible/issues/40904
