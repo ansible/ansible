@@ -737,6 +737,7 @@ def main():
     boot_volume = module.params['boot_volume']
     flavor = module.params['flavor']
     flavor_ram = module.params['flavor_ram']
+    files = module.params['files']
 
     if state == 'present':
         if not (image or boot_volume):
