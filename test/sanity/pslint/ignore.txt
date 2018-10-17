@@ -47,7 +47,6 @@ lib/ansible/modules/windows/win_iis_website.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_iis_website.ps1 PSAvoidUsingPositionalParameters
 lib/ansible/modules/windows/win_iis_website.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_nssm.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_nssm.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_package.ps1 PSUseApprovedVerbs
