@@ -133,34 +133,37 @@ notes:
     # Documentation fragment for E-Series
     ESERIES = """
 options:
-  api_username:
-    required: true
-    description:
-    - The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
-  api_password:
-    required: true
-    description:
-    - The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
-  api_url:
-    required: true
-    description:
-    - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
-  validate_certs:
-    required: false
-    default: true
-    description:
-        - Should https certificates be validated?
-    type: bool
-  ssid:
-    required: true
-    description:
-    - The ID of the array to manage. This value must be unique for each array.
-
+    api_username:
+        description:
+            - The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+        required: true
+    api_password:
+        description:
+            - The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+        required: true
+    api_url:
+        description:
+            - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
+        required: true
+        example:
+            - https://prod-1.wahoo.acme.com/devmgr/v2
+    validate_certs:
+        description:
+            - Should https certificates be validated?
+        required: false
+        default: true
+        type: bool
+    ssid:
+        description:
+            - The ID of the array to manage. This value must be unique for each array.
+        required: true
+    log_path:
+        description:
+            - Local path on the control node used for logging
+        required: false
 notes:
-  - The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage
-    the storage-system, or an E-Series storage-system that supports the Embedded Web Services API.
-  - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
-  - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
-    """
+      - The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to
+        manage the storage-system, or an E-Series storage-system that supports the Embedded Web Services API.
+      - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+      - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
+"""
