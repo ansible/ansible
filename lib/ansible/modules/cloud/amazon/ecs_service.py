@@ -312,7 +312,6 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
-from distutils.version import LooseVersion
 
 try:
     import botocore
@@ -453,12 +452,13 @@ class EcsServiceManager:
         # There doesn't seem to be a nice way to inspect botocore to look
         # for attributes (and networkConfiguration is not an explicit argument
         # to e.g. ecs.run_task, it's just passed as a keyword argument)
-        return LooseVersion(botocore.__version__) >= LooseVersion('1.7.44')
+        return self.module.botocore_at_least('1.7.44')
 
     def health_check_setable(self, params):
         load_balancers = params.get('loadBalancers', [])
         # check if botocore (and thus boto3) is new enough for using the healthCheckGracePeriodSeconds parameter
-        return len(load_balancers) > 0  and LooseVersion(botocore.__version__) >= LooseVersion('1.9.0')
+        return len(load_balancers) > 0 and self.module.botocore_at_least('1.9.0')
+
 
 def main():
     argument_spec = ec2_argument_spec()
