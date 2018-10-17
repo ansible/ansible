@@ -43,7 +43,17 @@ class RabbitClient():
         self.params = module.params
         self.check_required_library()
         self.url = self.params['url']
+        self.proto = self.params['proto']
+        self.username = self.params['username']
+        self.password = self.params['password']
+        self.host = self.params['host']
+        self.port = self.params['port']
+        self.vhost = self.params['vhost']
         self.queue = self.params['queue']
+
+        if self.host is not None:
+            self.build_url()
+
         self.conn_channel = self.connect_to_rabbitmq()
 
     def check_required_library(self):
@@ -53,7 +63,13 @@ class RabbitClient():
     @staticmethod
     def rabbitmq_argument_spec():
         return dict(
-            url=dict(default='amqp://guest:guest@127.0.0.1:5672/%2F', type='str'),
+            url=dict(default=None, type='str'),
+            proto=dict(default=None, type='str'),
+            host=dict(default=None, type='str'),
+            port=dict(default=None, type='int'),
+            username=dict(default=None, type='str'),
+            password=dict(default=None, type='str', no_log=True),
+            vhost=dict(default='%2F', type='str'),
             queue=dict(default=None, type='str')
         )
 
@@ -70,6 +86,14 @@ class RabbitClient():
     def _check_file_mime_type(path):
         mime = MimeTypes()
         return mime.guess_type(path)
+
+    def build_url(self):
+        self.url = '{0}://{1}:{2}@{3}:{4}/{5}'.format(self.proto,
+                                                      self.username,
+                                                      self.password,
+                                                      self.host,
+                                                      self.port,
+                                                      self.vhost)
 
     def connect_to_rabbitmq(self):
         """

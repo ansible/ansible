@@ -79,17 +79,35 @@
       - "file_missing_fail is failed"
       - "'Unable to open file' in file_missing_fail.msg"
 
+- name: Use proto/host/port/user/pass
+  rabbitmq_basic_publish:
+    proto: amqp
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    vhost: '%2F'
+    queue: publish_test
+    body: Testing with host/port
+  delegate_to: localhost
+  register: host_port_output
+
+- assert:
+    that:
+      - "host_port_output is not failed"
+
 - name: Collect all messages off the publish queue
   set_fact:
     messages: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2F', queue='publish_test') }}"
 
-- name: Double check contents of published messages
+- name: Check contents of published messages
   assert:
     that:
-      - messages|length == 2
+      - messages|length == 3
       - "'Hello world from ansible module rabitmq_basic_publish' in messages[0]['msg']"
       - "'text/plain' in messages[0]['content_type']"
       - "'image/gif' in messages[1]['content_type']"
+      - "'Testing with host/port' in messages[2]['msg']"
 
 # Tidy up
 - name: Uninstall pika and requests

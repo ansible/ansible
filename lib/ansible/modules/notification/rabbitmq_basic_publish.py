@@ -24,7 +24,26 @@ options:
   url:
     description:
       - An URL connection string to connect to the RabbitMQ server.
-    default: amqp://guest:guest@127.0.0.1:5672/%2F
+      - URL and host/port/user/pass/vhost are mutually exclusive, use either or but not both.
+  proto:
+    description:
+      - The protocol to use.  ampq or ampqs.
+  host:
+    description:
+      - The RabbitMQ server hostname or IP.
+  port:
+    description:
+      - The RabbitMQ server port.
+  username:
+    description:
+      - The RabbitMQ username.
+  password:
+    description:
+      - The RabbitMQ password.
+  vhost:
+    description:
+      - The virtual host to target.
+    default: '%2F'
   queue:
     description:
       - The queue to publish a message to.  If no queue is specified, RabbitMQ will return a random queue name.
@@ -98,7 +117,7 @@ RETURN = '''
 result:
   description:
     - Contains the a message (msg), content type (content_type) and the queue name (queue).
-  returned: always
+  returned: success
   type: dict
   sample: 'result': { 'content_type': 'text/plain', 'msg': 'Successfully published to queue test', 'queue': 'test' }
 '''
@@ -136,6 +155,10 @@ def main():
 
     if module.params['body'] is not None and module.params['src'] is not None:
         module.fail_json(msg="src and body cannot be specified at the same time")
+
+    # maybe use all() here?  This needs a tidy up.
+    if module.params['url'] is not None and (module.params['host'] is not None or module.params['port'] is not None or module.params['username'] is not None or module.params['password'] is not None  ):
+        module.fail_json(msg="url and host, port, username or password cannot be specified at the same time")
 
     if rabbitmq.basic_publish():
         rabbitmq.close_connection()
