@@ -80,6 +80,7 @@ options:
                        (total number of regions - 1). Failover priority values must be unique for each of the regions in which the database account exists."
     database_account_offer_type:
         description:
+            - TBD
         required: True
     ip_range_filter:
         description:
