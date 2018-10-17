@@ -105,7 +105,6 @@ disable=
     unexpected-keyword-arg,
     ungrouped-imports,
     unidiomatic-typecheck,
-    unneeded-not,
     unsubscriptable-object,
     unsupported-assignment-operation,
     unsupported-delete-operation,
