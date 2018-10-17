@@ -239,7 +239,6 @@ options:
 
   ovrd_perm:
     description:
-      - # TODO NO DESCRIPTION PARSED -  ENTER MANUALLY
       - FLAG Based Options. Specify multiple in list form.
       - flag | bannedword-override | Banned word override.
       - flag | urlfilter-override | URL filter override.
@@ -250,7 +249,6 @@ options:
 
   options:
     description:
-      - # TODO NO DESCRIPTION PARSED -  ENTER MANUALLY
       - FLAG Based Options. Specify multiple in list form.
       - flag | block-invalid-url | Block sessions contained an invalid domain name.
       - flag | jscript | Javascript block.
@@ -553,22 +551,9 @@ options:
       - choice | Acct-Multi-Session-Id | Use this attribute.
     required: false
     choices:["User-Name","NAS-IP-Address","Framed-IP-Address","Framed-IP-Netmask","Filter-Id","Login-IP-Host",
-        "Reply-Message",
-        "Callback-Number",
-        "Callback-Id",
-        "Framed-Route",
-        "Framed-IPX-Network",
-        "Class",
-        "Called-Station-Id",
-        "Calling-Station-Id",
-        "NAS-Identifier",
-        "Proxy-State",
-        "Login-LAT-Service",
-        "Login-LAT-Node",
-        "Login-LAT-Group",
-        "Framed-AppleTalk-Zone",
-        "Acct-Session-Id",
-        "Acct-Multi-Session-Id"]
+        "Reply-Message","Callback-Number","Callback-Id","Framed-Route","Framed-IPX-Network","Class",
+        "Called-Station-Id","Calling-Station-Id","NAS-Identifier","Proxy-State","Login-LAT-Service","Login-LAT-Node",
+        "Login-LAT-Group","Framed-AppleTalk-Zone","Acct-Session-Id","Acct-Multi-Session-Id"]
 
   override_profile_type:
     description:
@@ -729,90 +714,47 @@ options:
 '''
 
 EXAMPLES = '''
-- name: EDIT FMGR_WEBFILTER_PROFILE
-  fmgr_webfilter_profile:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    mode:
-    adom:
-    youtube_channel_status:
-    wisp_servers:
-    wisp_algorithm:
-    wisp:
-    web_url_log:
-    web_invalid_domain_log:
-    web_ftgd_quota_usage:
-    web_ftgd_err_log:
-    web_filter_vbs_log:
-    web_filter_unknown_log:
-    web_filter_referer_log:
-    web_filter_jscript_log:
-    web_filter_js_log:
-    web_filter_cookie_removal_log:
-    web_filter_cookie_log:
-    web_filter_command_block_log:
-    web_filter_applet_log:
-    web_filter_activex_log:
-    web_extended_all_action_log:
-    web_content_log:
-    replacemsg_group:
-    post_action:
-    ovrd_perm:
-    options:
-    name:
-    log_all_url:
-    inspection_mode:
-    https_replacemsg:
-    extended_log:
-    comment:
-    ftgd_wf_exempt_quota:
-    ftgd_wf_max_quota_timeout:
-    ftgd_wf_options:
-    ftgd_wf_ovrd:
-    ftgd_wf_rate_crl_urls:
-    ftgd_wf_rate_css_urls:
-    ftgd_wf_rate_image_urls:
-    ftgd_wf_rate_javascript_urls:
-    ftgd_wf_filters_action:
-    ftgd_wf_filters_auth_usr_grp:
-    ftgd_wf_filters_category:
-    ftgd_wf_filters_log:
-    ftgd_wf_filters_override_replacemsg:
-    ftgd_wf_filters_warn_duration:
-    ftgd_wf_filters_warning_duration_type:
-    ftgd_wf_filters_warning_prompt:
-    ftgd_wf_quota_category:
-    ftgd_wf_quota_duration:
-    ftgd_wf_quota_override_replacemsg:
-    ftgd_wf_quota_type:
-    ftgd_wf_quota_unit:
-    ftgd_wf_quota_value:
-    override_ovrd_cookie:
-    override_ovrd_dur:
-    override_ovrd_dur_mode:
-    override_ovrd_scope:
-    override_ovrd_user_group:
-    override_profile:
-    override_profile_attribute:
-    override_profile_type:
-    url_extraction_redirect_header:
-    url_extraction_redirect_no_content:
-    url_extraction_redirect_url:
-    url_extraction_server_fqdn:
-    url_extraction_status:
-    web_blacklist:
-    web_bword_table:
-    web_bword_threshold:
-    web_content_header_list:
-    web_keyword_match:
-    web_log_search:
-    web_safe_search:
-    web_urlfilter_table:
-    web_whitelist:
-    web_youtube_restrict:
-    youtube_channel_filter_channel_id:
-    youtube_channel_filter_comment:
+  - name: DELETE Profile
+    fmgr_secprof_web:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_Web_Filter_Profile"
+      mode: "delete"
+
+  - name: CREATE Profile
+    fmgr_secprof_web:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_Web_Filter_Profile"
+      comment: "Created by Ansible Module TEST"
+      mode: "set"
+      extended_log: "enable"
+      inspection_mode: "proxy"
+      log_all_url: "enable"
+      options: "js"
+      ovrd_perm: "bannedword-override"
+      post_action: "block"
+      web_content_log: "enable"
+      web_extended_all_action_log: "enable"
+      web_filter_activex_log: "enable"
+      web_filter_applet_log: "enable"
+      web_filter_command_block_log: "enable"
+      web_filter_cookie_log: "enable"
+      web_filter_cookie_removal_log: "enable"
+      web_filter_js_log: "enable"
+      web_filter_jscript_log: "enable"
+      web_filter_referer_log: "enable"
+      web_filter_unknown_log: "enable"
+      web_filter_vbs_log: "enable"
+      web_ftgd_err_log: "enable"
+      web_ftgd_quota_usage: "enable"
+      web_invalid_domain_log: "enable"
+      web_url_log: "enable"
+      wisp: "enable"
+      wisp_algorithm: "auto-learning"
+      youtube_channel_status: "blacklist"
 '''
 
 RETURN = """
