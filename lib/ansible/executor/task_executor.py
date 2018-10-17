@@ -4,7 +4,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import copy
 import os
 import pty
 import time
@@ -215,7 +214,7 @@ class TaskExecutor:
         if loop_cache is not None:
             # _ansible_loop_cache may be set in `get_vars` when calculating `delegate_to`
             # to avoid reprocessing the loop
-            items = copy.copy(loop_cache)
+            items = loop_cache
         elif self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
