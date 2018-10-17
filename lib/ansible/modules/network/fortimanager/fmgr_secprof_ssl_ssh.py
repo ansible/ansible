@@ -682,80 +682,29 @@ options:
 '''
 
 EXAMPLES = '''
-- name: EDIT FMGR_FIREWALL_SSL_SSH_PROFILE
-  fmgr_firewall_ssl_ssh_profile:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    mode:
-    adom:
-    whitelist:
-    use_ssl_server:
-    untrusted_caname:
-    ssl_exemptions_log:
-    ssl_anomalies_log:
-    server_cert_mode:
-    server_cert:
-    rpc_over_https:
-    name:
-    mapi_over_https:
-    comment:
-    caname:
-    ftps_allow_invalid_server_cert:
-    ftps_client_cert_request:
-    ftps_ports:
-    ftps_status:
-    ftps_unsupported_ssl:
-    ftps_untrusted_cert:
-    https_allow_invalid_server_cert:
-    https_client_cert_request:
-    https_ports:
-    https_status:
-    https_unsupported_ssl:
-    https_untrusted_cert:
-    imaps_allow_invalid_server_cert:
-    imaps_client_cert_request:
-    imaps_ports:
-    imaps_status:
-    imaps_unsupported_ssl:
-    imaps_untrusted_cert:
-    pop3s_allow_invalid_server_cert:
-    pop3s_client_cert_request:
-    pop3s_ports:
-    pop3s_status:
-    pop3s_unsupported_ssl:
-    pop3s_untrusted_cert:
-    smtps_allow_invalid_server_cert:
-    smtps_client_cert_request:
-    smtps_ports:
-    smtps_status:
-    smtps_unsupported_ssl:
-    smtps_untrusted_cert:
-    ssh_inspect_all:
-    ssh_ports:
-    ssh_ssh_algorithm:
-    ssh_ssh_policy_check:
-    ssh_ssh_tun_policy_check:
-    ssh_status:
-    ssh_unsupported_version:
-    ssl_allow_invalid_server_cert:
-    ssl_client_cert_request:
-    ssl_inspect_all:
-    ssl_unsupported_ssl:
-    ssl_untrusted_cert:
-    ssl_exempt_address:
-    ssl_exempt_address6:
-    ssl_exempt_fortiguard_category:
-    ssl_exempt_regex:
-    ssl_exempt_type:
-    ssl_exempt_wildcard_fqdn:
-    ssl_server_ftps_client_cert_request:
-    ssl_server_https_client_cert_request:
-    ssl_server_imaps_client_cert_request:
-    ssl_server_ip:
-    ssl_server_pop3s_client_cert_request:
-    ssl_server_smtps_client_cert_request:
-    ssl_server_ssl_other_client_cert_request:
+  - name: DELETE Profile
+    fmgr_secprof_ssl_ssh:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_SSL_SSH_Profile"
+      mode: "delete"
+
+  - name: CREATE Profile
+    fmgr_secprof_ssl_ssh:
+      host: "{{inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      name: "Ansible_SSL_SSH_Profile"
+      comment: "Created by Ansible Module TEST"
+      mode: "set"
+      mapi_over_https: "enable"
+      rpc_over_https: "enable"
+      server_cert_mode: "replace"
+      ssl_anomalies_log: "enable"
+      ssl_exemptions_log: "enable"
+      use_ssl_server: "enable"
+      whitelist: "enable"
 '''
 
 RETURN = """
