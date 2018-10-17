@@ -94,7 +94,7 @@ tasks:
     state: present
     password: "{{ temp_pass }}"
     access_key_state: create
-  with_items:
+  loop:
     - jcleese
     - mpython
 
@@ -106,7 +106,7 @@ task:
     iam_type: group
     name: "{{ item }}"
     state: present
-  with_items:
+  loop:
      - Mario
      - Luigi
   register: new_groups
@@ -117,7 +117,7 @@ task:
     name: jdavila
     state: update
     groups: "{{ item.created_group.group_name }}"
-  with_items: "{{ new_groups.results }}"
+  loop: "{{ new_groups.results }}"
 
 # Example of role with custom trust policy for Lambda service
 - name: Create IAM role with custom trust relationship
