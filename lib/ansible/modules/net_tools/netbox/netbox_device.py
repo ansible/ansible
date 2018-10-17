@@ -168,7 +168,7 @@ meta:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
-
+import json
 try:
     import pynetbox
     HAS_PYNETBOX = True
@@ -186,17 +186,19 @@ def netbox_create_device(nb, nb_endpoint, data):
     try:
         return nb_endpoint.create([norm_data])
     except pynetbox.RequestError as e:
-        return [e.error]
+        return json.loads(e.error)
 
 
 def netbox_delete_device(nb_endpoint, data):
     norm_data = normalize_data(data)
     endpoint = nb_endpoint.get(name=norm_data["name"])
+    result = []
     try:
         if endpoint.delete():
-            return ['SUCCESS: %s deleted from Netbox' % (norm_data["name"])]
+            result.append({'success': '%s deleted from Netbox' % (norm_data["name"])})
     except AttributeError:
-        return ['FAILED: %s not found' % (norm_data["name"])]
+        result.append({'failed': '%s not found' % (norm_data["name"])})
+    return result
 
 
 def main():
@@ -241,11 +243,11 @@ def main():
     nb_endpoint = getattr(nb_app, endpoint)
     if 'present' in state:
         response = netbox_create_device(nb, nb_endpoint, data)
-        if isinstance(response, list):
+        if response[0].get('created'):
             changed = True
     else:
         response = netbox_delete_device(nb_endpoint, data)
-        if 'SUCCESS' in response:
+        if 'success' in response[0]:
             changed = True
     module.exit_json(changed=changed, meta=response)
 
