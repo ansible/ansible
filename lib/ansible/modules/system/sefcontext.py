@@ -97,7 +97,6 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_native
 
 try:
@@ -193,8 +192,7 @@ def semanage_fcontext_modify(module, result, target, ftype, setype, do_reload, s
                 prepared_diff += '# Addition to semanage file context mappings\n'
                 prepared_diff += '+%s      %s      %s:%s:%s:%s\n' % (target, ftype, seuser, 'object_r', setype, serange)
 
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)))
 
     if module._diff and prepared_diff:
@@ -225,8 +223,7 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
                 prepared_diff += '# Deletion to semanage file context mappings\n'
                 prepared_diff += '-%s      %s      %s:%s:%s:%s\n' % (target, ftype, exists[0], exists[1], exists[2], exists[3])
 
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)))
 
     if module._diff and prepared_diff:
