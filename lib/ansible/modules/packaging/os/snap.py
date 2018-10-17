@@ -153,7 +153,7 @@ def get_snap_for_action(module):
     return [s for s in snaps if predicate(s)]
 
 
-def get_cmd_parts(module, snap_names):
+def get_base_cmd_parts(module):
     action_map = {
         'present': 'install',
         'absent': 'remove',
@@ -162,21 +162,35 @@ def get_cmd_parts(module, snap_names):
     state = module.params['state']
 
     classic = ['--classic'] if module.params['classic'] else []
-    channel = ['--channel', module.params['channel']] if module.params['channel'] != 'stable' else []
+    channel = ['--channel', module.params['channel']] if module.params['channel'] and module.params['channel'] != 'stable' else []
 
     snap_path = module.get_bin_path("snap", True)
     snap_action = action_map[state]
 
-    cmd_parts = [snap_path, snap_action] + snap_names
+    cmd_parts = [snap_path, snap_action]
     if snap_action == 'install':
         cmd_parts += classic + channel
 
     return cmd_parts
 
 
+def get_cmd_parts(module, snap_names):
+    """Return list of cmds to run in exec format."""
+    is_install_mode = module.params['state'] == 'present'
+    has_multiple_snaps = len(snap_names) > 1
+
+    cmd_parts = get_base_cmd_parts(module)
+    has_one_pkg_params = '--classic' in cmd_parts or '--channel' in cmd_parts
+
+    if not (is_install_mode and has_one_pkg_params and has_multiple_snaps):
+        return [cmd_parts + snap_names]
+
+    return [[cmd_parts + s] for s in snap_names]
+
+
 def run_cmd_for(module, snap_names):
-    cmd_parts = get_cmd_parts(module, snap_names)
-    cmd = ' '.join(cmd_parts)
+    cmds_parts = get_cmd_parts(module, snap_names)
+    cmd = '; '.join(' '.join(c) for c in cmd_parts)
 
     # Actually execute the snap command
     return module.run_command(cmd, check_rc=False)
