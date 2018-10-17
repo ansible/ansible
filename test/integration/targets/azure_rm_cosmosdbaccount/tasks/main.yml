@@ -6,6 +6,12 @@
 - name: Create instance of Database Account -- check mode
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
+    account_name: cosmosdbaccount
+    location: eastus
+    locations:
+      - location_name: eastus
+        failover_priority: 0
+    database_account_offer_type: Standard
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -16,6 +22,12 @@
 - name: Create instance of Database Account
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
+    account_name: cosmosdbaccount
+    location: eastus
+    locations:
+      - location_name: eastus
+        failover_priority: 0
+    database_account_offer_type: Standard
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -25,6 +37,12 @@
 - name: Create again instance of Database Account
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
+    account_name: cosmosdbaccount
+    location: eastus
+    locations:
+      - location_name: eastus
+        failover_priority: 0
+    database_account_offer_type: Standard
   register: output
 - name: Assert the state has not changed
   assert:
@@ -34,6 +52,7 @@
 - name: Delete instance of Database Account -- check mode
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
+    account_name: cosmosdbaccount
     state: absent
   check_mode: yes
   register: output
@@ -45,6 +64,7 @@
 - name: Delete instance of Database Account
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
+    account_name: cosmosdbaccount
     state: absent
   register: output
 - name: Assert the state has changed
@@ -55,6 +75,7 @@
 - name: Delete unexisting instance of Database Account
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
+    account_name: cosmosdbaccount
     state: absent
   register: output
 - name: Assert the state has changed

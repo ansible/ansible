@@ -120,7 +120,7 @@ id:
         - The unique resource identifier of the database account.
     returned: always
     type: str
-    sample: /subscriptions/subid/resourceGroups/rg1/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
+    sample: /subscriptions/subid/resourceGroups/rg1/yders/Microsoft.DocumentDB/databaseAccounts/ddb1
 '''
 
 import time
