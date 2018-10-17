@@ -522,6 +522,10 @@ def main():
                 clientToken = module.params['client_token']
                 loadBalancers = module.params['load_balancers']
 
+                for loadBalancer in loadBalancers:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
+
                 if update:
                     if (existing['loadBalancers'] or []) != loadBalancers:
                         module.fail_json(msg="It is not possible to update the load balancers of an existing service")
@@ -533,9 +537,6 @@ def main():
                                                           deploymentConfiguration,
                                                           network_configuration)
                 else:
-                    for loadBalancer in loadBalancers:
-                        if 'containerPort' in loadBalancer:
-                            loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
                     # doesn't exist. create it.
                     try:
                         response = service_mgr.create_service(module.params['name'],
