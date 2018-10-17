@@ -8,15 +8,15 @@
 - name: "Setup - Disable feature OSPF"
   nxos_feature: &disable
     feature: ospf
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   ignore_errors: yes
 
 - name: "Setup - Enable feature OSPF"
   nxos_feature: &enable
     feature: ospf
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - name: "Put interface into default state"
@@ -55,8 +55,8 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -80,8 +80,8 @@
       passive_interface: false
       hello_interval: 17
       dead_interval: 70
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -100,8 +100,8 @@
       cost: default
       hello_interval: 10
       dead_interval: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -122,8 +122,8 @@
       message_digest_algorithm_type: md5
       message_digest_encryption_type: 3des
       message_digest_password: b69f7bc54725b1bfd1ea93afa7b09400
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -144,8 +144,8 @@
       message_digest_algorithm_type: default
       message_digest_encryption_type: default
       message_digest_password: default
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -186,8 +186,8 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -207,8 +207,8 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -223,12 +223,12 @@
     nxos_interface_ospf: &configurelb
       interface: LOOPBACK55
       ospf: 1
-      area: 4.4.4.4
+      area: 192.0.2.4
       cost: 55
       hello_interval: 15
       dead_interval: 75
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -247,8 +247,8 @@
       cost: 77
       hello_interval: 45
       dead_interval: 75
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -268,8 +268,8 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true

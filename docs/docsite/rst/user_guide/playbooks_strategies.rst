@@ -1,3 +1,5 @@
+.. _playbooks_strategies:
+
 Strategies
 ===========
 

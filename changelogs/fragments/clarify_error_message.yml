@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix an atomic_move error that is 'true', but  misleading. Now we show all 3 files involved and clarify what happened.

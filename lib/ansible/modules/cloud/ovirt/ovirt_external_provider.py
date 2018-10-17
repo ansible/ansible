@@ -39,6 +39,8 @@ options:
     state:
         description:
             - "Should the external be present or absent"
+            - "When you are using absent for I(os_volume), you need to make
+               sure that SD is not attached to the data center!"
         choices: ['present', 'absent']
         default: present
     description:
@@ -84,6 +86,15 @@ options:
             - "Applicable if C(type) is I(network)."
         choices: ['external', 'neutron']
         default: ['external']
+    authentication_keys:
+        description:
+            - "List of authentication keys. Each key is represented by dict
+               like {'uuid': 'our-uuid', 'value': 'YourSecretValue=='}"
+            - "When you will not pass these keys and there are already some
+               of them defined in the system they will be removed."
+            - "Applicable for I(os_volume)."
+        default: []
+        version_added: "2.6"
 extends_documentation_fragment: ovirt
 '''
 
@@ -95,11 +106,25 @@ EXAMPLES = '''
 - ovirt_external_provider:
     name: image_provider
     type: os_image
-    url: http://10.34.63.71:9292
+    url: http://1.2.3.4:9292
     username: admin
     password: 123456
     tenant: admin
-    auth_url: http://10.34.63.71:35357/v2.0/
+    auth_url: http://1.2.3.4:35357/v2.0
+
+# Add volume external provider:
+- ovirt_external_provider:
+    name: image_provider
+    type: os_volume
+    url: http://1.2.3.4:9292
+    username: admin
+    password: 123456
+    tenant: admin
+    auth_url: http://1.2.3.4:5000/v2.0
+    authentication_keys:
+      -
+        uuid: "1234567-a1234-12a3-a234-123abc45678"
+        value: "ABCD00000000111111222333445w=="
 
 # Add foreman provider:
 - ovirt_external_provider:
@@ -169,23 +194,49 @@ from ansible.module_utils.ovirt import (
 )
 
 
+OS_VOLUME = 'os_volume'
+OS_IMAGE = 'os_image'
+NETWORK = 'network'
+FOREMAN = 'foreman'
+
+
 class ExternalProviderModule(BaseModule):
+
+    non_provider_params = ['type', 'authentication_keys', 'data_center']
 
     def provider_type(self, provider_type):
         self._provider_type = provider_type
+
+    def provider_module_params(self):
+        provider_params = [
+            (key, value) for key, value in self._module.params.items() if key
+            not in self.non_provider_params
+        ]
+        provider_params.append(('data_center', self.get_data_center()))
+        return provider_params
+
+    def get_data_center(self):
+        dc_name = self._module.params.get("data_center", None)
+        if dc_name:
+            system_service = self._connection.system_service()
+            data_centers_service = system_service.data_centers_service()
+            return data_centers_service.list(
+                search='name=%s' % dc_name,
+            )[0]
+        return dc_name
 
     def build_entity(self):
         provider_type = self._provider_type(
             requires_authentication=self._module.params.get('username') is not None,
         )
-        if self._module.params.pop('type') == 'network':
+        if self._module.params.pop('type') == NETWORK:
             setattr(
                 provider_type,
                 'type',
                 otypes.OpenStackNetworkProviderType(self._module.params.pop('network_type'))
             )
 
-        for key, value in self._module.params.items():
+        for key, value in self.provider_module_params():
             if hasattr(provider_type, key):
                 setattr(provider_type, key, value)
 
@@ -200,15 +251,76 @@ class ExternalProviderModule(BaseModule):
             equal(self._module.params.get('username'), entity.username)
         )
 
+    def update_volume_provider_auth_keys(
+        self, provider, providers_service, keys
+    ):
+        """
+        Update auth keys for volume provider, if not exist add them or remove
+        if they are not specified and there are already defined in the external
+        volume provider.
+
+        Args:
+            provider (dict): Volume provider details.
+            providers_service (openstack_volume_providers_service): Provider
+                service.
+            keys (list): Keys to be updated/added to volume provider, each key
+                is represented as dict with keys: uuid, value.
+        """
+
+        provider_service = providers_service.provider_service(provider['id'])
+        auth_keys_service = provider_service.authentication_keys_service()
+        provider_keys = auth_keys_service.list()
+        # removing keys which are not defined
+        for key in [
+            k.id for k in provider_keys if k.uuid not in [
+                defined_key['uuid'] for defined_key in keys
+            ]
+        ]:
+            self.changed = True
+            if not self._module.check_mode:
+                auth_keys_service.key_service(key).remove()
+        if not (provider_keys or keys):
+            # Nothing need to do when both are empty.
+            return
+        for key in keys:
+            key_id_for_update = None
+            for existing_key in provider_keys:
+                if key['uuid'] == existing_key.uuid:
+                    key_id_for_update = existing_key.id
+
+            auth_key_usage_type = (
+                otypes.OpenstackVolumeAuthenticationKeyUsageType("ceph")
+            )
+            auth_key = otypes.OpenstackVolumeAuthenticationKey(
+                usage_type=auth_key_usage_type,
+                uuid=key['uuid'],
+                value=key['value'],
+            )
+
+            if not key_id_for_update:
+                self.changed = True
+                if not self._module.check_mode:
+                    auth_keys_service.add(auth_key)
+            else:
+                # We cannot really distinguish here if it was really updated cause
+                # we cannot take key value to check if it was changed or not. So
+                # for sure we update here always.
+                self.changed = True
+                if not self._module.check_mode:
+                    auth_key_service = (
+                        auth_keys_service.key_service(key_id_for_update)
+                    )
+                    auth_key_service.update(auth_key)
+
 
 def _external_provider_service(provider_type, system_service):
-    if provider_type == 'os_image':
+    if provider_type == OS_IMAGE:
         return otypes.OpenStackImageProvider, system_service.openstack_image_providers_service()
-    elif provider_type == 'network':
+    elif provider_type == NETWORK:
         return otypes.OpenStackNetworkProvider, system_service.openstack_network_providers_service()
-    elif provider_type == 'os_volume':
+    elif provider_type == OS_VOLUME:
         return otypes.OpenStackVolumeProvider, system_service.openstack_volume_providers_service()
-    elif provider_type == 'foreman':
+    elif provider_type == FOREMAN:
         return otypes.ExternalHostProvider, system_service.external_host_providers_service()
 
 
@@ -224,7 +336,7 @@ def main():
             default=None,
             required=True,
             choices=[
-                'os_image', 'network', 'os_volume', 'foreman',
+                OS_IMAGE, NETWORK, OS_VOLUME, FOREMAN,
             ],
             aliases=['provider'],
         ),
@@ -238,6 +350,9 @@ def main():
         network_type=dict(
             default='external',
             choices=['external', 'neutron'],
+        ),
+        authentication_keys=dict(
+            default=[], aliases=['auth_keys'], type='list', no_log=True,
         ),
     )
     module = AnsibleModule(
@@ -254,8 +369,9 @@ def main():
     try:
         auth = module.params.pop('auth')
         connection = create_connection(auth)
+        provider_type_param = module.params.get('type')
         provider_type, external_providers_service = _external_provider_service(
-            provider_type=module.params.get('type'),
+            provider_type=provider_type_param,
             system_service=connection.system_service(),
         )
         external_providers_module = ExternalProviderModule(
@@ -270,8 +386,18 @@ def main():
             ret = external_providers_module.remove()
         elif state == 'present':
             ret = external_providers_module.create()
+            openstack_volume_provider_id = ret.get('id')
+            if (
+                provider_type_param == OS_VOLUME and
+                openstack_volume_provider_id
+            ):
+                external_providers_module.update_volume_provider_auth_keys(
+                    ret, external_providers_service,
+                    module.params.get('authentication_keys'),
+                )
 
         module.exit_json(**ret)
+
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:

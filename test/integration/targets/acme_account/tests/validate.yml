@@ -1,0 +1,51 @@
+---
+- name: Validate that account wasn't created in the first step
+  assert:
+    that:
+      - account_not_created is failed
+
+- name: Validate that account was created in the second step
+  assert:
+    that:
+      - account_created is changed
+      - account_created.account_uri is not none
+
+- name: Validate that email address was changed
+  assert:
+    that:
+      - account_modified is changed
+      - account_modified.account_uri is not none
+
+- name: Validate that email address was not changed a second time (idempotency)
+  assert:
+    that:
+      - account_modified_idempotent is not changed
+      - account_modified_idempotent.account_uri is not none
+
+- name: Validate that the account key was changed
+  assert:
+    that:
+      - account_change_key is changed
+      - account_change_key.account_uri is not none
+
+- name: Validate that the account was deactivated
+  assert:
+    that:
+      - account_deactivate is changed
+      - account_deactivate.account_uri is not none
+
+- name: Validate that the account was really deactivated (idempotency)
+  assert:
+    that:
+      - account_deactivate_idempotent is not changed
+      - account_deactivate_idempotent.account_uri is not none
+
+- name: Validate that the account is gone (new account key)
+  assert:
+    that:
+      - account_not_created_2 is failed
+
+- name: Validate that the account is gone (old account key)
+  assert:
+    that:
+      - account_not_created_3 is failed

@@ -83,6 +83,8 @@ Errors
   208       ``module_utils`` imports should import specific components, not ``*``
   209       Only the following ``from __future__`` imports are allowed:
             ``absolute_import``, ``division``, and ``print_function``.
+  210       ``subprocess.Popen`` used instead of ``module.run_command``
+  211       ``os.call`` used instead of ``module.run_command``
   ..
 ---------   -------------------
   **3xx**   **Documentation**
@@ -117,11 +119,11 @@ Errors
   328       Choices value from the documentation is not compatible with type defined in the argument_spec
   329       Default value from the argument_spec is not compatible with type defined in the argument_spec
   330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
+  331       argument in argument_spec must be a dictionary/hash when used
   ..
 ---------   -------------------
   **4xx**   **Syntax**
   401       Python ``SyntaxError`` while parsing module
-  402       Indentation contains tabs
   403       Type comparison using ``type()`` found. Use ``isinstance()`` instead
   ..
 ---------   -------------------

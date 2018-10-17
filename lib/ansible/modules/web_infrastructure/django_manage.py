@@ -63,7 +63,7 @@ options:
       - Fail the command immediately if a test fails. Used by the 'test' command.
     required: false
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
   fixtures:
     description:
       - A space-delimited list of fixture file names to load in the database. B(Required) by the 'loaddata' command.

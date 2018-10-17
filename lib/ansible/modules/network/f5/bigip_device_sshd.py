@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -17,17 +17,16 @@ module: bigip_device_sshd
 short_description: Manage the SSHD settings of a BIG-IP
 description:
   - Manage the SSHD settings of a BIG-IP.
-version_added: "2.2"
+version_added: 2.2
 options:
   allow:
     description:
       - Specifies, if you have enabled SSH access, the IP address or address
         range for other systems that can use SSH to communicate with this
         system.
-    choices:
-      - all
-      - IP address, such as 172.27.1.10
-      - IP range, such as 172.27.*.* or 172.27.0.0/255.255.0.0
+      - To specify all addresses, use the value C(all).
+      - IP address can be specified, such as 172.27.1.10.
+      - IP rangees can be specified, such as 172.27.*.* or 172.27.0.0/255.255.0.0.
   banner:
     description:
       - Whether to enable the banner or not.
@@ -147,30 +146,23 @@ port:
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -229,13 +221,33 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
 
     def _update_changed_options(self):
         changed = {}
@@ -246,7 +258,7 @@ class ModuleManager(object):
                 if attr1 != attr2:
                     changed[key] = attr1
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -266,7 +278,7 @@ class ModuleManager(object):
     def read_current_from_device(self):
         resource = self.client.api.tm.sys.sshd.load()
         result = resource.attrs
-        return Parameters(params=result)
+        return ApiParameters(params=result)
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -284,7 +296,7 @@ class ModuleManager(object):
         return False
 
     def update_on_device(self):
-        params = self.want.api_params()
+        params = self.changes.api_params()
         resource = self.client.api.tm.sys.sshd.load()
         resource.update(**params)
 

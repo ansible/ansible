@@ -131,15 +131,11 @@ WORKFLOW_TEMPLATE_CREATED_SUCCESS = 'Workflow template created'
 WORKFLOW_TEMPLATE_UPDATED_SUCCESS = 'Workflow template updated'
 
 meta_args = dict(
-    vdirect_ip=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_IP']),
-        default=None),
-    vdirect_user=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_USER']),
-        default=None),
+    vdirect_ip=dict(required=True, fallback=(env_fallback, ['VDIRECT_IP'])),
+    vdirect_user=dict(required=True, fallback=(env_fallback, ['VDIRECT_USER'])),
     vdirect_password=dict(
         required=True, fallback=(env_fallback, ['VDIRECT_PASSWORD']),
-        default=None, no_log=True, type='str'),
+        no_log=True, type='str'),
     vdirect_secondary_ip=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_SECONDARY_IP']),
         default=None),
@@ -161,7 +157,7 @@ meta_args = dict(
     vdirect_http_port=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_HTTP_PORT']),
         default=2188, type='int'),
-    file_name=dict(required=True, default=None)
+    file_name=dict(required=True)
 )
 
 
@@ -229,10 +225,10 @@ class VdirectFile(object):
 
 def main():
 
-    if not HAS_REST_CLIENT:
-        raise ImportError("The python vdirect-client module is required")
-
     module = AnsibleModule(argument_spec=meta_args)
+
+    if not HAS_REST_CLIENT:
+        module.fail_json(msg="The python vdirect-client module is required")
 
     try:
         vdirect_file = VdirectFile(module.params)

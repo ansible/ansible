@@ -25,36 +25,35 @@ description:
 options:
     name:
       description:
-        - Name to use for the job_template.
+        - Name to use for the job template.
       required: True
     description:
       description:
         - Description to use for the job template.
     job_type:
       description:
-        - The job_type to use for the job template.
+        - The job type to use for the job template.
       required: True
       choices: ["run", "check", "scan"]
     inventory:
       description:
-        - Inventory to use for the job template.
+        - Name of the inventory to use for the job template.
     project:
       description:
-        - Project to use for the job template.
+        - Name of the project to use for the job template.
       required: True
     playbook:
       description:
-        - Playbook to use for the job template.
+        - Path to the playbook to use for the job template within the project provided.
       required: True
-    machine_credential:
+    credential:
       description:
-        - Machine_credential to use for the job template.
-    cloud_credential:
+        - Name of the credential to use for the job template.
+      version_added: 2.7
+    vault_credential:
       description:
-        - Cloud_credential to use for the job template.
-    network_credential:
-      description:
-        - The network_credential to use for the job template.
+        - Name of the vault credential to use for the job template.
+      version_added: 2.7
     forks:
       description:
         - The number of parallel or simultaneous processes to use while executing the playbook.
@@ -63,23 +62,52 @@ options:
         - A host pattern to further constrain the list of hosts managed or affected by the playbook
     verbosity:
       description:
-        - Control the output level Ansible produces as the playbook runs.
-      choices: ["verbose", "debug"]
-    job_tags:
-      description:
-        - The job_tags to use for the job template.
-    skip_tags:
-      description:
-        - The skip_tags to use for the job template.
-    host_config_key:
-      description:
-        - Allow provisioning callbacks using this host config key.
+        - Control the output level Ansible produces as the playbook runs. 0 - Normal, 1 - Verbose, 2 - More Verbose, 3 - Debug, 4 - Connection Debug.
+      choices: [0, 1, 2, 3, 4]
+      default: 0
     extra_vars_path:
       description:
         - Path to the C(extra_vars) YAML file.
+    job_tags:
+      description:
+        - Comma separated list of the tags to use for the job template.
+    force_handlers_enabled:
+      description:
+        - Enable forcing playbook handlers to run even if a task fails.
+      version_added: 2.7
+      type: bool
+      default: 'no'
+    skip_tags:
+      description:
+        - Comma separated list of the tags to skip for the job template.
+    start_at_task:
+      description:
+        - Start the playbook at the task matching this name.
+      version_added: 2.7
+    fact_caching_enabled:
+      description:
+        - Enable use of fact caching for the job template.
+      version_added: 2.7
+      type: bool
+      default: 'no'
+    host_config_key:
+      description:
+        - Allow provisioning callbacks using this host config key.
+    ask_diff_mode:
+      description:
+        - Prompt user to enable diff mode (show changes) to files when supported by modules.
+      version_added: 2.7
+      type: bool
+      default: 'no'
     ask_extra_vars:
       description:
-        - Prompt user for C(extra_vars) on launch.
+        - Prompt user for (extra_vars) on launch.
+      type: bool
+      default: 'no'
+    ask_limit:
+      description:
+        - Prompt user for a limit on launch.
+      version_added: 2.7
       type: bool
       default: 'no'
     ask_tags:
@@ -87,9 +115,21 @@ options:
         - Prompt user for job tags on launch.
       type: bool
       default: 'no'
+    ask_skip_tags:
+      description:
+        - Prompt user for job tags to skip on launch.
+      version_added: 2.7
+      type: bool
+      default: 'no'
     ask_job_type:
       description:
         - Prompt user for job type on launch.
+      type: bool
+      default: 'no'
+    ask_verbosity:
+      description:
+        - Prompt user to choose a verbosity level on launch.
+      version_added: 2.7
       type: bool
       default: 'no'
     ask_inventory:
@@ -102,9 +142,21 @@ options:
         - Prompt user for credential on launch.
       type: bool
       default: 'no'
+    survey_enabled:
+      description:
+        - Enable a survey on the job template.
+      version_added: 2.7
+      type: bool
+      default: 'no'
     become_enabled:
       description:
         - Activate privilege escalation.
+      type: bool
+      default: 'no'
+    concurrent_jobs_enabled:
+      description:
+        - Allow simultaneous runs of the job template.
+      version_added: 2.7
       type: bool
       default: 'no'
     state:
@@ -119,13 +171,13 @@ extends_documentation_fragment: tower
 EXAMPLES = '''
 - name: Create tower Ping job template
   tower_job_template:
-    name: Ping
-    job_type: run
-    inventory: Local
-    project: Demo
-    playbook: ping.yml
-    machine_credential: Local
-    state: present
+    name: "Ping"
+    job_type: "run"
+    inventory: "Local"
+    project: "Demo"
+    playbook: "ping.yml"
+    credential: "Local"
+    state: "present"
     tower_config_file: "~/tower_cli.cfg"
 '''
 
@@ -147,11 +199,19 @@ def update_fields(p):
     '''
     params = p.copy()
     field_map = {
+        'fact_caching_enabled': 'use_fact_cache',
+        'ask_diff_mode': 'ask_diff_mode_on_launch',
         'ask_extra_vars': 'ask_variables_on_launch',
         'ask_limit': 'ask_limit_on_launch',
         'ask_tags': 'ask_tags_on_launch',
+        'ask_skip_tags': 'ask_skip_tags_on_launch',
+        'ask_verbosity': 'ask_verbosity_on_launch',
+        'ask_inventory': 'ask_inventory_on_launch',
+        'ask_credential': 'ask_credential_on_launch',
         'ask_job_type': 'ask_job_type_on_launch',
-        'machine_credential': 'credential',
+        'diff_mode_enabled': 'diff_mode',
+        'concurrent_jobs_enabled': 'allow_simultaneous',
+        'force_handlers_enabled': 'force_handlers',
     }
 
     params_update = {}
@@ -172,9 +232,8 @@ def update_resources(module, p):
     identity_map = {
         'project': 'name',
         'inventory': 'name',
-        'machine_credential': 'name',
-        'network_credential': 'name',
-        'cloud_credential': 'name',
+        'credential': 'name',
+        'vault_credential': 'name',
     }
     for k, v in identity_map.items():
         try:
@@ -182,6 +241,9 @@ def update_resources(module, p):
                 key = 'credential' if '_credential' in k else k
                 result = tower_cli.get_resource(key).get(**{v: params[k]})
                 params[k] = result['id']
+            elif k in params:
+                # unset empty parameters to avoid ValueError: invalid literal for int() with base 10: ''
+                del(params[k])
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update job template: {0}'.format(excinfo), changed=False)
     return params
@@ -191,28 +253,37 @@ def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        description=dict(),
+        description=dict(default=''),
         job_type=dict(choices=['run', 'check', 'scan'], required=True),
-        inventory=dict(),
+        inventory=dict(default=''),
         project=dict(required=True),
         playbook=dict(required=True),
-        machine_credential=dict(),
-        cloud_credential=dict(),
-        network_credential=dict(),
+        credential=dict(default=''),
+        vault_credential=dict(default=''),
         forks=dict(type='int'),
-        limit=dict(),
-        verbosity=dict(choices=['verbose', 'debug']),
-        job_tags=dict(),
-        skip_tags=dict(),
-        host_config_key=dict(),
+        limit=dict(default=''),
+        verbosity=dict(type='int', choices=[0, 1, 2, 3, 4], default=0),
         extra_vars_path=dict(type='path', required=False),
+        job_tags=dict(default=''),
+        force_handlers_enabled=dict(type='bool', default=False),
+        skip_tags=dict(default=''),
+        start_at_task=dict(default=''),
+        timeout=dict(type='int', default=0),
+        fact_caching_enabled=dict(type='bool', default=False),
+        host_config_key=dict(default=''),
+        ask_diff_mode=dict(type='bool', default=False),
         ask_extra_vars=dict(type='bool', default=False),
         ask_limit=dict(type='bool', default=False),
         ask_tags=dict(type='bool', default=False),
+        ask_skip_tags=dict(type='bool', default=False),
         ask_job_type=dict(type='bool', default=False),
+        ask_verbosity=dict(type='bool', default=False),
         ask_inventory=dict(type='bool', default=False),
         ask_credential=dict(type='bool', default=False),
+        survey_enabled=dict(type='bool', default=False),
         become_enabled=dict(type='bool', default=False),
+        diff_mode_enabled=dict(type='bool', default=False),
+        concurrent_jobs_enabled=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
@@ -222,7 +293,7 @@ def main():
         module.fail_json(msg='ansible-tower-cli required for this module')
 
     name = module.params.get('name')
-    state = module.params.get('state')
+    state = module.params.pop('state')
     json_output = {'job_template': name, 'state': state}
 
     tower_auth = tower_auth_config(module)

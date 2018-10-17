@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     account_type:
         description:
             - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
@@ -73,11 +72,14 @@ options:
     access_tier:
         description:
             - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
-        default: 'Storage'
         choices:
             - Hot
             - Cool
         version_added: "2.4"
+    force:
+        description:
+            - Attempt deletion if resource already exists and cannot be updated
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -147,7 +149,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, HAS_AZURE
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):
@@ -167,8 +169,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
-        for key in self.storage_models.SkuName:
-            self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
+        if HAS_AZURE:
+            for key in self.storage_models.SkuName:
+                self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,

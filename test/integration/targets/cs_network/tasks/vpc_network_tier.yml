@@ -23,6 +23,7 @@
     name: vpc_network_test
     cidr: 10.43.0.0/16
     zone: "{{ cs_common_zone_adv }}"
+    vpc_offering: Redundant VPC offering
     network_domain: cs2sandbox.simulator.example.com
   register: vpc
 - name: verify setup vpc

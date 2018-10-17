@@ -258,7 +258,8 @@ class Interfaces(FactsBase):
         self.facts['interfaces'] = self.populate_interfaces(data)
 
         data = self.responses[1]
-        self.facts['neighbors'] = self.populate_neighbors(data['lldpNeighbors'])
+        if data:
+            self.facts['neighbors'] = self.populate_neighbors(data['lldpNeighbors'])
 
     def populate_interfaces(self, data):
         facts = dict()

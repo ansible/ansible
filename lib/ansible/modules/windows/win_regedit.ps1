@@ -1,8 +1,8 @@
 #!powershell
-# This file is part of Ansible
 
-# (c) 2015, Adam Keech <akeech@chathamfinancial.com>, Josh Ludwig <jludwig@chathamfinancial.com>
-# (c) 2017, Jordan Borean <jborean93@gmail.com>
+# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>
+# Copyright: (c) 2015, Josh Ludwig <jludwig@chathamfinancial.com>
+# Copyright: (c) 2017, Jordan Borean <jborean93@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -12,6 +12,7 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true -aliases "key"
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -aliases "entry","value"
@@ -173,12 +174,6 @@ namespace Ansible
     }
 }
 '@
-
-# Fix HCCC:\ PSDrive for pre-2.3 compatibility
-if ($path -match "^HCCC:\\") {
-    Add-DeprecationWarning -obj $result -message "Please use path: HKCC:\... instead of path: $path" -version 2.6
-    $path = $path -replace "HCCC:\\","HKCC:\\"
-}
 
 # fire a warning if the property name isn't specified, the (Default) key ($null) can only be a string
 if ($name -eq $null -and $type -ne "string") {
@@ -376,7 +371,14 @@ if ($hive) {
     if (-not (Test-Path $hive)) {
         Fail-Json -obj $result -message "hive at path '$hive' is not valid or accessible, cannot load hive"
     }
+
+    $original_tmp = $env:TMP
+    $original_temp = $env:TEMP
+    $env:TMP = $_remote_tmp
+    $env:TEMP = $_remote_tmp
     Add-Type -TypeDefinition $registry_util
+    $env:TMP = $original_tmp
+    $env:TEMP = $original_temp
     try {
         [Ansible.RegistryUtil]::EnablePrivileges()
     } catch [System.ComponentModel.Win32Exception] {
@@ -562,6 +564,7 @@ $key_prefix[$path]
 } finally {
     if ($hive) {
         [GC]::Collect()
+        [GC]::WaitForPendingFinalizers()
         try {
             [Ansible.RegistryUtil]::UnloadHive("ANSIBLE")
         } catch [System.ComponentModel.Win32Exception] {

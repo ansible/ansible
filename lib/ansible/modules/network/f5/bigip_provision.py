@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -19,9 +19,9 @@ short_description: Manage BIG-IP module provisioning
 description:
   - Manage BIG-IP module provisioning. This module will only provision at the
     standard levels of Dedicated, Nominal, and Minimum.
-version_added: "2.4"
+version_added: 2.4
 options:
-  name:
+  module:
     description:
       - The module to provision in BIG-IP.
     required: true
@@ -31,6 +31,7 @@ options:
       - apm
       - asm
       - avr
+      - cgnat
       - fps
       - gtm
       - ilx
@@ -41,7 +42,7 @@ options:
       - swg
       - vcmp
     aliases:
-      - module
+      - name
   level:
     description:
       - Sets the provisioning level for the requested modules. Changing the
@@ -49,6 +50,8 @@ options:
         For example, changing one module to C(dedicated) requires setting all
         others to C(none). Setting the level of a module to C(none) means that
         the module is not activated.
+      - This parameter is not relevant to C(cgnat) and will not be applied to the
+        C(cgnat) module.
     default: nominal
     choices:
       - dedicated
@@ -104,41 +107,32 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.bigip.contexts import TransactionContextManager
+        from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.bigip.contexts import TransactionContextManager
+        from f5.sdk_exception import LazyAttributesRequired
     except ImportError:
         HAS_F5SDK = False
-
-try:
-    from f5.bigip.contexts import TransactionContextManager
-    from f5.sdk_exception import LazyAttributesRequired
-except ImportError:
-    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -146,7 +140,7 @@ class Parameters(AnsibleF5Parameters):
 
     returnables = ['level']
 
-    updatables = ['level']
+    updatables = ['level', 'cgnat']
 
     def to_return(self):
         result = {}
@@ -162,7 +156,60 @@ class Parameters(AnsibleF5Parameters):
     def level(self):
         if self._values['level'] is None:
             return None
+        if self.state == 'absent':
+            return 'none'
         return str(self._values['level'])
+
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Parameters):
+    pass
+
+
+class ReportableChanges(Parameters):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            result = self.__default(param)
+            return result
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def cgnat(self):
+        if self.want.module == 'cgnat':
+            if self.want.state == 'absent' and self.have.enabled is True:
+                return True
+            if self.want.state == 'present' and self.have.disabled is True:
+                return True
 
 
 class ModuleManager(object):
@@ -170,19 +217,24 @@ class ModuleManager(object):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -196,7 +248,7 @@ class ModuleManager(object):
 
         try:
             if state == "present":
-                changed = self.update()
+                changed = self.present()
             elif state == "absent":
                 changed = self.absent()
         except iControlUnexpectedHTTPError as e:
@@ -207,14 +259,36 @@ class ModuleManager(object):
         result.update(dict(changed=changed))
         return result
 
-    def exists(self):
-        provision = self.client.api.tm.sys.provision
-        resource = getattr(provision, self.want.module)
-        resource = resource.load()
-        result = resource.attrs
-        if str(result['level']) == 'none':
+    def present(self):
+        if self.exists():
             return False
-        return True
+        return self.update()
+
+    def exists(self):
+        if self.want.module == 'cgnat':
+            resource = self.client.api.tm.sys.feature_module.cgnat.load()
+            if resource.disabled is True:
+                return False
+            elif resource.enabled is True:
+                return True
+
+        try:
+            for x in range(0, 5):
+                provision = self.client.api.tm.sys.provision
+                resource = getattr(provision, self.want.module)
+                resource = resource.load()
+                result = resource.attrs
+                if str(result['level']) != 'none' and self.want.level == 'none':
+                    return True
+                if str(result['level']) == 'none' and self.want.level == 'none':
+                    return False
+                if str(result['level']) == self.want.level:
+                    return True
+                return False
+        except Exception as ex:
+            if 'not registered' in str(ex):
+                return False
+            time.sleep(1)
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -223,7 +297,10 @@ class ModuleManager(object):
         if self.module.check_mode:
             return True
 
-        self.update_on_device()
+        result = self.update_on_device()
+        if self.want.module == 'cgnat':
+            return result
+
         self._wait_for_module_provisioning()
 
         if self.want.module == 'vcmp':
@@ -232,7 +309,54 @@ class ModuleManager(object):
 
         if self.want.module == 'asm':
             self._wait_for_asm_ready()
+        if self.want.module == 'afm':
+            self._wait_for_afm_ready()
         return True
+
+    def should_reboot(self):
+        for x in range(0, 24):
+            try:
+                resource = self.client.api.tm.sys.dbs.db.load(name='provision.action')
+                if resource.value == 'reboot':
+                    return True
+                elif resource.value == 'none':
+                    time.sleep(5)
+            except Exception:
+                time.sleep(5)
+        return False
+
+    def reboot_device(self):
+        nops = 0
+        last_reboot = self._get_last_reboot()
+
+        try:
+            output = self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs='-c "/sbin/reboot"'
+            )
+            if hasattr(output, 'commandResult'):
+                return str(output.commandResult)
+        except Exception:
+            pass
+
+        # Sleep a little to let rebooting take effect
+        time.sleep(20)
+
+        while nops < 6:
+            try:
+                self.client.reconnect()
+                next_reboot = self._get_last_reboot()
+                if next_reboot is None:
+                    nops = 0
+                if next_reboot == last_reboot:
+                    nops = 0
+                else:
+                    nops += 1
+            except Exception as ex:
+                # This can be caused by restjavad restarting.
+                pass
+            time.sleep(10)
+        return None
 
     def should_update(self):
         result = self._update_changed_options()
@@ -241,10 +365,21 @@ class ModuleManager(object):
         return False
 
     def update_on_device(self):
-        if self.want.level == 'dedicated':
+        if self.want.module == 'cgnat':
+            if self.changes.cgnat:
+                return self.provision_cgnat_on_device()
+            return False
+        elif self.want.level == 'dedicated':
             self.provision_dedicated_on_device()
         else:
             self.provision_non_dedicated_on_device()
+
+    def provision_cgnat_on_device(self):
+        resource = self.client.api.tm.sys.feature_module.cgnat.load()
+        resource.modify(
+            enabled=True
+        )
+        return True
 
     def provision_dedicated_on_device(self):
         params = self.want.api_params()
@@ -269,11 +404,15 @@ class ModuleManager(object):
         resource.update(**params)
 
     def read_current_from_device(self):
-        provision = self.client.api.tm.sys.provision
-        resource = getattr(provision, str(self.want.module))
-        resource = resource.load()
-        result = resource.attrs
-        return Parameters(params=result)
+        if self.want.module == 'cgnat':
+            resource = self.client.api.tm.sys.feature_module.cgnat.load()
+            result = resource.attrs
+        else:
+            provision = self.client.api.tm.sys.provision
+            resource = getattr(provision, str(self.want.module))
+            resource = resource.load()
+            result = resource.attrs
+        return ApiParameters(params=result)
 
     def absent(self):
         if self.exists():
@@ -283,7 +422,9 @@ class ModuleManager(object):
     def remove(self):
         if self.module.check_mode:
             return True
-        self.remove_from_device()
+        result = self.remove_from_device()
+        if self.want.module == 'cgnat':
+            return result
         self._wait_for_module_provisioning()
 
         # For vCMP, because it has to reboot, we also wait for mcpd to become available
@@ -293,15 +434,39 @@ class ModuleManager(object):
             self._wait_for_reboot()
             self._wait_for_module_provisioning()
 
+        if self.should_reboot():
+            self.save_on_device()
+            self.reboot_device()
+            self._wait_for_module_provisioning()
+
         if self.exists():
             raise F5ModuleError("Failed to de-provision the module")
         return True
 
+    def save_on_device(self):
+        command = 'tmsh save sys config'
+        self.client.api.tm.util.bash.exec_cmd(
+            'run',
+            utilCmdArgs='-c "{0}"'.format(command)
+        )
+
     def remove_from_device(self):
+        if self.want.module == 'cgnat':
+            if self.changes.cgnat:
+                return self.deprovision_cgnat_on_device()
+            return False
+
         provision = self.client.api.tm.sys.provision
         resource = getattr(provision, self.want.module)
         resource = resource.load()
         resource.update(level='none')
+
+    def deprovision_cgnat_on_device(self):
+        resource = self.client.api.tm.sys.feature_module.cgnat.load()
+        resource.modify(
+            disabled=True
+        )
+        return True
 
     def _wait_for_module_provisioning(self):
         # To prevent things from running forever, the hack is to check
@@ -370,6 +535,26 @@ class ModuleManager(object):
                     restarted_asm = True
             time.sleep(5)
 
+    def _wait_for_afm_ready(self):
+        """Waits specifically for AFM
+
+        AFM can take longer to actually start up than all the previous checks take.
+        This check here is specifically waiting for the Security API to stop raising
+        errors.
+        :return:
+        """
+        nops = 0
+        while nops < 3:
+            try:
+                security = self.client.api.tm.security.get_collection()
+                if len(security) >= 0:
+                    nops += 1
+                else:
+                    nops = 0
+            except Exception as ex:
+                pass
+            time.sleep(5)
+
     def _restart_asm(self):
         try:
             self.client.api.tm.util.bash.exec_cmd(
@@ -427,7 +612,7 @@ class ArgumentSpec(object):
                 choices=[
                     'afm', 'am', 'sam', 'asm', 'avr', 'fps',
                     'gtm', 'lc', 'ltm', 'pem', 'swg', 'ilx',
-                    'apm', 'vcmp'
+                    'apm', 'vcmp', 'cgnat'
                 ],
                 aliases=['name']
             ),

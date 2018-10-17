@@ -22,6 +22,15 @@ description:
 version_added: "2.5"
 requirements: ["Any of the following supported init systems: systemd, sysv, upstart"]
 
+notes:
+  - When accessing the C(ansible_facts.services) facts collected by this module,
+    it is recommended to not use "dot notation" because services can have a C(-)
+    character in their name which would result in invalid "dot notation", such as
+    C(ansible_facts.services.zuul-gateway). It is instead recommended to
+    using the string value of the service name as the key in order to obtain
+    the fact data value like C(ansible_facts.services['zuul-gateway'])
+
+
 author:
   - Matthew Jones
   - Adam Miller (@maxamillion)
@@ -178,21 +187,21 @@ class SystemctlScanService(BaseService):
         systemctl_path = self.module.get_bin_path("systemctl", opt_dirs=["/usr/bin", "/usr/local/bin"])
         if systemctl_path is None:
             return None
-        rc, stdout, stderr = self.module.run_command("%s list-unit-files --type=service | tail -n +2 | head -n -2" % systemctl_path, use_unsafe_shell=True)
-        for line in stdout.split("\n"):
-            line_data = line.split()
-            if len(line_data) != 2:
-                continue
-            if line_data[1] == "enabled":
+        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
+            service_name = line.split()[0]
+            if "running" in line:
                 state_val = "running"
             else:
+                if 'failed' in line:
+                    service_name = line.split()[1]
                 state_val = "stopped"
-            services[line_data[0]] = {"name": line_data[0], "state": state_val, "source": "systemd"}
+            services[service_name] = {"name": service_name, "state": state_val, "source": "systemd"}
         return services
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict())
+    module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
     service_modules = (ServiceScanService, SystemctlScanService)
     all_services = {}
     incomplete_warning = False

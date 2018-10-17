@@ -6,7 +6,7 @@ The SoftLayer Python API client is required. Use `pip install softlayer` to inst
 You have a few different options for configuring your username and api_key. You can pass
 environment variables (SL_USERNAME and SL_API_KEY). You can also write INI file to
 ~/.softlayer or /etc/softlayer.conf. For more information see the SL API at:
-- https://softlayer-python.readthedocs.org/en/latest/config_file.html
+- https://softlayer-python.readthedocs.io/en/latest/config_file.html
 
 The SoftLayer Python client has a built in command for saving this configuration file
 via the command `sl config setup`.

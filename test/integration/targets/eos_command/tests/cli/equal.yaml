@@ -8,7 +8,6 @@
       - show interfaces Management1 | json
     wait_for:
       - "result[1].interfaces.Management1.name eq Management1"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -23,7 +22,6 @@
       - show interfaces Management1 | json
     wait_for:
       - "result[1].interfaces.Management1.name == Management1"
-    provider: "{{ cli }}"
   register: result
 
 - assert:

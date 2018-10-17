@@ -1,0 +1,2 @@
+bugfixes:
+- win_updates - fixed module return value is lost in error in some cases (https://github.com/ansible/ansible/pull/42647)

@@ -45,7 +45,22 @@
   assert:
     that:
     - vpc is failed
-    - 'vpc.msg == "VPC offering not found: does_not_exist"'
+    - 'vpc.msg == "VPC offering not found or not enabled: does_not_exist"'
+
+- name: test fail name substring match
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    # Full name is "Redundant VPC offering"
+    vpc_offering: "Redundant"
+    zone: "{{ cs_common_zone_adv }}"
+    cidr: 10.10.1.0/16
+  ignore_errors: true
+  register: vpc
+- name: verify test fail name substring match
+  assert:
+    that:
+    - vpc is failed
+    - 'vpc.msg == "VPC offering not found or not enabled: Redundant"'
 
 - name: test create vpc with custom offering in check mode
   cs_vpc:
@@ -55,6 +70,7 @@
     vpc_offering: Redundant VPC offering
     network_domain: test.example.com
     zone: "{{ cs_common_zone_adv }}"
+    state: stopped
   register: vpc
   check_mode: true
 - name: verify test create vpc with custom offering in check mode
@@ -71,6 +87,7 @@
     vpc_offering: Redundant VPC offering
     network_domain: test.example.com
     zone: "{{ cs_common_zone_adv }}"
+    state: stopped
   register: vpc
 - name: verify test create vpc with custom offering
   assert:
@@ -90,6 +107,7 @@
     vpc_offering: Redundant VPC offering
     network_domain: test.example.com
     zone: "{{ cs_common_zone_adv }}"
+    state: stopped
   register: vpc
 - name: verify test create vpc with custom offering idempotence
   assert:
@@ -100,7 +118,6 @@
     - vpc.display_text == "{{ cs_resource_prefix }}_display_text_custom"
     - vpc.cidr == "10.10.1.0/16"
     - vpc.network_domain == "test.example.com"
-
 
 - name: test create vpc with default offering in check mode
   cs_vpc:

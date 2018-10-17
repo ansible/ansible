@@ -31,7 +31,7 @@ options:
     key_id:
         description:
             - Authentication key identifier to use with
-              given NTP server or peer.
+              given NTP server or peer or keyword 'default'.
     prefer:
         description:
             - Makes given NTP server or peer the preferred
@@ -40,14 +40,16 @@ options:
     vrf_name:
         description:
             - Makes the device communicate with the given
-              NTP server or peer over a specific VRF.
+              NTP server or peer over a specific VRF or
+              keyword 'default'.
     source_addr:
         description:
-            - Local source address from which NTP messages are sent.
+            - Local source address from which NTP messages are sent
+              or keyword 'default'
     source_int:
         description:
             - Local source interface from which NTP messages are sent.
-              Must be fully qualified interface name.
+              Must be fully qualified interface name or keyword 'default'
     state:
         description:
             - Manage the state of the resource.
@@ -71,30 +73,30 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"address": "2.2.2.2", "key_id": "48",
+    sample: {"address": "192.0.2.2", "key_id": "48",
             "peer_type": "server", "prefer": "enabled",
-            "source": "3.3.3.3", "source_type": "source"}
+            "source": "192.0.2.3", "source_type": "source"}
 existing:
     description:
         - k/v pairs of existing ntp server/peer
     returned: always
     type: dict
-    sample: {"address": "2.2.2.2", "key_id": "32",
+    sample: {"address": "192.0.2.2", "key_id": "32",
             "peer_type": "server", "prefer": "enabled",
             "source": "ethernet2/1", "source_type": "source-interface"}
 end_state:
     description: k/v pairs of ntp info after module execution
     returned: always
     type: dict
-    sample: {"address": "2.2.2.2", "key_id": "48",
+    sample: {"address": "192.0.2.2", "key_id": "48",
             "peer_type": "server", "prefer": "enabled",
-            "source": "3.3.3.3", "source_type": "source"}
+            "source": "192.0.2.3", "source_type": "source"}
 updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["ntp server 2.2.2.2 prefer key 48",
-             "no ntp source-interface ethernet2/1", "ntp source 3.3.3.3"]
+    sample: ["ntp server 192.0.2.2 prefer key 48",
+             "no ntp source-interface ethernet2/1", "ntp source 192.0.2.3"]
 changed:
     description: check to see if a change was made on the device
     returned: always
@@ -171,10 +173,12 @@ def get_ntp_peer(module):
 
             split_ntp = ntp.splitlines()
             for peer_line in split_ntp:
+                if 'access-group' in peer_line:
+                    continue
                 ntp_peer = {}
                 try:
                     peer_address = None
-                    vrf_name = None
+                    vrf_name = 'default'
                     prefer = None
                     key_id = None
                     match_ntp = re.match(ntp_regex, peer_line, re.DOTALL)
@@ -246,11 +250,18 @@ def set_ntp_server_peer(peer_type, address, prefer, key_id, vrf_name):
 
 
 def config_ntp(delta, existing):
-    address = delta.get('address', existing.get('address'))
-    peer_type = delta.get('peer_type', existing.get('peer_type'))
-    vrf_name = delta.get('vrf_name', existing.get('vrf_name'))
-    key_id = delta.get('key_id', existing.get('key_id'))
-    prefer = delta.get('prefer', existing.get('prefer'))
+    if (delta.get('address') or delta.get('peer_type') or delta.get('vrf_name') or
+            delta.get('key_id') or delta.get('prefer')):
+        address = delta.get('address', existing.get('address'))
+        peer_type = delta.get('peer_type', existing.get('peer_type'))
+        key_id = delta.get('key_id', existing.get('key_id'))
+        prefer = delta.get('prefer', existing.get('prefer'))
+        vrf_name = delta.get('vrf_name', existing.get('vrf_name'))
+        if delta.get('key_id') == 'default':
+            key_id = None
+    else:
+        peer_type = None
+        prefer = None
 
     source_type = delta.get('source_type')
     source = delta.get('source')
@@ -266,6 +277,9 @@ def config_ntp(delta, existing):
 
     ntp_cmds = []
     if peer_type:
+        if existing.get('peer_type') and existing.get('address'):
+            ntp_cmds.append('no ntp {0} {1}'.format(existing.get('peer_type'),
+                                                    existing.get('address')))
         ntp_cmds.append(set_ntp_server_peer(
             peer_type, address, prefer, key_id, vrf_name))
     if source:
@@ -273,7 +287,11 @@ def config_ntp(delta, existing):
         existing_source = existing.get('source')
         if existing_source_type and source_type != existing_source_type:
             ntp_cmds.append('no ntp {0} {1}'.format(existing_source_type, existing_source))
-        ntp_cmds.append('ntp {0} {1}'.format(source_type, source))
+        if source == 'default':
+            if existing_source_type and existing_source:
+                ntp_cmds.append('no ntp {0} {1}'.format(existing_source_type, existing_source))
+        else:
+            ntp_cmds.append('ntp {0} {1}'.format(source_type, source))
 
     return ntp_cmds
 
@@ -309,6 +327,7 @@ def main():
     source_addr = module.params['source_addr']
     source_int = module.params['source_int']
     state = module.params['state']
+
     if source_int is not None:
         source_int = source_int.lower()
 
@@ -350,6 +369,9 @@ def main():
 
     if state == 'present':
         delta = dict(set(proposed.items()).difference(existing.items()))
+        if delta.get('key_id') and delta.get('key_id') == 'default':
+            if not existing.get('key_id'):
+                delta.pop('key_id')
         if delta:
             command = config_ntp(delta, existing)
             if command:

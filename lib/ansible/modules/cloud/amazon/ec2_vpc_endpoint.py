@@ -62,7 +62,7 @@ options:
         behaviour from AWS.
     required: false
     default: no
-    choices: ["yes", "no"]
+    type: bool
   wait_timeout:
     description:
       - Used in conjunction with wait. Number of seconds to wait for status.

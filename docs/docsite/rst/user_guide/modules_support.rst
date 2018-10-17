@@ -1,3 +1,5 @@
+.. _modules_support:
+
 Module Maintenance & Support
 ----------------------------
 
@@ -8,13 +10,13 @@ To help identify maintainers and understand how the included modules are officia
 Core
 ````
 
-:ref:`core_supported`. These are maintained by the Ansible Engineering Team.
+:ref:`Core Maintained<core_supported>` modules are maintained by the Ansible Engineering Team.
 These modules are integral to the basic foundations of the Ansible distribution.
 
 Network
 ```````
 
-:ref:`network_supported`. These are maintained by the Ansible Network Team. Please note there are additional networking modules that are categorized as Certified or Community not maintained by Ansible.
+:ref:`Network Maintained<network_supported>` modules are are maintained by the Ansible Network Team. Please note there are additional networking modules that are categorized as Certified or Community not maintained by Ansible.
 
 
 Certified
@@ -25,7 +27,7 @@ Certified modules are part of a future planned program currently in development.
 Community
 `````````
 
-:ref:`community_supported`. These are submitted and maintained by the Ansible community.  These modules are not maintained by Ansible, and are included as a convenience.
+:ref:`Community Maintained<community_supported>` modules are submitted and maintained by the Ansible community.  These modules are not maintained by Ansible, and are included as a convenience.
 
 Issue Reporting
 ```````````````

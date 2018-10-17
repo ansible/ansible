@@ -23,13 +23,17 @@ __metaclass__ = type
 import re
 import os
 import traceback
+import string
 
 from collections import Mapping
 from xml.etree.ElementTree import fromstring
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.utils.encrypt import random_password
+
 
 try:
     import yaml
@@ -49,6 +53,12 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+try:
+    from passlib.hash import md5_crypt
+    HAS_PASSLIB = True
+except ImportError:
+    HAS_PASSLIB = False
 
 
 def re_matchall(regex, value):
@@ -345,13 +355,60 @@ def parse_xml(output, tmpl):
     return obj
 
 
+def type5_pw(password, salt=None):
+    if not HAS_PASSLIB:
+        raise AnsibleFilterError('type5_pw filter requires PassLib library to be installed')
+
+    if not isinstance(password, string_types):
+        raise AnsibleFilterError("type5_pw password input should be a string, but was given a input of %s" % (type(password).__name__))
+
+    salt_chars = u''.join((
+        to_text(string.ascii_letters),
+        to_text(string.digits),
+        u'./'
+    ))
+    if salt is not None and not isinstance(salt, string_types):
+        raise AnsibleFilterError("type5_pw salt input should be a string, but was given a input of %s" % (type(salt).__name__))
+    elif not salt:
+        salt = random_password(length=4, chars=salt_chars)
+    elif not set(salt) <= set(salt_chars):
+        raise AnsibleFilterError("type5_pw salt used inproper characters, must be one of %s" % (salt_chars))
+
+    encrypted_password = md5_crypt.encrypt(password, salt=salt)
+
+    return encrypted_password
+
+
+def hash_salt(password):
+
+    split_password = password.split("$")
+    if len(split_password) != 4:
+        raise AnsibleFilterError('Could not parse salt out password correctly from {0}'.format(password))
+    else:
+        return split_password[2]
+
+
+def comp_type5(unencrypted_password, encrypted_password, return_orginal=False):
+
+    salt = hash_salt(encrypted_password)
+    if type5_pw(unencrypted_password, salt) == encrypted_password:
+        if return_orginal is True:
+            return encrypted_password
+        else:
+            return True
+    return False
+
+
 class FilterModule(object):
     """Filters for working with output from network devices"""
 
     filter_map = {
         'parse_cli': parse_cli,
         'parse_cli_textfsm': parse_cli_textfsm,
-        'parse_xml': parse_xml
+        'parse_xml': parse_xml,
+        'type5_pw': type5_pw,
+        'hash_salt': hash_salt,
+        'comp_type5': comp_type5
     }
 
     def filters(self):

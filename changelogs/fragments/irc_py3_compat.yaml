@@ -1,0 +1,2 @@
+bugfixes:
+    - made irc module python3 compatible https://github.com/ansible/ansible/issues/42256

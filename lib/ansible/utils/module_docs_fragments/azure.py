@@ -54,6 +54,12 @@ options:
               the C(AZURE_CLOUD_ENVIRONMENT) environment variable.
         default: AzureCloud
         version_added: 2.4
+    adfs_authority_url:
+        description:
+            - Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+        required: false
+        default: null
+        version_added: 2.6
     cert_validation_mode:
         description:
             - Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but

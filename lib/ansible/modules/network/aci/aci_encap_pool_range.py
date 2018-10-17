@@ -53,6 +53,7 @@ options:
   range_end:
     description:
     - The end of encap range.
+    type: int
     aliases: [ end ]
   range_name:
     description:
@@ -61,6 +62,7 @@ options:
   range_start:
     description:
     - The start of the encap range.
+    type: int
     aliases: [ start ]
   state:
     description:

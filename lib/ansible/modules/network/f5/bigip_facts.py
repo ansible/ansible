@@ -19,7 +19,7 @@ module: bigip_facts
 short_description: Collect facts from F5 BIG-IP devices
 description:
   - Collect facts from F5 BIG-IP devices via iControl SOAP API
-version_added: "1.6"
+version_added: 1.6
 author:
   - Matt Hite (@mhite)
   - Tim Rupp (@caphrim007)
@@ -36,12 +36,12 @@ options:
     description:
       - BIG-IP session support; may be useful to avoid concurrency
         issues in certain circumstances.
+    default: no
     type: bool
-    default: 'yes'
   include:
     description:
       - Fact category or list of categories to collect
-    required: true
+    required: True
     choices:
       - address_class
       - certificate
@@ -83,19 +83,21 @@ import fnmatch
 import re
 import traceback
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import map, zip
+
+try:
+    from library.module_utils.network.f5.legacy import bigip_api, bigsuds_found
+    from library.module_utils.network.f5.common import f5_argument_spec
+except ImportError:
+    from ansible.module_utils.network.f5.legacy import bigip_api, bigsuds_found
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+
 try:
     from suds import MethodNotFound, WebFault
 except ImportError:
     pass  # Handle via f5_utils.bigsuds_found
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.f5_utils import bigip_api, bigsuds_found
-from ansible.module_utils.six.moves import map, zip
-
-try:
-    from library.module_utils.network.f5.common import f5_argument_spec
-except ImportError:
-    from ansible.module_utils.network.f5.common import f5_argument_spec
 
 
 class F5(object):
@@ -1089,6 +1091,9 @@ class AddressClasses(object):
 
     F5 BIG-IP address group/class class.
 
+    In TMUI these things are known as Address Data Groups. Examples that ship with the
+    box include /Common/aol and /Common/private_net
+
     Attributes:
         api: iControl API instance.
         address_classes: List of address classes.
@@ -1107,7 +1112,15 @@ class AddressClasses(object):
     def get_address_class(self):
         key = self.api.LocalLB.Class.get_address_class(self.address_classes)
         value = self.api.LocalLB.Class.get_address_class_member_data_value(key)
-        result = list(map(zip, [x['members'] for x in key], value))
+
+        result = []
+        for idx, v in enumerate(key):
+            for idx2, member in enumerate(v['members']):
+                dg_value = dict(
+                    value=value[idx][idx2]
+                )
+                dg_value.update(member)
+                result.append(dg_value)
         return result
 
     def get_description(self):
@@ -1639,9 +1652,18 @@ def generate_provision_dict(f5):
 def main():
     argument_spec = f5_argument_spec
     meta_args = dict(
-        session=dict(type='bool', default=False),
-        include=dict(type='list', required=True),
-        filter=dict(type='str', required=False),
+        session=dict(type='bool', default='no'),
+        include=dict(
+            type='raw',
+            required=True,
+            choices=[
+                'address_class', 'certificate', 'client_ssl_profile', 'device',
+                'device_group', 'interface', 'key', 'node', 'pool', 'provision',
+                'rule', 'self_ip', 'software', 'system_info', 'traffic_group',
+                'trunk', 'virtual_address', 'virtual_server', 'vlan'
+            ]
+        ),
+        filter=dict(type='str'),
     )
     argument_spec.update(meta_args)
 
@@ -1671,7 +1693,11 @@ def main():
         regex = fnmatch.translate(fact_filter)
     else:
         regex = None
-    include = [x.lower() for x in module.params['include']]
+    if isinstance(module.params['include'], string_types):
+        includes = module.params['include'].split(',')
+    else:
+        includes = module.params['include']
+    include = [x.lower() for x in includes]
     valid_includes = ('address_class', 'certificate', 'client_ssl_profile',
                       'device', 'device_group', 'interface', 'key', 'node',
                       'pool', 'provision', 'rule', 'self_ip', 'software',
@@ -1679,7 +1705,7 @@ def main():
                       'virtual_address', 'virtual_server', 'vlan')
     include_test = (x in valid_includes for x in include)
     if not all(include_test):
-        module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
+        module.fail_json(msg="Value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
 
     try:
         facts = {}

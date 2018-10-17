@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -20,7 +20,7 @@ description:
     to accept configuration.
   - This module can take into account situations where the device is in the middle
     of rebooting due to a configuration change.
-version_added: "2.5"
+version_added: 2.5
 options:
   timeout:
     description:
@@ -80,30 +80,21 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -114,7 +105,7 @@ except ImportError:
 def hard_timeout(module, want, start):
     elapsed = datetime.datetime.utcnow() - start
     module.fail_json(
-        want.msg or "Timeout when waiting for BIG-IP", elapsed=elapsed.seconds
+        msg=want.msg or "Timeout when waiting for BIG-IP", elapsed=elapsed.seconds
     )
 
 
@@ -186,6 +177,9 @@ class ModuleManager(object):
                 version=warning['version']
             )
 
+    def _get_client_connection(self):
+        return F5Client(**self.module.params)
+
     def execute(self):
         signal.signal(
             signal.SIGALRM,
@@ -204,7 +198,7 @@ class ModuleManager(object):
             try:
                 # The first test verifies that the REST API is available; this is done
                 # by repeatedly trying to login to it.
-                self.client = F5Client(**self.module.params)
+                self.client = self._get_client_connection()
                 if not self.client:
                     continue
 

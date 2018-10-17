@@ -277,6 +277,7 @@ class VmwareGuestFileManager(PyVmomi):
         result = dict(changed=True, uuid=self.vm.summary.config.uuid)
         vm_username = self.module.params['vm_username']
         vm_password = self.module.params['vm_password']
+        hostname = self.module.params['hostname']
         dest = self.module.params["fetch"]['dest']
         src = self.module.params['fetch']['src']
         creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
@@ -286,6 +287,7 @@ class VmwareGuestFileManager(PyVmomi):
             fileTransferInfo = file_manager.InitiateFileTransferFromGuest(vm=self.vm, auth=creds,
                                                                           guestFilePath=src)
             url = fileTransferInfo.url
+            url = url.replace("*", hostname)
             resp, info = urls.fetch_url(self.module, url, method="GET")
             try:
                 with open(dest, "wb") as local_file:
@@ -316,6 +318,7 @@ class VmwareGuestFileManager(PyVmomi):
         result = dict(changed=True, uuid=self.vm.summary.config.uuid)
         vm_username = self.module.params['vm_username']
         vm_password = self.module.params['vm_password']
+        hostname = self.module.params['hostname']
         overwrite = self.module.params["copy"]["overwrite"]
         dest = self.module.params["copy"]['dest']
         src = self.module.params['copy']['src']
@@ -340,6 +343,7 @@ class VmwareGuestFileManager(PyVmomi):
             url = file_manager.InitiateFileTransferToGuest(vm=self.vm, auth=creds, guestFilePath=dest,
                                                            fileAttributes=file_attributes, overwrite=overwrite,
                                                            fileSize=file_size)
+            url = url.replace("*", hostname)
             resp, info = urls.fetch_url(self.module, url, data=data, method="PUT")
 
             status_code = info["status"]

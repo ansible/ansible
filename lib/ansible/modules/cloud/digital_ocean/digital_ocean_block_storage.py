@@ -199,7 +199,7 @@ class DOBlockStorage(object):
         json = response.json
         if status == 201:
             self.module.exit_json(changed=True, id=json['volume']['id'])
-        elif status == 409 and json['id'] == 'already_exists':
+        elif status == 409 and json['id'] == 'conflict':
             self.module.exit_json(changed=False)
         else:
             raise DOBlockStorageException(json['message'])

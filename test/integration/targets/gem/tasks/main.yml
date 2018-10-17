@@ -25,31 +25,104 @@
         - 'default.yml'
       paths: '../vars'
 
-- name: install dependencies for test
-  package: name={{ package_item }} state=present
-  with_items: "{{ test_packages }}"
-  loop_control:
-    loop_var: package_item
+- name: Install dependencies for test
+  package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ test_packages }}"
   when: ansible_distribution != "MacOSX"
 
-- name: remove a gem
-  gem: name=gist state=absent
+- name: Install a gem
+  gem:
+    name: gist
+    state: present
+  register: install_gem_result
 
-- name: verify gist is not installed
-  shell: gem list | egrep '^gist '
-  register: uninstall
-  failed_when: "uninstall.rc != 1"
+- name: List gems
+  command: gem list
+  register: current_gems
 
-- name: install a gem
-  gem: name=gist state=present
-  register: gem_result
-
-- name: verify module output properties
+- name: Ensure gem was installed
   assert:
     that:
-        - "'name' in gem_result"
-        - "'changed' in gem_result"
-        - "'state' in gem_result"
+      - install_gem_result is changed
+      - current_gems.stdout is search('gist\s+\([0-9.]+\)')
 
-- name: verify gist is installed
-  shell: gem list | egrep '^gist '
+- name: Remove a gem
+  gem:
+    name: gist
+    state: absent
+  register: remove_gem_results
+
+- name: List gems
+  command: gem list
+  register: current_gems
+
+- name: Verify gem is not installed
+  assert:
+    that:
+      - remove_gem_results is changed
+      - current_gems.stdout is not search('gist\s+\([0-9.]+\)')
+
+
+# Check cutom gem directory
+- name: Install gem in a custom directory with incorrect options
+  gem:
+    name: gist
+    state: present
+    install_dir: "{{ output_dir }}/gems"
+  ignore_errors: yes
+  register: install_gem_fail_result
+
+- debug:
+    var: install_gem_fail_result
+  tags: debug
+
+- name: Ensure previous task failed
+  assert:
+    that:
+      - install_gem_fail_result is failed
+      - install_gem_fail_result.msg == 'install_dir requires user_install=false'
+
+- name: Install a gem in a custom directory
+  gem:
+    name: gist
+    state: present
+    user_install: no
+    install_dir: "{{ output_dir }}/gems"
+  register: install_gem_result
+
+- name: Find gems in custom directory
+  find:
+    paths: "{{ output_dir }}/gems/gems"
+    file_type: directory
+    contains: gist
+  register: gem_search
+
+- name: Ensure gem was installed in custom directory
+  assert:
+    that:
+      - install_gem_result is changed
+      - gem_search.files[0].path is search('gist-[0-9.]+')
+  ignore_errors: yes
+
+- name: Remove a gem in a custom directory
+  gem:
+    name: gist
+    state: absent
+    user_install: no
+    install_dir: "{{ output_dir }}/gems"
+  register: install_gem_result
+
+- name: Find gems in custom directory
+  find:
+    paths: "{{ output_dir }}/gems/gems"
+    file_type: directory
+    contains: gist
+  register: gem_search
+
+- name: Ensure gem was removed in custom directory
+  assert:
+    that:
+      - install_gem_result is changed
+      - gem_search.files | length == 0

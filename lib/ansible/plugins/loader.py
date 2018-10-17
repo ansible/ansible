@@ -209,9 +209,8 @@ class PluginLoader:
         if self.class_name:
             type_name = get_plugin_class(self.class_name)
 
-            # FIXME: expand to other plugins, but never doc fragments
             # if type name != 'module_doc_fragment':
-            if type_name in ('callback', 'connection', 'inventory', 'lookup', 'shell'):
+            if type_name in C.CONFIGURABLE_PLUGINS:
                 dstring = get_docstring(path, fragment_loader, verbose=False, ignore_errors=True)[0]
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
@@ -762,4 +761,11 @@ inventory_loader = PluginLoader(
     'ansible.plugins.inventory',
     C.DEFAULT_INVENTORY_PLUGIN_PATH,
     'inventory_plugins'
+)
+
+httpapi_loader = PluginLoader(
+    'HttpApi',
+    'ansible.plugins.httpapi',
+    C.DEFAULT_HTTPAPI_PLUGIN_PATH,
+    'httpapi_plugins',
 )

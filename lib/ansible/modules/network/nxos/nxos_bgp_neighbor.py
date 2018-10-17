@@ -151,7 +151,7 @@ EXAMPLES = '''
 # create a new neighbor
 - nxos_bgp_neighbor:
     asn: 65535
-    neighbor: 3.3.3.3
+    neighbor: 192.0.2.3
     local_as: 20
     remote_as: 30
     description: "just a description"
@@ -164,7 +164,7 @@ commands:
   description: commands sent to the device
   returned: always
   type: list
-  sample: ["router bgp 65535", "neighbor 3.3.3.3",
+  sample: ["router bgp 65535", "neighbor 192.0.2.3",
            "remote-as 30", "update-source Ethernet1/3",
            "description just a description", "local-as 20"]
 '''

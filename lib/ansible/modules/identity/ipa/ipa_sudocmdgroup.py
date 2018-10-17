@@ -30,7 +30,7 @@ options:
   state:
     description: State to ensure
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'enabled', 'disabled']
   sudocmd:
     description:
     - List of sudo commands to assign to the group.

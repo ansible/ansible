@@ -17,7 +17,7 @@
     interfaces:
           - ge-0/0/6
           - ge-0/0/5
-    rd: 3.3.3.3:10
+    rd: 192.0.2.3:10
     target: target:65513:111
     state: present
     provider: "{{ netconf }}"
@@ -31,7 +31,7 @@
       - result.diff.prepared is search("\+ *instance-type vrf")
       - result.diff.prepared is search("\+ *interface ge-0/0/5.0")
       - result.diff.prepared is search("\+ *interface ge-0/0/6.0")
-      - result.diff.prepared is search("\+ *route-distinguisher 3.3.3.3:10")
+      - result.diff.prepared is search("\+ *route-distinguisher 192.0.2.3:10")
       - result.diff.prepared is search("\+ *vrf-target target:65513:111")
 
 - name: teardown - remove vrf

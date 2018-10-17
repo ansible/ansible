@@ -1,0 +1,2 @@
+bugfixes:
+  - '**Security Fix** - avoid using ansible.cfg in a world writable dir.'

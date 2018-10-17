@@ -1,0 +1,19 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather vultr os facts in check mode
+  vr_os_facts:
+  check_mode: yes
+
+- name: verify test gather vultr os facts in check mode
+  assert:
+    that:
+    - ansible_facts.vultr_os_facts|selectattr('name','equalto', 'CentOS 7 x64') | list | count == 1
+
+- name: test gather vultr os fact
+  vr_os_facts:
+
+- name: verify test gather vultr os facts
+  assert:
+    that:
+    - ansible_facts.vultr_os_facts|selectattr('name','equalto', 'CentOS 7 x64') | list | count == 1

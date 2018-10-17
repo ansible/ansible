@@ -16,7 +16,7 @@ DOCUMENTATION = """
       remote_addr:
         description:
             - Container identifier
-        default: The set user as per docker's configuration
+        default: inventory_hostname
         vars:
             - name: ansible_host
             - name: ansible_lxd_host

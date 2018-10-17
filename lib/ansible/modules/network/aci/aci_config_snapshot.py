@@ -39,21 +39,19 @@ options:
   format:
     description:
     - Sets the config backup to be formatted in JSON or XML.
-    - The APIC defaults new Export Policies to C(json)
+    - The APIC defaults to C(json) when unset.
     choices: [ json, xml ]
-    default: json
   include_secure:
     description:
     - Determines if secure information should be included in the backup.
-    - The APIC defaults new Export Policies to C(yes).
+    - The APIC defaults to C(yes) when unset.
     type: bool
-    default: 'yes'
   max_count:
     description:
     - Determines how many snapshots can exist for the Export Policy before the APIC starts to rollover.
-    - The APIC defaults new Export Policies to C(3).
-    choices: [ range between 1 and 10 ]
-    default: 3
+    - Accepted values range between C(1) and C(10).
+    - The APIC defaults to C(3) when unset.
+    type: int
   snapshot:
     description:
     - The name of the snapshot to delete.

@@ -30,7 +30,8 @@ author: "Rob White (@wimnat)"
 options:
   force:
     description:
-      - When trying to delete a bucket, delete all keys in the bucket first (an s3 bucket must be empty for a successful deletion)
+      - When trying to delete a bucket, delete all keys (including versions and delete markers)
+        in the bucket first (an s3 bucket must be empty for a successful deletion)
     type: bool
     default: 'no'
   name:
@@ -108,7 +109,7 @@ import json
 import os
 import time
 
-import ansible.module_utils.six.moves.urllib.parse as urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -353,7 +354,7 @@ def wait_policy_is_applied(module, s3_client, bucket_name, expected_policy, shou
         else:
             return current_policy
     if should_fail:
-        module.fail_json(msg="Bucket policy failed to apply in the excepted time")
+        module.fail_json(msg="Bucket policy failed to apply in the expected time")
     else:
         return None
 
@@ -369,13 +370,13 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
         else:
             return requester_pays_status
     if should_fail:
-        module.fail_json(msg="Bucket request payment failed to apply in the excepted time")
+        module.fail_json(msg="Bucket request payment failed to apply in the expected time")
     else:
         return None
 
 
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
-    for dummy in range(0, 12):
+    for dummy in range(0, 24):
         try:
             versioning_status = get_bucket_versioning(s3_client, bucket_name)
         except (BotoCoreError, ClientError) as e:
@@ -384,7 +385,7 @@ def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioni
             time.sleep(5)
         else:
             return versioning_status
-    module.fail_json(msg="Bucket versioning failed to apply in the excepted time")
+    module.fail_json(msg="Bucket versioning failed to apply in the expected time")
 
 
 def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
@@ -397,7 +398,7 @@ def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
             time.sleep(5)
         else:
             return
-    module.fail_json(msg="Bucket tags failed to apply in the excepted time")
+    module.fail_json(msg="Bucket tags failed to apply in the expected time")
 
 
 def get_current_bucket_tags_dict(s3_client, bucket_name):
@@ -417,6 +418,13 @@ def paginated_list(s3_client, **pagination_params):
         yield [data['Key'] for data in page.get('Contents', [])]
 
 
+def paginated_versions_list(s3_client, **pagination_params):
+    pg = s3_client.get_paginator('list_object_versions')
+    for page in pg.paginate(**pagination_params):
+        # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
+        yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+
+
 def destroy_bucket(s3_client, module):
 
     force = module.params.get("force")
@@ -432,10 +440,10 @@ def destroy_bucket(s3_client, module):
         module.exit_json(changed=False)
 
     if force:
-        # if there are contents then we need to delete them before we can delete the bucket
+        # if there are contents then we need to delete them (including versions) before we can delete the bucket
         try:
-            for keys in paginated_list(s3_client, Bucket=name):
-                formatted_keys = [{'Key': key} for key in keys]
+            for key_version_pairs in paginated_versions_list(s3_client, Bucket=name):
+                formatted_keys = [{'Key': key, 'VersionId': version} for key, version in key_version_pairs]
                 if formatted_keys:
                     s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
         except (BotoCoreError, ClientError) as e:
@@ -455,7 +463,7 @@ def destroy_bucket(s3_client, module):
 def is_fakes3(s3_url):
     """ Return True if s3_url has scheme fakes3:// """
     if s3_url is not None:
-        return urlparse.urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
+        return urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
     else:
         return False
 
@@ -465,7 +473,7 @@ def is_walrus(s3_url):
 
     We assume anything other than *.amazonaws.com is Walrus"""
     if s3_url is not None:
-        o = urlparse.urlparse(s3_url)
+        o = urlparse(s3_url)
         return not o.hostname.endswith('amazonaws.com')
     else:
         return False

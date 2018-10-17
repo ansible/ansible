@@ -1,0 +1,6 @@
+---
+bugfixes:
+- 'The ssh connection plugin was categorizing all 255 exit statuses as an ssh
+  error but modules can return exit code 255 as well.  The connection plugin
+  has now been changed to know that certain instances of exit code 255 are not
+  ssh-related.  (https://github.com/ansible/ansible/pull/41716)'

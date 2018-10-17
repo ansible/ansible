@@ -118,10 +118,8 @@ def list_internet_gateways(client, module):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
-    snaked_internet_gateways = [camel_dict_to_snake_dict(get_internet_gateway_info(igw))
-                                for igw in all_internet_gateways['InternetGateways']]
-
-    module.exit_json(internet_gateways=snaked_internet_gateways)
+    return [camel_dict_to_snake_dict(get_internet_gateway_info(igw))
+            for igw in all_internet_gateways['InternetGateways']]
 
 
 def main():
@@ -148,7 +146,7 @@ def main():
     # call your function here
     results = list_internet_gateways(connection, module)
 
-    module.exit_json(result=results)
+    module.exit_json(internet_gateways=results)
 
 
 if __name__ == '__main__':

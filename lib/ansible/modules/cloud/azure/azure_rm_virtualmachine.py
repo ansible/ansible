@@ -58,13 +58,16 @@ options:
         description:
             - Use with state 'present' to start the machine. Set to false to have the machine be 'stopped'.
         default: true
+        type: bool
     allocated:
         description:
             - Toggle that controls if the machine is allocated/deallocated, only useful with state='present'.
         default: True
+        type: bool
     restarted:
         description:
             - Use with state 'present' to restart a running VM.
+        type: bool
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
@@ -88,6 +91,7 @@ options:
             - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
               and require use of SSH keys.
         default: true
+        type: bool
     ssh_public_keys:
         description:
             - "For os_type Linux provide a list of SSH keys. Each item in the list should be a dictionary where the
@@ -118,11 +122,15 @@ options:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
               a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+        aliases:
+            - storage_account
     storage_container_name:
         description:
             - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
               default container will created.
         default: vhds
+        aliases:
+            - storage_container
     storage_blob_name:
         description:
             - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
@@ -151,8 +159,7 @@ options:
         choices:
             - Windows
             - Linux
-        default:
-            - Linux
+        default: Linux
     data_disks:
         description:
             - Describes list of data disks.
@@ -208,8 +215,7 @@ options:
             - Dynamic
             - Static
             - Disabled
-        default:
-            - Static
+        default: Static
         aliases:
             - public_ip_allocation
     open_ports:
@@ -223,6 +229,8 @@ options:
             - List of existing network interface names to add to the VM. If a network interface name is not provided
               when the VM is created, a default network interface will be created. In order for the module to create
               a network interface, at least one Virtual Network with one Subnet must exist.
+        aliases:
+            - network_interfaces
     virtual_network_resource_group:
         description:
             - When creating a virtual machine, if a specific virtual network from another resource group should be
@@ -606,7 +614,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import to_native, to_bytes
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -734,6 +742,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             # Set default location
             self.location = resource_group.location
 
+        self.location = normalize_location_name(self.location)
+
         if self.state == 'present':
             # Verify parameters and resolve any defaults
 
@@ -819,7 +829,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if set(current_nics) != set(network_interfaces):
                         self.log('CHANGED: virtual machine {0} - network interfaces are different.'.format(self.name))
                         differences.append('Network Interfaces')
-                        updated_nics = [dict(id=id) for id in network_interfaces]
+                        updated_nics = [dict(id=id, primary=(i is 0))
+                                        for i, id in enumerate(network_interfaces)]
                         vm_dict['properties']['networkProfile']['networkInterfaces'] = updated_nics
                         changed = True
 
@@ -928,7 +939,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not self.short_hostname:
                         self.short_hostname = self.name
 
-                    nics = [self.compute_models.NetworkInterfaceReference(id=id) for id in network_interfaces]
+                    nics = [self.compute_models.NetworkInterfaceReference(id=id, primary=(i is 0))
+                            for i, id in enumerate(network_interfaces)]
 
                     # os disk
                     if self.managed_disk_type:
@@ -1057,9 +1069,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     self.log("Update virtual machine {0}".format(self.name))
                     self.results['actions'].append('Updated VM {0}'.format(self.name))
-
-                    nics = [self.compute_models.NetworkInterfaceReference(id=interface['id'])
-                            for interface in vm_dict['properties']['networkProfile']['networkInterfaces']]
+                    nics = [self.compute_models.NetworkInterfaceReference(id=interface['id'], primary=(i is 0))
+                            for i, interface in enumerate(vm_dict['properties']['networkProfile']['networkInterfaces'])]
 
                     # os disk
                     if not vm_dict['properties']['storageProfile']['osDisk'].get('managedDisk'):

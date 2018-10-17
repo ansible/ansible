@@ -55,6 +55,8 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """
@@ -93,15 +95,15 @@ output_lines:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.netconf import exec_rpc
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 
 def main():
@@ -151,7 +153,7 @@ def main():
 
     reply = exec_rpc(module, tostring(element), ignore_warning=False)
 
-    result['xml'] = str(tostring(reply))
+    result['xml'] = tostring(reply)
 
     if module.params['output'] == 'text':
         data = reply.find('.//output')
@@ -162,7 +164,7 @@ def main():
         result['output'] = module.from_json(reply.text.strip())
 
     else:
-        result['output'] = str(tostring(reply)).split('\n')
+        result['output'] = tostring(reply).split('\n')
 
     module.exit_json(**result)
 

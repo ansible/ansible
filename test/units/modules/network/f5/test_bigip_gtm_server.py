@@ -21,12 +21,12 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_gtm_server import ApiParameters
-    from library.bigip_gtm_server import ModuleParameters
-    from library.bigip_gtm_server import ModuleManager
-    from library.bigip_gtm_server import V1Manager
-    from library.bigip_gtm_server import V2Manager
-    from library.bigip_gtm_server import ArgumentSpec
+    from library.modules.bigip_gtm_server import ApiParameters
+    from library.modules.bigip_gtm_server import ModuleParameters
+    from library.modules.bigip_gtm_server import ModuleManager
+    from library.modules.bigip_gtm_server import V1Manager
+    from library.modules.bigip_gtm_server import V2Manager
+    from library.modules.bigip_gtm_server import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -196,6 +196,8 @@ class TestV1Manager(unittest.TestCase):
         m1 = V1Manager(module=module, params=module.params)
         m1.exists = Mock(side_effect=[False, True])
         m1.create_on_device = Mock(return_value=True)
+        m1.client = Mock()
+        m1.client.api.tmos_version = '12.0.0'
 
         # Override methods in the specific type of manager
         mm = ModuleManager(module=module)
@@ -272,6 +274,8 @@ class TestV2Manager(unittest.TestCase):
         m1 = V2Manager(module=module)
         m1.exists = Mock(side_effect=[False, True])
         m1.create_on_device = Mock(return_value=True)
+        m1.client = Mock()
+        m1.client.api.tmos_version = '13.1.0'
 
         # Override methods in the specific type of manager
         mm = ModuleManager(module=module)

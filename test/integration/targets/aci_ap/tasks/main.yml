@@ -21,6 +21,12 @@
     tenant: anstest
   register: tenant_present
 
+- name: ensure ap does not exist initially
+  aci_ap:
+    <<: *aci_tenant_present
+    ap: anstest
+    state: absent
+
 - name: create ap - check mode works
   aci_ap: &aci_ap_present
     <<: *aci_tenant_present

@@ -1,0 +1,68 @@
+- name: Install Python requirements
+  pip:
+    state: present 
+    name: "{{ item }}"
+  with_items:
+    - docker==2.7.0
+
+- name: Test parameters with state=present
+  docker_swarm:
+    state: present
+  ignore_errors: yes
+  register: output
+
+- name: assert failure when called with state=init and no advertise_addr
+  assert:
+    that:
+       - 'output.failed'
+       - 'output.msg == "advertise_addr is required to initialize a swarm cluster."'
+
+- name: Test parameters with state=join
+  docker_swarm:
+    state: join
+  ignore_errors: yes
+  register: output
+
+- name: assert failure when called with state=join and no advertise_addr,remote_addrs,join_token
+  assert:
+    that:
+       - 'output.failed'
+       - 'output.msg == "state is join but all of the following are missing: advertise_addr, remote_addrs, join_token"'
+
+- name: Test parameters with state=remove
+  docker_swarm:
+    state: remove
+  ignore_errors: yes
+  register: output
+
+- name: assert failure when called with state=remove and no node_id
+  assert:
+    that:
+       - 'output.failed'
+       - 'output.msg == "state is remove but all of the following are missing: node_id"'
+
+- name: Create a Swarm cluster
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address}}"
+  register: output
+
+- name: assert changed when create a new swarm cluster
+  assert:
+    that:
+       - 'output.changed'
+       - 'output.actions[0] | regex_search("New Swarm cluster created: ")'
+       - 'output.swarm_facts.JoinTokens.Manager'
+       - 'output.swarm_facts.JoinTokens.Worker'
+
+- name: Remove a Swarm cluster
+  docker_swarm:
+    state: absent
+    force: true
+  register: output
+
+- name: assert changed when remove a swarm cluster
+  assert:
+    that:
+       - 'output.changed'
+       - 'output.actions[0] == "Node has leaved the swarm cluster"'

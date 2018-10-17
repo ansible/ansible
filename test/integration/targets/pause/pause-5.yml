@@ -1,0 +1,35 @@
+- name: Test pause module echo output
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - pause:
+        echo: yes
+        prompt: Enter some text
+      register: results
+
+    - name: Ensure that input was captured
+      assert:
+        that:
+          - results.user_input == 'hello there'
+
+    - pause:
+        echo: yes
+        prompt: Enter some text to edit
+      register: result
+
+    - name: Ensure edited input was captured
+      assert:
+        that:
+          - result.user_input == 'hello tommy boy'
+
+    - pause:
+        echo: no
+        prompt: Enter some text
+      register: result
+
+    - name: Ensure secret input was caputered
+      assert:
+        that:
+          - result.user_input == 'supersecretpancakes'

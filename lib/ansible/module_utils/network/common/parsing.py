@@ -205,9 +205,16 @@ class Conditional(object):
 
     def __init__(self, conditional, encoding=None):
         self.raw = conditional
-
+        self.negate = False
         try:
-            key, op, val = shlex.split(conditional)
+            components = shlex.split(conditional)
+            key, val = components[0], components[-1]
+            op_components = components[1:-1]
+            if 'not' in op_components:
+                self.negate = True
+                op_components.pop(op_components.index('not'))
+            op = op_components[0]
+
         except ValueError:
             raise ValueError('failed to parse conditional')
 
@@ -217,7 +224,10 @@ class Conditional(object):
 
     def __call__(self, data):
         value = self.get_value(dict(result=data))
-        return self.func(value)
+        if not self.negate:
+            return self.func(value)
+        else:
+            return not self.func(value)
 
     def _cast_value(self, value):
         if value in BOOLEANS_TRUE:

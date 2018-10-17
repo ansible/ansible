@@ -25,5 +25,5 @@ the release has been made.  The Release manager will let the GitHub Admin know w
 done.
 
 .. seealso:: The `GitHub Admin Process Docs
-    <https://github.com/ansible/ansible/blob/devel/hacking/release-branches.rst>`_ for instructions
+    <https://docs.google.com/document/d/1gWPtxNX4J39uIzwqQWLIsTZ1dY_AwEZzAd9bJ4XtZso/edit#heading=h.2wezayw9xsqz>`_ for instructions
     on how to change branch permissions.

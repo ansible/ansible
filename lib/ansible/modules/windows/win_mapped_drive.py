@@ -43,6 +43,7 @@ options:
       drive regardless of the target.
     - If C(state=absent) and the path is set, the module will throw an error if
       path does not match the target of the mapped drive.
+    type: path
   state:
     description:
     - If C(present) will ensure the mapped drive exists.

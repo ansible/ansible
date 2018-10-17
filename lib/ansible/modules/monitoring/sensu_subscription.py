@@ -40,7 +40,7 @@ options:
     description:
       - Create a backup file (if yes), including the timestamp information so you
       - can get the original file back if you somehow clobbered it incorrectly.
-    choices: [ 'yes', 'no' ]
+    type: bool
     required: false
     default: no
 requirements: [ ]

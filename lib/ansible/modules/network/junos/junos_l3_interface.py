@@ -47,13 +47,15 @@ options:
     description:
       - Specifies whether or not the configuration is active or deactivated
     default: True
-    choices: [True, False]
+    type: bool
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 extends_documentation_fragment: junos
 """
 
@@ -72,18 +74,18 @@ EXAMPLES = """
   junos_l3_interface:
     aggregate:
     - name: ge-0/0/1
-      ipv4: 1.1.1.1
+      ipv4: 192.0.2.1
     - name: ge-0/0/2
-      ipv4: 2.2.2.2
+      ipv4: 192.0.2.2
       ipv6: fd5d:12c9:2201:2::2
 
 - name: Delete ipv4 address using aggregate
   junos_l3_interface:
     aggregate:
     - name: ge-0/0/1
-      ipv4: 1.1.1.1
+      ipv4: 192.0.2.1
     - name: ge-0/0/2
-      ipv4: 2.2.2.2
+      ipv4: 192.0.2.2
     state: absent
 """
 
@@ -94,7 +96,7 @@ diff:
   type: string
   sample: >
         [edit interfaces ge-0/0/1 unit 0 family inet]
-        +       address 1.1.1.1/32;
+        +       address 192.0.2.1/32;
         [edit interfaces ge-0/0/1 unit 0 family inet6]
         +       address fd5d:12c9:2201:1::1/128;
 """
@@ -104,14 +106,9 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 

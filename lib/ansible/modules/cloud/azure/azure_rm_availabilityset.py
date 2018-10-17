@@ -45,7 +45,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
         required: false
     platform_update_domain_count:
         description:

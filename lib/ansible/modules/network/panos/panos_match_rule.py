@@ -33,8 +33,8 @@ description:
 author: "Robert Hagen (@rnh556)"
 version_added: "2.5"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
+    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is not supported.
     - Panorama NOT is supported.

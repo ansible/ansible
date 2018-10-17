@@ -1,0 +1,6 @@
+---
+minor_changes:
+- The apt, ec2_elb_lb, elb_classic_lb, and unarchive modules have been ported
+  away from using __file__.  This is futureproofing as__file__ won't work if we
+  switch to using python -m to invoke modules in the future or if we figure out
+  a way to make a module never touch disk for pipelining purposes.

@@ -32,7 +32,7 @@ try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
-    from ncclient.xml_ import to_ele, to_xml, new_ele
+    from ncclient.xml_ import to_ele, to_xml, new_ele, sub_ele
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
@@ -73,7 +73,6 @@ class Netconf(NetconfBase):
         :target: is the name of the configuration datastore being edited
         :config: is the configuration in string format."""
         if kwargs.get('config'):
-            kwargs['config'] = to_bytes(kwargs['config'], errors='surrogate_or_strict')
             if kwargs.get('format', 'xml') == 'xml':
                 kwargs['config'] = to_ele(kwargs['config'])
 
@@ -92,6 +91,7 @@ class Netconf(NetconfBase):
         result['server_capabilities'] = [c for c in self.m.server_capabilities]
         result['client_capabilities'] = [c for c in self.m.client_capabilities]
         result['session_id'] = self.m.session_id
+        result['device_operations'] = self.get_device_operations(result['server_capabilities'])
         return json.dumps(result)
 
     @staticmethod
@@ -144,43 +144,36 @@ class Netconf(NetconfBase):
         """reboot the device"""
         return self.m.reboot().data_xml
 
+    # Due to issue in ncclient commit() method for Juniper (https://github.com/ncclient/ncclient/issues/238)
+    # below commit() is a workaround which build's raw `commit-configuration` xml with required tags and uses
+    # ncclient generic rpc() method to execute rpc on remote host.
+    # Remove below method after the issue in ncclient is fixed.
     @ensure_connected
-    def halt(self):
-        """reboot the device"""
-        return self.m.halt().data_xml
-
-    @ensure_connected
-    def get(self, *args, **kwargs):
-        try:
-            return self.m.get(*args, **kwargs).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
-
-    @ensure_connected
-    def get_config(self, *args, **kwargs):
-        try:
-            return self.m.get_config(*args, **kwargs).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
-
-    @ensure_connected
-    def edit_config(self, *args, **kwargs):
-        try:
-            self.m.edit_config(*args, **kwargs).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
-
-    @ensure_connected
-    def commit(self, *args, **kwargs):
-        try:
-            return self.m.commit(*args, **kwargs).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
-
-    @ensure_connected
-    def validate(self, *args, **kwargs):
-        return self.m.validate(*args, **kwargs).data_xml
-
-    @ensure_connected
-    def discard_changes(self, *args, **kwargs):
-        return self.m.discard_changes(*args, **kwargs).data_xml
+    def commit(self, confirmed=False, check=False, timeout=None, comment=None, synchronize=False, at_time=None):
+        """Commit the candidate configuration as the device's new current configuration.
+           Depends on the `:candidate` capability.
+           A confirmed commit (i.e. if *confirmed* is `True`) is reverted if there is no
+           followup commit within the *timeout* interval. If no timeout is specified the
+           confirm timeout defaults to 600 seconds (10 minutes).
+           A confirming commit may have the *confirmed* parameter but this is not required.
+           Depends on the `:confirmed-commit` capability.
+        :confirmed: whether this is a confirmed commit
+        :timeout: specifies the confirm timeout in seconds
+        """
+        obj = new_ele('commit-configuration')
+        if confirmed:
+            sub_ele(obj, 'confirmed')
+        if check:
+            sub_ele(obj, 'check')
+        if synchronize:
+            sub_ele(obj, 'synchronize')
+        if at_time:
+            subele = sub_ele(obj, 'at-time')
+            subele.text = str(at_time)
+        if comment:
+            subele = sub_ele(obj, 'log')
+            subele.text = str(comment)
+        if timeout:
+            subele = sub_ele(obj, 'confirm-timeout')
+            subele.text = str(timeout)
+        return self.rpc(obj)

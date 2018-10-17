@@ -204,7 +204,7 @@ def main():
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, getattr(module, 'tmpdir', None))
+    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
     path_hash = module.sha1(path)
     result['checksum'] = path_hash
 

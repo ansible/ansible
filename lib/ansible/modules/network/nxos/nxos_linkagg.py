@@ -128,24 +128,9 @@ from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-
-
-def execute_show_command(command, module):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        if 'show port-channel summary' in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def search_obj_in_list(group, lst):
@@ -244,14 +229,20 @@ def map_params_to_obj(module):
             d = item.copy()
             d['group'] = str(d['group'])
             d['min_links'] = str(d['min_links'])
+            if d['members']:
+                d['members'] = [normalize_interface(i) for i in d['members']]
 
             obj.append(d)
     else:
+        members = None
+        if module.params['members']:
+            members = [normalize_interface(i) for i in module.params['members']]
+
         obj.append({
             'group': str(module.params['group']),
             'mode': module.params['mode'],
             'min_links': str(module.params['min_links']),
-            'members': module.params['members'],
+            'members': members,
             'state': module.params['state']
         })
 
@@ -290,10 +281,10 @@ def get_members(channel):
         return list()
 
     if isinstance(interfaces, dict):
-        members.append(interfaces.get('port'))
+        members.append(normalize_interface(interfaces.get('port')))
     elif isinstance(interfaces, list):
         for i in interfaces:
-            members.append(i.get('port'))
+            members.append(normalize_interface(i.get('port')))
 
     return members
 
@@ -330,13 +321,13 @@ def parse_channel_options(module, output, channel):
 
 def map_config_to_obj(module):
     objs = list()
-    output = execute_show_command('show port-channel summary', module)[0]
+    output = run_commands(module, ['show port-channel summary | json'])[0]
     if not output:
         return list()
 
     try:
         channels = output['TABLE_channel']['ROW_channel']
-    except KeyError:
+    except (TypeError, KeyError):
         return objs
 
     if channels:

@@ -44,12 +44,6 @@ options:
       - Using C(force) will cause ansible to always report that a change was made.
     type: bool
     default: 'no'
-  upgrade:
-    description:
-      - If package is already installed it, try to upgrade to the latest version or to the specified version.
-      - As of Ansible v2.3 this is deprecated, set parameter C(state) to C(latest) for the same result.
-    type: bool
-    default: 'no'
   version:
     description:
       - Specific version of the package to be installed.
@@ -57,6 +51,15 @@ options:
   source:
     description:
       - Specify source rather than using default chocolatey repository.
+  architecture:
+    description:
+      - Allows installation of alternative architecture packages, for example,
+        32bit on 64bit windows.
+    version_added: '2.7'
+    choices:
+      - default
+      - x86
+    default: default
   install_args:
     description:
       - Arguments to pass to the native installer.
@@ -86,6 +89,7 @@ options:
   timeout:
     description:
       - The time to allow chocolatey to finish before timing out.
+    type: int
     default: 2700
     version_added: '2.3'
     aliases: [ execution_timeout ]
@@ -156,8 +160,13 @@ EXAMPLES = r'''
 
 - name: Install notepadplusplus version 6.6
   win_chocolatey:
-    name: notepadplusplus.install
+    name: notepadplusplus
     version: '6.6'
+
+- name: Install notepadplusplus 32 bit version
+  win_chocolatey:
+    name: notepadplusplus
+    architecture: 'x86'
 
 - name: Install git from specified repository
   win_chocolatey:
@@ -210,21 +219,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-choco_bootstrap_output:
-  description: DEPRECATED, will be removed in 2.6, use stdout instead.
-  returned: changed, choco task returned a failure
-  type: str
-  sample: Chocolatey upgraded 1/1 packages.
-choco_error_cmd:
-  description: DEPRECATED, will be removed in 2.6, use command instead.
-  returned: changed, choco task returned a failure
-  type: str
-  sample: choco.exe install -r --no-progress -y sysinternals --timeout 2700 --failonunfound
-choco_error_log:
-  description: DEPRECATED, will be removed in 2.6, use stdout instead.
-  returned: changed, choco task returned a failure
-  type: str
-  sample: sysinternals not installed. The package was not found with the source(s) listed
 command:
   description: The full command used in the chocolatey task.
   returned: changed
@@ -232,7 +226,7 @@ command:
   sample: choco.exe install -r --no-progress -y sysinternals --timeout 2700 --failonunfound
 rc:
   description: The return code from the chocolatey task.
-  returned: changed
+  returned: always
   type: int
   sample: 0
 stdout:

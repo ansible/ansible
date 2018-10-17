@@ -27,7 +27,7 @@ description:
        absent on the filesystem.
      - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
-     - This module is also supported for Windows targets.
+     - For Windows targets, use the M(win_wait_for) module instead.
 version_added: "0.7"
 options:
   host:

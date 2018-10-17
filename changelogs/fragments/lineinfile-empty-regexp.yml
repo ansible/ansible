@@ -1,0 +1,2 @@
+minor_changes:
+  - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)

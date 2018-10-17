@@ -1,4 +1,5 @@
 import json
+import sys
 
 from ansible.module_utils.urls import fetch_url
 
@@ -33,9 +34,12 @@ class Response(object):
 
 class ScalewayAPI(object):
 
-    def __init__(self, module, headers, base_url):
+    def __init__(self, module, base_url, headers=None):
         self.module = module
-        self.headers = headers
+        self.headers = {'User-Agent': self.get_user_agent_string(module),
+                        'Content-type': 'application/json'}
+        if headers is not None:
+            self.headers.update(headers)
         self.base_url = base_url
 
     def _url_builder(self, path):
@@ -59,6 +63,10 @@ class ScalewayAPI(object):
 
         return Response(resp, info)
 
+    @staticmethod
+    def get_user_agent_string(module):
+        return "ansible %s Python %s" % (module.ansible_version, sys.version.split(' ')[0])
+
     def get(self, path, data=None, headers=None):
         return self.send('GET', path, data, headers)
 
@@ -76,3 +84,12 @@ class ScalewayAPI(object):
 
     def update(self, path, data=None, headers=None):
         return self.send("UPDATE", path, data, headers)
+
+
+SCALEWAY_LOCATION = {
+    'par1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
+    'EMEA-FR-PAR1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
+
+    'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
+    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'}
+}

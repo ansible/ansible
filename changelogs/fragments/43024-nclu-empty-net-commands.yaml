@@ -1,0 +1,2 @@
+bugfixes:
+- nclu - no longer runs net on empty lines in templates (https://github.com/ansible/ansible/pull/43024)

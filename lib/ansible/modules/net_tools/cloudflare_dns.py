@@ -558,7 +558,7 @@ class CloudflareAPI(object):
             if (params['priority'] is not None) and ('priority' in cur_record) and (cur_record['priority'] != params['priority']):
                 do_update = True
             if ('data' in new_record) and ('data' in cur_record):
-                if (cur_record['data'] > new_record['data']) - (cur_record['data'] < new_record['data']):
+                if (cur_record['data'] != new_record['data']):
                     do_update = True
             if (params['type'] == 'CNAME') and (cur_record['content'] != new_record['content']):
                 do_update = True

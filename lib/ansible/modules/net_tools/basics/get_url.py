@@ -24,7 +24,7 @@ description:
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
        (see `setting the environment
-       <http://docs.ansible.com/playbooks_environment.html>`_),
+       <https://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
      - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
        your proxy environment for both protocols is correct.
@@ -342,7 +342,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
             else:
                 module.fail_json(msg="%s directory does not exist." % tmp_dest)
     else:
-        tmp_dest = getattr(module, 'tmpdir', None)
+        tmp_dest = module.tmpdir
 
     fd, tempname = tempfile.mkstemp(dir=tmp_dest)
 

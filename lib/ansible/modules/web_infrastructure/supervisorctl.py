@@ -55,6 +55,7 @@ options:
 notes:
   - When C(state) = I(present), the module will call C(supervisorctl reread) then C(supervisorctl add) if the program/group does not exist.
   - When C(state) = I(restarted), the module will call C(supervisorctl update) then call C(supervisorctl restart).
+  - When C(state) = I(absent), the module will call C(supervisorctl reread) then C(supervisorctl remove) to remove the target program/group.
 requirements: [ "supervisorctl" ]
 author:
     - "Matt Wright (@mattupstate)"

@@ -1,21 +1,20 @@
 ---
-- debug: msg='START connection={{ ansible_connection }}/sublevel_block.yaml'
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg='START common/sublevel_block.yaml on connection={{ ansible_connection }}'
 
 - name: setup
   nxos_config: &clear
     lines: no ip access-list test
-    provider: "{{ connection }}"
     match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
 
 - name: configure sub level command using block replace
   nxos_config:
     lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-      - 40 permit ip 4.4.4.4/32 any log
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
     provider: "{{ connection }}"
@@ -25,18 +24,18 @@
     that:
       - "result.changed == true"
       - "'ip access-list test' in result.updates"
-      - "'10 permit ip 1.1.1.1/32 any log' in result.updates"
-      - "'20 permit ip 2.2.2.2/32 any log' in result.updates"
-      - "'30 permit ip 3.3.3.3/32 any log' in result.updates"
-      - "'40 permit ip 4.4.4.4/32 any log' in result.updates"
+      - "'10 permit ip 192.0.2.1/32 any log' in result.updates"
+      - "'20 permit ip 192.0.2.2/32 any log' in result.updates"
+      - "'30 permit ip 192.0.2.3/32 any log' in result.updates"
+      - "'40 permit ip 192.0.2.4/32 any log' in result.updates"
 
 - name: check sub level command using block replace
   nxos_config:
     lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-      - 40 permit ip 4.4.4.4/32 any log
+      - 10 permit ip 192.0.2.1/32 any log
+      - 20 permit ip 192.0.2.2/32 any log
+      - 30 permit ip 192.0.2.3/32 any log
+      - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
     provider: "{{ connection }}"
@@ -49,4 +48,4 @@
 - name: teardown
   nxos_config: *clear
 
-- debug: msg='END connection={{ ansible_connection }}/sublevel_block.yaml'
+- debug: msg='END common/sublevel_block.yaml on connection={{ ansible_connection }}'

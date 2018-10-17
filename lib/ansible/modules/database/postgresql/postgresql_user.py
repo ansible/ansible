@@ -7,9 +7,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['stableinterface'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -34,60 +36,70 @@ version_added: "0.6"
 options:
   name:
     description:
-      - name of the user (role) to add or remove
+      - Name of the user (role) to add or remove.
     required: true
   password:
     description:
-      - set the user's password, before 1.4 this was required.
-      - >
-        When passing an encrypted password, the encrypted parameter must also be true, and it must be generated with the format
-        C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
-        C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if the provided password string is already in
-        MD5-hashed format, then it is used as-is, regardless of encrypted parameter.
+      - Set the user's password, before 1.4 this was required.
+      - Password can be passed unhashed or hashed (MD5-hashed).
+      - Unhashed password will automatically be hashed when saved into the
+        database if C(encrypted) parameter is set, otherwise it will be save in
+        plain text format.
+      - When passing a hashed password it must be generated with the format
+        C('str["md5"] + md5[ password + username ]'), resulting in a total of
+        35 characters. An easy way to do this is C(echo "md5$(echo -n
+        'verysecretpasswordJOE' | md5sum)").
+      - Note that if the provided password string is already in MD5-hashed
+        format, then it is used as-is, regardless of C(encrypted) parameter.
   db:
     description:
-      - name of database where permissions will be granted
+      - Name of database where permissions will be granted.
   fail_on_user:
     description:
-      - if C(yes), fail when user can't be removed. Otherwise just log and continue
-    type: bool
+      - If C(yes), fail when user can't be removed. Otherwise just log and
+        continue.
     default: 'yes'
+    type: bool
   port:
     description:
       - Database port to connect to.
     default: 5432
   login_user:
     description:
-      - User (role) used to authenticate with PostgreSQL
+      - User (role) used to authenticate with PostgreSQL.
     default: postgres
   login_password:
     description:
-      - Password used to authenticate with PostgreSQL
+      - Password used to authenticate with PostgreSQL.
   login_host:
     description:
       - Host running PostgreSQL.
     default: localhost
   login_unix_socket:
     description:
-      - Path to a Unix domain socket for local connections
+      - Path to a Unix domain socket for local connections.
   priv:
     description:
-      - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
+      - "PostgreSQL privileges string in the format: C(table:priv1,priv2)."
   role_attr_flags:
     description:
-      - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
+      - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
       - Note that '[NO]CREATEUSER' is deprecated.
-    default: ""
-    choices: [ "[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS" ]
+    choices: ["[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS"]
   state:
     description:
-      - The user (role) state
+      - The user (role) state.
     default: present
-    choices: [ present, absent ]
+    choices: ["present", "absent"]
   encrypted:
     description:
-      - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
-        stored password is hashed when encrypted is set.
+      - Whether the password is stored hashed in the database. Passwords can be
+        passed already hashed or unhashed, and postgresql ensures the stored
+        password is hashed when C(encrypted) is set.
+      - "Note: Postgresql 10 and newer doesn't support unhashed passwords."
+      - Previous to Ansible 2.6, this was C(no) by default.
+    default: 'yes'
+    type: bool
     version_added: '1.4'
   expires:
     description:
@@ -97,22 +109,26 @@ options:
     version_added: '1.4'
   no_password_changes:
     description:
-      - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
+      - If C(yes), don't inspect database for password changes. Effective when
+        C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
-    type: bool
     default: 'no'
+    type: bool
     version_added: '2.0'
   ssl_mode:
     description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Determines whether or with what priority a secure SSL TCP/IP connection
+        will be negotiated with the server.
+      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
+        more information on the modes.
       - Default of C(prefer) matches libpq default.
     default: prefer
-    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
     version_added: '2.3'
   ssl_rootcert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
+      - Specifies the name of a file containing SSL certificate authority (CA)
+        certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
     version_added: '2.3'
   conn_limit:
@@ -128,14 +144,11 @@ notes:
      PostgreSQL must also be installed on the remote host. For Ubuntu-based
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
-   - If the passlib library is installed, then passwords that are encrypted
-     in the DB but not encrypted when passed as arguments can be checked for
-     changes. If the passlib library is not installed, unencrypted passwords
-     stored in the DB encrypted will be assumed to have changed.
    - If you specify PUBLIC as the user, then the privilege changes will apply
      to all users. You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
-   - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
+   - The ssl_rootcert parameter requires at least Postgres version 8.4 and
+     I(psycopg2) version 2.4.3.
 requirements: [ psycopg2 ]
 author: "Ansible Core Team"
 '''
@@ -148,10 +161,11 @@ EXAMPLES = '''
     password: ceec4eif7ya
     priv: "CONNECT/products:ALL"
 
-# Create rails user, grant privilege to create other databases and demote rails from super user status
+# Create rails user, set its password (MD5-hashed) and grant privilege to create other
+# databases and demote rails from super user status
 - postgresql_user:
     name: rails
-    password: secret
+    password: md59543f1d82624df2b31672ec0f7050460
     role_attr_flags: CREATEDB,NOSUPERUSER
 
 # Remove test user privileges from acme
@@ -184,7 +198,7 @@ EXAMPLES = '''
 - postgresql_user:
     db: test
     user: test
-    password: NULL
+    password: ""
 '''
 
 import itertools
@@ -248,7 +262,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
     query_password_data = dict(password=password, expires=expires)
     query = ['CREATE USER %(user)s' %
              {"user": pg_quote_identifier(user, 'role')}]
-    if password is not None:
+    if password is not None and password != '':
         query.append("WITH %(crypt)s" % {"crypt": encrypted})
         query.append("PASSWORD %(password)s")
     if expires is not None:
@@ -277,11 +291,16 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
     # Do we actually need to do anything?
     pwchanging = False
     if password is not None:
+        # Empty password means that the role shouldn't have a password, which
+        # means we need to check if the current password is None.
+        if password == '':
+            if current_role_attrs['rolpassword'] is not None:
+                pwchanging = True
         # 32: MD5 hashes are represented as a sequence of 32 hexadecimal digits
         #  3: The size of the 'md5' prefix
         # When the provided password looks like a MD5-hash, value of
         # 'encrypted' is ignored.
-        if ((password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED'):
+        elif (password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED':
             if password != current_role_attrs['rolpassword']:
                 pwchanging = True
         elif encrypted == 'ENCRYPTED':
@@ -360,8 +379,11 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
         alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
         if pwchanging:
-            alter.append("WITH %(crypt)s" % {"crypt": encrypted})
-            alter.append("PASSWORD %(password)s")
+            if password != '':
+                alter.append("WITH %(crypt)s" % {"crypt": encrypted})
+                alter.append("PASSWORD %(password)s")
+            else:
+                alter.append("WITH PASSWORD NULL")
             alter.append(role_attr_flags)
         elif role_attr_flags:
             alter.append('WITH %s' % role_attr_flags)
@@ -715,7 +737,7 @@ def main():
             port=dict(default='5432'),
             fail_on_user=dict(type='bool', default='yes'),
             role_attr_flags=dict(default=''),
-            encrypted=dict(type='bool', default='no'),
+            encrypted=dict(type='bool', default='yes'),
             no_password_changes=dict(type='bool', default='no'),
             expires=dict(default=None),
             ssl_mode=dict(default='prefer', choices=[

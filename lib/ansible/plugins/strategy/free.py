@@ -91,15 +91,15 @@ class StrategyModule(StrategyBase):
                 # peek at the next task for the host, to see if there's
                 # anything to do do for this host
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
-                display.debug("free host state: %s" % state)
-                display.debug("free host task: %s" % task)
+                display.debug("free host state: %s" % state, host=host_name)
+                display.debug("free host task: %s" % task, host=host_name)
                 if host_name not in self._tqm._unreachable_hosts and task:
 
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done
                     work_to_do = True
 
-                    display.debug("this host has work to do")
+                    display.debug("this host has work to do", host=host_name)
 
                     # check to see if this host is blocked (still executing a previous task)
                     if host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]:
@@ -114,19 +114,19 @@ class StrategyModule(StrategyBase):
                             # corresponding action plugin
                             action = None
 
-                        display.debug("getting variables")
+                        display.debug("getting variables", host=host_name)
                         task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
-                        display.debug("done getting variables")
+                        display.debug("done getting variables", host=host_name)
 
                         try:
                             task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                            display.debug("done templating")
+                            display.debug("done templating", host=host_name)
                         except:
                             # just ignore any errors during task name templating,
                             # we don't care if it just shows the raw name
-                            display.debug("templating failed for some reason")
+                            display.debug("templating failed for some reason", host=host_name)
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:
@@ -143,7 +143,7 @@ class StrategyModule(StrategyBase):
                             # If there is no metadata, the default behavior is to not allow duplicates,
                             # if there is metadata, check to see if the allow_duplicates flag was set to true
                             if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
-                                display.debug("'%s' skipped because role has already run" % task)
+                                display.debug("'%s' skipped because role has already run" % task, host=host_name)
                                 del self._blocked_hosts[host_name]
                                 continue
 

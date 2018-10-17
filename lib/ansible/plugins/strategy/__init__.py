@@ -439,12 +439,6 @@ class StrategyBase:
             task_result._host = original_host
             task_result._task = original_task
 
-            # get the correct loop var for use later
-            if original_task.loop_control:
-                loop_var = original_task.loop_control.loop_var
-            else:
-                loop_var = 'item'
-
             # send callbacks for 'non final' results
             if '_ansible_retry' in task_result._result:
                 self._tqm.send_callback('v2_runner_retry', task_result)
@@ -456,7 +450,7 @@ class StrategyBase:
                     self._tqm.send_callback('v2_runner_item_on_skipped', task_result)
                 else:
                     if 'diff' in task_result._result:
-                        if self._diff:
+                        if self._diff or getattr(original_task, 'diff', False):
                             self._tqm.send_callback('v2_on_file_diff', task_result)
                     self._tqm.send_callback('v2_runner_item_on_ok', task_result)
                 continue
@@ -499,7 +493,7 @@ class StrategyBase:
                     if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
 
-                    if state and state.run_state == iterator.ITERATING_RESCUE:
+                    if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
                         self._variable_manager.set_nonpersistent_facts(
                             original_host,
                             dict(
@@ -630,7 +624,7 @@ class StrategyBase:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
                 if 'diff' in task_result._result:
-                    if self._diff:
+                    if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
                 if not isinstance(original_task, TaskInclude):
@@ -723,7 +717,12 @@ class StrategyBase:
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self._inventory.hosts[host.name]
+        real_host = self._inventory.hosts.get(host.name)
+        if real_host is None:
+            if host.name == self._inventory.localhost.name:
+                real_host = self._inventory.localhost
+            else:
+                raise AnsibleError('%s cannot be matched in inventory' % host.name)
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
@@ -837,7 +836,14 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler._uuid in self._notified_handlers and len(self._notified_handlers[handler._uuid]):
-                    result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
+                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
+                    templar = Templar(loader=self._loader, variables=handler_vars)
+                    handler_name = handler.get_name()
+                    try:
+                        handler_name = templar.template(handler_name)
+                    except (UndefinedError, AnsibleUndefinedVariable):
+                        pass
+                    result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break
         return result
@@ -944,15 +950,14 @@ class StrategyBase:
 
         return ret
 
+    def _cond_not_supported_warn(self, task_name):
+        display.warning("%s task does not support when conditional" % task_name)
+
     def _execute_meta(self, task, play_context, iterator, target_host):
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
         meta_action = task.args.get('_raw_params')
-
-        # FIXME(s):
-        # * raise an error or show a warning when a conditional is used
-        #   on a meta task that doesn't support them
 
         def _evaluate_conditional(h):
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
@@ -963,11 +968,17 @@ class StrategyBase:
         msg = ''
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             msg = "noop"
         elif meta_action == 'flush_handlers':
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             self.run_handlers(iterator, play_context)
             msg = "ran handlers"
         elif meta_action == 'refresh_inventory' or self.flush_cache:
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
@@ -994,6 +1005,30 @@ class StrategyBase:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
         elif meta_action == 'reset_connection':
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task)
+            templar = Templar(loader=self._loader, variables=all_vars)
+
+            # apply the given task's information to the connection info,
+            # which may override some fields already set by the play or
+            # the options specified on the command line
+            play_context = play_context.set_task_and_variable_override(task=task, variables=all_vars, templar=templar)
+
+            # fields set from the play/task may be based on variables, so we have to
+            # do the same kind of post validation step on it here before we use it.
+            play_context.post_validate(templar=templar)
+
+            # now that the play context is finalized, if the remote_addr is not set
+            # default to using the host's address field as the remote address
+            if not play_context.remote_addr:
+                play_context.remote_addr = target_host.address
+
+            # We also add "magic" variables back into the variables dict to make sure
+            # a certain subset of variables exist.
+            play_context.update_vars(all_vars)
+
+            if task.when:
+                self._cond_not_supported_warn(meta_action)
+
             if target_host in self._active_connections:
                 connection = Connection(self._active_connections[target_host])
                 del self._active_connections[target_host]

@@ -52,6 +52,13 @@ options:
             of the properties do not match.
       type: bool
       default: 'no'
+    state:
+        description:
+            - Assert the state of the PostgreSQL database. Use 'present' to create or update a database and 'absent' to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
@@ -88,9 +95,9 @@ import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
-    from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -240,7 +247,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                                                                    server_name=self.server_name,
                                                                    database_name=self.name,
                                                                    parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

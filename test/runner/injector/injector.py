@@ -120,7 +120,7 @@ def main():
         try:
             cwd = os.getcwd()
         except OSError as ex:
-            # some platforms, such as OS X, may not allow querying the working directory when using become to drop privileges
+            # some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges
             if ex.errno != errno.EACCES:
                 raise
             if require_cwd:

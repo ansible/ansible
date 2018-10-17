@@ -50,7 +50,7 @@
 - assert:
     that:
       - "result.failed == true"
-      - "result.msg == 'Subset must be one of [hardware, default, interfaces, config], got test'"
+      - "result.msg == 'Subset must be one of [hardware, default, ofacts, config, interfaces], got test'"
 
 - name: Collect config facts from device in set format
   junos_facts:
@@ -92,7 +92,7 @@
 - assert:
     that:
       - "result.changed == false"
-      - "'{{ result['ansible_facts']['ansible_net_config']['configuration']['system']['service']['netconf'] }}' is defined"
+      - "'ssh' in result['ansible_facts']['ansible_net_config']['configuration']['system']['services']['netconf']"
   when: ansible_net_version == "17.3R1.10"
 
 - name: Collect config facts from device in text format

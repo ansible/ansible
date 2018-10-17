@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -19,7 +19,7 @@ description:
   - Manage the trust relationships between BIG-IPs. Devices, once peered, cannot
     be updated. If updating is needed, the peer must first be removed before it
     can be re-added to the trust.
-version_added: "2.5"
+version_added: 2.5
 options:
   peer_server:
     description:
@@ -30,8 +30,9 @@ options:
   peer_hostname:
     description:
       - The hostname that you want to associate with the device. This value will
-        be used to easily distinguish this device in BIG-IP configuration. If not
-        specified, the value of C(peer_server) will be used as a default.
+        be used to easily distinguish this device in BIG-IP configuration.
+      - When trusting a new device, if this parameter is not specified, the value
+        of C(peer_server) will be used as a default.
   peer_user:
     description:
       - The API username of the remote peer device that you are trusting. Note
@@ -107,30 +108,23 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -189,7 +183,7 @@ class Parameters(AnsibleF5Parameters):
     def peer_hostname(self):
         if self._values['peer_hostname'] is None:
             return self.peer_server
-        regex = re.compile('[^a-zA-Z.-_]')
+        regex = re.compile(r'[^a-zA-Z0-9.\-_]')
         result = regex.sub('_', self._values['peer_hostname'])
         return result
 
@@ -234,6 +228,22 @@ class ModuleManager(object):
         result.update(dict(changed=changed))
         return result
 
+    def provided_password(self):
+        if self.want.password:
+            return self.password
+        if self.want.provider.get('password', None):
+            return self.want.provider.get('password')
+        if self.module.params.get('password', None):
+            return self.module.params.get('password')
+
+    def provided_username(self):
+        if self.want.username:
+            return self.username
+        if self.want.provider.get('user', None):
+            return self.provider.get('user')
+        if self.module.params.get('user', None):
+            return self.module.params.get('user')
+
     def present(self):
         if self.exists():
             return False
@@ -243,11 +253,11 @@ class ModuleManager(object):
     def create(self):
         self._set_changed_options()
         if self.want.peer_user is None:
-            self.want.update({'peer_user': self.want.user})
+            self.want.update({'peer_user': self.provided_username()})
         if self.want.peer_password is None:
-            self.want.update({'peer_password': self.want.password})
+            self.want.update({'peer_password': self.provided_password()})
         if self.want.peer_hostname is None:
-            self.want.update({'peer_hostname': self.want.server})
+            self.want.update({'peer_hostname': self.want.peer_server})
         if self.module.check_mode:
             return True
 
@@ -262,6 +272,8 @@ class ModuleManager(object):
     def remove(self):
         if self.module.check_mode:
             return True
+        if self.want.peer_hostname is None:
+            self.want.update({'peer_hostname': self.want.peer_server})
         self.remove_from_device()
         if self.exists():
             raise F5ModuleError("Failed to remove the trusted peer.")
@@ -286,7 +298,7 @@ class ModuleManager(object):
         )
 
     def remove_from_device(self):
-        result = self.client.api.tm.cm.remove_from_trust.exec_cmd(
+        self.client.api.tm.cm.remove_from_trust.exec_cmd(
             'run', deviceName=self.want.peer_hostname, name=self.want.peer_hostname
         )
 

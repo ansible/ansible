@@ -210,7 +210,7 @@ class TaskQueueManager:
             except AttributeError:
                     display.deprecated("%s callback, does not support setting 'options', it will work for now, "
                                        " but this will be required in the future and should be updated, "
-                                       " see the 2.4 porting guide for details." % self.callback_obj._load_name, version="2.9")
+                                       " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
             self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True

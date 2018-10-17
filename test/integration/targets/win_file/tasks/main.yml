@@ -41,27 +41,75 @@
       - "file2_result.changed == false"
 #      - "file2_result.state == 'absent'"
 
+- name: verify we can touch a file (check)
+  win_file:
+    path: '{{win_output_dir}}\touch.txt'
+    state: touch
+  register: touch_file_check
+  check_mode: yes
+
+- name: get details of touched file (check)
+  win_stat:
+    path: '{{win_output_dir}}\touch.txt'
+  register: touch_file_actual_check
+
+- name: assert touch a file (check)
+  assert:
+    that:
+    - touch_file_check.changed
+    - not touch_file_actual_check.stat.exists
+
 - name: verify we can touch a file
-  win_file: path={{win_output_dir}}/baz.txt state=touch
-  register: file3_result
+  win_file: path={{win_output_dir}}/touch.txt state=touch
+  register: touch_file
 
-- name: verify that the file was marked as changed
+- name: get details of touched file
+  win_stat:
+    path: '{{win_output_dir}}\touch.txt'
+  register: touch_file_actual
+
+- name: assert touch a file
   assert:
     that:
-      - "file3_result.changed == true"
-#      - "file3_result.state == 'file'"
-#      - "file3_result.mode == '0644'"
+    - touch_file.changed
+    - touch_file_actual.stat.exists
+    - touch_file_actual.stat.size == 0
 
-- name: stat the touched file
-  win_stat: path={{win_output_dir}}/baz.txt state=touch
-  register: file3_stat_result
+- name: touch a file again
+  win_file:
+    path: '{{win_output_dir}}\touch.txt'
+    state: touch
+  register: touch_file_again
 
-- name: verify that the touched file exists and is size 0
+- name: get details of touched file again
+  win_stat:
+    path: '{{win_output_dir}}\touch.txt'
+  register: touch_file_actual_again
+
+- name: assert touch a file again
   assert:
     that:
-      - "file3_stat_result.changed == false"
-      - "file3_stat_result.stat.size == 0"
-      - "file3_stat_result.stat.exists == true"
+    - touch_file_again.changed
+    - touch_file_actual_again.stat.lastwritetime > touch_file_actual.stat.lastwritetime
+
+- name: touch an existing file in check mode
+  win_file:
+    path: '{{win_output_dir}}\touch.txt'
+    state: touch
+  register: touch_file_again_check
+  check_mode: yes
+
+- name: get details of touched file in check mode
+  win_stat:
+    path: '{{win_output_dir}}\touch.txt'
+  register: touch_file_again_actual_check
+
+- name: assert touch an existing file in check mode
+  assert:
+    that:
+    - touch_file_again_check.changed
+    - touch_file_again_actual_check.stat.lastwritetime == touch_file_actual_again.stat.lastwritetime
+
 #- name: change file mode
 #  win_file: path={{win_output_dir}}/baz.txt mode=0600
 #  register: file4_result
@@ -468,11 +516,14 @@
        - "stat_result.stat.exists == False"
 
 - name: create dir with spaces and parens in the dir name
-  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=directory
+  win_file:
+    path: '{{win_output_dir}}\dir with spaces (and parens) [block]'
+    state: directory
   register: file_result
 
 - name: stat the directory with spaces and parens
-  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
+  win_stat:
+    path: '{{win_output_dir}}\dir with spaces (and parens) [block]'
   register: stat_result
 
 - name: check dir with spaces and parens in the dir name has been created
@@ -482,12 +533,33 @@
        - stat_result.stat.exists
        - stat_result.stat.isdir
 
+- name: create file in dir with special char
+  win_file:
+    path: '{{win_output_dir}}\dir with spaces (and parens) [block]\file[1].txt'
+    state: touch
+  register: file_result
+
+- name: stat the file with spaces and parens
+  win_stat:
+    path: '{{win_output_dir}}\dir with spaces (and parens) [block]\file[1].txt'
+  register: stat_result
+
+- name: check file in dir with spaces and parens exist
+  assert:
+    that:
+    - file_result.changed
+    - stat_result.stat.exists
+    - stat_result.stat.isreg
+
 - name: remove dir with spaces and parens in the dir name
-  win_file: path="{{win_output_dir}}/dir with spaces (and parens)" state=absent
+  win_file:
+    path: '{{win_output_dir}}/dir with spaces (and parens) [block]'
+    state: absent
   register: file_result
 
 - name: stat the dir with spaces and parens in the dir name
-  win_stat: path="{{win_output_dir}}/dir with spaces (and parens)"
+  win_stat:
+    path: '{{win_output_dir}}\dir with spaces (and parens) [block]'
   register: stat_result
 
 - name: assert dir with spaces and parens in the dir name was removed

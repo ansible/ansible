@@ -40,6 +40,7 @@ options:
         B(At least one of name and hwclock are required.)
         I(Only used on Linux.)
     aliases: [ rtc ]
+    choices: [ "UTC", "local" ]
 notes:
   - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
 author:
@@ -74,8 +75,9 @@ import platform
 import random
 import re
 import string
+import filecmp
 
-from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.basic import AnsibleModule, get_platform, get_distribution
 from ansible.module_utils.six import iteritems
 
 
@@ -317,7 +319,12 @@ class NosystemdTimezone(Timezone):
         adjtime='/etc/adjtime'
     )
 
-    allow_no_file = dict()
+    # It's fine if all tree config files don't exist
+    allow_no_file = dict(
+        name=True,
+        hwclock=True,
+        adjtime=True
+    )
 
     regexps = dict(
         name=None,  # To be set in __init__
@@ -325,47 +332,77 @@ class NosystemdTimezone(Timezone):
         adjtime=re.compile(r'^(UTC|LOCAL)$', re.MULTILINE)
     )
 
+    dist_regexps = dict(
+        SuSE=re.compile(r'^TIMEZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE),
+        redhat=re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
+    )
+
+    dist_tzline_format = dict(
+        SuSE='TIMEZONE="%s"\n',
+        redhat='ZONE="%s"\n'
+    )
+
     def __init__(self, module):
         super(NosystemdTimezone, self).__init__(module)
         # Validate given timezone
         if 'name' in self.value:
             tzfile = self._verify_timezone()
-            self.update_timezone = ['%s %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
+            # `--remove-destination` is needed if /etc/localtime is a symlink so
+            # that it overwrites it instead of following it.
+            self.update_timezone = ['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
-        self.allow_no_file['hwclock'] = True  # Since this is only used for get values, file absense does not metter
         # Distribution-specific configurations
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
-            self.update_timezone = ['%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
-                                    '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True)]
+            if 'name' in self.value:
+                self.update_timezone = ['%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
+                                        '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True)]
             self.conf_files['name'] = '/etc/timezone'
-            self.allow_no_file['name'] = True
             self.conf_files['hwclock'] = '/etc/default/rcS'
             self.regexps['name'] = re.compile(r'^([^\s]+)', re.MULTILINE)
             self.tzline_format = '%s\n'
         else:
             # RHEL/CentOS/SUSE
             if self.module.get_bin_path('tzdata-update') is not None:
-                self.update_timezone = [self.module.get_bin_path('tzdata-update', required=True)]
-                self.allow_no_file['name'] = True
-            # else:
-            #   self.update_timezone       = 'cp ...' <- configured above
-            #   self.allow_no_file['name'] = False <- this is default behavior
+                # tzdata-update cannot update the timezone if /etc/localtime is
+                # a symlink so we have to use cp to update the time zone which
+                # was set above.
+                if not os.path.islink('/etc/localtime'):
+                    self.update_timezone = [self.module.get_bin_path('tzdata-update', required=True)]
+                # else:
+                #   self.update_timezone       = 'cp --remove-destination ...' <- configured above
             self.conf_files['name'] = '/etc/sysconfig/clock'
             self.conf_files['hwclock'] = '/etc/sysconfig/clock'
-            # The key for timezone might be `ZONE` or `TIMEZONE`
-            # (the former is used in RHEL/CentOS and the latter is used in SUSE linux).
-            # So check the content of /etc/sysconfig/clock and decide which key to use.
-            with open(self.conf_files['name'], mode='r') as f:
-                sysconfig_clock = f.read()
-            if re.search(r'^TIMEZONE\s*=', sysconfig_clock, re.MULTILINE):
-                # For SUSE
-                self.regexps['name'] = re.compile(r'^TIMEZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
-                self.tzline_format = 'TIMEZONE="%s"\n'
+            try:
+                f = open(self.conf_files['name'], 'r')
+            except IOError as err:
+                if self._allow_ioerror(err, 'name'):
+                    # If the config file doesn't exist detect the distribution and set regexps.
+                    distribution = get_distribution()
+                    if distribution == 'SuSE':
+                        # For SUSE
+                        self.regexps['name'] = self.dist_regexps['SuSE']
+                        self.tzline_format = self.dist_tzline_format['SuSE']
+                    else:
+                        # For RHEL/CentOS
+                        self.regexps['name'] = self.dist_regexps['redhat']
+                        self.tzline_format = self.dist_tzline_format['redhat']
+                else:
+                    self.abort('could not read configuration file "%s"' % self.conf_files['name'])
             else:
-                # For RHEL/CentOS
-                self.regexps['name'] = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
-                self.tzline_format = 'ZONE="%s"\n'
+                # The key for timezone might be `ZONE` or `TIMEZONE`
+                # (the former is used in RHEL/CentOS and the latter is used in SUSE linux).
+                # So check the content of /etc/sysconfig/clock and decide which key to use.
+                sysconfig_clock = f.read()
+                f.close()
+                if re.search(r'^TIMEZONE\s*=', sysconfig_clock, re.MULTILINE):
+                    # For SUSE
+                    self.regexps['name'] = self.dist_regexps['SuSE']
+                    self.tzline_format = self.dist_tzline_format['SuSE']
+                else:
+                    # For RHEL/CentOS
+                    self.regexps['name'] = self.dist_regexps['redhat']
+                    self.tzline_format = self.dist_tzline_format['redhat']
 
     def _allow_ioerror(self, err, key):
         # In some cases, even if the target file does not exist,
@@ -423,18 +460,18 @@ class NosystemdTimezone(Timezone):
             file.close()
         self.msg.append('Added 1 line and deleted %s line(s) on %s' % (len(matched_indices), filename))
 
-    def get(self, key, phase):
-        if key == 'hwclock' and os.path.isfile('/etc/adjtime'):
-            # If /etc/adjtime exists, use that file.
-            key = 'adjtime'
-
+    def _get_value_from_config(self, key, phase):
         filename = self.conf_files[key]
-
         try:
             file = open(filename, mode='r')
         except IOError as err:
             if self._allow_ioerror(err, key):
-                return None
+                if key == 'hwclock':
+                    return 'n/a'
+                elif key == 'adjtime':
+                    return 'UTC'
+                elif key == 'name':
+                    return 'n/a'
             else:
                 self.abort('tried to configure %s using a file "%s", but could not read it' % (key, filename))
         else:
@@ -443,19 +480,77 @@ class NosystemdTimezone(Timezone):
             try:
                 value = self.regexps[key].search(status).group(1)
             except AttributeError:
-                self.abort('tried to configure %s using a file "%s", but could not find a valid value in it' % (key, filename))
+                if key == 'hwclock':
+                    # If we cannot find UTC in the config that's fine.
+                    return 'n/a'
+                elif key == 'adjtime':
+                    # If we cannot find UTC/LOCAL in /etc/cannot that means UTC
+                    # will be used by default.
+                    return 'UTC'
+                elif key == 'name':
+                    if phase == 'before':
+                        # In 'before' phase UTC/LOCAL doesn't need to be set in
+                        # the timezone config file, so we ignore this error.
+                        return 'n/a'
+                    else:
+                        self.abort('tried to configure %s using a file "%s", but could not find a valid value in it' % (key, filename))
             else:
                 if key == 'hwclock':
-                    # For key='hwclock'; convert yes/no -> UTC/local
+                    # convert yes/no -> UTC/local
                     if self.module.boolean(value):
                         value = 'UTC'
                     else:
                         value = 'local'
                 elif key == 'adjtime':
-                    # For key='adjtime'; convert LOCAL -> local
+                    # convert LOCAL -> local
                     if value != 'UTC':
                         value = value.lower()
-                return value
+        return value
+
+    def get(self, key, phase):
+        planned = self.value[key]['planned']
+        if key == 'hwclock':
+            value = self._get_value_from_config(key, phase)
+            if value == planned:
+                # If the value in the config file is the same as the 'planned'
+                # value, we need to check /etc/adjtime.
+                value = self._get_value_from_config('adjtime', phase)
+        elif key == 'name':
+            value = self._get_value_from_config(key, phase)
+            if value == planned:
+                # If the planned values is the same as the one in the config file
+                # we need to check if /etc/localtime is also set to the 'planned' zone.
+                if os.path.islink('/etc/localtime'):
+                    # If /etc/localtime is a symlink and is not set to the TZ we 'planned'
+                    # to set, we need to return the TZ which the symlink points to.
+                    if os.path.exists('/etc/localtime'):
+                        # We use readlink() because on some distros zone files are symlinks
+                        # to other zone files, so it's hard to get which TZ is actually set
+                        # if we follow the symlink.
+                        path = os.readlink('/etc/localtime')
+                        linktz = re.search(r'/usr/share/zoneinfo/(.*)', path, re.MULTILINE)
+                        if linktz:
+                            valuelink = linktz.group(1)
+                            if valuelink != planned:
+                                value = valuelink
+                        else:
+                            # Set current TZ to 'n/a' if the symlink points to a path
+                            # which isn't a zone file.
+                            value = 'n/a'
+                    else:
+                        # Set current TZ to 'n/a' if the symlink to the zone file is broken.
+                        value = 'n/a'
+                else:
+                    # If /etc/localtime is not a symlink best we can do is compare it with
+                    # the 'planned' zone info file and return 'n/a' if they are different.
+                    try:
+                        if not filecmp.cmp('/etc/localtime', '/usr/share/zoneinfo/' + planned):
+                            return 'n/a'
+                    except:
+                        return 'n/a'
+        else:
+            self.abort('unknown parameter "%s"' % key)
+        return value
 
     def set_timezone(self, value):
         self._edit_file(filename=self.conf_files['name'],
@@ -468,8 +563,15 @@ class NosystemdTimezone(Timezone):
     def set_hwclock(self, value):
         if value == 'local':
             option = '--localtime'
+            utc = 'no'
         else:
             option = '--utc'
+            utc = 'yes'
+        if self.conf_files['hwclock'] is not None:
+            self._edit_file(filename=self.conf_files['hwclock'],
+                            regexp=self.regexps['hwclock'],
+                            value='UTC=%s\n' % utc,
+                            key='hwclock')
         self.execute(self.update_hwclock, '--systohc', option, log=True)
 
     def set(self, key, value):
@@ -592,15 +694,46 @@ class BSDTimezone(Timezone):
     def __init__(self, module):
         super(BSDTimezone, self).__init__(module)
 
+    def __get_timezone(self):
+        zoneinfo_dir = '/usr/share/zoneinfo/'
+        localtime_file = '/etc/localtime'
+
+        # Strategy 1:
+        #   If /etc/localtime does not exist, assum the timezone is UTC.
+        if not os.path.exists(localtime_file):
+            self.module.warn('Could not read /etc/localtime. Assuming UTC.')
+            return 'UTC'
+
+        # Strategy 2:
+        #   Follow symlink of /etc/localtime
+        zoneinfo_file = localtime_file
+        while not zoneinfo_file.startswith(zoneinfo_dir):
+            try:
+                zoneinfo_file = os.readlink(localtime_file)
+            except OSError:
+                # OSError means "end of symlink chain" or broken link.
+                break
+        else:
+            return zoneinfo_file.replace(zoneinfo_dir, '')
+
+        # Strategy 3:
+        #   (If /etc/localtime is not symlinked)
+        #   Check all files in /usr/share/zoneinfo and return first non-link match.
+        for dname, _, fnames in sorted(os.walk(zoneinfo_dir)):
+            for fname in sorted(fnames):
+                zoneinfo_file = os.path.join(dname, fname)
+                if not os.path.islink(zoneinfo_file) and filecmp.cmp(zoneinfo_file, localtime_file):
+                    return zoneinfo_file.replace(zoneinfo_dir, '')
+
+        # Strategy 4:
+        #   As a fall-back, return 'UTC' as default assumption.
+        self.module.warn('Could not identify timezone name from /etc/localtime. Assuming UTC.')
+        return 'UTC'
+
     def get(self, key, phase):
         """Lookup the current timezone by resolving `/etc/localtime`."""
         if key == 'name':
-            try:
-                tz = os.readlink('/etc/localtime')
-                return tz.replace('/usr/share/zoneinfo/', '')
-            except:
-                self.module.warn('Could not read /etc/localtime. Assuming UTC')
-                return 'UTC'
+            return self.__get_timezone()
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
 

@@ -6,14 +6,14 @@
 - name: "Disable feature PIM"
   nxos_feature: &disable_feature
     feature: pim
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
 
 - name: "Enable feature PIM"
   nxos_feature:
     feature: pim
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
 
 - set_fact: testint="{{ nxos_int1 }}"
 
@@ -30,15 +30,15 @@
     mode: layer3
     description: 'Configured by Ansible - Layer3'
     admin_state: 'up'
-    state: present
     provider: "{{ connection }}"
+    state: present
 
 - block:
   - name: Configure nxos_pim_interface state absent
     nxos_pim_interface: &pimabsent
       interface: "{{ testint }}"
-      state: absent
       provider: "{{ connection }}"
+      state: absent
 
   - name: configure jp policy and type
     nxos_pim_interface: &configjp
@@ -115,8 +115,8 @@
       hello_interval: 40
       sparse: True
       border: True
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -132,8 +132,8 @@
       interface: "{{ testint }}"
       sparse: False
       border: False
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -150,8 +150,8 @@
   - name: configure state default
     nxos_pim_interface: &configdefault
       interface: "{{ testint }}"
-      state: default
       provider: "{{ connection }}"
+      state: default
     register: result
 
   - assert: *true
@@ -166,8 +166,8 @@
     nxos_pim_interface: &configb
       interface: "{{ testint }}"
       border: True
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true

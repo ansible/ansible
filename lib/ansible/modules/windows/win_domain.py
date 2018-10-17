@@ -19,23 +19,30 @@ description:
 options:
   dns_domain_name:
     description:
-      - the DNS name of the domain which should exist and be reachable or reside on the target Windows host
+      - The DNS name of the domain which should exist and be reachable or reside on the target Windows host.
     required: yes
+  domain_netbios_name:
+    description:
+      - The netbios name of the domain.
+      - If not set, then the default netbios name will be the first section of dns_domain_name, up to, but not including the first period.
+    version_added: '2.6'
   safe_mode_password:
     description:
-      - safe mode password for the domain controller
+      - Safe mode password for the domain controller.
     required: yes
   database_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
       domain database will be created.
     - If not set then the default path is C(%SYSTEMROOT%\NTDS).
+    type: path
     version_added: '2.5'
   sysvol_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the
       Sysvol file will be created.
     - If not set then the default path is C(%SYSTEMROOT%\SYSVOL).
+    type: path
     version_added: '2.5'
 author:
     - Matt Davis (@nitzmahone)

@@ -687,7 +687,7 @@ class Homebrew(object):
             raise HomebrewException(self.message)
 
         opts = (
-            [self.brew_path, 'uninstall']
+            [self.brew_path, 'uninstall', '--force']
             + self.install_options
             + [self.current_package]
         )

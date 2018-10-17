@@ -3,3 +3,5 @@
 powershell_module: powershell-yaml
 wrong_module: powershell_yaml
 allow_clobber_module: PowerShellCookbook
+custom_repo_path: C:\_repo
+custom_repo_name: PSRegisterRepo

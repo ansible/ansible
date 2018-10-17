@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
@@ -20,8 +20,9 @@ description:
   - Adds and/or removes instances of network objects from
     Infoblox NIOS servers.  This module manages NIOS C(network) objects
     using the Infoblox WAPI interface over REST.
+  - Supports both IPV4 and IPV6 internet protocols
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   network:
@@ -87,7 +88,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: configure a network
+- name: configure a network ipv4
   nios_network:
     network: 192.168.10.0/24
     comment: this is a test comment
@@ -97,8 +98,17 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
-- name: set dhcp options for a network
+- name: configure a network ipv6
+  nios_network:
+    network: fe80::/64
+    comment: this is a test comment
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: set dhcp options for a network ipv4
   nios_network:
     network: 192.168.10.0/24
     comment: this is a test comment
@@ -111,8 +121,7 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
-- name: remove a network
+- name: remove a network ipv4
   nios_network:
     network: 192.168.10.0/24
     state: absent
@@ -128,14 +137,15 @@ RETURN = ''' # '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_NETWORK
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV6_NETWORK
 
 
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
-
     This function will transform the options argument into a structure that
     is a valid WAPI structure in the format of:
-
         {
             name: <value>,
             num: <value>,
@@ -143,11 +153,9 @@ def options(module):
             use_option: <value>,
             vendor_class: <value>
         }
-
     It will remove any options that are set to None since WAPI will error on
     that condition.  It will also verify that either `name` or `num` is
     set in the structure but does not validate the values are equal.
-
     The remainder of the value validation is performed by WAPI
     '''
     options = list()
@@ -157,6 +165,17 @@ def options(module):
             module.fail_json(msg='one of `name` or `num` is required for option value')
         options.append(opt)
     return options
+
+
+def check_ip_addr_type(ip):
+    '''This function will check if the argument ip is type v4/v6 and return appropriate infoblox network type
+    '''
+    check_ip = ip.split('/')
+
+    if validate_ip_address(check_ip[0]):
+        return NIOS_IPV4_NETWORK
+    elif validate_ip_v6_address(check_ip[0]):
+        return NIOS_IPV6_NETWORK
 
 
 def main():
@@ -194,8 +213,12 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
+    # to get the argument ipaddr
+    obj_filter = dict([(k, module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
+    network_type = check_ip_addr_type(obj_filter['network'])
+
     wapi = WapiModule(module)
-    result = wapi.run('network', ib_spec)
+    result = wapi.run(network_type, ib_spec)
 
     module.exit_json(**result)
 

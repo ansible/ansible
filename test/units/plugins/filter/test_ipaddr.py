@@ -20,8 +20,10 @@ __metaclass__ = type
 import pytest
 
 from ansible.compat.tests import unittest
+from ansible.errors import AnsibleFilterError
 from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
-                                           previous_nth_usable, network_in_usable, network_in_network)
+                                           previous_nth_usable, network_in_usable, network_in_network,
+                                           cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')
 
 
@@ -457,3 +459,46 @@ class TestIpFilter(unittest.TestCase):
         subnet = '1.12.1.0/24'
         address = '1.12.2.0'
         self.assertEqual(network_in_network(subnet, address), False)
+
+    def test_cidr_merge(self):
+        self.assertEqual(cidr_merge([]), [])
+        self.assertEqual(cidr_merge([], 'span'), None)
+        subnets = ['1.12.1.0/24']
+        self.assertEqual(cidr_merge(subnets), subnets)
+        self.assertEqual(cidr_merge(subnets, 'span'), subnets[0])
+        subnets = ['1.12.1.0/25', '1.12.1.128/25']
+        self.assertEqual(cidr_merge(subnets), ['1.12.1.0/24'])
+        self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')
+        subnets = ['1.12.1.0/25', '1.12.1.128/25', '1.12.2.0/24']
+        self.assertEqual(cidr_merge(subnets), ['1.12.1.0/24', '1.12.2.0/24'])
+        self.assertEqual(cidr_merge(subnets, 'span'), '1.12.0.0/22')
+        subnets = ['1.12.1.1', '1.12.1.255']
+        self.assertEqual(cidr_merge(subnets), ['1.12.1.1/32', '1.12.1.255/32'])
+        self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')
+
+    def test_ipmath(self):
+        self.assertEqual(ipmath('192.168.1.5', 5), '192.168.1.10')
+        self.assertEqual(ipmath('192.168.1.5', -5), '192.168.1.0')
+        self.assertEqual(ipmath('192.168.0.5', -10), '192.167.255.251')
+
+        self.assertEqual(ipmath('2001::1', 8), '2001::9')
+        self.assertEqual(ipmath('2001::1', 9), '2001::a')
+        self.assertEqual(ipmath('2001::1', 10), '2001::b')
+        self.assertEqual(ipmath('2001::5', -3), '2001::2')
+        self.assertEqual(
+            ipmath('2001::5', -10),
+            '2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb'
+        )
+
+        expected = 'You must pass a valid IP address; invalid_ip is invalid'
+        with self.assertRaises(AnsibleFilterError) as exc:
+            ipmath('invalid_ip', 8)
+        self.assertEqual(exc.exception.message, expected)
+
+        expected = (
+            'You must pass an integer for arithmetic; '
+            'some_number is not a valid integer'
+        )
+        with self.assertRaises(AnsibleFilterError) as exc:
+            ipmath('1.2.3.4', 'some_number')
+        self.assertEqual(exc.exception.message, expected)

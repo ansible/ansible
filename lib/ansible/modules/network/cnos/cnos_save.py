@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_save
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Save the running configuration as the startup configuration on devices running Lenovo CNOS
 description:
     - This module allows you to copy the running configuration of a switch over its startup configuration.
@@ -53,8 +53,8 @@ Tasks : The following are examples of using the module cnos_save. These are writ
 - name: Test Save
   cnos_save:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_save_{{ inventory_hostname }}_output.txt"
@@ -124,7 +124,7 @@ def main():
     remote_conn = remote_conn_pre.invoke_shell()
     time.sleep(2)
 
-    # Enable and enter configure terminal then send command
+    # Enable and then send command
     output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
 
     output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)

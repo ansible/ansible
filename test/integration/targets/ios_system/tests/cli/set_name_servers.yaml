@@ -11,9 +11,9 @@
 - name: configure name_servers
   ios_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
     provider: "{{ cli }}"
   register: result
 
@@ -21,16 +21,16 @@
     that:
       - result.changed == true
       - result.commands|length == 3
-      - "'ip name-server 1.1.1.1' in result.commands"
-      - "'ip name-server 2.2.2.2' in result.commands"
-      - "'ip name-server 3.3.3.3' in result.commands"
+      - "'ip name-server 192.0.2.1' in result.commands"
+      - "'ip name-server 192.0.2.2' in result.commands"
+      - "'ip name-server 192.0.2.3' in result.commands"
 
 - name: verify name_servers
   ios_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
     provider: "{{ cli }}"
   register: result
 
@@ -41,9 +41,9 @@
 #- name: change to vrf
 #  ios_system:
 #    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
 #    provider: "{{ cli }}"
 #  register: result
 
@@ -51,15 +51,15 @@
 #    that:
 #      - result.changed == true
 #      - result.commands|length == 2
-#      - "'no ip name-server 2.2.2.2' in result.commands"
-#      - "'ip name-server 2.2.2.2 vrf ansible' in result.commands"
+#      - "'no ip name-server 192.0.2.2' in result.commands"
+#      - "'ip name-server 192.0.2.2 vrf ansible' in result.commands"
 
 #- name: verify change to vrf
 #  ios_system:
 #    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
 #    provider: "{{ cli }}"
 #  register: result
 #
@@ -70,8 +70,8 @@
 - name: remove one
   ios_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
+      - 192.0.2.1
+      - 192.0.2.2
     provider: "{{ cli }}"
   register: result
 
@@ -79,7 +79,7 @@
     that:
       - result.changed == true
       - result.commands|length == 1
-      - "'no ip name-server 3.3.3.3' in result.commands"
+      - "'no ip name-server 192.0.2.3' in result.commands"
 
 - name: teardown
   ios_config:

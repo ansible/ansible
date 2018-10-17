@@ -31,6 +31,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import network_cli
+from ansible.plugins.loader import connection_loader
 
 
 class TestConnectionClass(unittest.TestCase):
@@ -40,7 +41,7 @@ class TestConnectionClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = network_cli.Connection(pc, new_stdin)
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
         conn._terminal = MagicMock()
@@ -52,7 +53,7 @@ class TestConnectionClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = network_cli.Connection(pc, new_stdin)
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
         conn._terminal = MagicMock()
@@ -63,10 +64,10 @@ class TestConnectionClass(unittest.TestCase):
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
         pc = PlayContext()
+        pc.network_os = 'ios'
         new_stdin = StringIO()
 
-        conn = network_cli.Connection(pc, new_stdin)
-        pc.network_os = 'ios'
+        conn = connection_loader.get('network_cli', pc, '/dev/null')
 
         conn.ssh = MagicMock()
         conn.receive = MagicMock()

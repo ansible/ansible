@@ -79,6 +79,35 @@
       - "no_command.msg == 'no command given'"
       - "no_command.rc == 256"
 
+- name: use argv
+  command:
+    argv:
+      - echo
+      - testing
+  register: argv_command
+  ignore_errors: true
+
+- name: assert executable works with argv
+  assert:
+    that:
+      - "argv_command.stdout == 'testing'"
+
+- name: use argv and command string
+  command: echo testing
+  args:
+    argv:
+      - echo
+      - testing
+  register: argv_and_string_command
+  ignore_errors: true
+
+- name: assert executable fails with both argv and command string
+  assert:
+    that:
+      - "argv_and_string_command.failed == true"
+      - "argv_and_string_command.msg == 'only command or argv can be given, not both'"
+      - "argv_and_string_command.rc == 256"
+
 - set_fact: output_dir_test={{output_dir}}/test_command_shell
 
 - name: make sure our testing sub-directory does not exist

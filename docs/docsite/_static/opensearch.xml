@@ -1,0 +1,9 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>Ansible</ShortName>
+  <Description>Search Ansible Documentation</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="16" height="16" type="image/x-icon">https://docs.ansible.com/favicon.ico</Image>
+  <Url type="text/html" method="get" template="https://docs.ansible.com/ansible/latest/search.html?q={searchTerms}&amp;ref=opensearch"/>
+  <moz:SearchForm>https://docs.ansible.com/ansible/latest/search.html</moz:SearchForm>
+</OpenSearchDescription>

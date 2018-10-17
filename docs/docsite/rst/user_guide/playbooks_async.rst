@@ -1,3 +1,5 @@
+.. _playbooks_async:
+
 Asynchronous Actions and Polling
 ================================
 
@@ -52,7 +54,7 @@ run the task asynchronously by specifying a poll value of 0::
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
 
-If you would like to perform a task asynchroniusly and check on it later you can perform a task similar to the
+If you would like to perform a task asynchronously and check on it later you can perform a task similar to the
 following::
 
       ---

@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_conditional_command
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Execute a single command based on condition on devices running Lenovo CNOS
 description:
    - This module allows you to modify the running configuration of a switch. It provides a way to
@@ -79,8 +79,8 @@ Tasks : The following are examples of using the module cnos_conditional_command.
 - name: Applying CLI template on VLAG Tier1 Leaf Switch1
   cnos_conditional_command:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_conditional_command_{{ inventory_hostname }}_output.txt"
@@ -171,7 +171,7 @@ def main():
     output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
 
     # Go to config mode
-    output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
+    output = output + cnos.waitForDeviceResponse("configure device\n", "(config)#", 2, remote_conn)
 
     # Send the CLi command
     output = output + cnos.waitForDeviceResponse(cliCommand + "\n", "(config)#", 2, remote_conn)

@@ -31,9 +31,8 @@ options:
   allow_useg:
     description:
     - Allows micro-segmentation.
-    - The APIC defaults new EPG to Domain bindings to use C(encap).
+    - The APIC defaults to C(encap) when unset during creation.
     choices: [ encap, useg ]
-    default: encap
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
@@ -41,9 +40,8 @@ options:
   deploy_immediacy:
     description:
     - Determines when the policy is pushed to hardware Policy CAM.
-    - The APIC defaults new EPG to Domain bindings to C(lazy).
+    - The APIC defaults to C(lazy) when unset during creation.
     choices: [ immediate, lazy ]
-    default: lazy
   domain:
     description:
     - Name of the physical or virtual domain being associated with the EPG.
@@ -57,13 +55,13 @@ options:
     description:
     - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
     - This acts as the secondary encap when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   encap_mode:
     description:
     - The ecapsulataion method to be used.
-    - The APIC defaults new EPG to Domain bindings to C(auto).
+    - The APIC defaults to C(auto) when unset during creation.
     choices: [ auto, vlan, vxlan ]
-    default: auto
   epg:
     description:
     - Name of the end point group.
@@ -71,19 +69,18 @@ options:
   netflow:
     description:
     - Determines if netflow should be enabled.
-    - The APIC defaults new EPG to Domain binings to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   primary_encap:
     description:
     - Determines the primary VLAN ID when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   resolution_immediacy:
     description:
     - Determines when the policies should be resolved and available.
-    - The APIC defaults new EPG to Domain bindings to C(lazy).
+    - The APIC defaults to C(lazy) when unset during creation.
     choices: [ immediate, lazy, pre-provision ]
-    default: lazy
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -272,7 +269,7 @@ def main():
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
-        deploy_immediacy=dict(type='str', choices=['immediate', 'on-demand']),
+        deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
         domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
@@ -284,8 +281,6 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

@@ -27,6 +27,7 @@ options:
   pod_id:
     description:
     - The pod id of the new Fabric Node Member.
+    type: int
   serial:
     description:
     - Serial Number for the new Fabric Node Member.
@@ -34,6 +35,7 @@ options:
   node_id:
     description:
     - Node ID Number for the new Fabric Node Member.
+    type: int
   switch:
     description:
     - Switch Name for the new Fabric Node Member.

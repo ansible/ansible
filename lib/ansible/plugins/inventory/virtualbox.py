@@ -16,6 +16,10 @@ DOCUMENTATION = '''
       - constructed
       - inventory_cache
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'virtualbox' plugin
+            required: True
+            choices: ['virtualbox']
         running_only:
             description: toggles showing all vms vs only those currently running
             type: boolean
@@ -82,15 +86,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 for varname in query:
                     hostvars[host][varname] = self._query_vbox_data(host, query[varname])
 
+            strict = self.get_option('strict')
+
             # create composite vars
-            self._set_composite_vars(self.get_option('compose'), hostvars, host)
+            self._set_composite_vars(self.get_option('compose'), hostvars[host], host, strict=strict)
 
             # actually update inventory
             for key in hostvars[host]:
                 self.inventory.set_variable(host, key, hostvars[host][key])
 
             # constructed groups based on conditionals
-            self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host)
+            self._add_host_to_composed_groups(self.get_option('groups'), hostvars[host], host, strict=strict)
+
+            # constructed keyed_groups
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars[host], host, strict=strict)
 
     def _populate_from_cache(self, source_data):
         hostvars = source_data.pop('_meta', {}).get('hostvars', {})
@@ -218,7 +227,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         source_data = None
         if cache:
-            cache = self._options.get('cache')
+            cache = self.get_option('cache')
 
         update_cache = False
         if cache:
@@ -245,7 +254,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 p = Popen(cmd, stdout=PIPE)
             except Exception as e:
-                AnsibleParserError(to_native(e))
+                raise AnsibleParserError(to_native(e))
 
             source_data = p.stdout.read().splitlines()
 

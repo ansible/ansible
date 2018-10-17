@@ -90,33 +90,19 @@ class ActionModule(ActionBase):
             # handle diff mode client side
             # handle check mode client side
 
-            if not remote_src:
-                # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
-                # Build temporary module_args.
-                new_module_args = self._task.args.copy()
-                new_module_args.update(
-                    dict(
-                        src=tmp_src,
-                        original_basename=os.path.basename(source),
-                    ),
-                )
-
-            else:
-                new_module_args = self._task.args.copy()
-                new_module_args.update(
-                    dict(
-                        original_basename=os.path.basename(source),
-                    ),
-                )
-
-            # remove action plugin only key
+            # remove action plugin only keys
+            new_module_args = self._task.args.copy()
             for key in ('decrypt',):
                 if key in new_module_args:
                     del new_module_args[key]
 
-                # execute the unarchive module now, with the updated args
-                result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
+            if not remote_src:
+                # fix file permissions when the copy is done as a different user
+                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
+                new_module_args['src'] = tmp_src
+
+            # execute the unarchive module now, with the updated args
+            result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
         except AnsibleAction as e:
             result.update(e.result)
         finally:

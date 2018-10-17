@@ -28,7 +28,7 @@
     template_name: 'unknown'
   register: template_bad
   failed_when: not template_bad is failed
-  
+
 - name: Check if it fails if we try to access a non-existent VM in check-mode
   one_vm:
     instance_ids: non-existent-vm-{{ ansible_date_time.iso8601_basic_short }}
@@ -84,7 +84,7 @@
   always:
     - name: Delete the VM
       one_vm:
-        instance_ids: 
+        instance_ids:
           - '{{ deployed_vm.instances[0].vm_id }}'
         state: absent
         hard: yes
@@ -92,7 +92,7 @@
 
 - name: Check if deletion has done
   assert:
-    that: 
+    that:
       - delete_vm is changed
       - delete_vm.instances_ids|length == 1
       - delete_vm.instances_ids[0] == deployed_vm.instances_ids[0]
@@ -107,27 +107,27 @@
 
 - name: Check if deletion is idempotent
   assert:
-    that: 
+    that:
       - not delete_vm_idempotent is changed
     msg: 'Deletion is not idempotent'
-  
+
 - name: Delete a non-existent VM
   one_vm:
     instance_ids:
      - non-existent-vm-{{ ansible_date_time.iso8601_basic_short }}
     state: absent
   register: delete_non_existent_vm
-     
+
 - name: Check if deletion is not executed
   assert:
-    that: 
+    that:
       - not delete_non_existent_vm is changed
     msg: 'Deletion is bad, task has deleted non existent VM'
 
 - block:
     - name: Set the unique name of the VM
       set_fact:
-        vm_unique_name: test-vm-name-{{ ansible_date_time.iso8601_basic_short }}  
+        vm_unique_name: test-vm-name-{{ ansible_date_time.iso8601_basic_short }}
 
     - name: Try to deploy an unique VM with exact_count but without count_attributes and count_labels
       one_vm:
@@ -144,7 +144,7 @@
         attributes:
           name: '{{ vm_unique_name }}'
         exact_count: 1
-        count_attributes: 
+        count_attributes:
           name: '{{ vm_unique_name }}'
       register: unique_vm_check_mode
       check_mode: yes
@@ -161,7 +161,7 @@
         attributes:
           name: '{{ vm_unique_name }}'
         exact_count: 1
-        count_attributes: 
+        count_attributes:
           name: '{{ vm_unique_name }}'
       register: unique_vm
 
@@ -173,14 +173,14 @@
           - unique_vm.instances|length == 1
           - unique_vm.instances[0].vm_name == "{{ vm_unique_name }}"
         msg: Deployment of the unique VM doesn't return as 'changed'
-    
+
     - name: Deploy an unique VM again to check idempotence
       one_vm:
         template_id: '{{ one_template_id }}'
         attributes:
           name: '{{ vm_unique_name }}'
         exact_count: 1
-        count_attributes: 
+        count_attributes:
           name: '{{ vm_unique_name }}'
       register: unique_vm_idempotent
 
@@ -348,7 +348,7 @@
       one_vm:
         instance_ids:
           - '{{ vm_register.instances[0].vm_id }}'
-        state: absent      
+        state: absent
         hard: yes
 
 - block:
@@ -364,7 +364,7 @@
 
     - name: Check if deployment in check-mode returns as 'changed'
       assert:
-        that: 
+        that:
           - deploy_vms_with_count_check_mode is changed
 
     - name: Deploy 2 VMs with attributes
@@ -378,14 +378,14 @@
 
     - name: Check if deployment in returns as 'changed'
       assert:
-        that: 
+        that:
           - deploy_vms_with_count is changed
           - deploy_vms_with_count.instances_ids|length == 2
           - deploy_vms_with_count.instances|length == 2
-          - deploy_vms_with_count.tagged_instances|length == 2
-          - deploy_vms_with_count.tagged_instances[0].vm_name == "aero"
-          - deploy_vms_with_count.tagged_instances[1].vm_name == "aero"
-        
+          - deploy_vms_with_count.tagged_instances|length == 0
+          - deploy_vms_with_count.instances[0].vm_name == "aero"
+          - deploy_vms_with_count.instances[1].vm_name == "aero"
+
     - name: Deploy 2 VMs with attributes to check it is not idempotent
       one_vm:
         template_id: '{{ one_template_id }}'
@@ -397,7 +397,7 @@
 
     - name: Check if deployment with count is not idempotent
       assert:
-        that: 
+        that:
           - deploy_vms_with_count_check_idempotence is changed
           - deploy_vms_with_count_check_idempotence.instances_ids|length == 2
           - deploy_vms_with_count_check_idempotence.instances|length == 2
@@ -447,7 +447,7 @@
           name: aero
         hard: yes
 
-    - name: Fetch all VMs with name's format 'aero-##' 
+    - name: Fetch all VMs with name's format 'aero-##'
       one_vm:
         attributes:
           name: '{{ vms_indexed_name }}'
@@ -460,7 +460,7 @@
         attributes:
           name: '{{ vms_indexed_name }}'
         exact_count: 3
-        count_attributes: 
+        count_attributes:
           name: '{{ vms_indexed_name }}'
       register: vms_with_hash
 
@@ -470,11 +470,11 @@
         attributes:
           name: aero
         exact_count: 2
-        count_attributes: 
+        count_attributes:
           name: aero
       register: vms_without_hash
 
-    - name: Fetch all VMs with name's format 'aero-#' 
+    - name: Fetch all VMs with name's format 'aero-#'
       one_vm:
         attributes:
           name: aero-#
@@ -482,9 +482,9 @@
 
     - name: Check there are exactly 3 instances with name's format 'aero-#'
       assert:
-        that: 
+        that:
           - not all_aero_vms_with_hash is changed
-          - all_aero_vms_with_hash.tagged_instances|length == 3
+          - all_aero_vms_with_hash.instances|length == 3
 
     - name: Decrement count of 'aero-#' instances
       one_vm:
@@ -508,13 +508,13 @@
           name: 'aero-#'
       register: new_vm_with_hash
 
-    - name: Check if new VM has index 0 
+    - name: Check if new VM has index 0
       assert:
-        that: 
+        that:
           - new_vm_with_hash is changed
           - new_vm_with_hash.instances_ids|length == 1
           - new_vm_with_hash.instances|length == 1
-          - new_vm_with_hash.tagged_instances|length == 1
+          - new_vm_with_hash.tagged_instances|length == 0
           - new_vm_with_hash.instances[0].vm_name|regex_replace('(\d+)$','\1')|int == 0
 
   always:
@@ -603,7 +603,7 @@
 
     - name: Set special label for a new instance
       set_fact:
-        vm_spec_label: spec-label-{{ ansible_date_time.iso8601_basic_short }} 
+        vm_spec_label: spec-label-{{ ansible_date_time.iso8601_basic_short }}
 
     - name: Add a new instance in the group of instances with label 'foo'
       one_vm:
@@ -615,7 +615,7 @@
         count_labels:
           - foo
       register: new_vm_with_label
-      
+
     - name: Fetch all instances with special label
       one_vm:
         labels:
@@ -626,7 +626,6 @@
       assert:
         that:
           - not vm_with_special_label is changed
-          - vm_with_special_label.tagged_instances|length == 1
           - vm_with_special_label.instances_ids|length == 1
           - vm_with_special_label.instances_ids[0] == new_vm_with_label.instances_ids[0]
 
@@ -673,7 +672,7 @@
           name: 'aero-###'
           foo_app: foo
         count: 2
-    
+
     - name: Deploy 2 instances with different value for attribute
       one_vm:
         template_id: '{{ one_template_id }}'
@@ -687,12 +686,12 @@
         attributes:
           foo_app:
       register: all_foo_app_vms
-      
+
     - name: Check there are 4 VMs with 'foo_app' key
       assert:
         that:
-          - all_foo_app_vms.tagged_instances|length == 4
-    
+          - all_foo_app_vms.instances|length == 4
+
     - name: Decrement count of VMs with 'foo_app' key
       one_vm:
         template_id: '{{ one_template_id }}'
@@ -737,7 +736,7 @@
         labels_list:
            - bar1
            - bar2
-      
+
     - name: Deploy an instance with name 'app1', attribute 'foo app' and labels 'bar1' and 'bar2'
       one_vm:
         template_id: '{{ one_template_id }}'
@@ -764,7 +763,7 @@
       assert:
         that: instance_with_labels.instances[0].labels|difference(labels_list)|length == 0
         msg: Labels are not correct
-    
+
     - name: Check that name is correct
       assert:
         that: instance_with_labels.instances[0].vm_name == 'app1'
@@ -779,21 +778,21 @@
 
 - name: Try to use letters for ids option
   one_vm:
-    instance_ids: 
+    instance_ids:
       - asd
       - 123
     state: running
   register: ids_with_letters
-  failed_when: not ids_with_letters is failed 
+  failed_when: not ids_with_letters is failed
 
 - name: Try to use letters for ids option when terminate vms
   one_vm:
-    instance_ids: 
+    instance_ids:
       - asd
       - 123
     state: absent
   register: ids_with_letters
-  failed_when: ids_with_letters is failed 
+  failed_when: ids_with_letters is failed
 
 - name: Try to use restricted attributes when deploying
   one_vm:
@@ -809,12 +808,228 @@
     that:
       - restricted_attributes.msg == "Restricted attribute `DISK` cannot be used when filtering VMs."
 
+- block:
+    - name: Deploy VM and set its mode
+      one_vm:
+        template_id: '{{ one_template_id }}'
+        mode: 640
+      register: deployed_vm
+
+    - name: Check if mode is set correctly
+      assert:
+        that:
+          - deployed_vm is changed
+          - deployed_vm.instances|length == 1
+          - deployed_vm.instances[0].mode == "640"
+
+    - name: Set VM permissions to 660
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids }}'
+        mode: 660
+      register: deployed_vm
+
+    - name: Check if mode is set correctly
+      assert:
+        that:
+          - deployed_vm is changed
+          - deployed_vm.instances|length == 1
+          - deployed_vm.instances[0].mode == "660"
+
+    - name: Set 660 permissions againt to check idempotence
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids[0] }}'
+        mode: 660
+      register: chmod_idempotent
+
+    - name: Check if chmod is idempotent
+      assert:
+        that:
+          - chmod_idempotent is not changed
+        msg: 'Permissions changing is not idempotent'
+
+    - name: Try to set permissions incorectly
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids[0] }}'
+        mode: 8983
+      register: chmod_failed
+      failed_when: not chmod_failed is failed
+
+    - name: Try to set permissions incorectly
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids[0] }}'
+        mode: 64a
+      register: chmod_failed
+      failed_when: not chmod_failed is failed
+
+    - name: Set 664 permissions
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids[0] }}'
+        mode: 664
+      register: vm_chmod
+
+    - name: Verify permissions changing
+      assert:
+        that:
+          - vm_chmod is changed
+          - vm_chmod.instances|length == 1
+          - vm_chmod.instances[0].mode == "664"
+        msg: 'Permissions changing is failed'
+
+    - name: Deploy 2 VMs with label 'test-mode' and mode 640
+      one_vm:
+        template_id: '{{ one_template_id }}'
+        count_labels:
+          - test-mode
+        exact_count: 2
+        mode: 640
+      register: deployed_vm2
+
+    - name: Verify VMs permissions
+      assert:
+        that:
+          - deployed_vm2 is changed
+          - deployed_vm2.instances|length == 2
+          - deployed_vm2.instances[0].mode == "640"
+          - deployed_vm2.instances[1].mode == "640"
+
+    - name: Change permissions of first VM
+      one_vm:
+        instance_ids: '{{ deployed_vm2.instances_ids[0] }}'
+        mode: 644
+      register: chmod_vm1
+
+    - name: Verify VM permissions
+      assert:
+        that:
+          - chmod_vm1 is changed
+          - chmod_vm1.instances|length == 1
+          - chmod_vm1.instances[0].mode == "644"
+
+    - name: Change permissions on both VMs
+      one_vm:
+        instance_ids: '{{ deployed_vm2.instances_ids }}'
+        mode: 644
+      register: deployed_vm2
+
+    - name: Verify VMs permissions
+      assert:
+        that:
+          - deployed_vm2 is changed
+          - deployed_vm2.instances|length == 2
+          - deployed_vm2.instances[0].mode == "644"
+          - deployed_vm2.instances[1].mode == "644"
+
+    - name: Change VMs permissions using the label
+      one_vm:
+        labels:
+          - test-mode
+        mode: 664
+      register: label_chmod
+
+    - name: Verify VMs permissions
+      assert:
+        that:
+          - label_chmod is changed
+          - label_chmod.instances|length == 2
+          - label_chmod.instances[0].mode == "664"
+          - label_chmod.instances[1].mode == "664"
+
+    - name: Deploy 2 more VMs with label 'test-mode' and mode 640
+      one_vm:
+        template_id: '{{ one_template_id }}'
+        count_labels:
+          - test-mode
+        exact_count: 4
+        mode: 640
+      register: deployed_vm4
+
+    - name: Verify VMs permissions
+      assert:
+        that:
+          - deployed_vm4 is changed
+          - deployed_vm4.tagged_instances|length == 4
+          - deployed_vm4.tagged_instances[0].mode == "640"
+          - deployed_vm4.tagged_instances[1].mode == "640"
+          - deployed_vm4.tagged_instances[2].mode == "640"
+          - deployed_vm4.tagged_instances[3].mode == "640"
+
+    - name: Terminate 2 VMs with label 'test-mode' and set mode 660 on remaining VMs
+      one_vm:
+        template_id: '{{ one_template_id }}'
+        count_labels:
+          - test-mode
+        exact_count: 2
+        mode: 660
+      register: terminate_vm4
+
+    - name: Verify VMs permissions
+      assert:
+        that:
+          - terminate_vm4 is changed
+          - terminate_vm4.instances|length == 2 # 2 removed
+          - terminate_vm4.tagged_instances|length == 2 # 2 remaining with label test-mode
+          - terminate_vm4.instances[0].mode == "640"
+          - terminate_vm4.instances[1].mode == "640"
+          - terminate_vm4.tagged_instances[0].mode == "660"
+          - terminate_vm4.tagged_instances[1].mode == "660"
+
+  always:
+    - name: Delete VM
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids }}'
+        state: absent
+        hard: yes
+
+    - name: Delete VMs
+      one_vm:
+        instance_ids: '{{ deployed_vm4.instances_ids }}'
+        state: absent
+        hard: yes
+  tags: test-chmod
+
+- block:
+    - name: Deploy VM
+      one_vm:
+        template_id: '{{ one_template_id }}'
+      register: deployed_vm
+
+    - name: Change VM's group
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids }}'
+        group_id: 1
+      register: changed_group
+
+    - name: Verify group changing
+      assert:
+        that:
+          - deployed_vm is changed
+          - changed_group is changed
+          - deployed_vm.instances|length == 1
+          - changed_group.instances|length == 1
+          - changed_group.instances[0].owner_id == deployed_vm.instances[0].owner_id
+          - changed_group.instances[0].group_id != deployed_vm.instances[0].group_id
+
+    - name: Try to set non-existent group
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids }}'
+        group_id: -999
+      register: changed_group
+      failed_when: changed_group is not failed
+
+  always:
+    - name: Delete VM
+      one_vm:
+        instance_ids: '{{ deployed_vm.instances_ids }}'
+        state: absent
+        hard: yes
+  tags: test-chown
+
 - name: Test images creation
   block:
     - name: Set fact image name
       set_fact:
         image_name: test-image-name-{{ ansible_date_time.iso8601_basic_short }}
-    
+
     - name: Deploy VM
       one_vm:
         template_id: '{{ one_template_id }}'
@@ -834,7 +1049,7 @@
           name: '{{ image_name }}'
       register: save_disk_labels
       failed_when: not save_disk_labels is failed
-        
+
     - name: Try to save disk in running state to check if it will fail
       one_vm:
         instance_ids: '{{ vm_image.instances_ids }}'

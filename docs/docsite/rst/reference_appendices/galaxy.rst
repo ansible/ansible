@@ -18,7 +18,7 @@ You can also use the site to share roles that you create. By authenticating with
 them available to the Ansible community. Imported roles become available in the Galaxy search index and visible on the site, allowing users to
 discover and download them.
 
-Learn more by viewing `the About page <https://galaxy.ansible.com/intro>`_.
+Learn more by viewing `the About page <https://galaxy.ansible.com/docs/>`_.
 
 The command line tool
 `````````````````````
@@ -178,8 +178,8 @@ the format ``username.role_name``. The more complex format used in ``requirement
 
 Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies, the tag should be applied to the role, not to all the tasks within a role.
 
-Roles listed as dependencies are subject to conditionals and tag filtering, and may not execute fully depeneding on
-what tags and conditinoals are applied.
+Roles listed as dependencies are subject to conditionals and tag filtering, and may not execute fully depending on
+what tags and conditionals are applied.
 
 Dependencies found in Galaxy can be specified as follows:
 

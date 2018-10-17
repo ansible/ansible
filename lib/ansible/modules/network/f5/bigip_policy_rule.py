@@ -30,21 +30,25 @@ options:
         a C(type) be specified.
       - These conditions can be specified in any order. Despite them being a list, the
         BIG-IP does not treat their order as anything special.
-      - Available C(type) values are C(forward).
     suboptions:
       type:
         description:
           - The action type. This value controls what below options are required.
-          - When C(type) is C(forward), will associate a given C(pool) with this rule.
+          - When C(type) is C(forward), will associate a given C(pool), or C(virtual)
+            with this rule.
           - When C(type) is C(enable), will associate a given C(asm_policy) with
             this rule.
           - When C(type) is C(ignore), will remove all existing actions from this
             rule.
         required: true
-        choices: [ 'forward', 'enable', 'ignore' ]
+        choices: ['forward', 'enable', 'ignore']
       pool:
         description:
           - Pool that you want to forward traffic to.
+          - This parameter is only valid with the C(forward) type.
+      virtual:
+        description:
+          - Virtual Server that you want to forward traffic to.
           - This parameter is only valid with the C(forward) type.
       asm_policy:
         description:
@@ -77,7 +81,7 @@ options:
             list will provide a match.
           - When C(type) is C(all_traffic), will remove all existing conditions from
             this rule.
-        required: true
+        required: True
         choices: [ 'http_uri', 'all_traffic' ]
       path_begins_with_any:
         description:
@@ -120,6 +124,7 @@ EXAMPLES = r'''
     actions:
       - type: forward
         pool: pool-svrs
+  delegate_to: localhost
 
 - name: Add multiple rules to the new policy
   bigip_policy_rule:
@@ -127,6 +132,7 @@ EXAMPLES = r'''
     name: "{{ item.name }}"
     conditions: "{{ item.conditions }}"
     actions: "{{ item.actions }}"
+  delegate_to: localhost
   loop:
     - name: rule1
       actions:
@@ -151,6 +157,7 @@ EXAMPLES = r'''
       - type: all_traffic
     actions:
       - type: ignore
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -176,7 +183,7 @@ conditions:
   type: complex
   contains:
     type:
-      description: The condition type
+      description: The condition type.
       returned: changed
       type: string
       sample: http_uri
@@ -197,30 +204,25 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -241,10 +243,9 @@ class Parameters(AnsibleF5Parameters):
         'actions', 'conditions', 'description'
     ]
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
+    returnable = [
+        'description'
+    ]
 
     @property
     def name(self):
@@ -253,13 +254,6 @@ class Parameters(AnsibleF5Parameters):
     @property
     def description(self):
         return self._values.get('description', None)
-
-    @property
-    def strategy(self):
-        if self._values['strategy'] is None:
-            return None
-        result = self._fqdn_name(self._values['strategy'])
-        return result
 
     @property
     def policy(self):
@@ -403,11 +397,14 @@ class ModuleParameters(Parameters):
         :return:
         """
         action['type'] = 'forward'
-        if 'pool' not in item:
+        if not any(x for x in ['pool', 'virtual'] if x in item):
             raise F5ModuleError(
-                "A 'pool' must be specified when the 'forward' type is used."
+                "A 'pool' or 'virtual' must be specified when the 'forward' type is used."
             )
-        action['pool'] = self._fqdn_name(item['pool'])
+        if item.get('pool', None):
+            action['pool'] = fq_name(self.partition, item['pool'])
+        elif item.get('virtual', None):
+            action['virtual'] = fq_name(self.partition, item['virtual'])
 
     def _handle_enable_action(self, action, item):
         """Handle the nuances of the enable type
@@ -422,7 +419,7 @@ class ModuleParameters(Parameters):
                 "An 'asm_policy' must be specified when the 'enable' type is used."
             )
         action.update(dict(
-            policy=self._fqdn_name(item['asm_policy']),
+            policy=fq_name(self.partition, item['asm_policy']),
             asm=True
         ))
 
@@ -821,10 +818,11 @@ class ArgumentSpec(object):
                         required=True
                     ),
                     pool=dict(),
-                    asm_policy=dict()
+                    asm_policy=dict(),
+                    virtual=dict()
                 ),
                 mutually_exclusive=[
-                    ['pool', 'asm_policy']
+                    ['pool', 'asm_policy', 'virtual']
                 ]
             ),
             conditions=dict(
@@ -836,9 +834,9 @@ class ArgumentSpec(object):
                             'all_traffic'
                         ],
                         required=True
-                    )
+                    ),
+                    path_begins_with_any=dict()
                 ),
-                path_begins_with_any=dict()
             ),
             name=dict(required=True),
             policy=dict(required=True),

@@ -80,6 +80,8 @@ BLACKLIST_IMPORTS = {
         }
     },
 }
+SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
+OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
 class ReporterEncoder(json.JSONEncoder):
@@ -396,18 +398,33 @@ class ModuleValidator(Validator):
                         'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
                 )
 
-    def _check_for_tabs(self):
-        for line_no, line in enumerate(self.text.splitlines()):
-            indent = INDENT_REGEX.search(line)
-            if indent and '\t' in line:
-                index = line.index('\t')
-                self.reporter.error(
-                    path=self.object_path,
-                    code=402,
-                    msg='indentation contains tabs',
-                    line=line_no + 1,
-                    column=index
-                )
+    def _check_for_subprocess(self):
+        for child in self.ast.body:
+            if isinstance(child, ast.Import):
+                if child.names[0].name == 'subprocess':
+                    for line_no, line in enumerate(self.text.splitlines()):
+                        sp_match = SUBPROCESS_REGEX.search(line)
+                        if sp_match:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code=210,
+                                msg=('subprocess.Popen call found. Should be module.run_command'),
+                                line=(line_no + 1),
+                                column=(sp_match.span()[0] + 1)
+                            )
+
+    def _check_for_os_call(self):
+        if 'os.call' in self.text:
+            for line_no, line in enumerate(self.text.splitlines()):
+                os_call_match = OS_CALL_REGEX.search(line)
+                if os_call_match:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=211,
+                        msg=('os.call() call found. Should be module.run_command'),
+                        line=(line_no + 1),
+                        column=(os_call_match.span()[0] + 1)
+                    )
 
     def _find_blacklist_imports(self):
         for child in self.ast.body:
@@ -1049,6 +1066,13 @@ class ModuleValidator(Validator):
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
         for arg, data in spec.items():
+            if not isinstance(data, dict):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=331,
+                    msg="argument '%s' in argument_spec must be a dictionary/hash when used" % arg,
+                )
+                continue
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
                 args_from_argspec.update(data.get('aliases', []))
@@ -1314,7 +1338,6 @@ class ModuleValidator(Validator):
 
     def validate(self):
         super(ModuleValidator, self).validate()
-
         if not self._python_module() and not self._powershell_module():
             self.reporter.error(
                 path=self.object_path,
@@ -1358,9 +1381,10 @@ class ModuleValidator(Validator):
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
-            self._check_for_tabs()
             first_callable = self._get_first_callable()
             self._ensure_imports_below_docs(doc_info, first_callable)
+            self._check_for_subprocess()
+            self._check_for_os_call()
 
         if self._powershell_module():
             self._validate_ps_replacers()

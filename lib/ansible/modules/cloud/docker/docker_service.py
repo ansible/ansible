@@ -110,6 +110,9 @@ options:
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
+      choices:
+          - 'all'
+          - 'local'
   remove_volumes:
       description:
         - Use with state I(absent) to remove data volumes.
@@ -125,17 +128,28 @@ options:
         - Use with state I(present) to restart all containers.
       type: bool
       default: 'no'
-  debug:
+  remove_orphans:
       description:
-        - Include I(actions) in the return values.
+        - Remove containers for services not defined in the compose file.
       type: bool
-      default: 'no'
+      default: false
+  timeout:
+    description:
+        - timeout in seconds for container shutdown when attached or when containers are already running.
+    default: 10
 
 extends_documentation_fragment:
     - docker
 
 requirements:
     - "python >= 2.6"
+    - "docker-py >= 1.8.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time."
     - "docker-compose >= 1.7.0"
     - "Docker API >= 1.20"
     - "PyYAML >= 3.11"

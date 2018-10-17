@@ -30,13 +30,13 @@ DOCUMENTATION = '''
         env:
            - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_STDERR
     description:
-        - The source provided must an executable that returns Ansible inventory JSON
+        - The source provided must be an executable that returns Ansible inventory JSON
         - The source must accept C(--list) and C(--host <hostname>) as arguments.
           C(--host) will only be used if no C(_meta) key is present.
           This is a performance optimization as the script would be called per host otherwise.
     notes:
         - It takes the place of the previously hardcoded script inventory.
-        - To function it requires being whitelisted in configuration, which is true by default.
+        - In order to function, it requires being whitelisted in configuration, which is true by default.
 '''
 
 import os
@@ -85,6 +85,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     def parse(self, inventory, loader, path, cache=None):
 
         super(InventoryModule, self).parse(inventory, loader, path)
+        self.set_options()
 
         if cache is None:
             cache = self.get_option('cache')
@@ -104,7 +105,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 (stdout, stderr) = sp.communicate()
 
                 path = to_native(path)
-                err = to_native(stderr or "") + "\n"
+                err = to_native(stderr or "")
+
+                if err and not err.endswith('\n'):
+                    err += '\n'
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
@@ -121,7 +125,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
                 # if no other errors happened and you want to force displaying stderr, do so now
-                if err and self.get_option('always_show_stderr'):
+                if stderr and self.get_option('always_show_stderr'):
                     self.display.error(msg=to_text(err))
 
             processed = self._cache[cache_key]

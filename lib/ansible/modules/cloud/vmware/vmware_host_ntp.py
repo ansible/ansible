@@ -22,7 +22,7 @@ description:
 - User can specify an ESXi hostname or Cluster name. In case of cluster name, all ESXi hosts are updated.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START nxos nxapi/net_system.yaml on connection={{ ansible_connection }}"
-- debug: msg="Using provider={{ connection.transport }}"
 
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
@@ -11,7 +10,7 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: configure domain_list using platform agnostic module
@@ -19,7 +18,7 @@
     domain_search:
       - ansible.com
       - redhat.com
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -34,6 +33,6 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
 - debug: msg="END nxos nxapi/net_system.yaml on connection={{ ansible_connection }}"

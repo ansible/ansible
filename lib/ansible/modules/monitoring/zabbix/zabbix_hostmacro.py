@@ -51,7 +51,7 @@ options:
         description:
             - Only updates an existing macro if set to C(yes).
         default: 'yes'
-        choices: ['yes', 'no']
+        type: bool
         version_added: 2.5
 
 extends_documentation_fragment:

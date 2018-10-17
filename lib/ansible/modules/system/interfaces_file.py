@@ -193,6 +193,9 @@ def read_interfaces_lines(module, line_strings):
         elif words[0] == "source-dir":
             lines.append(lineDict(line))
             currently_processing = "NONE"
+        elif words[0] == "source-directory":
+            lines.append(lineDict(line))
+            currently_processing = "NONE"
         elif words[0] == "iface":
             currif = {
                 "pre-up": [],
@@ -216,7 +219,7 @@ def read_interfaces_lines(module, line_strings):
         elif words[0] == "auto":
             lines.append(lineDict(line))
             currently_processing = "NONE"
-        elif words[0] == "allow-":
+        elif words[0].startswith("allow-"):
             lines.append(lineDict(line))
             currently_processing = "NONE"
         elif words[0] == "no-auto-down":
@@ -302,6 +305,14 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
 
 
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options):
+    # Changing method of interface is not an addition
+    if option == 'method':
+        for ln in lines:
+            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface:
+                ln['line'] = re.sub(ln.get('params', {}).get('method', '') + '$', value, ln.get('line'))
+                ln['params']['method'] = value
+        return lines
+
     last_line = last_line_dict['line']
     prefix_start = last_line.find(last_line.split()[0])
     suffix_start = last_line.rfind(last_line.split()[-1]) + len(last_line.split()[-1])

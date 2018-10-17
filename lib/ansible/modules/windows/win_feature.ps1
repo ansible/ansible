@@ -1,5 +1,4 @@
 #!powershell
-# This file is part of Ansible
 
 # Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -18,15 +17,9 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $name = Get-AnsibleParam -obj $params -name "name" -type "list" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 
-# DEPRECATED 2.4, potential removal in 2.6+
-$restart = Get-AnsibleParam -obj $params -name "restart" -type "bool" -default $false
 $include_sub_features = Get-AnsibleParam -obj $params -name "include_sub_features" -type "bool" -default $false
 $include_management_tools = Get-AnsibleParam -obj $params -name "include_management_tools" -type "bool" -default $false
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
-
-If ($restart) {
-    Add-DeprecationWarning -obj $result -message "The 'restart' parameter causes instability. Use the 'win_reboot' action conditionally on 'reboot_required' return value instead" -version 2.6
-}
 
 $install_cmdlet = $false
 if (Get-Command -Name Install-WindowsFeature -ErrorAction SilentlyContinue) {
@@ -43,8 +36,8 @@ if (Get-Command -Name Install-WindowsFeature -ErrorAction SilentlyContinue) {
 if ($state -eq "present") {
     $install_args = @{
         Name = $name
-        Restart = $restart
         IncludeAllSubFeature = $include_sub_features
+        Restart = $false
         WhatIf = $check_mode
         ErrorAction = "Stop"
     }
@@ -68,7 +61,7 @@ if ($state -eq "present") {
 } else {
     $uninstall_args = @{
         Name = $name
-        Restart = $restart
+        Restart = $false
         WhatIf = $check_mode
         ErrorAction = "Stop"
     }
@@ -115,7 +108,7 @@ $result.reboot_required = ConvertTo-Bool -obj $action_results.RestartNeeded
 # controls whether Ansible will fail or not
 $result.failed = (-not $action_results.Success)
 
-# DEPRECATED 2.4, potential removal in 2.6+ (standardize naming to "reboot_required")
+# DEPRECATED 2.4, remove in 2.8 (standardize naming to "reboot_required")
 $result.restart_needed = $result.reboot_required
 
 Exit-Json -obj $result

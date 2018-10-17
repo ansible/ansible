@@ -33,6 +33,7 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
+from ansible.plugins.loader import connection_loader
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -68,13 +69,13 @@ class TestConnectionBaseClass(unittest.TestCase):
     def test_plugins_connection_ssh__build_command(self):
         pc = PlayContext()
         new_stdin = StringIO()
-        conn = ssh.Connection(pc, new_stdin)
+        conn = connection_loader.get('ssh', pc, new_stdin)
         conn._build_command('ssh')
 
     def test_plugins_connection_ssh_exec_command(self):
         pc = PlayContext()
         new_stdin = StringIO()
-        conn = ssh.Connection(pc, new_stdin)
+        conn = connection_loader.get('ssh', pc, new_stdin)
 
         conn._build_command = MagicMock()
         conn._build_command.return_value = 'ssh something something'
@@ -90,7 +91,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = ssh.Connection(pc, new_stdin)
+        conn = connection_loader.get('ssh', pc, new_stdin)
 
         conn.check_password_prompt = MagicMock()
         conn.check_become_success = MagicMock()
@@ -198,7 +199,7 @@ class TestConnectionBaseClass(unittest.TestCase):
     def test_plugins_connection_ssh_put_file(self, mock_ospe, mock_sleep):
         pc = PlayContext()
         new_stdin = StringIO()
-        conn = ssh.Connection(pc, new_stdin)
+        conn = connection_loader.get('ssh', pc, new_stdin)
         conn._build_command = MagicMock()
         conn._bare_run = MagicMock()
 
@@ -255,9 +256,10 @@ class TestConnectionBaseClass(unittest.TestCase):
     def test_plugins_connection_ssh_fetch_file(self, mock_sleep):
         pc = PlayContext()
         new_stdin = StringIO()
-        conn = ssh.Connection(pc, new_stdin)
+        conn = connection_loader.get('ssh', pc, new_stdin)
         conn._build_command = MagicMock()
         conn._bare_run = MagicMock()
+        conn._load_name = 'ssh'
 
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
@@ -269,6 +271,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test when SFTP works
         C.DEFAULT_SCP_IF_SSH = 'smart'
         expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        conn.set_options({})
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -327,10 +330,11 @@ def mock_run_env(request, mocker):
     pc = PlayContext()
     new_stdin = StringIO()
 
-    conn = ssh.Connection(pc, new_stdin)
+    conn = connection_loader.get('ssh', pc, new_stdin)
     conn._send_initial_data = MagicMock()
     conn._examine_output = MagicMock()
     conn._terminate_process = MagicMock()
+    conn._load_name = 'ssh'
     conn.sshpass_pipe = [MagicMock(), MagicMock()]
 
     request.cls.pc = pc
@@ -468,27 +472,6 @@ class TestSSHConnectionRun(object):
         assert self.conn._send_initial_data.called is True
         assert self.conn._send_initial_data.call_count == 1
         assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
-
-    def test_pasword_without_data(self):
-        # simulate no data input
-        self.mock_openpty.return_value = (98, 99)
-        self.mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
-        self.mock_popen_res.stderr.read.side_effect = [b""]
-        self.mock_selector.select.side_effect = [
-            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
-            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-            []]
-        self.mock_selector.get_map.side_effect = lambda: True
-
-        return_code, b_stdout, b_stderr = self.conn._run("ssh", "")
-        assert return_code == 0
-        assert b_stdout == b'some data'
-        assert b_stderr == b''
-        assert self.mock_selector.register.called is True
-        assert self.mock_selector.register.call_count == 2
-        assert self.conn._send_initial_data.called is False
 
     def test_pasword_without_data(self):
         # simulate no data input but Popen using new pty's fails

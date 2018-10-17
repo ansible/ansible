@@ -7,14 +7,14 @@
   - name: "Enable interface-vlan"
     nxos_feature: 
       feature: interface-vlan
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
 
   - name: "Enable vrrp"
     nxos_feature: 
       feature: vrrp
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
 
   - name: "create int vlan 10"
     nxos_config: 
@@ -63,8 +63,8 @@
     nxos_vrrp: &remove
       interface: vlan10
       group: 100
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -130,15 +130,15 @@
       nxos_config: 
         commands:
           - no feature interface-vlan
-        provider: "{{ connection }}"
         match: none
+        provider: "{{ connection }}"
       ignore_errors: yes
 
     - name: "Disable vrrp"
       nxos_feature: 
         feature: vrrp
-        state: disabled
         provider: "{{ connection }}"
+        state: disabled
       ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vrrp sanity test"

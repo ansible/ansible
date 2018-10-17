@@ -1,0 +1,2 @@
+bugfixes:
+  - pause - nest try except when importing curses to gracefully fail if curses is not present (https://github.com/ansible/ansible/issues/42004)

@@ -70,8 +70,9 @@ Examples:
   $ contrib/inventory/gce.py --host my_instance
 
 Author: Eric Johnson <erjohnso@google.com>
-Contributors: Matt Hite <mhite@hotmail.com>, Tom Melendez <supertom@google.com>
-Version: 0.0.3
+Contributors: Matt Hite <mhite@hotmail.com>, Tom Melendez <supertom@google.com>,
+              John Roach <johnroach1985@gmail.com>
+Version: 0.0.4
 '''
 
 try:
@@ -167,7 +168,7 @@ class GceInventory(object):
         # Read settings and parse CLI arguments
         self.parse_cli_args()
         self.config = self.get_config()
-        self.driver = self.get_gce_driver()
+        self.drivers = self.get_gce_drivers()
         self.ip_type = self.get_inventory_options()
         if self.ip_type:
             self.ip_type = self.ip_type.lower()
@@ -277,9 +278,9 @@ class GceInventory(object):
         ip_type = os.environ.get('INVENTORY_IP_TYPE', ip_type)
         return ip_type
 
-    def get_gce_driver(self):
-        """Determine the GCE authorization settings and return a
-        libcloud driver.
+    def get_gce_drivers(self):
+        """Determine the GCE authorization settings and return a list of
+        libcloud drivers.
         """
         # Attempt to get GCE params from a configuration file, if one
         # exists.
@@ -325,12 +326,16 @@ class GceInventory(object):
         kwargs['project'] = os.environ.get('GCE_PROJECT', kwargs['project'])
         kwargs['datacenter'] = os.environ.get('GCE_ZONE', kwargs['datacenter'])
 
-        # Retrieve and return the GCE driver.
-        gce = get_driver(Provider.GCE)(*args, **kwargs)
-        gce.connection.user_agent_append(
-            '%s/%s' % (USER_AGENT_PRODUCT, USER_AGENT_VERSION),
-        )
-        return gce
+        gce_drivers = []
+        projects = kwargs['project'].split(',')
+        for project in projects:
+            kwargs['project'] = project
+            gce = get_driver(Provider.GCE)(*args, **kwargs)
+            gce.connection.user_agent_append(
+                '%s/%s' % (USER_AGENT_PRODUCT, USER_AGENT_VERSION),
+            )
+            gce_drivers.append(gce)
+        return gce_drivers
 
     def parse_env_zones(self):
         '''returns a list of comma separated zones parsed from the GCE_ZONE environment variable.
@@ -420,9 +425,10 @@ class GceInventory(object):
         all_nodes = []
         params, more_results = {'maxResults': 500}, True
         while more_results:
-            self.driver.connection.gce_params = params
-            all_nodes.extend(self.driver.list_nodes())
-            more_results = 'pageToken' in params
+            for driver in self.drivers:
+                driver.connection.gce_params = params
+                all_nodes.extend(driver.list_nodes())
+                more_results = 'pageToken' in params
         return all_nodes
 
     def group_instances(self, zones=None):

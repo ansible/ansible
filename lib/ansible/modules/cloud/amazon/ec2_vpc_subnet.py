@@ -253,16 +253,17 @@ def describe_subnets_with_backoff(client, **params):
     return client.describe_subnets(**params)
 
 
-def wait_config(wait_timeout, start_time):
-    remaining_wait_timeout = int(wait_timeout + start_time - time.time())
-    return {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
+def waiter_params(module, params, start_time):
+    if not module.botocore_at_least("1.7.0"):
+        remaining_wait_timeout = int(module.params['wait_timeout'] + start_time - time.time())
+        params['WaiterConfig'] = {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
+    return params
 
 
 def handle_waiter(conn, module, waiter_name, params, start_time):
-    params['WaiterConfig'] = wait_config(module.params['wait_timeout'], start_time)
     try:
         get_waiter(conn, waiter_name).wait(
-            **params
+            **waiter_params(module, params, start_time)
         )
     except botocore.exceptions.WaiterError as e:
         module.fail_json_aws(e, "Failed to wait for updates to complete")
@@ -295,8 +296,7 @@ def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None, start_tim
         handle_waiter(conn, module, 'subnet_exists', {'SubnetIds': [subnet['id']]}, start_time)
         try:
             conn.get_waiter('subnet_available').wait(
-                SubnetIds=[subnet['id']],
-                WaiterConfig=wait_config(wait_timeout, start_time)
+                **waiter_params(module, {'SubnetIds': [subnet['id']]}, start_time)
             )
             subnet['state'] = 'available'
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -508,7 +508,7 @@ def ensure_subnet_present(conn, module):
 
 
 def ensure_final_subnet(conn, module, subnet, start_time):
-    for rewait in range(0, 10):
+    for rewait in range(0, 30):
         map_public_correct = False
         assign_ipv6_correct = False
 
@@ -531,7 +531,7 @@ def ensure_final_subnet(conn, module, subnet, start_time):
         if map_public_correct and assign_ipv6_correct:
             break
 
-        time.sleep(3)
+        time.sleep(5)
         subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
 
     return subnet
@@ -576,6 +576,9 @@ def main():
 
     if module.params.get('assign_instances_ipv6') and not module.params.get('ipv6_cidr'):
         module.fail_json(msg="assign_instances_ipv6 is True but ipv6_cidr is None or an empty string")
+
+    if not module.botocore_at_least("1.7.0"):
+        module.warn("botocore >= 1.7.0 is required to use wait_timeout for custom wait times")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)

@@ -1,11 +1,14 @@
 #!powershell
-# Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
-# Copyright 2015, Trond Hindenes
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+
+# Copyright: (c) 2015, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright: (c) 2015, Trond Hindenes
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.SID
+
+$ErrorActionPreference = "Stop"
 
 # win_acl module (File/Resources Permission Additions/Removal)
 
@@ -120,7 +123,16 @@ namespace Ansible {
 }
 "@
 
+$params = Parse-Args $args
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
+
+$original_tmp = $env:TMP
+$original_temp = $env:TEMP
+$env:TMP = $_remote_tmp
+$env:TEMP = $_remote_tmp
 add-type $AdjustTokenPrivileges
+$env:TMP = $original_tmp
+$env:TEMP = $original_temp
 
 Function SetPrivilegeTokens() {
     # Set privilege tokens only if admin.
@@ -143,30 +155,28 @@ Function SetPrivilegeTokens() {
 }
 
 
-$params = Parse-Args $args;
-
 $result = @{
     changed = $false
 }
 
-$path = Get-Attr $params "path" -failifempty $true
-$user = Get-Attr $params "user" -failifempty $true
-$rights = Get-Attr $params "rights" -failifempty $true
+$path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
+$user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $true
+$rights = Get-AnsibleParam -obj $params -name "rights" -type "str" -failifempty $true
 
-$type = Get-Attr $params "type" -failifempty $true -validateSet "allow","deny" -resultobj $result
-$state = Get-Attr $params "state" "present" -validateSet "present","absent" -resultobj $result
+$type = Get-AnsibleParam -obj $params -name "type" -type "str" -failifempty $true -validateset "allow","deny"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 
-$inherit = Get-Attr $params "inherit" ""
-$propagation = Get-Attr $params "propagation" "None" -validateSet "None","NoPropagateInherit","InheritOnly" -resultobj $result
+$inherit = Get-AnsibleParam -obj $params -name "inherit" -type "str"
+$propagation = Get-AnsibleParam -obj $params -name "propagation" -type "str" -default "None" -validateset "InheritOnly","None","NoPropagateInherit"
 
 If (-Not (Test-Path -Path $path)) {
-    Fail-Json $result "$path file or directory does not exist on the host"
+    Fail-Json -obj $result -message "$path file or directory does not exist on the host"
 }
 
 # Test that the user/group is resolvable on the local machine
 $sid = Get-UserSID -AccountName $user
 if (!$sid) {
-    Fail-Json $result "$user is not a valid user or group on the host machine or domain"
+    Fail-Json -obj $result -message "$user is not a valid user or group on the host machine or domain"
 }
 
 If (Test-Path -Path $path -PathType Leaf) {
@@ -175,8 +185,6 @@ If (Test-Path -Path $path -PathType Leaf) {
 ElseIf ($inherit -eq "") {
     $inherit = "ContainerInherit, ObjectInherit"
 }
-
-$ErrorActionPreference = "Stop"
 
 Try {
     SetPrivilegeTokens
@@ -243,7 +251,7 @@ Try {
             $result.changed = $true
         }
         Catch {
-            Fail-Json $result "an exception occurred when adding the specified rule - $($_.Exception.Message)"
+            Fail-Json -obj $result -message "an exception occurred when adding the specified rule - $($_.Exception.Message)"
         }
     }
     ElseIf ($state -eq "absent" -And $match -eq $true) {
@@ -253,22 +261,22 @@ Try {
             $result.changed = $true
         }
         Catch {
-            Fail-Json $result "an exception occurred when removing the specified rule - $($_.Exception.Message)"
+            Fail-Json -obj $result -message "an exception occurred when removing the specified rule - $($_.Exception.Message)"
         }
     }
     Else {
         # A rule was attempting to be added but already exists
         If ($match -eq $true) {
-            Exit-Json $result "the specified rule already exists"
+            Exit-Json -obj $result -message "the specified rule already exists"
         }
         # A rule didn't exist that was trying to be removed
         Else {
-            Exit-Json $result "the specified rule does not exist"
+            Exit-Json -obj $result -message "the specified rule does not exist"
         }
     }
 }
 Catch {
-    Fail-Json $result "an error occurred when attempting to $state $rights permission(s) on $path for $user - $($_.Exception.Message)"
+    Fail-Json -obj $result -message "an error occurred when attempting to $state $rights permission(s) on $path for $user - $($_.Exception.Message)"
 }
 
-Exit-Json $result
+Exit-Json -obj $result

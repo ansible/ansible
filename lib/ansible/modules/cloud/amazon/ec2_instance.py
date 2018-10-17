@@ -55,7 +55,7 @@ options:
       tower_address:
         description:
         - IP address or DNS name of Tower server. Must be accessible via this address from the VPC that this instance will be launched in.
-      template_id:
+      job_template_id:
         description:
         - Either the integer ID of the Tower Job Template, or the name (name supported only for Tower 3.2+)
       host_config_key:
@@ -108,7 +108,7 @@ options:
   volumes:
     description:
     - A list of block device mappings, by default this will always use the AMI root device so the volumes option is primarily for adding more storage.
-    - A mapping contains the (optional) keys device_name, virtual_name, ebs.device_type, ebs.device_size, ebs.kms_key_id,
+    - A mapping contains the (optional) keys device_name, virtual_name, ebs.volume_type, ebs.volume_size, ebs.kms_key_id,
       ebs.iops, and ebs.delete_on_termination.
     - For more information about each parameter, see U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html)
   launch_template:
@@ -622,6 +622,7 @@ import re
 import uuid
 import string
 import textwrap
+import time
 from collections import namedtuple
 
 try:
@@ -737,6 +738,47 @@ def build_volume_spec(params):
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
+def add_or_update_instance_profile(instance, desired_profile_name):
+    instance_profile_setting = instance.get('IamInstanceProfile')
+    if instance_profile_setting and desired_profile_name:
+        if desired_profile_name in (instance_profile_setting.get('Name'), instance_profile_setting.get('Arn')):
+            # great, the profile we asked for is what's there
+            return False
+        else:
+            desired_arn = determine_iam_role(desired_profile_name)
+            if instance_profile_setting.get('Arn') == desired_arn:
+                return False
+        # update association
+        ec2 = module.client('ec2')
+        try:
+            association = ec2.describe_iam_instance_profile_associations(Filters=[{'Name': 'instance-id', 'Values': [instance['InstanceId']]}])
+        except botocore.exceptions.ClientError as e:
+            # check for InvalidAssociationID.NotFound
+            module.fail_json_aws(e, "Could not find instance profile association")
+        try:
+            resp = ec2.replace_iam_instance_profile_association(
+                AssociationId=association['IamInstanceProfileAssociations'][0]['AssociationId'],
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)}
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate instance profile")
+
+    if not instance_profile_setting and desired_profile_name:
+        # create association
+        ec2 = module.client('ec2')
+        try:
+            resp = ec2.associate_iam_instance_profile(
+                IamInstanceProfile={'Arn': determine_iam_role(desired_profile_name)},
+                InstanceId=instance['InstanceId']
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not associate new instance profile")
+
+    return False
+
+
 def build_network_spec(params, ec2=None):
     """
     Returns list of interfaces [complex]
@@ -827,7 +869,6 @@ def build_network_spec(params, ec2=None):
 
         if interface_params.get('ipv6_addresses'):
             spec['Ipv6Addresses'] = [{'Ipv6Address': a} for a in interface_params.get('ipv6_addresses', [])]
-            spec['Ipv6AddressCount'] = len(spec['Ipv6Addresses'])
 
         if interface_params.get('private_ip_address'):
             spec['PrivateIpAddress'] = interface_params.get('private_ip_address')
@@ -1292,9 +1333,9 @@ def pretty_instance(i):
 def determine_iam_role(name_or_arn):
     if re.match(r'^arn:aws:iam::\d+:instance-profile/[\w+=/,.@-]+$', name_or_arn):
         return name_or_arn
-    iam = module.client('iam')
+    iam = module.client('iam', retry_decorator=AWSRetry.jittered_backoff())
     try:
-        role = iam.get_instance_profile(InstanceProfileName=name_or_arn)
+        role = iam.get_instance_profile(InstanceProfileName=name_or_arn, aws_retry=True)
         return role['InstanceProfile']['Arn']
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
@@ -1313,6 +1354,8 @@ def handle_existing(existing_matches, changed, ec2, state):
     changes = diff_instance_and_params(existing_matches[0], module.params)
     for c in changes:
         ec2.modify_instance_attribute(**c)
+    changed |= bool(changes)
+    changed |= add_or_update_instance_profile(existing_matches[0], module.params.get('instance_role'))
     changed |= change_network_attachments(existing_matches[0], module.params, ec2)
     altered = find_instances(ec2, ids=[i['InstanceId'] for i in existing_matches])
     module.exit_json(
@@ -1335,7 +1378,7 @@ def ensure_present(existing_matches, changed, ec2, state):
             )
     try:
         instance_spec = build_run_instance_spec(module.params)
-        instance_response = AWSRetry.jittered_backoff()(ec2.run_instances)(**instance_spec)
+        instance_response = run_instances(ec2, **instance_spec)
         instances = instance_response['Instances']
         instance_ids = [i['InstanceId'] for i in instances]
 
@@ -1360,6 +1403,20 @@ def ensure_present(existing_matches, changed, ec2, state):
         )
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed to create new EC2 instance")
+
+
+@AWSRetry.jittered_backoff()
+def run_instances(ec2, **instance_spec):
+    try:
+        return ec2.run_instances(**instance_spec)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'InvalidParameterValue' and "Invalid IAM Instance Profile ARN" in e.response['Error']['Message']:
+            # If the instance profile has just been created, it takes some time to be visible by ec2
+            # So we wait 10 second and retry the run_instances
+            time.sleep(10)
+            return ec2.run_instances(**instance_spec)
+        else:
+            raise e
 
 
 def main():

@@ -209,6 +209,33 @@ class EFSConnection(object):
         """
         return self.connection.describe_mount_target_security_groups(MountTargetId=mount_target_id)['SecurityGroups']
 
+    def get_mount_targets_data(self, file_systems):
+        for item in file_systems:
+            if item['life_cycle_state'] == self.STATE_AVAILABLE:
+                try:
+                    mount_targets = self.get_mount_targets(item['file_system_id'])
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Couldn't get EFS targets")
+                for mt in mount_targets:
+                    item['mount_targets'].append(camel_dict_to_snake_dict(mt))
+        return file_systems
+
+    def get_security_groups_data(self, file_systems):
+        for item in file_systems:
+            if item['life_cycle_state'] == self.STATE_AVAILABLE:
+                for target in item['mount_targets']:
+                    if target['life_cycle_state'] == self.STATE_AVAILABLE:
+                        try:
+                            target['security_groups'] = self.get_security_groups(target['mount_target_id'])
+                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                            self.module.fail_json_aws(e, msg="Couldn't get EFS security groups")
+                    else:
+                        target['security_groups'] = []
+            else:
+                item['tags'] = {}
+                item['mount_targets'] = []
+        return file_systems
+
     def get_file_systems(self, file_system_id=None, creation_token=None):
         kwargs = dict()
         if file_system_id:
@@ -230,23 +257,9 @@ class EFSConnection(object):
             item['MountPoint'] = '.%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
             if 'Timestamp' in item['SizeInBytes']:
                 item['SizeInBytes']['Timestamp'] = str(item['SizeInBytes']['Timestamp'])
-            if item['LifeCycleState'] == self.STATE_AVAILABLE:
-                try:
-                    item['MountTargets'] = self.get_mount_targets(item['FileSystemId'])
-                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                    self.module.fail_json_aws(e, msg="Couldn't get EFS targets")
-                for target in item['MountTargets']:
-                    if target['LifeCycleState'] == self.STATE_AVAILABLE:
-                        try:
-                            target['SecurityGroups'] = self.get_security_groups(target['MountTargetId'])
-                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                            self.module.fail_json_aws(e, msg="Couldn't get EFS security groups")
-                    else:
-                        target['SecurityGroups'] = []
-            else:
-                item['tags'] = {}
-                item['mount_targets'] = []
             result = camel_dict_to_snake_dict(item)
+            result['tags'] = {}
+            result['mount_targets'] = []
             # Set tags *after* doing camel to snake
             if result['life_cycle_state'] == self.STATE_AVAILABLE:
                 try:
@@ -339,6 +352,9 @@ def main():
 
     if tags:
         file_systems_info = [item for item in file_systems_info if has_tags(item['tags'], tags)]
+
+    file_systems_info = connection.get_mount_targets_data(file_systems_info)
+    file_systems_info = connection.get_security_groups_data(file_systems_info)
 
     if targets:
         targets = [(item, prefix_to_attr(item)) for item in targets]

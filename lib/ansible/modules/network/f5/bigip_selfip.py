@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -18,7 +18,7 @@ module: bigip_selfip
 short_description: Manage Self-IPs on a BIG-IP system
 description:
   - Manage Self-IPs on a BIG-IP system.
-version_added: "2.2"
+version_added: 2.2
 options:
   address:
     description:
@@ -34,8 +34,9 @@ options:
   name:
     description:
       - The self IP to create.
+      - If this parameter is not specified, then it will default to the value supplied
+        in the C(address) parameter.
     required: True
-    default: Value of C(address)
   netmask:
     description:
       - The netmask for the self IP. When creating a new Self IP, this value
@@ -190,27 +191,27 @@ allow_service:
   sample: ['igmp:0','tcp:22','udp:53']
 address:
   description: The address for the Self IP
-  returned: created
+  returned: changed
   type: string
   sample: 192.0.2.10
 name:
   description: The name of the Self IP
-  returned: created, changed and deleted
+  returned: created
   type: string
   sample: self1
 netmask:
   description: The netmask of the Self IP
-  returned: changed and created
+  returned: changed
   type: string
   sample: 255.255.255.0
 traffic_group:
   description: The traffic group that the Self IP is a member of
-  returned: changed and created
+  returned: changed
   type: string
   sample: traffic-group-local-only
 vlan:
   description: The VLAN set on the Self IP
-  returned: changed and created
+  returned: changed
   type: string
   sample: vlan1
 '''
@@ -220,30 +221,25 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
@@ -282,16 +278,11 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
-
     @property
     def vlan(self):
         if self._values['vlan'] is None:
             return None
-        return self._fqdn_name(self._values['vlan'])
+        return fq_name(self.partition, self._values['vlan'])
 
 
 class ModuleParameters(Parameters):
@@ -318,7 +309,7 @@ class ModuleParameters(Parameters):
     def traffic_group(self):
         if self._values['traffic_group'] is None:
             return None
-        return self._fqdn_name(self._values['traffic_group'])
+        return fq_name(self.partition, self._values['traffic_group'])
 
     @property
     def route_domain(self):

@@ -22,6 +22,7 @@ options:
   profiles:
     description:
     - Specify one or more profiles to change.
+    type: list
     choices:
     - Domain
     - Private

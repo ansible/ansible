@@ -6,8 +6,8 @@
 - name: Configure feature bgp
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
 
 - name: Configure feature nv overlay
   nxos_config:
@@ -95,8 +95,8 @@
       vrf: ansible
       afi: ipv6
       route_target_both_auto_evpn: True
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -115,8 +115,8 @@
       vrf: ansible
       afi: ipv4
       route_target_both_auto_evpn: True
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -130,7 +130,7 @@
 
   - assert: *false
 
-  when: not platform is search("N35")
+  when: not platform is search("N35|N3L")
 
   always:
   - name: Remove vrf
@@ -154,7 +154,8 @@
   - name: Remove feature bgp
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_vrf_af sanity test"

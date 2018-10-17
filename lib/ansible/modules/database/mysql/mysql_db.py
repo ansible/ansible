@@ -56,6 +56,12 @@ options:
     type: bool
     default: 'yes'
     version_added: "2.1"
+  ignore_tables:
+    description:
+      - A list of table names that will be ignored in the dump of the form database_name.table_name
+    required: false
+    default: []
+    version_added: "2.7"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -130,7 +136,7 @@ def db_delete(cursor, db):
 
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None):
+            single_transaction=None, quick=None, ignore_tables=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -157,6 +163,9 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --single-transaction=true"
     if quick:
         cmd += " --quick"
+    if ignore_tables:
+        for an_ignored_table in ignore_tables:
+            cmd += " --ignore-table={0}".format(an_ignored_table)
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -264,6 +273,7 @@ def main():
             config_file=dict(default="~/.my.cnf", type='path'),
             single_transaction=dict(default=False, type='bool'),
             quick=dict(default=True, type='bool'),
+            ignore_tables=dict(default=[], type='list')
         ),
         supports_check_mode=True
     )
@@ -288,6 +298,10 @@ def main():
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     login_host = module.params["login_host"]
+    ignore_tables = module.params["ignore_tables"]
+    for a_table in ignore_tables:
+        if a_table == "":
+            module.fail_json(msg="Name of ignored table cannot be empty")
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
 
@@ -333,7 +347,7 @@ def main():
                 rc, stdout, stderr = db_dump(module, login_host, login_user,
                                              login_password, db, target, all_databases,
                                              login_port, config_file, socket, ssl_cert, ssl_key,
-                                             ssl_ca, single_transaction, quick)
+                                             ssl_ca, single_transaction, quick, ignore_tables)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:

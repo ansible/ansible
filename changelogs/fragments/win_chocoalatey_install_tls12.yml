@@ -1,0 +1,2 @@
+bugfixes:
+- win_chocolatey - enable TLSv1.2 support when downloading the Chocolatey installer https://github.com/ansible/ansible/issues/41906

@@ -364,7 +364,6 @@ import distutils.version
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
     from boto.route53.status import Status
@@ -436,6 +435,7 @@ def commit(changes, retry_interval, wait, wait_timeout):
             raise TimeoutError()
         return result
 
+
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
 MAX_RETRIES = 5
@@ -491,7 +491,7 @@ def main():
     mutually_exclusive = [('failover', 'region', 'weight')]
 
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together, required_if=required_if,
-                           mutually_exclusive=mutually_exclusive)
+                           mutually_exclusive=mutually_exclusive, supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -654,17 +654,18 @@ def main():
             command = command_in.upper()
         changes.add_change_record(command, wanted_rset)
 
-    try:
-        result = invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
-    except boto.route53.exception.DNSServerError as e:
-        txt = e.body.split("<Message>")[1]
-        txt = txt.split("</Message>")[0]
-        if "but it already exists" in txt:
-            module.exit_json(changed=False)
-        else:
-            module.fail_json(msg=txt)
-    except TimeoutError:
-        module.fail_json(msg='Timeout waiting for changes to replicate')
+    if not module.check_mode:
+        try:
+            invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
+        except boto.route53.exception.DNSServerError as e:
+            txt = e.body.split("<Message>")[1]
+            txt = txt.split("</Message>")[0]
+            if "but it already exists" in txt:
+                module.exit_json(changed=False)
+            else:
+                module.fail_json(msg=txt)
+        except TimeoutError:
+            module.fail_json(msg='Timeout waiting for changes to replicate')
 
     module.exit_json(changed=True)
 

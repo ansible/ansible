@@ -131,7 +131,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
+from ansible.module_utils.ec2 import (boto3_conn, AWSRetry, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info)
 
 
@@ -148,6 +148,7 @@ class Ec2CustomerGatewayManager:
         except ClientError as e:
             module.fail_json(msg=e.message)
 
+    @AWSRetry.jittered_backoff(delay=2, max_delay=30, retries=6, catch_extra_error_codes=['IncorrectState'])
     def ensure_cgw_absent(self, gw_id):
         response = self.ec2.delete_customer_gateway(
             DryRun=False,

@@ -1,17 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
+# Copyright (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
@@ -21,69 +22,59 @@ version_added: "2.0"
 
 short_description: This module manages rabbitMQ bindings
 description:
-  - This module uses rabbitMQ Rest API to create/delete bindings
+  - This module uses rabbitMQ REST APIs to create / delete bindings.
 requirements: [ "requests >= 1.0.0" ]
 options:
     state:
-        description:
-            - Whether the exchange should be present or absent
-            - Only present implemented atm
-        choices: [ "present", "absent" ]
-        required: false
-        default: present
+      description:
+      - Whether the bindings should be present or absent.
+      - Only present implemented at the momemt.
+      choices: [ "present", "absent" ]
+      default: present
     name:
-        description:
-            - source exchange to create binding on
-        required: true
-        aliases: [ "src", "source" ]
+      description:
+      - source exchange to create binding on.
+      required: true
+      aliases: [ "src", "source" ]
     login_user:
-        description:
-            - rabbitMQ user for connection
-        required: false
-        default: guest
+      description:
+      - rabbitMQ user for the connection.
+      default: guest
     login_password:
-        description:
-            - rabbitMQ password for connection
-        required: false
-        default: false
+      description:
+      - rabbitMQ password for the connection.
+      default: false
     login_host:
-        description:
-            - rabbitMQ host for connection
-        required: false
-        default: localhost
+      description:
+      - rabbitMQ host for the connection.
+      default: localhost
     login_port:
-        description:
-            - rabbitMQ management api port
-        required: false
-        default: 15672
+      description:
+      - rabbitMQ management API port.
+      default: 15672
     vhost:
-        description:
-            - rabbitMQ virtual host
-            - default vhost is /
-        required: false
-        default: "/"
+      description:
+      - rabbitMQ virtual host.
+      default: "/"
     destination:
-        description:
-            - destination exchange or queue for the binding
-        required: true
-        aliases: [ "dst", "dest" ]
+      description:
+      - destination exchange or queue for the binding.
+      required: true
+      aliases: [ "dst", "dest" ]
     destination_type:
-        description:
-            - Either queue or exchange
-        required: true
-        choices: [ "queue", "exchange" ]
-        aliases: [ "type", "dest_type" ]
+      description:
+      - Either queue or exchange.
+      required: true
+      choices: [ "queue", "exchange" ]
+      aliases: [ "type", "dest_type" ]
     routing_key:
-        description:
-            - routing key for the binding
-            - default is #
-        required: false
-        default: "#"
+      description:
+      - routing key for the binding.
+      default: "#"
     arguments:
-        description:
-            - extra arguments for exchange. If defined this argument is a key/value dictionary
-        required: false
-        default: {}
+      description:
+      - extra arguments for exchange. If defined this argument is a key/value dictionary.
+      default: {}
 '''
 
 EXAMPLES = '''
@@ -106,12 +97,183 @@ import json
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib import parse as urllib_parse
+from ansible.module_utils.basic import AnsibleModule
+
+
+class RabbitMqBinding(object):
+    def __init__(self, module):
+        """
+        :param module:
+        """
+        self.module = module
+        self.name = self.module.params['name']
+        self.login_user = self.module.params['login_user']
+        self.login_password = self.module.params['login_password']
+        self.login_host = self.module.params['login_host']
+        self.login_port = self.module.params['login_port']
+        self.vhost = self.module.params['vhost']
+        self.destination = self.module.params['destination']
+        self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
+        self.routing_key = self.module.params['routing_key']
+        self.arguments = self.module.params['arguments']
+        self.base_url = 'http://{0}:{1}/api/bindings'.format(self.login_host,
+                                                             self.login_port)
+        self.url = '{0}/{1}/e/{2}/{3}/{4}/{5}'.format(self.base_url,
+                                                      urllib_parse.quote(self.vhost),
+                                                      urllib_parse.quote(self.name),
+                                                      self.destination_type,
+                                                      self.destination,
+                                                      self.routing_key)
+        self.result = {
+            'changed': False,
+            'name': self.module.params['name'],
+        }
+        self.authentication = (
+            self.login_user,
+            self.login_password
+        )
+        self.request = requests
+        self.http_check_states = {
+            200: True,
+            404: False,
+        }
+        self.http_actionable_states = {
+            201: True,
+            204: True,
+        }
+        self.api_result = self.request.get(self.url, auth=self.authentication)
+
+    def run(self):
+        """
+        :return:
+        """
+        self.check_presence()
+        self.check_mode()
+        self.action_mode()
+
+    def check_presence(self):
+        """
+        :return:
+        """
+        if self.check_should_throw_fail():
+            self.fail()
+
+    def change_required(self):
+        """
+        :return:
+        """
+        if self.module.params['state'] == 'present':
+            if not self.is_present():
+                return True
+        return False
+
+    def is_present(self):
+        """
+        :return:
+        """
+        return self.http_check_states.get(self.api_result.status_code, False)
+
+    def check_mode(self):
+        """
+        :return:
+        """
+        if self.module.check_mode:
+            result = self.result
+            result['changed'] = self.change_required()
+            result['details'] = self.api_result.json() if self.is_present() else self.api_result.text
+            result['arguments'] = self.module.params['arguments']
+            self.module.exit_json(**result)
+
+    def check_reply_is_correct(self):
+        """
+        :return:
+        """
+        if self.api_result.status_code in self.http_check_states:
+            return True
+        return False
+
+    def check_should_throw_fail(self):
+        """
+        :return:
+        """
+        if not self.is_present():
+            if not self.check_reply_is_correct():
+                return True
+        return False
+
+    def action_mode(self):
+        """
+        :return:
+        """
+        result = self.result
+        if self.change_required():
+            if self.module.params['state'] == 'present':
+                self.create()
+            if self.module.params['state'] == 'absent':
+                self.remove()
+            if self.action_should_throw_fail():
+                self.fail()
+            result['changed'] = True
+            result['destination'] = self.module.params['destination']
+            self.module.exit_json(**result)
+        else:
+            result['changed'] = False
+            self.module.exit_json(**result)
+
+    def action_reply_is_correct(self):
+        """
+        :return:
+        """
+        if self.api_result.status_code in self.http_actionable_states:
+            return True
+        return False
+
+    def action_should_throw_fail(self):
+        """
+        :return:
+        """
+        if not self.action_reply_is_correct():
+            return True
+        return False
+
+    def create(self):
+        """
+        :return:
+        """
+        self.url = '{0}/{1}/e/{2}/{3}/{4}'.format(self.base_url,
+                                                  urllib_parse.quote(self.vhost),
+                                                  urllib_parse.quote(self.name),
+                                                  self.destination_type,
+                                                  urllib_parse.quote(self.destination))
+        self.api_result = self.request.post(self.url,
+                                            auth=self.authentication,
+                                            headers={"content-type": "application/json"},
+                                            data=json.dumps({
+                                                'routing_key': self.routing_key,
+                                                'arguments': self.arguments
+                                            }))
+
+    def remove(self):
+        """
+        :return:
+        """
+        self.api_result = self.request.delete(self.url, auth=self.authentication)
+
+    def fail(self):
+        """
+        :return:
+        """
+        self.module.fail_json(
+            msg="Unexpected reply from API",
+            status=self.api_result.status_code,
+            details=self.api_result.text
+        )
 
 
 def main():
@@ -125,7 +287,8 @@ def main():
             login_port=dict(default='15672', type='str'),
             vhost=dict(default='/', type='str'),
             destination=dict(required=True, aliases=["dst", "dest"], type='str'),
-            destination_type=dict(required=True, aliases=["type", "dest_type"], choices=["queue", "exchange"], type='str'),
+            destination_type=dict(required=True, aliases=["type", "dest_type"], choices=["queue", "exchange"],
+                                  type='str'),
             routing_key=dict(default='#', type='str'),
             arguments=dict(default=dict(), type='dict')
         ),
@@ -134,92 +297,9 @@ def main():
 
     if not HAS_REQUESTS:
         module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
-    result = dict(changed=False, name=module.params['name'])
 
-    if module.params['destination_type'] == "queue":
-        dest_type = "q"
-    else:
-        dest_type = "e"
+    RabbitMqBinding(module).run()
 
-    if module.params['routing_key'] == "":
-        props = "~"
-    else:
-        props = urllib_parse.quote(module.params['routing_key'], '')
-
-    base_url = "http://%s:%s/api/bindings" % (module.params['login_host'], module.params['login_port'])
-
-    url = "%s/%s/e/%s/%s/%s/%s" % (base_url,
-                                   urllib_parse.quote(module.params['vhost'], ''),
-                                   urllib_parse.quote(module.params['name'], ''),
-                                   dest_type,
-                                   urllib_parse.quote(module.params['destination'], ''),
-                                   props
-                                   )
-
-    # Check if exchange already exists
-    r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']))
-
-    if r.status_code == 200:
-        binding_exists = True
-        response = r.json()
-    elif r.status_code == 404:
-        binding_exists = False
-        response = r.text
-    else:
-        module.fail_json(
-            msg="Invalid response from RESTAPI when trying to check if exchange exists",
-            details=r.text
-        )
-
-    if module.params['state'] == 'present':
-        change_required = not binding_exists
-    else:
-        change_required = binding_exists
-
-    # Exit if check_mode
-    if module.check_mode:
-        result['changed'] = change_required
-        result['details'] = response
-        result['arguments'] = module.params['arguments']
-        module.exit_json(**result)
-
-    # Do changes
-    if change_required:
-        if module.params['state'] == 'present':
-            url = "%s/%s/e/%s/%s/%s" % (
-                base_url,
-                urllib_parse.quote(module.params['vhost'], ''),
-                urllib_parse.quote(module.params['name'], ''),
-                dest_type,
-                urllib_parse.quote(module.params['destination'], '')
-            )
-
-            r = requests.post(
-                url,
-                auth=(module.params['login_user'], module.params['login_password']),
-                headers={"content-type": "application/json"},
-                data=json.dumps({
-                    "routing_key": module.params['routing_key'],
-                    "arguments": module.params['arguments']
-                })
-            )
-        elif module.params['state'] == 'absent':
-            r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']))
-
-        if r.status_code == 204 or r.status_code == 201:
-            result['changed'] = True
-            result['destination'] = module.params['destination']
-            module.exit_json(**result)
-        else:
-            module.fail_json(
-                msg="Error creating exchange",
-                status=r.status_code,
-                details=r.text
-            )
-
-    else:
-        result['changed'] = False
-        module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

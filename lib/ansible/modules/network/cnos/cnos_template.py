@@ -32,7 +32,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_template
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Manage switch configuration using templates on devices running Lenovo CNOS
 description:
     - This module allows you to work with the running configuration of a switch. It provides a way
@@ -74,8 +74,8 @@ Tasks : The following are examples of using the module cnos_template. These are 
 - name: Applying CLI commands on Switches
   cnos_template:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       commandfile: "./commands/demo_template_{{ inventory_hostname }}_commands.txt"
@@ -156,10 +156,9 @@ def main():
     output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
 
     # Go to config mode
-    output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
+    output = output + cnos.waitForDeviceResponse("configure device\n", "(config)#", 2, remote_conn)
 
     # Send commands one by one to the device
-    # with open(commandfile, "r") as f:
     f = open(commandfile, "r")
     for line in f:
         # Omit the comment lines in template file

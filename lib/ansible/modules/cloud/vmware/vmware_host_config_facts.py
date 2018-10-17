@@ -21,7 +21,7 @@ description:
 - This module can be used to gather facts about an ESXi host's advance configuration information when ESXi hostname or Cluster name is given.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:

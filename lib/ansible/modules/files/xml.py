@@ -40,7 +40,6 @@ options:
     description:
     - A valid XPath expression describing the item(s) you want to manipulate.
     - Operates on the document root, C(/), by default.
-    default: /
   namespaces:
     description:
     - The namespace C(prefix:uri) mapping for the XPath expression.
@@ -107,6 +106,13 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: 'no'
+  strip_cdata_tags:
+    description:
+      - Remove CDATA tags surrounding text values.
+      - Note that this might break your XML file if text values contain characters that could be interpreted as XML.
+    type: bool
+    default: 'no'
+    version_added: '2.7'
 requirements:
 - lxml >= 2.3.0
 notes:
@@ -733,6 +739,7 @@ def main():
             content=dict(type='str', choices=['attribute', 'text']),
             input_type=dict(type='str', default='yaml', choices=['xml', 'yaml']),
             backup=dict(type='bool', default=False),
+            strip_cdata_tags=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         # TODO: Implement this as soon as #28662 (required_by functionality) is merged
@@ -773,6 +780,7 @@ def main():
     print_match = module.params['print_match']
     count = module.params['count']
     backup = module.params['backup']
+    strip_cdata_tags = module.params['strip_cdata_tags']
 
     # Check if we have lxml 2.3.0 or newer installed
     if not HAS_LXML:
@@ -801,7 +809,7 @@ def main():
 
     # Try to parse in the target XML file
     try:
-        parser = etree.XMLParser(remove_blank_text=pretty_print)
+        parser = etree.XMLParser(remove_blank_text=pretty_print, strip_cdata=strip_cdata_tags)
         doc = etree.parse(infile, parser)
     except etree.XMLSyntaxError as e:
         module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))

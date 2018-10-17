@@ -23,7 +23,7 @@ description:
 - All parameters and VMware object names are case sensitive.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:

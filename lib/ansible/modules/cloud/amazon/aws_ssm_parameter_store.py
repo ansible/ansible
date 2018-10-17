@@ -105,8 +105,8 @@ EXAMPLES = '''
     value: "Test1234"
     overwrite_value: "always"
 
-- name: recommend to use with ssm lookup plugin
-  debug: msg="{{ lookup('ssm', 'hello') }}"
+- name: recommend to use with aws_ssm lookup plugin
+  debug: msg="{{ lookup('aws_ssm', 'hello') }}"
 '''
 
 RETURN = '''
@@ -181,7 +181,7 @@ def create_update_parameter(client, module):
             if existing_parameter['Parameter']['Value'] != args['Value']:
                 (changed, response) = update_parameter(client, module, args)
 
-            if args['Description']:
+            if args.get('Description'):
                 # Description field not available from get_parameter function so get it from describe_parameters
                 describe_existing_parameter = None
                 try:

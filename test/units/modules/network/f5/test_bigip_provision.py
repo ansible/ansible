@@ -20,9 +20,9 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_provision import Parameters
-    from library.bigip_provision import ModuleManager
-    from library.bigip_provision import ArgumentSpec
+    from library.modules.bigip_provision import Parameters
+    from library.modules.bigip_provision import ModuleManager
+    from library.modules.bigip_provision import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -107,6 +107,8 @@ class TestManager(unittest.TestCase):
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
         mm.read_current_from_device = Mock(return_value=current)
+        mm.reboot_device = Mock(return_value=True)
+        mm.save_on_device = Mock(return_value=True)
 
         # this forced sleeping can cause these tests to take 15
         # or more seconds to run. This is deliberate.

@@ -9,7 +9,7 @@ This section discusses the behavioral changes between Ansible 2.2 and Ansible 2.
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
 
-We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md#2.3>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.3 <https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -118,15 +118,15 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.5. Please update your playbooks accordingly.
 
-* :ref:`ec2_vpc <ec2_vpc>`
-* :ref:`cl_bond <cl_bond>`
-* :ref:`cl_bridge <cl_bridge>`
-* :ref:`cl_img_install <cl_img_install>`
-* :ref:`cl_interface <cl_interface>`
-* :ref:`cl_interface_policy <cl_interface_policy>`
-* :ref:`cl_license <cl_license>`
-* :ref:`cl_ports <cl_ports>`
-* :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>` instead
+* :ref:`ec2_vpc <ec2_vpc_module>`
+* :ref:`cl_bond <cl_bond_module>`
+* :ref:`cl_bridge <cl_bridge_module>`
+* :ref:`cl_img_install <cl_img_install_module>`
+* :ref:`cl_interface <cl_interface_module>`
+* :ref:`cl_interface_policy <cl_interface_policy_module>`
+* :ref:`cl_license <cl_license_module>`
+* :ref:`cl_ports <cl_ports_module>`
+* :ref:`nxos_mtu <nxos_mtu_module>` use :ref:`nxos_system <nxos_system_module>` instead
 
 Noteworthy module changes
 -------------------------

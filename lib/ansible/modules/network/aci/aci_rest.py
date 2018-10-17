@@ -63,6 +63,7 @@ options:
       of the HTTP request being sent to the ACI fabric.
     - If you require a templated payload, use the C(content) parameter
       together with the C(template) lookup plugin, or use M(template).
+    type: path
     aliases: [ config_file ]
 extends_documentation_fragment: aci
 '''
@@ -320,7 +321,6 @@ def main():
         method=dict(type='str', default='get', choices=['delete', 'get', 'post'], aliases=['action']),
         src=dict(type='path', aliases=['config_file']),
         content=dict(type='raw'),
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -353,6 +353,7 @@ def main():
         module.fail_json(msg='Failed to find REST API payload type (neither .xml nor .json).')
 
     aci = ACIRESTModule(module)
+    aci.result['status'] = -1  # Ensure we always return a status
 
     # We include the payload as it may be templated
     payload = content

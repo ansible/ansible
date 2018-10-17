@@ -1,0 +1,31 @@
+---
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - include_tasks:
+        file: include_tasks.yml
+        apply:
+          tags:
+            - foo
+      tags:
+        - always
+
+    - assert:
+        that:
+          - include_tasks_result is defined
+      tags:
+        - always
+
+    - include_role:
+        name: include_role
+        apply:
+          tags:
+            - foo
+      tags:
+        - always
+
+    - assert:
+        that:
+          - include_role_result is defined
+      tags:
+        - always

@@ -67,7 +67,7 @@ options:
        on personally controlled devices using self-signed certificates.
     required: false
     default: true
-    choices: [true, false]
+    type: bool
   access_token:
     description:
      - Bigmon access token. If this isn't set, the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.

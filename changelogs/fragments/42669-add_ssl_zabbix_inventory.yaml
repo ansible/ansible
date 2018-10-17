@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - Added capability to skip ssl verification 
+    on zabbix host with dynamic inventory

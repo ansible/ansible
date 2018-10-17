@@ -23,7 +23,7 @@ import json
 import re
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -78,15 +78,15 @@ class Cliconf(CliconfBase):
             comment: Optional commit description.
         """
         comment = kwargs.get('comment', None)
-        command = b'commit'
+        command = 'commit'
         if comment:
-            command += b' comment {0}'.format(comment)
-        command += b' and-quit'
+            command += ' comment {0}'.format(comment)
+        command += ' and-quit'
         return self.send_command(command)
 
     def discard_changes(self):
-        command = b'rollback 0'
-        for cmd in chain(to_list(command), b'exit'):
+        command = 'rollback 0'
+        for cmd in chain(to_list(command), 'exit'):
             self.send_command(cmd)
 
     def get_capabilities(self):
@@ -97,7 +97,7 @@ class Cliconf(CliconfBase):
         return json.dumps(result)
 
     def compare_configuration(self, rollback_id=None):
-        command = b'show | compare'
+        command = 'show | compare'
         if rollback_id is not None:
-            command += b' rollback %s' % int(rollback_id)
+            command += ' rollback %s' % int(rollback_id)
         return self.send_command(command)

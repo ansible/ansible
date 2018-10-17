@@ -4,17 +4,15 @@
 - name: setup
   eos_config:
     lines:
-      - snmp-server contact ansible
-      - hostname veos01
+      - "snmp-server contact ansible"
+      - "hostname {{ inventory_hostname_short }}"
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure top level command with before
   eos_config:
     lines: hostname foo
     before: snmp-server contact bar
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -28,7 +26,6 @@
   eos_config:
     lines: hostname foo
     before: snmp-server contact foo
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -39,10 +36,9 @@
 - name: teardown
   eos_config:
     lines:
-      - hostname veos01
       - no snmp-server contact
+      - "hostname {{ inventory_hostname_short }}"
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - debug: msg="END cli/toplevel_before.yaml on connection={{ ansible_connection }}"

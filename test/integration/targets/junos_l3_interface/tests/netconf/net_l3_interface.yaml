@@ -7,7 +7,7 @@
 - name: setup - remove interface address
   net_l3_interface:
     name: ge-0/0/1
-    ipv4: 1.1.1.1
+    ipv4: 192.0.2.1
     ipv6: fd5d:12c9:2201:1::1
     state: absent
     provider: "{{ netconf }}"
@@ -15,7 +15,7 @@
 - name: Configure interface address using platform agnostic module
   net_l3_interface:
     name: ge-0/0/1
-    ipv4: 1.1.1.1
+    ipv4: 192.0.2.1
     ipv6: fd5d:12c9:2201:1::1
     state: present
     provider: "{{ netconf }}"
@@ -30,15 +30,15 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'<name>1.1.1.1/32</name>' in config.xml"
+      - "'<name>192.0.2.1/32</name>' in config.xml"
       - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
-      - result.diff.prepared is search("\+ *address 1.1.1.1/32")
+      - result.diff.prepared is search("\+ *address 192.0.2.1/32")
       - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
 
 - name: teardown - remove interface address
   net_l3_interface:
     name: ge-0/0/1
-    ipv4: 1.1.1.1
+    ipv4: 192.0.2.1
     ipv6: fd5d:12c9:2201:1::1
     state: absent
     provider: "{{ netconf }}"

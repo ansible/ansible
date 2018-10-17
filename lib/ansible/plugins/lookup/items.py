@@ -14,7 +14,7 @@ DOCUMENTATION = """
     notes:
       - this is the standard lookup used for loops in most examples
       - check out the 'flattened' lookup for recursive flattening
-      - if you dont want flattening nor any other tranformation look at the 'list' lookup.
+      - if you do not want flattening nor any other transformation look at the 'list' lookup.
     options:
       _terms:
         description: list of items
@@ -40,7 +40,8 @@ EXAMPLES = """
      - testuser2
 
 - name: "loop through list from a variable"
-  debug: msg="An item: {{item}}"
+  debug:
+    msg: "An item: {{item}}"
   with_items: "{{ somelist }}"
 
 - name: more complex items to add several users

@@ -1,5 +1,4 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -38,9 +37,9 @@ $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -default "%TEMP%" -aliases "dest"
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "file" -validateset "file","directory"
-$prefix = Get-AnsibleParam -obj $params -name "prefix" -type "string" -default "ansible."
-$suffix = Get-AnsibleParam -obj $params -name "suffix" -type "string"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "file" -validateset "file","directory"
+$prefix = Get-AnsibleParam -obj $params -name "prefix" -type "str" -default "ansible."
+$suffix = Get-AnsibleParam -obj $params -name "suffix" -type "str"
 
 # Expand environment variables on non-path types
 $prefix = Expand-Environment($prefix)

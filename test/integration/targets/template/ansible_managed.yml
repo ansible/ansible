@@ -1,0 +1,12 @@
+---
+- hosts: testhost
+  gather_facts: False
+  tasks:
+  - file:
+      path: '{{ output_dir }}/café.txt'
+      state: 'absent'
+  # Smoketest that ansible_managed with non-ascii chars works:
+  # https://github.com/ansible/ansible/issues/27262
+  - template:
+      src: 'templates/café.j2'
+      dest: '{{ output_dir }}/café.txt'

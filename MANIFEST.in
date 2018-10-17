@@ -1,10 +1,9 @@
-prune ticket_stubs
 prune hacking
-include README.rst COPYING
+include README.rst
+include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
 include .coveragerc
-include .yamllint
 include examples/hosts
 include examples/ansible.cfg
 recursive-include lib/ansible/module_utils/powershell *
@@ -15,8 +14,7 @@ recursive-include licenses *
 recursive-include packaging *
 recursive-include test *
 include Makefile
-include VERSION
 include MANIFEST.in
-include CHANGELOG.md
+include changelogs/CHANGELOG*.rst
 include contrib/README.md
 recursive-include contrib/inventory *

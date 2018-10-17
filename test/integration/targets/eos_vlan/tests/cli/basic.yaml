@@ -137,9 +137,9 @@
     that:
       - "result.changed == true"
       - "'vlan 4000' in result.commands"
-      - "'interface ethernet1' in result.commands"
+      - "'interface Ethernet1' in result.commands"
       - "'switchport access vlan 4000' in result.commands"
-      - "'interface ethernet2' in result.commands"
+      - "'interface Ethernet2' in result.commands"
       - "'switchport access vlan 4000' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
@@ -149,8 +149,8 @@
     vlan_id: 4000
     state: present
     interfaces:
-      - ethernet 1   # interface name modified to test case insensitive and space scenario
-      - ethernet 2   # interface name modified to test case insensitive and space scenario
+      - Ethernet 1   # interface name space scenario
+      - Ethernet 2   # interface name space scenario
     authorize: yes
     provider: "{{ cli }}"
   become: yes
@@ -194,7 +194,7 @@
     that:
       - "result.changed == true"
       - "'vlan 4000' in result.commands"
-      - "'interface ethernet2' in result.commands"
+      - "'interface Ethernet2' in result.commands"
       - "'no switchport access vlan 4000' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
@@ -204,7 +204,7 @@
     vlan_id: 4000
     state: present
     interfaces:
-      - ethernet 1 # interface name modified to handle case insensitive and space scenario
+      - Ethernet 1 # space scenario
     authorize: yes
     provider: "{{ cli }}"
   become: yes

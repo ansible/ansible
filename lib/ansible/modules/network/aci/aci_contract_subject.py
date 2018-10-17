@@ -41,23 +41,20 @@ options:
     description:
     - Determines if the APIC should reverse the src and dst ports to allow the
       return traffic back, since ACI is stateless filter.
-    - The APIC defaults new Contract Subjects to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   priority:
     description:
     - The QoS class.
-    - The APIC defaults new Contract Subjects to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ level1, level2, level3, unspecified ]
-    default: unspecified
   dscp:
     description:
     - The target DSCP.
-    - The APIC defaults new Contract Subjects to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43,
                CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
     aliases: [ target ]
-    default: unspecified
   description:
     description:
     - Description for the contract subject.
@@ -65,15 +62,13 @@ options:
   consumer_match:
     description:
     - The match criteria across consumers.
-    - The APIC defaults new Contract Subjects to C(at_least_one).
+    - The APIC defaults to C(at_least_one) when unset during creation.
     choices: [ all, at_least_one, at_most_one, none ]
-    default: at_least_one
   provider_match:
     description:
     - The match criteria across providers.
-    - The APIC defaults new Contract Subjects to C(at_least_one).
+    - The APIC defaults to C(at_least_one) when unset during creation.
     choices: [ all, at_least_one, at_most_one, none ]
-    default: at_least_one
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -245,15 +240,15 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         priority=dict(type='str', choices=['unspecified', 'level1', 'level2', 'level3']),
         reverse_filter=dict(type='bool'),
-        dscp=dict(type='str', aliases=['target']),
+        dscp=dict(type='str', aliases=['target'],
+                  choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
+                           'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified']),
         description=dict(type='str', aliases=['descr']),
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         directive=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         filter=dict(type='str', aliases=['filter_name'], removed_in_version='2.4'),  # Deprecated starting from v2.4
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(

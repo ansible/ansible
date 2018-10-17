@@ -30,7 +30,7 @@ DOCUMENTATION = """
         default: utf-8
         version_added: "2.1"
     notes:
-      - The default is for TSV files (tab delimeted) not CSV (comma delimted) ... yes the name is misleading.
+      - The default is for TSV files (tab delimited) not CSV (comma delimited) ... yes the name is misleading.
 """
 
 EXAMPLES = """
@@ -106,7 +106,7 @@ class LookupModule(LookupBase):
             creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
-                if row[0] == key:
+                if len(row) and row[0] == key:
                     return row[int(col)]
         except Exception as e:
             raise AnsibleError("csvfile: %s" % to_native(e))

@@ -22,17 +22,17 @@ This section covers the various types of plugins that are included with Ansible:
    shell
    strategy
    vars
-   playbooks_filters
-   playbooks_tests
+   ../user_guide/playbooks_filters
+   ../user_guide/playbooks_tests
    ../user_guide/plugin_filtering_config
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`config`
+   :ref:`ansible_configuration_settings`
        Ansible configuration documentation and settings
-   :doc:`command_line_tools`
+   :doc:`../user_guide/command_line_tools`
        Ansible tools, description and options
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

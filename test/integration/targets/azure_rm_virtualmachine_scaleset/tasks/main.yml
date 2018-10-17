@@ -1,3 +1,8 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
 - name: Create virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
@@ -26,7 +31,7 @@
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS
+    name: testVMSS{{ rpfx }}
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -50,14 +55,48 @@
         managed_disk_type: Standard_LRS
   register: results
 
-- name: Assert that VMSS ran
+- name: Assert that VMSS was created
   assert:
     that: results.changed
+
+- name: Retrieve scaleset facts
+  azure_rm_virtualmachine_scaleset_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    format: curated
+  register: output_scaleset
+
+- name: Get scaleset body
+  set_fact:
+    body: "{{ output_scaleset.ansible_facts.azure_vmss[0] }}"
+
+- name: Try to update VMSS using output as input
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ body.resource_group }}"
+    name: "{{ body.name }}"
+    vm_size: "{{ body.vm_size }}"
+    admin_username: "{{ body.admin_username }}"
+    ssh_password_enabled: "{{ body.ssh_password_enabled }}"
+    admin_password: "Password1234!"
+    capacity: "{{ body.capacity }}"
+    virtual_network_name: "{{ body.virtual_network_name }}"
+    subnet_name: "{{ body.subnet_name }}"
+    upgrade_policy: "{{ body.upgrade_policy }}"
+    tier: "{{ body.tier }}"
+    managed_disk_type: "{{ body.managed_disk_type }}"
+    os_disk_caching: "{{ body.os_disk_caching }}"
+    image: "{{ body.image }}"
+    data_disks: "{{ body.data_disks }}"
+  register: results
+
+- name: Assert that VMSS was updated
+  assert:
+    that: not results.changed
 
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS
+    name: testVMSS{{ rpfx }}
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
@@ -82,7 +121,7 @@
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS1
+    name: testVMSS{{ rpfx }}1
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -115,7 +154,7 @@
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS1
+    name: testVMSS{{ rpfx }}1
     vm_size: Standard_DS1_v2
     admin_username: testuser
     ssh_password_enabled: true
@@ -147,7 +186,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS1
+    name: testVMSS{{ rpfx }}1
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2

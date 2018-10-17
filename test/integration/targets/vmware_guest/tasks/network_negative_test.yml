@@ -61,7 +61,7 @@
 
 - debug: var=non_existent_network
 
-- name: assert that no changes were made
+- name: assert that no changes were not made
   assert:
     that:
         - "not non_existent_network.changed"
@@ -94,7 +94,7 @@
 
 - debug: var=no_netmask
 
-- name: assert that no changes were made
+- name: assert that no changes were not made
   assert:
     that:
         - "not no_netmask.changed"
@@ -127,7 +127,7 @@
 
 - debug: var=no_ip
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "not no_ip.changed"
@@ -160,7 +160,7 @@
 
 - debug: var=no_network_name
 
-- name: assert that no changes were made
+- name: assert that no changes were not made
   assert:
     that:
         - "not no_network_name.changed"
@@ -193,7 +193,7 @@
 
 - debug: var=no_network
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "not no_network.changed"
@@ -227,7 +227,7 @@
 
 - debug: var=invalid_device_type
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "not invalid_device_type.changed"
@@ -262,7 +262,7 @@
 
 - debug: var=invalid_mac
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "not invalid_mac.changed"
@@ -298,7 +298,7 @@
 
 - debug: var=invalid_network_type
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "not invalid_network_type.changed"
@@ -334,8 +334,38 @@
 
 - debug: var=invalid_dhcp_network_type
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
         - "not invalid_dhcp_network_type.changed"
         - "\"Static IP information provided for network\" in invalid_dhcp_network_type.msg"
+
+- name: create new VMs with no network type which set network type as "DHCP"
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm_no_nw_type
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: no_network_type
+  ignore_errors: yes
+
+- debug: var=no_network_type
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "no_network_type.changed"

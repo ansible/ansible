@@ -366,7 +366,7 @@ def main():
             group=dict(type='bool'),
             set_remote_user=dict(type='bool', default=True),
             rsync_timeout=dict(type='int', default=0),
-            rsync_opts=dict(type='list'),
+            rsync_opts=dict(type='list', default=[]),
             ssh_args=dict(type='str'),
             partial=dict(type='bool', default=False),
             verify_host=dict(type='bool', default=False),

@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix bug that resulted in module always reporting a change when specifiying the home directory on FreeBSD (https://github.com/ansible/ansible/issues/42484)

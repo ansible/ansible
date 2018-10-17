@@ -228,10 +228,10 @@ class Task(Base, Conditional, Taggable, Become):
                 # as we will remove this at some point in the future.
                 if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                                       " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
+                                       " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables", version="2.7")
                     new_ds['vars'][k] = v
-                elif k in self._valid_attrs:
+                elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
@@ -280,7 +280,8 @@ class Task(Base, Conditional, Taggable, Become):
                 except AnsibleUndefinedVariable as e:
                     if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
                         # ignore as fact gathering sets ansible_env
-                        pass
+                        return
+                    raise
 
             if isinstance(value, list):
                 for env_item in value:
@@ -423,13 +424,20 @@ class Task(Base, Conditional, Taggable, Become):
         prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
-            if self._parent and (value is None or extend):
-                if getattr(self._parent, 'statically_loaded', True):
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
+
+            if _parent and (value is None or extend):
+                if getattr(_parent, 'statically_loaded', True):
                     # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
-                        parent_value = self._parent._get_parent_attribute(attr)
+                    if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
+                        parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = self._parent._attributes.get(attr, None)
+                        parent_value = _parent._attributes.get(attr, None)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)

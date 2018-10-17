@@ -63,12 +63,13 @@
     - update_search_with_log_check.found_update_count is defined
     - update_search_with_log_check_actual.stat.exists == False
 
-- name: search for updates with log output
+- name: search for updates with log output and use scheduled task
   win_updates:
     state: searched
     category_names:
     - CriticalUpdates
     log_path: '{{win_updates_dir}}/update.log'
+    use_scheduled_task: yes
   register: update_search_with_log
 
 - name: get stat of update log file

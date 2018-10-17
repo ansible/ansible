@@ -28,6 +28,7 @@ options:
       - Registry paths should be in Powershell format, beginning with an abbreviation for the root
         such as, 'hklm:\software'.
     required: yes
+    type: path
     aliases: [ dest, destination ]
   user:
     description:
@@ -41,12 +42,14 @@ options:
       - If I(path) is a registry key, rights can be any right under MSDN
         RegistryRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx).
     required: yes
+    type: list
   inheritance_flags:
     description:
       - Defines what objects inside of a folder or registry key will inherit the settings.
       - If you are setting a rule on a file, this value has to be changed to C(none).
       - For more information on the choices see MSDN PropagationFlags enumeration
         at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx).
+    type: list
     default: "ContainerInherit,ObjectInherit"
     choices: [ ContainerInherit, ObjectInherit ]
   propagation_flags:
@@ -62,6 +65,7 @@ options:
       - Defines whether to log on failure, success, or both.
       - To log both define as comma seperated list "Success, Failure".
     required: yes
+    type: list
     choices: [ Failure, Success ]
   state:
     description:

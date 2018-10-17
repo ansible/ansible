@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/configure.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: setup
   nxos_config:
@@ -12,8 +10,8 @@
 - name: enable bgp
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   register: result
 
 - assert:
@@ -23,8 +21,8 @@
 - name: verify bgp
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   register: result
 
 - assert:
@@ -34,8 +32,8 @@
 - name: disable bgp
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   register: result
 
 - assert:
@@ -45,8 +43,8 @@
 - name: verify bgp
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   register: result
 
 - assert:

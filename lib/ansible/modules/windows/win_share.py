@@ -30,6 +30,7 @@ options:
     description:
       - Share directory.
     required: yes
+    type: path
   state:
     description:
       - Specify whether to add C(present) or remove C(absent) the specified share.

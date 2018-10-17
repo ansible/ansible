@@ -154,7 +154,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def write_changes(module, contents, path):
 
-    tmpfd, tmpfile = tempfile.mkstemp(dir=getattr(module, 'tmpdir', None))
+    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
     f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
     f.close()

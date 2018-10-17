@@ -1,0 +1,10 @@
+---
+deprecated_features:
+  - The `skippy`, `full_skip`, `actionable`, and `stderr` callback plugins have
+    been deprecated in favor of config options that influence the behavior of the
+    `default` callback plugin (https://github.com/ansible/ansible/pull/41058)
+minor_changes:
+  - New config options `display_ok_hosts` and `display_failed_stderr` (along with
+    the existing `display_skipped_hosts` option) allow more fine-grained control
+    over the way that ansible displays output from a playbook
+    (https://github.com/ansible/ansible/pull/41058)

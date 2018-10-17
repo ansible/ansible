@@ -10,14 +10,14 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure domain_list using platform agnostic module
   net_system:
     domain_list:
       - ansible.com
       - redhat.com
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -32,6 +32,6 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eos eapi/net_system.yaml on connection={{ ansible_connection }}"

@@ -1,8 +1,7 @@
 #!powershell
-# This file is part of Ansible
 
-# (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>, and others
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -16,7 +15,6 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $arguments = Get-AnsibleParam -obj $params -name "arguments"
 $expected_return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "list" -default @(0, 3010)
-$name = Get-AnsibleParam -obj $params -name "name" -type "str"
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
 $product_id = Get-AnsibleParam -obj $params -name "product_id" -type "str" -aliases "productid"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present" -aliases "ensure"
@@ -30,7 +28,7 @@ $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "
 $result = @{
     changed = $false
     reboot_required = $false
-    restart_required = $false # deprecate in 2.6
+    restart_required = $false # deprecate in 2.8
 }
 
 if ($arguments -ne $null) {
@@ -60,15 +58,6 @@ if ($username -ne $null) {
     $credential = New-Object -TypeName PSCredential -ArgumentList $username, $sec_user_password
 }
 
-if ($name -ne $null) {
-    Add-DeprecationWarning -obj $result -message "the use of name has been deprecated, please remove from the task options" -version 2.6
-}
-
-# validate initial arguments, more is done after analysing the exec path
-if ($expected_return_code -eq "") {
-    Add-DeprecationWarning -obj $result -message "an empty string for expected_return_code will be deprecated in the future, omit the value or set it explicitly if you wish to override it" -version 2.6
-    $expected_return_code = @(0, 3010)
-}
 $valid_return_codes = @()
 foreach ($rc in ($expected_return_code)) {
     try {
@@ -373,7 +362,7 @@ if ($state -eq "absent") {
                 }
 
                 $result.rc = $process_result.rc
-                $result.exit_code = $process_result.rc # deprecate in 2.6
+                $result.exit_code = $process_result.rc # deprecate in 2.8
                 if ($valid_return_codes -notcontains $process_result.rc) {
                     $result.stdout = Convert-Encoding -string $process_result.stdout
                     $result.stderr = Convert-Encoding -string $process_result.stderr
@@ -456,7 +445,7 @@ if ($state -eq "absent") {
                 }
 
                 $result.rc = $process_result.rc
-                $result.exit_code = $process_result.rc # deprecate in 2.6
+                $result.exit_code = $process_result.rc # deprecate in 2.8
                 if ($valid_return_codes -notcontains $process_result.rc) {
                     $result.stdout = Convert-Encoding -string $process_result.stdout
                     $result.stderr = Convert-Encoding -string $process_result.stderr

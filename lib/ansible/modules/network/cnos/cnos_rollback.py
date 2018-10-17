@@ -33,7 +33,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cnos_rollback
-author: "Dave Kasberg (@dkasberg)"
+author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Roll back the running or startup configuration from a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch configurations. It provides a way to roll back configurations
@@ -96,8 +96,8 @@ Tasks : The following are examples of using the module cnos_rollback. These are 
 - name: Test Rollback of config - Running config
   cnos_rolback:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_rollback_{{ inventory_hostname }}_output.txt"
@@ -111,8 +111,8 @@ Tasks : The following are examples of using the module cnos_rollback. These are 
 - name: Test Rollback of config - Startup config
   cnos_rolback:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_rollback_{{ inventory_hostname }}_output.txt"
@@ -126,8 +126,8 @@ Tasks : The following are examples of using the module cnos_rollback. These are 
 - name: Test Rollback of config - Running config - TFTP
   cnos_rolback:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_rollback_{{ inventory_hostname }}_output.txt"
@@ -141,8 +141,8 @@ Tasks : The following are examples of using the module cnos_rollback. These are 
 - name: Test Rollback of config - Startup config - TFTP
   cnos_rolback:
       host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['username'] }}"
-      password: "{{ hostvars[inventory_hostname]['password'] }}"
+      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
+      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
       enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_rollback_{{ inventory_hostname }}_output.txt"
@@ -232,7 +232,7 @@ def main():
     remote_conn = remote_conn_pre.invoke_shell()
     time.sleep(2)
 
-    # Enable and enter configure terminal then send command
+    # Enable and then send command
     output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
 
     output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)

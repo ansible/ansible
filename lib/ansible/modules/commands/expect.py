@@ -45,7 +45,8 @@ options:
     required: true
   timeout:
     description:
-      - Amount of time in seconds to wait for the expected strings.
+      - Amount of time in seconds to wait for the expected strings. Use
+        C(null) to disable timeout.
     default: 30
   echo:
     description:
@@ -71,7 +72,7 @@ author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = r'''
-- name: Case insensitve password string match
+- name: Case insensitive password string match
   expect:
     command: passwd username
     responses:

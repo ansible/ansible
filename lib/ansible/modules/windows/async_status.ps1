@@ -1,30 +1,17 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $results = @{changed=$false}
 
 $parsed_args = Parse-Args $args
 $jid = Get-AnsibleParam $parsed_args "jid" -failifempty $true -resultobj $results
 $mode = Get-AnsibleParam $parsed_args "mode" -Default "status" -ValidateSet "status","cleanup"
+$_remote_tmp = Get-AnsibleParam $parsed_args "_ansible_remote_tmp" -type "path" -default $env:TMP
 
-# setup logging directory
-$log_path = [System.IO.Path]::Combine($env:LOCALAPPDATA, ".ansible_async", $jid)
+$log_path = [System.IO.Path]::Combine($_remote_tmp, ".ansible_async", $jid)
 
 If(-not $(Test-Path $log_path))
 {

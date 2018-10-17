@@ -173,9 +173,9 @@ Collect data
 
 Ansible facts modules gather system information 'facts' that are available to the rest of your playbook.
 
-Ansible Networking ships with a number of network-specific facts modules. In this example, we use the ``_facts`` modules :ref:`eos_facts <eos_facts>`, :ref:`ios_facts <ios_facts>` and :ref:`vyos_facts <vyos_facts>` to connect to the remote networking device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
+Ansible Networking ships with a number of network-specific facts modules. In this example, we use the ``_facts`` modules :ref:`eos_facts <eos_facts_module>`, :ref:`ios_facts <ios_facts_module>` and :ref:`vyos_facts <vyos_facts_module>` to connect to the remote networking device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
 
-Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts>` and :ref:`vyos_facts <vyos_facts>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
+Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts_module>` and :ref:`vyos_facts <vyos_facts_module>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
 
 To ensure we call the correct mode (``*_facts``) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
@@ -357,7 +357,7 @@ For more information, see :ref:`magic_variables_and_hostvars`.
 Get running configuration
 -------------------------
 
-The :ref:`eos_config <eos_config>` and :ref:`vyos_config <vyos_config>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
+The :ref:`eos_config <eos_config_module>` and :ref:`vyos_config <vyos_config_module>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
 
 To demonstrate how we can move the backup file to a different location, we register the result and move the file to the path stored in ``backup_path``.
 

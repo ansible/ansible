@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['stableinterface'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -20,7 +20,7 @@ description:
   - Manages vCMP guests on a BIG-IP. This functionality only exists on
     actual hardware and must be enabled by provisioning C(vcmp) with the
     C(bigip_provision) module.
-version_added: "2.5"
+version_added: 2.5
 options:
   name:
     description:
@@ -68,6 +68,7 @@ options:
     description:
       - When C(state) is C(absent), will additionally delete the virtual disk associated
         with the vCMP guest. By default, this value is C(no).
+    type: bool
     default: no
   mgmt_address:
     description:
@@ -179,33 +180,30 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from collections import namedtuple
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
     from library.module_utils.network.f5.bigip import HAS_F5SDK
     from library.module_utils.network.f5.bigip import F5Client
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     try:
         from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    # Upstream Ansible
     from ansible.module_utils.network.f5.bigip import HAS_F5SDK
     from ansible.module_utils.network.f5.bigip import F5Client
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     try:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from f5.utils.responses.handlers import Stats
     except ImportError:
         HAS_F5SDK = False
 
@@ -214,11 +212,6 @@ try:
     HAS_NETADDR = True
 except ImportError:
     HAS_NETADDR = False
-
-try:
-    from f5.utils.responses.handlers import Stats
-except ImportError:
-    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -245,11 +238,6 @@ class Parameters(AnsibleF5Parameters):
         'vlans', 'mgmt_network', 'mgmt_address', 'initial_image', 'mgmt_route',
         'state'
     ]
-
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
 
     def to_return(self):
         result = {}
@@ -318,7 +306,7 @@ class Parameters(AnsibleF5Parameters):
     def vlans(self):
         if self._values['vlans'] is None:
             return None
-        result = [self._fqdn_name(x) for x in self._values['vlans']]
+        result = [fq_name(self.partition, x) for x in self._values['vlans']]
         result.sort()
         return result
 
@@ -438,11 +426,6 @@ class ModuleManager(object):
                 msg=warning['msg'],
                 version=warning['version']
             )
-
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
 
     def present(self):
         if self.exists():

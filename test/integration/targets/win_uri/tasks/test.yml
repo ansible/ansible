@@ -4,7 +4,7 @@
 
 - name: get request without return_content
   win_uri:
-    url: http://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/get
     return_content: no
   register: get_request_without_content
 
@@ -18,7 +18,7 @@
 
 - name: get request with xml content
   win_uri:
-    url: http://{{httpbin_host}}/xml
+    url: https://{{httpbin_host}}/xml
     return_content: yes
   register: get_request_with_xml_content
 
@@ -32,7 +32,7 @@
 
 - name: get request with binary content
   win_uri:
-    url: http://{{httpbin_host}}/image/png
+    url: https://{{httpbin_host}}/image/png
     return_content: yes
   register: get_request_with_binary_content
 
@@ -46,7 +46,7 @@
 
 - name: get request with return_content and dest (check mode)
   win_uri:
-    url: http://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/get
     return_content: yes
     dest: '{{test_uri_path}}\get.json'
   register: get_request_with_dest_check
@@ -67,7 +67,7 @@
 
 - name: get request with return_content and dest
   win_uri:
-    url: http://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/get
     return_content: yes
     dest: '{{test_uri_path}}\get.json'
   register: get_request_with_dest
@@ -90,7 +90,7 @@
 
 - name: get request with return_content and dest (idempotent)
   win_uri:
-    url: http://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/get
     return_content: yes
     dest: '{{test_uri_path}}\get.json'
   register: get_request_with_dest_again
@@ -102,7 +102,7 @@
 
 - name: test request with creates option should skip
   win_uri:
-    url: http://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/get
     creates: '{{test_uri_path}}\get.json'
   register: request_with_creates_skipped
 
@@ -114,7 +114,7 @@
 
 - name: test request with creates option should not skip
   win_uri:
-    url: http://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/get
     creates: '{{test_uri_path}}\fake.json'
   register: request_with_creates_not_skipped
 
@@ -126,7 +126,7 @@
 
 - name: post request with return_content, dest and different content
   win_uri:
-    url: http://{{httpbin_host}}/post
+    url: https://{{httpbin_host}}/post
     method: POST
     content_type: application/json
     body: '{"foo": "bar"}'
@@ -150,7 +150,7 @@
 
 - name: test redirect without follow_redirects
   win_uri:
-    url: http://{{httpbin_host}}/redirect/2
+    url: https://{{httpbin_host}}/redirect/2
     follow_redirects: none
     status_code: 302
   register: redirect_without_follow
@@ -164,7 +164,7 @@
 
 - name: test redirect with follow_redirects
   win_uri:
-    url: http://{{httpbin_host}}/redirect/2
+    url: https://{{httpbin_host}}/redirect/2
     follow_redirects: all
   register: redirect_with_follow
 
@@ -174,7 +174,7 @@
     - not redirect_with_follow.changed
     - redirect_with_follow.location is not defined
     - redirect_with_follow.status_code == 200
-    - redirect_with_follow.response_uri == 'http://{{httpbin_host}}/get'
+    - redirect_with_follow.response_uri == 'https://{{httpbin_host}}/get'
 
 - name: get request with redirect of TLS
   win_uri:
@@ -192,7 +192,7 @@
 
 - name: test basic auth
   win_uri:
-    url: http://{{httpbin_host}}/basic-auth/user/passwd
+    url: https://{{httpbin_host}}/basic-auth/user/passwd
     user: user
     password: passwd
   register: basic_auth
@@ -205,7 +205,7 @@
 
 - name: test basic auth with force auth
   win_uri:
-    url: http://{{httpbin_host}}/hidden-basic-auth/user/passwd
+    url: https://{{httpbin_host}}/hidden-basic-auth/user/passwd
     user: user
     password: passwd
     force_basic_auth: yes
@@ -219,7 +219,7 @@
 
 - name: test PUT
   win_uri:
-    url: http://{{httpbin_host}}/put
+    url: https://{{httpbin_host}}/put
     method: PUT
     body: foo=bar
     return_content: yes
@@ -234,7 +234,7 @@
 
 - name: test OPTIONS
   win_uri:
-    url: http://{{httpbin_host}}/
+    url: https://{{httpbin_host}}/
     method: OPTIONS
   register: option_request
 
@@ -249,7 +249,7 @@
 
 - name: validate status_codes are correct
   win_uri:
-    url: http://{{httpbin_host}}/status/202
+    url: https://{{httpbin_host}}/status/202
     status_code:
     - 202
     - 418
@@ -265,7 +265,7 @@
 
 - name: send JSON body with dict type
   win_uri:
-    url: http://{{httpbin_host}}/post
+    url: https://{{httpbin_host}}/post
     method: POST
     body:
       foo: bar
@@ -298,7 +298,7 @@
 
 - name: get request with custom headers
   win_uri:
-    url: http://{{httpbin_host}}/get
+    url: https://{{httpbin_host}}/get
     headers:
       Test-Header: hello
       Another-Header: world
@@ -317,14 +317,14 @@
 
 - name: get request with timeout
   win_uri:
-    url: http://{{httpbin_host}}/delay/10
+    url: https://{{httpbin_host}}/delay/10
     timeout: 5
   register: get_with_timeout_fail
   failed_when: '"The operation has timed out" not in get_with_timeout_fail.msg'
 
 - name: connect to fakepath that does not exist
   win_uri:
-    url: http://{{httpbin_host}}/fakepath
+    url: https://{{httpbin_host}}/fakepath
     status_code: 404
     return_content: yes
   register: invalid_path
@@ -342,7 +342,7 @@
 
 - name: post request with custom headers
   win_uri:
-    url: http://{{httpbin_host}}/post
+    url: https://{{httpbin_host}}/post
     method: POST
     headers:
       Test-Header: hello

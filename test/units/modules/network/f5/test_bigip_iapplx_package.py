@@ -20,9 +20,9 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_iapp_template import Parameters
-    from library.bigip_iapp_template import ModuleManager
-    from library.bigip_iapp_template import ArgumentSpec
+    from library.modules.bigip_iapp_template import Parameters
+    from library.modules.bigip_iapp_template import ModuleManager
+    from library.modules.bigip_iapp_template import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -84,7 +84,7 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             content='fixtures/MyApp-0.1.0-0001.noarch.rpm',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

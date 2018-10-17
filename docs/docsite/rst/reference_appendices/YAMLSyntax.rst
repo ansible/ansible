@@ -235,6 +235,6 @@ value::
    `YAML 1.1 Specification <http://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
        implementing
-   `YAML 1.2 Specification <http://yaml.org/spec/1.2/>`_
+   `YAML 1.2 Specification <http://yaml.org/spec/1.2/spec.html>`_
        For completeness, YAML 1.2 is the successor of 1.1
 

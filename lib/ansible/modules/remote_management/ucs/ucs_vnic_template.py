@@ -93,6 +93,11 @@ options:
     - "  Designates the VLAN as a native VLAN.  Only one VLAN in the list can be a native VLAN."
     - "  [choices: 'no', 'yes']"
     - "  [Default: 'no']"
+    - "- state"
+    - "  If present, will verify VLAN is present on template."
+    - "  If absent, will verify VLAN is absent on template."
+    - "  choices: [present, absent]"
+    - "  default: present"
   cdn_source:
     description:
     - CDN Source field.
@@ -161,7 +166,7 @@ EXAMPLES = r'''
     vlans_list:
     - name: default
       native: 'yes'
-    - name: finance
+      state: present
 
 - name: Remove vNIC template
   ucs_vnic_template:
@@ -178,6 +183,18 @@ EXAMPLES = r'''
     password: password
     name: vNIC-A-B
     state: absent
+
+- name: Remove VLAN from template
+  ucs_vnic_template:
+    hostname: 172.16.143.150
+    username: admin
+    password: password
+    name: vNIC-A-B
+    fabric: A-B
+    vlans_list:
+    - name: default
+      native: 'yes'
+      state: absent
 '''
 
 RETURN = r'''
@@ -250,6 +267,8 @@ def main():
                 for vlan in module.params['vlans_list']:
                     if not vlan.get('native'):
                         vlan['native'] = 'no'
+                    if not vlan.get('state'):
+                        vlan['state'] = 'present'
             # for target 'adapter', change to internal UCS Manager spelling 'adaptor'
             if module.params['target'] == 'adapter':
                 module.params['target'] = 'adaptor'
@@ -271,19 +290,27 @@ def main():
                     kwargs['nw_ctrl_policy_name'] = module.params['network_control_policy']
                     kwargs['pin_to_group_name'] = module.params['pin_group']
                     kwargs['stats_policy_name'] = module.params['stats_policy']
-                if (mo.check_prop_match(**kwargs)):
+                if mo.check_prop_match(**kwargs):
                     # top-level props match, check next level mo/props
                     if not module.params.get('vlans_list'):
                         props_match = True
                     else:
                         # check vlan props
                         for vlan in module.params['vlans_list']:
-                            child_dn = dn + '/if-' + vlan['name']
+                            child_dn = dn + '/if-' + str(vlan['name'])
                             mo_1 = ucs.login_handle.query_dn(child_dn)
-                            if mo_1:
-                                kwargs = dict(default_net=vlan['native'])
-                                if (mo_1.check_prop_match(**kwargs)):
-                                    props_match = True
+                            if vlan['state'] == 'absent':
+                                if mo_1:
+                                    props_match = False
+                                    break
+                            else:
+                                if mo_1:
+                                    kwargs = dict(default_net=vlan['native'])
+                                    if mo_1.check_prop_match(**kwargs):
+                                        props_match = True
+                                else:
+                                    props_match = False
+                                    break
 
             if not props_match:
                 if not module.check_mode:
@@ -306,7 +333,7 @@ def main():
                             descr=module.params['description'],
                             switch_id=module.params['fabric'],
                             redundancy_pair_type=module.params['redundancy_type'],
-                            peer_redundancy_templ_name=module.params['peer_redundancy_templ'],
+                            peer_redundancy_templ_name=module.params['peer_redundancy_template'],
                             target=module.params['target'],
                             templ_type=module.params['template_type'],
                             cdn_source=module.params['cdn_source'],
@@ -321,11 +348,16 @@ def main():
 
                     if module.params.get('vlans_list'):
                         for vlan in module.params['vlans_list']:
-                            mo_1 = VnicEtherIf(
-                                parent_mo_or_dn=mo,
-                                name=vlan['name'],
-                                default_net=vlan['native'],
-                            )
+                            if vlan['state'] == 'absent':
+                                child_dn = dn + '/if-' + str(vlan['name'])
+                                mo_1 = ucs.login_handle.query_dn(child_dn)
+                                ucs.login_handle.remove_mo(mo_1)
+                            else:
+                                mo_1 = VnicEtherIf(
+                                    parent_mo_or_dn=mo,
+                                    name=str(vlan['name']),
+                                    default_net=vlan['native'],
+                                )
 
                     ucs.login_handle.add_mo(mo, True)
                     ucs.login_handle.commit()

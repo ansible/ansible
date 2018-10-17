@@ -1,0 +1,28 @@
+# Yarn package manager integration tests
+# (c) 2018 David Gunter, <david.gunter@tivix.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- include: run.yml
+  vars:
+    nodejs_version: '{{ item.node_version }}'
+    nodejs_path: 'node-v{{ nodejs_version }}-{{ ansible_system|lower }}-x{{ ansible_userspace_bits }}'
+    yarn_version: '{{ item.yarn_version }}'
+  with_items:
+    - {node_version: 4.8.0, yarn_version: 1.6.0}  # Lowest compatible nodejs version
+    - {node_version: 8.0.0, yarn_version: 1.6.0}

@@ -14,13 +14,13 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $orig_src = Get-AnsibleParam -obj $params -name "src"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "absent","present"
-$orig_args = Get-AnsibleParam -obj $params -name "args" -type "string"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
+$orig_args = Get-AnsibleParam -obj $params -name "args" -type "str"
 $directory = Get-AnsibleParam -obj $params -name "directory" -type "path"
-$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string"
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "str"
 $icon = Get-AnsibleParam -obj $params -name "icon" -type "path"
-$orig_description = Get-AnsibleParam -obj $params -name "description" -type "string"
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "maximized","minimized","normal"
+$orig_description = Get-AnsibleParam -obj $params -name "description" -type "str"
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "str" -validateset "maximized","minimized","normal"
 
 # Expand environment variables on non-path types
 $args = Expand-Environment($orig_args)

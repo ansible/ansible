@@ -22,7 +22,7 @@ description:
     - This module can be used to gather facts about virtual machine's snapshots.
 version_added: 2.6
 author:
-    - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.0 and 6.5
 requirements:

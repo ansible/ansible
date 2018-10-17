@@ -1,7 +1,8 @@
- - name: Setup variables...
+ - name: Prepare random number
    set_fact:
-       managed_disk1: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
-       managed_disk2: "{{ resource_group | hash('md5') | truncate(18, True, '') }}"
+     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+     parameter: {}
+   run_once: yes
 
  - name: Clearing (if) previous disks were created
    azure_rm_managed_disk:
@@ -9,13 +10,13 @@
        name: "{{item }}"
        state: absent
    with_items:
-     - "{{ managed_disk2 }}"
-     - "{{ managed_disk1 }}"
+     - "md{{ rpfx }}2"
+     - "md{{ rpfx }}1"
 
  - name: Create managed disk (Check Mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 1
        tags:
            testing: testing
@@ -45,7 +46,7 @@
  - name: Create new managed disk succesfully
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        storage_account_type: "Standard_LRS"
        disk_size_gb: 1
        tags:
@@ -62,7 +63,7 @@
  - name: Copy disk to a new managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk2 }}"
+       name: "md{{ rpfx }}2"
        create_option: "copy"
        source_resource_uri: "{{ output.state.id }}"
        disk_size_gb: 1
@@ -77,7 +78,7 @@
  - name: Update a new disk without changes
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        storage_account_type: "Standard_LRS"
        disk_size_gb: 1
    register: output
@@ -91,7 +92,7 @@
  - name: Change storage account type to an invalid type
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        storage_account_type: "PremiumL"
        disk_size_gb: 1
    register: output
@@ -103,7 +104,7 @@
  - name: Change disk size to incompatible size
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 30000
    register: output
    ignore_errors: yes
@@ -114,7 +115,7 @@
  - name: Change disk to bigger size
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
    register: output
 
@@ -126,7 +127,7 @@
  - name: Change disk to Premium
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        storage_account_type: "Premium_LRS"
        disk_size_gb: 2
    register: output
@@ -139,7 +140,7 @@
  - name: Update disk tags
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
        tags:
            testing: testing
@@ -156,7 +157,7 @@
  - name: Update disk tags
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
        tags:
            testing: testing
@@ -173,7 +174,8 @@
  - name: Gather facts to one specific disk
    azure_rm_managed_disk_facts:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
+   register: fact
 
  - assert:
        that:
@@ -187,49 +189,62 @@
        that:
            - "azure_managed_disk | length > 0"
 
+ - set_fact:
+     parameter: "{{parameter |combine({item.key: item.value})}}"
+   when: "{{item.key not in ['id', 'changed'] and item.value != None}}"
+   with_dict: "{{ fact.ansible_facts.azure_managed_disk[0] }}"
+
+ - name: Create disk with facts return value
+   azure_rm_managed_disk: "{{ parameter | combine({'resource_group': resource_group}) }}"
+   register: output
+
+ - assert:
+       that:
+           - not output.changed
+
  - name: Create virtual network
    azure_rm_virtualnetwork:
        resource_group: "{{ resource_group }}"
-       name: testvm001
+       name: "tr{{ rpfx }}"
        address_prefixes: "10.10.0.0/16"
 
  - name: Add subnet
    azure_rm_subnet:
        resource_group: "{{ resource_group }}"
-       name: testvm001
+       name: "tr{{ rpfx }}"
        address_prefix: "10.10.0.0/24"
-       virtual_network: testvm001
+       virtual_network: "tr{{ rpfx }}"
 
  - name: Create public ip
    azure_rm_publicipaddress:
        resource_group: "{{ resource_group }}"
        allocation_method: Static
-       name: testvm001
+       name: "tr{{ rpfx }}"
 
  - name: Create security group
    azure_rm_securitygroup:
        resource_group: "{{ resource_group }}"
-       name: testvm001
+       name: "tr{{ rpfx }}"
 
  - name: Create NIC
    azure_rm_networkinterface:
        resource_group: "{{ resource_group }}"
-       name: testvm001
-       virtual_network: testvm001
-       subnet: testvm001
-       public_ip_name: testvm001
-       security_group: testvm001
+       name: "tr{{ rpfx }}"
+       virtual_network: "tr{{ rpfx }}"
+       subnet: "tr{{ rpfx }}"
+       public_ip_name: "tr{{ rpfx }}"
+       security_group: "tr{{ rpfx }}"
 
  - name: Create virtual machine
    azure_rm_virtualmachine:
        resource_group: "{{ resource_group }}"
-       name: testvm001
+       name: "tr{{ rpfx }}"
        admin_username: adminuser
        admin_password: Password123!
        os_type: Linux
        managed_disk_type: Premium_LRS
        vm_size: Standard_DS1_v2
-       network_interfaces: testvm001
+       network_interfaces: "tr{{ rpfx }}"
        image:
          offer: UbuntuServer
          publisher: Canonical
@@ -239,9 +254,9 @@
  - name: Mount the disk to virtual machine (check mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
-       managed_by: testvm001
+       managed_by: "tr{{ rpfx }}"
        tags:
            testing: testing
            delete: never
@@ -255,9 +270,9 @@
  - name: Mount the disk to virtual machine
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
-       managed_by: testvm001
+       managed_by: "tr{{ rpfx }}"
        tags:
            testing: testing
            delete: never
@@ -265,14 +280,14 @@
 
  - assert:
      that:
-       - "'testvm001' in mounted.state.managed_by"
+       - "'tr{{ rpfx }}' in mounted.state.managed_by"
 
  - name: Mount the disk to virtual machine (idempotent)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
-       managed_by: testvm001
+       managed_by: "tr{{ rpfx }}"
        tags:
            testing: testing
            delete: never
@@ -281,12 +296,12 @@
  - assert:
      that:
        - not mounted.changed
-       - "'testvm001' in mounted.state.managed_by"
+       - "'tr{{ rpfx }}' in mounted.state.managed_by"
  
  - name: Unmount the disk to virtual machine (check mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
        tags:
            testing: testing
@@ -301,7 +316,7 @@
  - name: Unmount the disk to virtual machine
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
        tags:
            testing: testing
@@ -316,7 +331,7 @@
  - name: Unmount the disk to virtual machine (idempotent)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
        tags:
            testing: testing
@@ -331,7 +346,7 @@
  - name: Update disk size
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 4
        tags:
            testing: testing
@@ -345,9 +360,9 @@
  - name: Attach the disk to virtual machine again
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 4
-       managed_by: testvm001
+       managed_by: "tr{{ rpfx }}"
        tags:
            testing: testing
            delete: never
@@ -356,14 +371,14 @@
  - assert:
      that:
        - mounted.changed
-       - "'testvm001' in mounted.state.managed_by"
+       - "'tr{{ rpfx }}' in mounted.state.managed_by"
 
  - name: Change disk size to incompatible size
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        state: absent
-       managed_by: testvm001
+       managed_by: "tr{{ rpfx }}"
    register: output
    ignore_errors: yes
 
@@ -373,7 +388,7 @@
  - name: Delete managed disk (Check Mode)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        state: absent
    register: output
    check_mode: yes
@@ -387,14 +402,14 @@
  - name: Delete managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk2 }}"
+       name: "md{{ rpfx }}2"
        state: absent
    check_mode: no
 
  - name: Delete copied managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{ managed_disk1 }}"
+       name: "md{{ rpfx }}1"
        disk_size_gb: 2
        state: absent
    check_mode: no
@@ -402,6 +417,13 @@
  - name: Delete virtual machine
    azure_rm_virtualmachine:
        resource_group: "{{ resource_group }}"
-       name: testvm001
+       name: "tr{{ rpfx }}"
        state: absent
        vm_size: Standard_DS1_v2
+
+ - name: Delete public ip
+   azure_rm_publicipaddress:
+       resource_group: "{{ resource_group }}"
+       allocation_method: Static
+       name: "tr{{ rpfx }}"
+       state: absent

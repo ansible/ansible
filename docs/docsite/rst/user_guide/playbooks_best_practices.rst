@@ -32,11 +32,11 @@ The top level of the directory would contain files and directories like so::
     staging                   # inventory file for staging environment
 
     group_vars/
-       group1                 # here we assign variables to particular groups
-       group2                 # ""
+       group1.yml             # here we assign variables to particular groups
+       group2.yml
     host_vars/
-       hostname1              # if systems need specific variables, put them here
-       hostname2              # ""
+       hostname1.yml          # here we assign variables to particular systems
+       hostname2.yml
 
     library/                  # if any custom modules, put them here (optional)
     module_utils/             # if any custom module_utils to support modules, put them here (optional)
@@ -84,20 +84,20 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
        production/
           hosts               # inventory file for production servers
           group_vars/
-             group1           # here we assign variables to particular groups
-             group2           # ""
+             group1.yml       # here we assign variables to particular groups
+             group2.yml
           host_vars/
-             hostname1        # if systems need specific variables, put them here
-             hostname2        # ""
+             hostname1.yml    # here we assign variables to particular systems
+             hostname2.yml
 
        staging/
           hosts               # inventory file for staging environment
           group_vars/
-             group1           # here we assign variables to particular groups
-             group2           # ""
+             group1.yml       # here we assign variables to particular groups
+             group2.yml
           host_vars/
-             stagehost1       # if systems need specific variables, put them here
-             stagehost2       # ""
+             stagehost1.yml   # here we assign variables to particular systems
+             stagehost2.yml
 
     library/
     module_utils/

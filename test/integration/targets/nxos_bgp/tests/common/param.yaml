@@ -6,15 +6,15 @@
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - block:
@@ -22,7 +22,7 @@
     nxos_bgp: &set_multi_vrf
       asn: 65535
       vrf: "{{ item }}"
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       bestpath_always_compare_med: true
       bestpath_aspath_multipath_relax: true
       bestpath_compare_routerid: true
@@ -269,8 +269,8 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

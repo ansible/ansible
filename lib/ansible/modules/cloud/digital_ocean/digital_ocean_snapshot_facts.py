@@ -21,7 +21,7 @@ module: digital_ocean_snapshot_facts
 short_description: Gather facts about DigitalOcean Snapshot
 description:
     - This module can be used to gather facts about snapshot facts based upon provided values such as droplet, volume and snapshot id.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   snapshot_type:

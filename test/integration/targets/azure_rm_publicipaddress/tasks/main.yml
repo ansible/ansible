@@ -1,17 +1,18 @@
 - name: Create domain name
   set_fact:
       domain_name: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+      rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
 - name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       state:  absent
 
 - name: Create public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       allocation_method: Static
       domain_name: "{{ domain_name }}"
       tags:
@@ -29,7 +30,7 @@
 - name: Should be idempotent
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       allocation_method: Static
       domain_name: "{{ domain_name }}"
       tags:
@@ -43,7 +44,7 @@
 - name: Update tags
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       tags:
           testing: testing
           delete: never
@@ -68,7 +69,7 @@
 - name: Purge all tags
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       tags: {}
   register: output
 
@@ -79,7 +80,7 @@
 - name: Gather facts for a public ip
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
 
 - assert:
       that: azure_publicipaddresses | length == 1
@@ -94,13 +95,13 @@
 - name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       state:  absent
 
 - name: Gather facts for a public ip
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
 
 - assert:
       that: azure_publicipaddresses | length == 0

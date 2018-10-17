@@ -189,7 +189,7 @@ def map_obj_to_commands(updates, module):
 
 def map_config_to_obj(module):
     objs = []
-    output = run_commands(module, ['show vrf'])
+    output = run_commands(module, {'command': 'show vrf', 'output': 'text'})
 
     lines = output[0].strip().splitlines()[3:]
 

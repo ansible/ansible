@@ -1,9 +1,11 @@
 ---
-- name: Install Nuage VSD API Simulator
-  pip:
-    name: nuage-vsd-sim
+- block:
+    - name: Install Nuage VSD API Simulator
+      pip:
+        name: nuage-vsd-sim
 
-- name: Start Nuage VSD API Simulator
-  shell: "(cd /; nuage-vsd-sim >/dev/null 2>&1 &)"
-  async: 10
-  poll: 0
+    - name: Start Nuage VSD API Simulator
+      shell: "(cd /; nuage-vsd-sim >/dev/null 2>&1 &)"
+      async: 10
+      poll: 0
+  when: "ansible_python_version is version('2.7', '>=')"

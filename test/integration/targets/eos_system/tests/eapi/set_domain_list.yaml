@@ -6,17 +6,15 @@
     lines:
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
-    timeout: 30
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure domain_list
   eos_system:
     domain_list:
       - ansible.com
       - redhat.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -30,8 +28,7 @@
     domain_list:
       - ansible.com
       - redhat.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -42,8 +39,7 @@
   eos_system:
     domain_list:
       - ansible.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -55,8 +51,7 @@
   eos_system:
     domain_list:
       - ansible.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -68,8 +63,7 @@
     domain_list:
       - ansible.com
       - redhat.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -82,8 +76,7 @@
     domain_list:
       - ansible.com
       - redhat.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -95,8 +88,7 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -111,8 +103,7 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
-    timeout: 30
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -125,8 +116,7 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
       - no ip domain-list eng.ansible.com
-    timeout: 30
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eapi/set_domain_list.yaml"

@@ -1,0 +1,31 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Upload an ssh key
+  vr_ssh_key:
+    name: '{{ ssh_key_name }}'
+    ssh_key: '{{ ssh_key_content }}'
+
+- name: test gather vultr ssh key facts in check mode
+  vr_ssh_key_facts:
+  check_mode: yes
+
+- name: verify test gather vultr ssh key facts in check mode
+  assert:
+    that:
+    - ansible_facts.vultr_ssh_key_facts|selectattr('name','equalto','{{ ssh_key_name }}') | list | count == 1
+    - ansible_facts.vultr_ssh_key_facts|selectattr('ssh_key','equalto','{{ ssh_key_content }}') | list | count == 1
+
+- name: test gather vultr ssh key fact
+  vr_ssh_key_facts:
+
+- name: verify test gather vultr ssh key facts
+  assert:
+    that:
+    - ansible_facts.vultr_ssh_key_facts|selectattr('name','equalto','{{ ssh_key_name }}') | list | count == 1
+    - ansible_facts.vultr_ssh_key_facts|selectattr('ssh_key','equalto','{{ ssh_key_content }}') | list | count == 1
+
+- name: Destroy the ssh key
+  vr_ssh_key:
+    name: ansibletest-sshkey
+    state: absent

@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
             except Exception as e:
                 exc = e
                 if what_desc:
-                    display.debug("win_reboot: %s fail (expected), retrying in %d seconds..." % (what_desc, fail_sleep))
+                    display.debug("win_reboot: %s fail '%s' (expected), retrying in %d seconds..." % (what_desc, to_native(e), fail_sleep))
                 time.sleep(fail_sleep)
 
         raise TimedOutException("timed out waiting for %s: %s" % (what_desc, exc))
@@ -124,7 +124,7 @@ class ActionModule(ActionBase):
         (rc, stdout, stderr) = self._connection.exec_command('shutdown /r /t %d /c "%s"' % (pre_reboot_delay, msg))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
-        if rc == 1190:
+        if rc == 1190 or (rc != 0 and b"(1190)" in stderr):
             display.warning('A scheduled reboot was pre-empted by Ansible.')
 
             # Try to abort (this may fail if it was already aborted)
@@ -138,7 +138,7 @@ class ActionModule(ActionBase):
         if rc != 0:
             result['failed'] = True
             result['rebooted'] = False
-            result['msg'] = "Shutdown command failed, error text was %s" % stderr
+            result['msg'] = "Shutdown command failed, error text was '%s'" % to_native(stderr)
             return result
 
         start = datetime.now()
@@ -156,10 +156,12 @@ class ActionModule(ActionBase):
 
                 # override connection timeout from defaults to custom value
                 try:
-                    self._connection.set_options(direct={"connection_timeout": connect_timeout})
-                    self._connection._reset()
+                    self._connection.set_option("connection_timeout",
+                                                connect_timeout)
+                    self._connection.reset()
                 except AttributeError:
-                    display.warning("Connection plugin does not allow the connection timeout to be overridden")
+                    display.warning("Connection plugin does not allow the "
+                                    "connection timeout to be overridden")
 
                 # try and get uptime
                 try:
@@ -174,18 +176,30 @@ class ActionModule(ActionBase):
 
             # reset the connection to clear the custom connection timeout
             try:
-                self._connection.set_options(direct={"connection_timeout": connection_timeout_orig})
-                self._connection._reset()
-            except (AnsibleError, AttributeError):
-                display.debug("Failed to reset connection_timeout back to default")
+                self._connection.set_option("connection_timeout",
+                                            connection_timeout_orig)
+                self._connection.reset()
+            except (AnsibleError, AttributeError) as e:
+                display.debug("Failed to reset connection_timeout back to default: %s" % to_native(e))
 
             # finally run test command to ensure everything is working
             def run_test_command():
                 display.vvv("attempting post-reboot test command '%s'" % test_command)
-                (rc, stdout, stderr) = self._connection.exec_command(test_command)
-
-                if rc != 0:
-                    raise Exception('test command failed')
+                try:
+                    (rc, stdout, stderr) = self._connection.exec_command(test_command)
+                except Exception as e:
+                    # in case of a failure trying to execute the command
+                    # (another reboot occurred) we need to reset the connection
+                    # to make sure we are not re-using the same shell id
+                    try:
+                        self._connection.reset()
+                    except AttributeError:
+                        pass
+                    raise
+                else:
+                    if rc != 0:
+                        raise Exception("test command failed, stdout: '%s', stderr: '%s', rc: %d"
+                                        % (stdout, stderr, rc))
 
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
 

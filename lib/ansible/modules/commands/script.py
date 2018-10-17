@@ -40,6 +40,10 @@ options:
     description:
       - cd into this directory on the remote node before running the script
     version_added: "2.4"
+  executable:
+    description:
+      - Name or path of a executable to invoke the script with
+    version_added: "2.6"
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all
@@ -66,4 +70,14 @@ EXAMPLES = '''
 - script: /some/local/remove_file.sh --some-arguments 1234
   args:
     removes: /the/removed/file.txt
+
+# Run a script using a executable in a non-system path
+- script: /some/local/script
+  args:
+    executable: /some/remote/executable
+
+# Run a script using a executable in a system path
+- script: /some/local/script.py
+  args:
+    executable: python3
 '''

@@ -48,9 +48,10 @@ options:
         description:
             - Identifies the column in the record.
     key:
-        required: true
+        required: false
         description:
-            - Identifies the key in the record column
+            - Identifies the key in the record column, when the column is a map
+              type.
     value:
         required: true
         description:
@@ -87,10 +88,22 @@ EXAMPLES = '''
     record: br-int
     col: other_config
     key: disable-in-band
+
+# Mark port with tag 10
+- openvswitch_db:
+    table: Port
+    record: port0
+    col: tag
+    value: 10
 '''
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+
+# Regular expression for map type, must not be empty
+NON_EMPTY_MAP_RE = re.compile(r'{.+}')
+# Regular expression for a map column type
+MAP_RE = re.compile(r'{.*}')
 
 
 def map_obj_to_commands(want, have, module):
@@ -102,8 +115,16 @@ def map_obj_to_commands(want, have, module):
             templatized_command = "%(ovs-vsctl)s -t %(timeout)s remove %(table)s %(record)s " \
                                   "%(col)s %(key)s=%(value)s"
             commands.append(templatized_command % module.params)
+        elif module.params['key'] is None:
+            templatized_command = "%(ovs-vsctl)s -t %(timeout)s remove %(table)s %(record)s " \
+                                  "%(col)s"
+            commands.append(templatized_command % module.params)
     else:
-        if 'key' not in have.keys():
+        if module.params['key'] is None:
+            templatized_command = "%(ovs-vsctl)s -t %(timeout)s set %(table)s %(record)s " \
+                                  "%(col)s=%(value)s"
+            commands.append(templatized_command % module.params)
+        elif 'key' not in have.keys():
             templatized_command = "%(ovs-vsctl)s -t %(timeout)s add %(table)s %(record)s " \
                                   "%(col)s %(key)s=%(value)s"
             commands.append(templatized_command % module.params)
@@ -125,8 +146,16 @@ def map_config_to_obj(module):
     match = re.search(r'^' + module.params['col'] + r'(\s+):(\s+)(.*)$', out, re.M)
 
     col_value = match.group(3)
+
+    # Map types require key argument
+    has_key = module.params['key'] is not None
+    is_map = MAP_RE.match(col_value)
+    if is_map and not has_key:
+        module.fail_json(
+            msg="missing required arguments: key for map type of column")
+
     col_value_to_dict = {}
-    if col_value and col_value != '{}':
+    if NON_EMPTY_MAP_RE.match(col_value):
         for kv in col_value[1:-1].split(', '):
             k, v = kv.split('=')
             col_value_to_dict[k.strip()] = v.strip()
@@ -137,9 +166,12 @@ def map_config_to_obj(module):
         'col': module.params['col'],
     }
 
-    if module.params['key'] in col_value_to_dict:
-        obj['key'] = module.params['key']
-        obj['value'] = col_value_to_dict[module.params['key']]
+    if has_key and is_map:
+        if module.params['key'] in col_value_to_dict:
+            obj['key'] = module.params['key']
+            obj['value'] = col_value_to_dict[module.params['key']]
+    else:
+            obj['value'] = col_value.strip()
 
     return obj
 
@@ -149,9 +181,12 @@ def map_params_to_obj(module):
         'table': module.params['table'],
         'record': module.params['record'],
         'col': module.params['col'],
-        'key': module.params['key'],
         'value': module.params['value']
     }
+
+    key = module.params['key']
+    if key is not None:
+        obj['key'] = key
 
     return obj
 
@@ -163,7 +198,7 @@ def main():
         'table': {'required': True},
         'record': {'required': True},
         'col': {'required': True},
-        'key': {'required': True},
+        'key': {'required': False},
         'value': {'required': True},
         'timeout': {'default': 5, 'type': 'int'},
     }
