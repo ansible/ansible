@@ -49,8 +49,7 @@ options:
         description:
             - The password to log in with
 notes:
-    - Requires matrix-client on the executing host.
-    - Install it with pip install matrix-client.
+    - Requires matrix-client (python library) on the executing host.
 '''
 
 EXAMPLES = '''
