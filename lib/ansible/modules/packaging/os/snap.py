@@ -191,6 +191,7 @@ def get_cmd_parts(module, snap_names):
 def run_cmd_for(module, snap_names):
     cmds_parts = get_cmd_parts(module, snap_names)
     cmd = '; '.join(' '.join(c) for c in cmds_parts)
+    cmd = 'sh -c "{0}"'.format(cmd)
 
     # Actually execute the snap command
     return (cmd, ) + module.run_command(cmd, check_rc=False)
