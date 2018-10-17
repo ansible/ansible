@@ -409,7 +409,7 @@ class EcsServiceManager:
             params['networkConfiguration'] = network_configuration
         if launch_type:
             params['launchType'] = launch_type
-        if health_check_setable:
+        if self.health_check_setable(params):
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
@@ -425,7 +425,7 @@ class EcsServiceManager:
         )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
-        if health_check_setable:
+        if self.health_check_setable(params):
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
@@ -456,9 +456,10 @@ class EcsServiceManager:
         # to e.g. ecs.run_task, it's just passed as a keyword argument)
         return LooseVersion(botocore.__version__) >= LooseVersion('1.7.44')
 
-    def health_check_setable(self):
+    def health_check_setable(self, params):
+        load_balancers = params.get('loadBalancers', [])
         # check if botocore (and thus boto3) is new enough for using the healthCheckGracePeriodSeconds parameter
-        return LooseVersion(botocore.__version__) >= LooseVersion('1.9.0')
+        return len(load_balancers) > 0  and LooseVersion(botocore.__version__) >= LooseVersion('1.9.0')
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -544,7 +545,7 @@ def main():
                                                           module.params['desired_count'],
                                                           deploymentConfiguration,
                                                           network_configuration,
-                                                          health_check_grace_period_seconds
+                                                          module.params['health_check_grace_period_seconds']
                                                           )
                 else:
                     for loadBalancer in loadBalancers:
@@ -564,7 +565,7 @@ def main():
                                                               module.params['placement_strategy'],
                                                               network_configuration,
                                                               module.params['launch_type'],
-                                                              health_check_grace_period_seconds
+                                                              module.params['health_check_grace_period_seconds']
                                                               )
                     except botocore.exceptions.ClientError as e:
                         module.fail_json_aws(e, msg="Couldn't create service")
