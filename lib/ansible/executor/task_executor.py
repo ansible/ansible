@@ -211,10 +211,11 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
-        loop_cache = self._job_vars.get(self._host.name, {}).get('_ansible_loop_cache')
+        loop_cache = self._job_vars.get('_ansible_loop_cache')
         if loop_cache is not None:
+            # _ansible_loop_cache may be set in `get_vars` when calculating `delegate_to`
+            # to avoid reprocessing the loop
             items = copy.copy(loop_cache)
-            del self._job_vars[self._host.name]['_ansible_loop_cache']
         elif self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
