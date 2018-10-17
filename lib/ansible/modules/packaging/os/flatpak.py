@@ -62,7 +62,7 @@ options:
     default: system
   name:
     description:
-    - The name of the flatpak to manage.
+    - A single name or list of the flatpaks to manage.
     - When used with I(state=present), I(name) can be specified as an C(http(s)) URL to a
       C(flatpakref) file or the unique reverse DNS name that identifies a flatpak.
     - When suppying a reverse DNS name, you can use the I(remote) option to specify on what remote
@@ -115,6 +115,13 @@ EXAMPLES = r'''
   flatpak:
     name: org.gnome.gedit
     state: absent
+
+- name: Install a list of flatpaks
+  flatpak:
+    name:
+      - io.atom.Atom
+      - org.libreoffice.LibreOffice
+    state: present
 '''
 
 RETURN = r'''
@@ -156,10 +163,19 @@ OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE = "Unknown option --columns=application"
 def install_flat(module, binary, remote, name, method):
     """Add a new flatpak."""
     global result
-    if name.startswith('http://') or name.startswith('https://'):
-        command = "{0} install --{1} -y {2}".format(binary, method, name)
+    apps = " ".join(name)
+    use_remote = True
+
+    for app in name:
+
+        if app.startswith('http://') or app.startswith('https://'):
+            use_remote = False
+
+    if use_remote:
+        command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, apps)
     else:
-        command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, name)
+        command = "{0} install --{1} -y {2}".format(binary, method, apps)
+
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
@@ -168,7 +184,7 @@ def uninstall_flat(module, binary, name, method):
     """Remove an existing flatpak."""
     global result
     installed_flat_name = _match_installed_flat_name(module, binary, name, method)
-    command = "{0} uninstall -y --{1} {2}".format(binary, method, installed_flat_name)
+    command = "{0} uninstall --{1} -y {2}".format(binary, method, " ".join(installed_flat_name))
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
@@ -178,8 +194,10 @@ def flatpak_exists(module, binary, name, method):
     command = "{0} list --{1} --app".format(binary, method)
     output = _flatpak_command(module, False, command)
     name = _parse_flatpak_name(name).lower()
+
     if name in output.lower():
         return True
+
     return False
 
 
@@ -188,24 +206,29 @@ def _match_installed_flat_name(module, binary, name, method):
     # we have to rely on a naming convention:
     # The flatpakref file name needs to match the flatpak name
     global result
-    parsed_name = _parse_flatpak_name(name)
-    # Try running flatpak list with columns feature
-    command = "{0} list --{1} --app --columns=application".format(binary, method)
-    _flatpak_command(module, False, command, ignore_failure=True)
-    if result['rc'] != 0 and OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE in result['stderr']:
-        # Probably flatpak before 1.2
-        matched_flatpak_name = \
-            _match_flat_using_flatpak_column_feature(module, binary, parsed_name, method)
-    else:
-        # Probably flatpak >= 1.2
-        matched_flatpak_name = \
-            _match_flat_using_outdated_flatpak_format(module, binary, parsed_name, method)
+    parsed_names = []
+    matched_flatpak_name = []
+
+    for app in name:
+        parsed_name = _parse_flatpak_name(app)
+
+        # Try running flatpak list with columns feature
+        command = "{0} list --{1} --app --columns=application".format(binary, method)
+        _flatpak_command(module, False, command, ignore_failure=True)
+        if result['rc'] != 0 and OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE in result['stderr']:
+            # Probably flatpak before 1.2
+            matched_flatpak_name.append(
+                _match_flat_using_flatpak_column_feature(module, binary, parsed_name, method))
+        else:
+            # Probably flatpak >= 1.2
+            matched_flatpak_name.append(
+                _match_flat_using_outdated_flatpak_format(module, binary, parsed_name, method))
 
     if matched_flatpak_name:
         return matched_flatpak_name
     else:
         result['msg'] = "Flatpak removal failed: Could not match any installed flatpaks to " +\
-            "the name `{0}`. ".format(_parse_flatpak_name(name)) +\
+            "the name `{0}`. ".format(" ".join(parsed_names)) +\
             "If you used a URL, try using the reverse DNS name of the flatpak"
         module.fail_json(**result)
 
@@ -229,31 +252,36 @@ def _match_flat_using_flatpak_column_feature(module, binary, parsed_name, method
 
 
 def _parse_flatpak_name(name):
+
     if name.startswith('http://') or name.startswith('https://'):
         file_name = urlparse(name).path.split('/')[-1]
         file_name_without_extension = file_name.split('.')[0:-1]
         common_name = ".".join(file_name_without_extension)
     else:
         common_name = name
+
     return common_name
 
 
 def _flatpak_command(module, noop, command, ignore_failure=False):
     global result
+
     if noop:
         result['rc'] = 0
-        result['command'] = command
+        result['command'].append(to_native(command))
         return ""
 
     process = subprocess.Popen(
         command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout_data, stderr_data = process.communicate()
     result['rc'] = process.returncode
-    result['command'] = command
-    result['stdout'] = to_native(stdout_data)
-    result['stderr'] = to_native(stderr_data)
+    result['command'].append(to_native(command))
+    result['stdout'] += to_native(stdout_data)
+    result['stderr'] += to_native(stderr_data)
+
     if result['rc'] != 0 and not ignore_failure:
         module.fail_json(msg="Failed to execute flatpak command", **result)
+
     return to_native(stdout_data)
 
 
@@ -261,7 +289,7 @@ def main():
     # This module supports check mode
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
+            name=dict(type='list', required=True),
             remote=dict(type='str', default='flathub'),
             method=dict(type='str', default='system',
                         choices=['user', 'system']),
@@ -281,17 +309,31 @@ def main():
 
     global result
     result = dict(
-        changed=False
+        changed=False,
+        command=[],
+        stdout="",
+        stderr=""
     )
 
     # If the binary was not found, fail the operation
     if not binary:
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
-    if state == 'present' and not flatpak_exists(module, binary, name, method):
-        install_flat(module, binary, remote, name, method)
-    elif state == 'absent' and flatpak_exists(module, binary, name, method):
-        uninstall_flat(module, binary, name, method)
+    flatpaks_found = []
+
+    if state == 'present' or state == 'absent':
+
+        for app in name:
+
+            if flatpak_exists(module, binary, app, method):
+                flatpaks_found.append(app)
+
+        result['flatpaks_found'] = flatpaks_found
+
+        if state == 'present' and (len(flatpaks_found) != len(name)):
+            install_flat(module, binary, remote, name, method)
+        elif state == 'absent' and flatpaks_found:
+            uninstall_flat(module, binary, flatpaks_found, method)
 
     module.exit_json(**result)
 
