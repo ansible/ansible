@@ -164,7 +164,7 @@ options:
         from Paramiko channel after the command prompt is matched. This timeout
         value ensure that command prompt matched is correct and there is no more data
         left to be received from remote host.
-    default: 0.1
+    default: 0.2
     ini:
       - section: persistent_connection
         key: buffer_read_timeout
@@ -370,12 +370,15 @@ class Connection(NetworkConnectionBase):
         command_prompt_matched = False
         matched_prompt_window = window_count = 0
         command_timeout = self.get_option('persistent_command_timeout')
+        self._validate_timeout_value(command_timeout, "persistent_command_timeout")
+        buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
+        self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
         while True:
             if command_prompt_matched:
                 try:
                     signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
-                    signal.setitimer(signal.ITIMER_REAL, self.get_option('persistent_buffer_read_timeout'))
+                    signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
                     data = self._ssh_shell.recv(256)
                     signal.alarm(0)
                     # if data is still received on channel it indicates the prompt string
@@ -440,6 +443,8 @@ class Connection(NetworkConnectionBase):
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
 
     def _handle_buffer_read_timeout(self, signum, frame):
+        display.vvvv("Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds"
+                     % self.get_option('persistent_buffer_read_timeout'), host=self._play_context.remote_addr)
         raise AnsibleCmdRespRecv()
 
     def _handle_command_timeout(self, signum, frame):
@@ -538,3 +543,7 @@ class Connection(NetworkConnectionBase):
             raise AnsibleConnectionFailure(errored_response)
 
         return False
+
+    def _validate_timeout_value(timeout, timer_name):
+        if timeout <= 0:
+         raise AnsibleConnectionFailure("'%s' timer value is invalid: %s, value should be greater than zero." % (timer_name, timeout))
