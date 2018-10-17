@@ -403,7 +403,7 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy,
+            placementStrategy=placement_strategy
         )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
@@ -421,7 +421,7 @@ class EcsServiceManager:
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration,
+            deploymentConfiguration=deployment_configuration
         )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
