@@ -185,7 +185,7 @@ def get_cmd_parts(module, snap_names):
     if not (is_install_mode and has_one_pkg_params and has_multiple_snaps):
         return [cmd_parts + snap_names]
 
-    return [[cmd_parts + s] for s in snap_names]
+    return [cmd_parts + [s] for s in snap_names]
 
 
 def run_cmd_for(module, snap_names):
