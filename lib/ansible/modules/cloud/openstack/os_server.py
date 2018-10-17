@@ -406,7 +406,7 @@ EXAMPLES = '''
       os_server:
         name: csr1kv
         image: csr1kv
-        flavor: small.csr1000v
+        flavor: csr1000v.small
         nics:
           - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
         config_drive: true
