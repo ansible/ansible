@@ -17,3 +17,7 @@ Release Manager
 
 Ryan Brown (IRC: ryansb; GitHub: @ryansb)
 
+Planned work
+============
+
+See the `2.8 Project Board <https://github.com/ansible/ansible/projects/30>`_
