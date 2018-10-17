@@ -193,7 +193,7 @@ def run_cmd_for(module, snap_names):
     cmd = '; '.join(' '.join(c) for c in cmds_parts)
 
     # Actually execute the snap command
-    return (cmd, *module.run_command(cmd, check_rc=False))
+    return (cmd, ) + module.run_command(cmd, check_rc=False)
 
 
 def execute_action(module):
