@@ -18,7 +18,7 @@ module: iam_password_policy
 short_description: Update an IAM Password Policy
 description:
     - Module updates an IAM Password Policy on a given AWS account
-version_added: "2.6"
+version_added: "2.8"
 requirements: [ 'botocore', 'boto3' ]
 author:
     - "Aaron Smith (@slapula)"
@@ -32,6 +32,7 @@ options:
     description:
       - Minimum password length.
     default: 6
+    aliases: [minimum_password_length]
   require_symbols:
     description:
       - Require symbols in password.
@@ -57,19 +58,23 @@ options:
       - Allow users to change their password.
     default: false
     type: bool
+    aliases: [allow_password_change]
   pw_max_age:
     description:
       - Maximum age for a password in days.
     default: 0
+    aliases: [password_max_age]
   pw_reuse_prevent:
     description:
       - Prevent re-use of passwords.
     default: 0
+    aliases: [password_reuse_prevent, prevent_reuse]
   pw_expire:
     description:
       - Prevents users from change an expired password.
     default: false
     type: bool
+    aliases: [password_expire, expire]
 extends_documentation_fragment:
   - aws
   - ec2
@@ -104,11 +109,9 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to
 
 class IAMConnection(object):
 
-    def __init__(self, module, region, **aws_connect_params):
+    def __init__(self, module):
         try:
-            self.connection = boto3_conn(module, conn_type='resource',
-                                         resource='iam', region=region,
-                                         **aws_connect_params)
+            self.connection = module.resource('iam')
             self.module = module
         except Exception as e:
             module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
@@ -157,21 +160,20 @@ def main():
     module = AnsibleAWSModule(
         argument_spec={
             'state': dict(choices=['present', 'absent'], required=True),
-            'min_pw_length': dict(type='int', default=6),
+            'min_pw_length': dict(type='int', aliases=['minimum_password_length'], default=6),
             'require_symbols': dict(type='bool', default=False),
             'require_numbers': dict(type='bool', default=False),
             'require_uppercase': dict(type='bool', default=False),
             'require_lowercase': dict(type='bool', default=False),
-            'allow_pw_change': dict(type='bool', default=False),
-            'pw_max_age': dict(type='int', default=0),
-            'pw_reuse_prevent': dict(type='int', default=0),
-            'pw_expire': dict(type='bool', default=False),
+            'allow_pw_change': dict(type='bool', aliases=['allow_password_change'], default=False),
+            'pw_max_age': dict(type='int', aliases=['password_max_age'], default=0),
+            'pw_reuse_prevent': dict(type='int', aliases=['password_reuse_prevent', 'prevent_reuse'], default=0),
+            'pw_expire': dict(type='bool', aliases=['password_expire', 'expire'], default=False),
         },
         supports_check_mode=True,
     )
 
-    region, dummy, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    resource = IAMConnection(module, region, **aws_connect_params)
+    resource = IAMConnection(module)
     policy = resource.connection.AccountPasswordPolicy()
 
     state = module.params.get('state')
