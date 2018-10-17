@@ -292,15 +292,13 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_cam
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 
 def create_or_update_project(client, params, module):
     resp = {}
     name = params['name']
-    # Sanity check and cleanup params not needed for boto methods:
-    if not isinstance(name, str):
-        module.fail_json(msg="Params was missing name", exception=traceback.format_exc())
+    # cleanup params not needed for boto methods:
     clean_params = dict((k, v) for k, v in params.items() if v is not None)
     clean_params.pop('region', None)
     clean_params.pop('state', None)
@@ -330,12 +328,8 @@ def create_or_update_project(client, params, module):
         resp = client.create_project(**formatted_params)
         changed = True
         return resp, changed
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable create project {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Unable to create project {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to create CodeBuild project")
 
 
 def update_project(client, params, module):
@@ -344,12 +338,8 @@ def update_project(client, params, module):
     try:
         resp = client.update_project(**params)
         return resp
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable update project {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Unable to update project {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to update CodeBuild project")
 
 
 def delete_project(client, name, module):
@@ -361,12 +351,8 @@ def delete_project(client, name, module):
     try:
         resp = client.delete_project(name=name)
         return resp, changed
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable delete project {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Unable to delete project {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to delete CodeBuild project")
 
 
 def describe_project(client, name, module):
@@ -376,12 +362,8 @@ def describe_project(client, name, module):
         if len(projects) > 0:
             project = projects[0]
         return project
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Client error when describing project {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    except botocore.exceptions.BotoCoreError as e:
-        module.fail_json(msg="Error when calling client.batch_get_projects {0}: {1}".format(name, to_native(e)),
-                         exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to describe CodeBuild projects")
 
 
 def main():
