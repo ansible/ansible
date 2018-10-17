@@ -1,0 +1,19 @@
+---
+# tasks file for aws_codepipeline
+
+- name: Run ec2_asg integration tests.
+
+  block:
+
+    # ============================================================
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # Set up the testing dependencies: IAM role
