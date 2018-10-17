@@ -125,7 +125,7 @@ EXAMPLES = '''
     environment_variables: '{{ item.env_vars }}'
     tags:
       key1: 'value1'
-  with_items:
+  loop:
     - name: HelloWorld
       zip_file: hello-code.zip
       env_vars:
@@ -153,7 +153,7 @@ EXAMPLES = '''
   lambda:
     name: '{{ item }}'
     state: absent
-  with_items:
+  loop:
     - HelloWorld
     - ByeBye
 '''

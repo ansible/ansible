@@ -68,7 +68,7 @@ EXAMPLES = '''
     tags:
       Name: dbserver
       Env: production
-  with_items: '{{ ec2_vol.volumes }}'
+  loop: '{{ ec2_vol.volumes }}'
 
 - name: Retrieve all tags on an instance
   ec2_tag:
