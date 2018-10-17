@@ -152,6 +152,11 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
+        if sys_vendor == 'Google':
+            virtual_facts['virtualization_type'] = 'kvm'
+            virtual_facts['virtualization_role'] = 'guest'
+            return virtual_facts
+
         if os.path.exists('/proc/self/status'):
             for line in get_file_lines('/proc/self/status'):
                 if re.match(r'^VxID:\s+\d+', line):
