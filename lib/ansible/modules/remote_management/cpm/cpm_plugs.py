@@ -30,7 +30,7 @@ DOCUMENTATION = """
 module: cpm_plugs
 version_added: "2.8"
 author: "Western Telematic Inc. (@wtinetworkgear)"
-short_description: Get and Set Plug actions on WTI OOB and PDU devices
+short_description: Get and Set Plug actions on WTI OOB and PDU power devices
 description:
     - "Get and Set Plug actions on WTI OOB and PDU devices"
 options:
@@ -82,8 +82,8 @@ options:
 
 EXAMPLES = """
 # Get Plug status for all ports
-- name: Get the Plug status for all ports of a WTI device
-  cpm_user:
+- name: Get the Plug status for ALL ports of a WTI device
+  cpm_plugs:
     cpm_action: "getplug"
     cpm_url: "nonexist.wti.com"
     cpm_username: "super"
@@ -92,20 +92,20 @@ EXAMPLES = """
     validate_certs: true
     plug_id: "all"
 
-# Get Plug status for ports 1 and 2
-- name: Get the Plug status for the given ports of a WTI device
-  cpm_user:
+# Get Plug status for port 2
+- name: Get the Plug status for the given port of a WTI device
+  cpm_plugs:
     cpm_action: "getplug"
     cpm_url: "nonexist.wti.com"
     cpm_username: "super"
     cpm_password: "super"
     use_https: true
     validate_certs: false
-    plug_id: "1,2"
+    plug_id: "2"
 
 # Reboot plugs 3 and 4
 - name: Reboot Plugs 3 and 4 on a given WTI device
-  cpm_user:
+  cpm_plugs:
     cpm_action: "setplug"
     cpm_url: "nonexist.wti.com"
     cpm_username: "super"
@@ -187,7 +187,7 @@ def run_module():
     if (module.params['cpm_action'] == 'getplug'):
         fullurl = ("%s%s/api/v2/config/powerplug" % (protocol, to_native(module.params['cpm_url'])))
         if (module.params['plug_id'].lower() != 'all'):
-            fullurl = '?plug=%s' % (fullurl, to_native(module.params['plug_id']))
+            fullurl = '%s?plug=%s' % (fullurl, to_native(module.params['plug_id']))
         method = 'GET'
     elif (module.params['cpm_action'] == 'setplug'):
         Payload = assemble_json(module, result)
