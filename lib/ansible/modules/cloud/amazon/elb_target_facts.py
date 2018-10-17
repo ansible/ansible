@@ -129,7 +129,7 @@ EXAMPLES = """
              Port={{target.target_port}}{%if target.target_az%},AvailabilityZone={{target.target_az}}
              {%endif%}
              {%endfor%}
-    with_items: "{{target_facts.instance_target_groups}}"
+    loop: "{{target_facts.instance_target_groups}}"
 
 """
 
