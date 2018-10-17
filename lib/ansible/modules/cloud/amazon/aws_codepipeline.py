@@ -297,5 +297,6 @@ def main():
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(pipeline_result))
 
+
 if __name__ == '__main__':
     main()

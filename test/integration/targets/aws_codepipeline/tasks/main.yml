@@ -1,0 +1,120 @@
+---
+# tasks file for aws_codepipeline
+
+- name: Run aws_codebuild integration tests.
+
+  block:
+
+    # ==================== preparaions ========================================
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: create IAM role needed for CodePipeline
+      iam_role:
+        name: "{{ resource_prefix }}-codepipeline-service-role"
+        description: Role with permissions for CodePipeline actions.
+        assume_role_policy_document: "{{ lookup('file', 'codepipeline_iam_trust_policy.json') }}"
+        state: present
+        <<: *aws_connection_info
+      register: codepipeline_iam_role
+
+    # ================== integration test ==========================================
+
+    - name: create CodePipeline
+      aws_codepipeline:
+        name: "{{ resource_prefix }}-test-pipeline"
+        role_arn: "{{ codepipeline_iam_role.iam_role.arn }}"
+        artifact_store:
+          type: S3
+          location: foo
+        stages:
+          - name: step_1
+            actions:
+              - name: action
+                actionTypeId:
+                  category: Source
+                  owner: AWS
+                  provider: S3
+                  version: '1'
+                configuration:
+                  S3Bucket: foo
+                  S3ObjectKey: bar
+                outputArtifacts:
+                  - { name: step_one_output }
+          - name: step_2
+            actions:
+              - name: action
+                actionTypeId:
+                  category: Build
+                  owner: AWS
+                  provider: CodeBuild
+                  version: '1'
+                inputArtifacts:
+                  - { name: step_one_output }
+                outputArtifacts:
+                  - { name: step_two_output }
+                configuration:
+                  ProjectName: foo
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - "output.pipeline.stages|length > 1"
+
+    - name: idempotence check rerunning same CodePipeline task
+      aws_codepipeline:
+        name: "{{ resource_prefix }}-test-ansible"
+        artifact_store:
+          type: S3
+          location: foo
+        stages:
+          - name: step_1
+            actions:
+              - name: action
+                actionTypeId:
+                  category: Source
+                  owner: AWS
+                  provider: S3
+                  version: '1'
+                configuration:
+                  S3Bucket: foo
+                  S3ObjectKey: bar
+                outputArtifacts:
+                  - { name: step_one_output }
+          - name: step_2
+            actions:
+              - name: action
+                actionTypeId:
+                  category: Build
+                  owner: AWS
+                  provider: CodeBuild
+                  version: '1'
+                inputArtifacts:
+                  - { name: step_one_output }
+                outputArtifacts:
+                  - { name: step_two_output }
+                configuration:
+                  ProjectName: foo
+        state: present
+        <<: *aws_connection_info
+      regiser: rerun_test_output
+
+    - assert:
+        that:
+          - "rerun_test_output.pipeline == output.pipeline"
+
+    - name: delete CodePipeline again
+      aws_codepipeline:
+        name: "{{ output.project.name }}"
+        state: absent
+        <<: *aws_connection_info
+      async: 300
