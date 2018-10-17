@@ -230,6 +230,8 @@ def create_or_update_bucket(s3_client, module, location):
         module.fail_json_aws(e, msg="Failed to get bucket tags")
 
     if tags is not None:
+        # Tags are always returned as text
+        tags = dict((to_text(k), to_text(v)) for k, v in tags.items())
         if current_tags_dict != tags:
             if tags:
                 try:
