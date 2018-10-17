@@ -37,9 +37,9 @@ options:
   drain:
     description:
       - Wait until the server has no active connections or until the timeout
-        determined by wait_interval and wait_retries is reached.  After this
-        step, the server status is switch to 'MAINT'. This overrides shutdown_sessions
-        option (considered as "yes"). This option must be used only with state "disabled"
+        determined by I(wait_interval) and I(wait_retries) is reached.  After this
+        step, the server status is switch to C(MAINT). This overrides shutdown_sessions
+        option (considered as C(yes)). This option must be used only with I(state=disabled)
     version_added: "2.4"
     default: 'no'
   host:
