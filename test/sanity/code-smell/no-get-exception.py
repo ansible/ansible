@@ -9,13 +9,6 @@ def main():
     skip = set([
         'test/sanity/code-smell/%s' % os.path.basename(__file__),
         'lib/ansible/module_utils/pycompat24.py',
-        'lib/ansible/module_utils/six/__init__.py',
-        # the following files should be fixed and removed from this list
-        'lib/ansible/modules/network/cloudengine/ce_file_copy.py',
-        'lib/ansible/modules/network/panos/panos_dag_tags.py',
-        'lib/ansible/modules/network/panos/panos_match_rule.py',
-        'lib/ansible/modules/network/panos/panos_op.py',
-        'lib/ansible/modules/system/sefcontext.py',
     ])
 
     basic_allow_once = True

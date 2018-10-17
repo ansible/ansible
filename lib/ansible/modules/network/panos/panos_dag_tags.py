@@ -100,8 +100,6 @@ RETURN = '''
 # Default return values
 '''
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
-
 try:
     from pandevice import base
     from pandevice import firewall
@@ -113,6 +111,9 @@ try:
     HAS_LIB = True
 except ImportError:
     HAS_LIB = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def get_devicegroup(device, devicegroup):
@@ -128,10 +129,7 @@ def register_ip_to_tag_map(device, ip_addresses, tag):
     exc = None
     try:
         device.userid.register(ip_addresses, tag)
-    except PanXapiError:
-        exc = get_exception()
-
-    if exc:
+    except PanXapiError as exc:
         return False, exc
 
     return True, exc
@@ -142,10 +140,7 @@ def get_all_address_group_mapping(device):
     ret = None
     try:
         ret = device.userid.get_registered_ip()
-    except PanXapiError:
-        exc = get_exception()
-
-    if exc:
+    except PanXapiError as exc:
         return False, exc
 
     return ret, exc
@@ -155,10 +150,7 @@ def delete_address_from_mapping(device, ip_address, tags):
     exc = None
     try:
         ret = device.userid.unregister(ip_address, tags)
-    except PanXapiError:
-        exc = get_exception()
-
-    if exc:
+    except PanXapiError as exc:
         return False, exc
 
     return True, exc
@@ -224,9 +216,8 @@ def main():
     if commit:
         try:
             device.commit(sync=True)
-        except PanXapiError:
-            exc = get_exception()
-            module.fail_json(msg=exc)
+        except PanXapiError as exc:
+            module.fail_json(msg=to_native(exc))
 
     module.exit_json(changed=True, msg=result)
 
