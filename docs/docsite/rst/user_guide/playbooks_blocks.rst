@@ -11,26 +11,11 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
   tasks:
     - name: Install, configure, and start Apache
       block:
-<<<<<<< HEAD
-        - yum:
-            name: "{{ item }}"
-            state: installed
-          loop:
-            - httpd
-            - memcached
-        - template:
-            src: templates/src.j2
-            dest: /etc/foo.conf
-        - service:
-            name: bar
-            state: started
-            enabled: True
-=======
       - name: install httpd and memcached
         yum:
           name: "{{ item }}"
           state: installed
-        with_items:
+        loop:
           - httpd
           - memcached
       - name: apply the foo config template
@@ -42,7 +27,6 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
           name: bar
           state: started
           enabled: True
->>>>>>> adds names to tasks within example block, removes 2nd example
       when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root
