@@ -115,7 +115,6 @@ class IAMConnection(object):
             self.module = module
         except Exception as e:
             module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
-        self.region = region
 
     def update_password_policy(self, module, policy):
         min_pw_length = module.params.get('min_pw_length')
