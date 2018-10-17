@@ -717,6 +717,22 @@ class PyVmomiDeviceHelper(object):
         mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
         return bool(mac_addr_regex.match(mac_addr))
 
+    def integer_value(self, input_value, name):
+        """
+        Function to return int value for given input, else return error
+        Args:
+            input_value: Input value to retrive int value from
+            name:  Name of the Input value (used to build error message)
+        Returns: (int) if integer value can be obtained, otherwise will send a error message.
+        """
+        if isinstance(input_value, int):
+            return input_value
+        elif isinstance(input_value, str) and input_value.isdigit():
+            return int(input_value)
+        else:
+            self.module.fail_json(msg='"%s" attribute should be an'
+                                  ' integer value.' % name)
+
 
 class PyVmomiCache(object):
     """ This class caches references to objects which are requested multiples times but not modified """
@@ -1515,10 +1531,9 @@ class PyVmomiHelper(PyVmomi):
 
             if 'timezone' in self.params['customization']:
                 # Check if timezone value is a int before proceeding.
-                if (self.params['customization']['timezone']).isdigit():
-                    ident.guiUnattended.timeZone = int(self.params['customization']['timezone'])
-                else:
-                    self.module.fail_json(msg="timezone attribute should be an integer value.")
+                ident.guiUnattended.timeZone = self.device_helper.integer_value(
+                    self.params['customization']['timezone'],
+                    'customization.timezone')
 
             ident.identification = vim.vm.customization.Identification()
 
