@@ -17,13 +17,13 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: openssh_keypair
-author: "David Kainz (@lolcube) aka (@bsod)"
+author: "David Kainz (@lolcube)"
 version_added: "2.8"
 short_description: Generate OpenSSH private and public keys.
 description:
     - "This module allows one to (re)generate OpenSSH private and public keys. It uses
-      ssh-keygen to generate keys. One can generate rsa, dsa, rsa1, ed25519
-      or ecdsa private keys."
+      ssh-keygen to generate keys. One can generate C(rsa), C(dsa), C(rsa1), C(ed25519)
+      or C(ecdsa) private keys."
 requirements:
     - "ssh-keygen"
 options:
@@ -46,7 +46,8 @@ options:
         default: rsa
         choices: ['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519']
         description:
-            - The algorithm used to generate the SSH private key.
+            - "The algorithm used to generate the SSH private key. C(rsa1) is for protocol version 1.
+              C(rsa1) is deprecated and may not be supported by every version of ssh-keygen."
     force:
         required: false
         default: false
@@ -56,11 +57,11 @@ options:
     path:
         required: true
         description:
-            - Name of the file in which the generated SSH private and public key will be written.
+            - Name of the files cointaining the public and private key. The file containing the public key will have the extension C(.pub).
     comment:
         required: false
         description:
-            - Provides a new comment to the public key
+            - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
 
 extends_documentation_fragment: files
 '''
@@ -110,17 +111,12 @@ fingerprint:
 '''
 
 import os
-import io
 import errno
 import subprocess
 
 from subprocess import PIPE, Popen
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-try:
-    from shlex import quote
-except ImportError:
-    from pipes import quote
 
 
 class KeypairError(Exception):
@@ -144,21 +140,21 @@ class Keypair(object):
         if self.type in ('rsa', 'rsa1'):
             self.size = 4096 if self.size is None else self.size
             if self.size < 1024:
-                module.fail_json(msg=('For RSA keys, the minimum size is 1024 bits and the default is 4096 bits. '
+                module.fail_json(msg=('For C(RSA) keys, the minimum size is 1024 bits and the default is 4096 bits. '
                                       'Attempting to use bit lengths under 1024 will cause the module to fail.'))
 
         if self.type == 'dsa':
             self.size = 1024 if self.size is None else self.size
             if self.size != 1024:
-                module.fail_json(msg=('DSA keys must be exactly 1024 bits as specified by FIPS 186-2.'))
+                module.fail_json(msg=('C(DSA) keys must be exactly 1024 bits as specified by FIPS 186-2.'))
 
         if self.type == 'ecdsa':
             self.size = 256 if self.size is None else self.size
             if self.size not in (256, 384, 521):
-                module.fail_json(msg=('For ECDSA keys, size determines the key length by selecting from '
-                                      'one of three elliptic curve sizes: 256, 384 or 521 bits.'
-                                      'Attempting to use bit lengths other than these three values for'
-                                      'ECDSA keys will cause this module to fail.'))
+                module.fail_json(msg=('For C(ECDSA) keys, size determines the key length by selecting from '
+                                      'one of three elliptic curve sizes: 256, 384 or 521 bits. '
+                                      'Attempting to use bit lengths other than these three values for '
+                                      'C(ECDSA) keys will cause this module to fail. '))
         if self.type == 'ed25519':
             self.size = 256
 
