@@ -34,9 +34,6 @@ options:
         description:
             - The name of the server configuration.
         required: True
-    parameters:
-        description:
-            - The required parameters for updating a server configuration.
     value:
         description:
             - Value of the configuration.
@@ -58,7 +55,6 @@ EXAMPLES = '''
       resource_group: TestGroup
       server_name: testserver
       name: array_nulls
-      parameters: parameters
 '''
 
 RETURN = '''
