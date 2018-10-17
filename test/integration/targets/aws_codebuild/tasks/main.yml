@@ -18,7 +18,7 @@
 
     - name: create IAM role needed for CodeBuild
       iam_role:
-        name: "{{ resource_prefic }}-codebuild-service-role"
+        name: "{{ resource_prefix }}-codebuild-service-role"
         description: Role with permissions for CodeBuild actions.
         assume_role_policy_document: "{{ lookup('file', 'codedbuild_iam_trust_policy.json') }}"
         state: present
@@ -29,7 +29,7 @@
 
     - name: create CodeBuild project
       aws_codebuild:
-        name: test-ansible
+        name: "{{ resource_prefix }}-test-ansible-codebuild"
         description: Build project for testing the Ansible aws_codebuild module
         service_role: "{{ codebuild_iam_role.iam_role.arn }}"
         timeout_in_minutes: 30
@@ -41,7 +41,6 @@
           packaging: NONE
           type: CODEPIPELINE
           name: test
-        encryption_key: 'arn:aws:kms:{{ aws_region }}:{{ aws_account_id }}:alias/aws/s3'
         environment:
           compute_type: BUILD_GENERAL1_SMALL
           privileged_mode: true
@@ -56,17 +55,13 @@
         <<: *aws_connection_info
       register: output
 
-    - name: Output CodeBuild project details
-      debug:
-        var: output
-
     - assert:
         that:
           - "output.project.description == 'Build project for testing the Ansible aws_codebuild module'"
 
     - name: idempotence check rerunning same Codebuild task
       aws_codebuild:
-        name: test-ansible
+        name: "{{ resource_prefix }}-test-ansible-codebuild"
         description: Build project for testing the Ansible aws_codebuild module
         service_role: "{{ codebuild_iam_role.iam_role.arn }}"
         timeout_in_minutes: 30
@@ -98,7 +93,7 @@
           - "rerun_test_output.project.created == output.project.created"
 
     - name: delete CodeBuild project
-      ec2_asg:
+      aws_codebuild:
         name: "{{ output.project.name }}"
         state: absent
         <<: *aws_connection_info

@@ -287,7 +287,13 @@ import traceback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
-import botocore
+
+
+try:
+    import botocore
+except ImportError:
+    pass  # will be detected by imported HAS_BOTO3
+
 
 def create_or_update_project(client, params, module):
     resp = {}
@@ -409,6 +415,7 @@ def main():
         project_result, changed = delete_project(client=client_conn, name=module.params['name'], module=module)
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(project_result))
+
 
 if __name__ == '__main__':
     main()
