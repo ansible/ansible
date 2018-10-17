@@ -317,7 +317,9 @@ class HAProxy(object):
             if state is not None:
                 self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
                 if self.wait:
-                    self.wait_until_status(backend, svname, wait_for_status)
+                    if self.wait_until_status(backend, svname, wait_for_status) is not True:
+                        self.module.fail_json(msg="Can't get the status %s expected" % (svname))
+
 
     def get_state_for(self, pxname, svname):
         """
