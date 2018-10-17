@@ -36,7 +36,6 @@ disable=
     expression-not-assigned,
     fixme,
     function-redefined,
-    global-at-module-level,
     global-statement,
     global-variable-not-assigned,
     global-variable-undefined,
