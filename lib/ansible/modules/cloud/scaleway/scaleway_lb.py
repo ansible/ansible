@@ -148,6 +148,7 @@ import datetime
 import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.scaleway import SCALEWAY_REGIONS, SCALEWAY_ENDPOINT, scaleway_argument_spec, Scaleway
+from ansible.module_utils.scaleway import SCALEWAY_NEW_LOCATION, scaleway_argument_spec, Scaleway
 
 STABLE_STATES = (
     "ready",
@@ -319,6 +320,9 @@ def core(module):
         "organization_id": module.params["organization_id"]
     }
     module.params['api_url'] = SCALEWAY_ENDPOINT
+        "organization_id": module.params["organization_id"]
+    }
+    module.params['api_url'] = SCALEWAY_NEW_LOCATION[region]["api_endpoint"]
     api = Scaleway(module=module)
     api.api_path = "lbaas/v1beta1/regions/%s/lbs" % region
 
@@ -335,6 +339,8 @@ def main():
         region=dict(required=True, choices=SCALEWAY_REGIONS),
         state=dict(choices=state_strategy.keys(), default='present'),
         tags=dict(type="list", default=[]),
+        region=dict(required=True, choices=SCALEWAY_NEW_LOCATION.keys()),
+        state=dict(choices=state_strategy.keys(), default='present'),
         organization_id=dict(required=True),
         wait=dict(type="bool", default=False),
         wait_timeout=dict(type="int", default=300),

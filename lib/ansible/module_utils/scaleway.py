@@ -179,3 +179,9 @@ SCALEWAY_ZONES = [
     "fr-par-1",
     "nl-ams-1",
 ]
+
+# New convention about region naming
+SCALEWAY_NEW_LOCATION = {
+    'fr-par': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://api-world.scaleway.com'},
+    'nl-ams': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://api-world.scaleway.com'}
+}
