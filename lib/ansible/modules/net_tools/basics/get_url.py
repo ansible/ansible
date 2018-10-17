@@ -181,7 +181,7 @@ EXAMPLES = r'''
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     headers:
-      key1: one 
+      key1: one
       key2: two
 
 - name: Download file with check (sha256)
