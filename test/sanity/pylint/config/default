@@ -70,7 +70,6 @@ disable=
     pointless-string-statement,
     possibly-unused-variable,
     protected-access,
-    raising-format-tuple,
     redefined-argument-from-local,
     redefined-builtin,
     redefined-outer-name,
