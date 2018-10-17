@@ -78,7 +78,6 @@ disable=
     relative-import,
     signature-differs,
     simplifiable-if-statement,
-    stop-iteration-return,
     subprocess-popen-preexec-fn,
     super-init-not-called,
     superfluous-parens,
