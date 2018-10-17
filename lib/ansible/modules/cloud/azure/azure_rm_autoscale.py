@@ -551,7 +551,7 @@ class AzureRMAutoScale(AzureRMModuleBase):
                                                                                            days=p.get('recurrence_days'),
                                                                                            hours=p.get('recurrence_hours'),
                                                                                            minutes=p.get('recurrence_mins'))))
-                                                    if p.get('recurrence_frequency') and p['recurrence_frequency'] != 'None' else None)
+                                         if p.get('recurrence_frequency') and p['recurrence_frequency'] != 'None' else None)
                         for p in self.profiles or []]
 
             notifications = [AutoscaleNotification(email=EmailNotification(**n),
