@@ -174,6 +174,14 @@ def get_cmd_parts(module, snap_names):
     return cmd_parts
 
 
+def run_cmd_for(module, snap_names):
+    cmd_parts = get_cmd_parts(module, snap_names)
+    cmd = ' '.join(cmd_parts)
+
+    # Actually execute the snap command
+    return module.run_command(cmd, check_rc=False)
+
+
 def execute_action(module):
     is_install_mode = module.params['state'] == 'present'
     exit_kwargs = {
@@ -195,11 +203,7 @@ def execute_action(module):
     if module.check_mode:
         module.exit_json(**dict(changed_def_args, **exit_kwargs))
 
-    cmd_parts = get_cmd_parts(module, actionable_snaps)
-    cmd = ' '.join(cmd_parts)
-
-    # Actually execute the snap command
-    rc, out, err = module.run_command(cmd, check_rc=False)
+    rc, out, err = run_cmd_for(module, actionable_snaps)
     cmd_out_args = {
         'cmd': cmd,
         'rc': rc,
