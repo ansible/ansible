@@ -49,7 +49,6 @@ disable=
     line-too-long,
     literal-comparison,
     locally-disabled,
-    logging-not-lazy,
     method-hidden,
     misplaced-comparison-constant,
     missing-docstring,
