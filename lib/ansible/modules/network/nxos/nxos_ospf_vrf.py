@@ -204,7 +204,7 @@ def get_existing(module, args):
             elif 'auto' in line:
                 cost = re.search(r'auto-cost reference-bandwidth (\d+) (\S+)', line).group(1)
                 if 'Gbps' in line:
-                    cost *= 1000
+                    cost = int(cost) * 1000
                 existing['auto_cost'] = str(cost)
             elif 'timers throttle lsa' in line:
                 tmp = re.search(r'timers throttle lsa (\S+) (\S+) (\S+)', line)
@@ -405,14 +405,15 @@ def main():
     if state == 'absent' and existing:
         state_absent(module, existing, proposed, candidate)
 
-    if candidate:
+    if not module.check_mode and candidate:
         candidate = candidate.items_text()
         load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
 
     else:
-        result['commands'] = []
+        candidate = candidate.items_text()
+        result['commands'] = candidate
     module.exit_json(**result)
 
 
