@@ -180,7 +180,7 @@ EXAMPLES = r'''
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
-    headers: 
+    headers:
       key1: one 
       key2: two
 
