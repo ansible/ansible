@@ -455,7 +455,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             return _check_keyUsage_(extensions, b'basicConstraints', self.basicConstraints, self.basicConstraints_critical)
 
         def _check_ocspMustStaple(extensions):
-            oms_ext = [ext for ext in extensions if ext.get_short_name() == MUST_STAPLE_NAME and str(ext) == MUST_STAPLE_VALUE]
+            oms_ext = [ext for ext in extensions if to_bytes(ext.get_short_name()) == MUST_STAPLE_NAME and to_bytes(ext) == MUST_STAPLE_VALUE]
             if OpenSSL.SSL.OPENSSL_VERSION_NUMBER < 0x10100000:
                 # Older versions of libssl don't know about OCSP Must Staple
                 oms_ext.extend([ext for ext in extensions if ext.get_short_name() == b'UNDEF' and ext.get_data() == b'\x30\x03\x02\x01\x05'])
