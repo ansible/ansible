@@ -181,7 +181,6 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
 
 try:
     from pan.xapi import PanXapiError
@@ -358,8 +357,7 @@ def main():
     # Submit the op command with the appropriate test string
     try:
         response = device.op(cmd=test_string, vsys=vsys_id)
-    except PanXapiError:
-        exc = get_exception()
+    except PanXapiError as exc:
         module.fail_json(msg=exc.message)
 
     if response.find('result/rules').__len__() == 1:
