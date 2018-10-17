@@ -507,20 +507,32 @@ class PamdService(object):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
 
+        changes = 0
         for current_rule in rules_to_find:
+            rule_changed = False
             if new_type:
-                current_rule.rule_type = new_type
+                if(current_rule.rule_type is not new_type):
+                    rule_changed = True
+                    current_rule.rule_type = new_type
             if new_control:
-                current_rule.rule_control = new_control
+                if(current_rule.rule_control is not new_control):
+                    rule_changed = True
+                    current_rule.rule_control = new_control
             if new_path:
-                current_rule.rule_path = new_path
+                if(current_rule.rule_path is not new_path):
+                    rule_changed = True
+                    current_rule.rule_path = new_path
             if new_args:
-                if isinstance(new_args, str):
-                    new_args = new_args.replace(" = ", "=")
-                    new_args = new_args.split(' ')
-                current_rule.rule_args = new_args
+                    if isinstance(new_args, str):
+                        new_args = new_args.replace(" = ", "=")
+                        new_args = new_args.split(' ')
+                    if(current_rule.rule_args is not new_args):
+                        rule_changed = True
+                        current_rule.rule_args = new_args
+            if rule_changed:
+                changes += 1
 
-        return len(rules_to_find)
+        return changes
 
     def insert_before(self, rule_type, rule_control, rule_path,
                       new_type=None, new_control=None, new_path=None, new_args=None):
