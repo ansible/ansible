@@ -112,7 +112,6 @@ disable=
     unused-import,
     unused-variable,
     used-before-assignment,
-    useless-import-alias,
     useless-object-inheritance,
     useless-return,
     useless-super-delegation,
