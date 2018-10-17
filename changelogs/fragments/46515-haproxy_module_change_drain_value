@@ -1,0 +1,2 @@
+minor_changes:
+  - haproxy - change drain value from None to no
