@@ -121,7 +121,6 @@ options:
         required: false
         version_added: 2.7
         choices: ["EC2", "FARGATE"]
-
     health_check_grace_period_seconds:
         description:
           - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.9.0.
