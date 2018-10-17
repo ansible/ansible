@@ -55,7 +55,7 @@ EXAMPLES = """
 
 - name: use in a loop
   debug: msg="MX record for gmail.com {{ item }}"
-  with_items: "{{ lookup('dig', 'gmail.com./MX', wantlist=True) }}"
+  loop: "{{ lookup('dig', 'gmail.com./MX', wantlist=True) }}"
 
 - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '192.0.2.5/PTR') }}"
 - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa./PTR') }}"
@@ -63,7 +63,7 @@ EXAMPLES = """
 - debug: msg="Querying 198.51.100.23 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@198.51.100.23') }}"
 
 - debug: msg="XMPP service for gmail.com. is available at {{ item.target }} on port {{ item.port }}"
-  with_items: "{{ lookup('dig', '_xmpp-server._tcp.gmail.com./SRV', 'flat=0', wantlist=True) }}"
+  loop: "{{ lookup('dig', '_xmpp-server._tcp.gmail.com./SRV', 'flat=0', wantlist=True) }}"
 """
 
 RETURN = """
