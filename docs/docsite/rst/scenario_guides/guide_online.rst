@@ -6,7 +6,7 @@ Introduction
 ============
 
 Online is a French hosting company mainly known for providing bare-metal servers named Dedibox.
-Check it out: `https://www.online.net/en <https://www.online.net/en>_`
+Check it out: `https://www.online.net/en <https://www.online.net/en>`_
 
 Dynamic inventory for Online resources
 --------------------------------------
@@ -21,7 +21,7 @@ Ansible has a dynamic inventory plugin that can list your resources.
 
 2. Set your ``ONLINE_TOKEN`` environment variable with your token.
     You need to open an account and log into it before you can get a token.
-    You can find your token at the following page: `https://console.online.net/en/api/access <https://console.online.net/en/api/access>_`
+    You can find your token at the following page: `https://console.online.net/en/api/access <https://console.online.net/en/api/access>`_
 
 3. You can test that your inventory is working by running: ``ansible-inventory -v -i online_inventory.yml --list``
 
