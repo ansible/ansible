@@ -198,6 +198,10 @@ service:
             returned: always
             type: complex
             contains:
+                targetGroupArn:
+                    description: the name of the Elastic Load Balancing target group
+                    returned: always
+                    type: string
                 loadBalancerName:
                     description: the name
                     returned: always
