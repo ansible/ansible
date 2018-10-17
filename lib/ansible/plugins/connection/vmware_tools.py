@@ -75,7 +75,7 @@ DOCUMENTATION = """
       vm_path:
         description:
           - VM path relative to vCenter.
-          - Example: C(Datacenter/vm/Discovered virtual machine/testVM) (Needs to include C(vm) between the Datacenter and the rest of the VM path.)
+          - "Example: C(Datacenter/vm/Discovered virtual machine/testVM) (Needs to include C(vm) between the Datacenter and the rest of the VM path.)"
         vars:
           - name: ansible_vmware_tools_vm_path
         required: True
@@ -101,7 +101,7 @@ DOCUMENTATION = """
       file_chunk_size:
         description:
           - File chunk size.
-          - (Applicable when writing a file to disk, example: using the C(fetch) module.)
+          - "(Applicable when writing a file to disk, example: using the C(fetch) module.)"
         vars:
           - name: ansible_vmware_tools_file_chunk_size
         default: 128
