@@ -6,12 +6,12 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
 
 .. code-block:: YAML
  :emphasize-lines: 3
- :caption: Block example
-
+ :caption: Block example with named tasks inside the block
 
   tasks:
-    - name: Install Apache
+    - name: Install, configure, and start Apache
       block:
+<<<<<<< HEAD
         - yum:
             name: "{{ item }}"
             state: installed
@@ -25,6 +25,24 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
             name: bar
             state: started
             enabled: True
+=======
+      - name: install httpd and memcached
+        yum:
+          name: "{{ item }}"
+          state: installed
+        with_items:
+          - httpd
+          - memcached
+      - name: apply the foo config template
+        template:
+          src: templates/src.j2
+          dest: /etc/foo.conf
+      - name: start service bar and enable it
+        service:
+          name: bar
+          state: started
+          enabled: True
+>>>>>>> adds names to tasks within example block, removes 2nd example
       when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root
@@ -33,41 +51,7 @@ In the example above, each of the 3 tasks will be executed after appending the `
 and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
 for all the enclosed tasks.
 
-
-You may also define the tasks inside of a block with their own names, just as
-you can outside of a block, for added output about the tasks being executed when
-you run the playbook.
-
-.. code-block:: YAML
- :emphasize-lines: 3
- :caption: Block example with named tasks inside the block
-
-
-  tasks:
-    - name: Install Apache
-      block:
-        - name: install httpd and memcached
-          yum:
-            name:
-               - httpd
-               - memcached
-            state: installed
-        - name: apply the foo config template
-          template:
-            src: templates/src.j2
-            dest: /etc/foo.conf
-        - name: start service bar and enable it
-          service:
-            name: bar
-            state: started
-            enabled: True
-      when: ansible_facts['distribution'] == 'CentOS'
-      become: true
-      become_user: root
-
-.. versionadded:: 2.3
-
-    The ``name:`` keyword for ``block:`` was added in Ansible 2.3.
+Names for tasks within blocks have been available since Ansible 2.3. We recommend using names in all tasks, within blocks or elsewhere, for better visibility into the tasks being executed when you run the playbook.
 
 .. _block_error_handling:
 
@@ -191,6 +175,3 @@ ansible_failed_result
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-
