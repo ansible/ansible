@@ -190,10 +190,10 @@ def get_cmd_parts(module, snap_names):
 
 def run_cmd_for(module, snap_names):
     cmds_parts = get_cmd_parts(module, snap_names)
-    cmd = '; '.join(' '.join(c) for c in cmd_parts)
+    cmd = '; '.join(' '.join(c) for c in cmds_parts)
 
     # Actually execute the snap command
-    return module.run_command(cmd, check_rc=False)
+    return cmd, *module.run_command(cmd, check_rc=False)
 
 
 def execute_action(module):
@@ -217,7 +217,7 @@ def execute_action(module):
     if module.check_mode:
         module.exit_json(**dict(changed_def_args, **exit_kwargs))
 
-    rc, out, err = run_cmd_for(module, actionable_snaps)
+    cmd, rc, out, err = run_cmd_for(module, actionable_snaps)
     cmd_out_args = {
         'cmd': cmd,
         'rc': rc,
