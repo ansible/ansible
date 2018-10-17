@@ -53,6 +53,12 @@ options:
     type: bool
     default: no
     version_added: "1.8"
+  unsafe_perm:
+    description:
+      - Use the C(--unsafe-perm) flag when installing.
+    type: bool
+    default: no
+    version_added: "2.8"
   production:
     description:
       - Install dependencies in production mode, excluding devDependencies
@@ -136,6 +142,7 @@ class Npm(object):
         self.registry = kwargs['registry']
         self.production = kwargs['production']
         self.ignore_scripts = kwargs['ignore_scripts']
+        self.unsafe_perm = kwargs['unsafe_perm']
         self.state = kwargs['state']
 
         if kwargs['executable']:
@@ -158,6 +165,8 @@ class Npm(object):
                 cmd.append('--production')
             if self.ignore_scripts:
                 cmd.append('--ignore-scripts')
+            if self.unsafe_perm:
+                cmd.append('--unsafe-perm')
             if self.name:
                 cmd.append(self.name_version)
             if self.registry:
@@ -231,6 +240,7 @@ def main():
         registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
         ignore_scripts=dict(default=False, type='bool'),
+        unsafe_perm=dict(default=False, type='bool'),
     )
     arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
@@ -247,6 +257,7 @@ def main():
     registry = module.params['registry']
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
+    unsafe_perm = module.params['unsafe_perm']
 
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
@@ -254,7 +265,8 @@ def main():
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
     npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production,
-              executable=executable, registry=registry, ignore_scripts=ignore_scripts, state=state)
+              executable=executable, registry=registry, ignore_scripts=ignore_scripts,
+              unsafe_perm=unsafe_perm, state=state)
 
     changed = False
     if state == 'present':
