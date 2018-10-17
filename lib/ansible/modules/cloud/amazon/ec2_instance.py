@@ -1343,7 +1343,7 @@ def change_instance_state(filters, desired_state, ec2=None):
 
     changed = set()
     instances = find_instances(ec2, filters=filters)
-    to_change = set(i['InstanceId'] for i in instances)
+    to_change = set(i['InstanceId'] for i in instances if i['State']['Name'].upper() != desired_state)
     unchanged = set()
 
     for inst in instances:
@@ -1358,7 +1358,7 @@ def change_instance_state(filters, desired_state, ec2=None):
                 resp = ec2.terminate_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['TerminatingInstances']]
             if desired_state == 'STOPPED':
-                if inst['State']['Name'] == 'stopping':
+                if inst['State']['Name'] in ('stopping', 'stopped'):
                     unchanged.add(inst['InstanceId'])
                     continue
 
@@ -1383,7 +1383,7 @@ def change_instance_state(filters, desired_state, ec2=None):
         await_instances(ids=list(changed) + list(unchanged), state=desired_state)
 
     change_failed = list(to_change - changed)
-    instances = find_instances(ec2, ids=list(to_change))
+    instances = find_instances(ec2, ids=list(i['InstanceId'] for i in instances))
     return changed, change_failed, instances
 
 
