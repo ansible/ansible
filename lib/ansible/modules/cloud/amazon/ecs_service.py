@@ -121,6 +121,13 @@ options:
         required: false
         version_added: 2.7
         choices: ["EC2", "FARGATE"]
+
+    health_check_grace_period_seconds:
+        description:
+          - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.9.0.
+        required: false
+        default: 30
+        version_added: 2.8
 extends_documentation_fragment:
     - aws
     - ec2
@@ -306,6 +313,7 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
+from distutils.version import LooseVersion
 
 try:
     import botocore
@@ -384,7 +392,7 @@ class EcsServiceManager:
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
                        placement_constraints, placement_strategy, network_configuration,
-                       launch_type):
+                       launch_type, health_check_grace_period_seconds):
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
@@ -395,25 +403,30 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy
+            placementStrategy=placement_strategy,
         )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
         if launch_type:
             params['launchType'] = launch_type
+        if health_check_setable:
+            params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       desired_count, deployment_configuration, network_configuration):
+                       desired_count, deployment_configuration, network_configuration, health_check_grace_period_seconds):
         params = dict(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration)
+            deploymentConfiguration=deployment_configuration,
+        )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
+        if health_check_setable:
+            params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
 
@@ -438,12 +451,14 @@ class EcsServiceManager:
         return self.ecs.delete_service(cluster=cluster, service=service)
 
     def ecs_api_handles_network_configuration(self):
-        from distutils.version import LooseVersion
         # There doesn't seem to be a nice way to inspect botocore to look
         # for attributes (and networkConfiguration is not an explicit argument
         # to e.g. ecs.run_task, it's just passed as a keyword argument)
         return LooseVersion(botocore.__version__) >= LooseVersion('1.7.44')
 
+    def health_check_setable(self):
+        # check if botocore (and thus boto3) is new enough for using the healthCheckGracePeriodSeconds parameter
+        return LooseVersion(botocore.__version__) >= LooseVersion('1.9.0')
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -466,7 +481,8 @@ def main():
             security_groups=dict(type='list'),
             assign_public_ip=dict(type='bool'),
         )),
-        launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
+        health_check_grace_period_seconds=dict(required=False, type='int', default=30)
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -527,7 +543,9 @@ def main():
                                                           module.params['task_definition'],
                                                           module.params['desired_count'],
                                                           deploymentConfiguration,
-                                                          network_configuration)
+                                                          network_configuration,
+                                                          health_check_grace_period_seconds
+                                                          )
                 else:
                     for loadBalancer in loadBalancers:
                         if 'containerPort' in loadBalancer:
@@ -545,7 +563,9 @@ def main():
                                                               module.params['placement_constraints'],
                                                               module.params['placement_strategy'],
                                                               network_configuration,
-                                                              module.params['launch_type'])
+                                                              module.params['launch_type'],
+                                                              health_check_grace_period_seconds
+                                                              )
                     except botocore.exceptions.ClientError as e:
                         module.fail_json_aws(e, msg="Couldn't create service")
 

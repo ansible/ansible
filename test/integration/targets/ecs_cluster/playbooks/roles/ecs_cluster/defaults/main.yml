@@ -27,6 +27,7 @@ ecs_service_placement_strategy:
 ecs_task_container_port: 8080
 ecs_target_group_name: "{{ resource_prefix[:28] }}-tg"
 ecs_load_balancer_name: "{{ resource_prefix[:29] }}-lb"
+ecs_service_health_check_grace_period: 60
 ecs_fargate_task_containers:
 - name: "{{ ecs_task_name }}"
   image: "{{ ecs_task_image_path }}"
