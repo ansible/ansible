@@ -40,7 +40,7 @@ options:
       - A C(body) cannot be provided if a C(src) is specified.
   src:
     description:
-      - A file to upload to the queue.  Automatic mime type detection is attempted if content_type is not defined.
+      - A file to upload to the queue.  Automatic mime type detection is attempted if content_type is not defined (left as default).
       - A C(src) cannot be provided if a C(body) is specified.
     aliases: ['file']
   content_type:
@@ -86,7 +86,7 @@ EXAMPLES = '''
     file: 'path/to/logo.gif'
   delegate_to: localhost
 
-- name: RabbitMQ auto geneated queue
+- name: RabbitMQ auto generated queue
   rabbitmq_basic_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     body: "Hello world random queue from ansible module rabitmq_basic_publish"
@@ -95,12 +95,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg:
+result:
   description:
-    - A message stating success or failure of the publish action and the queue name.
+    - Contains the a message (msg), content type (content_type) and the queue name (queue).
   returned: always
-  type: string
-  sample: Successfully published to queue hello
+  type: dict
+  sample: 'result': { 'content_type': 'text/plain', 'msg': 'Successfully published to queue test', 'queue': 'test' }
 '''
 
 try:
@@ -139,7 +139,9 @@ def main():
 
     if rabbitmq.basic_publish():
         rabbitmq.close_connection()
-        module.exit_json(changed=True, msg="Successfully published to queue %s" % rabbitmq.queue)
+        module.exit_json(changed=True, result={"msg": "Successfully published to queue %s" % rabbitmq.queue,
+                                               "queue": rabbitmq.queue,
+                                               "content_type": rabbitmq.content_type})
     else:
         rabbitmq.close_connection()
         module.fail_json(changed=False, msg="Unsuccessful publishing to queue %s" % rabbitmq.queue)

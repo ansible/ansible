@@ -1,0 +1,98 @@
+- name: Install pika and requests
+  pip:
+    name: pika,requests
+    state: latest
+
+- name: RabbitMQ basic publish test
+  rabbitmq_basic_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    body: "Hello world from ansible module rabitmq_basic_publish"
+    content_type: "text/plain"
+  register: rabbit_basic_output1
+  delegate_to: localhost
+
+- assert:
+    that:
+      - "rabbit_basic_output1 is not failed"
+      - "'publish_test' in rabbit_basic_output1.result.msg"
+      - "'publish_test' in rabbit_basic_output1.result.queue"
+      - "'text/plain' in rabbit_basic_output1.result.content_type"
+
+
+# Testing random queue
+- name: Post to random queue
+  rabbitmq_basic_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    body: "RANDOM QUEUE POST"
+    content_type: "text/plain"
+  register: rabbit_random_queue_output
+  delegate_to: localhost
+
+- assert:
+    that:
+      - "rabbit_random_queue_output is not failed"
+      - "'amq.gen' in rabbit_random_queue_output.result.msg"
+      - "'amq.gen' in rabbit_random_queue_output.result.queue"
+      - "'text/plain' in rabbit_random_queue_output.result.content_type"
+
+- name: Post binary to a queue
+  rabbitmq_basic_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    src: '/root/ansible/ajax-loader.gif'
+  register: rabbitmq_publish_file
+  delegate_to: localhost
+
+- assert:
+    that:
+      - "rabbitmq_publish_file is not failed"
+      - "'publish_test' in rabbitmq_publish_file.result.queue"
+      - "'image/gif' in rabbitmq_publish_file.result.content_type"
+
+- name: Raise error for src and body defined
+  rabbitmq_basic_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    src: 'ajax-loader.gif'
+    body: blah
+  register: rabbit_basic_fail_output1
+  ignore_errors: yes
+  delegate_to: localhost
+
+- assert:
+    that:
+      - "rabbit_basic_fail_output1 is failed"
+      - "'src and body cannot be specified at the same time' in rabbit_basic_fail_output1.msg"
+
+- name: File does not exist
+  rabbitmq_basic_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'hello'
+    src: 'aaaaaaajax-loader.gif'
+  register: file_missing_fail
+  ignore_errors: yes
+  delegate_to: localhost
+
+- assert:
+    that:
+      - "file_missing_fail is failed"
+      - "'Unable to open file' in file_missing_fail.msg"
+
+- name: Collect all messages off the publish queue
+  set_fact:
+    messages: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2F', queue='publish_test') }}"
+
+- name: Double check contents of published messages
+  assert:
+    that:
+      - messages|length == 2
+      - "'Hello world from ansible module rabitmq_basic_publish' in messages[0]['msg']"
+      - "'text/plain' in messages[0]['content_type']"
+      - "'image/gif' in messages[1]['content_type']"
+
+# Tidy up
+- name: Uninstall pika and requests
+  pip:
+    name: pika,requests
+    state: absent

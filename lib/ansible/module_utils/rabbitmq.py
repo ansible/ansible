@@ -58,9 +58,13 @@ class RabbitClient():
         )
 
     ''' Consider some file size limits here '''
-    @staticmethod
-    def _read_file(path):
-        return open(path, "rb").read()
+    def _read_file(self, path):
+        try:
+            fh = open(path, "rb").read()
+        except IOError:
+            self.module.fail_json(msg="Unable to open file %s." % path)
+
+        return fh
 
     @staticmethod
     def _check_file_mime_type(path):
@@ -134,19 +138,30 @@ class RabbitClient():
         return [ret]
 
     def basic_publish(self):
+        self.content_type = self.params.get("content_type")
+
         if self.params.get("body") is not None:
             args = dict(
                 body=self.params.get("body"),
                 exchange=self.params.get("exchange"),
                 routing_key=self.params.get("routing_key"),
-                properties=pika.BasicProperties(content_type=self.params.get("content_type"), delivery_mode=1))
+                properties=pika.BasicProperties(content_type=self.content_type, delivery_mode=1))
 
-        if self.params.get("src") is not None:
+        # If src (file) is defined and content_type is left as default, do a mime lookup on the file
+        if self.params.get("src") is not None and self.content_type == 'text/plain':
+            self.content_type = RabbitClient._check_file_mime_type(self.params.get("src"))[0]
+
             args = dict(
-                body=RabbitClient._read_file(self.params.get("src")),
+                body=self._read_file(self.params.get("src")),
                 exchange=self.params.get("exchange"),
                 routing_key=self.params.get("routing_key"),
-                properties=pika.BasicProperties(content_type=RabbitClient._check_file_mime_type(self.params.get("src"))[0], delivery_mode=1))
+                properties=pika.BasicProperties(content_type=self.content_type, delivery_mode=1))
+        elif self.params.get("src") is not None:
+            args = dict(
+                body=self._read_file(self.params.get("src")),
+                exchange=self.params.get("exchange"),
+                routing_key=self.params.get("routing_key"),
+                properties=pika.BasicProperties(content_type=self.content_type, delivery_mode=1))
 
         try:
             # If queue is not defined, RabbitMQ will return the queue name of the automatically generated queue.
