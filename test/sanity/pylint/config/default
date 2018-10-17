@@ -36,7 +36,6 @@ disable=
     fixme,
     function-redefined,
     global-statement,
-    global-variable-not-assigned,
     global-variable-undefined,
     import-error,
     import-self,
