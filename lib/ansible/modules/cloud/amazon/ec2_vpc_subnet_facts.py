@@ -72,7 +72,7 @@ EXAMPLES = '''
     filters:
       vpc-id: vpc-abcdef00
       "tag:Name": "{{ item }}"
-  with_items:
+  loop:
     - publicA
     - publicB
     - publicC

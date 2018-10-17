@@ -381,14 +381,14 @@ EXAMPLES = '''
       add_host:
         hostname: "{{ item.public_ip }}"
         groupname: launched
-      with_items: "{{ ec2.instances }}"
+      loop: "{{ ec2.instances }}"
 
     - name: Wait for SSH to come up
       delegate_to: "{{ item.public_dns_name }}"
       wait_for_connection:
         delay: 60
         timeout: 320
-      with_items: "{{ ec2.instances }}"
+      loop: "{{ ec2.instances }}"
 
 - name: Configure instance(s)
   hosts: launched
