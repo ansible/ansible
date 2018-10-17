@@ -1,0 +1,5 @@
+---
+scaleway_region: world
+name: lb_ansible_test
+description: Load-balancer used for testing scaleway_lb ansible module
+updated_description: Load-balancer used for testing scaleway_lb ansible module (Updated description)
