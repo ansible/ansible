@@ -405,6 +405,8 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
                 return changed
             else:
                 raise psycopg2.InternalError(e)
+        except psycopg2.NotSupportedError as e:
+            module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
 
     elif no_password_changes and role_attr_flags != '':
         # Grab role information from pg_roles instead of pg_authid
