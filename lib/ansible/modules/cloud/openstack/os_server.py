@@ -398,6 +398,20 @@ EXAMPLES = '''
         name: abcdef01-2345-6789-0abc-def0123456789
         state: absent
 
+# Creates a new instance and passes a file via config-drive option
+- name: launch a virtual-router instance
+  hosts: localhost
+  task:
+    - name: launch instance
+      os_server:
+        name: csr1kv
+        image: csr1kv
+        flavor: small.csr1000v
+        nics:
+          - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
+        config_drive: true
+        files: iosxe_config.txt="{{ lookup('template', 'files/day0.j2') }}
+        state: present
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -688,6 +702,7 @@ def main():
         meta=dict(default=None, type='raw'),
         userdata=dict(default=None, aliases=['user_data']),
         config_drive=dict(default=False, type='bool'),
+        files=dict(default=[], type='dict'),
         auto_ip=dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips=dict(default=None, type='list'),
         floating_ip_pools=dict(default=None, type='list'),
