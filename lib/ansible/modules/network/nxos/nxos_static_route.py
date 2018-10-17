@@ -147,6 +147,7 @@ def reconcile_candidate(module, candidate, prefix, w):
 def remove_route_command(prefix, w):
     return 'no ip route {0} {1}'.format(prefix, w['next_hop'])
 
+
 def get_configured_track(module, ctrack):
     check_track = 'Track {0}'.format(ctrack)
     track_exists = False
@@ -158,6 +159,7 @@ def get_configured_track(module, ctrack):
     if check_track in body[0].split('\n'):
         track_exists = True
     return track_exists
+
 
 def set_route_command(prefix, w, module):
     route_cmd = 'ip route {0} {1}'.format(prefix, w['next_hop'])
