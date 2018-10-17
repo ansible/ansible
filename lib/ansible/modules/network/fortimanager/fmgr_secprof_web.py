@@ -551,9 +551,9 @@ options:
       - choice | Acct-Multi-Session-Id | Use this attribute.
     required: false
     choices:["User-Name","NAS-IP-Address","Framed-IP-Address","Framed-IP-Netmask","Filter-Id","Login-IP-Host",
-        "Reply-Message","Callback-Number","Callback-Id","Framed-Route","Framed-IPX-Network","Class",
-        "Called-Station-Id","Calling-Station-Id","NAS-Identifier","Proxy-State","Login-LAT-Service","Login-LAT-Node",
-        "Login-LAT-Group","Framed-AppleTalk-Zone","Acct-Session-Id","Acct-Multi-Session-Id"]
+      "Reply-Message","Callback-Number","Callback-Id","Framed-Route","Framed-IPX-Network","Class",
+      "Called-Station-Id","Calling-Station-Id","NAS-Identifier","Proxy-State","Login-LAT-Service","Login-LAT-Node",
+      "Login-LAT-Group","Framed-AppleTalk-Zone","Acct-Session-Id","Acct-Multi-Session-Id"]
 
   override_profile_type:
     description:
