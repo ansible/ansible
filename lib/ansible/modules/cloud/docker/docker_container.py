@@ -267,7 +267,7 @@ options:
       - "Use docker CLI syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000), where 8000 is a
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
-      - A value of all will publish all exposed container ports to random host ports, ignoring
+      - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
         a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
@@ -1223,7 +1223,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_env = None
         self.parameters_map = dict()
         self.parameters_map['expected_links'] = 'links'
-        self.parameters_map['expected_ports'] = 'published_ports'
+        self.parameters_map['expected_ports'] = 'expected_ports'
         self.parameters_map['expected_exposed'] = 'exposed_ports'
         self.parameters_map['expected_volumes'] = 'volumes'
         self.parameters_map['expected_ulimits'] = 'ulimits'
@@ -1408,7 +1408,8 @@ class Container(DockerBaseClass):
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            working_dir=config.get('WorkingDir')
+            working_dir=config.get('WorkingDir'),
+            publish_all_ports=host_config.get('PublishAllPorts'),
         )
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
@@ -1817,11 +1818,19 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
+
+        # If the image parameter was passed then we need to deal with the image
+        # version comparison. Otherwise we handle this depending on whether
+        # the container already runs or not; in the former case, in case the
+        # container needs to be restarted, we use the existing container's
+        # image ID.
         image = self._get_image()
         self.log(image, pretty_print=True)
         if not container.exists:
             # New container
             self.log('No container found')
+            if not self.parameters.image:
+                self.fail('Cannot create container when image is not specified!')
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -1837,10 +1846,15 @@ class ContainerManager(DockerBaseClass):
                     self.diff['image_different'] = True
                 self.log("differences")
                 self.log(differences, pretty_print=True)
+                image_to_use = self.parameters.image
+                if not image_to_use and container and container.Image:
+                    image_to_use = container.Image
+                if not image_to_use:
+                    self.fail('Cannot recreate container when image is not specified or cannot be extracted from current container!')
                 if container.running:
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
-                new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+                new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
 
@@ -2127,6 +2141,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Process legacy ignore options
         if self.module.params['ignore_image']:
             comparisons['image']['comparison'] = 'ignore'
+        # Add implicit options
+        comparisons['publish_all_ports'] = dict(type='value', comparison='strict', name='published_ports')
+        comparisons['expected_ports'] = dict(type='dict', comparison=comparisons['published_ports']['comparison'], name='expected_ports')
         self.comparisons = comparisons
 
     def __init__(self, **kwargs):

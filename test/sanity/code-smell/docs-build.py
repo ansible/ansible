@@ -3,18 +3,34 @@
 import os
 import re
 import subprocess
+import sys
 
 
 def main():
-    base_dir = os.getcwd() + os.sep
+    base_dir = os.getcwd() + os.path.sep
     docs_dir = os.path.abspath('docs/docsite')
     cmd = ['make', 'singlehtmldocs']
 
     sphinx = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=docs_dir)
     stdout, stderr = sphinx.communicate()
 
+    stdout = stdout.decode('utf-8')
+    stderr = stderr.decode('utf-8')
+
     if sphinx.returncode != 0:
-        raise subprocess.CalledProcessError(sphinx.returncode, cmd, output=stdout, stderr=stderr)
+        sys.stderr.write("Command '%s' failed with status code: %d\n" % (' '.join(cmd), sphinx.returncode))
+
+        if stdout.strip():
+            stdout = simplify_stdout(stdout)
+
+            sys.stderr.write("--> Standard Output\n")
+            sys.stderr.write("%s\n" % stdout.strip())
+
+        if stderr.strip():
+            sys.stderr.write("--> Standard Error\n")
+            sys.stderr.write("%s\n" % stderr.strip())
+
+        sys.exit(1)
 
     with open('docs/docsite/rst_warnings', 'r') as warnings_fd:
         output = warnings_fd.read().strip()
@@ -95,6 +111,41 @@ def main():
 
     for code in unused_ignore_codes:
         print('test/sanity/code-smell/docs-build.py:0:0: remove `%s` from the `ignore_codes` list as it is no longer needed' % code)
+
+
+def simplify_stdout(value):
+    """Simplify output by omitting earlier 'rendering: ...' messages."""
+    lines = value.strip().splitlines()
+
+    rendering = []
+    keep = []
+
+    def truncate_rendering():
+        """Keep last rendering line (if any) with a message about omitted lines as needed."""
+        if not rendering:
+            return
+
+        notice = rendering[-1]
+
+        if len(rendering) > 1:
+            notice += ' (%d previous rendering line(s) omitted)' % (len(rendering) - 1)
+
+        keep.append(notice)
+        rendering[:] = []
+
+    for line in lines:
+        if line.startswith('rendering: '):
+            rendering.append(line)
+            continue
+
+        truncate_rendering()
+        keep.append(line)
+
+    truncate_rendering()
+
+    result = '\n'.join(keep)
+
+    return result
 
 
 if __name__ == '__main__':

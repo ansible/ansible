@@ -1,0 +1,2 @@
+bugfixes:
+    - "os_router - ``enable_snat: no`` was ignored."

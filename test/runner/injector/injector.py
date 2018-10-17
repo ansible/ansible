@@ -32,6 +32,7 @@ import sys
 import pipes
 import logging
 import getpass
+import resource
 
 logger = logging.getLogger('injector')  # pylint: disable=locally-disabled, invalid-name
 # pylint: disable=locally-disabled, invalid-name
@@ -90,6 +91,17 @@ def main():
     try:
         logger.debug('Self: %s', __file__)
 
+        # to achieve a consistent nofile ulimit, set to 16k here, this can affect performance in subprocess.Popen when
+        # being called with close_fds=True on Python (8x the time on some environments)
+        nofile_limit = 16 * 1024
+        current_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        new_limit = (nofile_limit, nofile_limit)
+        if current_limit > new_limit:
+            logger.debug('RLIMIT_NOFILE: %s -> %s', current_limit, new_limit)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (nofile_limit, nofile_limit))
+        else:
+            logger.debug('RLIMIT_NOFILE: %s', current_limit)
+
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'injector.json')
 
         try:
@@ -110,6 +122,8 @@ def main():
                 args, env, require_cwd = cover()
             else:
                 args, env = runner()
+        elif os.path.basename(__file__) == 'python.py':
+            args, env = python()  # run arbitrary python commands using the correct python and with optional code coverage
         else:
             args, env = injector()
 
@@ -140,6 +154,20 @@ def main():
     except Exception as ex:
         logger.fatal(ex)
         raise
+
+
+def python():
+    """
+    :rtype: list[str], dict[str, str]
+    """
+    if config.coverage_file:
+        args, env = coverage_command()
+    else:
+        args, env = [config.python_interpreter], os.environ.copy()
+
+    args += config.arguments[1:]
+
+    return args, env
 
 
 def injector():
@@ -233,10 +261,10 @@ def find_executable(executable):
     :rtype: str
     """
     self = os.path.abspath(__file__)
-    path = os.environ.get('PATH', os.defpath)
+    path = os.environ.get('PATH', os.path.defpath)
     seen_dirs = set()
 
-    for path_dir in path.split(os.pathsep):
+    for path_dir in path.split(os.path.pathsep):
         if path_dir in seen_dirs:
             continue
 

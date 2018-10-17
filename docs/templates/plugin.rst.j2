@@ -384,7 +384,7 @@ Status
 ------
 {% if not deprecated %}
 
-{%   set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
+{%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
 {%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
 
 {%   if metadata %}
@@ -396,12 +396,24 @@ This module is flagged as **@{cur_state}@** which means that @{module_states[cur
 
 {%     endif %}
 
-{%     if metadata.supported_by in ('core', 'network') %}
+{%     if metadata.supported_by %}
+
+Maintenance
+-----------
+
+{%       set supported_by = support[metadata.supported_by] %}
+This @{ plugin_type }@ is flagged as **@{metadata.supported_by}@** which means that it is maintained by @{ supported_by }@. See :ref:`Module Maintenance & Support <modules_support>` for more info.
+
+For a list of other modules that are also maintained by @{ supported_by }@, see :ref:`here <@{ metadata.supported_by }@_supported>`.
+
+{%       if metadata.supported_by in ('core', 'network') %}
 
 Support
 ~~~~~~~
+
 For more information about Red Hat's support of this @{ plugin_type }@,
 please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
+{%       endif %}
 
 {%     endif %}
 {%   endif %}

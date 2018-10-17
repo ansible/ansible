@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-# PYTHON_ARGCOMPLETE_OK
 """Test runner for all Ansible tests."""
 
 from __future__ import absolute_import, print_function
 
 import errno
 import os
+import resource
 import sys
 
 from lib.util import (
@@ -14,6 +13,7 @@ from lib.util import (
     raw_command,
     get_docker_completion,
     generate_pip_command,
+    read_lines_without_comments,
 )
 
 from lib.delegation import (
@@ -72,7 +72,7 @@ import lib.cover
 def main():
     """Main program function."""
     try:
-        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
         os.chdir(git_root)
         initialize_cloud_plugins()
         sanity_init()
@@ -85,6 +85,17 @@ def main():
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
 
+        # to achieve a consistent nofile ulimit, set to 16k here, this can affect performance in subprocess.Popen when
+        # being called with close_fds=True on Python (8x the time on some environments)
+        nofile_limit = 16 * 1024
+        current_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        new_limit = (nofile_limit, nofile_limit)
+        if current_limit > new_limit:
+            display.info('RLIMIT_NOFILE: %s -> %s' % (current_limit, new_limit), verbosity=2)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (nofile_limit, nofile_limit))
+        else:
+            display.info('RLIMIT_NOFILE: %s' % (current_limit, ), verbosity=2)
+
         try:
             args.func(config)
         except Delegate as ex:
@@ -92,10 +103,10 @@ def main():
 
         display.review_warnings()
     except ApplicationWarning as ex:
-        display.warning(str(ex))
+        display.warning(u'%s' % ex)
         exit(0)
     except ApplicationError as ex:
-        display.error(str(ex))
+        display.error(u'%s' % ex)
         exit(1)
     except KeyboardInterrupt:
         exit(2)
@@ -169,6 +180,11 @@ def parse_args():
                       metavar='TARGET',
                       nargs='*',
                       help='test the specified target').completer = complete_target
+
+    test.add_argument('--include',
+                      metavar='TARGET',
+                      action='append',
+                      help='include the specified target').completer = complete_target
 
     test.add_argument('--exclude',
                       metavar='TARGET',
@@ -262,6 +278,11 @@ def parse_args():
                              default='all',
                              help='target to run when all tests are needed')
 
+    integration.add_argument('--changed-all-mode',
+                             metavar='MODE',
+                             choices=('default', 'include', 'exclude'),
+                             help='include/exclude behavior with --changed-all-target: %(choices)s')
+
     integration.add_argument('--list-targets',
                              action='store_true',
                              help='list matching targets instead of running tests')
@@ -312,6 +333,7 @@ def parse_args():
                                      config=WindowsIntegrationConfig)
 
     add_extra_docker_options(windows_integration, integration=False)
+    add_httptester_options(windows_integration, argparse)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -334,6 +356,10 @@ def parse_args():
     units.add_argument('--collect-only',
                        action='store_true',
                        help='collect tests but do not execute them')
+
+    units.add_argument('--requirements-mode',
+                       choices=('only', 'skip'),
+                       help=argparse.SUPPRESS)
 
     add_extra_docker_options(units, integration=False)
 
@@ -564,7 +590,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
     environments.add_argument('--remote',
                               metavar='PLATFORM',
                               default=None,
-                              help='run from a remote instance').completer = complete_remote
+                              help='run from a remote instance').completer = complete_remote_shell if parser.prog.endswith(' shell') else complete_remote
 
     remote = parser.add_argument_group(title='remote arguments')
 
@@ -685,8 +711,23 @@ def complete_remote(prefix, parsed_args, **_):
     """
     del parsed_args
 
-    with open('test/runner/completion/remote.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = read_lines_without_comments('test/runner/completion/remote.txt', remove_blank_lines=True)
+
+    return [i for i in images if i.startswith(prefix)]
+
+
+def complete_remote_shell(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    images = read_lines_without_comments('test/runner/completion/remote.txt', remove_blank_lines=True)
+
+    # 2008 doesn't support SSH so we do not add to the list of valid images
+    images.extend(["windows/%s" % i for i in read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True) if i != '2008'])
 
     return [i for i in images if i.startswith(prefix)]
 
@@ -710,8 +751,7 @@ def complete_windows(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    with open('test/runner/completion/windows.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = read_lines_without_comments('test/runner/completion/windows.txt', remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
 
@@ -722,8 +762,7 @@ def complete_network_platform(prefix, parsed_args, **_):
     :type parsed_args: any
     :rtype: list[str]
     """
-    with open('test/runner/completion/network.txt', 'r') as completion_fd:
-        images = completion_fd.read().splitlines()
+    images = read_lines_without_comments('test/runner/completion/network.txt', remove_blank_lines=True)
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
@@ -764,7 +803,3 @@ def complete_sanity_test(prefix, parsed_args, **_):
     tests = sorted(t.name for t in sanity_get_tests())
 
     return [i for i in tests if i.startswith(prefix)]
-
-
-if __name__ == '__main__':
-    main()

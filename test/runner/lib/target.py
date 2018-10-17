@@ -12,6 +12,7 @@ import sys
 
 from lib.util import (
     ApplicationError,
+    read_lines_without_comments,
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -31,7 +32,7 @@ def find_target_completion(target_func, prefix):
         matches = walk_completion_targets(targets, prefix, short)
         return matches
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        return [str(ex)]
+        return [u'%s' % ex]
 
 
 def walk_completion_targets(targets, prefix, short=False):
@@ -511,8 +512,8 @@ class IntegrationTarget(CompletionTarget):
         # static_aliases
 
         try:
-            with open(os.path.join(path, 'aliases'), 'r') as aliases_file:
-                static_aliases = tuple(aliases_file.read().splitlines())
+            aliases_path = os.path.join(path, 'aliases')
+            static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
         except IOError as ex:
             if ex.errno != errno.ENOENT:
                 raise

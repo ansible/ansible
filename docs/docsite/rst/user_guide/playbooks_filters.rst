@@ -87,7 +87,7 @@ Omitting Parameters
 As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
-      file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
+      file: dest={{ item.path }} state=touch mode={{ item.mode | default(omit) }}
       loop:
         - path: /tmp/foo
         - path: /tmp/bar
@@ -123,11 +123,11 @@ To get the maximum value from a list of numbers::
 
 Flatten a list (same thing the `flatten` lookup does)::
 
-    {{ [3, [4, 2] ]|flatten }}
+    {{ [3, [4, 2] ] | flatten }}
 
 Flatten only the first level of a list (akin to the `items` lookup)::
 
-    {{ [3, [4, [2]] ]|flatten(levels=1) }}
+    {{ [3, [4, [2]] ] | flatten(levels=1) }}
 
 
 .. _set_theory_filters:
@@ -191,7 +191,7 @@ subelements Filter
 
 Produces a product of an object, and subelement values of that object, similar to the ``subelements`` lookup::
 
-    {{ users|subelements('groups', skip_missing=True) }}
+    {{ users | subelements('groups', skip_missing=True) }}
 
 Which turns::
 
@@ -241,7 +241,7 @@ An example of using this filter with ``loop``::
       authorized_key:
         user: "{{ item.0.name }}"
         key: "{{ lookup('file', item.1) }}"
-      loop: "{{ users|subelements('authorized') }}"
+      loop: "{{ users | subelements('authorized') }}"
 
 .. _random_filter:
 
@@ -255,29 +255,29 @@ items), but can also generate a random number based on a range.
 
 To get a random item from a list::
 
-    "{{ ['a','b','c']|random }}"
+    "{{ ['a','b','c'] | random }}"
     # => 'c'
 
 To get a random number between 0 and a specified number::
 
-    "{{ 60 |random}} * * * * root /script/from/cron"
+    "{{ 60 | random }} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
 
 Get a random number from 0 to 100 but in steps of 10::
 
-    {{ 101 |random(step=10) }}
+    {{ 101 | random(step=10) }}
     # => 70
 
 Get a random number from 1 to 100 but in steps of 10::
 
-    {{ 101 |random(1, 10) }}
+    {{ 101 | random(1, 10) }}
     # => 31
-    {{ 101 |random(start=1, step=10) }}
+    {{ 101 | random(start=1, step=10) }}
     # => 51
 
 As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
-    "{{ 60 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
+    "{{ 60 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 
 Shuffle Filter
@@ -289,14 +289,14 @@ This filter will randomize an existing list, giving a different order every invo
 
 To get a random list from an existing  list::
 
-    {{ ['a','b','c']|shuffle }}
+    {{ ['a','b','c'] | shuffle }}
     # => ['c','a','b']
-    {{ ['a','b','c']|shuffle }}
+    {{ ['a','b','c'] | shuffle }}
     # => ['b','c','a']
 
 As of Ansible version 2.3, it's also possible to shuffle a list idempotent. All you need is a seed.::
 
-    {{ ['a','b','c']|shuffle(seed=inventory_hostname) }}
+    {{ ['a','b','c'] | shuffle(seed=inventory_hostname) }}
     # => ['b','a','c']
 
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
@@ -651,31 +651,31 @@ Hashing filters
 
 To get the sha1 hash of a string::
 
-    {{ 'test1'|hash('sha1') }}
+    {{ 'test1' | hash('sha1') }}
 
 To get the md5 hash of a string::
 
-    {{ 'test1'|hash('md5') }}
+    {{ 'test1' | hash('md5') }}
 
 Get a string checksum::
 
-    {{ 'test2'|checksum }}
+    {{ 'test2' | checksum }}
 
 Other hashes (platform dependent)::
 
-    {{ 'test2'|hash('blowfish') }}
+    {{ 'test2' | hash('blowfish') }}
 
 To get a sha512 password hash (random salt)::
 
-    {{ 'passwordsaresecret'|password_hash('sha512') }}
+    {{ 'passwordsaresecret' | password_hash('sha512') }}
 
 To get a sha256 password hash with a specific salt::
 
-    {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
+    {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt') }}
 
 An idempotent method to generate unique hashes per system is to use a salt that is consistent between runs::
 
-    {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
+    {{ 'secretpassword' | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}
 
 Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
@@ -690,7 +690,7 @@ Combining hashes/dictionaries
 The `combine` filter allows hashes to be merged. For example, the
 following would override keys in one hash::
 
-    {{ {'a':1, 'b':2}|combine({'b':3}) }}
+    {{ {'a':1, 'b':2} | combine({'b':3}) }}
 
 The resulting hash would be::
 
@@ -702,7 +702,7 @@ hashes and merge their keys too
 
 .. code-block:: jinja
 
-    {{ {'a':{'foo':1, 'bar':2}, 'b':2}|combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
+    {{ {'a':{'foo':1, 'bar':2}, 'b':2} | combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
 
 This would result in::
 
@@ -710,7 +710,7 @@ This would result in::
 
 The filter can also take multiple arguments to merge::
 
-    {{ a|combine(b, c, d) }}
+    {{ a | combine(b, c, d) }}
 
 In this case, keys in `d` would override those in `c`, which would
 override those in `b`, and so on.
@@ -728,8 +728,8 @@ Extracting values from containers
 The `extract` filter is used to map from a list of indices to a list of
 values from a container (hash or array)::
 
-    {{ [0,2]|map('extract', ['x','y','z'])|list }}
-    {{ ['x','y']|map('extract', {'x': 42, 'y': 31})|list }}
+    {{ [0,2] | map('extract', ['x','y','z']) | list }}
+    {{ ['x','y'] | map('extract', {'x': 42, 'y': 31}) | list }}
 
 The results of the above expressions would be::
 
@@ -738,7 +738,7 @@ The results of the above expressions would be::
 
 The filter can take another argument::
 
-    {{ groups['x']|map('extract', hostvars, 'ec2_ip_address')|list }}
+    {{ groups['x'] | map('extract', hostvars, 'ec2_ip_address') | list }}
 
 This takes the list of hosts in group 'x', looks them up in `hostvars`,
 and then looks up the `ec2_ip_address` of the result. The final result
@@ -747,7 +747,7 @@ is a list of IP addresses for the hosts in group 'x'.
 The third argument to the filter can also be a list, for a recursive
 lookup inside the container::
 
-    {{ ['a']|map('extract', b, ['x','y'])|list }}
+    {{ ['a'] | map('extract', b, ['x','y']) | list }}
 
 This would return a list containing the value of `b['a']['x']['y']`.
 
@@ -1029,19 +1029,19 @@ doesn't know it is a boolean value::
 To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
-    {{ ansible_mounts|map(attribute='mount')|join(',') }}
+    {{ ansible_mounts | map(attribute='mount') | join(',') }}
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
     # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
-    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).total_seconds()  }}
+    {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).total_seconds()  }}
 
     # Get remaining seconds after delta has been calculated. NOTE: This does NOT convert years, days, hours, etc to seconds. For that, use total_seconds()
-    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2016-08-14 18:00:00"|to_datetime)).seconds  }}
+    {{ (("2016-08-14 20:00:12" | to_datetime) - ("2016-08-14 18:00:00" | to_datetime)).seconds  }}
     # This expression evaluates to "12" and not "132". Delta is 2 hours, 12 seconds
 
     # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
-    {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).days  }}
+    {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).days  }}
 
 Combination Filters
 ````````````````````
@@ -1053,34 +1053,34 @@ To get permutations of a list::
 
     - name: give me largest permutations (order matters)
       debug:
-        msg: "{{ [1,2,3,4,5]|permutations|list }}"
+        msg: "{{ [1,2,3,4,5] | permutations | list }}"
 
     - name: give me permutations of sets of three
       debug:
-        msg: "{{ [1,2,3,4,5]|permutations(3)|list }}"
+        msg: "{{ [1,2,3,4,5] | permutations(3) | list }}"
 
 Combinations always require a set size::
 
     - name: give me combinations for sets of two
       debug:
-        msg: "{{ [1,2,3,4,5]|combinations(2)|list }}"
+        msg: "{{ [1,2,3,4,5] | combinations(2) | list }}"
 
 
 To get a list combining the elements of other lists use ``zip``::
 
     - name: give me list combo of two lists
       debug:
-       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
+       msg: "{{ [1,2,3,4,5] | zip(['a','b','c','d','e','f']) | list }}"
 
     - name: give me shortest combo of two lists
       debug:
-        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
+        msg: "{{ [1,2,3] | zip(['a','b','c','d','e','f']) | list }}"
 
 To always exhaust all list use ``zip_longest``::
 
     - name: give me longest combo of three lists , fill with X
       debug:
-        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
+        msg: "{{ [1,2,3] | zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X') | list }}"
 
 
 .. versionadded:: 2.4
