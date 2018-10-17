@@ -72,8 +72,6 @@ options:
             location_name:
                 description:
                     - The name of the region.
-            provisioning_state:
-                description:
             failover_priority:
                 description:
                     - "The failover priority of the region. A failover priority of 0 indicates a write region. The maximum value for a failover priority =
