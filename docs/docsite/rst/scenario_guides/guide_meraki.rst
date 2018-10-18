@@ -28,7 +28,7 @@ Meraki's MX firewalls support full layer 3-7 deep packet inspection. MX firewall
 MR Wireless Access Points
 -------------------------
 
-MR access points are enterprise class, high performance, access points for the enterprise. MR access points have MIMO technology and integrated beamforming built-in for high performance applications. BLE allows for advanced location applications to be developed with no on-premises analytics platforms.
+MR access points are enterprise-class, high-performance access points for the enterprise. MR access points have MIMO technology and integrated beamforming built-in for high performance applications. BLE allows for advanced location applications to be developed with no on-premises analytics platforms.
 
 Using the Meraki modules
 ========================
