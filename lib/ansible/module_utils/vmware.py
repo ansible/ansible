@@ -165,8 +165,11 @@ def get_parent_datacenter(obj):
     return datacenter
 
 
-def find_datastore_by_name(content, datastore_name):
-    return find_object_by_name(content, datastore_name, [vim.Datastore])
+def find_datastore_by_name(content, datastore_name, datacenter=None):
+    folder = None
+    if datacenter:
+        folder = datacenter.datastoreFolder
+    return find_object_by_name(content, datastore_name, [vim.Datastore], folder)
 
 
 def find_dvs_by_name(content, switch_name):
@@ -482,6 +485,10 @@ def vmware_argument_spec():
 
 
 def connect_to_api(module, disconnect_atexit=True):
+    return connect_to_si(module, disconnect_atexit=disconnect_atexit).RetrieveContent()
+
+
+def connect_to_si(module, disconnect_atexit=True):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
@@ -545,7 +552,7 @@ def connect_to_api(module, disconnect_atexit=True):
     # Also removal significantly speeds up the return of the module
     if disconnect_atexit:
         atexit.register(connect.Disconnect, service_instance)
-    return service_instance.RetrieveContent()
+    return service_instance
 
 
 def get_all_objs(content, vimtype, folder=None, recurse=True):
@@ -793,9 +800,28 @@ class PyVmomi(object):
 
         self.module = module
         self.params = module.params
-        self.si = None
         self.current_vm_obj = None
-        self.content = connect_to_api(self.module)
+        self.si = connect_to_si(self.module)
+        self.content = self.si.RetrieveContent()
+
+    def acquire_service_ticket(self, url, method):
+        """
+        Acquire credentials to log into an ESXi Host directly.
+
+        This can be used, for example, to access the datastore file
+        URI on an ESXi Host.
+
+        Args:
+            url (str): The URL one plans to use
+            method (str): The HTTP method one plans to use, for
+                example 'GET', 'PUT', 'POST', 'HEAD', etc.
+
+        Returns:
+            vim.SessionManagerGenericServiceTicket
+        """
+        return self.content.sessionManager.AcquireGenericServiceTicket(
+            spec=vim.SessionManagerHttpServiceRequestSpec(
+                url=url, method='http' + method.title()))
 
     def is_vcenter(self):
         """
@@ -1147,16 +1173,17 @@ class PyVmomi(object):
         """
         return find_datacenter_by_name(self.content, datacenter_name=datacenter_name)
 
-    def find_datastore_by_name(self, datastore_name):
+    def find_datastore_by_name(self, datastore_name, datacenter=None):
         """
         Function to get datastore managed object by name
         Args:
             datastore_name: Name of datastore
+            datacenter: (optional) datacenter managed object to scope the request
 
         Returns: datastore managed object if found else None
 
         """
-        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+        return find_datastore_by_name(self.content, datastore_name=datastore_name, datacenter=datacenter)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):
