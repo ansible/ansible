@@ -630,25 +630,83 @@ class PamdService(object):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
 
-        changed = 0
+        changes = 0
 
         for current_rule in rules_to_find:
+            rule_changed = False
             if isinstance(args_to_add, str):
                 args_to_add = args_to_add.replace(" = ", "=")
                 args_to_add = args_to_add.split(' ')
             if not args_to_add:
                 args_to_add = []
-            # Create a list of new args that aren't already present
-            new_args = [arg for arg in args_to_add if arg not in current_rule.rule_args]
-            # If there aren't any new args to add, we'll move on to the next rule
-            if not new_args:
-                continue
 
-            current_rule.rule_args = current_rule.rule_args + new_args
+            # create some structures to evaluate the situation
+            new_args_d = dict()
+            no_eq_new_args = set()
+            for new_arg in args_to_add:
+                if new_arg.count("=") is 0:
+                    no_eq_new_args.add(new_arg)
+                else:
+                    pair = new_arg.split("=")
+                    new_args_d[pair[0]] = pair[1]
+            new_args_k = set(new_args_d.keys())
 
-            changed += 1
+            rule_args_d = dict()
+            no_eq_rule_args = set()
+            for rule_arg in current_rule.rule_args:
+                if rule_arg.count("=") is 0:
+                    no_eq_rule_args.add(rule_arg)
+                else:
+                    pair = rule_arg.split("=")
+                    rule_args_d[pair[0]] = pair[1]
+            rule_args_k = set(rule_args_d.keys())
 
-        return changed
+            # if there is nothing in common and neither set is empty
+            if ((no_eq_new_args.isdisjoint(no_eq_rule_args))
+            and (len(no_eq_new_args) is not 0)
+            and (len(no_eq_rule_args) is not 0)):
+                rule_changed = True
+                for new_arg in no_eq_new_args:
+                    no_eq_rule_args.add(new_arg)
+            # else there's an intersection and possibly new args
+            else:
+                real_new_no_eq_args = no_eq_new_args.difference(no_eq_rule_args)
+                for new_arg in real_new_no_eq_args:
+                    no_eq_rule_args.add(new_arg)
+
+            # if there are only new args that are not the same as any current rule args and neither set is empty
+            if((new_args_k.isdisjoint(rule_args_k))
+            and (len(new_args_k) is not 0)
+            and (len(rule_args_k) is not 0)):
+                rule_changed = True
+                for key in new_args_k:
+                    rule_args_d[key] = new_args_d[key]
+            # else there's an intersection and possibly new args
+            else:
+                # what args are in both new_args_d and rule_args_d
+                args_in_both = new_args_k.intersection(rule_args_k)
+                # what args are in new_args_d that aren't in rule_args_d
+                real_new_args = new_args_k.difference(rule_args_k)
+
+                for key in args_in_both:
+                    if new_args_d[key] is not rule_args_d[key]:
+                        rule_changed = True
+                        rule_args_d[key] = new_args_d[key]
+
+                for key in real_new_args:
+                    rule_changed = True
+                    rule_args_d[key] = new_args_d[key]
+
+            if rule_changed:
+                new_rule_args = list()
+                for rule_arg in rule_args_d:
+                    new_rule_args.append(rule_arg + "=" + rule_args_d[rule_arg])
+                for rule_arg in no_eq_rule_args:
+                    new_rule_args.append(rule_arg)
+                current_rule.rule_args = new_rule_args
+                changes += 1
+
+        return changes
 
     def remove_module_arguments(self, rule_type, rule_control, rule_path, args_to_remove):
         # Get a list of rules we want to change
