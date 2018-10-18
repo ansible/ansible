@@ -4,7 +4,7 @@ tested_filesystems:
   #   grow: True if resizefs is supported
   # Other minimal sizes:
   # - XFS: 20Mo
-  # - Btrfs: 100Mo (50Mo when "--metadata single" is used)
+  # - Btrfs: 150Mo (50Mo when "--metadata single" is used and 100Mb when on newer Fedora versions)
   # - f2fs:
   #     - 1.2.0 requires at leat 116Mo
   #     - 1.7.0 requires at least 30Mo
