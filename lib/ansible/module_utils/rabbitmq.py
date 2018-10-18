@@ -42,6 +42,7 @@ class RabbitClient():
         self.module = module
         self.params = module.params
         self.check_required_library()
+        self.check_host_params()
         self.url = self.params['url']
         self.proto = self.params['proto']
         self.username = self.params['username']
@@ -60,6 +61,15 @@ class RabbitClient():
         if not HAS_PIKA:
             self.module.fail_json(msg="Unable to find 'pika' Python library which is required.")
 
+    def check_host_params(self):
+        # Fail if url is specified and other conflicting parameters have been specified
+        if self.params['url'] is not None and any(self.params[k] is not None for k in ['proto', 'host', 'port', 'password', 'username', 'vhost']):
+            self.module.fail_json(msg="url and proto, host, port, vhost, username or password cannot be specified at the same time.")
+
+        # Fail if url not specified and there is a missing parameter to build the url
+        if self.params['url'] is None and any(self.params[k] is None for k in ['proto', 'host', 'port', 'password', 'username', 'vhost']):
+            self.module.fail_json(msg="Connection parameters must be passed via url, or,  proto, host, port, vhost, username or password.")
+
     @staticmethod
     def rabbitmq_argument_spec():
         return dict(
@@ -69,7 +79,7 @@ class RabbitClient():
             port=dict(default=None, type='int'),
             username=dict(default=None, type='str'),
             password=dict(default=None, type='str', no_log=True),
-            vhost=dict(default='%2F', type='str'),
+            vhost=dict(default=None, type='str'),
             queue=dict(default=None, type='str')
         )
 

@@ -43,7 +43,7 @@ options:
   vhost:
     description:
       - The virtual host to target.
-    default: '%2F'
+      - If default vhost is required, use C('%2F').
   queue:
     description:
       - The queue to publish a message to.  If no queue is specified, RabbitMQ will return a random queue name.
@@ -155,10 +155,6 @@ def main():
 
     if module.params['body'] is not None and module.params['src'] is not None:
         module.fail_json(msg="src and body cannot be specified at the same time")
-
-    # maybe use all() here?  This needs a tidy up.
-    if module.params['url'] is not None and (module.params['host'] is not None or module.params['port'] is not None or module.params['username'] is not None or module.params['password'] is not None  ):
-        module.fail_json(msg="url and host, port, username or password cannot be specified at the same time")
 
     if rabbitmq.basic_publish():
         rabbitmq.close_connection()

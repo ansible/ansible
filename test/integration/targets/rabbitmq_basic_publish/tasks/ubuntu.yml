@@ -65,10 +65,10 @@
       - "rabbit_basic_fail_output1 is failed"
       - "'src and body cannot be specified at the same time' in rabbit_basic_fail_output1.msg"
 
-- name: File does not exist
+- name: Publish a file that does not exist
   rabbitmq_basic_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
-    queue: 'hello'
+    queue: 'publish_test'
     src: 'aaaaaaajax-loader.gif'
   register: file_missing_fail
   ignore_errors: yes
@@ -79,7 +79,7 @@
       - "file_missing_fail is failed"
       - "'Unable to open file' in file_missing_fail.msg"
 
-- name: Use proto/host/port/user/pass
+- name: Publish with proto/host/port/user/pass
   rabbitmq_basic_publish:
     proto: amqp
     host: localhost
@@ -88,13 +88,52 @@
     password: guest
     vhost: '%2F'
     queue: publish_test
-    body: Testing with host/port
+    body: Testing with proto/host/port/username/password/vhost
   delegate_to: localhost
   register: host_port_output
 
 - assert:
     that:
       - "host_port_output is not failed"
+
+- name: Publish with host/port/user but missing proto
+  rabbitmq_basic_publish:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    vhost: '%2F'
+    queue: publish_test
+    body: Testing with proto/host/port/username/password/vhost
+  delegate_to: localhost
+  ignore_errors: yes
+  register: host_port_missing_proto_output
+
+- assert:
+    that:
+      - "host_port_missing_proto_output is failed"
+      - "'Connection parameters must be passed via' in host_port_missing_proto_output.msg"
+
+- name: Publish with proto/host/port/user and url
+  rabbitmq_basic_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    proto: amqp
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    vhost: '%2F'
+    queue: publish_test
+    body: Testing with proto/host/port/username/password/vhost
+  delegate_to: localhost
+  ignore_errors: yes
+  register: host_and_url_output
+
+- assert:
+    that:
+      - "host_and_url_output is failed"
+      - "'cannot be specified at the same time' in host_and_url_output.msg"
+
 
 - name: Collect all messages off the publish queue
   set_fact:
@@ -107,7 +146,7 @@
       - "'Hello world from ansible module rabitmq_basic_publish' in messages[0]['msg']"
       - "'text/plain' in messages[0]['content_type']"
       - "'image/gif' in messages[1]['content_type']"
-      - "'Testing with host/port' in messages[2]['msg']"
+      - "'Testing with proto/host/port/username/password/vhost' in messages[2]['msg']"
 
 # Tidy up
 - name: Uninstall pika and requests
