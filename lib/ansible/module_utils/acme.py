@@ -686,9 +686,8 @@ class ACMEAccount(object):
             # try POST-as-GET first (draft-15 or newer)
             data = None
             result, info = self.send_signed_request(self.uri, data)
-            # check whether that failed with a malformedRequest error
-            if info['status'] >= 400 and result.get('type') in ('urn:ietf:params:acme:error:malformed',
-                                                                'urn:ietf:params:acme:error:malformedRequest'):
+            # check whether that failed with a malformed request error
+            if info['status'] >= 400 and result.get('type') == 'urn:ietf:params:acme:error:malformed':
                 # retry as a regular POST (with no changed data) for pre-draft-15 ACME servers
                 data = {}
                 result, info = self.send_signed_request(self.uri, data)
