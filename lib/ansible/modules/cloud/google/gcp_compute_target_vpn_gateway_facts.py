@@ -61,7 +61,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -71,7 +71,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -106,7 +106,7 @@ items:
                 - A list of references to VpnTunnel resources associated to this VPN gateway.
             returned: success
             type: list
-        forwarding_rules:
+        forwardingRules:
             description:
                 - A list of references to the ForwardingRule resources associated to this VPN gateway.
             returned: success

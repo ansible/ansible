@@ -61,7 +61,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -71,7 +71,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -82,7 +82,7 @@ items:
                   the resource. This field can be set only at resource creation time.
             returned: success
             type: str
-        gateway_address:
+        gatewayAddress:
             description:
                 - The gateway address for default routes to reach destination addresses outside this
                   subnetwork.
@@ -93,7 +93,7 @@ items:
                 - The unique identifier for the resource.
             returned: success
             type: int
-        ip_cidr_range:
+        ipCidrRange:
             description:
                 - The range of internal addresses that are owned by this subnetwork.
                 - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
@@ -117,7 +117,41 @@ items:
                 - Only networks that are in the distributed mode can have subnetworks.
             returned: success
             type: dict
-        private_ip_google_access:
+        enableFlowLogs:
+            description:
+                - Whether to enable flow logging for this subnetwork.
+            returned: success
+            type: bool
+        fingerprint:
+            description:
+                - Fingerprint of this resource. This field is used internally during updates of this
+                  resource.
+            returned: success
+            type: str
+        secondaryIpRanges:
+            description:
+                - An array of configurations for secondary IP ranges for VM instances contained in
+                  this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
+                  of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
+            returned: success
+            type: complex
+            contains:
+                rangeName:
+                    description:
+                        - The name associated with this subnetwork secondary range, used when adding an alias
+                          IP range to a VM instance. The name must be 1-63 characters long, and comply with
+                          RFC1035. The name must be unique within the subnetwork.
+                    returned: success
+                    type: str
+                ipCidrRange:
+                    description:
+                        - The range of IP addresses belonging to this subnetwork secondary range. Provide
+                          this property when you create the subnetwork.
+                        - Ranges must be unique and non-overlapping with all primary and secondary IP ranges
+                          within a network. Only IPv4 is supported.
+                    returned: success
+                    type: str
+        privateIpGoogleAccess:
             description:
                 - Whether the VMs in this subnet can access Google services without assigned external
                   IP addresses.
