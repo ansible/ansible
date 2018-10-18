@@ -47,7 +47,7 @@ MODULE_RESULT = {"msg": "Configuration template run completed.", "parameters": {
 
 
 @patch('vdirect_client.rest_client.RestClient')
-class RestClient ():
+class RestClient:
     def __init__(self, vdirect_ip=None, vdirect_user=None, vdirect_password=None, wait=None,
                  secondary_vdirect_ip=None, https_port=None, http_port=None,
                  timeout=None, https=None, strict_http_results=None,
@@ -56,7 +56,7 @@ class RestClient ():
 
 
 @patch('vdirect_client.rest_client.Runnable')
-class Runnable ():
+class Runnable:
     available_actions_result = None
     action_info_result = None
     runnable_objects_result = None

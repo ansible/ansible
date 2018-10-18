@@ -363,7 +363,7 @@ def main():
     # The server could be in a changeing or error state.
     # Wait for one of the allowed states before doing anything.
     # If an allowed state can't be reached, this module fails.
-    if not server.info['state'] in ALLOWED_STATES:
+    if server.info['state'] not in ALLOWED_STATES:
         server.wait_for_state(ALLOWED_STATES)
     current_state = server.info['state']
 

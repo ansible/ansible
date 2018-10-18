@@ -550,7 +550,7 @@ class MgmtInterface(object):
             url_address_info = socket.getaddrinfo(iface["address"], 8443)
             update_used_matching_address = any(info in url_address_info for info in address_info)
 
-        self._logger.info("update_used_matching_address: " + str(update_used_matching_address))
+        self._logger.info("update_used_matching_address: %s", update_used_matching_address)
 
         # Populate the body of the request and check for changes
         if self.enable_interface is not None:

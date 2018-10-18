@@ -48,7 +48,7 @@ MODULE_RESULT = {"msg": "Requested actions were successfully performed on all de
 
 
 @patch('vdirect_client.rest_client.RestClient')
-class RestClient ():
+class RestClient:
     def __init__(self, vdirect_ip=None, vdirect_user=None, vdirect_password=None, wait=None,
                  secondary_vdirect_ip=None, https_port=None, http_port=None,
                  timeout=None, https=None, strict_http_results=None,
@@ -56,7 +56,7 @@ class RestClient ():
         pass
 
 
-class DeviceMock ():
+class DeviceMock:
 
     def __init__(self, name, client):
         self.name = name
