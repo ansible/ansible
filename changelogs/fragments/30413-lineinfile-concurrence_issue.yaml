@@ -1,0 +1,4 @@
+bugfixes:
+- "lineinfile now uses FileLock to prevent concurrency issues, fixes #30413"
+- "common.file.FileLocking now properly handles lock_timeout = None and negative int"
+- "common.file.FileLocking now locks the actual file instead of per-user lock files making locks global for processes that supports it"

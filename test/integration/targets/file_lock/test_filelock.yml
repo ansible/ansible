@@ -1,0 +1,55 @@
+---
+- hosts: lockhosts
+  gather_facts: no
+  vars:
+    testfile: ~/ansible_testing/lock.test
+  tasks:
+  - name: Remove testfile
+    file:
+      path: '{{ testfile }}'
+      state: absent
+    run_once: yes
+
+  - name: Write inventory_hostname to testfile concurrently
+    lineinfile:
+      path: '{{ testfile }}'
+      line: '{{ inventory_hostname }}'
+      create: yes
+      state: present
+#    async: 60
+#    poll: 0
+#    register: write_waiter
+
+#  - name: wait for write jobs to finish
+#    async_status:
+#      jid: "{{ write_waiter.ansible_job_id }}"
+#    register: write_job_result
+#    until: write_job_result.finished
+#    retries: 60
+
+  - debug:
+      msg: "File {{ testfile }} has {{ content.split('\n')|length }} lines for {{ ansible_play_batch|length }} instances"
+    vars:
+      content: "{{ lookup('file', testfile) }}"
+    run_once: yes
+
+  - name: Assert we get the expected number of lines
+    assert:
+      that:
+      - content.split('\n')|length == ansible_play_batch|length
+    vars:
+      content: "{{ lookup('file', testfile) }}"
+    run_once: yes
+
+  - name: Check testfile for inventory_hostname entries
+    lineinfile:
+      path: '{{ testfile }}'
+      line: '{{ inventory_hostname }}'
+      state: present
+    register: check_lockfile
+
+  - name: Assert locking results
+    assert:
+      that:
+      - check_lockfile is not changed
+      - check_lockfile is not failed
