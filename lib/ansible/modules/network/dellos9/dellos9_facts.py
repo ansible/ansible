@@ -370,6 +370,7 @@ class Interfaces(FactsBase):
         return parsed
 
     def parse_mgmt_interfaces(self, data):
+        key = None
         parsed = dict()
         interface_start = True
         for line in data.split('\n'):
@@ -387,6 +388,7 @@ class Interfaces(FactsBase):
         return parsed
 
     def parse_vlan_interfaces(self, data):
+        key = None
         parsed = dict()
         interface_start = True
         line_before_end = False
@@ -410,6 +412,7 @@ class Interfaces(FactsBase):
         return parsed
 
     def parse_ipv6_interfaces(self, data):
+        key = None
         parsed = dict()
         for line in data.split('\n'):
             if len(line) == 0:

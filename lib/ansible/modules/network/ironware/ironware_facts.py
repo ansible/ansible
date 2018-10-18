@@ -266,6 +266,7 @@ class MPLS(FactsBase):
             self.facts['mpls_vpls'] = self.populate_vpls(data)
 
     def parse_mpls(self, data):
+        key = None
         parsed = dict()
         for line in data.split('\n'):
             if not line:
@@ -506,6 +507,7 @@ class Interfaces(FactsBase):
         return facts
 
     def parse_interfaces(self, data):
+        key = None
         parsed = dict()
         for line in data.split('\n'):
             if not line:

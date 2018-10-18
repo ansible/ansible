@@ -107,11 +107,11 @@ def retry(retries=None, retry_pause=1):
         retry_count = 0
 
         def retried(*args, **kwargs):
+            global retry_count
             if retries is not None:
                 ret = None
                 while True:
-                    # pylint doesn't understand this is a closure
-                    retry_count += 1  # pylint: disable=undefined-variable
+                    retry_count += 1
                     if retry_count >= retries:
                         raise Exception("Retry limit exceeded: %d" % retries)
                     try:
