@@ -20,7 +20,7 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about a image image from OpenStack.
 notes:
-    - Facts are placed in the C(openstack) variable.
+    - Facts are placed in the C(openstack_image) variable.
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
