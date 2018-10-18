@@ -180,7 +180,9 @@ EXAMPLES = r'''
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
-    headers: 'key:value,key:value'
+    headers:
+      key1: one
+      key2: two
 
 - name: Download file with check (sha256)
   get_url:
