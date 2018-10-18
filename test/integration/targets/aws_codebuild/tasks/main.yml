@@ -20,7 +20,7 @@
       iam_role:
         name: "{{ resource_prefix }}-codebuild-service-role"
         description: Role with permissions for CodeBuild actions.
-        assume_role_policy_document: "{{ lookup('file', 'codedbuild_iam_trust_policy.json') }}"
+        assume_role_policy_document: "{{ lookup('file', 'codebuild_iam_trust_policy.json') }}"
         state: present
         <<: *aws_connection_info
       register: codebuild_iam_role
@@ -90,7 +90,7 @@
           - { key: 'purpose', value: 'ansible-test' }
         state: present
         <<: *aws_connection_info
-      regiser: rerun_test_output
+      register: rerun_test_output
 
     - assert:
         that:
@@ -103,10 +103,12 @@
         <<: *aws_connection_info
       async: 300
 
-    # ============================== cleanup ======================================
+  # ============================== cleanup ======================================
+
+  always:
 
     - name: cleanup IAM role created for CodeBuild test
       iam_role:
         name: "{{ resource_prefix }}-codebuild-service-role"
-        state: absend
+        state: absent
         <<: *aws_connection_info
