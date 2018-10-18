@@ -277,6 +277,10 @@ extends_documentation_fragment:
 - docker
 requirements:
 - "docker-py >= 2.0"
+- "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+   module has been superseded by L(docker,https://pypi.org/project/docker/)
+   (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+   Version 2.1.0 or newer is only available with the C(docker) module."
 '''
 
 RETURN = '''
@@ -462,13 +466,7 @@ try:
     from distutils.version import LooseVersion
     from docker import utils
     from docker import types
-    from docker import __version__ as docker_version
-    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
-        from docker.types import Ulimit, LogConfig
-        HAS_DOCKER_PY_2 = True
-    else:
-        from docker.utils.types import Ulimit, LogConfig
-except:
+except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
@@ -839,7 +837,7 @@ class DockerService(DockerBaseClass):
             network_id = None
             try:
                 network_id = filter(lambda n: n['name'] == network_name, docker_networks)[0]['id']
-            except:
+            except Exception as dummy:
                 pass
             if network_id:
                 networks.append({'Target': network_id})
@@ -1159,14 +1157,9 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         required_if=required_if,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_version='2.0.0',
     )
-
-    if not HAS_DOCKER_PY_2:
-        client.module.fail_json(
-            msg=("docker python library version is %s. " +
-                 "this module requires version 2.0.0 or greater")
-            % docker_version)
 
     dsm = DockerServiceManager(client)
     msg, changed, rebuilt, changes, facts = dsm.run()
