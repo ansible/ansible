@@ -24,7 +24,7 @@ description:
 options:
     resource_group:
         description:
-            - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
+            - The name of the resource group.
         required: True
     server_name:
         description:
@@ -57,33 +57,35 @@ EXAMPLES = '''
 
 RETURN = '''
 rules:
-    description: A list of dictionaries containing facts for that PostgreSQL Firewall Rule.
+    description: A list of dictionaries containing facts for PostgreSQL Firewall Rule.
     returned: always
     type: complex
     contains:
-        postgresqlfirewallrule_name:
-            description: The key is the name of the server that the values relate to.
-            type: complex
-            contains:
-                id:
-                    description:
-                        - Resource ID
-                    returned: always
-                    type: str
-                    sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testser
-                            ver/firewallRules/rule1"
-                name:
-                    description:
-                        - Resource name.
-                    returned: always
-                    type: str
-                    sample: rule1
-                type:
-                    description:
-                        - Resource type.
-                    returned: always
-                    type: str
-                    sample: Microsoft.DBforPostgreSQL/servers/firewallRules
+        id:
+            description:
+                - Resource ID
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/fire
+                    wallRules/rule1"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: rule1
+        start_ip_address:
+            description:
+                - The start IP address of the PostgreSQL firewall rule.
+            returned: always
+            type: str
+            sample: 10.0.0.16
+        end_ip_address:
+            description:
+                - The end IP address of the PostgreSQL firewall rule.
+            returned: always
+            type: str
+            sample: 10.0.0.18
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -148,7 +150,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
             self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
-            results.append(response.as_dict())
+            results.append(self.format_item(response))
 
         return results
 
@@ -164,9 +166,20 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results.append(item.as_dict())
+                results.append(self.format_item(item))
 
         return results
+
+    def format_item(self, item):
+        d = item.as_dict()
+        d = {
+            'resource_group': self.resource_group,
+            'id': d['id'],
+            'name': d['name'],
+            'start_ip_address': d['start_ip_address'],
+            'end_ip_address': d['end_ip_address']
+        }
+        return d
 
 
 def main():
