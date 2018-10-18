@@ -1,0 +1,45 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  vars:
+    delegate_to_host: "localhost"
+  tasks:
+    - set_fact:
+        gandalf:
+          shout: 'You shall not pass!'
+      when: inventory_hostname == 'testhost'
+
+    - set_fact:
+        gandalf:
+          speak: 'Run you fools!'
+      when: inventory_hostname == 'testhost2'
+
+    - name: works correctly
+      debug: var=item
+      delegate_to: localhost
+      with_dict: "{{ gandalf }}"
+      register: result1
+
+    - name: shows same item for all hosts
+      debug: var=item
+      delegate_to: "{{ delegate_to_host }}"
+      with_dict: "{{ gandalf }}"
+      register: result2
+
+    - debug:
+        var: result2.results[0].item.value
+
+    - assert:
+        that:
+          - result1.results[0].item.value == 'You shall not pass!'
+          - result2.results[0].item.value == 'You shall not pass!'
+      when: inventory_hostname == 'testhost'
+
+    - assert:
+        that:
+          - result1.results[0].item.value == 'Run you fools!'
+          - result2.results[0].item.value == 'Run you fools!'
+      when: inventory_hostname == 'testhost2'
+
+    - assert:
+        that:
+          - _ansible_loop_cache is undefined
