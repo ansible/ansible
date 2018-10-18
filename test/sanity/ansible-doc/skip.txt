@@ -18,3 +18,4 @@ cs_nic
 ec2_remote_facts
 netscaler
 win_msi
+os_server_actions
