@@ -544,6 +544,6 @@ class Connection(NetworkConnectionBase):
 
         return False
 
-    def _validate_timeout_value(timeout, timer_name):
+    def _validate_timeout_value(self, timeout, timer_name):
         if timeout <= 0:
-         raise AnsibleConnectionFailure("'%s' timer value is invalid: %s, value should be greater than zero." % (timer_name, timeout))
+            raise AnsibleConnectionFailure("'%s' timer value '%s' is invalid, value should be greater than zero." % (timer_name, timeout))
