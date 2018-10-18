@@ -8,30 +8,29 @@ Working With Dynamic Inventory
 .. contents:: Topics
    :local:
 
-As you expand the number of hosts Ansible manages, you'll quickly outgrow the basic inventory file described in :ref:`inventory`. You may need to track hosts from multiple sources: cloud providers, LDAP, `Cobbler <https://cobbler.github.io>`_, and/or enterprise CMDB systems.
+If your Ansible inventory fluctuates over time, with hosts spinning up and shutting down in response to business demands, the static inventory solutions described in :ref:`inventory` will not serve your needs. You may need to track hosts from multiple sources: cloud providers, LDAP, `Cobbler <https://cobbler.github.io>`_, and/or enterprise CMDB systems.
 
-Ansible supports and integrates all of these options via an external inventory system. Ansible offers three ways to connect with external inventory: inventory scripts, :ref:`inventory_plugins`, and the :ref:`ansible_tower` inventory database.
+Ansible integrates all of these options via a dynamic external inventory system. Ansible supports two ways to connect with external inventory:  :ref:`inventory_plugins` and `inventory scripts <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`.
 
-The :ref:`ansible_tower` inventory database syncs with all your Ansible dynamic inventory sources, provides web and REST access to the results, and offers a graphical inventory editor. With a database record of all of your hosts, it's easy to correlate past event history and see which ones have had failures on their last playbook runs.
+Inventory plugins take advantage of the most recent updates to Ansible's core code. We recommend plugins over scripts for dynamic inventory. You can :ref:`write your own plugin <developing_inventory>` to connect to additional dynamic inventory sources.
 
-You can also :ref:`write your own plugin or script <developing_inventory>` to connect to a dynamic inventory source.
+You can still use inventory scripts if you choose. When we implemented inventory plugins, we ensured backwards compatibility via the script inventory plugin. The examples below illustrate how to use inventory scripts.
+
+If you'd like a GUI for handling dynamic inventory, the :ref:`ansible_tower` inventory database syncs with all your dynamic inventory sources, provides web and REST access to the results, and offers a graphical inventory editor. With a database record of all of your hosts, you can correlate past event history and see which hosts have had failures on their last playbook runs.
 
 .. _cobbler_example:
 
 Inventory Script Example: Cobbler
 =================================
 
-It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <https://cobbler.github.io>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
+Ansible integrates seamlessly with `Cobbler <https://cobbler.github.io>`_, a Linux installation server originally written by Michael DeHaan and now led by James Cammarata, who works for Ansible.
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
-layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
-been referred to as a 'lightweight CMDB' by some admins.
+layer that can represent data for multiple configuration management systems (even at the same time) and serve as a 'lightweight CMDB'.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
-to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
-This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
+To tie Ansible's inventory to Cobbler, copy `this script <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file. Run ``cobblerd`` any time you use Ansible and use the ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``) to communicate with Cobbler using Cobbler's XMLRPC API.
 
-Also a ``cobbler.ini`` file should be added to ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
+Add a ``cobbler.ini`` file in ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
 
 
     [cobbler]
@@ -316,9 +315,7 @@ Note that the OpenStack dynamic inventory script will cache results to avoid rep
 Other inventory scripts
 =======================
 
-Cobbler, EC2, and OpenStack are great examples, but they are not the only external inventory scripts available for Ansible. See the  `contrib/inventory directory <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`_ for all included inventory scripts. General usage is similar across all inventory scripts.
-
-If you develop an inventory script that might be general purpose, please submit a pull request -- we'd likely be glad to include it in the project.
+You can find all included inventory scripts in the `contrib/inventory directory <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`_. General usage is similar across all inventory scripts. You can also :ref:`write your own inventory script <developing_inventory>`.
 
 .. _using_multiple_sources:
 
