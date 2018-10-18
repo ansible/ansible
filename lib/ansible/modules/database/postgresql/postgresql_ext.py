@@ -28,6 +28,10 @@ options:
     description:
       - name of the database to add or remove the extension to/from
     required: true
+  schema:
+    description:
+      - name of the schema to add the extension to
+    version_added: "2.8"
   login_user:
     description:
       - The username used to authenticate with
@@ -100,9 +104,12 @@ def ext_delete(cursor, ext):
         return False
 
 
-def ext_create(cursor, ext):
+def ext_create(cursor, ext, schema):
     if not ext_exists(cursor, ext):
-        query = 'CREATE EXTENSION "%s"' % ext
+        query_fragments = ['CREATE EXTENSION "%s"' % ext]
+        if schema:
+            query_fragments.append(' WITH SCHEMA "%s"' % schema)
+        query = ''.join(query_fragments)
         cursor.execute(query)
         return True
     else:
@@ -122,6 +129,7 @@ def main():
             port=dict(default="5432"),
             db=dict(required=True),
             ext=dict(required=True, aliases=['name']),
+            schema=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
         ),
         supports_check_mode=True
@@ -132,6 +140,7 @@ def main():
 
     db = module.params["db"]
     ext = module.params["ext"]
+    schema = module.params["schema"]
     state = module.params["state"]
     changed = False
 
@@ -171,7 +180,7 @@ def main():
                 changed = ext_delete(cursor, ext)
 
             elif state == "present":
-                changed = ext_create(cursor, ext)
+                changed = ext_create(cursor, ext, schema)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:
