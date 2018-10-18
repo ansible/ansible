@@ -28,7 +28,7 @@ options:
             - ID of the Virtual Machine to manage.
     state:
         description:
-            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered.
+            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported.
               When C(state) is I(registered) and the unregistered VM's name
               belongs to an already registered in engine VM in the same DC
               then we fail to register the unregistered template.
@@ -36,8 +36,9 @@ options:
             - I(running) state will create/update VM and start it.
             - I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted.
             - Please check I(notes) to more detailed description of states.
+            - I(exported) state will export the VM to export domain or as OVA.
             - I(registered) is supported since 2.4.
-        choices: [ absent, next_run, present, registered, running, stopped, suspended ]
+        choices: [ absent, next_run, present, registered, running, stopped, suspended, exported ]
         default: present
     cluster:
         description:
@@ -558,6 +559,24 @@ options:
             - "C(headless_mode) - If I(true) disable the graphics console for this virtual machine."
             - "C(protocol) - Graphical protocol, a list of I(spice), I(vnc), or both."
         version_added: "2.5"
+    exclusive:
+        description:
+            - "When C(state) is I(exported) this parameter indicates if the existing VM with the
+               same name should be overwritten."
+        version_added: "2.8"
+        type: bool
+    export_domain:
+        description:
+            - "When C(state) is I(exported)this parameter specifies the name of the export storage domain."
+        version_added: "2.8"
+    export_ova:
+        description:
+            - Dictionary of values to be used to export VM as OVA.
+            - C(host) - The name of the destination host where the OVA has to be exported.
+            - C(directory) - The name of the directory where the OVA has to be exported.
+            - C(filename) - The name of the exported OVA file.
+        version_added: "2.8"
+
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -899,6 +918,15 @@ EXAMPLES = '''
       - name: pci_0000_00_08_0
         state: present
 
+- name: Export the VM as OVA
+  ovirt_vm:
+    name: myvm
+    state: exported
+    cluster: mycluster
+    export_ova:
+        host: myhost
+        filename: myvm.ova
+        directory: /tmp/
 '''
 
 
@@ -937,6 +965,7 @@ from ansible.module_utils.ovirt import (
     get_link_name,
     get_id_by_name,
     ovirt_full_argument_spec,
+    search_by_attributes,
     search_by_name,
     wait,
 )
@@ -1158,6 +1187,15 @@ class VmsModule(BaseModule):
             ] if self.param('custom_properties') is not None else None,
             initialization=self.get_initialization() if self.param('cloud_init_persist') else None,
         )
+
+    def _get_export_domain_service(self):
+        provider_name = self._module.params['export_domain']
+        export_sds_service = self._connection.system_service().storage_domains_service()
+        export_sd_id = get_id_by_name(export_sds_service, provider_name)
+        return export_sds_service.service(export_sd_id)
+
+    def post_export_action(self, entity):
+        self._service = self._get_export_domain_service().vms_service()
 
     def update_check(self, entity):
         def check_cpu_pinning():
@@ -1912,7 +1950,7 @@ def control_state(vm, vms_service, module):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended']),
+        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended', 'exported']),
         name=dict(type='str'),
         id=dict(type='str'),
         cluster=dict(type='str'),
@@ -1990,6 +2028,9 @@ def main():
         watchdog=dict(type='dict'),
         host_devices=dict(type='list'),
         graphical_console=dict(type='dict'),
+        exclusive=dict(type='bool'),
+        export_domain=dict(default=None),
+        export_ova=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -2192,6 +2233,29 @@ def main():
                 'id': vm.id,
                 'vm': get_dict_of_struct(vm)
             }
+        elif state == 'exported':
+            if module.params['export_domain']:
+                export_service = vms_module._get_export_domain_service()
+                export_vm = search_by_attributes(export_service.vms_service(), id=vm.id)
+
+                ret = vms_module.action(
+                    entity=vm,
+                    action='export',
+                    action_condition=lambda t: export_vm is None or module.params['exclusive'],
+                    wait_condition=lambda t: t is not None,
+                    post_action=vms_module.post_export_action,
+                    storage_domain=otypes.StorageDomain(id=export_service.get().id),
+                    exclusive=module.params['exclusive'],
+                )
+            elif module.params['export_ova']:
+                export_vm = module.params['export_ova']
+                ret = vms_module.action(
+                    entity=vm,
+                    action='export_to_path_on_host',
+                    host=otypes.Host(name=export_vm.get('host')),
+                    directory=export_vm.get('directory'),
+                    filename=export_vm.get('filename'),
+                )
 
         module.exit_json(**ret)
     except Exception as e:
