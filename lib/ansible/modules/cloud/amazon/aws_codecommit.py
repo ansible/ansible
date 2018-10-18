@@ -9,7 +9,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: code_commit
+module: aws_codecommit
 version_added: "2.8"
 short_description: Manage repositories in AWS CodeCommit
 description:
@@ -122,12 +122,12 @@ response_metadata:
 
 EXAMPLES = '''
 # Create a new repository
-- code_commit:
+- aws_codecommit:
     name: repo
     state: present
 
 # Delete a repository
-- code_commit:
+- aws_codecommit:
     name: repo
     state: absent
 '''
@@ -204,8 +204,8 @@ def main():
         supports_check_mode=True
     )
 
-    code_commit = CodeCommit(module=ansible_aws_module)
-    result = code_commit.process()
+    aws_codecommit = CodeCommit(module=ansible_aws_module)
+    result = aws_codecommit.process()
     ansible_aws_module.exit_json(**camel_dict_to_snake_dict(result))
 
 

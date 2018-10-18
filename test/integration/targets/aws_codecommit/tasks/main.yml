@@ -11,7 +11,7 @@
     no_log: true
   # ============================================================
   - name: Create a repository
-    code_commit:
+    aws_codecommit:
       name: "{{ resource_prefix }}_repo"
       comment: original comment
       state: present
@@ -24,7 +24,7 @@
         - output.repositoryDescription == 'original comment'
   # ============================================================
   - name: Create a repository (CHECK MODE)
-    code_commit:
+    aws_codecommit:
       name: "{{ resource_prefix }}_check_repo"
       comment: original comment
       state: present
@@ -38,7 +38,7 @@
         - output.repositoryDescription == 'original comment'
   # ============================================================
   - name: Delete  a repository (CHECK MODE)
-    code_commit:
+    aws_codecommit:
       name: "{{ resource_prefix }}_repo"
       state: absent
       <<: *aws_connection_info
@@ -48,7 +48,7 @@
       that:
         - output is changed
   - name: Delete  a repository
-    code_commit:
+    aws_codecommit:
       name: "{{ resource_prefix }}_repo"
       state: absent
       <<: *aws_connection_info
@@ -57,11 +57,11 @@
       that:
         - output is changed
 
-  always: 
-     ###### TEARDOWN STARTS HERE ###### 
+  always:
+     ###### TEARDOWN STARTS HERE ######
     - name: Delete  a repository
-      code_commit:
+      aws_codecommit:
         name: "{{ resource_prefix }}_repo"
         state: absent
         <<: *aws_connection_info
-      ignore_errors: yes 
+      ignore_errors: yes
