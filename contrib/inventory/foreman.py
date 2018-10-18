@@ -279,9 +279,9 @@ class ForemanInventory(object):
 
     def _get_all_params(self, host):
         if host.get('all_parameters') is not None:
-          ret = host.get('all_parameters')
+            ret = host.get('all_parameters')
         else:
-          ret = self._get_all_params_by_id(host['id'])
+            ret = self._get_all_params_by_id(host['id'])
         return ret
 
     def update_cache(self, scan_only_new_hosts=False):
