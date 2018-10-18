@@ -1,0 +1,2 @@
+bugfixes:
+- "The docker_* modules more uniformly check versions of docker-py/docker and (if necessary) the docker API."
