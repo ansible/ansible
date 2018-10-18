@@ -157,7 +157,8 @@ class DockerBaseClass(object):
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
-                 required_together=None, required_if=None):
+                 required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
+                 min_docker_api_version=None):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -182,6 +183,8 @@ class AnsibleDockerClient(Client):
             required_together=required_together_params,
             required_if=required_if)
 
+        NEEDS_DOCKER_PY2 = (LooseVersion(min_docker_version) < LooseVersion('2.0'))
+
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
                       "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
@@ -189,11 +192,24 @@ class AnsibleDockerClient(Client):
                       "Please note that simply uninstalling one of the modules can leave the other module in a broken state.")
 
         if not HAS_DOCKER_PY:
-            self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
+            if NEEDS_DOCKER_PY2:
+                msg = "Failed to import docker - %s. Try `pip install docker`"
+            else:
+                msg = "Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)"
+            self.fail(msg % HAS_DOCKER_ERROR)
 
-        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
-            self.fail("Error: docker / docker-py version is %s. Minimum version required is %s." % (docker_version,
-                                                                                                    MIN_DOCKER_VERSION))
+        if LooseVersion(docker_version) < LooseVersion(min_docker_version):
+            if NEEDS_DOCKER_PY2:
+                if docker_version < LooseVersion('2.0'):
+                    msg = "Error: docker-py version is %s, while this module requires docker %s. Try `pip uninstall docker-py` and then `pip install docker`"
+                else:
+                    msg = "Error: docker version is %s. Minimum version required is %s. Use `pip install --upgrade docker` to upgrade."
+            else:
+                # The minimal required version is < 2.0 (and the current version as well).
+                # Advertise docker (instead of docker-py) for non-Python-2.6 users.
+                msg = ("Error: docker / docker-py version is %s. Minimum version required is %s. "
+                       "Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` followed by `pip install docker`")
+            self.fail(msg % (docker_version, min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -205,6 +221,11 @@ class AnsibleDockerClient(Client):
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
+
+        if min_docker_api_version is not None:
+            docker_api_version = self.version()['ApiVersion']
+            if LooseVersion(docker_api_version) < LooseVersion(min_docker_api_version):
+                self.fail('docker API version is %s. Minimum version required is %s.' % (docker_api_version, min_docker_api_version))
 
     def log(self, msg, pretty_print=False):
         pass
