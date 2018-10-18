@@ -1,10 +1,6 @@
 %define name ansible
 %define release_date %(date "+%a %b %e %Y")
 
-%if 0%{?rhel} == 5
-%define __python2 /usr/bin/python26
-%endif
-
 Name:      %{name}
 Version:   %{rpmversion}
 Release:   %{rpmrelease}%{?dist}%{?repotag}
@@ -14,35 +10,12 @@ License:   GPLv3+
 Group:     Development/Libraries
 Source:    https://releases.ansible.com/ansible/%{name}-%{upstream_version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-%{!?__python2: %global __python2 /usr/bin/python2.6}
 %{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 BuildArch: noarch
 
-# RHEL <=5
-%if 0%{?rhel} && 0%{?rhel} <= 5
-BuildRequires: python26-devel
-BuildRequires: python26-setuptools
-Requires: python26-PyYAML
-Requires: python26-paramiko
-Requires: python26-jinja2
-Requires: python26-httplib2
-Requires: python26-setuptools
-Requires: python26-six
-%endif
-
-# RHEL == 6
-%if 0%{?rhel} == 6
-Requires: python-crypto
-%endif
-
 # RHEL >=7
 %if 0%{?rhel} >= 7
-Requires: python2-cryptography
-%endif
-
-# RHEL > 5
-%if 0%{?rhel} && 0%{?rhel} > 5
 BuildRequires: python2-devel
 BuildRequires: python-setuptools
 Requires: PyYAML
@@ -50,6 +23,7 @@ Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-setuptools
 Requires: python-six
+Requires: python2-cryptography
 %endif
 
 # FEDORA > 17
