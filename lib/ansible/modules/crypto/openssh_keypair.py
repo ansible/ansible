@@ -57,7 +57,7 @@ options:
     path:
         required: true
         description:
-            - Name of the files cointaining the public and private key. The file containing the public key will have the extension C(.pub).
+            - Name of the files containing the public and private key. The file containing the public key will have the extension C(.pub).
     comment:
         required: false
         description:
@@ -112,9 +112,7 @@ fingerprint:
 
 import os
 import errno
-import subprocess
 
-from subprocess import PIPE, Popen
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -140,29 +138,29 @@ class Keypair(object):
         if self.type in ('rsa', 'rsa1'):
             self.size = 4096 if self.size is None else self.size
             if self.size < 1024:
-                module.fail_json(msg=('For C(RSA) keys, the minimum size is 1024 bits and the default is 4096 bits. '
+                module.fail_json(msg=('For RSA keys, the minimum size is 1024 bits and the default is 4096 bits. '
                                       'Attempting to use bit lengths under 1024 will cause the module to fail.'))
 
         if self.type == 'dsa':
             self.size = 1024 if self.size is None else self.size
             if self.size != 1024:
-                module.fail_json(msg=('C(DSA) keys must be exactly 1024 bits as specified by FIPS 186-2.'))
+                module.fail_json(msg=('DSA keys must be exactly 1024 bits as specified by FIPS 186-2.'))
 
         if self.type == 'ecdsa':
             self.size = 256 if self.size is None else self.size
             if self.size not in (256, 384, 521):
-                module.fail_json(msg=('For C(ECDSA) keys, size determines the key length by selecting from '
+                module.fail_json(msg=('For ECDSA keys, size determines the key length by selecting from '
                                       'one of three elliptic curve sizes: 256, 384 or 521 bits. '
                                       'Attempting to use bit lengths other than these three values for '
-                                      'C(ECDSA) keys will cause this module to fail. '))
+                                      'ECDSA keys will cause this module to fail. '))
         if self.type == 'ed25519':
             self.size = 256
 
     def generate(self, module):
         # generate a keypair
-        if not self.check(module, perms_required=False) or self.force:
+        if not self.isValid(module, perms_required=False) or self.force:
             args = [
-                'ssh-keygen',
+                module.get_bin_path('ssh-keygen', True),
                 '-q',
                 '-N', '',
                 '-b', str(self.size),
@@ -177,9 +175,9 @@ class Keypair(object):
 
             try:
                 self.changed = True
-                subprocess.call(args)
-                proc = Popen(['ssh-keygen', '-lf', self.path], stdout=PIPE)
-                self.fingerprint = proc.communicate()[0].split()
+                module.run_command(args)
+                proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
+                self.fingerprint = proc[1].split()
             except Exception as e:
                 self.remove()
                 module.fail_json(msg="%s" % to_native(e))
@@ -188,15 +186,15 @@ class Keypair(object):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-    def check(self, module, perms_required=True):
+    def isValid(self, module, perms_required=True):
 
         # check if the key is correct
         def _check_state():
             return os.path.exists(self.path)
 
         if _check_state():
-            proc = Popen(['ssh-keygen', '-lf', self.path], stdout=PIPE)
-            fingerprint = proc.communicate()[0].split()
+            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
+            fingerprint = proc[1].split()
             keysize = int(fingerprint[0])
             keytype = fingerprint[-1][1:-1].lower()
         else:
@@ -207,7 +205,7 @@ class Keypair(object):
             return not module.set_fs_attributes_if_different(file_args, False)
 
         def _check_type():
-            return self.type == keytype.decode("utf-8")
+            return self.type == keytype
 
         def _check_size():
             return self.size == keysize
@@ -246,7 +244,7 @@ class Keypair(object):
             else:
                 pass
 
-        if os.path.isdir(self.path + ".pub"):
+        if os.path.exists(self.path + ".pub"):
             try:
                 os.remove(self.path + ".pub")
                 self.changed = True
@@ -287,7 +285,7 @@ def main():
 
         if module.check_mode:
             result = keypair.dump()
-            result['changed'] = module.params['force'] or not keypair.check(module)
+            result['changed'] = module.params['force'] or not keypair.isValid(module)
             module.exit_json(**result)
 
         try:
@@ -297,7 +295,7 @@ def main():
     else:
 
         if module.check_mode:
-            keypair.changed = module.params['force'] or not keypair.check(module)
+            keypair.changed = os.path.exists(module.params['path'])
             if keypair.changed:
                 keypair.fingerprint = {}
             result = keypair.dump()
