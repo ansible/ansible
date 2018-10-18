@@ -320,7 +320,6 @@ class HAProxy(object):
                     if self.wait_until_status(backend, svname, wait_for_status) is not True:
                         self.module.fail_json(msg="Can't get the status %s expected" % (svname))
 
-
     def get_state_for(self, pxname, svname):
         """
         Find the state of specific services. When pxname is not set, get all backends for a specific host.
