@@ -564,6 +564,18 @@ def get_failure_info(exc, out_name, err_name=None, msg_format='%s'):
 
 class ContainerManager(DockerBaseClass):
 
+    def _parse_scale(self):
+        '''
+        Parse scale parameters
+        '''
+        if self.scale is None:
+            return None
+
+        result = dict()
+        for key, value in self.scale.items():
+            result[key] = int(value)
+        return result
+
     def __init__(self, client):
 
         super(ContainerManager, self).__init__()
