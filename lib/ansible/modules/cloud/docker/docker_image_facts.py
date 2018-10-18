@@ -226,7 +226,8 @@ def main():
     )
 
     client = AnsibleDockerClient(
-        argument_spec=argument_spec
+        argument_spec=argument_spec,
+        min_docker_api_version='1.20',
     )
 
     results = dict(

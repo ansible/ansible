@@ -164,7 +164,7 @@ try:
     from docker.errors import NotFound
     if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import IPAMPool, IPAMConfig
-except:
+except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
@@ -381,6 +381,7 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True
+        # "The docker server >= 1.9.0"
     )
 
     cm = DockerNetworkManager(client)
