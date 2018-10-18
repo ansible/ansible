@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vm - Fix issue in SSO option (https://github.com/ansible/ansible/pull/47312).
