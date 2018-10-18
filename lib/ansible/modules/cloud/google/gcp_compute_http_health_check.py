@@ -115,18 +115,18 @@ EXAMPLES = '''
       timeout_sec: 2
       unhealthy_threshold: 5
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    check_interval_sec:
+    checkIntervalSec:
         description:
             - How often (in seconds) to send a health check. The default value is 5 seconds.
         returned: success
         type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -137,7 +137,7 @@ RETURN = '''
               the resource.
         returned: success
         type: str
-    healthy_threshold:
+    healthyThreshold:
         description:
             - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
               The default value is 2.
@@ -171,20 +171,20 @@ RETURN = '''
             - The default value is 80.
         returned: success
         type: int
-    request_path:
+    requestPath:
         description:
             - The request path of the HTTP health check request.
             - The default value is /.
         returned: success
         type: str
-    timeout_sec:
+    timeoutSec:
         description:
             - How long (in seconds) to wait before claiming failure.
             - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
               than checkIntervalSec.
         returned: success
         type: int
-    unhealthy_threshold:
+    unhealthyThreshold:
         description:
             - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
               The default value is 2.
@@ -235,7 +235,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -289,9 +290,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -302,9 +303,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/httpHealthChecks".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -319,8 +320,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 

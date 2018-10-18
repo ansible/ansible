@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -66,7 +66,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -91,7 +91,7 @@ items:
                   be a dash.
             returned: success
             type: str
-        quic_override:
+        quicOverride:
             description:
                 - Specifies the QUIC override policy for this resource. This determines whether the
                   load balancer will attempt to negotiate QUIC with clients or not. Can specify one
@@ -100,13 +100,13 @@ items:
                   to specifying NONE.
             returned: success
             type: str
-        ssl_certificates:
+        sslCertificates:
             description:
                 - A list of SslCertificate resources that are used to authenticate connections between
                   users and the load balancer. Currently, exactly one SSL certificate must be specified.
             returned: success
             type: list
-        url_map:
+        urlMap:
             description:
                 - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
             returned: success
@@ -127,7 +127,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 

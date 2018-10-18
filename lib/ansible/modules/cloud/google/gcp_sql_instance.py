@@ -246,6 +246,12 @@ options:
                       instances, this field determines whether the instance is Second Generation (recommended)
                       or First Generation.
                 required: false
+            settings_version:
+                description:
+                    - The version of instance settings. This is a required field for  update method to
+                      make sure concurrent updates are handled properly.  During update, use the most
+                      recent settingsVersion value for this  instance and do not try to update this value.
+                required: false
 extends_documentation_fragment: gcp
 '''
 
@@ -261,25 +267,25 @@ EXAMPLES = '''
         tier: db-n1-standard-1
       region: us-central1
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    backend_type:
+    backendType:
         description:
             - "* FIRST_GEN: First Generation instance. MySQL only."
             - "* SECOND_GEN: Second Generation instance or PostgreSQL instance."
             - "* EXTERNAL: A database server that is not managed by Google."
         returned: success
         type: str
-    connection_name:
+    connectionName:
         description:
             - Connection name of the Cloud SQL instance used in connection strings.
         returned: success
         type: str
-    database_version:
+    databaseVersion:
         description:
             - The database engine type and version. For First Generation instances, can be MYSQL_5_5,
               or MYSQL_5_6. For Second Generation instances, can be MYSQL_5_6 or MYSQL_5_7. Defaults
@@ -288,7 +294,7 @@ RETURN = '''
               after instance creation.'
         returned: success
         type: str
-    failover_replica:
+    failoverReplica:
         description:
             - The name and status of the failover replica. This property is applicable only to
               Second Generation instances.
@@ -309,7 +315,7 @@ RETURN = '''
                       property is applicable only to Second Generation instances.
                 returned: success
                 type: str
-    instance_type:
+    instanceType:
         description:
             - The instance type. This can be one of the following.
             - "* CLOUD_SQL_INSTANCE: A Cloud SQL instance that is not replicating   from a master."
@@ -317,18 +323,18 @@ RETURN = '''
             - "* READ_REPLICA_INSTANCE: A Cloud SQL instance configured as a   read-replica."
         returned: success
         type: str
-    ip_addresses:
+    ipAddresses:
         description:
             - The assigned IP addresses for the instance.
         returned: success
         type: complex
         contains:
-            ip_address:
+            ipAddress:
                 description:
                     - The IP address assigned.
                 returned: success
                 type: str
-            time_to_retire:
+            timeToRetire:
                 description:
                     - The due time for this IP to be retired in RFC 3339 format, for example 2012-11-15T16:19:00.094Z.
                       This field is only available when the IP is scheduled to be retired.
@@ -341,18 +347,18 @@ RETURN = '''
                       from the instance, if supported.
                 returned: success
                 type: str
-    ipv6_address:
+    ipv6Address:
         description:
             - The IPv6 address assigned to the instance. This property is applicable only to First
               Generation instances.
         returned: success
         type: str
-    master_instance_name:
+    masterInstanceName:
         description:
             - The name of the instance which will act as master in the replication setup.
         returned: success
         type: str
-    max_disk_size:
+    maxDiskSize:
         description:
             - The maximum disk size of the instance in bytes.
         returned: success
@@ -368,13 +374,13 @@ RETURN = '''
               instance type (First Generation or Second Generation/PostgreSQL).
         returned: success
         type: str
-    replica_configuration:
+    replicaConfiguration:
         description:
             - Configuration specific to failover replicas and read replicas.
         returned: success
         type: complex
         contains:
-            failover_target:
+            failoverTarget:
                 description:
                     - Specifies if the replica is the failover target. If the field is set to true the
                       replica will be designated as a failover replica.
@@ -384,7 +390,7 @@ RETURN = '''
                       in different zone with the master instance.
                 returned: success
                 type: bool
-            mysql_replica_configuration:
+            mysqlReplicaConfiguration:
                 description:
                     - MySQL specific configuration when replicating from a MySQL on-premises master. Replication
                       configuration information such as the username, password, certificates, and keys
@@ -394,28 +400,28 @@ RETURN = '''
                 returned: success
                 type: complex
                 contains:
-                    ca_certificate:
+                    caCertificate:
                         description:
                             - PEM representation of the trusted CA's x509 certificate.
                         returned: success
                         type: str
-                    client_certificate:
+                    clientCertificate:
                         description:
                             - PEM representation of the slave's x509 certificate .
                         returned: success
                         type: str
-                    client_key:
+                    clientKey:
                         description:
                             - PEM representation of the slave's private key. The corresponsing public key is encoded
                               in the client's asf asd certificate.
                         returned: success
                         type: str
-                    connect_retry_interval:
+                    connectRetryInterval:
                         description:
                             - Seconds to wait between connect retries. MySQL's default is 60 seconds.
                         returned: success
                         type: int
-                    dump_file_path:
+                    dumpFilePath:
                         description:
                             - Path to a SQL dump file in Google Cloud Storage from which the slave instance is
                               to be created. The URI is in the form gs://bucketName/fileName. Compressed gzip
@@ -424,7 +430,7 @@ RETURN = '''
                               when using mysqldump.
                         returned: success
                         type: str
-                    master_heartbeat_period:
+                    masterHeartbeatPeriod:
                         description:
                             - Interval in milliseconds between replication heartbeats.
                         returned: success
@@ -434,7 +440,7 @@ RETURN = '''
                             - The password for the replication connection.
                         returned: success
                         type: str
-                    ssl_cipher:
+                    sslCipher:
                         description:
                             - A list of permissible ciphers to use for SSL encryption.
                         returned: success
@@ -444,18 +450,18 @@ RETURN = '''
                             - The username for the replication connection.
                         returned: success
                         type: str
-                    verify_server_certificate:
+                    verifyServerCertificate:
                         description:
                             - Whether or not to check the master's Common Name value in the certificate that it
                               sends during the SSL handshake.
                         returned: success
                         type: bool
-            replica_names:
+            replicaNames:
                 description:
                     - The replicas of the instance.
                 returned: success
                 type: list
-            service_account_email_address:
+            serviceAccountEmailAddress:
                 description:
                     - The service account email address assigned to the instance. This property is applicable
                       only to Second Generation instances.
@@ -467,7 +473,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            ip_configuration:
+            ipConfiguration:
                 description:
                     - The settings for IP Management. This allows to enable or disable the instance IP
                       and manage which external networks can connect to the instance. The IPv4 address
@@ -475,19 +481,19 @@ RETURN = '''
                 returned: success
                 type: complex
                 contains:
-                    ipv4_enabled:
+                    ipv4Enabled:
                         description:
                             - Whether the instance should be assigned an IP address or not.
                         returned: success
                         type: bool
-                    authorized_networks:
+                    authorizedNetworks:
                         description:
                             - The list of external networks that are allowed to connect to the instance using
                               the IP. In CIDR notation, also known as 'slash' notation (e.g. 192.168.100.0/24).
                         returned: success
                         type: complex
                         contains:
-                            expiration_time:
+                            expirationTime:
                                 description:
                                     - The time when this access control entry expires in RFC 3339 format, for example
                                       2012-11-15T16:19:00.094Z.
@@ -505,7 +511,7 @@ RETURN = '''
                                       or subnet here.
                                 returned: success
                                 type: str
-                    require_ssl:
+                    requireSsl:
                         description:
                             - Whether the mysqld should default to 'REQUIRE X509' for users connecting over IP.
                         returned: success
@@ -517,6 +523,13 @@ RETURN = '''
                       or First Generation.
                 returned: success
                 type: str
+            settingsVersion:
+                description:
+                    - The version of instance settings. This is a required field for  update method to
+                      make sure concurrent updates are handled properly.  During update, use the most
+                      recent settingsVersion value for this  instance and do not try to update this value.
+                returned: success
+                type: int
 '''
 
 ################################################################################
@@ -578,7 +591,8 @@ def main():
                     )),
                     require_ssl=dict(type='bool')
                 )),
-                tier=dict(type='str')
+                tier=dict(type='str'),
+                settings_version=dict(type='int')
             ))
         )
     )
@@ -595,7 +609,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind, fetch)
@@ -652,9 +667,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'sql')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -665,7 +680,7 @@ def collection(module):
     return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
     if response.status_code == 404:
         return None
@@ -895,13 +910,15 @@ class InstanceSettings(object):
     def to_request(self):
         return remove_nones_from_dict({
             u'ipConfiguration': InstanceIpConfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
-            u'tier': self.request.get('tier')
+            u'tier': self.request.get('tier'),
+            u'settingsVersion': self.request.get('settings_version')
         })
 
     def from_response(self):
         return remove_nones_from_dict({
             u'ipConfiguration': InstanceIpConfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
-            u'tier': self.request.get(u'tier')
+            u'tier': self.request.get(u'tier'),
+            u'settingsVersion': self.request.get(u'settingsVersion')
         })
 
 

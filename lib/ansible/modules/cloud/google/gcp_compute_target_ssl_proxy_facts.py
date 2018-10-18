@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -66,7 +66,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -91,7 +91,7 @@ items:
                   be a dash.
             returned: success
             type: str
-        proxy_header:
+        proxyHeader:
             description:
                 - Specifies the type of proxy header to append before sending data to the backend,
                   either NONE or PROXY_V1. The default is NONE.
@@ -102,7 +102,7 @@ items:
                 - A reference to the BackendService resource.
             returned: success
             type: dict
-        ssl_certificates:
+        sslCertificates:
             description:
                 - A list of SslCertificate resources that are used to authenticate connections between
                   users and the load balancer. Currently, exactly one SSL certificate must be specified.
@@ -124,7 +124,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 

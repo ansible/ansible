@@ -84,6 +84,11 @@ options:
     network:
         description:
             - The network that this route applies to.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: true
     priority:
         description:
@@ -146,13 +151,13 @@ EXAMPLES = '''
       - backends
       - databases
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    dest_range:
+    destRange:
         description:
             - The destination range of outgoing packets that this route applies to.
             - Only IPv4 is supported.
@@ -193,7 +198,7 @@ RETURN = '''
             - A list of instance tags to which this route applies.
         returned: success
         type: list
-    next_hop_gateway:
+    nextHopGateway:
         description:
             - URL to a gateway that should handle matching packets.
             - 'Currently, you can only specify the internet gateway, using a full or partial valid
@@ -202,7 +207,7 @@ RETURN = '''
               .'
         returned: success
         type: str
-    next_hop_instance:
+    nextHopInstance:
         description:
             - URL to an instance that should handle matching packets.
             - 'You can specify this as a full or partial URL. For example:  * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
@@ -210,17 +215,17 @@ RETURN = '''
               .'
         returned: success
         type: str
-    next_hop_ip:
+    nextHopIp:
         description:
             - Network IP address of an instance that should handle matching packets.
         returned: success
         type: str
-    next_hop_vpn_tunnel:
+    nextHopVpnTunnel:
         description:
             - URL to a VpnTunnel that should handle matching packets.
         returned: success
         type: str
-    next_hop_network:
+    nextHopNetwork:
         description:
             - URL to a Network that should handle matching packets.
         returned: success
@@ -271,7 +276,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -295,8 +301,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="Route cannot be edited")
 
 
 def delete(module, link, kind):
@@ -326,9 +331,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -339,9 +344,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/routes".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -356,8 +361,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
