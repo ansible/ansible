@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -73,7 +73,7 @@ items:
                 - The chain must include at least one intermediate cert.
             returned: success
             type: str
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -98,9 +98,9 @@ items:
                   be a dash.
             returned: success
             type: str
-        private_key:
+        privateKey:
             description:
-                - The private key in PEM format.
+                - The write-only private key in PEM format.
             returned: success
             type: str
 '''
@@ -119,7 +119,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 

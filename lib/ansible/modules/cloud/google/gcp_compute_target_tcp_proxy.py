@@ -69,6 +69,11 @@ options:
     service:
         description:
             - A reference to the BackendService resource.
+            - 'This field represents a link to a BackendService resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+              task and then set this service field to "{{ name-of-resource }}" Alternatively,
+              you can set this service to a dictionary with the selfLink key where the value is
+              the selfLink of your BackendService.'
         required: true
 extends_documentation_fragment: gcp
 notes:
@@ -124,13 +129,13 @@ EXAMPLES = '''
       proxy_header: PROXY_V1
       service: "{{ backendservice }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -155,7 +160,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    proxy_header:
+    proxyHeader:
         description:
             - Specifies the type of proxy header to append before sending data to the backend,
               either NONE or PROXY_V1. The default is NONE.
@@ -206,7 +211,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -229,9 +235,43 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('proxyHeader') != request.get('proxyHeader'):
+        proxy_header_update(module, request, response)
+    if response.get('service') != request.get('service'):
+        service_update(module, request, response)
+
+
+def proxy_header_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetTcpProxies/{name}/setProxyHeader"
+        ]).format(**module.params),
+        {
+            u'proxyHeader': module.params.get('proxy_header')
+        }
+    )
+
+
+def service_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetTcpProxies/{name}/setBackendService"
+        ]).format(**module.params),
+        {
+            u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -255,9 +295,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -268,9 +308,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/targetTcpProxies".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -285,8 +325,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 

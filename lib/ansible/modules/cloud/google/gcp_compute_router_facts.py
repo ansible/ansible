@@ -61,7 +61,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -76,7 +76,7 @@ items:
                 - The unique identifier for the resource.
             returned: success
             type: int
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -113,13 +113,13 @@ items:
                           that link to this router will have the same local ASN.
                     returned: success
                     type: int
-                advertise_mode:
+                advertiseMode:
                     description:
                         - User-specified flag to indicate which mode to use for advertisement.
                         - 'Valid values of this enum field are: DEFAULT, CUSTOM .'
                     returned: success
                     type: str
-                advertised_groups:
+                advertisedGroups:
                     description:
                         - User-specified list of prefix groups to advertise in custom mode.
                         - This field can only be populated if advertiseMode is CUSTOM and is advertised to
@@ -128,7 +128,7 @@ items:
                         - 'This enum field has the one valid value: ALL_SUBNETS .'
                     returned: success
                     type: list
-                advertised_ip_ranges:
+                advertisedIpRanges:
                     description:
                         - User-specified list of individual IP ranges to advertise in custom mode. This field
                           can only be populated if advertiseMode is CUSTOM and is advertised to all peers

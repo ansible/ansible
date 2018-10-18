@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -66,12 +66,12 @@ items:
     returned: always
     type: complex
     contains:
-        bucket_name:
+        bucketName:
             description:
                 - Cloud Storage bucket name.
             returned: success
             type: str
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -82,7 +82,7 @@ items:
                   resource is created.
             returned: success
             type: str
-        enable_cdn:
+        enableCdn:
             description:
                 - If true, enable Cloud CDN for this BackendBucket.
             returned: success
@@ -118,7 +118,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 
