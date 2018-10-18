@@ -168,7 +168,8 @@ class ForemanInventory(object):
     def _get_json(self, url, ignore_errors=None, params=None):
         if params is None:
             params = {}
-        params['per_page'] = 250
+        params['per_page'] = 500
+        params['include'] = 'all_parameters'
 
         page = 1
         results = []
@@ -269,6 +270,20 @@ class ForemanInventory(object):
         regex = r"[^A-Za-z0-9\_]"
         return re.sub(regex, "_", word.replace(" ", ""))
 
+    def _get_all_params_by_id(self, hid):
+        url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
+        ret = self._get_json(url, [404])
+        if ret == []:
+            ret = {}
+        return ret.get('all_parameters', {})
+
+    def _get_all_params(self, host):
+        if host.get('all_parameters') is not None:
+          ret = host.get('all_parameters')
+        else:
+          ret = self._get_all_params_by_id(host['id'])
+        return ret
+
     def update_cache(self, scan_only_new_hosts=False):
         """Make calls to foreman and save the output in a cache"""
 
@@ -280,8 +295,7 @@ class ForemanInventory(object):
                 continue
             dns_name = host['name']
 
-            host_data = self._get_host_data_by_id(host['id'])
-            host_params = host_data.get('all_parameters', {})
+            host_params = self._get_all_params(host)
 
             # Create ansible groups for hostgroup
             group = 'hostgroup'
@@ -332,7 +346,7 @@ class ForemanInventory(object):
                     pass  # Host not part of this group
 
             if self.want_hostcollections:
-                hostcollections = host_data.get('host_collections')
+                hostcollections = host.get('host_collections')
 
                 if hostcollections:
                     # Create Ansible groups for host collections
