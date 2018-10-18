@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_host_network - check for empty user_opts (https://github.com/ansible/ansible/pull/47283).
