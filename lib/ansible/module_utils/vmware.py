@@ -12,9 +12,10 @@ import ssl
 import time
 from random import randint
 
+# requests is required for exception handling of the ConnectionError
+import requests
+
 try:
-    # requests is required for exception handling of the ConnectionError
-    import requests
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
