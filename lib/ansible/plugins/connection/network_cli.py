@@ -164,7 +164,7 @@ options:
         from Paramiko channel after the command prompt is matched. This timeout
         value ensure that command prompt matched is correct and there is no more data
         left to be received from remote host.
-    default: 0.2
+    default: 0.1
     ini:
       - section: persistent_connection
         key: buffer_read_timeout
@@ -369,8 +369,10 @@ class Connection(NetworkConnectionBase):
         handled = False
         command_prompt_matched = False
         matched_prompt_window = window_count = 0
+
         command_timeout = self.get_option('persistent_command_timeout')
         self._validate_timeout_value(command_timeout, "persistent_command_timeout")
+
         buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
@@ -420,7 +422,10 @@ class Connection(NetworkConnectionBase):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
                 self._command_response = self._sanitize(resp, command)
-                command_prompt_matched = True
+                if buffer_read_timeout == 0.0:
+                    return self._command_response
+                else:
+                    command_prompt_matched = True
 
     def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False, check_all=False):
         '''
@@ -545,5 +550,5 @@ class Connection(NetworkConnectionBase):
         return False
 
     def _validate_timeout_value(self, timeout, timer_name):
-        if timeout <= 0:
-            raise AnsibleConnectionFailure("'%s' timer value '%s' is invalid, value should be greater than zero." % (timer_name, timeout))
+        if timeout < 0:
+            raise AnsibleConnectionFailure("'%s' timer value '%s' is invalid, value should be greater than or equal to zero." % (timer_name, timeout))

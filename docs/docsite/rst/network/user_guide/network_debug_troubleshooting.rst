@@ -689,3 +689,5 @@ To make this a global setting, add the following to your ``ansible.cfg`` file:
 
    [persistent_connection]
    buffer_read_timeout = 2
+
+This timer delay per command executed on remote host can be disabled by setting the value to zero.
