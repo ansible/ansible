@@ -12,6 +12,7 @@ idna < 2.6 # requests requires idna < 2.6, but cryptography will cause the lates
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
 pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
 ntlm-auth >= 1.0.6 # message encryption support
+requests < 2.20.0 ; python_version < '2.7' # requests 2.20.0 drops support for python 2.6
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
 voluptuous >= 0.11.0 # Schema recursion via Self
