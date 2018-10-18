@@ -36,8 +36,9 @@ options:
   drain:
     description:
       - Wait until the server has no active connections or until the timeout
-        determined by wait_interval and wait_retries is reached.
-      - Continue only after the status changes to 'MAINT'.
+        determined by I(wait_interval) and I(wait_retries) is reached.  After this
+      - step, the server status is switch to C(MAINT). This overrides shutdown_sessions
+        option (considered as C(yes)). This option must be used only with I(state=disabled)
       - This overrides the shutdown_sessions option.
     type: bool
     version_added: "2.4"
@@ -326,7 +327,6 @@ class HAProxy(object):
                 if self.wait:
                     if self.wait_until_status(backend, svname, wait_for_status) is not True:
                         self.module.fail_json(msg="Can't get the status %s expected" % (svname))
-
 
     def get_state_for(self, pxname, svname):
         """
