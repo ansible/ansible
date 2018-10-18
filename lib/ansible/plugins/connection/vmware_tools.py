@@ -36,6 +36,7 @@ DOCUMENTATION = """
     short_description: Execute modules via VMware Tools.
     description:
       - Execute modules via VMware Tools.
+      - "Note: Windows VMs will need to have C(ansible_shell_type: powershell) set."
     version_added: "2.8"
     requirements:
       - pyvmomi (python library)
@@ -135,9 +136,29 @@ class Connection(ConnectionBase):
         return self._si.content.guestOperationsManager.processManager
 
     @property
+    def linuxGuest(self):
+        """Return if VM guest family is linux."""
+        return self.vm.guest.guestFamily == "linuxGuest"
+
+    @property
+    def windowsGuest(self):
+        """Return if VM guest family is windows."""
+        return self.vm.guest.guestFamily == "windowsGuest"
+
+    @property
     def supported_guest_family(self):
         """Return if VM guest family is supported."""
-        return self.vm.guest.guestFamily == "linuxGuest"
+        return self.linuxGuest or self.windowsGuest
+
+    def __init__(self, *args, **kwargs):
+        """init."""
+        super(Connection, self).__init__(*args, **kwargs)
+        if hasattr(self, "_shell") and self._shell.SHELL_FAMILY == "powershell":
+            self.module_implementation_preferences = (".ps1", ".exe", "")
+            self.become_methods = ["runas"]
+            self.allow_executable = False
+            self.has_pipelining = True
+            self.allow_extras = True
 
     def _establish_connection(self):
         connection_kwargs = {
@@ -214,8 +235,14 @@ class Connection(ConnectionBase):
         return self.fileManager.CreateTemporaryFileInGuest(vm=self.vm, auth=self.vm_auth, prefix=prefix, suffix=suffix)
 
     def _get_program_spec_program_path_and_arguments(self, cmd):
-        program_path = self._play_context.executable
-        arguments = re.sub(r"^%s\s*" % program_path, "", cmd)
+        if self.linuxGuest:
+            program_path = self._play_context.executable
+            arguments = re.sub(r"^%s\s*" % program_path, "", cmd)
+        elif self.windowsGuest:
+            cmd_parts = self._shell._encode_script(cmd, as_list=False, strict_mode=False, preserve_rc=False)
+
+            program_path = "cmd.exe"
+            arguments = "/c %s" % cmd_parts
 
         return program_path, arguments
 
@@ -290,8 +317,13 @@ class Connection(ConnectionBase):
                 fd.write(chunk)
 
     def guestFileAttributes(self):
-        """Return GuestPosixFileAttributes."""
-        return vim.GuestPosixFileAttributes()
+        """Return appropriate GuestFileAttributes."""
+        if self.linuxGuest:
+            guest_file_attributes = vim.GuestPosixFileAttributes()
+        elif self.windowsGuest:
+            guest_file_attributes = vim.GuestWindowsFileAttributes()
+
+        return guest_file_attributes
 
     def put_file(self, in_path, out_path):
         """Put file."""
