@@ -155,6 +155,11 @@ options:
               full URL to the resource. For example, the following are valid values: *
               `U(https://www.googleapis.com/compute/v1/projects/project/global/snapshots/snapshot`)
               * `projects/project/global/snapshots/snapshot` * `global/snapshots/snapshot` .'
+            - 'This field represents a link to a Snapshot resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_snapshot
+              task and then set this source_snapshot field to "{{ name-of-resource }}" Alternatively,
+              you can set this source_snapshot to a dictionary with the selfLink key where the
+              value is the selfLink of your Snapshot.'
         required: false
     source_snapshot_encryption_key:
         description:
@@ -187,13 +192,19 @@ EXAMPLES = '''
         raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
       zone: us-central1-a
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    labelFingerprint:
+        description:
+            - The fingerprint used for optimistic locking of this resource.  Used internally during
+              updates.
+        returned: success
+        type: str
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -209,12 +220,12 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
-    last_attach_timestamp:
+    lastAttachTimestamp:
         description:
             - Last attach timestamp in RFC3339 text format.
         returned: success
         type: str
-    last_detach_timestamp:
+    lastDetachTimestamp:
         description:
             - Last dettach timestamp in RFC3339 text format.
         returned: success
@@ -239,7 +250,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    size_gb:
+    sizeGb:
         description:
             - Size of the persistent disk, specified in GB. You can specify this field when creating
               a persistent disk using the sourceImage or sourceSnapshot parameter, or specify
@@ -248,19 +259,19 @@ RETURN = '''
               sizeGb must not be less than the size of the sourceImage or the size of the snapshot.
         returned: success
         type: int
-    type:
-        description:
-            - URL of the disk type resource describing which disk type to use to create the disk.
-              Provide this when creating the disk.
-        returned: success
-        type: str
     users:
         description:
             - 'Links to the users of the disk (attached instances) in form: project/zones/zone/instances/instance
               .'
         returned: success
         type: list
-    source_image:
+    type:
+        description:
+            - URL of the disk type resource describing which disk type to use to create the disk.
+              Provide this when creating the disk.
+        returned: success
+        type: str
+    sourceImage:
         description:
             - The source image used to create this disk. If the source image is deleted, this
               field will not be set.
@@ -280,14 +291,14 @@ RETURN = '''
             - A reference to the zone where the disk resides.
         returned: success
         type: str
-    source_image_encryption_key:
+    sourceImageEncryptionKey:
         description:
             - The customer-supplied encryption key of the source image. Required if the source
               image is protected by a customer-supplied encryption key.
         returned: success
         type: complex
         contains:
-            raw_key:
+            rawKey:
                 description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                       to either encrypt or decrypt this resource.
@@ -299,7 +310,7 @@ RETURN = '''
                       that protects this resource.
                 returned: success
                 type: str
-    source_image_id:
+    sourceImageId:
         description:
             - The ID value of the image used to create this disk. This value identifies the exact
               image that was used to create this persistent disk. For example, if you created
@@ -308,7 +319,7 @@ RETURN = '''
               was used.
         returned: success
         type: str
-    disk_encryption_key:
+    diskEncryptionKey:
         description:
             - Encrypts the disk using a customer-supplied encryption key.
             - After you encrypt a disk with a customer-supplied key, you must provide the same
@@ -321,7 +332,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            raw_key:
+            rawKey:
                 description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                       to either encrypt or decrypt this resource.
@@ -333,7 +344,7 @@ RETURN = '''
                       that protects this resource.
                 returned: success
                 type: str
-    source_snapshot:
+    sourceSnapshot:
         description:
             - 'The source snapshot used to create this disk. You can provide this as a partial or
               full URL to the resource. For example, the following are valid values: *
@@ -341,14 +352,14 @@ RETURN = '''
               * `projects/project/global/snapshots/snapshot` * `global/snapshots/snapshot` .'
         returned: success
         type: dict
-    source_snapshot_encryption_key:
+    sourceSnapshotEncryptionKey:
         description:
             - The customer-supplied encryption key of the source snapshot. Required if the source
               snapshot is protected by a customer-supplied encryption key.
         returned: success
         type: complex
         contains:
-            raw_key:
+            rawKey:
                 description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                       to either encrypt or decrypt this resource.
@@ -360,7 +371,7 @@ RETURN = '''
                       that protects this resource.
                 returned: success
                 type: str
-    source_snapshot_id:
+    sourceSnapshotId:
         description:
             - The unique ID of the snapshot used to create this disk. This value identifies the
               exact snapshot that was used to create this persistent disk. For example, if you
@@ -427,7 +438,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -450,8 +462,44 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
-    module.fail_json(msg="Disk cannot be edited")
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('labels') != request.get('labels'):
+        label_fingerprint_update(module, request, response)
+    if response.get('sizeGb') != request.get('sizeGb'):
+        size_gb_update(module, request, response)
+
+
+def label_fingerprint_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/zones/{zone}/disks/{name}/setLabels"
+        ]).format(**module.params),
+        {
+            u'labelFingerprint': response.get('labelFingerprint'),
+            u'labels': module.params.get('labels')
+        }
+    )
+
+
+def size_gb_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/zones/{zone}/disks/{name}/resize"
+        ]).format(**module.params),
+        {
+            u'sizeGb': module.params.get('size_gb')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -481,9 +529,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -494,9 +542,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/disks".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -511,8 +559,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -539,6 +585,7 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
+        u'labelFingerprint': response.get(u'labelFingerprint'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
@@ -548,8 +595,8 @@ def response_to_hash(module, response):
         u'licenses': response.get(u'licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': response.get(u'sizeGb'),
-        u'type': response.get(u'type'),
         u'users': response.get(u'users'),
+        u'type': response.get(u'type'),
         u'sourceImage': module.params.get('source_image')
     }
 
@@ -557,7 +604,7 @@ def response_to_hash(module, response):
 def disk_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/{zone}/diskTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*/diskTypes/[a-z1-9\-]*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/diskTypes/%s".format(**params) % name
     return name

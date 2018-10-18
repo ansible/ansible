@@ -85,6 +85,11 @@ options:
             - A reference to a BackendService to receive the matched traffic.
             - This is used for internal load balancing.
             - "(not used for external load balancing) ."
+            - 'This field represents a link to a BackendService resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+              task and then set this backend_service field to "{{ name-of-resource }}" Alternatively,
+              you can set this backend_service to a dictionary with the selfLink key where the
+              value is the selfLink of your BackendService.'
         required: false
     ip_version:
         description:
@@ -116,6 +121,11 @@ options:
               IP should belong to for this Forwarding Rule. If this field is not specified, the
               default network will be used.
             - This field is not used for external load balancing.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: false
     port_range:
         description:
@@ -147,6 +157,11 @@ options:
             - If the network specified is in auto subnet mode, this field is optional. However,
               if the network is in custom subnet mode, a subnetwork must be specified.
             - This field is not used for external load balancing.
+            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
+              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
+              you can set this subnetwork to a dictionary with the selfLink key where the value
+              is the selfLink of your Subnetwork.'
         required: false
     target:
         description:
@@ -155,8 +170,21 @@ options:
               rule. For global forwarding rules, this target must be a global load balancing resource.
               The forwarded traffic must be of a type appropriate to the target object.
             - This field is not used for internal load balancing.
+            - 'This field represents a link to a TargetPool resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_target_pool
+              task and then set this target field to "{{ name-of-resource }}" Alternatively, you
+              can set this target to a dictionary with the selfLink key where the value is the
+              selfLink of your TargetPool.'
         required: false
         version_added: 2.7
+    network_tier:
+        description:
+            - 'The networking tier used for configuring this address. This field can take the
+              following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+              to be PREMIUM.'
+        required: false
+        version_added: 2.8
+        choices: ['PREMIUM', 'STANDARD']
     region:
         description:
             - A reference to the region where the regional forwarding rule resides.
@@ -198,13 +226,13 @@ EXAMPLES = '''
       port_range: 80-80
       ip_address: "{{ address.address }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -220,7 +248,7 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
-    ip_address:
+    IPAddress:
         description:
             - The IP address that this forwarding rule is serving on behalf of.
             - Addresses are restricted based on the forwarding rule's load balancing scheme (EXTERNAL
@@ -241,27 +269,27 @@ RETURN = '''
               * global/addresses/address * address .'
         returned: success
         type: str
-    ip_protocol:
+    IPProtocol:
         description:
             - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP, AH,
               SCTP or ICMP.
             - When the load balancing scheme is INTERNAL, only TCP and UDP are valid.
         returned: success
         type: str
-    backend_service:
+    backendService:
         description:
             - A reference to a BackendService to receive the matched traffic.
             - This is used for internal load balancing.
             - "(not used for external load balancing) ."
         returned: success
         type: dict
-    ip_version:
+    ipVersion:
         description:
             - The IP Version that will be used by this forwarding rule. Valid options are IPV4
               or IPV6. This can only be specified for a global forwarding rule.
         returned: success
         type: str
-    load_balancing_scheme:
+    loadBalancingScheme:
         description:
             - 'This signifies what the ForwardingRule will be used for and can only take the following
               values: INTERNAL, EXTERNAL The value of INTERNAL means that this will be used for
@@ -288,7 +316,7 @@ RETURN = '''
             - This field is not used for external load balancing.
         returned: success
         type: dict
-    port_range:
+    portRange:
         description:
             - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
               TargetSslProxy, TargetTcpProxy, TargetVpnGateway, TargetPool, TargetInstance.
@@ -331,6 +359,19 @@ RETURN = '''
             - This field is not used for internal load balancing.
         returned: success
         type: dict
+    labelFingerprint:
+        description:
+            - The fingerprint used for optimistic locking of this resource.  Used internally during
+              updates.
+        returned: success
+        type: str
+    networkTier:
+        description:
+            - 'The networking tier used for configuring this address. This field can take the
+              following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+              to be PREMIUM.'
+        returned: success
+        type: str
     region:
         description:
             - A reference to the region where the regional forwarding rule resides.
@@ -370,6 +411,7 @@ def main():
             ports=dict(type='list', elements='str'),
             subnetwork=dict(type='dict'),
             target=dict(type='dict'),
+            network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
             region=dict(required=True, type='str')
         )
     )
@@ -386,7 +428,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -409,9 +452,41 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('target') != request.get('target'):
+        target_update(module, request, response)
+
+
+def target_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/forwardingRules/{name}/setTarget"
+        ]).format(**module.params),
+        {
+            u'target': replace_resource_dict(module.params.get(u'target', {}), 'selfLink')
+        }
+    )
+
+
+def label_fingerprint_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/forwardingRules/{name}/setLabels"
+        ]).format(**module.params),
+        {
+            u'labelFingerprint': response.get('labelFingerprint')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -433,7 +508,8 @@ def resource_to_request(module):
         u'portRange': module.params.get('port_range'),
         u'ports': module.params.get('ports'),
         u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
-        u'target': replace_resource_dict(module.params.get(u'target', {}), 'selfLink')
+        u'target': replace_resource_dict(module.params.get(u'target', {}), 'selfLink'),
+        u'networkTier': module.params.get('network_tier')
     }
     return_vals = {}
     for k, v in request.items():
@@ -443,9 +519,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -456,9 +532,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/forwardingRules".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -473,8 +549,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -514,7 +588,9 @@ def response_to_hash(module, response):
         u'portRange': response.get(u'portRange'),
         u'ports': response.get(u'ports'),
         u'subnetwork': response.get(u'subnetwork'),
-        u'target': response.get(u'target')
+        u'target': response.get(u'target'),
+        u'labelFingerprint': response.get(u'labelFingerprint'),
+        u'networkTier': module.params.get('network_tier')
     }
 
 

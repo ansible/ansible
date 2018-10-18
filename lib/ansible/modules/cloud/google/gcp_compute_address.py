@@ -81,11 +81,24 @@ options:
               letter, and all following characters must be a dash, lowercase letter, or digit,
               except the last character, which cannot be a dash.
         required: true
+    network_tier:
+        description:
+            - 'The networking tier used for configuring this address. This field can take the
+              following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+              to be PREMIUM.'
+        required: false
+        version_added: 2.8
+        choices: ['PREMIUM', 'STANDARD']
     subnetwork:
         description:
             - The URL of the subnetwork in which to reserve the address. If an IP address is specified,
               it must be within the subnetwork's IP range.
             - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
+            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
+              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
+              you can set this subnetwork to a dictionary with the selfLink key where the value
+              is the selfLink of your Subnetwork.'
         required: false
         version_added: 2.7
     region:
@@ -106,7 +119,7 @@ EXAMPLES = '''
       name: test-address1
       region: us-west1
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -119,13 +132,13 @@ RETURN = '''
               be inside the specified subnetwork, if any.
         returned: success
         type: str
-    address_type:
+    addressType:
         description:
             - The type of address to reserve, either INTERNAL or EXTERNAL.
             - If unspecified, defaults to EXTERNAL.
         returned: success
         type: str
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -147,6 +160,13 @@ RETURN = '''
               `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
               letter, and all following characters must be a dash, lowercase letter, or digit,
               except the last character, which cannot be a dash.
+        returned: success
+        type: str
+    networkTier:
+        description:
+            - 'The networking tier used for configuring this address. This field can take the
+              following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+              to be PREMIUM.'
         returned: success
         type: str
     subnetwork:
@@ -192,6 +212,7 @@ def main():
             address_type=dict(default='EXTERNAL', type='str', choices=['INTERNAL', 'EXTERNAL']),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
+            network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
             subnetwork=dict(type='dict'),
             region=dict(required=True, type='str')
         )
@@ -209,7 +230,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -233,8 +255,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="Address cannot be edited")
 
 
 def delete(module, link, kind):
@@ -249,6 +270,7 @@ def resource_to_request(module):
         u'addressType': module.params.get('address_type'),
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
+        u'networkTier': module.params.get('network_tier'),
         u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
     }
     return_vals = {}
@@ -259,9 +281,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -272,9 +294,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/addresses".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -289,8 +311,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -323,6 +343,7 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
+        u'networkTier': response.get(u'networkTier'),
         u'subnetwork': response.get(u'subnetwork'),
         u'users': response.get(u'users')
     }

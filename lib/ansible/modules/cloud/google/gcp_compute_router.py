@@ -61,6 +61,11 @@ options:
     network:
         description:
             - A reference to the network to which this router belongs.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: true
     bgp:
         description:
@@ -138,7 +143,7 @@ EXAMPLES = '''
         - range: 6.7.0.0/16
       region: us-central1
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -149,7 +154,7 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -186,13 +191,13 @@ RETURN = '''
                       that link to this router will have the same local ASN.
                 returned: success
                 type: int
-            advertise_mode:
+            advertiseMode:
                 description:
                     - User-specified flag to indicate which mode to use for advertisement.
                     - 'Valid values of this enum field are: DEFAULT, CUSTOM .'
                 returned: success
                 type: str
-            advertised_groups:
+            advertisedGroups:
                 description:
                     - User-specified list of prefix groups to advertise in custom mode.
                     - This field can only be populated if advertiseMode is CUSTOM and is advertised to
@@ -201,7 +206,7 @@ RETURN = '''
                     - 'This enum field has the one valid value: ALL_SUBNETS .'
                 returned: success
                 type: list
-            advertised_ip_ranges:
+            advertisedIpRanges:
                 description:
                     - User-specified list of individual IP ranges to advertise in custom mode. This field
                       can only be populated if advertiseMode is CUSTOM and is advertised to all peers
@@ -274,7 +279,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -324,9 +330,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -337,9 +343,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/routers".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -354,8 +360,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 

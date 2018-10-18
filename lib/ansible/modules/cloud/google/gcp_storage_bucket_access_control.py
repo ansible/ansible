@@ -58,6 +58,11 @@ options:
     bucket:
         description:
             - The name of the bucket.
+            - 'This field represents a link to a Bucket resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_storage_bucket task
+              and then set this bucket field to "{{ name-of-resource }}" Alternatively, you can
+              set this bucket to a dictionary with the name key where the value is the name of
+              your Bucket.'
         required: true
     entity:
         description:
@@ -111,7 +116,7 @@ EXAMPLES = '''
       entity: user-alexstephen@google.com
       role: WRITER
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -143,7 +148,7 @@ RETURN = '''
               entity would be domain-example.com.
         returned: success
         type: str
-    entity_id:
+    entityId:
         description:
             - The ID for the entity.
         returned: success
@@ -153,13 +158,13 @@ RETURN = '''
             - The ID of the access-control entry.
         returned: success
         type: str
-    project_team:
+    projectTeam:
         description:
             - The project team associated with the entity.
         returned: success
         type: complex
         contains:
-            project_number:
+            projectNumber:
                 description:
                     - The project team associated with the entity.
                 returned: success
@@ -217,7 +222,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -267,9 +273,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'storage')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -280,9 +286,9 @@ def collection(module):
     return "https://www.googleapis.com/storage/v1/b/{bucket}/acl".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -297,8 +303,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 

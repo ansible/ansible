@@ -87,7 +87,39 @@ options:
         description:
             - The network this subnet belongs to.
             - Only networks that are in the distributed mode can have subnetworks.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: true
+    enable_flow_logs:
+        description:
+            - Whether to enable flow logging for this subnetwork.
+        required: false
+        type: bool
+        version_added: 2.8
+    secondary_ip_ranges:
+        description:
+            - An array of configurations for secondary IP ranges for VM instances contained in
+              this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
+              of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
+        required: false
+        version_added: 2.8
+        suboptions:
+            range_name:
+                description:
+                    - The name associated with this subnetwork secondary range, used when adding an alias
+                      IP range to a VM instance. The name must be 1-63 characters long, and comply with
+                      RFC1035. The name must be unique within the subnetwork.
+                required: true
+            ip_cidr_range:
+                description:
+                    - The range of IP addresses belonging to this subnetwork secondary range. Provide
+                      this property when you create the subnetwork.
+                    - Ranges must be unique and non-overlapping with all primary and secondary IP ranges
+                      within a network. Only IPv4 is supported.
+                required: true
     private_ip_google_access:
         description:
             - Whether the VMs in this subnet can access Google services without assigned external
@@ -123,13 +155,13 @@ EXAMPLES = '''
       network: "{{ network }}"
       ip_cidr_range: 172.16.0.0/16
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -140,7 +172,7 @@ RETURN = '''
               the resource. This field can be set only at resource creation time.
         returned: success
         type: str
-    gateway_address:
+    gatewayAddress:
         description:
             - The gateway address for default routes to reach destination addresses outside this
               subnetwork.
@@ -151,7 +183,7 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
-    ip_cidr_range:
+    ipCidrRange:
         description:
             - The range of internal addresses that are owned by this subnetwork.
             - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
@@ -175,7 +207,41 @@ RETURN = '''
             - Only networks that are in the distributed mode can have subnetworks.
         returned: success
         type: dict
-    private_ip_google_access:
+    enableFlowLogs:
+        description:
+            - Whether to enable flow logging for this subnetwork.
+        returned: success
+        type: bool
+    fingerprint:
+        description:
+            - Fingerprint of this resource. This field is used internally during updates of this
+              resource.
+        returned: success
+        type: str
+    secondaryIpRanges:
+        description:
+            - An array of configurations for secondary IP ranges for VM instances contained in
+              this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
+              of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
+        returned: success
+        type: complex
+        contains:
+            rangeName:
+                description:
+                    - The name associated with this subnetwork secondary range, used when adding an alias
+                      IP range to a VM instance. The name must be 1-63 characters long, and comply with
+                      RFC1035. The name must be unique within the subnetwork.
+                returned: success
+                type: str
+            ipCidrRange:
+                description:
+                    - The range of IP addresses belonging to this subnetwork secondary range. Provide
+                      this property when you create the subnetwork.
+                    - Ranges must be unique and non-overlapping with all primary and secondary IP ranges
+                      within a network. Only IPv4 is supported.
+                returned: success
+                type: str
+    privateIpGoogleAccess:
         description:
             - Whether the VMs in this subnet can access Google services without assigned external
               IP addresses.
@@ -192,7 +258,7 @@ RETURN = '''
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
 import time
 
@@ -211,6 +277,11 @@ def main():
             ip_cidr_range=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             network=dict(required=True, type='dict'),
+            enable_flow_logs=dict(type='bool'),
+            secondary_ip_ranges=dict(type='list', elements='dict', options=dict(
+                range_name=dict(required=True, type='str'),
+                ip_cidr_range=dict(required=True, type='str')
+            )),
             private_ip_google_access=dict(type='bool'),
             region=dict(required=True, type='str')
         )
@@ -228,7 +299,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -251,9 +323,60 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('ipCidrRange') != request.get('ipCidrRange'):
+        ip_cidr_range_update(module, request, response)
+    if response.get('enableFlowLogs') != request.get('enableFlowLogs') or response.get('secondaryIpRanges') != request.get('secondaryIpRanges'):
+        enable_flow_logs_update(module, request, response)
+    if response.get('privateIpGoogleAccess') != request.get('privateIpGoogleAccess'):
+        private_ip_google_access_update(module, request, response)
+
+
+def ip_cidr_range_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/subnetworks/{name}/expandIpCidrRange"
+        ]).format(**module.params),
+        {
+            u'ipCidrRange': module.params.get('ip_cidr_range')
+        }
+    )
+
+
+def enable_flow_logs_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.patch(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/subnetworks/{name}"
+        ]).format(**module.params),
+        {
+            u'enableFlowLogs': module.params.get('enable_flow_logs'),
+            u'fingerprint': response.get('fingerprint'),
+            u'secondaryIpRanges': SubnetworkSecondaryIpRangesArray(module.params.get('secondary_ip_ranges', []), module).to_request()
+        }
+    )
+
+
+def private_ip_google_access_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/subnetworks/{name}/setPrivateIpGoogleAccess"
+        ]).format(**module.params),
+        {
+            u'privateIpGoogleAccess': module.params.get('private_ip_google_access')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -268,6 +391,8 @@ def resource_to_request(module):
         u'ipCidrRange': module.params.get('ip_cidr_range'),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
+        u'enableFlowLogs': module.params.get('enable_flow_logs'),
+        u'secondaryIpRanges': SubnetworkSecondaryIpRangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
         u'privateIpGoogleAccess': module.params.get('private_ip_google_access'),
         u'region': module.params.get('region')
     }
@@ -279,9 +404,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -292,9 +417,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/subnetworks".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -309,8 +434,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -344,6 +467,9 @@ def response_to_hash(module, response):
         u'ipCidrRange': response.get(u'ipCidrRange'),
         u'name': response.get(u'name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
+        u'enableFlowLogs': response.get(u'enableFlowLogs'),
+        u'fingerprint': response.get(u'fingerprint'),
+        u'secondaryIpRanges': SubnetworkSecondaryIpRangesArray(response.get(u'secondaryIpRanges', []), module).from_response(),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),
         u'region': module.params.get('region')
     }
@@ -384,6 +510,39 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+class SubnetworkSecondaryIpRangesArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({
+            u'rangeName': item.get('range_name'),
+            u'ipCidrRange': item.get('ip_cidr_range')
+        })
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({
+            u'rangeName': item.get(u'rangeName'),
+            u'ipCidrRange': item.get(u'ipCidrRange')
+        })
 
 
 if __name__ == '__main__':

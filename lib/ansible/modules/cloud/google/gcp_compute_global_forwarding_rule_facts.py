@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -66,7 +66,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -82,7 +82,7 @@ items:
                 - The unique identifier for the resource.
             returned: success
             type: int
-        ip_address:
+        IPAddress:
             description:
                 - The IP address that this forwarding rule is serving on behalf of.
                 - Addresses are restricted based on the forwarding rule's load balancing scheme (EXTERNAL
@@ -103,27 +103,27 @@ items:
                   * global/addresses/address * address .'
             returned: success
             type: str
-        ip_protocol:
+        IPProtocol:
             description:
                 - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP, AH,
                   SCTP or ICMP.
                 - When the load balancing scheme is INTERNAL, only TCP and UDP are valid.
             returned: success
             type: str
-        backend_service:
+        backendService:
             description:
                 - A reference to a BackendService to receive the matched traffic.
                 - This is used for internal load balancing.
                 - "(not used for external load balancing) ."
             returned: success
             type: dict
-        ip_version:
+        ipVersion:
             description:
                 - The IP Version that will be used by this forwarding rule. Valid options are IPV4
                   or IPV6. This can only be specified for a global forwarding rule.
             returned: success
             type: str
-        load_balancing_scheme:
+        loadBalancingScheme:
             description:
                 - 'This signifies what the ForwardingRule will be used for and can only take the following
                   values: INTERNAL, EXTERNAL The value of INTERNAL means that this will be used for
@@ -150,7 +150,7 @@ items:
                 - This field is not used for external load balancing.
             returned: success
             type: dict
-        port_range:
+        portRange:
             description:
                 - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
                   TargetSslProxy, TargetTcpProxy, TargetVpnGateway, TargetPool, TargetInstance.
@@ -213,7 +213,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 

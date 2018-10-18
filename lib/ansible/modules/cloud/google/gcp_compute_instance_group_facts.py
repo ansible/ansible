@@ -61,7 +61,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -71,7 +71,7 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -93,7 +93,7 @@ items:
                 - The name must be 1-63 characters long, and comply with RFC1035.
             returned: success
             type: str
-        named_ports:
+        namedPorts:
             description:
                 - Assigns a name to a port number.
                 - 'For example: {name: "http", port: 80}.'
@@ -135,6 +135,15 @@ items:
                 - A reference to the zone where the instance group resides.
             returned: success
             type: str
+        instances:
+            description:
+                - The list of instances associated with this InstanceGroup.
+                - All instances must be created before being added to an InstanceGroup.
+                - All instances not in this list will be removed from the InstanceGroup and will not
+                  be deleted.
+                - Only the full identifier of the instance will be returned.
+            returned: success
+            type: list
 '''
 
 ################################################################################

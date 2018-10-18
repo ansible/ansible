@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -66,12 +66,12 @@ items:
     returned: always
     type: complex
     contains:
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
             type: str
-        default_service:
+        defaultService:
             description:
                 - A reference to BackendService resource if none of the hostRules match.
             returned: success
@@ -82,7 +82,7 @@ items:
                   the resource.
             returned: success
             type: str
-        host_rules:
+        hostRules:
             description:
                 - The list of HostRules to use against the URL.
             returned: success
@@ -101,7 +101,7 @@ items:
                           must be followed in the pattern by either - or .
                     returned: success
                     type: list
-                path_matcher:
+                pathMatcher:
                     description:
                         - The name of the PathMatcher to use to match the path portion of the URL if the hostRule
                           matches the URL's host portion.
@@ -112,6 +112,12 @@ items:
                 - The unique identifier for the resource.
             returned: success
             type: int
+        fingerprint:
+            description:
+                - Fingerprint of this resource. This field is used internally during updates of this
+                  resource.
+            returned: success
+            type: str
         name:
             description:
                 - Name of the resource. Provided by the client when the resource is created. The name
@@ -122,13 +128,13 @@ items:
                   be a dash.
             returned: success
             type: str
-        path_matchers:
+        pathMatchers:
             description:
                 - The list of named PathMatchers to use against the URL.
             returned: success
             type: complex
             contains:
-                default_service:
+                defaultService:
                     description:
                         - A reference to a BackendService resource. This will be used if none of the pathRules
                           defined by this PathMatcher is matched by the URL's path portion.
@@ -144,7 +150,7 @@ items:
                         - The name to which this PathMatcher is referred by the HostRule.
                     returned: success
                     type: str
-                path_rules:
+                pathRules:
                     description:
                         - The list of path rules.
                     returned: success
@@ -205,7 +211,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 

@@ -54,6 +54,11 @@ options:
     topic:
         description:
             - A reference to a Topic resource.
+            - 'This field represents a link to a Topic resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_pubsub_topic task and
+              then set this topic field to "{{ name-of-resource }}" Alternatively, you can set
+              this topic to a dictionary with the name key where the value is the name of your
+              Topic.'
         required: false
     push_config:
         description:
@@ -105,7 +110,7 @@ EXAMPLES = '''
         push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -121,7 +126,7 @@ RETURN = '''
             - A reference to a Topic resource.
         returned: success
         type: dict
-    push_config:
+    pushConfig:
         description:
             - If push delivery is used with this subscription, this field is used to configure
               it. An empty pushConfig signifies that the subscriber will pull and ack messages
@@ -129,13 +134,13 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            push_endpoint:
+            pushEndpoint:
                 description:
                     - A URL locating the endpoint to which messages should be pushed.
                     - For example, a Webhook endpoint might use "U(https://example.com/push".)
                 returned: success
                 type: str
-    ack_deadline_seconds:
+    ackDeadlineSeconds:
         description:
             - This value is the maximum time after a subscriber receives a message before the
               subscriber should acknowledge the message. After message delivery but before the
@@ -193,7 +198,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -241,9 +247,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'pubsub')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -254,9 +260,9 @@ def collection(module):
     return "https://pubsub.googleapis.com/v1/projects/{project}/subscriptions".format(**module.params)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -319,7 +325,7 @@ def decode_request(response, module):
 
 def encode_request(request, module):
     request['topic'] = '/'.join(['projects', module.params['project'],
-                                 'topics', module.params['topic']])
+                                 'topics', module.params['topic']['name']])
     request['name'] = '/'.join(['projects', module.params['project'],
                                 'subscriptions', module.params['name']])
 

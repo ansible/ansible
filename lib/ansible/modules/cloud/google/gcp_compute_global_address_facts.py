@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -71,7 +71,7 @@ items:
                 - The static external IP address represented by this resource.
             returned: success
             type: str
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -97,7 +97,13 @@ items:
                   be a dash.
             returned: success
             type: str
-        ip_version:
+        labelFingerprint:
+            description:
+                - The fingerprint used for optimistic locking of this resource.  Used internally during
+                  updates.
+            returned: success
+            type: str
+        ipVersion:
             description:
                 - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
                   The default value is IPV4.
@@ -106,6 +112,13 @@ items:
         region:
             description:
                 - A reference to the region where the regional address resides.
+            returned: success
+            type: str
+        addressType:
+            description:
+                - The type of the address to reserve, default is EXTERNAL.
+                - "* EXTERNAL indicates public/external single IP address."
+                - "* INTERNAL indicates internal IP ranges belonging to some network."
             returned: success
             type: str
 '''
@@ -124,7 +137,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 
