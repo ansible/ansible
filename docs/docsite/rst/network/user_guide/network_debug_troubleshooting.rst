@@ -665,9 +665,9 @@ Intermittent failure while using ``network_cli`` connection type
 ----------------------------------------------------------------
 
 If the command prompt received in response is not matched correctly within
-``network_cli`` connection plugin the task might fail intermittently with stacktarce
-or truncated response or with error message ``operation requires privilege escalation``.
-Startin 2.7.1 a new buffer read timer is added to ensure prompts are matched properly
+``network_cli`` connection plugin the task might fail intermittently with truncated
+response or with error message ``operation requires privilege escalation``.
+Starting 2.7.1 a new buffer read timer is added to ensure prompts are matched properly
 and complete response is send in output. The timer default value is 0.2 seconds and
 can be adjusted per task basis or can be set globally in seconds.
 
@@ -683,7 +683,7 @@ Example Per task timer setting
       ansible_buffer_read_timeout: 2
 
 
-To make this a global, add the following to your ``ansible.cfg`` file:
+To make this a global setting, add the following to your ``ansible.cfg`` file:
 
 .. code-block:: ini
 
