@@ -662,25 +662,24 @@ class PamdService(object):
             rule_args_k = set(rule_args_d.keys())
 
             # if there is nothing in common and neither set is empty
-            if ((no_eq_new_args.isdisjoint(no_eq_rule_args))
-            and (len(no_eq_new_args) is not 0)
-            and (len(no_eq_rule_args) is not 0)):
-                rule_changed = True
-                for new_arg in no_eq_new_args:
-                    no_eq_rule_args.add(new_arg)
+            if no_eq_new_args.isdisjoint(no_eq_rule_args):
+                if((len(no_eq_new_args) != 0) and (len(no_eq_rule_args) != 0)):
+                    rule_changed = True
+                    for new_arg in no_eq_new_args:
+                        no_eq_rule_args.add(new_arg)
             # else there's an intersection and possibly new args
             else:
                 real_new_no_eq_args = no_eq_new_args.difference(no_eq_rule_args)
                 for new_arg in real_new_no_eq_args:
                     no_eq_rule_args.add(new_arg)
 
-            # if there are only new args that are not the same as any current rule args and neither set is empty
-            if((new_args_k.isdisjoint(rule_args_k))
-            and (len(new_args_k) is not 0)
-            and (len(rule_args_k) is not 0)):
-                rule_changed = True
-                for key in new_args_k:
-                    rule_args_d[key] = new_args_d[key]
+            # if there are only new args that are not the same as
+            # any current rule args and neither set is empty
+            if new_args_k.isdisjoint(rule_args_k):
+                if((len(new_args_k) != 0) and (len(rule_args_k) != 0)):
+                    rule_changed = True
+                    for key in new_args_k:
+                        rule_args_d[key] = new_args_d[key]
             # else there's an intersection and possibly new args
             else:
                 # what args are in both new_args_d and rule_args_d
