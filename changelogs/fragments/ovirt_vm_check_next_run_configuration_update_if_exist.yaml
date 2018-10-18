@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vm - Check next_run configuration update if exist (https://github.com/ansible/ansible/pull/47282/).
