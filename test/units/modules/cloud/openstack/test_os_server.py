@@ -35,7 +35,7 @@ def params_from_doc(func):
     return cfg[0]['os_server']
 
 
-class FakeCloud (object):
+class FakeCloud(object):
     ports = [
         {'name': 'port1', 'id': '1234'},
         {'name': 'port2', 'id': '4321'},

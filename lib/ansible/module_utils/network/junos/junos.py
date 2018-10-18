@@ -129,7 +129,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         module.fail_json(msg='invalid action for format json')
     elif format in ('text', 'xml') and action not in ACTIONS:
         module.fail_json(msg='invalid action format %s' % format)
-    if action == 'set' and not format == 'text':
+    if action == 'set' and format != 'text':
         module.fail_json(msg='format must be text when action is set')
 
     conn = get_connection(module)
