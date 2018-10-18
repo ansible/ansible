@@ -508,7 +508,9 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_version='2.6.0',
+        min_docker_api_version='1.35',
     )
 
     results = dict(
