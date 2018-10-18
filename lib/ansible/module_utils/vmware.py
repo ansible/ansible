@@ -12,8 +12,12 @@ import ssl
 import time
 from random import randint
 
-# requests is required for exception handling of the ConnectionError
-import requests
+try:
+    # requests is required for exception handling of the ConnectionError
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 try:
     from pyVim import connect
@@ -778,6 +782,10 @@ class PyVmomi(object):
         """
         Constructor
         """
+        if not HAS_REQUESTS:
+            self.module.fail_json(msg="Unable to find 'requests' Python library which is required."
+                                      " Please install using 'pip install requests'")
+
         if not HAS_PYVMOMI:
             module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
 
