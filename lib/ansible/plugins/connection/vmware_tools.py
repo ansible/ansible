@@ -307,15 +307,6 @@ class Connection(ConnectionBase):
             for chunk in in_path_response.iter_content(chunk_size=self.get_option("file_chunk_size")):
                 fd.write(chunk)
 
-    def guestFileAttributes(self):
-        """Return appropriate GuestFileAttributes."""
-        if self.linuxGuest:
-            guest_file_attributes = vim.GuestPosixFileAttributes()
-        elif self.windowsGuest:
-            guest_file_attributes = vim.GuestWindowsFileAttributes()
-
-        return guest_file_attributes
-
     def put_file(self, in_path, out_path):
         """Put file."""
         super(Connection, self).put_file(in_path, out_path)
@@ -324,7 +315,7 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound("file or module does not exist: '%s'" % to_native(in_path))
 
         put_url = self.fileManager.InitiateFileTransferToGuest(
-            vm=self.vm, auth=self.vm_auth, guestFilePath=out_path, fileAttributes=self.guestFileAttributes(), fileSize=getsize(in_path), overwrite=True
+            vm=self.vm, auth=self.vm_auth, guestFilePath=out_path, fileAttributes=vim.GuestFileAttributes(), fileSize=getsize(in_path), overwrite=True
         )
 
         # file size of 'in_path' must be greater than 0
