@@ -254,7 +254,9 @@ def main():
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_version='1.10.0',
+        # "The docker server >= 1.9.0"
     )
 
     cm = DockerVolumeManager(client)
