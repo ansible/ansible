@@ -221,7 +221,8 @@ def get_bond_options(mode, usr_opts):
     )
 
     opts_dict = DEFAULT_MODE_OPTS.get(mode, {})
-    opts_dict.update(**usr_opts)
+    if usr_opts is not None:
+        opts_dict.update(**usr_opts)
 
     options.extend(
         [otypes.Option(name=opt, value=value)
