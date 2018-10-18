@@ -430,7 +430,7 @@ class VariableManager:
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later
         if task and task.delegate_to is not None and include_delegate_to:
-            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, host, all_vars)
+            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
         # 'vars' magic var
         if task or play:
@@ -486,7 +486,7 @@ class VariableManager:
 
         return variables
 
-    def _get_delegated_vars(self, play, task, host, existing_variables):
+    def _get_delegated_vars(self, play, task, existing_variables):
         if not hasattr(task, 'loop'):
             # This "task" is not a Task, so we need to skip it
             return {}
