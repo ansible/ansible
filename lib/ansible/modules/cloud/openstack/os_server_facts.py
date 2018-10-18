@@ -41,8 +41,6 @@ options:
      description:
         - restrict results to servers matching a dictionary of
           filters
-     required: false
-     default: None
      version_added: "2.8"
    availability_zone:
      description:
