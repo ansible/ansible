@@ -183,7 +183,7 @@ class AnsibleDockerClient(Client):
             required_together=required_together_params,
             required_if=required_if)
 
-        NEEDS_DOCKER_PY2 = (LooseVersion(min_docker_version) < LooseVersion('2.0'))
+        NEEDS_DOCKER_PY2 = (LooseVersion(min_docker_version) >= LooseVersion('2.0.0'))
 
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
