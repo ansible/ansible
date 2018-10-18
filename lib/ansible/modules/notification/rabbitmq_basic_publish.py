@@ -119,7 +119,8 @@ result:
     - Contains the a message (msg), content type (content_type) and the queue name (queue).
   returned: success
   type: dict
-  sample: 'result': { 'content_type': 'text/plain', 'msg': 'Successfully published to queue test', 'queue': 'test' }
+  sample: |
+    'result': { 'content_type': 'text/plain', 'msg': 'Successfully published to queue test', 'queue': 'test' }
 '''
 
 try:
