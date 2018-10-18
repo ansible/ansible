@@ -23,10 +23,12 @@ To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 #. Click on ``Edit on GitHub``.
 #. If you don't already have a fork of the ansible repo on your GitHub account, you'll be prompted to create one.
 #. Fix the typo, update the example, or make whatever other change you have in mind.
-#. Enter a commit message at the bottom of the GitHub page. The more specific, the better. For example, "fixes typo in my_module description".
-#. Suggest the change. GitHub will handle branching and committing for you, and open Ansible's pull request template.
-#. Fill out the PR template - include as much detail as appropriate for your change.
-#. Submit the PR. Ansibot, our automated script, will add labels, cc: the docs maintainers, and kick off a CI testing run.
+#. Enter a commit message in the first rectangle under the heading ``Propose file change`` at the bottom of the GitHub page. The more specific, the better. For example, "fixes typo in my_module description". You can put more detail in the second rectangle if you like. Leave the ``+label: docsite_pr`` there.
+#. Submit the suggested change by clicking on the green "Propose file change" button. GitHub will handle branching and committing for you, and open a page with the heading "Comparing Changes".
+#. Click on ``Create pull request`` to open the PR template.
+#. Fill out the PR template, including as much detail as appropriate for your change. You can change the title of your PR if you like (by default it's the same as your commit message). In the ``Issue Type`` section, delete all lines except the ``Docs Pull Request`` line.
+#. Submit your change by clicking on ``Create pull request`` button.
+#. Be patient while Ansibot, our automated script, adds labels, pings the docs maintainers, and kicks off a CI testing run.
 #. Keep an eye on your PR - the docs team may ask you for changes.
 
 Opening a new issue and/or PR
