@@ -204,7 +204,7 @@ class ActionModule(ActionBase):
                 fail_count += 1
                 time.sleep(fail_sleep)
 
-        raise TimedOutException('Timed out waiting for %s' % (action_desc))
+        raise TimedOutException('Timed out waiting for %s (timeout=%s)' % (action_desc, reboot_timeout))
 
     def perform_reboot(self):
         display.debug("%s: rebooting server" % self._task.action)
