@@ -346,10 +346,7 @@ def _find_address_range(addresses):
 
     """
     it = iter(addresses)
-    try:
-        first = last = next(it)
-    except StopIteration:
-        return
+    first = last = next(it)  # pylint: disable=stop-iteration-return
     for ip in it:
         if ip._ip != last._ip + 1:
             yield first, last
