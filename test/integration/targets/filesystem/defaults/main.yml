@@ -4,7 +4,7 @@ tested_filesystems:
   #   grow: True if resizefs is supported
   # Other minimal sizes:
   # - XFS: 20Mo
-  # - Btrfs: 100Mo (50Mo when "--metadata single" is used)
+  # - Btrfs: 150Mo (50Mo when "--metadata single" is used and 100Mb when on newer Fedora versions)
   ext4: {fssize: 10, grow: True}
   ext4dev: {fssize: 10, grow: True}
   ext3: {fssize: 10, grow: True}
