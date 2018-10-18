@@ -136,19 +136,9 @@ class Connection(ConnectionBase):
         return self._si.content.guestOperationsManager.processManager
 
     @property
-    def linuxGuest(self):
-        """Return if VM guest family is linux."""
-        return self.vm.guest.guestFamily == "linuxGuest"
-
-    @property
     def windowsGuest(self):
         """Return if VM guest family is windows."""
         return self.vm.guest.guestFamily == "windowsGuest"
-
-    @property
-    def supported_guest_family(self):
-        """Return if VM guest family is supported."""
-        return self.linuxGuest or self.windowsGuest
 
     def __init__(self, *args, **kwargs):
         """init."""
@@ -189,9 +179,6 @@ class Connection(ConnectionBase):
 
         if self.vm is None:
             raise AnsibleError("Unable to find VM by path '%s'" % to_native(self.get_option("vm_path")))
-
-        if not self.supported_guest_family:
-            raise AnsibleError("Unsupported guest family: %s" % to_native(self.vm.guest.guestFamily))
 
         self.vm_auth = vim.NamePasswordAuthentication(
             username=self.get_option("vm_username"), password=self.get_option("vm_password"), interactiveSession=False
@@ -239,14 +226,14 @@ class Connection(ConnectionBase):
         return self.fileManager.CreateTemporaryFileInGuest(vm=self.vm, auth=self.vm_auth, prefix=prefix, suffix=suffix)
 
     def _get_program_spec_program_path_and_arguments(self, cmd):
-        if self.linuxGuest:
-            program_path = self._play_context.executable
-            arguments = re.sub(r"^%s\s*" % program_path, "", cmd)
-        elif self.windowsGuest:
+        if self.windowsGuest:
             cmd_parts = self._shell._encode_script(cmd, as_list=False, strict_mode=False, preserve_rc=False)
 
             program_path = "cmd.exe"
             arguments = "/c %s" % cmd_parts
+        else:
+            program_path = self._play_context.executable
+            arguments = re.sub(r"^%s\s*" % program_path, "", cmd)
 
         return program_path, arguments
 
