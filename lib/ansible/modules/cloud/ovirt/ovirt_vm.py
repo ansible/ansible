@@ -1160,6 +1160,13 @@ class VmsModule(BaseModule):
         )
 
     def update_check(self, entity):
+        res = self._update_check(entity)
+        if entity.next_run_configuration_exists:
+            res = res and self._update_check(self._service.service(entity.id).get(next_run=True))
+
+        return res
+
+    def _update_check(self, entity):
         def check_cpu_pinning():
             if self.param('cpu_pinning'):
                 current = []
@@ -1206,7 +1213,7 @@ class VmsModule(BaseModule):
             equal(self.param('smartcard_enabled'), getattr(vm_display, 'smartcard_enabled', False)) and
             equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
-            equal(self.param('serial_console'), entity.console.enabled) and
+            equal(self.param('serial_console'), getattr(entity.console, 'enabled', None)) and
             equal(self._get_minor(self.param('custom_compatibility_version')), self._get_minor(entity.custom_compatibility_version)) and
             equal(self._get_major(self.param('custom_compatibility_version')), self._get_major(entity.custom_compatibility_version)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
