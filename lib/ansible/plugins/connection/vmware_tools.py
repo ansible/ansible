@@ -43,7 +43,7 @@ DOCUMENTATION = """
     options:
       connection_address:
         description:
-          - Address for the connection
+          - Address for the connection (vCenter or ESXi Host).
         vars:
           - name: ansible_vmware_tools_connection_address
         required: True
@@ -55,28 +55,30 @@ DOCUMENTATION = """
         required: True
       connection_password:
         description:
-          - Password for the connection
+          - Password for the connection.
         vars:
           - name: ansible_vmware_tools_connection_password
         required: True
       connection_verify_ssl:
         description:
-          - Verify SSL for the connection
+          - Verify SSL for the connection.
+          - "Note: This will verify SSL for both C(connection_address) and the ESXi host running the VM."
         vars:
           - name: ansible_vmware_tools_connection_verify_ssl
         default: True
         type: bool
       connection_ignore_ssl_warnings:
         description:
-          - Ignore SSL warnings for the connection
+          - Ignore SSL warnings for the connection.
         vars:
           - name: ansible_vmware_tools_connection_ignore_ssl_warnings
         default: False
         type: bool
       vm_path:
         description:
-          - VM path relative to vCenter.
-          - "Example: C(Datacenter/vm/Discovered virtual machine/testVM) (Needs to include C(vm) between the Datacenter and the rest of the VM path.)"
+          - VM path relative to the connection.
+          - "vCenter Example: C(Datacenter/vm/Discovered virtual machine/testVM) (Needs to include C(vm) between the Datacenter and the rest of the VM path.)"
+          - "ESXi Host Example: C(ha-datacenter/vm/testVM) (Needs to include C(vm) between the Datacenter (C(ha-datacenter)) and the rest of the VM path.)"
         vars:
           - name: ansible_vmware_tools_vm_path
         required: True
@@ -116,6 +118,11 @@ class Connection(ConnectionBase):
     transport = "vmware_tools"
 
     @property
+    def connection_address(self):
+        """Read-only property holding the connection address."""
+        return self.get_option("connection_address")
+
+    @property
     def connection_verify_ssl(self):
         """Read-only property holding whether the connection should verify ssl."""
         return self.get_option("connection_verify_ssl")
@@ -151,11 +158,7 @@ class Connection(ConnectionBase):
             self.allow_extras = True
 
     def _establish_connection(self):
-        connection_kwargs = {
-            "host": self.get_option("connection_address"),
-            "user": self.get_option("connection_username"),
-            "pwd": self.get_option("connection_password"),
-        }
+        connection_kwargs = {"host": self.connection_address, "user": self.get_option("connection_username"), "pwd": self.get_option("connection_password")}
 
         if self.connection_verify_ssl:
             connect = SmartConnect
@@ -249,14 +252,26 @@ class Connection(ConnectionBase):
 
         return guest_program_spec
 
-    def get_pid_info(self, pid):
-        """Return pid status."""
+    def _get_pid_info(self, pid):
         processes = self.processManager.ListProcessesInGuest(vm=self.vm, auth=self.vm_auth, pids=[pid])
         return processes[0]
 
+    def _fix_url_for_hosts(self, url):
+        """
+        Fix url if connection is a host.
+
+        The host part of the URL is returned as '*' if the hostname to be used is the name of the server to which the call was made. For example, if the call is
+        made to esx-svr-1.domain1.com, and the file is available for download from http://esx-svr-1.domain1.com/guestFile?id=1&token=1234, the URL returned may
+        be http://*/guestFile?id=1&token=1234. The client replaces the asterisk with the server name on which it invoked the call.
+
+        https://code.vmware.com/apis/358/vsphere#/doc/vim.vm.guest.FileManager.FileTransferInformation.html
+        """
+        return url.replace("*", self.connection_address)
+
     def _fetch_file_from_vm(self, guestFilePath):
         fileTransferInformation = self.fileManager.InitiateFileTransferFromGuest(vm=self.vm, auth=self.vm_auth, guestFilePath=guestFilePath)
-        response = requests.get(fileTransferInformation.url, verify=self.connection_verify_ssl, stream=True)
+        url = self._fix_url_for_hosts(fileTransferInformation.url)
+        response = requests.get(url, verify=self.connection_verify_ssl, stream=True)
 
         if response.status_code != 200:
             raise AnsibleError("Failed to fetch file")
@@ -281,11 +296,11 @@ class Connection(ConnectionBase):
         except vim.fault.FileNotFound as e:
             raise AnsibleError("StartProgramInGuest Error: %s" % to_native(e.msg))
 
-        pid_info = self.get_pid_info(pid)
+        pid_info = self._get_pid_info(pid)
 
         while pid_info.endTime is None:
             sleep(self.get_option("exec_command_sleep_interval"))
-            pid_info = self.get_pid_info(pid)
+            pid_info = self._get_pid_info(pid)
 
         stdout_response = self._fetch_file_from_vm(stdout)
         self.delete_file_in_guest(stdout)
@@ -317,10 +332,11 @@ class Connection(ConnectionBase):
         put_url = self.fileManager.InitiateFileTransferToGuest(
             vm=self.vm, auth=self.vm_auth, guestFilePath=out_path, fileAttributes=vim.GuestFileAttributes(), fileSize=getsize(in_path), overwrite=True
         )
+        url = self._fix_url_for_hosts(put_url)
 
         # file size of 'in_path' must be greater than 0
         with open(in_path, "rb") as fd:
-            r = requests.put(put_url, verify=self.connection_verify_ssl, data=fd)
+            response = requests.put(url, verify=self.connection_verify_ssl, data=fd)
 
-        if r.status_code != 200:
+        if response.status_code != 200:
             raise AnsibleError("File transfer failed")
