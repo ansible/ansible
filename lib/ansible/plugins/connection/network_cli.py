@@ -182,6 +182,7 @@ import os
 import signal
 import socket
 import traceback
+import time
 from io import BytesIO
 
 from ansible.errors import AnsibleConnectionFailure
@@ -376,6 +377,7 @@ class Connection(NetworkConnectionBase):
         buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
+        timeout = self._ssh_shell.gettimeout()
         while True:
             if command_prompt_matched:
                 try:
@@ -395,6 +397,16 @@ class Connection(NetworkConnectionBase):
                 except AnsibleCmdRespRecv:
                     return self._command_response
             else:
+                start=time.time()
+                while True:
+                    if timeout and time.time() - start >= timeout:
+                        raise AnsibleConnectionFailure("timeout waiting ouput from command")
+
+                    if self._ssh_shell.recv_ready() is False:
+                        time.sleep(0.001)
+                    else:
+                        break
+
                 data = self._ssh_shell.recv(256)
 
             # when a channel stream is closed, received data will be empty
