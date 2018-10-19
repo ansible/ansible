@@ -1,7 +1,12 @@
-- name: Install pika and requests
+- name: Install pika
   pip:
-    name: pika,requests
+    name: pika
     state: latest
+
+- name: Install requests
+  pip:
+    name: requests
+    state: present
 
 - name: RabbitMQ basic publish test
   rabbitmq_basic_publish:
@@ -147,9 +152,3 @@
       - "'text/plain' in messages[0]['content_type']"
       - "'image/gif' in messages[1]['content_type']"
       - "'Testing with proto/host/port/username/password/vhost' in messages[2]['msg']"
-
-# Tidy up
-- name: Uninstall pika and requests
-  pip:
-    name: pika,requests
-    state: absent
