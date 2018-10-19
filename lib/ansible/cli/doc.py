@@ -586,14 +586,14 @@ class DocCLI(CLI):
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
                     text.append(textwrap.fill(CLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/devel/modules/%s_module.html' % item['module']),
+                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'module' in item:
                     text.append(textwrap.fill(CLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
                     text.append(textwrap.fill(CLI.tty_ify('The official documentation on the %s module.' % item['module']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/devel/modules/%s_module.html' % item['module']),
+                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
                     text.append(textwrap.fill(CLI.tty_ify(item['name']),
@@ -607,7 +607,7 @@ class DocCLI(CLI):
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
                     text.append(textwrap.fill(CLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/devel/#stq=%s&stp=1' % item['ref']),
+                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
 
             text.append('')
