@@ -452,8 +452,7 @@ Suggestions to resolve:
         provider: "{{ cli }}"
         timeout: 30
 
-For network_cli, 
-connection type (applicable from 2.7 onwards):
+For network_cli, netconf connection type (applicable from 2.7 onwards):
 
 .. FIXME: Detail error here
 
