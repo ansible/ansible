@@ -1,0 +1,4 @@
+---
+bugfixes:
+- "pamd: use module.tmpdir for NamedTemporaryFile()
+   (see https://github.com/ansible/ansible/pull/47133 and https://github.com/ansible/ansible/issues/36954)" 
