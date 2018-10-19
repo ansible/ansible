@@ -77,9 +77,9 @@ options:
     choices: [ system_partition, microsoft_reserved, basic_data, microsoft_recovery ]
 
 notes:
-- A minimum Operating System Version of 6.2 is required to use this module. To check if your OS is compatible, see 
+- A minimum Operating System Version of 6.2 is required to use this module. To check if your OS is compatible, see
   U(https://docs.microsoft.com/en-us/windows/desktop/sysinfo/operating-system-version).
-- This module cannot be used for: removing the drive letter associated with a partition, initializing a disk or, file system formatting.
+- This module cannot be used for removing the drive letter associated with a partition, initializing a disk or, file system formatting.
 - Idempotence works only if you're specifying a drive letter or other unique attributes such as a combination of disk number and partition number.
 - For more information, see U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830524(v=vs.85).aspx).
 author:
