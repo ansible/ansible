@@ -499,7 +499,7 @@ def main():
         else:
             module.fail_json(msg='failed to create volume %s' % volume_name)
 
-    if action != 'delete' and volume_name not in volumes:
+    if action != 'absent' and volume_name not in volumes:
         module.fail_json(msg='volume not found %s' % volume_name)
 
     if action == 'started':
