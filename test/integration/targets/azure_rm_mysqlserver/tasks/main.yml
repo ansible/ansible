@@ -324,10 +324,10 @@
     start_ip_address: 172.28.10.136
     end_ip_address: 172.28.10.138
   register: output
-- name: Assert the state has not changed
+- name: Assert the state has changed
   assert:
     that:
-      - output.changed == false
+      - output.changed
 
 - name: Gather facts MySQL Firewall Rule
   azure_rm_mysqlfirewallrule_facts:
