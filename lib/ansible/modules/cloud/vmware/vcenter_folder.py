@@ -22,6 +22,7 @@ description:
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
+- Christian Kotte (@ckotte) <christian.kotte@gmx.de>
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -32,6 +33,7 @@ options:
     description:
     - Name of the datacenter.
     required: True
+    aliases: ['datacenter_name']
   folder_name:
     description:
     - Name of folder to be managed.
@@ -74,7 +76,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_vm_folder
     folder_type: vm
     state: present
@@ -86,7 +88,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_datastore_folder
     folder_type: datastore
     state: present
@@ -98,7 +100,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_sub_folder
     parent_folder: vm_folder
     state: present
@@ -110,7 +112,7 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter_name: datacenter_name
     folder_name: sample_vm_folder
     folder_type: vm
     state: absent
@@ -157,6 +159,7 @@ class VmwareFolderManager(PyVmomi):
         Manage internal state management
         """
         state = self.module.params.get('state')
+        datacenter_name = self.module.params.get('datacenter')
         folder_type = self.module.params.get('folder_type')
         folder_name = self.module.params.get('folder_name')
         parent_folder = self.module.params.get('parent_folder', None)
@@ -165,14 +168,16 @@ class VmwareFolderManager(PyVmomi):
             # Check if the folder already exists
             p_folder_obj = None
             if parent_folder:
-                p_folder_obj = self.get_folder(folder_name=parent_folder,
+                p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                               folder_name=parent_folder,
                                                folder_type=folder_type)
 
                 if not p_folder_obj:
                     self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
 
                 # Check if folder exists under parent folder
-                child_folder_obj = self.get_folder(folder_name=folder_name,
+                child_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                   folder_name=folder_name,
                                                    folder_type=folder_type,
                                                    parent_folder=p_folder_obj)
                 if child_folder_obj:
@@ -180,7 +185,8 @@ class VmwareFolderManager(PyVmomi):
                                         " parent folder %s" % (folder_name, parent_folder)
                     self.module.exit_json(**results)
             else:
-                folder_obj = self.get_folder(folder_name=folder_name,
+                folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                             folder_name=folder_name,
                                              folder_type=folder_type)
 
                 if folder_obj:
@@ -190,14 +196,21 @@ class VmwareFolderManager(PyVmomi):
             # Create a new folder
             try:
                 if parent_folder and p_folder_obj:
-                    p_folder_obj.CreateFolder(folder_name)
+                    if self.module.check_mode:
+                        results['result'] = "Folder '%s' of type '%s' under '%s' will be created." % \
+                                            (folder_name, folder_type, parent_folder)
+                    else:
+                        p_folder_obj.CreateFolder(folder_name)
+                        results['result'] = "Folder '%s' of type '%s' under '%s' created" \
+                                            " successfully." % (folder_name, folder_type, parent_folder)
                     results['changed'] = True
-                    results['result'] = "Folder '%s' of type '%s' created under %s" \
-                                        " successfully." % (folder_name, folder_type, parent_folder)
                 elif not parent_folder and not p_folder_obj:
-                    self.datacenter_folder_type[folder_type].CreateFolder(folder_name)
+                    if self.module.check_mode:
+                        results['result'] = "Folder '%s' of type '%s' will be created." % (folder_name, folder_type)
+                    else:
+                        self.datacenter_folder_type[folder_type].CreateFolder(folder_name)
+                        results['result'] = "Folder '%s' of type '%s' created successfully." % (folder_name, folder_type)
                     results['changed'] = True
-                    results['result'] = "Folder '%s' of type '%s' created successfully" % (folder_name, folder_type)
             except vim.fault.DuplicateName as duplicate_name:
                 # To be consistent with the other vmware modules, We decided to accept this error
                 # and the playbook should simply carry on with other tasks.
@@ -214,11 +227,48 @@ class VmwareFolderManager(PyVmomi):
                                           " exception : %s " % to_native(general_exc))
             self.module.exit_json(**results)
         elif state == 'absent':
-            folder_obj = self.get_folder(folder_name=folder_name, folder_type=folder_type)
+            # Check if the folder already exists
+            p_folder_obj = None
+            if parent_folder:
+                p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                               folder_name=parent_folder,
+                                               folder_type=folder_type)
+
+                if not p_folder_obj:
+                    self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
+
+                # Check if folder exists under parent folder
+                folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                             folder_name=folder_name,
+                                             folder_type=folder_type,
+                                             parent_folder=p_folder_obj)
+            else:
+                folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                             folder_name=folder_name,
+                                             folder_type=folder_type)
             if folder_obj:
                 try:
-                    task = folder_obj.UnregisterAndDestroy()
-                    results['changed'], results['result'] = wait_for_task(task=task)
+                    if parent_folder:
+                        if self.module.check_mode:
+                            results['changed'] = True
+                            results['result'] = "Folder '%s' of type '%s' under '%s' will be removed." % \
+                                                (folder_name, folder_type, parent_folder)
+                        else:
+                            if folder_type == 'vm':
+                                task = folder_obj.UnregisterAndDestroy()
+                            else:
+                                task = folder_obj.Destroy()
+                            results['changed'], results['result'] = wait_for_task(task=task)
+                    else:
+                        if self.module.check_mode:
+                            results['changed'] = True
+                            results['result'] = "Folder '%s' of type '%s' will be removed." % (folder_name, folder_type)
+                        else:
+                            if folder_type == 'vm':
+                                task = folder_obj.UnregisterAndDestroy()
+                            else:
+                                task = folder_obj.Destroy()
+                            results['changed'], results['result'] = wait_for_task(task=task)
                 except vim.fault.ConcurrentAccess as concurrent_access:
                     self.module.fail_json(msg="Failed to remove folder as another client"
                                               " modified folder before this operation : %s" % to_native(concurrent_access.msg))
@@ -230,7 +280,7 @@ class VmwareFolderManager(PyVmomi):
                                               " exception %s " % to_native(gen_exec))
             self.module.exit_json(**results)
 
-    def get_folder(self, folder_name, folder_type, parent_folder=None):
+    def get_folder(self, datacenter_name, folder_name, folder_type, parent_folder=None):
         """
         Get managed object of folder by name
         Returns: Managed object of folder by name
@@ -238,9 +288,15 @@ class VmwareFolderManager(PyVmomi):
         """
         folder_objs = get_all_objs(self.content, [vim.Folder], parent_folder)
         for folder in folder_objs:
-            if folder.name == folder_name and \
-               self.datacenter_folder_type[folder_type].childType == folder.childType:
-                return folder
+            if parent_folder:
+                if folder.name == folder_name and \
+                   self.datacenter_folder_type[folder_type].childType == folder.childType:
+                    return folder
+            else:
+                if folder.name == folder_name and \
+                   self.datacenter_folder_type[folder_type].childType == folder.childType and \
+                   folder.parent.parent.name == datacenter_name:    # e.g. folder.parent.parent.name == /DC01/host/folder
+                    return folder
 
         return None
 
@@ -248,7 +304,7 @@ class VmwareFolderManager(PyVmomi):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        datacenter=dict(type='str', required=True),
+        datacenter=dict(type='str', required=True, aliases=['datacenter_name']),
         folder_name=dict(type='str', required=True),
         parent_folder=dict(type='str', required=False),
         state=dict(type='str',
@@ -262,7 +318,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     if len(module.params.get('folder_name')) > 79:
