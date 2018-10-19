@@ -108,7 +108,7 @@ EXAMPLES = r'''
     name: "{{ item.name }}"
     conditions: "{{ item.conditions }}"
     actions: "{{ item.actions }}"
-  with_items:
+  loop:
     - name: rule1
       actions:
         - type: forward
