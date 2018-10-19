@@ -2,6 +2,9 @@
 # (c) 2018 Rubrik, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -13,8 +16,8 @@ module: rubrik_cluster_version
 short_description: Retrieves the software version of the Rubrik cluster.
 description:
     - Retrieves the software version of the Rubrik cluster.
-version_added: '2.7'
-author: 'Rubrik Ranger Team'
+version_added: 2.8
+author: Rubrik Ranger Team
 
 extends_documentation_fragment:
     - rubrik_cdm
