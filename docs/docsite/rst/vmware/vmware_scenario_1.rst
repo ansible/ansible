@@ -6,6 +6,8 @@ Sample Scenario for Ansible VMware
 
 Introductory paragraph.
 
+.. contents::
+   :local:
 
 Scenario Requirements
 =====================
@@ -34,5 +36,4 @@ What to look for if it breaks.
 Conclusion and Where To Go Next
 ===============================
 
-Blah blah for more information please see blah blah...
-
+Recap of important points. For more information please see: links.
