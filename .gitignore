@@ -29,8 +29,6 @@ docs/man/man3/*
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
-docs/api/_build/
-docs/api/rst/
 docs/docsite/_build
 docs/docsite/*.html
 docs/docsite/htmlout

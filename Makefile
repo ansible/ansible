@@ -217,7 +217,6 @@ clean:
 	rm -f AUTHORS.TXT
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
-	$(MAKE) -C docs/api clean
 
 .PHONY: python
 python:
@@ -398,4 +397,3 @@ alldocs: docs webdocs
 
 version:
 	@echo $(VERSION)
-
