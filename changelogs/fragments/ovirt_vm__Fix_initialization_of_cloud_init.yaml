@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vm - Fix initialization of cloud init (https://github.com/ansible/ansible/pull/47354).
