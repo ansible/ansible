@@ -41,6 +41,7 @@ options:
             - custom_verizon
             - standard_akamai
             - standard_chinacdn
+            - standard_microsoft
     state:
         description:
             - Assert the state of the CDN profile. Use C(present) to create or update a CDN profile and C(absent) to delete it.
@@ -126,7 +127,7 @@ class AzureRMCdnprofile(AzureRMModuleBase):
             ),
             sku=dict(
                 type='str',
-                choices=['standard_verizon', 'premium_verizon', 'custom_verizon', 'standard_akamai', 'standard_chinacdn']
+                choices=['standard_verizon', 'premium_verizon', 'custom_verizon', 'standard_akamai', 'standard_chinacdn', 'standard_microsoft']
             )
         )
 
