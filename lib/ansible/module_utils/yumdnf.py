@@ -44,9 +44,7 @@ yumdnf_argument_spec = dict(
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
-        # this should not be needed, but exists as a failsafe
-        lock_poll=dict(type='int', default=-1),
-        lock_timeout=dict(type='int', default=10),
+        lock_timeout=dict(type='int', default=0),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
     mutually_exclusive=[['name', 'list']],
@@ -88,7 +86,6 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.update_only = self.module.params['update_only']
         self.update_cache = self.module.params['update_cache']
         self.validate_certs = self.module.params['validate_certs']
-        self.lock_poll = self.module.params['lock_poll']
         self.lock_timeout = self.module.params['lock_timeout']
 
         # It's possible someone passed a comma separated string since it used
@@ -103,14 +100,14 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.lockfile = '/var/run/yum.pid'
 
     def wait_for_lock(self):
-        '''Poll until the lock is removed if interval is a positive number'''
-        if (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)) and self.lock_timeout > 0:
-            for iteration in range(0, self.lock_timeout):
-                time.sleep(self.lock_poll)
-                if not os.path.isfile(self.lockfile) or not glob.glob(self.lockfile):
-                    break
-            if os.path.isfile(self.lockfile) or glob.glob(self.lockfile):
-                self.module.fail_json(msg='{0} lockfile was not released'.format(self.pkg_mgr_name))
+        '''Poll until the lock is removed if timeout is a positive number'''
+        if (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)):
+            if self.lock_timeout > 0:
+                for iteration in range(0, self.lock_timeout):
+                    time.sleep(1)
+                    if not os.path.isfile(self.lockfile) and not glob.glob(self.lockfile):
+                        return
+            self.module.fail_json(msg='{0} lockfile is held by another process'.format(self.pkg_mgr_name))
 
     def listify_comma_sep_strings_in_list(self, some_list):
         """
