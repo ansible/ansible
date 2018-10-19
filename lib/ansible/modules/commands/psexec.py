@@ -305,6 +305,9 @@ rc:
   sample: 0
 '''
 
+import sys
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -317,8 +320,8 @@ try:
     from smbprotocol.exceptions import SMBException, SMBAuthenticationError, \
         SMBResponseException
     HAS_PYPSEXEC = True
-except ImportError as exc:
-    PYPSEXEC_IMP_ERR = exc
+except ImportError:
+    PYPSEXEC_IMP_ERR = traceback.format_exc()
     HAS_PYPSEXEC = False
 
 KERBEROS_IMP_ERR = None
@@ -327,8 +330,8 @@ try:
     # GSSAPI extension required for Kerberos Auth in SMB
     from gssapi.raw import inquire_sec_context_by_oid
     HAS_KERBEROS = True
-except ImportError as exc:
-    KERBEROS_IMP_ERR = exc
+except ImportError:
+    KERBEROS_IMP_ERR = traceback.format_exc()
     HAS_KERBEROS = False
 
 
@@ -387,7 +390,9 @@ def main():
                              'running as System: process_username, '
                              'process_password')
     if not HAS_PYPSEXEC:
-        module.fail_json(msg='The pypsexec python module is required',
+        module.fail_json(msg="The pypsexec Python module is required to be "
+                             "installed for the Python environment at '%s'"
+                             % sys.executable,
                          exception=PYPSEXEC_IMP_ERR)
 
     hostname = module.params['hostname']
@@ -421,8 +426,10 @@ def main():
 
     if connection_username is None or connection_password is None and \
             not HAS_KERBEROS:
-        module.fail_json(msg='The gssapi python module with the GGF extension '
-                             'is required for Kerberos authentication',
+        module.fail_json(msg="The gssapi Python module with the GGF extension "
+                             "used for kerberos auth is required to be "
+                             "installed for the Python environment at '%s'"
+                             % sys.executable,
                          exception=KERBEROS_IMP_ERR)
 
     win_client = client.Client(server=hostname, username=connection_username,
