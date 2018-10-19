@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -OSVersion 6.2
 
 Set-StrictMode -Version 2
 
@@ -21,8 +22,8 @@ $read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -faili
 $active = Get-AnsibleParam -obj $params -name "active" -type "bool" -failifempty $false
 $hidden = Get-AnsibleParam -obj $params -name "hidden" -type "bool" -failifempty $false
 $offline = Get-AnsibleParam -obj $params -name "offline" -type "bool" -failifempty $false
-$mbr_type = Get-AnsibleParam -obj $params -name "mbr_type" -type "str" -failifempty $false -validateset "FAT12", "FAT16", "Extended", "Huge", "IFS", "FAT32"
-$gpt_type = Get-AnsibleParam -obj $params -name "gpt_type" -type "str" -failifempty $false -validateset "SystemPartition", "MicrosoftReserved", "BasicData", "MicrosoftRecovery"
+$mbr_type = Get-AnsibleParam -obj $params -name "mbr_type" -type "str" -failifempty $false -validateset "fat12", "fat16", "extended", "huge", "ifs", "fat32"
+$gpt_type = Get-AnsibleParam -obj $params -name "gpt_type" -type "str" -failifempty $false -validateset "system_partition", "microsoft_reserved", "basic_data", "microsoft_recovery"
 
 $result = @{
     changed = $false
@@ -34,25 +35,25 @@ $ansible_partition_size = $null
 $partition_style = $null
 
 $gpt_styles = @{
-    SystemPartition = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
-    MicrosoftReserved = "e3c9e316-0b5c-4db8-817d-f92df00215ae"
-    BasicData = "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
-    MicrosoftRecovery = "de94bba4-06d1-4d40-a16a-bfd50179d6ac"
+    system_partition = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
+    microsoft_reserved = "e3c9e316-0b5c-4db8-817d-f92df00215ae"
+    basic_data = "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
+    microsoft_recovery = "de94bba4-06d1-4d40-a16a-bfd50179d6ac"
 }
 
 $mbr_styles = @{
-    FAT12 = 1
-    FAT16 = 4
-    Extended = 5
-    Huge = 6
-    IFS = 7
-    FAT32 = 12
+    fat12 = 1
+    fat16 = 4
+    extended = 5
+    huge = 6
+    ifs = 7
+    fat32 = 12
 }
 
 # We're allowing postitive and -1 partition sizes; -1 is maximum possible size
-if ($partition_size -ne $null) {
+if ($null -ne $partition_size) {
     if ($partition_size -lt -1 -or $partition_size -eq 0) {
-        Fail-Json -obj $result -message "Please enter positive partition sizes. Use -1 for maximum size."
+        Fail-Json -obj $result -message "Please enter positive partition sizes. Use -1 for maximum size"
     }
     elseif ($partition_size -eq -1) {
         $size_is_maximum = $true
@@ -63,7 +64,7 @@ if ($partition_size -ne $null) {
 }
 
 # If partition_exists, we can change or delete it; otherwise we only need the disk to create a new partition
-if ($disk_number -and $partition_number) {
+if ($null -ne $disk_number -and $null -ne $partition_number) {
     $ansible_partition = Get-Partition -DiskNumber $disk_number -PartitionNumber $partition_number -ErrorAction SilentlyContinue
 }
 # Check if drive_letter is either auto-assigned or a character from A-Z
@@ -72,18 +73,23 @@ elseif ($drive_letter -and -not ($disk_number -and $partition_number)) {
         $ansible_partition = Get-Partition -DriveLetter $drive_letter -ErrorAction SilentlyContinue
     }
     else {
-        Fail-Json -obj $result -message "Incorrect usage of drive_letter"
+        Fail-Json -obj $result -message "Incorrect usage of drive_letter: specify a drive letter from A-Z or use 'auto' to automatically assign a drive letter"
     }
 }
 elseif ($disk_number) {
     try {
-        Get-Disk -Number $disk_number
+        Get-Disk -Number $disk_number | Out-Null
     } catch {
         Fail-Json -obj $result -message "Specified disk does not exist"
     }
 }
 else {
     Fail-Json -obj $result -message "You must provide disk_number, partition_number"
+}
+
+# Partition can't have two partition styles
+if ($null -ne $gpt_type -and $null -ne $mbr_type) {
+    Fail-Json "Cannot specify both GPT and MBR parititon styles. Check which partition style is supported by the disk"
 }
 
 function New-AnsiblePartition {
@@ -97,9 +103,9 @@ function New-AnsiblePartition {
         $Style
     )
 
-    $parameters = @{}
-
-    $parameters.Add("DiskNumber", $DiskNumber)
+    $parameters = @{
+        DiskNumber = $DiskNumber
+    }
 
     if ($null -ne $Letter) {
         switch ($Letter) {
@@ -129,7 +135,13 @@ function New-AnsiblePartition {
         $parameters.Add("GptType", $Style)
     }
 
-    return $parameters
+    try {
+        $new_partition = New-Partition @parameters
+    } catch {
+        Fail-Json -obj $result -message "Unable to create a new partition: $($_.Exception.Message)"
+    }
+
+    return $new_partition
 }
 
 
@@ -141,10 +153,10 @@ function Set-AnsiblePartitionState {
         $partition
     )
 
-    $parameters = @{}
-
-    $parameters.Add("DiskNumber", $partition.DiskNumber)
-    $parameters.Add("PartitionNumber", $partition.PartitionNumber)
+    $parameters = @{
+        DiskNumber = $partition.DiskNumber
+        PartitionNumber = $partition.PartitionNumber
+    }
 
     if ($hidden -NotIn ($null, $partition.IsHidden)) {
         $parameters.Add("IsHidden", $hidden)
@@ -158,7 +170,11 @@ function Set-AnsiblePartitionState {
         $parameters.Add("IsActive", $active)
     }
 
-    return $parameters
+    try {
+        Set-Partition @parameters
+    } catch {
+        Fail-Json -obj $result -message "Error changing state of partition: $($_.Exception.Message)"   
+    }
 }
 
 
@@ -173,8 +189,11 @@ if ($ansible_partition) {
     }
     else {
 
-        if ($gpt_type -ne $null -or $mbr_type -ne $null) {
-            Fail-Json -obj $result -message "gpt_type and mbr_type are not valid parameters for existing partitions"
+        if ($null -ne $gpt_type -and $gpt_styles.$gpt_type -ne $partition.GptType) {
+            Fail-Json -obj $result -message "gpt_type is not a valid parameter for existing partitions"
+        }
+        if ($null -ne $mbr_type -and $mbr_styles.$mbr_type -ne $partition.MbrType) {
+            Fail-Json -obj $result -message "mbr_type is not a valid parameter for existing partitions"
         }
 
         if ($partition_size) {
@@ -216,10 +235,10 @@ if ($ansible_partition) {
 }
 else {
     if ($state -eq "present") {
-        if ($disk_number -eq $null) {
+        if ($null -eq $disk_number) {
             Fail-Json -obj $result -message "Missing required parameter: disk_number"
         }
-        if ($ansible_partition_size -eq $null -and -not $size_is_maximum){
+        if ($null -eq $ansible_partition_size -and -not $size_is_maximum){
             Fail-Json -obj $result -message "Missing required parameter: partition_size"
         }
         if (-not $size_is_maximum) {
@@ -235,14 +254,14 @@ else {
         }
 
         $supp_part_type = (Get-Disk -Number $disk_number).PartitionStyle
-        if ($mbr_type -ne $null) {
+        if ($null -ne $mbr_type) {
             if ($supp_part_type -eq "MBR" -and $mbr_styles.ContainsKey($mbr_type)) {
                 $partition_style = $mbr_styles.$mbr_type
             } else {
                 Fail-Json -obj $result -message "Incorrect partition style specified"
             }
         }
-        if ($gpt_type -ne $null) {
+        if ($null -ne $gpt_type) {
             if ($supp_part_type -eq "GPT" -and $gpt_styles.ContainsKey($gpt_type)) {
                 $partition_style = $gpt_styles.$gpt_type
             } else {
@@ -250,14 +269,8 @@ else {
             }
         }
 
-        $partition_params = New-AnsiblePartition -DiskNumber $disk_number -Letter $drive_letter -SizeMax $size_is_maximum -Size $ansible_partition_size -MbrType $mbr_type -GptType $gpt_type -Style $partition_style
-
         if (-not $check_mode) {
-            try {
-                $ansible_partition = New-Partition @partition_params
-            } catch {
-                Fail-Json -obj $result -message "Unable to create a new partition: $($_.Exception.Message)"
-            }
+            $ansible_partition = New-AnsiblePartition -DiskNumber $disk_number -Letter $drive_letter -SizeMax $size_is_maximum -Size $ansible_partition_size -MbrType $mbr_type -GptType $gpt_type -Style $partition_style
         }
         $result.changed = $true
     }
@@ -277,12 +290,7 @@ if ($state -eq "present" -and $ansible_partition) {
 
     if ($hidden -NotIn ($null, $ansible_partition.IsHidden) -or $read_only -NotIn ($null, $ansible_partition.IsReadOnly) -or $active -NotIn ($null, $ansible_partition.IsActive)) {
         if (-not $check_mode) {
-            $partition_state_params = Set-AnsiblePartitionState -hidden $hidden -read_only $read_only -active $active -partition $ansible_partition
-            try {
-                Set-Partition @partition_state_params
-            } catch {
-                Fail-Json -obj $result -message "Error changing state of partition: $($_.Exception.Message)"
-            }
+            Set-AnsiblePartitionState -hidden $hidden -read_only $read_only -active $active -partition $ansible_partition
         }
         $result.changed = $true
     }

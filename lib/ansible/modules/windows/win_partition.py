@@ -65,17 +65,21 @@ options:
     description:
       - Specify the partition's MBR type if the disk's partition style is MBR.
       - This only applies to new partitions.
+      - This does not relate to the partitions file system formatting.
     type: str
-    choices: [ FAT12, FAT16, Extended, Huge, IFS, FAT32 ]
+    choices: [ fat12, fat16, extended, huge, ifs, fat32 ]
   gpt_type:
     description:
       - Specify the partition's GPT type if the disk's partition style is GPT.
       - This only applies to new partitions.
+      - This does not relate to the partitions file system formatting.
     type: str
-    choices: [ SystemPartition, MicrosoftReserved, BasicData, MicrosoftRecovery ]
+    choices: [ system_partition, microsoft_reserved, basic_data, microsoft_recovery ]
 
 notes:
-- This module cannot be used for removing the drive letter associated with a partition.
+- A minimum Operating System Version of 6.2 is required to use this module. To check if your OS is compatible, see 
+  U(https://docs.microsoft.com/en-us/windows/desktop/sysinfo/operating-system-version).
+- This module cannot be used for: removing the drive letter associated with a partition, initializing a disk or, file system formatting.
 - Idempotence works only if you're specifying a drive letter or other unique attributes such as a combination of disk number and partition number.
 - For more information, see U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830524(v=vs.85).aspx).
 author:
@@ -83,21 +87,21 @@ author:
 '''
 
 EXAMPLES = r'''
-# Create a partitition with drive letter D and size 5 GB
-- win_partition:
+- name: Create a partition with drive letter D and size 5 GiB
+  win_partition:
     drive_letter: D
     partition_size: 5
     disk_number: 1
 
-# Resize previously created partition to it's maximum size and change it's drive letter to E
-- win_partition:
+- name: Resize previously created partition to it's maximum size and change it's drive letter to E
+  win_partition:
     drive_letter: E
     partition_size: -1
     partition_number: 1
     disk_number: 1
 
-# Delete partition
-- win_partition:
+- name: Delete partition
+  win_partition:
     disk_number: 1
     partition_number: 1
     state: absent
