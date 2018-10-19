@@ -49,7 +49,11 @@ DOCUMENTATION = """
         required: True
       connection_username:
         description:
-          - Username for the connection
+          - Username for the connection.
+          - "Requires the following permissions on the VM:
+               - VirtualMachine.GuestOperations.Execute
+               - VirtualMachine.GuestOperations.Modify
+               - VirtualMachine.GuestOperations.Query"
         vars:
           - name: ansible_vmware_tools_connection_username
         required: True
@@ -195,6 +199,8 @@ class Connection(ConnectionBase):
             raise AnsibleError("VM Guest Operations (VMware Tools) Error: %s" % to_native(e.msg))
         except vim.fault.InvalidGuestLogin as e:
             raise AnsibleError("VM Login Error: %s" % to_native(e.msg))
+        except vim.fault.NoPermission as e:
+            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
 
     def _connect(self):
         if not HAS_PYVMOMI:
@@ -226,7 +232,10 @@ class Connection(ConnectionBase):
 
     def create_temporary_file_in_guest(self, prefix="", suffix=""):
         """Create a temporary file in the VM."""
-        return self.fileManager.CreateTemporaryFileInGuest(vm=self.vm, auth=self.vm_auth, prefix=prefix, suffix=suffix)
+        try:
+            return self.fileManager.CreateTemporaryFileInGuest(vm=self.vm, auth=self.vm_auth, prefix=prefix, suffix=suffix)
+        except vim.fault.NoPermission as e:
+            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
 
     def _get_program_spec_program_path_and_arguments(self, cmd):
         if self.windowsGuest:
@@ -253,7 +262,10 @@ class Connection(ConnectionBase):
         return guest_program_spec
 
     def _get_pid_info(self, pid):
-        processes = self.processManager.ListProcessesInGuest(vm=self.vm, auth=self.vm_auth, pids=[pid])
+        try:
+            processes = self.processManager.ListProcessesInGuest(vm=self.vm, auth=self.vm_auth, pids=[pid])
+        except vim.fault.NoPermission as e:
+            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
         return processes[0]
 
     def _fix_url_for_hosts(self, url):
@@ -269,7 +281,11 @@ class Connection(ConnectionBase):
         return url.replace("*", self.connection_address)
 
     def _fetch_file_from_vm(self, guestFilePath):
-        fileTransferInformation = self.fileManager.InitiateFileTransferFromGuest(vm=self.vm, auth=self.vm_auth, guestFilePath=guestFilePath)
+        try:
+            fileTransferInformation = self.fileManager.InitiateFileTransferFromGuest(vm=self.vm, auth=self.vm_auth, guestFilePath=guestFilePath)
+        except vim.fault.NoPermission as e:
+            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
+
         url = self._fix_url_for_hosts(fileTransferInformation.url)
         response = requests.get(url, verify=self.connection_verify_ssl, stream=True)
 
@@ -280,7 +296,10 @@ class Connection(ConnectionBase):
 
     def delete_file_in_guest(self, filePath):
         """Delete file from VM."""
-        self.fileManager.DeleteFileInGuest(vm=self.vm, auth=self.vm_auth, filePath=filePath)
+        try:
+            self.fileManager.DeleteFileInGuest(vm=self.vm, auth=self.vm_auth, filePath=filePath)
+        except vim.fault.NoPermission as e:
+            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Execute command."""
@@ -293,6 +312,8 @@ class Connection(ConnectionBase):
 
         try:
             pid = self.processManager.StartProgramInGuest(vm=self.vm, auth=self.vm_auth, spec=guest_program_spec)
+        except vim.fault.NoPermission as e:
+            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
         except vim.fault.FileNotFound as e:
             raise AnsibleError("StartProgramInGuest Error: %s" % to_native(e.msg))
 
@@ -329,9 +350,13 @@ class Connection(ConnectionBase):
         if not exists(to_bytes(in_path, errors="surrogate_or_strict")):
             raise AnsibleFileNotFound("file or module does not exist: '%s'" % to_native(in_path))
 
-        put_url = self.fileManager.InitiateFileTransferToGuest(
-            vm=self.vm, auth=self.vm_auth, guestFilePath=out_path, fileAttributes=vim.GuestFileAttributes(), fileSize=getsize(in_path), overwrite=True
-        )
+        try:
+            put_url = self.fileManager.InitiateFileTransferToGuest(
+                vm=self.vm, auth=self.vm_auth, guestFilePath=out_path, fileAttributes=vim.GuestFileAttributes(), fileSize=getsize(in_path), overwrite=True
+            )
+        except vim.fault.NoPermission as e:
+            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
+
         url = self._fix_url_for_hosts(put_url)
 
         # file size of 'in_path' must be greater than 0
