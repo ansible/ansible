@@ -29,6 +29,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
+from ansible.utils.vars import isidentifier
 
 try:
     from __main__ import display
@@ -39,7 +40,6 @@ except ImportError:
 
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
-VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
 
 class Conditional:
@@ -129,7 +129,7 @@ class Conditional:
         #     - item
         #   with_items:
         #   - 1 == 1
-        if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
+        if conditional in all_vars and isidentifier(conditional):
             conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specified with this method
@@ -188,11 +188,11 @@ class Conditional:
             except Exception as e:
                 raise AnsibleError("Invalid conditional detected: %s" % to_native(e))
 
-            if not disable_lookups:
-                conditional = templar.template('{{ %s }}' % conditional, disable_lookups=disable_lookups)
+            if conditional != original or (not isidentifier(conditional) and len(conditional.split()) == 1):
+                conditional = repr(to_native(conditional))
 
             # and finally we generate and template the presented string and look at the resulting string
-            presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+            presented = u"{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
