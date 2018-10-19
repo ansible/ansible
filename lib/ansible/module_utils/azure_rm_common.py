@@ -992,7 +992,7 @@ class AzureRMAuth(object):
                 try:
                     self._cloud_environment = azure_cloud.get_cloud_from_metadata_endpoint(raw_cloud_env)
                 except Exception as e:
-                    self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message), exception=traceback.format_exc(e))
+                    self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message), exception=traceback.format_exc())
 
         if self.credentials.get('subscription_id', None) is None and self.credentials.get('credentials') is None:
             self.fail("Credentials did not include a subscription_id value.")
