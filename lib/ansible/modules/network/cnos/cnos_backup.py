@@ -213,7 +213,7 @@ def doConfigBackUp(module, prompt, answer):
     elif(protocol == "tftp"):
         command = "copy " + configType + " " + protocol + " " + protocol
         command = command + "://" + server + "/" + confPath
-        command = command + + " vrf management\n"
+        command = command + " vrf management\n"
         # cnos.debugOutput(command)
         tftp_cmd = [{'command': command, 'prompt': None, 'answer': None}]
         cmd.extend(tftp_cmd)
