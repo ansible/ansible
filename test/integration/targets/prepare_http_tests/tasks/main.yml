@@ -36,6 +36,10 @@
       win_get_url:
         url: http://ansible.http.tests/{{ item }}
         dest: '{{ win_output_dir }}\{{ item }}'
+      register: win_download
+      # Server 2008 R2 is slightly slower, we attempt 5 retries
+      retries: 5
+      until: win_download is successful
       when: ansible_os_family == 'Windows'
       with_items:
         - client.pem
