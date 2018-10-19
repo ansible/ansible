@@ -69,7 +69,7 @@ class TestSlackModule(ModuleTestCase):
         set_module_args({
             'token': 'XXXX/YYYY/ZZZZ',
             'msg': 'test',
-            'thread_ts': 100.00
+            'thread_id': 100.00
         })
 
         with patch.object(slack, "fetch_url") as fetch_url_mock:

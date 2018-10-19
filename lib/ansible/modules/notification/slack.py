@@ -55,10 +55,10 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
-  thread_ts:
+  thread_id:
     version_added: 2.8
     description:
-      - Optional. TS of message to thread to as a float
+      - Optional. Timestamp of message to thread this message to as a float. https://api.slack.com/docs/message-threading
   username:
     description:
       - This is the sender of the message.
@@ -117,7 +117,7 @@ EXAMPLES = """
     token: thetoken/generatedby/slack
     msg: '{{ inventory_hostname }} completed'
     channel: '#ansible'
-    thread_ts: 1539917263.000100
+    thread_id: 1539917263.000100
     username: 'Ansible on {{ inventory_hostname }}'
     icon_url: http://www.example.com/some-image-file.png
     link_names: 0
@@ -178,7 +178,7 @@ def escape_quotes(text):
     return "".join(escape_table.get(c, c) for c in text)
 
 
-def build_payload_for_slack(module, text, channel, thread_ts, username, icon_url, icon_emoji, link_names,
+def build_payload_for_slack(module, text, channel, thread_id, username, icon_url, icon_emoji, link_names,
                             parse, color, attachments):
     payload = {}
     if color == "normal" and text is not None:
@@ -191,8 +191,8 @@ def build_payload_for_slack(module, text, channel, thread_ts, username, icon_url
             payload['channel'] = channel
         else:
             payload['channel'] = '#' + channel
-    if thread_ts is not None:
-        payload['thread_ts'] = thread_ts
+    if thread_id is not None:
+        payload['thread_ts'] = thread_id
     if username is not None:
         payload['username'] = username
     if icon_emoji is not None:
@@ -258,7 +258,7 @@ def main():
             token=dict(type='str', required=True, no_log=True),
             msg=dict(type='str', required=False, default=None),
             channel=dict(type='str', default=None),
-            thread_ts=dict(type='float', default=None),
+            thread_id=dict(type='float', default=None),
             username=dict(type='str', default='Ansible'),
             icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
             icon_emoji=dict(type='str', default=None),
@@ -274,7 +274,7 @@ def main():
     token = module.params['token']
     text = module.params['msg']
     channel = module.params['channel']
-    thread_ts = module.params['thread_ts']
+    thread_id = module.params['thread_id']
     username = module.params['username']
     icon_url = module.params['icon_url']
     icon_emoji = module.params['icon_emoji']
@@ -283,7 +283,7 @@ def main():
     color = module.params['color']
     attachments = module.params['attachments']
 
-    payload = build_payload_for_slack(module, text, channel, thread_ts, username, icon_url, icon_emoji, link_names,
+    payload = build_payload_for_slack(module, text, channel, thread_id, username, icon_url, icon_emoji, link_names,
                                       parse, color, attachments)
     do_notify_slack(module, domain, token, payload)
 
