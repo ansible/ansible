@@ -634,7 +634,11 @@ Example ssh config file (~/.ssh/config)
    HostName junos01
    User myuser
 
-   ProxyCommand ssh user@bastion01 nc %h %p %r
+   # Where host is listening for NETCONF on port 22
+   ProxyCommand ssh user@bastion01 nc %h %p
+   # Where host is listening for NETCONF on port 830
+   ProxyCommand ssh user@bastion01 nc %h 830
+
 
 Example Ansible inventory file
 
