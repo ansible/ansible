@@ -1241,11 +1241,26 @@ class ModuleValidator(Validator):
 
             # TODO: needs to recursively traverse suboptions
             doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
-            if 'type' in data and data['type'] == 'bool' and doc_type != 'bool':
+            if 'type' in data:
+                if data['type'] == 'bool' and doc_type != 'bool':
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=325,
+                        msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
+                    )
+
+                if data['type'] != doc_type:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=336,
+                        msg='argument_spec for "%s" defines type as %s but documentation defines type as %s' % (arg, data['type'], doc_type)
+                    )
+
+            if 'type' not in data and doc_type in frozenset(('str', 'list', 'dict', 'bool', 'int', 'float')):
                 self.reporter.error(
                     path=self.object_path,
-                    code=325,
-                    msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
+                    code=335,
+                    msg='argument_spec for "%s" defines type="str" but documentation defines as "%s"' % (arg, doc_type)
                 )
 
             # TODO: needs to recursively traverse suboptions
