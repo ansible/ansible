@@ -486,7 +486,7 @@ There are two ways that older hosts can be used with CredSSP:
   has no way of supporting TLS 1.2
 
 To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
-`KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1-1-and-tls-1-2-in-windows-7-or-wind>`_
+`KB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1-1-and-tls-1-2-in-windows-7-or-wind>`_
 needs to be installed.
 
 Once the update has been applied and the Windows host rebooted, run the following
@@ -494,7 +494,7 @@ PowerShell commands to enable TLS 1.2:
 
 .. code-block:: guess
 
-    $reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProvider\SCHANNEL\Protocols\TLS 1.2"
+    $reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2"
     New-Item -Path $reg_path
     New-Item -Path "$reg_path\Server"
     New-Item -Path "$reg_path\Client"
