@@ -68,6 +68,12 @@ rules:
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/fire
                     wallRules/rule1"
+        server_name:
+            description:
+                - The name of the server.
+            returned: always
+            type: str
+            sample: mypostgresqlserver
         name:
             description:
                 - Resource name.
@@ -175,6 +181,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         d = {
             'resource_group': self.resource_group,
             'id': d['id'],
+            'server_name': self.server_name,
             'name': d['name'],
             'start_ip_address': d['start_ip_address'],
             'end_ip_address': d['end_ip_address']
