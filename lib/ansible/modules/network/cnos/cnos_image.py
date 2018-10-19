@@ -175,7 +175,7 @@ def doImageDownload(module, prompt, answer):
     elif(protocol == "tftp"):
         command = "copy " + protocol + " " + protocol + "://" + server
         command = command + "/" + imgPath + " system-image " + imgType
-        command = command + + " vrf management"
+        command = command + " vrf management"
         prompt = ['Confirm download operation',
                   'Do you want to change that to the standby image']
         answer = ['y', 'y']
