@@ -100,7 +100,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, TaskError
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils._text import to_native
 
 
@@ -115,13 +115,10 @@ class VmwareHostIPv6(PyVmomi):
             self.module.fail_json(msg="Failed to find host system with given configuration.")
 
     def ensure(self):
-        """Function to manage IPv6 for an ESXi host system"""
+        """Manage IPv6 for an ESXi host system"""
         results = dict(changed=False, result=dict())
         desired_state = self.module.params['state']
-        if desired_state == 'enabled':
-            enable_ipv6 = True
-        else:
-            enable_ipv6 = False
+
         host_change_list = []
         for host in self.hosts:
             changed = False
@@ -130,7 +127,7 @@ class VmwareHostIPv6(PyVmomi):
             host_network_system = host.configManager.networkSystem
             host_network_info = host_network_system.networkInfo
 
-            if enable_ipv6:
+            if desired_state == 'enabled':
                 # Don't do anything if IPv6 is already enabled
                 if host_network_info.atBootIpV6Enabled:
                     if host_network_info.ipV6Enabled:
@@ -169,7 +166,7 @@ class VmwareHostIPv6(PyVmomi):
                         changed = True
                         results['result'][host.name]['changed'] = True
                         results['result'][host.name]['msg'] = "IPv6 will be enabled for host '%s'" % host.name
-            else:
+            elif desired_state == 'disabled':
                 # Don't do anything if IPv6 is already disabled
                 if not host_network_info.atBootIpV6Enabled:
                     if not host_network_info.ipV6Enabled:
