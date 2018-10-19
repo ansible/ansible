@@ -127,11 +127,13 @@ options:
       - Lock file while editing to prevent access to file from other concurrent lineinfile processes
     type: bool
     default: 'no'
+    version_added: "2.8"
   lock_timeout:
     description:
       - amount of time in seconds to wait for a lock before giving up
     type: int
-    default: 'None'
+    default: -1
+    version_added: "2.8"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 seealso:
@@ -217,6 +219,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common.file import FileLock
+
 
 def write_changes(module, b_lines, dest):
 
@@ -494,7 +497,7 @@ def main():
             firstmatch=dict(type='bool', default=False),
             validate=dict(type='str'),
             lock=dict(default=False, type='bool'),
-            lock_timeout=dict(default=None, type='int')
+            lock_timeout=dict(default=-1, type='int')
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -552,6 +555,7 @@ def main():
 
     if module.lock:
         flock.unlock()
+
 
 if __name__ == '__main__':
     main()
