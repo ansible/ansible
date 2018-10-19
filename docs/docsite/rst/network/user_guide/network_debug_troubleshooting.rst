@@ -665,11 +665,11 @@ Intermittent failure while using ``network_cli`` connection type
 ----------------------------------------------------------------
 
 If the command prompt received in response is not matched correctly within
-``network_cli`` connection plugin the task might fail intermittently with truncated
-response or with error message ``operation requires privilege escalation``.
-Starting 2.7.1 a new buffer read timer is added to ensure prompts are matched properly
-and complete response is send in output. The timer default value is 0.2 seconds and
-can be adjusted per task basis or can be set globally in seconds.
+the ``network_cli`` connection plugin the task might fail intermittently with truncated
+response or with the error message ``operation requires privilege escalation``.
+Starting in 2.7.1 a new buffer read timer is added to ensure prompts are matched properly
+and a complete response is send in output. The timer default value is 0.2 seconds and
+can be adjusted on a per task basis or can be set globally in seconds.
 
 Example Per task timer setting
 

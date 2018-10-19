@@ -162,7 +162,7 @@ options:
     description:
       - Configures, in seconds, the amount of time to wait for the data to be read
         from Paramiko channel after the command prompt is matched. This timeout
-        value ensure that command prompt matched is correct and there is no more data
+        value ensures that command prompt matched is correct and there is no more data
         left to be received from remote host.
     default: 0.1
     ini:
