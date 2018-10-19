@@ -40,6 +40,7 @@ options:
     description:
     - The marker line template.
     - C({mark}) will be replaced with the values C(in marker_begin) (default="BEGIN") and C(marker_end) (default="END").
+    - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
     type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
