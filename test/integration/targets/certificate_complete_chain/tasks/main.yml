@@ -1,6 +1,6 @@
 ---
 - name: register cryptography version
-  command: python -c 'import cryptography; print(cryptography.__version__)'
+  command: "{{ ansible_python.executable }} -c 'import cryptography; print(cryptography.__version__)'"
   register: cryptography_version
 
 - block:
