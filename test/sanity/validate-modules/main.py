@@ -1206,6 +1206,13 @@ class ModuleValidator(Validator):
                     msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
                 )
 
+            if 'type' not in data and doc_type == 'bool':
+                self.reporter.error(
+                    path=self.object_path,
+                    code=334,
+                    msg='argument_spec for "%s" defines type="str" but documentation defines as "bool"' % (arg,)
+                )
+
             # TODO: needs to recursively traverse suboptions
             doc_choices = []
             try:

@@ -126,6 +126,7 @@ Errors
   331       argument in argument_spec must be a dictionary/hash when used
   332       ``AnsibleModule`` schema validation error
   333       ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
+  334       argument_spec defines type="str" but documentation defines as "bool"
 
   ..
 ---------   -------------------
