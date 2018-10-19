@@ -237,7 +237,7 @@ def main():
                          exception=traceback.format_exc())
     except botocore.exceptions.ParamValidationError as ve:
         module.fail_json(msg="Parameters to `invoke` failed to validate",
-                         exception=traceback.format_exc(ve))
+                         exception=traceback.format_exc())
     except Exception as e:
         module.fail_json(msg="Unexpected failure while invoking Lambda function",
                          exception=traceback.format_exc())
