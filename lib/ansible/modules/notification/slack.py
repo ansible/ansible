@@ -55,6 +55,9 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
+  thread_ts:
+    description:
+      - Optional. TS of message to thread to as a float
   username:
     description:
       - This is the sender of the message.
@@ -113,6 +116,7 @@ EXAMPLES = """
     token: thetoken/generatedby/slack
     msg: '{{ inventory_hostname }} completed'
     channel: '#ansible'
+    thread_ts: 1539917263.000100
     username: 'Ansible on {{ inventory_hostname }}'
     icon_url: http://www.example.com/some-image-file.png
     link_names: 0
@@ -173,7 +177,8 @@ def escape_quotes(text):
     return "".join(escape_table.get(c, c) for c in text)
 
 
-def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
+def build_payload_for_slack(module, text, channel, thread_ts, username, icon_url, icon_emoji, link_names,
+                            parse, color, attachments):
     payload = {}
     if color == "normal" and text is not None:
         payload = dict(text=escape_quotes(text))
@@ -185,6 +190,8 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
             payload['channel'] = channel
         else:
             payload['channel'] = '#' + channel
+    if thread_ts is not None:
+        payload['thread_ts'] = thread_ts
     if username is not None:
         payload['username'] = username
     if icon_emoji is not None:
@@ -228,7 +235,8 @@ def do_notify_slack(module, domain, token, payload):
         slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (token)
     else:
         if not domain:
-            module.fail_json(msg="Slack has updated its webhook API.  You need to specify a token of the form XXXX/YYYY/ZZZZ in your playbook")
+            module.fail_json(msg="Slack has updated its webhook API.  You need to specify a token of the form "
+                                 "XXXX/YYYY/ZZZZ in your playbook")
         slack_incoming_webhook = OLD_SLACK_INCOMING_WEBHOOK % (domain, token)
 
     headers = {
@@ -249,6 +257,7 @@ def main():
             token=dict(type='str', required=True, no_log=True),
             msg=dict(type='str', required=False, default=None),
             channel=dict(type='str', default=None),
+            thread_ts=dict(type='float', default=None),
             username=dict(type='str', default='Ansible'),
             icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
             icon_emoji=dict(type='str', default=None),
@@ -264,6 +273,7 @@ def main():
     token = module.params['token']
     text = module.params['msg']
     channel = module.params['channel']
+    thread_ts = module.params['thread_ts']
     username = module.params['username']
     icon_url = module.params['icon_url']
     icon_emoji = module.params['icon_emoji']
@@ -272,7 +282,8 @@ def main():
     color = module.params['color']
     attachments = module.params['attachments']
 
-    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments)
+    payload = build_payload_for_slack(module, text, channel, thread_ts, username, icon_url, icon_emoji, link_names,
+                                      parse, color, attachments)
     do_notify_slack(module, domain, token, payload)
 
     module.exit_json(msg="OK")
