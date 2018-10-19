@@ -2,6 +2,45 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.6
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-10-19
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Minor Changes
+-------------
+
+- win_nssm - Drop support of literal YAML dictionnary for ``app_parameters`` option. Use the ``key=value;`` string form instead
+
+Bugfixes
+--------
+
+- Ignore empty result of rabbitmqctl list_user_permissions.
+- In systemd module, fix check if a systemd+initd service is enabled - disabled in systemd means disabled
+- Update callbacks to use Ansible's JSON encoder to avoid known serialization issues
+- blockinfile - use bytes rather than a native string to prevent a stacktrace in Python 3 when writing to the file (https://github.com/ansible/ansible/issues/46237)
+- docker_container - ``publish_ports: all`` was not used correctly when checking idempotency.
+- docker_container - fix idempotency check for published_ports in some special cases.
+- docker_container - the behavior is improved in case ``image`` is not specified, but needed for (re-)creating the container.
+- dynamic includes - Use the copied and merged task for calculating task vars in the free strategy (https://github.com/ansible/ansible/issues/47024)
+- fix flatten to properly handle multiple lists in lists https://github.com/ansible/ansible/issues/46343
+- lineinfile - fix index out of range error when using insertbefore on a file with only one line (https://github.com/ansible/ansible/issues/46043)
+- os_router - ``enable_snat: no`` was ignored.
+- route53 - fix CAA record ordering for idempotency.
+- use proper module_util to get Ansible version for Azure requests
+- user - add documentation on what underlying tools are used on each platform (https://github.com/ansible/ansible/issues/44266)
+- win_nssm - Add missing space between parameters with ``app_parameters``
+- win_nssm - Correctly escape argument line when a parameter contains spaces, quotes or backslashes
+- win_nssm - Fix error when several services were given to the ``dependencies`` option
+- win_nssm - Fix extra space added in argument line with ``app_parameters`` or ``app_parameters_free_form`` when a parameter start by a dash and is followed by a period (https://github.com/ansible/ansible/issues/44079)
+- win_nssm - Fix service not started when ``state=started`` (https://github.com/ansible/ansible/issues/35442)
+- win_nssm - Fix several issues and idempotency problems (https://github.com/ansible/ansible/pull/44755)
+
 v2.6.5
 ======
 

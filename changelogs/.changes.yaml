@@ -487,3 +487,23 @@ releases:
     - win_say-fix.yaml
     - winrm_pexpect.yaml
     release_date: '2018-09-28'
+  2.6.6:
+    codename: Heartbreaker
+    fragments:
+    - 34863-rabbitmq_user_unpack_fix.yaml
+    - 44755-win_nssm_fixes.yaml
+    - 45921-os_router-ignores-enable_snat-no.yml
+    - 46049-route53-caa-ordering.txt
+    - 46245-systemd-fix-service-enable-logic.yaml
+    - 46322-docker_container-image-not-given.yaml
+    - 46594-docker_container-publish-all-ports.yml
+    - 46595-docker_container-expected_ports.yml
+    - azure-version.yaml
+    - blockinfile-bytes-fix.yaml
+    - callback_fixes.yml
+    - fix_flatten.yml
+    - free-strategy-include-var-tags.yaml
+    - lineinfile-insertbefore-index-out-of-range.yaml
+    - user-docs-underlying-tools.yaml
+    - v2.6.6_summary.yaml
+    release_date: '2018-10-19'
