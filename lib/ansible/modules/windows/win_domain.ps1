@@ -17,7 +17,9 @@ Function Ensure-Prereqs {
         # NOTE: AD-Domain-Services includes: RSAT-AD-AdminCenter, RSAT-AD-Powershell and RSAT-ADDS-Tools
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
         # FUTURE: Check if reboot necessary
+        return $true
     }
+    return $false
 }
 
 $params = Parse-Args $args -supports_check_mode $true
@@ -41,25 +43,31 @@ if ($domain_netbios_name -and $domain_netbios_name.length -gt 15) {
     Fail-Json -message "The parameter 'domain_netbios_name' should not exceed 15 characters in length"
 }
 
-# Check that we got a valid domain_mode
-$valid_domain_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.DomainMode.ParameterType)
-if (($domain_mode -ne $null) -and -not ($domain_mode -in $valid_domain_modes)) {
-    Fail-Json -message "The parameter 'domain_mode' does not accept '$domain_mode', please use one of: $valid_domain_modes"
-}
-
-# Check that we got a valid forest_mode
-$valid_forest_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.ForestMode.ParameterType)
-if (($forest_mode -ne $null) -and -not ($forest_mode -in $valid_forest_modes)) {
-    Fail-Json -message "The parameter 'forest_mode' does not accept '$forest_mode', please use one of: $valid_forest_modes"
-}
-
 $result = @{
     changed=$false;
     reboot_required=$false;
 }
 
 # FUTURE: Any sane way to do the detection under check-mode *without* installing the feature?
-Ensure-Prereqs
+$installed = Ensure-Prereqs
+
+# when in check mode and the prereq was "installed" we need to exit early as
+# the AD cmdlets weren't really installed
+if ($check_mode -and $installed) {
+    Exit-Json -obj $result
+}
+
+# Check that we got a valid domain_mode
+$valid_domain_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.DomainMode.ParameterType)
+if (($domain_mode -ne $null) -and -not ($domain_mode -in $valid_domain_modes)) {
+    Fail-Json -obj $result -message "The parameter 'domain_mode' does not accept '$domain_mode', please use one of: $valid_domain_modes"
+}
+
+# Check that we got a valid forest_mode
+$valid_forest_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.ForestMode.ParameterType)
+if (($forest_mode -ne $null) -and -not ($forest_mode -in $valid_forest_modes)) {
+    Fail-Json -obj $result -message "The parameter 'forest_mode' does not accept '$forest_mode', please use one of: $valid_forest_modes"
+}
 
 $forest = $null
 try {
@@ -107,9 +115,13 @@ if (-not $forest) {
 
     $iaf = Install-ADDSForest @install_params
 
-    $result.reboot_required = $iaf.RebootRequired
+    if ($check_mode) {
+        # the return value after -WhatIf does not have RebootRequired populated
+        # manually set to True as the domain would have been installed
+        $result.reboot_required = $true
+    } else {
+        $result.reboot_required = $iaf.RebootRequired
 
-    if (-not $check_mode) {
         # The Netlogon service is set to auto start but is not started. This is
         # required for Ansible to connect back to the host and reboot in a
         # later task. Even if this fails Ansible can still connect but only
