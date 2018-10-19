@@ -73,7 +73,7 @@ rules:
                 - The name of the server.
             returned: always
             type: str
-            sample: mypostgresqlserver
+            sample: testserver
         name:
             description:
                 - Resource name.
