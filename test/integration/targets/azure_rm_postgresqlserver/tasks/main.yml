@@ -320,7 +320,6 @@
       - output.changed == False
       - output.rules[0].id != None
       - output.rules[0].name != None
-      - output.rules[0].type != None
 
 - name: Gather facts PostgreSQL Firewall Rule
   azure_rm_postgresqlfirewallrule_facts:
@@ -333,10 +332,8 @@
       - output.changed == False
       - output.rules[0].id != None
       - output.rules[0].name != None
-      - output.rules[0].type != None
       - output.rules[1].id != None
       - output.rules[1].name != None
-      - output.rules[1].type != None
 
 - name: Delete instance of Firewall Rule -- check mode
   azure_rm_postgresqlfirewallrule:
