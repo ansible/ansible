@@ -618,7 +618,6 @@ Enabling jump host setting
 
 
 Bastion/jump host with netconf connection can be enabled by:
-
  - Setting Ansible variable ``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path
  - Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path
  - Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>`` under ``netconf_connection`` section
