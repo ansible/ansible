@@ -359,6 +359,10 @@ options:
     description:
        - Use with restart policy to control maximum number of restart attempts.
     default: 0
+  runtime:
+    description:
+      - Runtime to use for the container.
+    version_added: "2.8"
   shm_size:
     description:
       - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
@@ -855,6 +859,7 @@ class TaskParameters(DockerBaseClass):
         self.restart = None
         self.restart_retries = None
         self.restart_policy = None
+        self.runtime = None
         self.shm_size = None
         self.security_opts = None
         self.state = None
@@ -1117,6 +1122,9 @@ class TaskParameters(DockerBaseClass):
 
         if self.client.HAS_UTS_MODE_OPT:
             host_config_params['uts_mode'] = 'uts'
+
+        if self.client.HAS_RUNTIME_OPT:
+            host_config_params['runtime'] = 'runtime'
 
         params = dict()
         for key, value in host_config_params.items():
@@ -1561,6 +1569,7 @@ class Container(DockerBaseClass):
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
             restart_policy=restart_policy.get('Name'),
+            runtime=host_config.get('Runtime'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
@@ -2421,6 +2430,10 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 self.module.warn("docker API version is %s. Minimum version required is 1.25 to set or "
                                  "update the container's stop_timeout configuration." % (docker_api_version,))
 
+        runtime_supported = LooseVersion(docker_api_version) >= LooseVersion('1.12')
+        if self.module.params.get("runtime") and not runtime_supported:
+            self.fail('docker API version is %s. Minimum version required is 1.12 to set runtime option.' % (docker_api_version,))
+
         self.HAS_INIT_OPT = init_supported
         self.HAS_UTS_MODE_OPT = uts_mode_supported
         self.HAS_BLKIO_WEIGHT_OPT = blkio_weight_supported
@@ -2428,6 +2441,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self.HAS_STOP_TIMEOUT_OPT = stop_timeout_supported
 
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
+        self.HAS_RUNTIME_OPT = runtime_supported
+
         if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
             self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
@@ -2496,6 +2511,7 @@ def main():
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int', default=None),
+        runtime=dict(type='str', default=None),
         security_opts=dict(type='list'),
         shm_size=dict(type='str'),
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
