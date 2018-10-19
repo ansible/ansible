@@ -25,6 +25,10 @@
         <<: *aws_connection_info
       register: codepipeline_iam_role
 
+    - name: Pause a few seconds to ensure IAM role is available to next task
+      pause:
+        seconds: 3
+
     # ================== integration test ==========================================
 
     - name: create CodePipeline
@@ -106,7 +110,7 @@
                   ProjectName: foo
         state: present
         <<: *aws_connection_info
-      regiser: rerun_test_output
+      register: rerun_test_output
 
     - assert:
         that:
@@ -118,3 +122,13 @@
         state: absent
         <<: *aws_connection_info
       async: 300
+
+  # ==================== cleanup =======================
+
+  always:
+
+    - name: deleta IAM role needed for CodePipeline test
+      iam_role:
+        name: "{{ resource_prefix }}-codepipeline-service-role"
+        state: absent
+        <<: *aws_connection_info
