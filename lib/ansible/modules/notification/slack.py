@@ -56,6 +56,7 @@ options:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
   thread_ts:
+    version_added: 2.8
     description:
       - Optional. TS of message to thread to as a float
   username:
