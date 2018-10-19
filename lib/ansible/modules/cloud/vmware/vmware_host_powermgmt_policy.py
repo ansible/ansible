@@ -49,20 +49,20 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Set the Power Management Policy of a host system to high-performance
   vmware_host_powermgmt_policy:
-    hostname: vcenter01.fqdn.local
-    username: administrator@vsphere.local
-    password: SuperSecretPassword
-    esxi_hostname: esx01.fqdn.local
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_host }}'
     policy: high-performance
     validate_certs: no
   delegate_to: localhost
 
 - name: Set the Power Management Policy of all host systems from cluster to high-performance
   vmware_host_powermgmt_policy:
-    hostname: vcenter01.fqdn.local
-    username: administrator@vsphere.local
-    password: SuperSecretPassword
-    esxi_hostname: esx01.fqdn.local
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    cluster_name: '{{ cluster_name }}'
     policy: high-performance
     validate_certs: no
   delegate_to: localhost
@@ -93,7 +93,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, TaskError
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils._text import to_native
 
 
@@ -111,33 +111,33 @@ class VmwareHostPowerManagement(PyVmomi):
 
     def ensure(self):
         """
-        Function to manage power management policy of an ESXi host system
+        Manage power management policy of an ESXi host system
         """
         results = dict(changed=False, result=dict())
         policy = self.params.get('policy')
         host_change_list = []
+        power_policies = {
+            'high-performance': {
+                'key': 1,
+                'short_name': 'static'
+            },
+            'balanced': {
+                'key': 2,
+                'short_name': 'dynamic'
+            },
+            'low-power': {
+                'key': 3,
+                'short_name': 'low'
+            },
+            'custom': {
+                'key': 4,
+                'short_name': 'custom'
+            }
+        }
+
         for host in self.hosts:
             changed = False
             results['result'][host.name] = dict(msg='')
-
-            power_policies = {
-                'high-performance': {
-                    'key': 1,
-                    'short_name': 'static'
-                },
-                'balanced': {
-                    'key': 2,
-                    'short_name': 'dynamic'
-                },
-                'low-power': {
-                    'key': 3,
-                    'short_name': 'low'
-                },
-                'custom': {
-                    'key': 4,
-                    'short_name': 'custom'
-                }
-            }
 
             power_system = host.configManager.powerSystem
 
