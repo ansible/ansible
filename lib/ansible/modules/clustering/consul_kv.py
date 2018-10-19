@@ -233,7 +233,7 @@ def set_value(module):
     value = module.params.get('value')
 
     if value is NOT_SET:
-        raise AssertionError('Cannot set value of "%s" to `NOT_SET`', (key, ))
+        raise AssertionError('Cannot set value of "%s" to `NOT_SET`' % key)
 
     index, changed = _has_value_changed(consul_api, key, value)
 
