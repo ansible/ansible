@@ -26,9 +26,10 @@ description:
 options:
   name:
     description:
-      - "A list of package names, or package specifier with version, like C(name-1.0)
+      - "A package name or package specifier with version, like C(name-1.0).
         When using state=latest, this can be '*' which means run: dnf -y update.
-        You can also pass a url or a local path to a rpm file."
+        You can also pass a url or a local path to a rpm file.
+        To operate on several packages this can accept a comma separated string of packages or a list of packages."
     required: true
     aliases:
         - pkg
