@@ -452,7 +452,8 @@ Suggestions to resolve:
         provider: "{{ cli }}"
         timeout: 30
 
-For network_cli, netconf connection type (applicable from 2.7 onwards):
+For network_cli, 
+connection type (applicable from 2.7 onwards):
 
 .. FIXME: Detail error here
 
@@ -615,13 +616,16 @@ Using bastion/jump host with netconf connection
 Enabling jump host setting
 --------------------------
 
-Bastion/jump host with netconf connection can be enable using
-- Setting Ansible variable``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path
-- Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path
-- Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>``under ``netconf_connection`` section
+
+Bastion/jump host with netconf connection can be enabled by:
+
+ - Setting Ansible variable ``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path
+ - Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path
+ - Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>`` under ``netconf_connection`` section
 
 If the configuration variable is set to 1 the proxycommand and other ssh variables are read from
 default ssh config file (~/.ssh/config).
+
 If the configuration variable is set to file path the proxycommand and other ssh variables are read
 from the given custom ssh file path
 
@@ -636,14 +640,22 @@ Example ssh config file (~/.ssh/config)
     IdentityFile "/path/to/ssh-key.pem"
     Port 22
 
-  Host netconf-host
-    HostName netconf.host.domain.name.com
-    ProxyCommand ssh -W %h:%p jumphost
-
-  # Note: Due to the way that Paramiko reads the SSH Config file, if your NETCONF host uses port 830, you need to use the following instead.
-
+  # Note: Due to the way that Paramiko reads the SSH Config file, 
+  # you need to specify the NETCONF port that the host uses.
+  # i.e. It does not automatically use ansible_port
+  # As a result you need either:
+  
+  Host junos01
+    HostName junos01
+    ProxyCommand ssh -W %h:22 jumphost
+    
+  # OR
+  
+  Host junos01
+    HostName junos01
     ProxyCommand ssh -W %h:830 jumphost
-
+    
+  # Depending on the netconf port used.
 
 Example Ansible inventory file
 
