@@ -630,14 +630,19 @@ Example ssh config file (~/.ssh/config)
 
 .. code-block:: ini
 
-   Host junos01
-   HostName junos01
-   User myuser
+  Host jumphost
+    HostName jumphost.domain.name.com
+    User jumphost-user
+    IdentityFile "/path/to/ssh-key.pem"
+    Port 22
 
-   # Where host is listening for NETCONF on port 22
-   ProxyCommand ssh user@bastion01 nc %h %p
-   # Where host is listening for NETCONF on port 830
-   ProxyCommand ssh user@bastion01 nc %h 830
+  Host netconf-host
+    HostName netconf.host.domain.name.com
+    ProxyCommand ssh -W %h:%p jumphost
+
+  # Note: Due to the way that Paramiko reads the SSH Config file, if your NETCONF host uses port 830, you need to use the following instead.
+
+    ProxyCommand ssh -W %h:830 jumphost
 
 
 Example Ansible inventory file
