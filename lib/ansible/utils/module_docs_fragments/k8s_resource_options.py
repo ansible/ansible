@@ -38,5 +38,5 @@ options:
     - Reads from the local file system. To read from the Ansible controller's file system, use the file lookup
       plugin or template lookup plugin, combined with the from_yaml filter, and pass the result to
       I(resource_definition). See Examples below.
-    - To read Ansible Vault-encrypted files, use the file lookup plugin. See Examples below. 
+    - To read Ansible Vault-encrypted files, use the file lookup plugin. See Examples below.
 '''
