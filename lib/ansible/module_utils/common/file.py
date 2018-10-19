@@ -163,7 +163,7 @@ class FileLock:
             os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
             return True
 
-        if lock_timeout:
+        if lock_timeout > 0:
             e_secs = 0
             while e_secs < lock_timeout:
                 try:
