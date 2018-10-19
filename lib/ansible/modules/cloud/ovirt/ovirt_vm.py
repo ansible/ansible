@@ -1042,7 +1042,7 @@ class VmsModule(BaseModule):
                 otypes.Sso(
                     methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param('sso') else []
                 )
-            ),
+            ) if self.param('sso') is not None else None,
             quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,
             high_availability=otypes.HighAvailability(
                 enabled=self.param('high_availability'),
