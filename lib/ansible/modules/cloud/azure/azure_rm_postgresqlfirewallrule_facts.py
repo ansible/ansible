@@ -19,7 +19,7 @@ module: azure_rm_postgresqlfirewallrule_facts
 version_added: "2.8"
 short_description: Get Azure PostgreSQL Firewall Rule facts.
 description:
-    - Get facts of PostgreSQL Firewall Rule.
+    - Get facts of Azure PostgreSQL Firewall Rule.
 
 options:
     resource_group:
