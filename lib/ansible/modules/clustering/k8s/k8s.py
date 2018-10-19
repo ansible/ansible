@@ -28,7 +28,7 @@ author:
 description:
   - Use the OpenShift Python client to perform CRUD operations on K8s objects.
   - Pass the object definition from a source file or inline. See examples for reading
-    files and using Jinja templates.
+    files and using Jinja templates and vault-encrypted files.
   - Access to the full range of K8s APIs.
   - Use the M(k8s_facts) module to obtain a list of items about an object of type C(kind)
   - Authenticate using either a config file, certificates, password or token.
@@ -116,7 +116,9 @@ EXAMPLES = '''
     state: present
     src: /testing/deployment.yml
 
-- name: Read definition file from the Ansible controller file system
+- name: >-
+    Read definition file from the Ansible controller file system
+    or by reading the definition from a file encrypted with Ansible Vault.
   k8s:
     state: present
     definition: "{{ lookup('file', '/testing/deployment.yml') }}"
