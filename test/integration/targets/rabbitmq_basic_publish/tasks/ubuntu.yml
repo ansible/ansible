@@ -39,8 +39,8 @@
 - name: Post binary to a queue
   rabbitmq_basic_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
-    queue: 'publish_test'
-    src: '/root/ansible/ajax-loader.gif'
+    queue: publish_test
+    src: "{{ role_path }}/files/image.gif"
   register: rabbitmq_publish_file
   delegate_to: localhost
 
