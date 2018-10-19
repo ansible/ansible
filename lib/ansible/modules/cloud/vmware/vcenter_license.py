@@ -1,21 +1,7 @@
 #!/usr/bin/python
 
-# Copyright 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -30,28 +16,18 @@ short_description: Manage VMware vCenter license keys
 description:
 - Add and delete vCenter license keys.
 version_added: '2.4'
-author: Dag Wieers (@dagwieers)
+author:
+- Dag Wieers (@dagwieers)
 requirements:
 - pyVmomi
 options:
-  hostname:
-    description:
-    - The hostname or IP address of the vSphere vCenter.
-    required: yes
-  username:
-    description:
-    - The username to log into the vSphere vCenter.
-    required: yes
-    aliases: [admin, user]
-  password:
-    description:
-    - The password to log into to the vSphere vCenter.
-    required: yes
-    aliases: [pass, pwd]
   labels:
     description:
     - The optional labels of the license key to manage in vSphere vCenter.
     - This is dictionary with key/value pair.
+    default: {
+        'source': 'ansible'
+    }
   license:
     description:
     - The license key to manage in vSphere vCenter.
@@ -67,6 +43,7 @@ notes:
   an evaluation license only.
 - The evaluation license (00000-00000-00000-00000-00000) is not listed
   when unused.
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
@@ -80,7 +57,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove an (unused) vCenter license
-  vmware_license:
+  vcenter_license:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
@@ -100,7 +77,7 @@ licenses:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
@@ -203,6 +180,7 @@ def main():
             result['diff']['after'] = '\n'.join(result['licenses']) + '\n'
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

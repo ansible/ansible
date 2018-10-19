@@ -11,14 +11,14 @@
         - no vlan 100
         - no vlan 200
         - no vlan 300
-      authorize: yes
+      provider: "{{ cli }}"
 
   - name: setup - remove switchport settings on interfaces used in test
     ios_config:
       lines:
         - switchport mode access
         - no switchport access vlan 100
-      authorize: yes
+      provider: "{{ cli }}"
       parents: "{{ item }}"
     loop:
       - interface GigabitEthernet0/1
@@ -28,7 +28,7 @@
     ios_vlan: &create
       vlan_id: 100
       name: test-vlan
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -51,7 +51,7 @@
       interfaces:
         - GigabitEthernet0/1
         - GigabitEthernet0/2
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -72,12 +72,38 @@
       that:
         - "result.changed == false"
 
+  - name: Check interface assigned to vrf (intent)
+    ios_vlan:
+      vlan_id: 100
+      associated_interfaces:
+        - GigabitEthernet0/1
+        - GigabitEthernet0/2
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == false"
+
+  - name: Check interface assigned to vrf (fail)
+    ios_vlan:
+      vlan_id: 100
+      associated_interfaces:
+        - test
+      provider: "{{ cli }}"
+    ignore_errors: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == True"
+
   - name: Remove interface from vlan
     ios_vlan: &single_int
       vlan_id: 100
       interfaces:
         - GigabitEthernet0/1
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -100,7 +126,7 @@
     ios_vlan:
       vlan_id: 100
       state: suspend
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -113,7 +139,7 @@
     ios_vlan:
       vlan_id: 100
       state: active
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -125,7 +151,7 @@
   - name: delete vlan
     ios_vlan: &delete
       vlan_id: 100
-      authorize: yes
+      provider: "{{ cli }}"
       state: absent
     register: result
 
@@ -147,7 +173,7 @@
       aggregate:
         - { vlan_id: 200, name: vlan-200 }
         - { vlan_id: 300, name: vlan-300 }
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -172,7 +198,7 @@
         - { vlan_id: 200, name: vlan-200 }
         - { vlan_id: 300, name: vlan-300 }
       state: absent
-      authorize: yes
+      provider: "{{ cli }}"
     register: result
 
   - assert:
@@ -195,14 +221,14 @@
         - no vlan 100
         - no vlan 200
         - no vlan 300
-      authorize: yes
+      provider: "{{ cli }}"
 
   - name: teardown(part2)
     ios_config:
       lines:
         - switchport mode access
         - no switchport access vlan 100
-      authorize: yes
+      provider: "{{ cli }}"
       parents: "{{ item }}"
     loop:
       - interface GigabitEthernet0/1

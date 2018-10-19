@@ -22,6 +22,7 @@ description:
 version_added: "2.5"
 author:
     - Gustavo Maia(@gurumaia)
+    - Chen Leibovich(@chenl87)
 requirements: [ json, botocore, boto3 ]
 options:
     policy_name:
@@ -55,6 +56,22 @@ options:
     target_tracking_scaling_policy_configuration:
         description: A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
         required: no
+    minimum_tasks:
+        description: The minimum value to scale to in response to a scale in event.
+            This parameter is required if you are creating a first new policy for the specified service.
+        required: no
+        version_added: "2.6"
+    maximum_tasks:
+        description: The maximum value to scale to in response to a scale out event.
+            This parameter is required if you are creating a first new policy for the specified service.
+        required: no
+        version_added: "2.6"
+    override_task_capacity:
+        description: Whether or not to override values of minimum and/or maximum tasks if it's already set.
+        required: no
+        default: no
+        type: bool
+        version_added: "2.6"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -63,24 +80,44 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create scaling policy for ECS Service
+# Create step scaling policy for ECS Service
 - name: scaling_policy
   aws_application_scaling_policy:
-  state: present
-  policy_name: test_policy
-  service_namespace: ecs
-  resource_id: service/poc-pricing/test-as
-  scalable_dimension: ecs:service:DesiredCount
-  policy_type: StepScaling
-  step_scaling_policy_configuration:
-    AdjustmentType: ChangeInCapacity
-    StepAdjustments:
-      - MetricIntervalUpperBound: 123
-        ScalingAdjustment: 2
-      - MetricIntervalLowerBound: 123
-        ScalingAdjustment: -2
-    Cooldown: 123
-    MetricAggregationType: Average
+    state: present
+    policy_name: test_policy
+    service_namespace: ecs
+    resource_id: service/poc-pricing/test-as
+    scalable_dimension: ecs:service:DesiredCount
+    policy_type: StepScaling
+    minimum_tasks: 1
+    maximum_tasks: 6
+    step_scaling_policy_configuration:
+      AdjustmentType: ChangeInCapacity
+      StepAdjustments:
+        - MetricIntervalUpperBound: 123
+          ScalingAdjustment: 2
+        - MetricIntervalLowerBound: 123
+          ScalingAdjustment: -2
+      Cooldown: 123
+      MetricAggregationType: Average
+
+# Create target tracking scaling policy for ECS Service
+- name: scaling_policy
+  aws_application_scaling_policy:
+    state: present
+    policy_name: test_policy
+    service_namespace: ecs
+    resource_id: service/poc-pricing/test-as
+    scalable_dimension: ecs:service:DesiredCount
+    policy_type: TargetTrackingScaling
+    minimum_tasks: 1
+    maximum_tasks: 6
+    target_tracking_scaling_policy_configuration:
+      TargetValue: 60
+      PredefinedMetricSpecification:
+        PredefinedMetricType: ECSServiceAverageCPUUtilization
+      ScaleOutCooldown: 60
+      ScaleInCooldown: 60
 
 # Remove scalable target for ECS Service
 - name: scaling_policy
@@ -94,6 +131,19 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+alarms:
+    description: List of the CloudWatch alarms associated with the scaling policy
+    returned: when state present
+    type: complex
+    contains:
+        alarm_arn:
+            description: The Amazon Resource Name (ARN) of the alarm
+            returned: when state present
+            type: string
+        alarm_name:
+            description: The name of the alarm
+            returned: when state present
+            type: string
 service_namespace:
     description: The namespace of the AWS service.
     returned: when state present
@@ -109,6 +159,18 @@ scalable_dimension:
     returned: when state present
     type: string
     sample: ecs:service:DesiredCount
+policy_arn:
+    description: The Amazon Resource Name (ARN) of the scaling policy..
+    returned: when state present
+    type: string
+policy_name:
+    description: The name of the scaling policy.
+    returned: when state present
+    type: string
+policy_type:
+    description: The policy type.
+    returned: when state present
+    type: string
 min_capacity:
     description: The minimum value to scale to in response to a scale in event. Required if I(state) is C(present).
     returned: when state present
@@ -124,6 +186,65 @@ role_arn:
     returned: when state present
     type: string
     sample: arn:aws:iam::123456789123:role/roleName
+step_scaling_policy_configuration:
+    description: The step scaling policy.
+    returned: when state present and the policy type is StepScaling
+    type: complex
+    contains:
+        adjustment_type:
+            description: The adjustment type
+            returned: when state present and the policy type is StepScaling
+            type: string
+            sample: "ChangeInCapacity, PercentChangeInCapacity, ExactCapacity"
+        cooldown:
+            description: The amount of time, in seconds, after a scaling activity completes
+                where previous trigger-related scaling activities can influence future scaling events
+            returned: when state present and the policy type is StepScaling
+            type: int
+            sample: 60
+        metric_aggregation_type:
+            description: The aggregation type for the CloudWatch metrics
+            returned: when state present and the policy type is StepScaling
+            type: string
+            sample: "Average, Minimum, Maximum"
+        step_adjustments:
+            description: A set of adjustments that enable you to scale based on the size of the alarm breach
+            returned: when state present and the policy type is StepScaling
+            type: list of complex
+target_tracking_scaling_policy_configuration:
+    description: The target tracking policy.
+    returned: when state present and the policy type is TargetTrackingScaling
+    type: complex
+    contains:
+        predefined_metric_specification:
+            description: A predefined metric
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: complex
+            contains:
+                predefined_metric_type:
+                    description: The metric type
+                    returned: when state present and the policy type is TargetTrackingScaling
+                    type: string
+                    sample: "ECSServiceAverageCPUUtilization, ECSServiceAverageMemoryUtilization"
+                resource_label:
+                    description: Identifies the resource associated with the metric type
+                    returned: when metric type is ALBRequestCountPerTarget
+                    type: string
+        scale_in_cooldown:
+            description: The amount of time, in seconds, after a scale in activity completes before another scale in activity can start
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: int
+            sample: 60
+        scale_out_cooldown:
+            description: The amount of time, in seconds, after a scale out activity completes before another scale out activity can start
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: int
+            sample: 60
+        target_value:
+            description: The target value for the metric
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: int
+            sample: 70
 creation_time:
     description: The Unix timestamp for when the scalable target was created.
     returned: when state present
@@ -133,30 +254,41 @@ creation_time:
 
 import traceback
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, ec2_argument_spec
 
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # handled by AnsibleAWSModule
+
+
+# Merge the results of the scalable target creation and policy deletion/creation
+# There's no risk in overriding values since mutual keys have the same values in our case
+def merge_results(scalable_target_result, policy_result):
+    if scalable_target_result['changed'] or policy_result['changed']:
+        changed = True
+    else:
+        changed = False
+
+    merged_response = scalable_target_result['response'].copy()
+    merged_response.update(policy_result['response'])
+
+    return {"changed": changed, "response": merged_response}
 
 
 def delete_scaling_policy(connection, module):
     changed = False
-    scaling_policy = connection.describe_scaling_policies(
-        ServiceNamespace=module.params.get('service_namespace'),
-        ResourceId=module.params.get('resource_id'),
-        ScalableDimension=module.params.get('scalable_dimension'),
-        PolicyNames=[module.params.get('policy_name')],
-        MaxResults=1
-    )
+    try:
+        scaling_policy = connection.describe_scaling_policies(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceId=module.params.get('resource_id'),
+            ScalableDimension=module.params.get('scalable_dimension'),
+            PolicyNames=[module.params.get('policy_name')],
+            MaxResults=1
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scaling policies")
 
     if scaling_policy['ScalingPolicies']:
         try:
@@ -167,20 +299,81 @@ def delete_scaling_policy(connection, module):
                 PolicyName=module.params.get('policy_name'),
             )
             changed = True
-        except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to delete scaling policy")
 
-    module.exit_json(changed=changed)
+    return {"changed": changed}
+
+
+def create_scalable_target(connection, module):
+    changed = False
+
+    try:
+        scalable_targets = connection.describe_scalable_targets(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceIds=[
+                module.params.get('resource_id'),
+            ],
+            ScalableDimension=module.params.get('scalable_dimension')
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to describe scalable targets")
+
+    # Scalable target registration will occur if:
+    # 1. There is no scalable target registered for this service
+    # 2. A scalable target exists, different min/max values are defined and override is set to "yes"
+    if (
+        not scalable_targets['ScalableTargets']
+        or (
+            module.params.get('override_task_capacity')
+            and (
+                scalable_targets['ScalableTargets'][0]['MinCapacity'] != module.params.get('minimum_tasks')
+                or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != module.params.get('maximum_tasks')
+            )
+        )
+    ):
+        changed = True
+        try:
+            connection.register_scalable_target(
+                ServiceNamespace=module.params.get('service_namespace'),
+                ResourceId=module.params.get('resource_id'),
+                ScalableDimension=module.params.get('scalable_dimension'),
+                MinCapacity=module.params.get('minimum_tasks'),
+                MaxCapacity=module.params.get('maximum_tasks')
+            )
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to register scalable target")
+
+    try:
+        response = connection.describe_scalable_targets(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceIds=[
+                module.params.get('resource_id'),
+            ],
+            ScalableDimension=module.params.get('scalable_dimension')
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scalable targets")
+
+    if (response['ScalableTargets']):
+        snaked_response = camel_dict_to_snake_dict(response['ScalableTargets'][0])
+    else:
+        snaked_response = {}
+
+    return {"changed": changed, "response": snaked_response}
 
 
 def create_scaling_policy(connection, module):
-    scaling_policy = connection.describe_scaling_policies(
-        ServiceNamespace=module.params.get('service_namespace'),
-        ResourceId=module.params.get('resource_id'),
-        ScalableDimension=module.params.get('scalable_dimension'),
-        PolicyNames=[module.params.get('policy_name')],
-        MaxResults=1
-    )
+    try:
+        scaling_policy = connection.describe_scaling_policies(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceId=module.params.get('resource_id'),
+            ScalableDimension=module.params.get('scalable_dimension'),
+            PolicyNames=[module.params.get('policy_name')],
+            MaxResults=1
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scaling policies")
 
     changed = False
 
@@ -229,8 +422,8 @@ def create_scaling_policy(connection, module):
                     PolicyType=scaling_policy['PolicyType'],
                     TargetTrackingScalingPolicyConfiguration=scaling_policy['TargetTrackingScalingPolicyConfiguration']
                 )
-        except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to create scaling policy")
 
     try:
         response = connection.describe_scaling_policies(
@@ -240,14 +433,15 @@ def create_scaling_policy(connection, module):
             PolicyNames=[module.params.get('policy_name')],
             MaxResults=1
         )
-    except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scaling policies")
 
     if (response['ScalingPolicies']):
         snaked_response = camel_dict_to_snake_dict(response['ScalingPolicies'][0])
     else:
         snaked_response = {}
-    module.exit_json(changed=changed, response=snaked_response)
+
+    return {"changed": changed, "response": snaked_response}
 
 
 def main():
@@ -268,26 +462,47 @@ def main():
                                                         ], type='str'),
         policy_type=dict(required=True, choices=['StepScaling', 'TargetTrackingScaling'], type='str'),
         step_scaling_policy_configuration=dict(required=False, type='dict'),
-        target_tracking_scaling_policy_configuration=dict(required=False, type='dict')
+        target_tracking_scaling_policy_configuration=dict(
+            required=False,
+            type='dict',
+            options=dict(
+                CustomizedMetricSpecification=dict(type='dict'),
+                DisableScaleIn=dict(type='bool'),
+                PredefinedMetricSpecification=dict(type='dict'),
+                ScaleInCooldown=dict(type='int'),
+                ScaleOutCooldown=dict(type='int'),
+                TargetValue=dict(type='float'),
+            )
+        ),
+        minimum_tasks=dict(required=False, type='int'),
+        maximum_tasks=dict(required=False, type='int'),
+        override_task_capacity=dict(required=False, type=bool)
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+    connection = module.client('application-autoscaling')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        if not region:
-            module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-        connection = boto3_conn(module, conn_type='client', resource='application-autoscaling', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=str(e))
+    # Remove any target_tracking_scaling_policy_configuration suboptions that are None
+    policy_config_options = [
+        'CustomizedMetricSpecification', 'DisableScaleIn', 'PredefinedMetricSpecification', 'ScaleInCooldown', 'ScaleOutCooldown', 'TargetValue'
+    ]
+    if isinstance(module.params['target_tracking_scaling_policy_configuration'], dict):
+        for option in policy_config_options:
+            if module.params['target_tracking_scaling_policy_configuration'][option] is None:
+                module.params['target_tracking_scaling_policy_configuration'].pop(option)
 
     if module.params.get("state") == 'present':
-        create_scaling_policy(connection, module)
+        # A scalable target must be registered prior to creating a scaling policy
+        scalable_target_result = create_scalable_target(connection, module)
+        policy_result = create_scaling_policy(connection, module)
+        # Merge the results of the scalable target creation and policy deletion/creation
+        # There's no risk in overriding values since mutual keys have the same values in our case
+        merged_result = merge_results(scalable_target_result, policy_result)
+        module.exit_json(**merged_result)
     else:
-        delete_scaling_policy(connection, module)
+        policy_result = delete_scaling_policy(connection, module)
+        module.exit_json(**policy_result)
 
 
 if __name__ == '__main__':

@@ -48,6 +48,7 @@ options:
     name:
         description:
             - Field introduced in 17.2.4.
+        required: true
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -95,7 +96,7 @@ def main():
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         error_page_body=dict(type='str',),
-        name=dict(type='str',),
+        name=dict(type='str', required=True),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
@@ -109,6 +110,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'errorpagebody',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

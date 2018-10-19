@@ -1,15 +1,15 @@
 ---
-- include: setup.yml
+- include_tasks: setup.yml
 
-- include: present.yml
-- include: tags.yml
-- include: absent.yml
+- include_tasks: present.yml
+- include_tasks: tags.yml
+- include_tasks: absent.yml
 
-- include: present_display_name.yml
-- include: absent_display_name.yml
+- include_tasks: present_display_name.yml
+- include_tasks: absent_display_name.yml
 
-- include: sshkeys.yml
+- include_tasks: sshkeys.yml
 
-- include: project.yml
+- include_tasks: project.yml
 
-- include: cleanup.yml
+- include_tasks: cleanup.yml

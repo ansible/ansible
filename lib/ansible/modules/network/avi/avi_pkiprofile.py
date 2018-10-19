@@ -52,6 +52,7 @@ options:
         description:
             - When enabled, avi will verify via crl checks that certificates in the trust chain have not been revoked.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     crls:
         description:
             - Certificate revocation lists.
@@ -60,6 +61,7 @@ options:
             - When enabled, avi will not trust intermediate and root certs presented by a client.
             - Instead, only the chain certs configured in the certificate authority section will be used to verify trust of the client's cert.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     is_federated:
         description:
             - This field describes the object's replication scope.
@@ -68,6 +70,7 @@ options:
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.4"
+        type: bool
     name:
         description:
             - Name of the pki profile.
@@ -86,6 +89,7 @@ options:
             - When enabled, avi will only validate the revocation status of the leaf certificate using crl.
             - To enable validation for the entire chain, disable this option and provide all the relevant crls.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
 extends_documentation_fragment:
     - avi
 '''
@@ -143,6 +147,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'pkiprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

@@ -9,13 +9,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
-
 
 DOCUMENTATION = '''
 ---
@@ -25,8 +23,8 @@ description:
     - Manage a host system from distributed virtual switch.
 version_added: 2.0
 author:
-- "Joseph Callen (@jcpowermac)"
-- "Abhijeet Kasurde (@akasurde)"
+- Joseph Callen (@jcpowermac)
+- Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -48,24 +46,25 @@ options:
     state:
         description:
         - If the host should be present or absent attached to the vSwitch.
-        choices: [present, absent]
+        choices: [ present, absent ]
         required: True
+        default: 'present'
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
 - name: Add Host to dVS
-  local_action:
-    module: vmware_dvs_host
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
-    esxi_hostname: esxi_hostname_as_listed_in_vcenter
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
     switch_name: dvSwitch
     vmnics:
         - vmnic0
         - vmnic1
     state: present
+  delegate_to: localhost
 '''
 
 try:

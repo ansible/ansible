@@ -32,8 +32,6 @@ options:
   names:
     description:
       - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
-    required: false
-    default: null
     aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment:
     - aws
@@ -53,7 +51,7 @@ EXAMPLES = '''
 
 - debug:
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
 - elb_classic_lb_facts:
@@ -72,7 +70,7 @@ EXAMPLES = '''
 
 - debug:
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 '''
 

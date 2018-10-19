@@ -42,14 +42,10 @@ options:
         description:
             - Name of checkpoint file to create. Mutually exclusive
               with rollback_to.
-        required: false
-        default: null
     rollback_to:
         description:
             - Name of checkpoint file to rollback to. Mutually exclusive
               with checkpoint_file.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''

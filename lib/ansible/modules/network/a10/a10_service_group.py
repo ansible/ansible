@@ -39,25 +39,20 @@ options:
     version_added: "2.3"
     description:
       - set active-partition
-    required: false
-    default: null
   service_group:
     description:
       - The SLB (Server Load Balancing) service-group name
     required: true
-    default: null
     aliases: ['service', 'pool', 'group']
   service_group_protocol:
     description:
       - The SLB service-group protocol of TCP or UDP.
-    required: false
     default: tcp
     aliases: ['proto', 'protocol']
     choices: ['tcp', 'udp']
   service_group_method:
     description:
       - The SLB service-group load balancing method, such as round-robin or weighted-rr.
-    required: false
     default: round-robin
     aliases: ['method']
     choices:
@@ -77,16 +72,13 @@ options:
       - A list of servers to add to the service group. Each list item should be a
         dictionary which specifies the C(server:) and C(port:), but can also optionally
         specify the C(status:). See the examples below for details.
-    required: false
-    default: null
     aliases: ['server', 'member']
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 
@@ -338,6 +330,7 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
+
 
 if __name__ == '__main__':
     main()

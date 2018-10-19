@@ -1,0 +1,16 @@
+- name: Test vars_prompt custom prompt
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: input
+      prompt: "Enter some input"
+
+  tasks:
+    - assert:
+        that:
+          - input == 'some more input'
+
+    - debug:
+        var: input

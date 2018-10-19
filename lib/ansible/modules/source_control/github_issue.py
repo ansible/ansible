@@ -22,27 +22,23 @@ options:
     description:
       - Name of repository from which issue needs to be retrieved.
     required: true
-    default: none
   organization:
     description:
       - Name of the GitHub organization in which the repository is hosted.
     required: true
-    default: none
   issue:
     description:
       - Issue number for which information is required.
-    default: none
     required: true
   action:
     description:
         - Get various details about issue depending upon action specified.
     default: 'get_status'
-    required: false
     choices:
         - ['get_status']
 
 author:
-    - Abhijeet Kasurde (@akasurde)
+    - Abhijeet Kasurde (@Akasurde)
 requirements:
     - "github3.py >= 1.0.0a4"
 '''

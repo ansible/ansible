@@ -32,8 +32,6 @@ options:
   names:
     description:
       - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
-    required: false
-    default: null
     aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment:
     - aws
@@ -52,7 +50,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
 - action:
@@ -75,7 +73,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 '''
 
@@ -130,6 +128,7 @@ class ElbInformation(object):
                 'load_balancer_port': listener[0],
                 'instance_port': listener[1],
                 'protocol': listener[2],
+                'instance_protocol': listener[3]
             }
 
             try:

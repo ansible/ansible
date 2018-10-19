@@ -34,6 +34,7 @@ class SQLParseError(Exception):
 class UnclosedQuoteError(SQLParseError):
     pass
 
+
 # maps a type of identifier to the maximum number of dot levels that are
 # allowed to specify that identifier.  For example, a database column can be
 # specified by up to 4 levels: database.schema.table.column

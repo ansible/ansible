@@ -65,6 +65,7 @@ options:
         description:
             - Boolean flag to set is_internal_policy.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     name:
         description:
             - Name of the http policy set.
@@ -164,6 +165,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'httppolicyset',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

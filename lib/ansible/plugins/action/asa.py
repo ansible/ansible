@@ -27,7 +27,6 @@ from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.asa.asa import asa_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
-from ansible.module_utils.connection import request_builder
 
 
 try:
@@ -40,6 +39,7 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
 
         if self._play_context.connection == 'local':
             provider = load_provider(asa_provider_spec, self._task.args)
@@ -51,13 +51,14 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+            command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
             pc.become = provider['authorize'] or False
             pc.become_pass = provider['auth_pass']
             pc.become_method = 'enable'
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
             socket_path = connection.run()
 
@@ -69,6 +70,6 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         return result

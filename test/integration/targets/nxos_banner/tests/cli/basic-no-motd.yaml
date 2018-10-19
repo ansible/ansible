@@ -8,13 +8,11 @@
       Junk motd banner
       over multiple lines
     state: present
-    provider: "{{ cli }}"
 
 - name: remove motd
   nxos_banner: &rm-motd
     banner: motd
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:

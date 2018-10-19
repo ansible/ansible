@@ -27,12 +27,15 @@ options:
     wait:
         description:
             - "I(True) if the module should wait for the entity to get into desired state."
+        default: true
+        type: bool
     fetch_nested:
         description:
             - "If I(True) the module will fetch additional data from the API."
             - "It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other
                attributes of the nested entities by specifying C(nested_attributes)."
         version_added: "2.3"
+        type: bool
     nested_attributes:
         description:
             - "Specifies list of the attributes which should be fetched from the API."
@@ -45,8 +48,12 @@ options:
             - C(username)[I(required)] - The name of the user, something like I(admin@internal).
               Default value is set by I(OVIRT_USERNAME) environment variable.
             - "C(password)[I(required)] - The password of the user. Default value is set by I(OVIRT_PASSWORD) environment variable."
-            - "C(url)[I(required)] - A string containing the base URL of the server, usually
-            something like `I(https://server.example.com/ovirt-engine/api)`. Default value is set by I(OVIRT_URL) environment variable."
+            - "C(url) - A string containing the API URL of the server, usually
+            something like `I(https://server.example.com/ovirt-engine/api)`. Default value is set by I(OVIRT_URL) environment variable.
+            Either C(url) or C(hostname) is required."
+            - "C(hostname) - A string containing the hostname of the server, usually
+            something like `I(server.example.com)`. Default value is set by I(OVIRT_HOSTNAME) environment variable.
+            Either C(url) or C(hostname) is required."
             - "C(token) - Token to be used instead of login with username/password. Default value is set by I(OVIRT_TOKEN) environment variable."
             - "C(insecure) - A boolean flag that indicates if the server TLS
             certificate and host name should be checked."
@@ -68,9 +75,9 @@ options:
         default: 3
 requirements:
   - python >= 2.7
-  - ovirt-engine-sdk-python >= 4.0.0
+  - ovirt-engine-sdk-python >= 4.2.4
 notes:
   - "In order to use this module you have to install oVirt Python SDK.
      To ensure it's installed with correct version you can create the following task:
-     I(pip: name=ovirt-engine-sdk-python version=4.0.0)"
+     I(pip: name=ovirt-engine-sdk-python version=4.2.4)"
 '''

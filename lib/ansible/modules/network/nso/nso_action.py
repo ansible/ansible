@@ -25,7 +25,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
@@ -37,7 +37,7 @@ description:
   - This module provices support for executing Cisco NSO actions and then
     verifying that the output is as expected.
 requirements:
-  - Cisco NSO version 4.4.3 or higher.
+  - Cisco NSO version 3.4 or higher.
 author: "Claes Nästén (@cnasten)"
 options:
   path:
@@ -62,13 +62,12 @@ version_added: "2.5"
 
 EXAMPLES = '''
 - name: Sync NSO device
-  nso_config:
+  nso_action:
     url: http://localhost:8080/jsonrpc
     username: username
     password: password
     path: /ncs:devices/device{ce0}/sync-from
-    output_required:
-      result: true
+    input: {}
 '''
 
 RETURN = '''
@@ -87,6 +86,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class NsoAction(object):
+    REQUIRED_VERSIONS = [
+        (3, 4)
+    ]
+
     def __init__(self, check_mode, client,
                  path, input,
                  output_required, output_invalid, validate_strict):
@@ -167,7 +170,7 @@ def main():
         p['output_invalid'],
         p['validate_strict'])
     try:
-        verify_version(client)
+        verify_version(client, NsoAction.REQUIRED_VERSIONS)
 
         output = nso_action.main()
         client.logout()

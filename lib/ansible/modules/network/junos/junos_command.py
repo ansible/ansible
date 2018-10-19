@@ -33,15 +33,11 @@ options:
         is returned.  If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of I(retries) has been exceeded.
-    required: false
-    default: null
   rpcs:
     description:
       - The C(rpcs) argument accepts a list of RPCs to be executed
         over a netconf session and the results from the RPC execution
         is return to the playbook via the modules results dictionary.
-    required: false
-    default: null
     version_added: "2.3"
   wait_for:
     description:
@@ -50,8 +46,6 @@ options:
         the task to wait for a particular conditional to be true
         before moving forward.   If the conditional is not true
         by the configured retries, the task fails.  See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
     version_added: "2.2"
   match:
@@ -62,7 +56,6 @@ options:
         then all conditionals in the I(wait_for) must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
     version_added: "2.2"
@@ -72,7 +65,6 @@ options:
         before it is considered failed.  The command is run on the
         target device every retry and evaluated against the I(wait_for)
         conditionals.
-    required: false
     default: 10
   interval:
     description:
@@ -80,7 +72,6 @@ options:
         of the command.  If the command does not pass the specified
         conditional, the interval indicates how to long to wait before
         trying the command again.
-    required: false
     default: 1
   display:
     description:
@@ -90,7 +81,6 @@ options:
         display is C(xml) and for I(commands) argument default display
         is C(text). Value C(set) is applicable only for fetching configuration
         from device.
-    required: false
     default: depends on input argument I(rpcs) or I(commands)
     aliases: ['format', 'output']
     choices: ['text', 'json', 'xml', 'set']
@@ -102,6 +92,8 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(network_cli) connections and with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """
@@ -166,21 +158,24 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-import time
 import re
 import shlex
+import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.netconf import exec_rpc
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities, tostring
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
+from ansible.module_utils.network.common.utils import to_lines
 from ansible.module_utils.six import string_types, iteritems
 
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 try:
     import jxmlease
@@ -189,15 +184,6 @@ except ImportError:
     HAS_JXMLEASE = False
 
 USE_PERSISTENT_CONNECTION = True
-
-
-def to_lines(stdout):
-    lines = list()
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        lines.append(item)
-    return lines
 
 
 def rpc(module, items):
@@ -380,7 +366,10 @@ def main():
             if ('display json' not in cmd) and ('display xml' not in cmd):
                 if display and display != 'text':
                     cmd += ' | display {0}'.format(display)
-            output.append(conn.get(command=cmd))
+            try:
+                output.append(conn.get(command=cmd))
+            except ConnectionError as exc:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
         lines = [out.split('\n') for out in output]
         result = {'changed': False, 'stdout': output, 'stdout_lines': lines}
@@ -434,20 +423,21 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result = {
         'changed': False,
         'warnings': warnings,
         'stdout': responses,
-        'stdout_lines': to_lines(responses)
+        'stdout_lines': list(to_lines(responses)),
     }
 
     if output:
         result['output'] = output
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

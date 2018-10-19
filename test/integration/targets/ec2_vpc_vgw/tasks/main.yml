@@ -1,0 +1,171 @@
+---
+- block:
+
+    # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+    - debug: msg="Setting up test dependencies"
+
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc-{{ item }}"
+        state: present
+        cidr_block: "10.0.0.0/26"
+        <<: *aws_connection_info
+        tags:
+          Name: "{{ resource_prefix }}-vpc-{{ item }}"
+          Description: "Created by ansible-test"
+      register: vpc_result
+      loop: [1, 2]
+
+    - name: use set fact for vpc ids
+      set_fact:
+        vpc_id_1: '{{ vpc_result.results.0.vpc.id }}'
+        vpc_id_2: '{{ vpc_result.results.1.vpc.id }}'
+
+    # ============================================================
+    - debug: msg="Running tests"
+
+    - name: create vpn gateway and attach it to vpc
+      ec2_vpc_vgw:
+        state: present
+        vpc_id: '{{ vpc_id_1 }}'
+        name: "{{ resource_prefix }}-vgw"
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - vgw.changed
+          - "{{ vgw.vgw.vpc_id == vpc_id_1 }}"
+          - '"{{ vgw.vgw.tags.Name }}" == "{{ resource_prefix }}-vgw"'
+
+    - name: test idempotence
+      ec2_vpc_vgw:
+        state: present
+        vpc_id: '{{ vpc_id_1 }}'
+        name: "{{ resource_prefix }}-vgw"
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - not vgw.changed
+
+    # ============================================================
+    - name: attach vpn gateway to the other VPC
+      ec2_vpc_vgw:
+        state: present
+        vpc_id: '{{ vpc_id_2 }}'
+        name: "{{ resource_prefix }}-vgw"
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - vgw.changed
+          - "{{ vgw.vgw.vpc_id == vpc_id_2 }}"
+
+    # ============================================================
+    - name: add tags to the VGW
+      ec2_vpc_vgw:
+        state: present
+        vpc_id: '{{ vpc_id_2 }}'
+        name: "{{ resource_prefix }}-vgw"
+        tags:
+          created_by: ec2_vpc_vgw integration tests
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - vgw.changed
+          - vgw.vgw.tags | length == 2
+          - "'created_by' in vgw.vgw.tags"
+
+    - name: test idempotence
+      ec2_vpc_vgw:
+        state: present
+        vpc_id: '{{ vpc_id_2 }}'
+        name: "{{ resource_prefix }}-vgw"
+        tags:
+          created_by: ec2_vpc_vgw integration tests
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - not vgw.changed
+
+    # ============================================================
+    - name: remove tags from the VGW
+      ec2_vpc_vgw:
+        state: present
+        vpc_id: '{{ vpc_id_2 }}'
+        name: "{{ resource_prefix }}-vgw"
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - vgw.changed
+          - vgw.vgw.tags | length == 1
+          - '"{{ vgw.vgw.tags.Name }}" == "{{ resource_prefix }}-vgw"'
+
+    # ============================================================
+    - name: detach vpn gateway
+      ec2_vpc_vgw:
+        state: present
+        name: "{{ resource_prefix }}-vgw"
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - vgw.changed
+          - not vgw.vgw.vpc_id
+
+    - name: test idempotence
+      ec2_vpc_vgw:
+        state: present
+        name: "{{ resource_prefix }}-vgw"
+        <<: *aws_connection_info
+      register: vgw
+
+    - assert:
+        that:
+          - not vgw.changed
+
+    # ============================================================
+
+  always:
+
+    - debug: msg="Removing test dependencies"
+
+    - name: delete vpn gateway
+      ec2_vpc_vgw:
+        state: absent
+        vpn_gateway_id: '{{ vgw.vgw.id }}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: delete vpc
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc-{{ item }}"
+        state: absent
+        cidr_block: "10.0.0.0/26"
+        <<: *aws_connection_info
+      loop: [1, 2]
+      register: result
+      retries: 10
+      delay: 5
+      until: result is not failed
+      ignore_errors: true

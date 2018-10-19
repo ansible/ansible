@@ -36,12 +36,12 @@ description:
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 deprecated:
-  removed_in: "2.8"
-  why: Renamed to M(panos_security_rule) in order to align with API calls and UI object references, which also has extra support for PanDevice SDK.
-  alternative: Use M(panos_security_rule) instead.
+    alternative: Use M(panos_security_rule) instead.
+    removed_in: '2.9'
+    why: This module depended on outdated and old SDK. In 2.4 use M(panos_security_rule) instead.
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
+    - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported
@@ -72,11 +72,9 @@ options:
     description:
         description:
             - Description for the security rule.
-        default: "None"
     tag:
         description:
             - Administrative tags that can be added to the rule. Note, tags must be already defined.
-        default: "None"
     from_zone:
         description:
             - List of source zones.
@@ -114,7 +112,6 @@ options:
     log_start:
         description:
             - Whether to log at session start.
-        default: false
     log_end:
         description:
             - Whether to log at session end.
@@ -127,40 +124,31 @@ options:
         description: >
             Security profile group that is already defined in the system. This property supersedes antivirus,
             vulnerability, spyware, url_filtering, file_blocking, data_filtering, and wildfire_analysis properties.
-        default: None
     antivirus:
         description:
             - Name of the already defined antivirus profile.
-        default: None
     vulnerability:
         description:
             - Name of the already defined vulnerability profile.
-        default: None
     spyware:
         description:
             - Name of the already defined spyware profile.
-        default: None
     url_filtering:
         description:
             - Name of the already defined url_filtering profile.
-        default: None
     file_blocking:
         description:
             - Name of the already defined file_blocking profile.
-        default: None
     data_filtering:
         description:
             - Name of the already defined data_filtering profile.
-        default: None
     wildfire_analysis:
         description:
             - Name of the already defined wildfire_analysis profile.
-        default: None
     devicegroup:
         description: >
             Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
             If device group is not define we assume that we are contacting Firewall.
-        default: None
     commit:
         description:
             - Commit configuration if changed.
@@ -260,7 +248,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -426,7 +414,7 @@ def main():
                            required_one_of=[['api_key', 'password']])
 
     if module._name == 'panos_security_policy':
-        module.deprecate("The 'panos_security_policy' module is being renamed 'panos_security_rule'", version=2.8)
+        module.deprecate("The 'panos_security_policy' module is being renamed 'panos_security_rule'", version=2.9)
 
     if not HAS_LIB:
         module.fail_json(msg='Missing required pan-python and pandevice modules.')
@@ -508,9 +496,8 @@ def main():
         module.fail_json(msg='Rule with the same name but different objects exists.')
     try:
         changed = add_security_rule(device, sec_rule, rule_exist)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     if changed and commit:
         result = _commit(device, devicegroup)

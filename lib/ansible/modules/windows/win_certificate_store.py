@@ -1,16 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -36,17 +32,15 @@ options:
       specified by I(thumbprint).
     - When exporting a certificate, if I(path) is a directory then the module
       will fail, otherwise the file will be replaced if needed.
+    choices: [ absent, exported, present ]
     default: present
-    choices:
-    - present
-    - absent
-    - exported
   path:
     description:
     - The path to a certificate file.
     - This is required when I(state) is C(present) or C(exported).
     - When I(state) is C(absent) and I(thumbprint) is not specified, the
       thumbprint is derived from the certificate at this path.
+    type: path
   thumbprint:
     description:
     - The thumbprint as a hex string to either export or remove.
@@ -55,6 +49,14 @@ options:
     description:
     - The store name to use when importing a certificate or searching for a
       certificate.
+    - "C(AddressBook): The X.509 certificate store for other users"
+    - "C(AuthRoot): The X.509 certificate store for third-party certificate authorities (CAs)"
+    - "C(CertificateAuthority): The X.509 certificate store for intermediate certificate authorities (CAs)"
+    - "C(Disallowed): The X.509 certificate store for revoked certificates"
+    - "C(My): The X.509 certificate store for personal certificates"
+    - "C(Root): The X.509 certificate store for trusted root certificate authorities (CAs)"
+    - "C(TrustedPeople): The X.509 certificate store for directly trusted people and resources"
+    - "C(TrustedPublisher): The X.509 certificate store for directly trusted publishers"
     default: My
     choices:
     - AddressBook
@@ -69,10 +71,8 @@ options:
     description:
     - The store location to use when importing a certificate or searching for a
       certificate.
+    choices: [ CurrentUser, LocalMachine ]
     default: LocalMachine
-    choices:
-    - CurrentUser
-    - LocalMachine
   password:
     description:
     - The password of the pkcs12 certificate key.
@@ -99,10 +99,7 @@ options:
     - Used when C(state=present) only and cannot be changed once imported.
     - See U(https://msdn.microsoft.com/en-us/library/system.security.cryptography.x509certificates.x509keystorageflags.aspx)
       for more details.
-    choices:
-    - default
-    - machine
-    - user
+    choices: [ default, machine, user ]
     default: default
   file_type:
     description:
@@ -113,10 +110,7 @@ options:
       the certificate and private key unlike the other options.
     - When C(pkcs12) is set and the private key is not exportable or accessible
       by the current user, it will throw an exception.
-    choices:
-    - der
-    - pem
-    - pkcs12
+    choices: [ der, pem, pkcs12 ]
     default: der
 notes:
 - Some actions on PKCS12 certificates and keys may fail with the error
@@ -131,12 +125,12 @@ author:
 EXAMPLES = r'''
 - name: import a certificate
   win_certificate_store:
-    path: C:\temp\cert.pem
+    path: C:\Temp\cert.pem
     state: present
 
 - name: import pfx certificate that is password protected
   win_certificate_store:
-    path: C:\temp\cert.pfx
+    path: C:\Temp\cert.pfx
     state: present
     password: VeryStrongPasswordHere!
   become: yes
@@ -144,7 +138,7 @@ EXAMPLES = r'''
 
 - name: import pfx certificate without password and set private key as un-exportable
   win_certificate_store:
-    path: C:\temp\cert.pfx
+    path: C:\Temp\cert.pfx
     state: present
     key_exportable: no
   # usually you don't set this here but it is for illustrative purposes
@@ -153,7 +147,7 @@ EXAMPLES = r'''
 
 - name: remove a certificate based on file thumbprint
   win_certificate_store:
-    path: C:\temp\cert.pem
+    path: C:\Temp\cert.pem
     state: absent
 
 - name: remove a certificate based on thumbprint
@@ -170,13 +164,13 @@ EXAMPLES = r'''
 
 - name: export certificate as der encoded file
   win_certificate_store:
-    path: C:\temp\cert.cer
+    path: C:\Temp\cert.cer
     state: exported
     file_type: der
 
 - name: export certificate and key as pfx encoded file
   win_certificate_store:
-    path: C:\temp\cert.pfx
+    path: C:\Temp\cert.pfx
     state: exported
     file_type: pkcs12
     password: AnotherStrongPass!

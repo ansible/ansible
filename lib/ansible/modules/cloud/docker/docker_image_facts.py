@@ -26,9 +26,9 @@ description:
 options:
   name:
     description:
-      - An image name or a list of image names. Name format will be name[:tag] or repository/name[:tag], where tag is
-        optional. If a tag is not provided, 'latest' will be used.
-    default: null
+      - An image name or a list of image names. Name format will be C(name[:tag]) or C(repository/name[:tag]),
+        where C(tag) is optional. If a tag is not provided, C(latest) will be used. Instead of image names, also
+        image IDs can be used.
     required: true
 
 extends_documentation_fragment:
@@ -36,12 +36,19 @@ extends_documentation_fragment:
 
 requirements:
   - "python >= 2.6"
-  - "docker-py >= 1.7.0"
+  - "docker-py >= 1.8.0"
+  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+     module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+     install the C(docker) Python module. Note that both modules should I(not)
+     be installed at the same time. Also note that when both modules are installed
+     and one of them is uninstalled, the other might no longer function and a
+     reinstall of it is required."
   - "Docker API >= 1.20"
 
 author:
   - Chris Houseknecht (@chouseknecht)
-  - James Tanner (@jctanner)
 
 '''
 
@@ -154,10 +161,10 @@ images:
 try:
     from docker import utils
 except ImportError:
-    # missing docker-py handled in docker_common
+    # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, is_image_name_id
 
 
 class ImageManager(DockerBaseClass):
@@ -193,11 +200,15 @@ class ImageManager(DockerBaseClass):
             names = [names]
 
         for name in names:
-            repository, tag = utils.parse_repository_tag(name)
-            if not tag:
-                tag = 'latest'
-            self.log('Fetching image %s:%s' % (repository, tag))
-            image = self.client.find_image(name=repository, tag=tag)
+            if is_image_name_id(name):
+                self.log('Fetching image %s (ID)' % (name))
+                image = self.client.find_image_by_id(name)
+            else:
+                repository, tag = utils.parse_repository_tag(name)
+                if not tag:
+                    tag = 'latest'
+                self.log('Fetching image %s:%s' % (repository, tag))
+                image = self.client.find_image(name=repository, tag=tag)
             if image:
                 results.append(image)
         return results
@@ -220,7 +231,9 @@ def main():
     )
 
     client = AnsibleDockerClient(
-        argument_spec=argument_spec
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        min_docker_api_version='1.20',
     )
 
     results = dict(

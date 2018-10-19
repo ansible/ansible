@@ -27,42 +27,36 @@ description:
     python module.
 options:
   balancer_url_suffix:
-    default: /balancer-manager/
     description:
       - Suffix of the balancer pool url required to access the balancer pool
         status page (e.g. balancer_vhost[:port]/balancer_url_suffix).
-    required: false
+    default: /balancer-manager/
   balancer_vhost:
-    default: None
     description:
       - (ipv4|ipv6|fqdn):port of the Apache httpd 2.4 mod_proxy balancer pool.
     required: true
   member_host:
-    default: None
     description:
       - (ipv4|ipv6|fqdn) of the balancer member to get or to set attributes to.
         Port number is autodetected and should not be specified here.
         If undefined, apache2_mod_proxy module will return a members list of
         dictionaries of all the current balancer pool members' attributes.
-    required: false
   state:
-    default: None
     description:
       - Desired state of the member host.
         (absent|disabled),drained,hot_standby,ignore_errors can be
         simultaneously invoked by separating them with a comma (e.g. state=drained,ignore_errors).
-    required: false
     choices: ["present", "absent", "enabled", "disabled", "drained", "hot_standby", "ignore_errors"]
   tls:
-    default: false
     description:
       - Use https to access balancer management page.
-    choices: ["true", "false"]
+    type: bool
+    default: 'no'
   validate_certs:
-    default: true
     description:
       - Validate ssl/tls certificates.
-    choices: ["true", "false"]
+    type: bool
+    default: 'yes'
 '''
 
 EXAMPLES = '''
@@ -207,7 +201,7 @@ else:
 # balancer member attributes extraction regexp:
 EXPRESSION = r"(b=([\w\.\-]+)&w=(https?|ajp|wss?|ftp|[sf]cgi)://([\w\.\-]+):?(\d*)([/\w\.\-]*)&?[\w\-\=]*)"
 # Apache2 server version extraction regexp:
-APACHE_VERSION_EXPRESSION = r"Server Version: Apache/([\d.]+) \(([\w]+)\)"
+APACHE_VERSION_EXPRESSION = r"SERVER VERSION: APACHE/([\d.]+)"
 
 
 def regexp_extraction(string, _regexp, groups=1):
@@ -323,10 +317,13 @@ class Balancer(object):
             self.module.fail_json(msg="Could not get balancer page! HTTP status response: " + str(page[1]['status']))
         else:
             content = page[0].read()
-            apache_version = regexp_extraction(content, APACHE_VERSION_EXPRESSION, 1)
-            if not re.search(pattern=r"2\.4\.[\d]*", string=apache_version):
-                self.module.fail_json(msg="This module only acts on an Apache2 2.4+ instance, current Apache2 version: " + str(apache_version))
-            return content
+            apache_version = regexp_extraction(content.upper(), APACHE_VERSION_EXPRESSION, 1)
+            if apache_version:
+                if not re.search(pattern=r"2\.4\.[\d]*", string=apache_version):
+                    self.module.fail_json(msg="This module only acts on an Apache2 2.4+ instance, current Apache2 version: " + str(apache_version))
+                return content
+            else:
+                self.module.fail_json(msg="Could not get the Apache server version from the balancer-manager")
 
     def get_balancer_members(self):
         """ Returns members of the balancer as a generator object for later iteration."""
@@ -436,6 +433,7 @@ def main():
             )
         else:
             module.fail_json(msg=str(module.params['member_host']) + ' is not a member of the balancer ' + str(module.params['balancer_vhost']) + '!')
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url

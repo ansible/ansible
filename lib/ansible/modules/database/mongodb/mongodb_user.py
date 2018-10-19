@@ -26,35 +26,25 @@ options:
     login_user:
         description:
             - The username used to authenticate with
-        required: false
-        default: null
     login_password:
         description:
             - The password used to authenticate with
-        required: false
-        default: null
     login_host:
         description:
             - The host running the database
-        required: false
         default: localhost
     login_port:
         description:
             - The port to connect to
-        required: false
         default: 27017
     login_database:
         version_added: "2.0"
         description:
             - The database where login credentials are stored
-        required: false
-        default: null
     replica_set:
         version_added: "1.6"
         description:
             - Replica set to connect to (automatically connects to primary for writes)
-        required: false
-        default: null
     database:
         description:
             - The name of the database to add/remove the user from
@@ -63,23 +53,18 @@ options:
         description:
             - The name of the user to add or remove
         required: true
-        default: null
         aliases: [ 'user' ]
     password:
         description:
             - The password to use for the user
-        required: false
-        default: null
     ssl:
         version_added: "1.8"
         description:
             - Whether to use an SSL connection when connecting to the database
-        default: False
     ssl_cert_reqs:
         version_added: "2.2"
         description:
             - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
-        required: false
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     roles:
@@ -91,16 +76,13 @@ options:
               'dbAdminAnyDatabase'
             - "Or the following dictionary '{ db: DATABASE_NAME, role: ROLE_NAME }'."
             - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+  is required."
-        required: false
         default: "readWrite"
     state:
         description:
             - The database user state
-        required: false
         default: present
         choices: [ "present", "absent" ]
     update_password:
-        required: false
         default: always
         choices: ['always', 'on_create']
         version_added: "2.1"
@@ -401,8 +383,9 @@ def main():
         client = MongoClient(**connection_params)
 
         # NOTE: this check must be done ASAP.
-        # We doesn't need to be authenticated.
-        check_compatibility(module, client)
+        # We doesn't need to be authenticated (this ability has lost in PyMongo 3.6)
+        if LooseVersion(PyMongoVersion) <= LooseVersion('3.5'):
+            check_compatibility(module, client)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()

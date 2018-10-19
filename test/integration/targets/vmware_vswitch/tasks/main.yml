@@ -2,11 +2,7 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-  when: "{{ ansible_user_id == 'root' }}"
+# TODO: akasurde: VCSIM does not suport network manager system
 
 - name: store the vcenter container ip
   set_fact:
@@ -54,7 +50,7 @@
 
 - assert:
     that:
-#    - add_nic_check.changed == true
+    - add_nic_check.changed == true
     - add_nic_check.skipped == true
 
 - name: Add a nic to a switch
@@ -65,68 +61,67 @@
     that:
     - add_nic_run.changed == true
 
-## FIXME: Implement check-mode support
-#- name: Add a nic to a switch again (check-mode)
-#  vmware_vswitch: *add_nic
-#  check_mode: yes
-#  register: add_nic_again_check
-#
-#- assert:
-#    that:
-#    - add_nic_again_check.changed == false
-#
-#- name: Add a nic to a switch again
-#  vmware_vswitch: *add_nic
-#  register: add_nic_again_run
-#
-#- assert:
-#    that:
-#    - add_nic_again_run.changed == false
-#
-#- name: Remove a switch (check-mode)
-#  vmware_vswitch: &remove_nic
-#    hostname: '{{ vcsim }}'
-#    username: '{{ vcsim_instance.json.username }}'
-#    password: '{{ vcsim_instance.json.password }}'
-#    validate_certs: no
-#    switch: vmswitch_0001
-#    state: absent
-#  check_mode: yes
-#  register: remove_nic_check
-#
-## FIXME: Implement check-mode support
-#- assert:
-#    that:
-#    - remove_nic_check.changed == true
+# FIXME: Implement check-mode support
+- name: Add a nic to a switch again (check-mode)
+  vmware_vswitch: *add_nic
+  check_mode: yes
+  register: add_nic_again_check
 
-## FIXME: Removing a switch fails
-#- name: Remove a switch
-#  vmware_vswitch: *remove_nic
-#  register: remove_nic_run
-#
-#- assert:
-#    that:
-#    - remove_nic_run.changed == true
-#
-#- name: Remove a switch again (check-mode)
-#  vmware_vswitch: *remove_nic
-#  check_mode: yes
-#  register: remove_nic_again_check
-#
-## FIXME: Implement check-mode support
-#- assert:
-#    that:
-#    - remove_nic_again_check_mode.changed == false
-#
-## FIXME: Removing a switch fails
-#- name: Remove a switch again
-#  vmware_vswitch: *remove_nic
-#  register: remove_nic_again_run
-#
-#- assert:
-#    that:
-#    - remove_nic_again_run.changed == false
+- assert:
+    that:
+    - add_nic_again_check.changed == false
 
+- name: Add a nic to a switch again
+  vmware_vswitch: *add_nic
+  register: add_nic_again_run
+
+- assert:
+    that:
+    - add_nic_again_run.changed == false
+
+- name: Remove a switch (check-mode)
+  vmware_vswitch: &remove_nic
+    hostname: '{{ vcsim }}'
+    username: '{{ vcsim_instance.json.username }}'
+    password: '{{ vcsim_instance.json.password }}'
+    validate_certs: no
+    switch: vmswitch_0001
+    state: absent
+  check_mode: yes
+  register: remove_nic_check
+
+# FIXME: Implement check-mode support
+- assert:
+    that:
+    - remove_nic_check.changed == true
+
+# FIXME: Removing a switch fails
+- name: Remove a switch
+  vmware_vswitch: *remove_nic
+  register: remove_nic_run
+
+- assert:
+    that:
+    - remove_nic_run.changed == true
+
+- name: Remove a switch again (check-mode)
+  vmware_vswitch: *remove_nic
+  check_mode: yes
+  register: remove_nic_again_check
+
+# FIXME: Implement check-mode support
+- assert:
+    that:
+    - remove_nic_again_check_mode.changed == false
+
+# FIXME: Removing a switch fails
+- name: Remove a switch again
+  vmware_vswitch: *remove_nic
+  register: remove_nic_again_run
+
+- assert:
+    that:
+    - remove_nic_again_run.changed == false
 
 - name: get a list of Host Systems from vcsim
   uri:

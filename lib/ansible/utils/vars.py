@@ -23,7 +23,6 @@ import ast
 import random
 import uuid
 
-from collections import MutableMapping
 from json import dumps
 
 
@@ -31,6 +30,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.splitter import parse_kv
 
 
@@ -146,16 +146,19 @@ def load_extra_vars(loader, options):
 def load_options_vars(options, version):
 
     options_vars = {'ansible_version': version}
-    aliases = {'check': 'check_mode',
-               'diff': 'diff_mode',
-               'inventory': 'inventory_sources',
-               'subset': 'limit',
-               'tags': 'run_tags'}
+    attrs = {'check': 'check_mode',
+             'diff': 'diff_mode',
+             'forks': 'forks',
+             'inventory': 'inventory_sources',
+             'skip_tags': 'skip_tags',
+             'subset': 'limit',
+             'tags': 'run_tags',
+             'verbosity': 'verbosity'}
 
-    for attr in ('check', 'diff', 'forks', 'inventory', 'skip_tags', 'subset', 'tags'):
+    for attr, alias in attrs.items():
         opt = getattr(options, attr, None)
         if opt is not None:
-            options_vars['ansible_%s' % aliases.get(attr, attr)] = opt
+            options_vars['ansible_%s' % alias] = opt
 
     return options_vars
 

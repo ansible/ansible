@@ -1,0 +1,16 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    recreate_crd_default_merge_expectation: recreate_crd is failed
+
+  tasks:
+    - python_requirements_facts:
+        dependencies:
+          - openshift==0.6.0
+          - kubernetes==6.0.0
+
+    - include_role:
+        name: k8s
+        tasks_from: crd

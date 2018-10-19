@@ -51,44 +51,35 @@ options:
     description:
      - vDirect server username, may be set as C(VDIRECT_USER) environment variable.
     required: true
-    default: None
   vdirect_password:
     description:
      - vDirect server password, may be set as C(VDIRECT_PASSWORD) environment variable.
     required: true
-    default: None
   vdirect_secondary_ip:
     description:
      - Secondary vDirect server IP address, may be set as C(VDIRECT_SECONDARY_IP) environment variable.
-    required: false
-    default: None
   vdirect_wait:
     description:
      - Wait for async operation to complete, may be set as C(VDIRECT_WAIT) environment variable.
-    required: false
     type: bool
     default: 'yes'
   vdirect_https_port:
     description:
      - vDirect server HTTPS port number, may be set as C(VDIRECT_HTTPS_PORT) environment variable.
-    required: false
     default: 2189
   vdirect_http_port:
     description:
      - vDirect server HTTP port number, may be set as C(VDIRECT_HTTP_PORT) environment variable.
-    required: false
     default: 2188
   vdirect_timeout:
     description:
      - Amount of time to wait for async operation completion [seconds],
      - may be set as C(VDIRECT_TIMEOUT) environment variable.
-    required: false
     default: 60
   vdirect_use_ssl:
     description:
      - If C(no), an HTTP connection will be used instead of the default HTTPS connection,
      - may be set as C(VDIRECT_HTTPS) or C(VDIRECT_USE_SSL) environment variable.
-    required: false
     type: bool
     default: 'yes'
   vdirect_validate_certs:
@@ -96,7 +87,6 @@ options:
      - If C(no), SSL certificates will not be validated,
      - may be set as C(VDIRECT_VALIDATE_CERTS) or C(VDIRECT_VERIFY) environment variable.
      - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
     type: bool
     default: 'yes'
   devices:
@@ -106,19 +96,16 @@ options:
   apply:
     description:
      - If C(no), apply action will not be performed. Relevant for ADC devices only.
-    required: false
     type: bool
     default: 'yes'
   save:
     description:
      - If C(no), save action will not be performed. Relevant for ADC devices only.
-    required: false
     type: bool
     default: 'yes'
   sync:
     description:
      - If C(no), sync action will not be performed. Relevant for ADC devices only.
-    required: false
     type: bool
     default: 'yes'
 
@@ -168,15 +155,11 @@ FAILED = 'failed'
 NOT_PERFORMED = 'not performed'
 
 meta_args = dict(
-    vdirect_ip=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_IP']),
-        default=None),
-    vdirect_user=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_USER']),
-        default=None),
+    vdirect_ip=dict(required=True, fallback=(env_fallback, ['VDIRECT_IP'])),
+    vdirect_user=dict(required=True, fallback=(env_fallback, ['VDIRECT_USER'])),
     vdirect_password=dict(
         required=True, fallback=(env_fallback, ['VDIRECT_PASSWORD']),
-        default=None, no_log=True, type='str'),
+        no_log=True, type='str'),
     vdirect_secondary_ip=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_SECONDARY_IP']),
         default=None),
@@ -341,10 +324,10 @@ class VdirectCommit(object):
 
 def main():
 
-    if not HAS_REST_CLIENT:
-        raise ImportError("The python vdirect-client module is required")
-
     module = AnsibleModule(argument_spec=meta_args)
+
+    if not HAS_REST_CLIENT:
+        module.fail_json(msg="The python vdirect-client module is required")
 
     try:
         vdirect_commit = VdirectCommit(module.params)
@@ -353,6 +336,7 @@ def main():
         module.exit_json(**result)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

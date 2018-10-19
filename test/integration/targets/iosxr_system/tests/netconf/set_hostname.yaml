@@ -31,7 +31,7 @@
   - assert:
       that:
         - "result.changed == false"
-- always:
+  always:
   - name: teardown
     iosxr_config:
       lines: "hostname {{ inventory_hostname }}"

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -27,53 +27,42 @@ options:
         description:
             - A boolean value that, if true, creates an encrypted file system. This can not be modfied after the file
               system is created.
-        required: false
-        default: false
-        choices: ['yes', 'no']
+        type: bool
+        default: 'no'
         version_added: 2.5
     kms_key_id:
         description:
             - The id of the AWS KMS CMK that will be used to protect the encrypted file system. This parameter is only
               required if you want to use a non-default CMK. If this parameter is not specified, the default CMK for
               Amazon EFS is used. The key id can be Key ID, Key ID ARN, Key Alias or Key Alias ARN.
-        required: false
         version_added: 2.5
     purge_tags:
         description:
             - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter
               is not set then tags will not be modified.
-        required: false
-        default: yes
-        choices: [ 'yes', 'no' ]
+        type: bool
+        default: 'yes'
         version_added: 2.5
     state:
         description:
             - Allows to create, search and destroy Amazon EFS file system
-        required: false
         default: 'present'
         choices: ['present', 'absent']
     name:
         description:
-            - Creation Token of Amazon EFS file system. Required for create. Either name or ID required for delete.
-        required: false
-        default: None
+            - Creation Token of Amazon EFS file system. Required for create and update. Either name or ID required for delete.
     id:
         description:
             - ID of Amazon EFS. Either name or ID required for delete.
-        required: false
-        default: None
     performance_mode:
         description:
             - File system's performance mode to use. Only takes effect during creation.
-        required: false
         default: 'general_purpose'
         choices: ['general_purpose', 'max_io']
     tags:
         description:
             - "List of tags of Amazon EFS. Should be defined as dictionary
               In case of 'present' state with list of tags and existing EFS (matched by 'name'), tags of EFS will be replaced with provided data."
-        required: false
-        default: None
     targets:
         description:
             - "List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
@@ -81,20 +70,29 @@ options:
                    - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
                    - security_groups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified
                This data may be modified for existing EFS using state 'present' and new list of mount targets."
-        required: false
-        default: None
+    throughput_mode:
+        description:
+            - The throughput_mode for the file system to be created.
+            - Requires botocore >= 1.10.57
+        choices: ['bursting', 'provisioned']
+        version_added: 2.8
+    provisioned_throughput_in_mibps:
+        description:
+            - If the throughput_mode is provisioned, select the amount of throughput to provisioned in Mibps.
+            - Requires botocore >= 1.10.57
+        type: float
+        version_added: 2.8
     wait:
         description:
             - "In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')
                In case of 'absent' state should wait for EFS 'deleted' life cycle state"
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
     wait_timeout:
         description:
             - How long the module should wait (in seconds) for desired state before returning. Zero means wait as long as necessary.
-        required: false
         default: 0
+
 extends_documentation_fragment:
     - aws
     - ec2
@@ -150,10 +148,15 @@ life_cycle_state:
     type: string
     sample: "creating, available, deleting, deleted"
 mount_point:
-    description: url of file system
+    description: url of file system with leading dot from the time when AWS EFS required to add a region suffix to the address
     returned: always
     type: string
     sample: ".fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
+filesystem_address:
+    description: url of file system valid for use with mount
+    returned: always
+    type: string
+    sample: "fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
 mount_targets:
     description: list of mount targets
     returned: always
@@ -267,10 +270,14 @@ class EFSConnection(object):
             item['Name'] = item['CreationToken']
             item['CreationTime'] = str(item['CreationTime'])
             """
-            Suffix of network path to be used as NFS device for mount. More detail here:
-            http://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
+            In the time when MountPoint was introduced there was a need to add a suffix of network path before one could use it
+            AWS updated it and now there is no need to add a suffix. MountPoint is left for back-compatibility purpose
+            And new FilesystemAddress variable is introduced for direct use with other modules (e.g. mount)
+            AWS documentation is available here:
+            https://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
             """
             item['MountPoint'] = '.%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
+            item['FilesystemAddress'] = '%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
             if 'Timestamp' in item['SizeInBytes']:
                 item['SizeInBytes']['Timestamp'] = str(item['SizeInBytes']['Timestamp'])
             if item['LifeCycleState'] == self.STATE_AVAILABLE:
@@ -356,7 +363,36 @@ class EFSConnection(object):
 
         return list(targets)
 
-    def create_file_system(self, name, performance_mode, encrypt, kms_key_id):
+    def supports_provisioned_mode(self):
+        """
+        Ensure boto3 includes provisioned throughput mode feature
+        """
+        return hasattr(self.connection, 'update_file_system')
+
+    def get_throughput_mode(self, **kwargs):
+        """
+        Returns throughput mode for selected EFS instance
+        """
+        info = first_or_default(iterate_all(
+            'FileSystems',
+            self.connection.describe_file_systems,
+            **kwargs
+        ))
+
+        return info and info['ThroughputMode'] or None
+
+    def get_provisioned_throughput_in_mibps(self, **kwargs):
+        """
+        Returns throughput mode for selected EFS instance
+        """
+        info = first_or_default(iterate_all(
+            'FileSystems',
+            self.connection.describe_file_systems,
+            **kwargs
+        ))
+        return info.get('ProvisionedThroughputInMibps', None)
+
+    def create_file_system(self, name, performance_mode, encrypt, kms_key_id, throughput_mode, provisioned_throughput_in_mibps):
         """
          Creates new filesystem with selected name
         """
@@ -369,6 +405,16 @@ class EFSConnection(object):
             params['Encrypted'] = encrypt
         if kms_key_id is not None:
             params['KmsKeyId'] = kms_key_id
+        if throughput_mode:
+            if self.supports_provisioned_mode():
+                params['ThroughputMode'] = throughput_mode
+            else:
+                self.module.fail_json(msg="throughput_mode parameter requires botocore >= 1.10.57")
+        if provisioned_throughput_in_mibps:
+            if self.supports_provisioned_mode():
+                params['ProvisionedThroughputInMibps'] = provisioned_throughput_in_mibps
+            else:
+                self.module.fail_json(msg="provisioned_throughput_in_mibps parameter requires botocore >= 1.10.57")
 
         if state in [self.STATE_DELETING, self.STATE_DELETED]:
             wait_for(
@@ -396,7 +442,39 @@ class EFSConnection(object):
 
         return changed
 
-    def converge_file_system(self, name, tags, purge_tags, targets):
+    def update_file_system(self, name, throughput_mode, provisioned_throughput_in_mibps):
+        """
+        Update filesystem with new throughput settings
+        """
+        changed = False
+        state = self.get_file_system_state(name)
+        if state in [self.STATE_AVAILABLE, self.STATE_CREATING]:
+            fs_id = self.get_file_system_id(name)
+            current_mode = self.get_throughput_mode(FileSystemId=fs_id)
+            current_throughput = self.get_provisioned_throughput_in_mibps(FileSystemId=fs_id)
+            params = dict()
+            if throughput_mode and throughput_mode != current_mode:
+                params['ThroughputMode'] = throughput_mode
+            if provisioned_throughput_in_mibps and provisioned_throughput_in_mibps != current_throughput:
+                params['ProvisionedThroughputInMibps'] = provisioned_throughput_in_mibps
+            if len(params) > 0:
+                wait_for(
+                    lambda: self.get_file_system_state(name),
+                    self.STATE_AVAILABLE,
+                    self.wait_timeout
+                )
+                try:
+                    self.connection.update_file_system(FileSystemId=fs_id, **params)
+                    changed = True
+                except ClientError as e:
+                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                except BotoCoreError as e:
+                    self.module.fail_json(msg="Unable to update file system: {0}".format(to_native(e)),
+                                          exception=traceback.format_exc())
+        return changed
+
+    def converge_file_system(self, name, tags, purge_tags, targets, throughput_mode, provisioned_throughput_in_mibps):
         """
          Change attributes (mount targets and tags) of filesystem by name
         """
@@ -626,12 +704,13 @@ def main():
         tags=dict(required=False, type="dict", default={}),
         targets=dict(required=False, type="list", default=[]),
         performance_mode=dict(required=False, type='str', choices=["general_purpose", "max_io"], default="general_purpose"),
+        throughput_mode=dict(required=False, type='str', choices=["bursting", "provisioned"], default=None),
+        provisioned_throughput_in_mibps=dict(required=False, type='float'),
         wait=dict(required=False, type="bool", default=False),
         wait_timeout=dict(required=False, type="int", default=0)
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
-
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
@@ -655,16 +734,20 @@ def main():
     kms_key_id = module.params.get('kms_key_id')
     performance_mode = performance_mode_translations[module.params.get('performance_mode')]
     purge_tags = module.params.get('purge_tags')
-    changed = False
-
+    throughput_mode = module.params.get('throughput_mode')
+    provisioned_throughput_in_mibps = module.params.get('provisioned_throughput_in_mibps')
     state = str(module.params.get('state')).lower()
+    changed = False
 
     if state == 'present':
         if not name:
             module.fail_json(msg='Name parameter is required for create')
 
-        changed = connection.create_file_system(name, performance_mode, encrypt, kms_key_id)
-        changed = connection.converge_file_system(name=name, tags=tags, purge_tags=purge_tags, targets=targets) or changed
+        changed = connection.create_file_system(name, performance_mode, encrypt, kms_key_id, throughput_mode, provisioned_throughput_in_mibps)
+        if connection.supports_provisioned_mode():
+            changed = connection.update_file_system(name, throughput_mode, provisioned_throughput_in_mibps) or changed
+        changed = connection.converge_file_system(name=name, tags=tags, purge_tags=purge_tags, targets=targets,
+                                                  throughput_mode=throughput_mode, provisioned_throughput_in_mibps=provisioned_throughput_in_mibps) or changed
         result = first_or_default(connection.get_file_systems(CreationToken=name))
 
     elif state == 'absent':

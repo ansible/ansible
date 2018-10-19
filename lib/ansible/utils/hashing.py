@@ -24,7 +24,7 @@ import os
 # Note, sha1 is the only hash algorithm compatible with python2.4 and with
 # FIPS-140 mode (as of 11-2014)
 try:
-    from hashlib import sha1 as sha1
+    from hashlib import sha1
 except ImportError:
     from sha import sha as sha1
 
@@ -68,6 +68,7 @@ def secure_hash(filename, hash_func=sha1):
     except IOError as e:
         raise AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
+
 
 # The checksum algorithm must match with the algorithm in ShellModule.checksum() method
 checksum = secure_hash

@@ -16,6 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: determine if mercurial is already installed
+  command: which hg
+  register: has_hg
+  ignore_errors: yes
+
+- name: install mercurial
+  include_tasks: install.yml
+  when: has_hg is failed
+
 - name: set where to extract the repo
   set_fact: checkout_dir={{ output_dir }}/epdb
 
@@ -84,3 +93,7 @@
       - hg_result3.msg
       - "'abort: HTTP Error 404: Not Found' in hg_result3.msg"
       - "not hg_result3.changed"
+
+- name: uninstall mercurial
+  include_tasks: uninstall.yml
+  when: has_hg is failed

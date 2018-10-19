@@ -3,19 +3,27 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
+- debug: msg="This test is not supported on {{ image_version }}"
+  when: imagetag is search("D1")
+- set_fact: test_helsinki="false"
+- set_fact: test_helsinki="true"
+  when: imagetag is not search("D1")
+
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
   ignore_errors: yes
+  when: test_helsinki
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
+  when: test_helsinki
 
 - block:
   # these tasks will fail on n7k running helsinki
@@ -33,19 +41,23 @@
       provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
+    when: test_helsinki
 
   - assert: &true
       that:
         - "result.changed == true"
+    when: test_helsinki
 
   - name: "Check Idempotence"
     nxos_bgp: *set1
     with_items: "{{ vrfs }}"
     register: result
+    when: test_helsinki
 
   - assert: &false
       that:
         - "result.changed == false"
+    when: test_helsinki
 
   - name: "reset helsinki"
     nxos_bgp: &reset1
@@ -61,15 +73,19 @@
       provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
+    when: test_helsinki
 
   - assert: *true
+    when: test_helsinki
 
   - name: "Check Idempotence"
     nxos_bgp: *reset1
     with_items: "{{ vrfs }}"
     register: result
+    when: test_helsinki
 
   - assert: *false
+    when: test_helsinki
 
   rescue:
   - debug: msg="Tests can fail on helsinki images"
@@ -78,8 +94,9 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
+    when: test_helsinki
 
   - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

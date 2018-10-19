@@ -49,7 +49,7 @@ class Conditional:
     to be run conditionally when a condition is met or skipped.
     '''
 
-    _when = FieldAttribute(isa='list', default=[], extend=True, prepend=True)
+    _when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
@@ -176,7 +176,7 @@ class Conditional:
                         )
             try:
                 e = templar.environment.overlay()
-                e.filters.update(templar._get_filters())
+                e.filters.update(templar._get_filters(e.filters))
                 e.tests.update(templar._get_tests())
 
                 res = e._parse(conditional, None, None)

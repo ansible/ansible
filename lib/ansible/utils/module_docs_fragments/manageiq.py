@@ -17,25 +17,19 @@ options:
         description:
           - ManageIQ environment url. C(MIQ_URL) env var if set. otherwise, it is required to pass it.
       username:
-        required: false
         description:
           - ManageIQ username. C(MIQ_USERNAME) env var if set. otherwise, required if no token is passed in.
       password:
-        required: false
         description:
           - ManageIQ password. C(MIQ_PASSWORD) env var if set. otherwise, required if no token is passed in.
       token:
-        required: false
         description:
           - ManageIQ token. C(MIQ_TOKEN) env var if set. otherwise, required if no username or password is passed in.
       verify_ssl:
-        required: false
-        default: true
         description:
           - Whether SSL certificates should be verified for HTTPS requests. defaults to True.
+        default: true
       ca_bundle_path:
-        required: false
-        default: null
         description:
           - The path to a CA bundle file or directory with certificates. defaults to None.
 

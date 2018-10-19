@@ -171,9 +171,29 @@
       - "'RPM-GPG2-KEY-EPEL' in repofile"
       - "'aaa bbb' in repofile"
       - "'ccc ddd' in repofile"
-    value:
 
 - name: Cleanup list test repo
   yum_repository:
     name: listtest
     state: absent
+
+- name: disable epel (clean up)
+  yum_repository:
+    name: epel
+    state: absent
+
+- name: add epel
+  yum_repository:
+    name: epel
+    description: EPEL yum repo
+    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+    state: present
+    gpgcheck: no
+
+- set_fact:
+    repofile: "{{ lookup('file', '/etc/yum.repos.d/epel.repo') }}"
+
+- name: check for gpgcheck=0
+  assert:
+    that:
+      - "'gpgcheck = 0' in repofile"

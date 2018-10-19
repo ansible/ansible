@@ -66,22 +66,26 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
-    _args = FieldAttribute(isa='dict', default=dict())
+    # NOTE: ONLY set defaults on task attributes that are not inheritable,
+    # inheritance is only triggered if the 'current value' is None,
+    # default can be set at play/top level object and inheritance will take it's course.
+
+    _args = FieldAttribute(isa='dict', default=dict)
     _action = FieldAttribute(isa='string')
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
-    _changed_when = FieldAttribute(isa='list', default=[])
+    _changed_when = FieldAttribute(isa='list', default=list)
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
-    _failed_when = FieldAttribute(isa='list', default=[])
+    _delegate_facts = FieldAttribute(isa='bool')
+    _failed_when = FieldAttribute(isa='list', default=list)
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
     _register = FieldAttribute(isa='string')
     _retries = FieldAttribute(isa='int', default=3)
-    _until = FieldAttribute(isa='list', default=[])
+    _until = FieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
@@ -184,6 +188,11 @@ class Task(Base, Conditional, Taggable, Become):
         try:
             (action, args, delegate_to) = args_parser.parse()
         except AnsibleParserError as e:
+            # if the raises exception was created with obj=ds args, then it includes the detail
+            # so we dont need to add it so we can just re raise.
+            if e._obj:
+                raise
+            # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
 
         # the command/shell/script modules used to support the `cmd` arg,
@@ -221,12 +230,12 @@ class Task(Base, Conditional, Taggable, Become):
                 # pre-2.0 syntax allowed variables for include statements at the top level of the task,
                 # so we move those into the 'vars' dictionary here, and show a deprecation message
                 # as we will remove this at some point in the future.
-                if action in ('include', 'include_tasks') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
+                if action in ('include',) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                                       " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                                       " for currently supported syntax regarding included files and variables", version="2.7")
+                                       " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
+                                       " for currently supported syntax regarding included files and variables", version="2.12")
                     new_ds['vars'][k] = v
-                elif k in self._valid_attrs:
+                elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
@@ -242,6 +251,13 @@ class Task(Base, Conditional, Taggable, Become):
             )
 
         return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
+
+    def _validate_attributes(self, ds):
+        try:
+            super(Task, self)._validate_attributes(ds)
+        except AnsibleParserError as e:
+            e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
+            raise e
 
     def post_validate(self, templar):
         '''
@@ -273,9 +289,11 @@ class Task(Base, Conditional, Taggable, Become):
                 try:
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
-                    if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
-                        # ignore as fact gathering sets ansible_env
-                        pass
+                    error = to_native(e)
+                    if self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                        # ignore as fact gathering is required for 'env' facts
+                        return
+                    raise
 
             if isinstance(value, list):
                 for env_item in value:
@@ -418,13 +436,20 @@ class Task(Base, Conditional, Taggable, Become):
         prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
-            if self._parent and (value is None or extend):
-                if getattr(self._parent, 'statically_loaded', True):
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
+
+            if _parent and (value is None or extend):
+                if getattr(_parent, 'statically_loaded', True):
                     # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
-                        parent_value = self._parent._get_parent_attribute(attr)
+                    if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
+                        parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = self._parent._attributes.get(attr, None)
+                        parent_value = _parent._attributes.get(attr, None)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)

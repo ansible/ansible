@@ -30,7 +30,7 @@ description:
     supports adding additional keywords to filter the return data and specify
     the desired set of returned fields.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
     _terms:
@@ -38,16 +38,10 @@ options:
       required: True
     return_fields:
       description: The list of field names to return for the specified object.
-      required: False
-      default: null
     filter:
       description: a dict object that is used to filter the return objects
-      required: False
-      default: null
     extattrs:
-      descrpition: a dict object that is used to filter on extattrs
-      required: false
-      default: null
+      description: a dict object that is used to filter on extattrs
 """
 
 EXAMPLES = """
@@ -57,7 +51,7 @@ EXAMPLES = """
 
 - name: fetch the default dns view
   set_fact:
-    dns_views: "{{ lookup('nios', 'view', filter={'view': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    dns_views: "{{ lookup('nios', 'view', filter={'name': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
 # all of the examples below use credentials that are  set using env variables
 # export INFOBLOX_HOST=nios01
@@ -75,7 +69,7 @@ EXAMPLES = """
 
 - name: get a host record
   set_fact:
-    host: "{{ lookup('nios', 'record:host', filter={'name': 'hostname.ansible.com'}) }}
+    host: "{{ lookup('nios', 'record:host', filter={'name': 'hostname.ansible.com'}) }}"
 
 - name: get the authoritative zone from a non default dns view
   set_fact:
@@ -88,7 +82,7 @@ obj_type:
     - The object type specified in the terms argument
   returned: always
   type: complex
-  contains
+  contains:
     obj_field:
       - One or more obj_type fields as specified by return_fields argument or
         the default set of fields as per the object type
@@ -113,8 +107,11 @@ class LookupModule(LookupBase):
         extattrs = normalize_extattrs(kwargs.pop('extattrs', {}))
         provider = kwargs.pop('provider', {})
         wapi = WapiLookup(provider)
-        res = wapi.get_object(obj_type, filter_data, return_fields=return_fields)
-        for obj in res:
-            if 'extattrs' in obj:
-                obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        res = wapi.get_object(obj_type, filter_data, return_fields=return_fields, extattrs=extattrs)
+        if res is not None:
+            for obj in res:
+                if 'extattrs' in obj:
+                    obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        else:
+            res = []
         return res

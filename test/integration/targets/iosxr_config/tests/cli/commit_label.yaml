@@ -1,0 +1,70 @@
+---
+- debug: msg="START cli/commit_label.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+- name: get a unique and valid label
+  set_fact:
+    label: "ansible_{{ 1001 | random | to_uuid | truncate(20, true, '_') }}"
+
+- name: configure device with a label and a comment
+  iosxr_config:
+    src: basic/config.j2
+    comment: "this is sensible commit message"
+    label: "{{ label }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: setup
+  iosxr_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+- name: Try to commit with old label, fail with a msg that label is alreay used
+  iosxr_config:
+    src: basic/config.j2
+    label: "{{ label }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'already used' in result.msg"
+
+- name: setup
+  iosxr_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+
+- name: Try to commit with invalid chars($) in label
+  iosxr_config:
+    src: basic/config.j2
+    label: 'ansible_iosxr_config_$'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'only contain alphabets' in result.msg"
+
+- debug: msg="END cli/commit_label.yaml on connection={{ ansible_connection }}"

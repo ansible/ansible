@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: panos_nat_policy
@@ -31,9 +35,9 @@ version_added: "2.3"
 requirements:
     - pan-python
 deprecated:
-  removed_in: "2.8"
-  why: M(panos_nat_rule) uses next generation SDK (PanDevice).
-  alternative: Use M(panos_nat_rule) instead.
+    alternative: Use M(panos_nat_rule) instead.
+    removed_in: '2.9'
+    why: This module depended on outdated and old SDK, use M(panos_nat_rule) instead.
 options:
     ip_address:
         description:
@@ -46,7 +50,6 @@ options:
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     rule_name:
         description:
@@ -63,63 +66,48 @@ options:
     source:
         description:
             - list of source addresses
-        required: false
         default: ["any"]
     destination:
         description:
             - list of destination addresses
-        required: false
         default: ["any"]
     service:
         description:
             - service
-        required: false
         default: "any"
     snat_type:
         description:
             - type of source translation
-        required: false
-        default: None
     snat_address:
         description:
             - snat translated address
-        required: false
-        default: None
     snat_interface:
         description:
             - snat interface
-        required: false
-        default: None
     snat_interface_address:
         description:
             - snat interface address
-        required: false
-        default: None
     snat_bidirectional:
         description:
             - bidirectional flag
-        required: false
-        default: "false"
+        type: bool
+        default: 'no'
     dnat_address:
         description:
             - dnat translated address
-        required: false
-        default: None
     dnat_port:
         description:
             - dnat translated port
-        required: false
-        default: None
     override:
         description:
             - attempt to override rule if one with the same name already exists
-        required: false
-        default: "false"
+        type: bool
+        default: 'no'
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''
@@ -145,13 +133,8 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['deprecated'],
-                    'supported_by': 'community'}
-
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -289,7 +272,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if module._name == 'panos_nat_policy':
-        module.deprecate("The 'panos_nat_policy' module is being renamed 'panos_nat_rule'", version=2.8)
+        module.deprecate("The 'panos_nat_policy' module is being renamed 'panos_nat_rule'", version=2.9)
 
     if not HAS_LIB:
         module.fail_json(msg='pan-python is required for this module')
@@ -346,9 +329,8 @@ def main():
 
         module.exit_json(changed=changed, msg="okey dokey")
 
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':

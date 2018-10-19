@@ -47,6 +47,28 @@ LSBLK_OUTPUT_2 = b"""
 
 LSBLK_UUIDS = {'/dev/sda1': '66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK'}
 
+UDEVADM_UUID = 'N/A'
+
+UDEVADM_OUTPUT = """
+UDEV_LOG=3
+DEVPATH=/devices/pci0000:00/0000:00:07.0/virtio2/block/vda/vda1
+MAJOR=252
+MINOR=1
+DEVNAME=/dev/vda1
+DEVTYPE=partition
+SUBSYSTEM=block
+MPATH_SBIN_PATH=/sbin
+ID_PATH=pci-0000:00:07.0-virtio-pci-virtio2
+ID_PART_TABLE_TYPE=dos
+ID_FS_UUID=57b1a3e7-9019-4747-9809-7ec52bba9179
+ID_FS_UUID_ENC=57b1a3e7-9019-4747-9809-7ec52bba9179
+ID_FS_VERSION=1.0
+ID_FS_TYPE=ext4
+ID_FS_USAGE=filesystem
+LVM_SBIN_PATH=/sbin
+DEVLINKS=/dev/block/252:1 /dev/disk/by-path/pci-0000:00:07.0-virtio-pci-virtio2-part1 /dev/disk/by-uuid/57b1a3e7-9019-4747-9809-7ec52bba9179
+"""
+
 MTAB = """
 sysfs /sys sysfs rw,seclabel,nosuid,nodev,noexec,relatime 0 0
 proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0

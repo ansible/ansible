@@ -4,6 +4,7 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
 # Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2016, Dag Wieers <dag@wieers.com>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -25,6 +26,7 @@ description:
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
      - For Windows targets, use the M(win_unzip) module instead.
+     - If checksum validation is desired, use M(get_url) or M(uri) instead to fetch the file and set C(remote_src=yes).
 options:
   src:
     description:
@@ -117,11 +119,20 @@ EXAMPLES = r'''
     src: https://example.com/example.zip
     dest: /usr/local/bin
     remote_src: yes
+
+- name: Unarchive a file with extra options
+  unarchive:
+    src: /tmp/foo.zip
+    dest: /usr/local/bin
+    extra_opts:
+    - --transform
+    - s/^xxx/yyy/
 '''
 
 import binascii
 import codecs
 import datetime
+import fnmatch
 import grp
 import os
 import platform
@@ -133,7 +144,7 @@ import traceback
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_file
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:  # python 3.3+
@@ -151,9 +162,6 @@ MOD_TIME_DIFF_RE = re.compile(r': Mod time differs$')
 EMPTY_FILE_RE = re.compile(r': : Warning: Cannot stat: No such file or directory$')
 MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory$')
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
-# When downloading an archive, how much of the archive to download before
-# saving to a tempfile (64k)
-BUFSIZE = 65536
 
 
 def crc32(path):
@@ -253,7 +261,11 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
-                    if member not in self.excludes:
+                    if self.excludes:
+                        for exclude in self.excludes:
+                            if not fnmatch.fnmatch(member, exclude):
+                                self._files_in_archive.append(to_native(member))
+                    else:
                         self._files_in_archive.append(to_native(member))
             except:
                 archive.close()
@@ -288,22 +300,22 @@ class ZipArchive(object):
         run_gid = os.getgid()
         try:
             run_owner = pwd.getpwuid(run_uid).pw_name
-        except:
+        except (TypeError, KeyError):
             run_owner = run_uid
         try:
             run_group = grp.getgrgid(run_gid).gr_name
-        except:
+        except (KeyError, ValueError, OverflowError):
             run_group = run_gid
 
         # Get future user ownership
         fut_owner = fut_uid = None
         if self.file_args['owner']:
             try:
-                tpw = pwd.getpwname(self.file_args['owner'])
-            except:
+                tpw = pwd.getpwnam(self.file_args['owner'])
+            except KeyError:
                 try:
                     tpw = pwd.getpwuid(self.file_args['owner'])
-                except:
+                except (TypeError, KeyError):
                     tpw = pwd.getpwuid(run_uid)
             fut_owner = tpw.pw_name
             fut_uid = tpw.pw_uid
@@ -319,10 +331,10 @@ class ZipArchive(object):
         if self.file_args['group']:
             try:
                 tgr = grp.getgrnam(self.file_args['group'])
-            except:
+            except (ValueError, KeyError):
                 try:
                     tgr = grp.getgrgid(self.file_args['group'])
-                except:
+                except (KeyError, ValueError, OverflowError):
                     tgr = grp.getgrgid(run_gid)
             fut_group = tgr.gr_name
             fut_gid = tgr.gr_gid
@@ -513,7 +525,7 @@ class ZipArchive(object):
             owner = uid = None
             try:
                 owner = pwd.getpwuid(st.st_uid).pw_name
-            except:
+            except (TypeError, KeyError):
                 uid = st.st_uid
 
             # If we are not root and requested owner is not our user, fail
@@ -533,7 +545,7 @@ class ZipArchive(object):
             group = gid = None
             try:
                 group = grp.getgrgid(st.st_gid).gr_name
-            except:
+            except (KeyError, ValueError, OverflowError):
                 gid = st.st_gid
 
             if run_uid != 0 and fut_gid not in groups:
@@ -632,7 +644,7 @@ class TgzArchive(object):
         if self.opts:
             cmd.extend(['--show-transformed-names'] + self.opts)
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         if rc != 0:
@@ -641,9 +653,21 @@ class TgzArchive(object):
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
             # filename = filename.decode('string_escape')
-            filename = codecs.escape_decode(filename)[0]
-            if filename and filename not in self.excludes:
+            filename = to_native(codecs.escape_decode(filename)[0])
+
+            # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
+            # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
+            # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
+            if filename.startswith('/'):
+                filename = filename[1:]
+
+            if self.excludes:
+                for exclude in self.excludes:
+                    if not fnmatch.fnmatch(filename, exclude):
+                        self._files_in_archive.append(to_native(filename))
+            else:
                 self._files_in_archive.append(to_native(filename))
+
         return self._files_in_archive
 
     def is_unarchived(self):
@@ -659,7 +683,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
@@ -706,7 +730,7 @@ class TgzArchive(object):
         if self.module.params['keep_newer']:
             cmd.append('--keep-newer-files')
         if self.excludes:
-            cmd.extend(['--exclude=' + quote(f) for f in self.excludes])
+            cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
         rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
@@ -769,7 +793,6 @@ def main():
         # not checking because of daisy chain to file module
         argument_spec=dict(
             src=dict(type='path', required=True),
-            original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             dest=dict(type='path', required=True),
             remote_src=dict(type='bool', default=False),
             creates=dict(type='path'),
@@ -795,29 +818,7 @@ def main():
             module.fail_json(msg="Source '%s' failed to transfer" % src)
         # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
-            tempdir = os.path.dirname(os.path.realpath(__file__))
-            package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
-            try:
-                rsp, info = fetch_url(module, src)
-                # If download fails, raise a proper exception
-                if rsp is None:
-                    raise Exception(info['msg'])
-
-                # open in binary mode for python3
-                f = open(package, 'wb')
-                # Read 1kb at a time to save on ram
-                while True:
-                    data = rsp.read(BUFSIZE)
-                    data = to_bytes(data, errors='surrogate_or_strict')
-
-                    if len(data) < 1:
-                        break  # End of file, break while loop
-
-                    f.write(data)
-                f.close()
-                src = package
-            except Exception as e:
-                module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
+            src = fetch_file(module, src)
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
@@ -868,6 +869,7 @@ def main():
         # do we need to change perms?
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
+
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:

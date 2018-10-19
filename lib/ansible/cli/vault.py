@@ -14,7 +14,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 # ansible-vault is a script that encrypts/decrypts YAML files. See
-# http://docs.ansible.com/playbooks_vault.html for more details.
+# https://docs.ansible.com/playbooks_vault.html for more details.
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -107,7 +107,7 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
-        if self.action in ['create', 'encrypt', 'encrypt_string', 'rekey']:
+        if self.action in ['create', 'encrypt', 'encrypt_string', 'rekey', 'edit']:
             self.parser.add_option('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
                                    action='store', type='string',
                                    help='the vault id used to encrypt (required if more than vault-id is provided)')
@@ -181,7 +181,7 @@ class VaultCLI(CLI):
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
-        if self.action in ['encrypt', 'encrypt_string', 'create', 'edit']:
+        if self.action in ['encrypt', 'encrypt_string', 'create']:
 
             encrypt_vault_id = None
             # no --encrypt-vault-id self.options.encrypt_vault_id for 'edit'

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_amg
-short_description: Create, Remove, and Update Asynchronous Mirror Groups
+short_description: NetApp E-Series create, remove, and update asynchronous mirror groups
 description:
     - Allows for the creation, removal and updating of Asynchronous Mirror Groups for NetApp E-series storage arrays
 version_added: '2.2'
@@ -34,22 +34,19 @@ options:
     syncIntervalMinutes:
         description:
             - The synchronization interval in minutes
-        required: no
         default: 10
     manualSync:
         description:
             - Setting this to true will cause other synchronization values to be ignored
-        required: no
-        default: no
+        type: bool
+        default: 'no'
     recoveryWarnThresholdMinutes:
         description:
             - Recovery point warning threshold (minutes). The user will be warned when the age of the last good failures point exceeds this value
-        required: no
         default: 20
     repoUtilizationWarnThreshold:
         description:
             - Recovery point warning threshold
-        required: no
         default: 80
     interfaceType:
         description:
@@ -57,17 +54,15 @@ options:
         choices:
             - iscsi
             - fibre
-        required: no
-        default: null
     syncWarnThresholdMinutes:
         description:
             - The threshold (in minutes) for notifying the user that periodic synchronization has taken too long to complete.
-        required: no
         default: 10
     state:
         description:
             - A C(state) of present will either create or update the async mirror group.
             - A C(state) of absent will remove the async mirror group.
+        choices: [ absent, present ]
         required: yes
 """
 

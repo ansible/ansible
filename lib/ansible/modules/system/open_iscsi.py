@@ -41,7 +41,7 @@ options:
         - the iscsi target name
     login:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the target node should be connected
     node_auth:
@@ -60,12 +60,12 @@ options:
     auto_node_startup:
         aliases: [automatic]
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the target node should be automatically connected at startup
     discover:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the list of target nodes on the portal should be
           (re)discovered and added to the persistent iscsi database.
@@ -74,7 +74,7 @@ options:
           a changed state.
     show_nodes:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the list of nodes in the persistent iscsi database should be
           returned by the module
@@ -171,7 +171,7 @@ def target_loggedon(module, target):
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
 
-def target_login(module, target):
+def target_login(module, target, portal=None, port=None):
     node_auth = module.params['node_auth']
     node_user = module.params['node_user']
     node_pass = module.params['node_pass']
@@ -187,6 +187,9 @@ def target_login(module, target):
                 module.fail_json(cmd=cmd, rc=rc, msg=err)
 
     cmd = '%s --mode node --targetname %s --login' % (iscsiadm_cmd, target)
+    if portal is not None and port is not None:
+        cmd += ' --portal %s:%s' % (portal, port)
+
     (rc, out, err) = module.run_command(cmd)
 
     if rc > 0:
@@ -333,7 +336,7 @@ def main():
                 result['devicenodes'] = target_device_node(module, target)
         elif not check:
             if login:
-                target_login(module, target)
+                target_login(module, target, portal, port)
                 # give udev some time
                 time.sleep(1)
                 result['devicenodes'] = target_device_node(module, target)

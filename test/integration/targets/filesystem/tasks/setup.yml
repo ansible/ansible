@@ -2,18 +2,19 @@
   package:
     name: '{{ item }}'
     state: present
-  when: ansible_system == 'Linux' or item != 'dosfstools'
   with_items:
     - e2fsprogs
     - xfsprogs
-    - dosfstools
 
 - block:
   - name: install btrfs progs
     package:
       name: btrfs-progs
       state: present
-    when: ansible_os_family != 'Suse' and not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+    when:
+      - ansible_os_family != 'Suse'
+      - not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+      - ansible_system != "FreeBSD"
 
   - name: install btrfs progs (Ubuntu <= 16.04)
     package:
@@ -29,7 +30,52 @@
     with_items:
       - python-xml
       - btrfsprogs
-  when: ansible_system == 'Linux'
+
+  - name: install ocfs2 (Debian)
+    package:
+      name: ocfs2-tools
+      state: present
+    when: ansible_os_family == 'Debian'
+
+  - when:
+      - ansible_os_family != 'RedHat' or ansible_distribution == 'Fedora'
+      - ansible_distribution != 'Ubuntu' or ansible_distribution_version is version('16.04', '>=')
+      - ansible_system != "FreeBSD"
+    block:
+      - name: install f2fs
+        package:
+          name: f2fs-tools
+          state: present
+
+      - name: fetch f2fs version
+        command: mkfs.f2fs /dev/null
+        ignore_errors: yes
+        register: mkfs_f2fs
+
+      - set_fact:
+          f2fs_version: '{{ mkfs_f2fs.stdout | regex_search("F2FS-tools: mkfs.f2fs Ver:.*") | regex_replace("F2FS-tools: mkfs.f2fs Ver: ([0-9.]+) .*", "\1") }}'
+
+  - name: install dosfstools and lvm2 (Linux)
+    package:
+      name: '{{ item }}'
+    with_items:
+      - dosfstools
+      - lvm2
+    when: ansible_system == 'Linux'
+
+- block:
+  - name: install fatresize
+    package:
+      name: fatresize
+      state: present
+  - command: fatresize --help
+    register: fatresize
+  - set_fact:
+      fatresize_version: '{{ fatresize.stdout_lines[0] | regex_search("[0-9]+\.[0-9]+\.[0-9]+")  }}'
+  when:
+    - ansible_system == 'Linux'
+    - ansible_os_family != 'Suse'
+    - ansible_os_family != 'RedHat' or (ansible_distribution == 'CentOS' and ansible_distribution_version is version('7.0', '>='))
 
 - command: mke2fs -V
   register: mke2fs
@@ -43,3 +89,5 @@
     # Mke2fs no longer complains if the user tries to create a file system
     # using the entire block device.
     force_creation: "{{ e2fsprogs_version is version('1.43', '<') }}"
+    # Earlier versions have a segfault bug
+    resize_vfat: "{{ fatresize_version|default('0.0') is version('1.0.4', '>=') }}"

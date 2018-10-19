@@ -33,34 +33,25 @@ options:
   state:
     description:
       - Whether to ensure that a publisher is present or absent.
-    required: false
     default: present
     choices: [ present, absent ]
   sticky:
     description:
       - Packages installed from a sticky repository can only receive updates
         from that repository.
-    required: false
-    default: null
-    choices: [ true, false ]
+    type: bool
   enabled:
     description:
       - Is the repository enabled or disabled?
-    required: false
-    default: null
-    choices: [ true, false ]
+    type: bool
   origin:
     description:
       - A path or URL to the repository.
       - Multiple values may be provided.
-    required: false
-    default: null
   mirror:
     description:
       - A path or URL to the repository mirror.
       - Multiple values may be provided.
-    required: false
-    default: null
 '''
 EXAMPLES = '''
 # Fetch packages for the solaris publisher direct from Oracle:
@@ -74,6 +65,8 @@ EXAMPLES = '''
     name: site
     origin: 'https://pkg.example.com/site/'
 '''
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
@@ -204,8 +197,6 @@ def unstringify(val):
     else:
         return val
 
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

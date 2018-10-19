@@ -49,6 +49,7 @@ options:
         description:
             - Boolean flag to set apic_mode.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     aws_configuration:
         description:
             - Awsconfiguration settings for cloud.
@@ -68,6 +69,7 @@ options:
         description:
             - Select the ip address management scheme.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     dns_provider_ref:
         description:
             - Dns profile for the cloud.
@@ -90,6 +92,7 @@ options:
         description:
             - Use static routes for vip side network resolution during virtualservice placement.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     ipam_provider_ref:
         description:
             - Ipam profile for the cloud.
@@ -139,6 +142,7 @@ options:
         description:
             - Prefer static routes over interface routes during virtualservice placement.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     proxy_configuration:
         description:
             - Proxyconfiguration settings for cloud.
@@ -151,6 +155,7 @@ options:
             - Field introduced in 17.1.12.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.5"
+        type: bool
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -266,6 +271,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'cloud',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

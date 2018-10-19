@@ -45,6 +45,10 @@ class TerminalModule(TerminalBase):
         re.compile(br"'[^']' +returned error code: ?\d+"),
     ]
 
+    terminal_initial_prompt = br"\[y/n\]:"
+
+    terminal_initial_answer = b"y"
+
     def on_open_shell(self):
         try:
             self._exec_cli_command(b'terminal length 0')

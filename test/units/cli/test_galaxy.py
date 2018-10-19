@@ -27,8 +27,8 @@ import tempfile
 import yaml
 
 from ansible.cli.galaxy import GalaxyCLI
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import call, patch
+from units.compat import unittest
+from units.compat.mock import call, patch
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import PY3
 
@@ -38,6 +38,9 @@ class TestGalaxy(unittest.TestCase):
     def setUpClass(cls):
         '''creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested.'''
         # class data for easy viewing: role_dir, role_tar, role_name, role_req, role_path
+
+        cls.temp_dir = tempfile.mkdtemp(prefix='ansible-test_galaxy-')
+        os.chdir(cls.temp_dir)
 
         if os.path.exists("./delete_me"):
             shutil.rmtree("./delete_me")
@@ -88,6 +91,9 @@ class TestGalaxy(unittest.TestCase):
             os.remove(cls.role_tar)
         if os.path.isdir(cls.role_path):
             shutil.rmtree(cls.role_path)
+
+        os.chdir('/')
+        shutil.rmtree(cls.temp_dir)
 
     def setUp(self):
         self.default_args = ['ansible-galaxy']
@@ -368,11 +374,41 @@ class TestGalaxyInitDefault(unittest.TestCase, ValidRoleTests):
         self.assertEqual(metadata.get('galaxy_info', dict()).get('author'), 'your name', msg='author was not set properly in metadata')
 
 
-class TestGalaxyInitContainerEnabled(unittest.TestCase, ValidRoleTests):
+class TestGalaxyInitAPB(unittest.TestCase, ValidRoleTests):
 
     @classmethod
     def setUpClass(cls):
-        cls.setUpRole('delete_me_container', galaxy_args=['--container-enabled'])
+        cls.setUpRole('delete_me_apb', galaxy_args=['--type=apb'])
+
+    def test_metadata_apb_tag(self):
+        with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
+            metadata = yaml.safe_load(mf)
+        self.assertIn('apb', metadata.get('galaxy_info', dict()).get('galaxy_tags', []), msg='apb tag not set in role metadata')
+
+    def test_metadata_contents(self):
+        with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
+            metadata = yaml.safe_load(mf)
+        self.assertEqual(metadata.get('galaxy_info', dict()).get('author'), 'your name', msg='author was not set properly in metadata')
+
+    def test_apb_yml(self):
+        self.assertTrue(os.path.exists(os.path.join(self.role_dir, 'apb.yml')), msg='apb.yml was not created')
+
+    def test_test_yml(self):
+        with open(os.path.join(self.role_dir, 'tests', 'test.yml'), 'r') as f:
+            test_playbook = yaml.safe_load(f)
+        print(test_playbook)
+        self.assertEqual(len(test_playbook), 1)
+        self.assertEqual(test_playbook[0]['hosts'], 'localhost')
+        self.assertFalse(test_playbook[0]['gather_facts'])
+        self.assertEqual(test_playbook[0]['connection'], 'local')
+        self.assertIsNone(test_playbook[0]['tasks'], msg='We\'re expecting an unset list of tasks in test.yml')
+
+
+class TestGalaxyInitContainer(unittest.TestCase, ValidRoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUpRole('delete_me_container', galaxy_args=['--type=container'])
 
     def test_metadata_container_tag(self):
         with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:

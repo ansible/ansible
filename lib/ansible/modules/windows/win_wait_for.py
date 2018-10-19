@@ -1,7 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub, actual code lives in the .ps1
@@ -10,7 +10,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -33,14 +32,17 @@ options:
     description:
     - The maximum number of seconds to wait for a connection to happen before
       closing and retrying.
+    type: int
     default: 5
   delay:
     description:
     - The number of seconds to wait before starting to poll.
+    type: int
   exclude_hosts:
     description:
     - The list of hosts or IPs to ignore when looking for active TCP
       connections when C(state=drained).
+    type: list
   host:
     description:
     - A resolvable hostname or IP address to wait for.
@@ -53,9 +55,11 @@ options:
     - If C(state) is present or started then it will wait until the file
       exists.
     - If C(state) is absent then it will wait until the file does not exist.
+    type: path
   port:
     description:
     - The port number to poll on C(host).
+    type: int
   search_regex:
     description:
     - Can be used to match a string in a file.
@@ -66,6 +70,7 @@ options:
   sleep:
     description:
     - Number of seconds to sleep between checks.
+    type: int
     default: 1
   state:
     description:
@@ -76,10 +81,11 @@ options:
       ensure that the file or string is present, C(absent) will check that the
       file or search string is absent or removed.
     default: started
-    choices: [ present, started, stopped, absent, drained ]
+    choices: [ absent, drained, present, started, stopped ]
   timeout:
     description:
     - The maximum number of seconds to wait for.
+    type: int
     default: 300
 author:
 - Jordan Borean (@jborean93)

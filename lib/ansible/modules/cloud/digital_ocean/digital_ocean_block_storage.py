@@ -31,10 +31,6 @@ options:
      - Indicate desired state of the target.
     choices: ['present', 'absent']
     required: true
-  api_token:
-    description:
-     - DigitalOcean api token.
-    required: true
   block_size:
     description:
     - The size of the Block Storage volume in gigabytes. Required when command=create and state=present. If snapshot_id is included, this will be ignored.
@@ -56,11 +52,7 @@ options:
   droplet_id:
     description:
     - The droplet id you want to operate on. Required when command=attach.
-  timeout:
-    description:
-    - The timeout in seconds used for polling DigitalOcean's API.
-    default: 10
-
+extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
     They both refer to the v2 token.
@@ -207,7 +199,7 @@ class DOBlockStorage(object):
         json = response.json
         if status == 201:
             self.module.exit_json(changed=True, id=json['volume']['id'])
-        elif status == 409 and json['id'] == 'already_exists':
+        elif status == 409 and json['id'] == 'conflict':
             self.module.exit_json(changed=False)
         else:
             raise DOBlockStorageException(json['message'])
@@ -267,26 +259,27 @@ def handle_request(module):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(choices=['present', 'absent'], required=True),
-            command=dict(choices=['create', 'attach'], required=True),
-            api_token=dict(aliases=['API_TOKEN'], no_log=True),
-            block_size=dict(type='int', required=False),
-            volume_name=dict(type='str', required=True),
-            description=dict(type='str'),
-            region=dict(type='str', required=False),
-            snapshot_id=dict(type='str', required=False),
-            droplet_id=dict(type='int'),
-            timeout=dict(type='int', default=10),
-        ),
+    argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
+    argument_spec.update(
+        state=dict(choices=['present', 'absent'], required=True),
+        command=dict(choices=['create', 'attach'], required=True),
+        block_size=dict(type='int', required=False),
+        volume_name=dict(type='str', required=True),
+        description=dict(type='str'),
+        region=dict(type='str', required=False),
+        snapshot_id=dict(type='str', required=False),
+        droplet_id=dict(type='int')
     )
+
+    module = AnsibleModule(argument_spec=argument_spec)
+
     try:
         handle_request(module)
     except DOBlockStorageException as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc())
     except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message, exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

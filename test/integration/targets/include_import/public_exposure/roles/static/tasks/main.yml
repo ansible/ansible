@@ -1,0 +1,5 @@
+- debug:
+    msg: static
+
+- set_fact:
+    static_tasks_var: static_tasks

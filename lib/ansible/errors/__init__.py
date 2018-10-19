@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from collections import Sequence
 import traceback
 import sys
 
@@ -33,6 +32,7 @@ from ansible.errors.yaml_strings import (
     YAML_POSITION_DETAILS,
 )
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import Sequence
 
 
 class AnsibleError(Exception):
@@ -247,6 +247,8 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
             if message:
                 message += "\n"
             message += "Searched in:\n\t%s" % searched
+
+        message += " on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option"
 
         super(AnsibleFileNotFound, self).__init__(message=message, obj=obj, show_content=show_content,
                                                   suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)

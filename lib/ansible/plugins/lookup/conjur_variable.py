@@ -13,9 +13,9 @@ DOCUMENTATION = """
     version_added: "2.5"
     short_description: Fetch credentials from CyberArk Conjur.
     description:
-      - Retrieves credentials from Conjur using the controlling host's Conjur identity. Conjur info: U(https://www.conjur.org/).
+      - "Retrieves credentials from Conjur using the controlling host's Conjur identity. Conjur info: U(https://www.conjur.org/)."
     requirements:
-      - The controlling host running Ansible has a Conjur identity. (More: U(https://developer.conjur.net/key_concepts/machine_identity.html))
+      - 'The controlling host running Ansible has a Conjur identity. (More: U(https://developer.conjur.net/key_concepts/machine_identity.html))'
     options:
       _term:
         description: Variable path
@@ -43,8 +43,8 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-  - debug
-    msg: {{ lookup('conjur_variable', '/path/to/secret') }}
+  - debug:
+      msg: "{{ lookup('conjur_variable', '/path/to/secret') }}"
 """
 
 RETURN = """

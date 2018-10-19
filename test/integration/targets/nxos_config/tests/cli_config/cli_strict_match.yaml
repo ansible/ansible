@@ -1,0 +1,25 @@
+---
+- debug: msg="START cli_config/cli_strict_match.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove configuration
+  cli_config:
+    config: "{{ lookup('template', 'basic/setupstrict.j2') }}"
+    diff_match: none
+
+- name: configure using strict match
+  cli_config:
+    config: "{{ lookup('template', 'basic/configstrict1.j2') }}"
+    diff_match: strict
+    diff_replace: block
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  cli_config:
+    config: no ip access-list test
+    diff_match: none
+
+- debug: msg="END cli_config/cli_strict_match.yaml on connection={{ ansible_connection }}"

@@ -40,15 +40,12 @@ options:
    device:
      description:
       - Device you want to attach. Defaults to auto finding a device name.
-     required: false
-     default: None
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -65,15 +62,8 @@ EXAMPLES = '''
       device: /dev/vdb
 '''
 
-try:
-    import shade
-    from shade import meta
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, device):
@@ -102,17 +92,18 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     wait = module.params['wait']
     timeout = module.params['timeout']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         server = cloud.get_server(module.params['server'])
         volume = cloud.get_volume(module.params['volume'])
+
+        if not volume:
+            module.fail_json(msg='volume %s is not found' % module.params['volume'])
+
         dev = cloud.get_volume_attach_device(volume, server.id)
 
         if module.check_mode:
@@ -128,7 +119,7 @@ def main():
 
             server = cloud.get_server(module.params['server'])  # refresh
             volume = cloud.get_volume(module.params['volume'])  # refresh
-            hostvars = meta.get_hostvars_from_server(cloud, server)
+            hostvars = cloud.get_openstack_vars(server)
 
             module.exit_json(
                 changed=True,
@@ -148,7 +139,7 @@ def main():
                 result='Detached volume from server'
             )
 
-    except (shade.OpenStackCloudException, shade.OpenStackCloudTimeout) as e:
+    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.OpenStackCloudTimeout) as e:
         module.fail_json(msg=str(e))
 
 

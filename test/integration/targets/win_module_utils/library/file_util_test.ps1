@@ -48,12 +48,21 @@ if ($pagefile) {
 $actual = Test-AnsiblePath -Path C:\fakefile
 Assert-Equals -actual $actual -expected $false
 
+# Test-AnsiblePath Directory that doesn't exist
+$actual = Test-AnsiblePath -Path C:\fakedirectory
+Assert-Equals -actual $actual -expected $false
+
+# Test-AnsiblePath file in non-existant directory
+$actual = Test-AnsiblePath -Path C:\fakedirectory\fakefile.txt
+Assert-Equals -actual $actual -expected $false
+
 # Test-AnsiblePath Normal directory
 $actual = Test-AnsiblePath -Path C:\Windows
 Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath Normal file
 $actual = Test-AnsiblePath -Path C:\Windows\System32\kernel32.dll
+Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath fails with wildcard
 $failed = $false
@@ -65,6 +74,18 @@ try {
 }
 Assert-Equals -actual $failed -expected $true
 
+# Test-AnsiblePath on non file PS Provider object
+$actual = Test-AnsiblePath -Path Cert:\LocalMachine\My
+Assert-Equals -actual $actual -expected $true
+
+# Test-AnsiblePath on environment variable
+$actual = Test-AnsiblePath -Path env:SystemDrive
+Assert-Equals -actual $actual -expected $true
+
+# Test-AnsiblePath on environment variable that does not exist
+$actual = Test-AnsiblePath -Path env:FakeEnvValue
+Assert-Equals -actual $actual -expected $false
+
 # Get-AnsibleItem doesn't exist with -ErrorAction SilentlyContinue param
 $actual = Get-AnsibleItem -Path C:\fakefile -ErrorAction SilentlyContinue
 Assert-Equals -actual $actual -expected $null
@@ -74,6 +95,14 @@ $actual = Get-AnsibleItem -Path C:\Windows
 Assert-Equals -actual $actual.FullName -expected C:\Windows
 Assert-Equals -actual $actual.Attributes.HasFlag([System.IO.FileAttributes]::Directory) -expected $true
 Assert-Equals -actual $actual.Exists -expected $true
+
+# ensure Get-AnsibleItem doesn't fail in a try/catch and -ErrorAction SilentlyContinue - stop's a trap from trapping it
+try {
+    $actual = Get-AnsibleItem -Path C:\fakepath -ErrorAction SilentlyContinue
+} catch {
+    Fail-Json -obj $result -message "this should not fire"
+}
+Assert-Equals -actual $actual -expected $null
 
 $result.data = "success"
 Exit-Json -obj $result

@@ -17,7 +17,7 @@ from lib.util import (
     SubprocessError,
     display,
     run_command,
-    deepest_path,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (
@@ -43,48 +43,44 @@ class ValidateModulesTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
+        skip_paths = read_lines_without_comments(VALIDATE_SKIP_PATH)
+        skip_paths_set = set(skip_paths)
+
         env = ansible_environment(args, color=False)
 
-        paths = [deepest_path(i.path, 'lib/ansible/modules/') for i in targets.include_external]
-        paths = sorted(set(p for p in paths if p))
+        paths = sorted([i.path for i in targets.include if i.module and i.path not in skip_paths_set])
 
         if not paths:
             return SanitySkipped(self.name)
 
         cmd = [
-            'python%s' % args.python_version,
+            args.python_executable,
             'test/sanity/validate-modules/validate-modules',
             '--format', 'json',
             '--arg-spec',
         ] + paths
 
-        with open(VALIDATE_SKIP_PATH, 'r') as skip_fd:
-            skip_paths = skip_fd.read().splitlines()
-
         invalid_ignores = []
 
-        with open(VALIDATE_IGNORE_PATH, 'r') as ignore_fd:
-            ignore_entries = ignore_fd.read().splitlines()
-            ignore = collections.defaultdict(dict)
-            line = 0
+        ignore_entries = read_lines_without_comments(VALIDATE_IGNORE_PATH)
+        ignore = collections.defaultdict(dict)
+        line = 0
 
-            for ignore_entry in ignore_entries:
-                line += 1
+        for ignore_entry in ignore_entries:
+            line += 1
 
-                if ' ' not in ignore_entry:
-                    invalid_ignores.append((line, 'Invalid syntax'))
-                    continue
+            if not ignore_entry:
+                continue
 
-                path, code = ignore_entry.split(' ', 1)
+            if ' ' not in ignore_entry:
+                invalid_ignores.append((line, 'Invalid syntax'))
+                continue
 
-                ignore[path][code] = line
+            path, code = ignore_entry.split(' ', 1)
 
-        skip_paths += [e.path for e in targets.exclude_external]
-
-        if skip_paths:
-            cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
+            ignore[path][code] = line
 
         if args.base_branch:
             cmd.extend([
@@ -144,8 +140,13 @@ class ValidateModulesTest(SanitySingleVersion):
                 confidence=calculate_confidence(VALIDATE_IGNORE_PATH, line, args.metadata) if args.metadata.changes else None,
             ))
 
+        line = 0
+
         for path in skip_paths:
             line += 1
+
+            if not path:
+                continue
 
             if not os.path.exists(path):
                 # Keep files out of the list which no longer exist in the repo.

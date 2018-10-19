@@ -14,16 +14,12 @@ if [ "${platform}" = "freebsd" ]; then
         pkg install -y \
             bash \
             curl \
-            devel/ruby-gems \
-            git \
             gtar \
-            mercurial \
             python \
-            rsync \
-            ruby \
-            subversion \
+            py27-Jinja2 \
+            py27-virtualenv \
+            py27-cryptography \
             sudo \
-            zip \
          && break
          echo "Failed to install packages. Sleeping before trying again..."
          sleep 10
@@ -34,15 +30,10 @@ elif [ "${platform}" = "rhel" ]; then
     while true; do
         yum install -y \
             gcc \
-            git \
-            mercurial \
             python-devel \
             python-jinja2 \
             python-virtualenv \
             python2-cryptography \
-            rubygems \
-            subversion \
-            unzip \
          && break
          echo "Failed to install packages. Sleeping before trying again..."
          sleep 10
@@ -85,6 +76,7 @@ if [ ! -f "${HOME}/.ssh/id_rsa.pub" ]; then
 fi
 
 # Improve prompts on remote host for interactive use.
+# shellcheck disable=SC1117
 cat << EOF > ~/.bashrc
 alias ls='ls -G'
 export PS1='\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '

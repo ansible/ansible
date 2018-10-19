@@ -43,12 +43,13 @@ def initialize_cloud_plugins():
 
 def get_cloud_platforms(args, targets=None):
     """
-    :type args: IntegrationConfig
+    :type args: TestConfig
     :type targets: tuple[IntegrationTarget] | None
     :rtype: list[str]
     """
-    if args.list_targets:
-        return []
+    if isinstance(args, IntegrationConfig):
+        if args.list_targets:
+            return []
 
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])
@@ -164,6 +165,7 @@ class CloudBase(ABC):
     _CONFIG_PATH = 'config_path'
     _RESOURCE_PREFIX = 'resource_prefix'
     _MANAGED = 'managed'
+    _SETUP_EXECUTED = 'setup_executed'
 
     def __init__(self, args):
         """
@@ -171,6 +173,20 @@ class CloudBase(ABC):
         """
         self.args = args
         self.platform = self.__module__.split('.')[2]
+
+    @property
+    def setup_executed(self):
+        """
+        :rtype: bool
+        """
+        return self._get_cloud_config(self._SETUP_EXECUTED, False)
+
+    @setup_executed.setter
+    def setup_executed(self, value):
+        """
+        :type value: bool
+        """
+        self._set_cloud_config(self._SETUP_EXECUTED, value)
 
     @property
     def config_path(self):
@@ -214,11 +230,15 @@ class CloudBase(ABC):
         """
         self._set_cloud_config(self._MANAGED, value)
 
-    def _get_cloud_config(self, key):
+    def _get_cloud_config(self, key, default=None):
         """
         :type key: str
+        :type default: str | int | bool | None
         :rtype: str | int | bool
         """
+        if default is not None:
+            return self.args.metadata.cloud_config[self.platform].get(key, default)
+
         return self.args.metadata.cloud_config[self.platform][key]
 
     def _set_cloud_config(self, key, value):
@@ -350,16 +370,28 @@ class CloudProvider(CloudBase):
                 os.environ['SHIPPABLE_JOB_NUMBER'],
             )
 
-        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0])
+        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
 
         return 'ansible-test-%s-%d' % (node, random.randint(10000000, 99999999))
 
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
+    def setup_once(self):
+        """Run setup if it has not already been run."""
+        if self.setup_executed:
+            return
+
+        self.setup()
+        self.setup_executed = True
+
+    def setup(self):
+        """Setup which should be done once per environment instead of once per test target."""
+        pass
+
     @abc.abstractmethod
     def configure_environment(self, env, cmd):
-        """
+        """Configuration which should be done once for each test target.
         :type env: dict[str, str]
         :type cmd: list[str]
         """

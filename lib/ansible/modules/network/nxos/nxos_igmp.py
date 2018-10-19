@@ -43,26 +43,19 @@ options:
         description:
             - Removes routes when the IGMP process is restarted. By default,
               routes are not flushed.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     enforce_rtr_alert:
         description:
             - Enables or disables the enforce router alert option check for
               IGMPv2 and IGMPv3 packets.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     restart:
         description:
             - Restarts the igmp process (using an exec config command).
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     state:
         description:
             - Manages desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'default']
 '''
@@ -139,10 +132,12 @@ def main():
             commands.append('no ip igmp enforce-router-alert')
 
     elif state == 'present':
-        if desired['flush_routes'] and not current['flush_routes']:
-            commands.append('ip igmp flush-routes')
-        if desired['enforce_rtr_alert'] and not current['enforce_rtr_alert']:
-            commands.append('ip igmp enforce-router-alert')
+        ldict = {'flush_routes': 'flush-routes', 'enforce_rtr_alert': 'enforce-router-alert'}
+        for arg in ['flush_routes', 'enforce_rtr_alert']:
+            if desired[arg] and not current[arg]:
+                commands.append('ip igmp {0}'.format(ldict.get(arg)))
+            elif current[arg] and not desired[arg]:
+                commands.append('no ip igmp {0}'.format(ldict.get(arg)))
 
     result = {'changed': False, 'updates': commands, 'warnings': warnings}
 
@@ -152,7 +147,8 @@ def main():
         result['changed'] = True
 
     if module.params['restart']:
-        run_commands(module, 'restart igmp')
+        cmd = {'command': 'restart igmp', 'output': 'text'}
+        run_commands(module, cmd)
 
     module.exit_json(**result)
 

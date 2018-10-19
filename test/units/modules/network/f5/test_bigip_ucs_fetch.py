@@ -14,17 +14,17 @@ from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import Mock
+from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_ucs_fetch import Parameters
-    from library.bigip_ucs_fetch import ModuleManager
-    from library.bigip_ucs_fetch import V1Manager
-    from library.bigip_ucs_fetch import V2Manager
-    from library.bigip_ucs_fetch import ArgumentSpec
+    from library.modules.bigip_ucs_fetch import Parameters
+    from library.modules.bigip_ucs_fetch import ModuleManager
+    from library.modules.bigip_ucs_fetch import V1Manager
+    from library.modules.bigip_ucs_fetch import V2Manager
+    from library.modules.bigip_ucs_fetch import ArgumentSpec
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args
@@ -94,7 +94,7 @@ class TestV1Manager(unittest.TestCase):
             force='yes',
             fail_on_missing='no',
             src='remote.ucs',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

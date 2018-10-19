@@ -68,9 +68,21 @@ options:
     admin_password:
         description:
             - The password of the administrator login.
+    create_mode:
+        description:
+            - Create mode of SQL Server
+        default: Default
+    state:
+        description:
+            - Assert the state of the PostgreSQL server. Use 'present' to create or update a server and 'absent' to delete it.
+        default: present
+        choices:
+            - present
+            - absent
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -83,9 +95,9 @@ EXAMPLES = '''
       resource_group: TestGroup
       name: testserver
       sku:
-        name: PGSQLS100
-        tier: Basic
-        capacity: 100
+        name: GP_Gen4_2
+        tier: GeneralPurpose
+        capacity: 2
       location: eastus
       storage_mb: 1024
       enforce_ssl: True
@@ -124,9 +136,9 @@ import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
-    from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -188,20 +200,20 @@ class AzureRMServers(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
         super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
                                              supports_check_mode=True,
-                                             supports_tags=False)
+                                             supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
@@ -231,9 +243,6 @@ class AzureRMServers(AzureRMModuleBase):
         old_response = None
         response = None
 
-        self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
-
         resource_group = self.get_resource_group(self.resource_group)
 
         if "location" not in self.parameters:
@@ -253,6 +262,9 @@ class AzureRMServers(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if PostgreSQL Server instance has to be deleted or may be updated")
+                update_tags, newtags = self.update_tags(old_response.get('tags', {}))
+                if update_tags:
+                    self.tags = newtags
                 self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -303,15 +315,16 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Creating / Updating the PostgreSQL Server instance {0}".format(self.name))
 
         try:
+            self.parameters['tags'] = self.tags
             if self.to_do == Actions.Create:
-                response = self.mgmt_client.servers.create(resource_group_name=self.resource_group,
-                                                           server_name=self.name,
-                                                           parameters=self.parameters)
+                response = self.postgresql_client.servers.create(resource_group_name=self.resource_group,
+                                                                 server_name=self.name,
+                                                                 parameters=self.parameters)
             else:
-                response = self.mgmt_client.servers.update(resource_group_name=self.resource_group,
-                                                           server_name=self.name,
-                                                           parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+                response = self.postgresql_client.servers.update(resource_group_name=self.resource_group,
+                                                                 server_name=self.name,
+                                                                 parameters=self.parameters)
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -327,8 +340,8 @@ class AzureRMServers(AzureRMModuleBase):
         '''
         self.log("Deleting the PostgreSQL Server instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.servers.delete(resource_group_name=self.resource_group,
-                                                       server_name=self.name)
+            response = self.postgresql_client.servers.delete(resource_group_name=self.resource_group,
+                                                             server_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the PostgreSQL Server instance.')
             self.fail("Error deleting the PostgreSQL Server instance: {0}".format(str(e)))
@@ -344,8 +357,8 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Checking if the PostgreSQL Server instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.servers.get(resource_group_name=self.resource_group,
-                                                    server_name=self.name)
+            response = self.postgresql_client.servers.get(resource_group_name=self.resource_group,
+                                                          server_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("PostgreSQL Server instance : {0} found".format(response.name))
@@ -360,6 +373,7 @@ class AzureRMServers(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMServers()
+
 
 if __name__ == '__main__':
     main()

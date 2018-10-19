@@ -2,9 +2,9 @@
 ! Last configuration change at Jan  11 12:26:08 2018
 !
 snmp-server contact http://www.dell.com/support
-snmp-server host 1.1.1.1 traps version 1 c4 udp-port 5
-snmp-server host 1.1.1.1 traps version 2c c1 udp-port 4
-snmp-server host 2.2.2.2 traps version 1 c3 udp-port 162
+snmp-server host 192.0.2.1 traps version 1 c4 udp-port 5
+snmp-server host 192.0.2.1 traps version 2c c1 udp-port 4
+snmp-server host 192.0.2.2 traps version 1 c3 udp-port 162
 ip community-list expanded commex deny aaa
 ip community-list standard commstd deny internet
 ip community-list standard commstd permit no-advertise

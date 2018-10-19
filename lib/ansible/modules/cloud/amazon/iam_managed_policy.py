@@ -36,13 +36,12 @@ options:
   only_version:
     description:
       - Remove all other non default revisions, if this is used with C(make_default) it will result in all other versions of this policy being deleted.
-    required: False
-    default: False
+    type: bool
+    default: 'no'
   state:
     description:
       - Should this managed policy be present or absent. Set to absent to detach all entities from this policy and remove it if found.
-    required: True
-    default: null
+    default: present
     choices: [ "present", "absent" ]
 author: "Dan Kozlowski (@dkhenry)"
 extends_documentation_fragment:
@@ -279,7 +278,7 @@ def main():
         make_default=dict(type='bool', default=True),
         only_version=dict(type='bool', default=False),
         fail_on_delete=dict(type='bool', default=True),
-        state=dict(required=True, choices=['present', 'absent']),
+        state=dict(default='present', choices=['present', 'absent']),
     ))
 
     module = AnsibleModule(

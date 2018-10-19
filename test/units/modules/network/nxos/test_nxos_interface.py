@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_interface
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -71,5 +71,21 @@ class TestNxosInterfaceModule(TestNxosModule):
 
     def test_nxos_interface_delete(self):
         set_module_args(dict(interface='loopback0', state='absent'))
+        result = self.execute_module(changed=False)
+        self.assertEqual(result['commands'], [])
+
+    def test_nxos_interface_type(self):
+        set_module_args(dict(interface_type='loopback', state='absent'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['no interface loopback0'])
+
+    def test_nxos_interface_mtu(self):
+        set_module_args(dict(interface='Ethernet2/1', mode='layer2', mtu='1800'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['interface Ethernet2/1', 'switchport', 'mtu 1800',
+                                              'interface Ethernet2/1', 'no shutdown'])
+
+    def test_nxos_interface_speed_idempotence(self):
+        set_module_args(dict(interface='Ethernet2/1', speed='1000'))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])

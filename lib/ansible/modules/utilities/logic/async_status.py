@@ -32,7 +32,7 @@ options:
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
-    - See also U(http://docs.ansible.com/playbooks_async.html)
+    - See also U(https://docs.ansible.com/playbooks_async.html)
     - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
@@ -42,6 +42,7 @@ author:
 import json
 import os
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -51,12 +52,13 @@ def main():
     module = AnsibleModule(argument_spec=dict(
         jid=dict(required=True),
         mode=dict(default='status', choices=['status', 'cleanup']),
+        # passed in from the async_status action plugin
+        _async_dir=dict(required=True, type='path'),
     ))
 
     mode = module.params['mode']
     jid = module.params['jid']
-
-    async_dir = os.environ.get('ANSIBLE_ASYNC_DIR', '~/.ansible_async')
+    async_dir = module.params['_async_dir']
 
     # setup logging directory
     logdir = os.path.expanduser(async_dir)
@@ -92,7 +94,7 @@ def main():
         data['finished'] = 0
 
     # Fix error: TypeError: exit_json() keywords must be strings
-    data = dict([(str(k), v) for k, v in iteritems(data)])
+    data = dict([(to_native(k), v) for k, v in iteritems(data)])
 
     module.exit_json(**data)
 

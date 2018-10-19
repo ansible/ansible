@@ -40,14 +40,12 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['login', 'motd']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration.  This argument
         accepts a multiline string. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is
@@ -102,7 +100,7 @@ def map_obj_to_commands(updates, module):
     state = module.params['state']
 
     if state == 'absent' and have.get('text'):
-        if isinstance(have['text'], str):
+        if isinstance(have['text'], string_types):
             commands.append('no banner %s' % module.params['banner'])
         elif have['text'].get('loginBanner') or have['text'].get('motd'):
             commands.append({'cmd': 'no banner %s' % module.params['banner']})
@@ -149,7 +147,7 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
-        text = str(text).strip()
+        text = to_text(text).strip()
 
     return {
         'banner': module.params['banner'],
@@ -196,6 +194,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

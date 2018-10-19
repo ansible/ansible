@@ -21,12 +21,12 @@ import os
 import time
 import errno
 from abc import ABCMeta, abstractmethod
-from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.loader import cache_loader
 
 try:
@@ -153,7 +153,7 @@ class BaseFileCacheModule(BaseCacheModule):
     def has_expired(self, key):
 
         if self._timeout == 0:
-            return True
+            return False
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:

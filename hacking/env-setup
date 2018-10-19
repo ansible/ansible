@@ -1,10 +1,26 @@
 # usage: source hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
+# prepend a value to a potentially empty path variable
+# usage: prepend_path variable_name value
+prepend_path()
+{
+    variable_name="$1"
+    value="$2"
+
+    old_value=$( eval "echo \$$variable_name" )
+
+    if [ "x$old_value" != "x" ]; then
+        value="$value:"
+    fi
+
+    export "$variable_name=$value$old_value"
+}
+
 # Default values for shell variables we use
 PYTHONPATH=${PYTHONPATH-""}
 PATH=${PATH-""}
-MANPATH=${MANPATH-""}
+MANPATH=${MANPATH-$(manpath)}
 PYTHON=$(which python 2>/dev/null || which python3 2>/dev/null)
 PYTHON_BIN=${PYTHON_BIN-$PYTHON}
 
@@ -25,18 +41,18 @@ elif [ -n "$KSH_VERSION" ] && echo $KSH_VERSION | grep -qv '^@(#)PD KSH'; then
 else
     HACKING_DIR="$PWD/hacking"
 fi
-# The below is an alternative to readlink -fn which doesn't exist on OS X
+# The below is an alternative to readlink -fn which doesn't exist on macOS
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=$($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 export ANSIBLE_HOME="$(dirname "$FULL_PATH")"
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
-PREFIX_PATH="$ANSIBLE_HOME/bin:$ANSIBLE_HOME/test/runner"
+PREFIX_PATH="$ANSIBLE_HOME/bin"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
-expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
-expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || export PATH="$PREFIX_PATH:$PATH"
-expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_MANPATH:$MANPATH"
+expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || prepend_path PYTHONPATH "$PREFIX_PYTHONPATH"
+expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || prepend_path PATH "$PREFIX_PATH"
+expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || prepend_path MANPATH "$PREFIX_MANPATH"
 
 #
 # Generate egg_info so that pkg_resources works
@@ -70,16 +86,16 @@ fi
 
 if [ "$verbosity" != silent ] ; then
     cat <<- EOF
-	
+
 	Setting up Ansible to run out of checkout...
-	
+
 	PATH=$PATH
 	PYTHONPATH=$PYTHONPATH
 	MANPATH=$MANPATH
-	
+
 	Remember, you may wish to specify your host file with -i
-	
+
 	Done!
-	
+
 	EOF
 fi

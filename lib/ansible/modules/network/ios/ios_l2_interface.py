@@ -19,7 +19,7 @@ extends_documentation_fragment: ios
 version_added: "2.5"
 short_description: Manage Layer-2 interface on Cisco IOS devices.
 description:
-  - This module provides declarative management of Layer-2 interface on
+  - This module provides declarative management of Layer-2 interfaces on
     Cisco IOS devices.
 author:
   - Nathaniel Case (@qalthos)
@@ -118,7 +118,7 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 def get_interface_type(interface):
     intf_type = 'unknown'
-    if interface.upper()[:2] in ('ET', 'GI'):
+    if interface.upper()[:2] in ('ET', 'GI', 'FA', 'TE', 'FO'):
         intf_type = 'ethernet'
     elif interface.upper().startswith('VL'):
         intf_type = 'svi'
@@ -146,19 +146,26 @@ def is_switchport(name, module):
 
 def interface_is_portchannel(name, module):
     if get_interface_type(name) == 'ethernet':
-        config = get_config(module, flags=[' | section interface'])
-        if 'channel group' in config:
+        config = run_commands(module, ['show run interface {0}'.format(name)])[0]
+        if any(c in config for c in ['channel group', 'channel-group']):
             return True
-
     return False
 
 
 def get_switchport(name, module):
     config = run_commands(module, ['show interface {0} switchport'.format(name)])[0]
-    mode = re.search(r'Administrative Mode: (?:.* )?(\w+)$', config, re.M).group(1)
-    access = re.search(r'Access Mode VLAN: (\d+)', config).group(1)
-    native = re.search(r'Trunking Native Mode VLAN: (\d+)', config).group(1)
-    trunk = re.search(r'Trunking VLANs Enabled: (.+)$', config, re.M).group(1)
+    mode = re.search(r'Administrative Mode: (?:.* )?(\w+)$', config, re.M)
+    access = re.search(r'Access Mode VLAN: (\d+)', config)
+    native = re.search(r'Trunking Native Mode VLAN: (\d+)', config)
+    trunk = re.search(r'Trunking VLANs Enabled: (.+)$', config, re.M)
+    if mode:
+        mode = mode.group(1)
+    if access:
+        access = access.group(1)
+    if native:
+        native = native.group(1)
+    if trunk:
+        trunk = trunk.group(1)
     if trunk == 'ALL':
         trunk = '1-4094'
 
@@ -185,18 +192,21 @@ def remove_switchport_config_commands(name, existing, proposed, module):
             commands.append(command)
 
     elif mode == 'trunk':
-        tv_check = existing.get('trunk_vlans_list') == proposed.get('trunk_vlans_list')
+        # Supported Remove Scenarios for trunk_vlans_list
+        # 1) Existing: 1,2,3 Proposed: 1,2,3 - Remove all
+        # 2) Existing: 1,2,3 Proposed: 1,2   - Remove 1,2 Leave 3
+        # 3) Existing: 1,2,3 Proposed: 2,3   - Remove 2,3 Leave 1
+        # 4) Existing: 1,2,3 Proposed: 4,5,6 - None removed.
+        # 5) Existing: None  Proposed: 1,2,3 - None removed.
+        existing_vlans = existing.get('trunk_vlans_list')
+        proposed_vlans = proposed.get('trunk_vlans_list')
+        vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
 
-        if not tv_check:
-            existing_vlans = existing.get('trunk_vlans_list')
-            proposed_vlans = proposed.get('trunk_vlans_list')
-            vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
-
-            if vlans_to_remove:
-                proposed_allowed_vlans = proposed.get('trunk_allowed_vlans')
-                remove_trunk_allowed_vlans = proposed.get('trunk_vlans', proposed_allowed_vlans)
-                command = 'switchport trunk allowed vlan remove {0}'.format(remove_trunk_allowed_vlans)
-                commands.append(command)
+        if vlans_to_remove:
+            proposed_allowed_vlans = proposed.get('trunk_allowed_vlans')
+            remove_trunk_allowed_vlans = proposed.get('trunk_vlans', proposed_allowed_vlans)
+            command = 'switchport trunk allowed vlan remove {0}'.format(remove_trunk_allowed_vlans)
+            commands.append(command)
 
         native_check = existing.get('native_vlan') == proposed.get('native_vlan')
         if native_check and proposed.get('native_vlan'):
@@ -291,13 +301,14 @@ def vlan_range_to_list(vlans):
     result = []
     if vlans:
         for part in vlans.split(','):
-            if part == 'none':
+            if part.lower() == 'none':
                 break
-            if '-' in part:
-                start, stop = (int(i) for i in part.split('-'))
-                result.extend(range(start, stop + 1))
-            else:
-                result.append(int(part))
+            if part:
+                if '-' in part:
+                    start, stop = (int(i) for i in part.split('-'))
+                    result.extend(range(start, stop + 1))
+                else:
+                    result.append(int(part))
     return sorted(result)
 
 

@@ -73,6 +73,7 @@ options:
         description:
             - Boolean flag to set system_default.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -140,6 +141,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'vrfcontext',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

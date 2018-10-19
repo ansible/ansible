@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function
 
 import os
-import re
 
 from lib.sanity import (
     SanityMultipleVersion,
@@ -15,6 +14,10 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     run_command,
+    display,
+    find_python,
+    read_lines_without_comments,
+    parse_to_list_of_dict,
 )
 
 from lib.config import (
@@ -33,14 +36,12 @@ class CompileTest(SanityMultipleVersion):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
-        # optional list of regex patterns to exclude from tests
         skip_file = 'test/sanity/compile/python%s-skip.txt' % python_version
 
         if os.path.exists(skip_file):
-            with open(skip_file, 'r') as skip_fd:
-                skip_paths = skip_fd.read().splitlines()
+            skip_paths = read_lines_without_comments(skip_file)
         else:
             skip_paths = []
 
@@ -49,10 +50,14 @@ class CompileTest(SanityMultipleVersion):
         if not paths:
             return SanitySkipped(self.name, python_version=python_version)
 
-        cmd = ['python%s' % python_version, 'test/sanity/compile/compile.py'] + paths
+        cmd = [find_python(python_version), 'test/sanity/compile/compile.py']
+
+        data = '\n'.join(paths)
+
+        display.info(data, verbosity=4)
 
         try:
-            stdout, stderr = run_command(args, cmd, capture=True)
+            stdout, stderr = run_command(args, cmd, data=data, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout
@@ -67,7 +72,7 @@ class CompileTest(SanityMultipleVersion):
 
         pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
 
-        results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+        results = parse_to_list_of_dict(pattern, stdout)
 
         results = [SanityMessage(
             message=r['message'],
@@ -80,6 +85,9 @@ class CompileTest(SanityMultipleVersion):
 
         for path in skip_paths:
             line += 1
+
+            if not path:
+                continue
 
             if not os.path.exists(path):
                 # Keep files out of the list which no longer exist in the repo.

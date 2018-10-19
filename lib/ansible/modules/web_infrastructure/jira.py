@@ -233,6 +233,7 @@ EXAMPLES = """
 import base64
 import json
 import sys
+from ansible.module_utils._text import to_text, to_bytes
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -249,7 +250,8 @@ def request(url, user, passwd, timeout, data=None, method=None):
     # resulting in unexpected results. To work around this we manually
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(user, passwd), errors='surrogate_or_strict')))
+
     response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
                                headers={'Content-Type': 'application/json',
                                         'Authorization': "Basic %s" % auth})
@@ -364,6 +366,7 @@ def link(restbase, user, passwd, params):
     ret = post(url, user, passwd, params['timeout'], data)
 
     return ret
+
 
 # Some parameters are required depending on the operation:
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],

@@ -209,12 +209,19 @@ def main():
                     ebs.delete_application(ApplicationName=app_name, TerminateEnvByForce=terminate_by_force)
                 else:
                     ebs.delete_application(ApplicationName=app_name)
-            except (BotoCoreError, ClientError) as e:
+                changed = True
+            except BotoCoreError as e:
                 module.fail_json_aws(e, msg="Cannot terminate app")
+            except ClientError as e:
+                if 'It is currently pending deletion.' not in e.response['Error']['Message']:
+                    module.fail_json_aws(e, msg="Cannot terminate app")
+                else:
+                    changed = False
 
-            result = dict(changed=True, app=app)
+            result = dict(changed=changed, app=app)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import sys
 
-from collections import defaultdict, MutableMapping
+from collections import defaultdict
 
 try:
     from hashlib import sha1
@@ -36,14 +36,15 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, text_type
+from ansible.module_utils.common._collections_compat import MutableMapping, Sequence
+from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.clean import namespace_facts
+from ansible.vars.clean import namespace_facts, clean_facts
 
 try:
     from __main__ import display
@@ -79,7 +80,6 @@ class VariableManager:
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
     def __init__(self, loader=None, inventory=None):
-
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -90,6 +90,8 @@ class VariableManager:
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._options_vars = defaultdict(dict)
+        self.safe_basedir = False
+        self._templar = Templar(loader=self._loader)
 
         # bad cache plugin is not fatal error
         try:
@@ -110,6 +112,7 @@ class VariableManager:
             omit_token=self._omit_token,
             options_vars=self._options_vars,
             inventory=self._inventory,
+            safe_basedir=self.safe_basedir,
         )
         return data
 
@@ -123,6 +126,7 @@ class VariableManager:
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
+        self.safe_basedir = data.get('safe_basedir', False)
 
     @property
     def extra_vars(self):
@@ -150,26 +154,6 @@ class VariableManager:
         if not isinstance(value, dict):
             raise AnsibleAssertionError("the type of 'value' for options_vars should be a dict, but is a %s" % type(value))
         self._options_vars = value.copy()
-
-    def _preprocess_vars(self, a):
-        '''
-        Ensures that vars contained in the parameter passed in are
-        returned as a list of dictionaries, to ensure for instance
-        that vars loaded from a file conform to an expected state.
-        '''
-
-        if a is None:
-            return None
-        elif not isinstance(a, list):
-            data = [a]
-        else:
-            data = a
-
-        for item in data:
-            if not isinstance(item, MutableMapping):
-                raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
-
-        return data
 
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
@@ -203,7 +187,9 @@ class VariableManager:
         )
 
         # default for all cases
-        basedirs = [self._loader.get_basedir()]
+        basedirs = []
+        if self.safe_basedir:  # avoid adhoc/console loading cwd
+            basedirs = [self._loader.get_basedir()]
 
         if play:
             # first we compile any vars specified in defaults/main.yml
@@ -261,6 +247,7 @@ class VariableManager:
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
+
                         data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
                 return data
 
@@ -268,6 +255,7 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
+
                     for path in basedirs:
                         data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
                 return data
@@ -320,13 +308,14 @@ class VariableManager:
             all_vars = combine_vars(all_vars, _plugins_play([host]))
 
             # finally, the facts caches for this host, if it exists
+            # TODO: cleaning of facts should eventually become part of taskresults instead of vars
             try:
-                facts = self._fact_cache.get(host.name, {})
+                facts = wrap_var(self._fact_cache.get(host.name, {}))
                 all_vars.update(namespace_facts(facts))
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    all_vars = combine_vars(all_vars, wrap_var(facts))
+                    all_vars = combine_vars(all_vars, wrap_var(clean_facts(facts)))
                 else:
                     # always 'promote' ansible_local
                     all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
@@ -343,7 +332,7 @@ class VariableManager:
                     # and magic vars so we can properly template the vars_files entries
                     temp_vars = combine_vars(all_vars, self._extra_vars)
                     temp_vars = combine_vars(temp_vars, magic_variables)
-                    templar = Templar(loader=self._loader, variables=temp_vars)
+                    self._templar.set_available_variables(temp_vars)
 
                     # we assume each item in the list is itself a list, as we
                     # support "conditional includes" for vars_files, which mimics
@@ -357,7 +346,13 @@ class VariableManager:
                     # raise an error, which is silently ignored at this point.
                     try:
                         for vars_file in vars_file_list:
-                            vars_file = templar.template(vars_file)
+                            vars_file = self._templar.template(vars_file)
+                            if not (isinstance(vars_file, Sequence)):
+                                raise AnsibleError(
+                                    "Invalid vars_files entry found: %r\n"
+                                    "vars_files entries should be either a string type or "
+                                    "a list of string types after template expansion" % vars_file
+                                )
                             try:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
@@ -435,7 +430,7 @@ class VariableManager:
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later
         if task and task.delegate_to is not None and include_delegate_to:
-            all_vars['ansible_delegated_vars'] = self._get_delegated_vars(play, task, all_vars)
+            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
         # 'vars' magic var
         if task or play:
@@ -467,8 +462,7 @@ class VariableManager:
         if self._inventory is not None:
             variables['groups'] = self._inventory.get_groups_dict()
             if play:
-                templar = Templar(loader=self._loader)
-                if templar.is_template(play.hosts):
+                if self._templar.is_template(play.hosts):
                     pattern = 'all'
                 else:
                     pattern = play.hosts or 'all'
@@ -493,19 +487,24 @@ class VariableManager:
         return variables
 
     def _get_delegated_vars(self, play, task, existing_variables):
+        if not hasattr(task, 'loop'):
+            # This "task" is not a Task, so we need to skip it
+            return {}
+
         # we unfortunately need to template the delegate_to field here,
         # as we're fetching vars before post_validate has been called on
         # the task that has been passed in
         vars_copy = existing_variables.copy()
-        templar = Templar(loader=self._loader, variables=vars_copy)
+        self._templar.set_available_variables(vars_copy)
 
         items = []
+        has_loop = True
         if task.loop_with is not None:
             if task.loop_with in lookup_loader:
                 try:
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=self._templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
-                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=self._templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
@@ -513,21 +512,34 @@ class VariableManager:
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
-            items = templar.template(task.loop)
+            try:
+                items = self._templar.template(task.loop)
+            except AnsibleUndefinedVariable:
+                # This task will be skipped later due to this, so we just setup
+                # a dummy array for the later code so it doesn't fail
+                items = [None]
         else:
+            has_loop = False
             items = [None]
 
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
+        cache_items = False
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
                 vars_copy[item_var] = item
 
-            templar.set_available_variables(vars_copy)
-            delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
+            self._templar.set_available_variables(vars_copy)
+            delegated_host_name = self._templar.template(task.delegate_to, fail_on_undefined=False)
+            if delegated_host_name != task.delegate_to:
+                cache_items = True
             if delegated_host_name is None:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
+            if not isinstance(delegated_host_name, string_types):
+                raise AnsibleError(message="the field 'delegate_to' has an invalid type (%s), and could not be"
+                                           " converted to a string type." % type(delegated_host_name),
+                                   obj=task._ds)
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value
                 # does not appear to be tied to the loop item variable
@@ -581,7 +593,16 @@ class VariableManager:
                 include_delegate_to=False,
                 include_hostvars=False,
             )
-        return delegated_host_vars
+
+        _ansible_loop_cache = None
+        if has_loop and cache_items:
+            # delegate_to templating produced a change, so we will cache the templated items
+            # in a special private hostvar
+            # this ensures that delegate_to+loop doesn't produce different results than TaskExecutor
+            # which may reprocess the loop
+            _ansible_loop_cache = items
+
+        return delegated_host_vars, _ansible_loop_cache
 
     def clear_facts(self, hostname):
         '''

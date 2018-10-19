@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -11,12 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_stat
 version_added: "1.7"
-short_description: returns information about a Windows file
+short_description: Get information about Windows files
 description:
      - Returns information about a Windows file.
      - For non-Windows targets, use the M(stat) module instead.
@@ -26,6 +25,7 @@ options:
             - The full path of the file/object to get the facts of; both forward and
               back slashes are accepted.
         required: yes
+        type: path
     get_md5:
         description:
             - Whether to return the checksum sum of the file. Between Ansible 1.9
@@ -49,7 +49,7 @@ options:
             - Algorithm to determine checksum of file. Will throw an error if
               the host is unable to use specified algorithm.
         default: sha1
-        choices: ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
+        choices: [ md5, sha1, sha256, sha384, sha512 ]
         version_added: "2.3"
 notes:
      - For non-Windows targets, use the M(stat) module instead.

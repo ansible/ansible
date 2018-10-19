@@ -1,7 +1,5 @@
 ---
-- debug: msg="START connection={{ ansible_connection }}/src_basic.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg="START common/src_basic.yaml on connection={{ ansible_connection }}"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -50,4 +48,4 @@
 # https://github.com/ansible/ansible-modules-core/issues/4807
       - "result.updates is not defined"
 
-- debug: msg="END connection={{ ansible_connection }}/src_basic.yaml"
+- debug: msg="END common/src_basic.yaml on connection={{ ansible_connection }}"

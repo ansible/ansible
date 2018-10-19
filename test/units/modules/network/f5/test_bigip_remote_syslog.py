@@ -14,17 +14,17 @@ from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import Mock
+from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_remote_syslog import Parameters
-    from library.bigip_remote_syslog import ModuleManager
-    from library.bigip_remote_syslog import ArgumentSpec
-    from library.bigip_remote_syslog import HAS_F5SDK
-    from library.bigip_remote_syslog import HAS_NETADDR
+    from library.modules.bigip_remote_syslog import Parameters
+    from library.modules.bigip_remote_syslog import ModuleManager
+    from library.modules.bigip_remote_syslog import ArgumentSpec
+    from library.modules.bigip_remote_syslog import HAS_F5SDK
+    from library.modules.bigip_remote_syslog import HAS_NETADDR
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
     from test.unit.modules.utils import set_module_args

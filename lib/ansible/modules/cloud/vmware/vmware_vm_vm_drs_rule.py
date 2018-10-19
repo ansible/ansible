@@ -1,18 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
-
 
 DOCUMENTATION = '''
 ---
@@ -22,7 +21,7 @@ description:
 - This module can be used to configure VMware DRS Affinity rule for virtual machine in given cluster.
 version_added: 2.5
 author:
-- "Abhijeet Kasurde (@akasurde)"
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -46,17 +45,20 @@ options:
     - If set to C(True), the DRS rule will be enabled.
     - Effective only if C(state) is set to C(present).
     default: False
+    type: bool
   mandatory:
     description:
     - If set to C(True), the DRS rule will be mandatory.
     - Effective only if C(state) is set to C(present).
     default: False
+    type: bool
   affinity_rule:
     description:
     - If set to C(True), the DRS rule will be an Affinity rule.
     - If set to C(False), the DRS rule will be an Anti-Affinity rule.
     - Effective only if C(state) is set to C(present).
-    default: False
+    default: True
+    type: bool
   state:
     description:
     - If set to C(present), then the DRS rule is created if not present.
@@ -64,13 +66,14 @@ options:
     - If set to C(absent), then the DRS rule is deleted if present.
     required: False
     default: present
+    choices: [ present, absent ]
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
 - name: Create DRS Affinity Rule for VM-VM
   vmware_vm_vm_drs_rule:
-    hostname: "{{ esxi }}"
+    hostname: "{{ esxi_server }}"
     username: "{{ esxi_username }}"
     password: "{{ esxi_password }}"
     cluster_name: "{{ cluster_name }}"
@@ -82,10 +85,11 @@ EXAMPLES = r'''
     enabled: True
     mandatory: True
     affinity_rule: True
+  delegate_to: localhost
 
 - name: Create DRS Anti-Affinity Rule for VM-VM
   vmware_vm_vm_drs_rule:
-    hostname: "{{ esxi }}"
+    hostname: "{{ esxi_server }}"
     username: "{{ esxi_username }}"
     password: "{{ esxi_password }}"
     cluster_name: "{{ cluster_name }}"
@@ -97,16 +101,18 @@ EXAMPLES = r'''
     enabled: True
     mandatory: True
     affinity_rule: False
+  delegate_to: localhost
 
 - name: Delete DRS Affinity Rule for VM-VM
   vmware_vm_vm_drs_rule:
-    hostname: "{{ esxi }}"
+    hostname: "{{ esxi_server }}"
     username: "{{ esxi_username }}"
     password: "{{ esxi_password }}"
     cluster_name: "{{ cluster_name }}"
     validate_certs: no
     drs_rule_name: vm1-vm2-affinity-rule-001
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -228,7 +234,7 @@ class VmwareDrs(PyVmomi):
     # Create
     def create(self):
         """
-        Function to create a DRS rule if rule does not exists
+        Function to create a DRS rule if rule does not exist
         """
         rule_obj = self.get_rule_key_by_name(rule_name=self.rule_name)
         if rule_obj is not None:

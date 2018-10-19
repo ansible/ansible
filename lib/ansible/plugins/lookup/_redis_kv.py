@@ -14,7 +14,7 @@ DOCUMENTATION = """
         version: '2.9'
         alternative: new 'redis' lookup
     description:
-      - this looup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
+      - this lookup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
     requirements:
       - redis (python library https://github.com/andymccurdy/redis-py/)
     options:

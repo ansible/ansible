@@ -1,0 +1,49 @@
+- name: Create an SCM Credential
+  tower_credential:
+    name: SCM Credential for Project
+    organization: Default
+    kind: scm
+
+- name: Create a Project
+  tower_project:
+    name: my-project
+    organization: Default
+    state: present
+    scm_credential: SCM Credential for Project
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Project
+  tower_project:
+    name: my-project
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: create a project directory for manual project
+  import_tasks: create_project_dir.yml
+
+- name: Create a manual project
+  tower_project:
+    name: manual project
+    organization: Default
+    scm_type: manual
+    local_path: "manual_test_project"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a git project without credentials
+  tower_project:
+    name: git project
+    organization: Default
+    scm_type: git
+    scm_url: https://github.com/ansible/ansible

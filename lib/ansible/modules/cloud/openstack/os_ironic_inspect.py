@@ -28,35 +28,25 @@ options:
     mac:
       description:
         - unique mac address that is used to attempt to identify the host.
-      required: false
-      default: None
     uuid:
       description:
         - globally unique identifier (UUID) to identify the host.
-      required: false
-      default: None
     name:
       description:
         - unique name identifier to identify the host in Ironic.
-      required: false
-      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the endpoint URL for the Ironic API.
           Use with "auth" and "auth_type" settings set to None.
-      required: false
-      default: None
     timeout:
       description:
         - A timeout in seconds to tell the role to wait for the node to complete introspection if wait is set to True.
-      required: false
       default: 1200
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 RETURN = '''
@@ -89,16 +79,8 @@ EXAMPLES = '''
     name: "testnode1"
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _choose_id_value(module):
@@ -121,12 +103,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.0.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.0.0")
-
     if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
         module.fail_json(msg="Authentication appears to be disabled, "
@@ -138,9 +114,8 @@ def main():
             endpoint=module.params['ironic_url']
         )
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
-
         if module.params['name'] or module.params['uuid']:
             server = cloud.get_machine(_choose_id_value(module))
         elif module.params['mac']:
@@ -161,7 +136,7 @@ def main():
         else:
             module.fail_json(msg="node not found.")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -102,6 +102,9 @@ changed:
 
 import shlex
 
+# Ansible boiler-plate
+from ansible.module_utils.basic import AnsibleModule
+
 VROUTER_EXISTS = None
 LB_INTERFACE_EXISTS = None
 # Index range
@@ -321,8 +324,6 @@ def main():
 
     run_cli(module, cli)
 
-# Ansible boiler-plate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

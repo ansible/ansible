@@ -1,0 +1,212 @@
+# ios_linkagg -> CustomNetworkConfig
+# ios_config -> dumps, NetworkConfig
+
+- debug: msg="START cli/common_config.yaml on connection={{ ansible_connection }}"
+
+# Hit NetworkConfig
+- name: set hostname
+  ios_config:
+    lines: ['hostname ios-smoke']
+    match: none
+    provider: "{{ cli }}"
+
+- name: hit diff_ignore_lines
+  ios_config:
+    lines: ['hostname ios-smoke-diff']
+    diff_ignore_lines:
+      - hostname ios-smoke
+    save_when: modified
+    provider: "{{ cli }}"
+
+- name: return hostname
+  ios_config:
+    lines: ['hostname {{ shorter_hostname }}']
+    match: none
+    provider: "{{ cli }}"
+
+- name: hit items with parents
+  ios_config:
+    lines: ['permit ip any any log']
+    parents: ['ip access-list extended test']
+    provider: "{{ cli }}"
+    match: exact
+  register: result
+
+- name: teardown
+  ios_config:
+    lines:
+      - 'no ip access-list extended test'
+    match: none
+    provider: "{{ cli }}"
+
+- name: setup test NetworkConfig.difference, replace=block
+  ios_config:
+    lines:
+      - permit ip host 192.0.2.1 any log
+      - permit ip host 192.0.2.2 any log
+      - permit ip host 192.0.2.3 any log
+    parents: ['ip access-list extended test']
+    before: ['no ip access-list extended test']
+    after: ['exit']
+    provider: "{{ cli }}"
+    match: none
+
+- name: test NetworkConfig.difference, replace=block
+  ios_config:
+    lines:
+      - permit ip host 192.0.2.1 any log
+      - permit ip host 192.0.2.2 any log
+      - permit ip host 192.0.2.3 any log
+      - permit ip host 192.0.2.4 any log
+    parents: ['ip access-list extended test']
+    replace: block
+    after: ['exit']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list extended test' in result.updates"
+      - "'permit ip host 192.0.2.1 any log' in result.updates"
+      - "'permit ip host 192.0.2.2 any log' in result.updates"
+      - "'permit ip host 192.0.2.3 any log' in result.updates"
+      - "'permit ip host 192.0.2.4 any log' in result.updates"
+
+- name: teardown- NetworkConfig.difference, replace=block
+  ios_config:
+    lines:
+      - no ip access-list extended test
+    match: none
+    provider: "{{ cli }}"
+
+# CustomNetworkConfig
+# currently gets skipped because switch_type != 'L2'
+- set_fact: switch_type="{{ switch_type }}"
+
+- block:
+
+  - name: setup - remove config used in test(part1)
+    ios_config:
+      lines:
+        - no interface port-channel 20
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: setup - remove config used in test(part2)
+    ios_config:
+      lines:
+        - no interface port-channel 5
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: setup - remove config used in test(part3)
+    ios_config:
+      lines:
+        - no channel-group 20 mode active
+      provider: "{{ cli }}"
+      parents: "{{ item }}"
+    loop:
+      - interface GigabitEthernet0/1
+      - interface GigabitEthernet0/2
+
+  - name: create linkagg
+    ios_linkagg: &create
+      group: 20
+      state: present
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface port-channel 20' in result.commands"
+
+  - name: set link aggregation group to members
+    ios_linkagg: &configure_member
+      group: 20
+      mode: active
+      members:
+        - GigabitEthernet0/1
+        - GigabitEthernet0/2
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface GigabitEthernet0/1' in result.commands"
+        - "'channel-group 20 mode active' in result.commands"
+        - "'interface GigabitEthernet0/2' in result.commands"
+        - "'channel-group 20 mode active' in result.commands"
+
+  - name: remove link aggregation group from member
+    ios_linkagg: &remove_member
+      group: 20
+      mode: active
+      members:
+        - GigabitEthernet0/2
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface GigabitEthernet0/1' in result.commands"
+        - "'no channel-group 20 mode active' in result.commands"
+
+  - name: remove linkagg
+    ios_linkagg: &remove
+      group: 20
+      state: absent
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no interface port-channel 20' in result.commands"
+
+  - name: create aggregate of linkagg definitions
+    ios_linkagg: &create_agg
+      aggregate:
+        - { group: 5 }
+        - { group: 20, mode: active, members: ['GigabitEthernet0/1'] }
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface port-channel 5' in result.commands"
+        - "'interface port-channel 20' in result.commands"
+        - "'interface GigabitEthernet0/1' in result.commands"
+        - "'channel-group 20 mode active' in result.commands"
+
+  - name: teardown(part1)
+    ios_config:
+      lines:
+        - no interface port-channel 20
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: teardown(part2)
+    ios_config:
+      lines:
+        - no interface port-channel 5
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: teardown(part3)
+    ios_config:
+      lines:
+        - no channel-group 20 mode active
+      provider: "{{ cli }}"
+      parents: "{{ item }}"
+    loop:
+      - interface GigabitEthernet0/1
+      - interface GigabitEthernet0/2
+
+  when: switch_type == 'L2'
+
+- debug: msg="END cli/common_config.yaml on connection={{ ansible_connection }}"

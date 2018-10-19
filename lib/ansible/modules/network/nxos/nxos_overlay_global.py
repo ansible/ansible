@@ -39,7 +39,6 @@ options:
     description:
       - Anycast gateway mac of the switch.
     required: true
-    default: null
 '''
 
 EXAMPLES = '''

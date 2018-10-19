@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_hsrp
 from .nxos_module import TestNxosModule, set_module_args
 
@@ -59,7 +59,7 @@ class TestNxosHsrpModule(TestNxosModule):
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['config t',
                                                              'interface ethernet1/2',
-                                                             'hsrp version 2',
+                                                             'hsrp version 1',
                                                              'hsrp 10',
                                                              'priority 150',
                                                              'ip 192.0.2.2/8',

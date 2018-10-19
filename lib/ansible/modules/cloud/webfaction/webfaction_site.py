@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: webfaction_site
 short_description: Add or remove a website on a Webfaction host
 description:
-    - Add or remove a website on a Webfaction host.  Further documentation at http://github.com/quentinsf/ansible-webfaction.
+    - Add or remove a website on a Webfaction host.  Further documentation at https://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -29,7 +29,7 @@ notes:
       You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
       The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
       your host, you may want to add C(serial: 1) to the plays.
-    - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
+    - See `the webfaction API <https://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 
 options:
 
@@ -41,7 +41,6 @@ options:
     state:
         description:
             - Whether the website should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -53,22 +52,18 @@ options:
     https:
         description:
             - Whether or not to use HTTPS
-        required: false
-        choices:
-            - true
-            - false
-        default: 'false'
+        type: bool
+        default: 'no'
 
     site_apps:
         description:
             - A mapping of URLs to apps
-        required: false
+        default: []
 
     subdomains:
         description:
             - A list of subdomains associated with this site.
-        required: false
-        default: null
+        default: []
 
     login_name:
         description:
@@ -97,12 +92,12 @@ EXAMPLES = '''
 '''
 
 import socket
-import xmlrpclib
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():

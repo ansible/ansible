@@ -10,12 +10,16 @@ DOCUMENTATION = '''
     short_description: virtualbox inventory source
     description:
         - Get inventory hosts from the local virtualbox installation.
-        - Uses a <name>.vbox.yaml (or .vbox.yml) YAML configuration file.
+        - Uses a YAML configuration file that ends with virtualbox.(yml|yaml) or vbox.(yml|yaml).
         - The inventory_hostname is always the 'Name' of the virtualbox instance.
     extends_documentation_fragment:
       - constructed
       - inventory_cache
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'virtualbox' plugin
+            required: True
+            choices: ['virtualbox']
         running_only:
             description: toggles showing all vms vs only those currently running
             type: boolean
@@ -44,11 +48,11 @@ simple_config_file:
 
 import os
 
-from collections import MutableMapping
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 
@@ -82,15 +86,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 for varname in query:
                     hostvars[host][varname] = self._query_vbox_data(host, query[varname])
 
+            strict = self.get_option('strict')
+
             # create composite vars
-            self._set_composite_vars(self.get_option('compose'), hostvars, host)
+            self._set_composite_vars(self.get_option('compose'), hostvars[host], host, strict=strict)
 
             # actually update inventory
             for key in hostvars[host]:
                 self.inventory.set_variable(host, key, hostvars[host][key])
 
             # constructed groups based on conditionals
-            self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host)
+            self._add_host_to_composed_groups(self.get_option('groups'), hostvars[host], host, strict=strict)
+
+            # constructed keyed_groups
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars[host], host, strict=strict)
 
     def _populate_from_cache(self, source_data):
         hostvars = source_data.pop('_meta', {}).get('hostvars', {})
@@ -201,7 +210,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith(('.vbox.yaml', '.vbox.yml')):
+            if path.endswith(('virtualbox.yaml', 'virtualbox.yml', 'vbox.yaml', 'vbox.yml')):
                 valid = True
         return valid
 
@@ -218,7 +227,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         source_data = None
         if cache:
-            cache = self._options.get('cache')
+            cache = self.get_option('cache')
 
         update_cache = False
         if cache:
@@ -245,7 +254,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 p = Popen(cmd, stdout=PIPE)
             except Exception as e:
-                AnsibleParserError(to_native(e))
+                raise AnsibleParserError(to_native(e))
 
             source_data = p.stdout.read().splitlines()
 

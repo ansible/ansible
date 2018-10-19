@@ -1,0 +1,2 @@
+minor_changes:
+- "docker_container - mount modes in ``volumes`` allow more values, similar to when using the ``docker`` executable."

@@ -57,7 +57,7 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running'):
+    def get_config(self, source='running', format='text'):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
@@ -71,8 +71,8 @@ class Cliconf(CliconfBase):
         for cmd in chain(['configure terminal'], to_list(command), ['end']):
             self.send_command(to_bytes(cmd))
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
         result = {}

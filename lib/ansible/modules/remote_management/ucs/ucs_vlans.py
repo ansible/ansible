@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -69,7 +69,7 @@ options:
   native:
     description:
     - Designates the VLAN as a native VLAN.
-    choices: ['no', 'yes']
+    choices: ['yes', 'no']
     default: 'no'
 requirements:
 - ucsmsdk

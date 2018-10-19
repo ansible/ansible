@@ -177,5 +177,6 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
 def main():
     AzureRMDNSZoneFacts()
 
+
 if __name__ == '__main__':
     main()

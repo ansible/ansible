@@ -87,7 +87,7 @@ options:
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
     default: no
-    choices: ['yes', 'no']
+    type: bool
   config:
     description:
       - The C(config) argument allows the playbook designer to supply
@@ -100,7 +100,7 @@ options:
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
     default: no
-    choices: ['yes', 'no']
+    type: bool
 """
 
 EXAMPLES = """

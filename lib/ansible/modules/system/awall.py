@@ -26,7 +26,6 @@ options:
   name:
     description:
       - A policy name, like C(foo), or multiple policies, like C(foo, bar).
-    default: null
   state:
     description:
       - The policy(ies) will be C(enabled)
@@ -36,7 +35,8 @@ options:
   activate:
     description:
       - Activate the new firewall rules. Can be run with other steps or on it's own.
-    default: False
+    type: bool
+    default: 'no'
 '''
 
 EXAMPLES = '''
@@ -148,6 +148,6 @@ def main():
 
     module.fail_json(msg="no action defined")
 
-# import module snippets
+
 if __name__ == '__main__':
     main()

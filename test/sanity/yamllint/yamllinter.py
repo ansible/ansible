@@ -14,7 +14,7 @@ from yamllint.config import YamlLintConfig
 
 def main():
     """Main program body."""
-    paths = sys.argv[1:]
+    paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     checker = YamlChecker()
     checker.check(paths)
@@ -40,6 +40,7 @@ class YamlChecker(object):
         """
         yaml_conf = YamlLintConfig(file='test/sanity/yamllint/config/default.yml')
         module_conf = YamlLintConfig(file='test/sanity/yamllint/config/modules.yml')
+        plugin_conf = YamlLintConfig(file='test/sanity/yamllint/config/plugins.yml')
 
         for path in paths:
             extension = os.path.splitext(path)[1]
@@ -50,7 +51,12 @@ class YamlChecker(object):
             if extension in ('.yml', '.yaml'):
                 self.check_yaml(yaml_conf, path, contents)
             elif extension == '.py':
-                self.check_module(module_conf, path, contents)
+                if path.startswith('lib/ansible/plugins/'):
+                    conf = plugin_conf
+                else:
+                    conf = module_conf
+
+                self.check_module(conf, path, contents)
             else:
                 raise Exception('unsupported extension: %s' % extension)
 
@@ -120,6 +126,9 @@ class YamlChecker(object):
         def check_assignment(statement, doc_types=None):
             """Check the given statement for a documentation assignment."""
             for target in statement.targets:
+                if isinstance(target, ast.Tuple):
+                    continue
+
                 if doc_types and target.id not in doc_types:
                     continue
 
@@ -134,7 +143,7 @@ class YamlChecker(object):
         if not module_ast:
             return {}
 
-        if path.startswith('lib/ansible/modules/'):
+        if path.startswith('lib/ansible/modules/') or path.startswith('lib/ansible/plugins/'):
             for body_statement in module_ast.body:
                 if isinstance(body_statement, ast.Assign):
                     check_assignment(body_statement, module_doc_types)

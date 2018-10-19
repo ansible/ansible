@@ -36,23 +36,15 @@ options:
   replication_id:
     description:
       - The name of the existing replication group to make the snapshot.
-    required: no
-    default: null
   cluster_id:
     description:
       - The name of an existing cache cluster in the replication group to make the snapshot.
-    required: no
-    default: null
   target:
     description:
       - The name of a snapshot copy
-    required: no
-    default: null
   bucket:
     description:
       - The s3 bucket to which the snapshot is exported
-    required: no
-    default: null
 """
 
 EXAMPLES = """

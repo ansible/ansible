@@ -92,5 +92,6 @@ def main():
     for host, result in callback.host_unreachable.items():
         print('{0} >>> {1}'.format(host, result._result['msg']))
 
+
 if __name__ == '__main__':
     main()

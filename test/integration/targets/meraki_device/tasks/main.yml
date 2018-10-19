@@ -1,0 +1,213 @@
+---
+- block:
+  - name: Claim a device into an organization
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      serial: '{{serial}}'
+      state: present
+    delegate_to: localhost
+    register: claim_device_org
+
+  - assert:
+      that:
+        - claim_device_org.changed == true
+
+  - name: Query status of all devices in an organization
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      state: query
+    delegate_to: localhost
+    register: query_device_org
+
+  - debug:
+      msg: '{{query_device_org}}'
+
+  - name: Claim a device into a network
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      state: present
+    delegate_to: localhost
+    register: claim_device
+
+  - debug:
+      msg: '{{claim_device}}'
+
+  - assert:
+      that:
+        - claim_device.changed == true
+
+  - name: Query all devices in one network by network ID
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_id: '{{test_net_id}}'
+      state: query
+    delegate_to: localhost
+    register: query_one_net_id
+
+  - debug:
+      msg: '{{query_one_net_id}}'
+
+  - name: Query all devices in one network
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: query
+    delegate_to: localhost
+    register: query_one_net
+
+  - debug:
+      msg: '{{query_one_net}}'
+
+  - name: Query device by serial
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      serial: '{{serial}}'
+      state: query
+    delegate_to: localhost
+    register: query_serial_no_net
+
+  - debug:
+      msg: '{{query_serial_no_net}}'
+
+  - name: Query device by serial
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      state: query
+    delegate_to: localhost
+    register: query_serial
+
+  - debug:
+      msg: '{{query_serial}}'
+
+  - assert:
+      that:
+        - query_serial.changed == False
+
+  - name: Query uplink information for a device
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial_uplink: '{{serial}}'
+      state: query
+    delegate_to: localhost
+    register: query_serial_uplink
+
+  - debug:
+      msg: '{{query_serial_uplink}}'
+
+  - name: Query LLDP/CDP information about a device
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial_lldp_cdp: '{{serial}}'
+      lldp_cdp_timespan: 6000
+      state: query
+    delegate_to: localhost
+    register: query_serial_lldp_cdp
+
+  - debug:
+      msg: '{{query_serial_lldp_cdp}}'
+
+  - name: Query a device by hostname
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      hostname: test-hostname
+      state: query
+    delegate_to: localhost
+    register: query_hostname
+
+  - debug:
+      msg: '{{query_hostname}}'
+
+  - name: Query a device by model
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      model: MR26
+      state: query
+    delegate_to: localhost
+    register: query_model
+
+  - debug:
+      msg: '{{query_model}}'
+
+  - name: Update a device
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      name: mr26
+      address: 1060 W. Addison St., Chicago, IL
+      lat: 41.948038
+      lng: -87.65568
+      tags: recently-added
+      state: present
+      move_map_marker: True
+    delegate_to: localhost
+    register: update_device
+
+  - debug:
+      msg: '{{update_device}}'
+
+  # - assert:
+  #     that:
+  #       - update_device.changed == true
+  #       - '"1060 W. Addison St., Chicago, IL" in update_device.data.0.address'
+
+  - name: Update a device with idempotency
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      name: mr26
+      address: 1060 W. Addison St., Chicago, IL
+      lat: 41.948038
+      lng: -87.65568
+      tags: recently-added
+      state: present
+      move_map_marker: True
+    delegate_to: localhost
+    register: update_device_idempotent
+
+  - debug:
+      msg: '{{update_device_idempotent}}'
+
+  - assert:
+      that:
+        - update_device_idempotent.changed == False
+
+  always:
+  - name: Remove a device from a network
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      state: absent
+    delegate_to: localhost
+    register: delete_device
+
+  - debug:
+      msg: '{{delete_device}}'
+
+  - assert:
+      that:
+        - delete_device.changed == true

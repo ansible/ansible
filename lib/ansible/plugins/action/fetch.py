@@ -43,8 +43,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         try:
             if self._play_context.check_mode:
@@ -55,10 +54,8 @@ class ActionModule(ActionBase):
             source = self._task.args.get('src', None)
             dest = self._task.args.get('dest', None)
             flat = boolean(self._task.args.get('flat'), strict=False)
-            fail_on_missing = boolean(self._task.args.get('fail_on_missing'), strict=False)
-            validate_checksum = boolean(self._task.args.get('validate_checksum',
-                                                            self._task.args.get('validate_md5', True)),
-                                        strict=False)
+            fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
+            validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
             # validate source and dest are strings FIXME: use basic.py and module specs
             if not isinstance(source, string_types):
@@ -66,13 +63,6 @@ class ActionModule(ActionBase):
 
             if not isinstance(dest, string_types):
                 result['msg'] = "Invalid type supplied for dest option, it must be a string"
-
-            # validate_md5 is the deprecated way to specify validate_checksum
-            if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
-                result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
-
-            if 'validate_md5' in self._task.args:
-                display.deprecated('Use validate_checksum instead of validate_md5', version='2.8')
 
             if source is None or dest is None:
                 result['msg'] = "src and dest are required"
@@ -93,7 +83,7 @@ class ActionModule(ActionBase):
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
             if remote_checksum in ('1', '2', None):
-                slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
+                slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
                     if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
@@ -160,7 +150,7 @@ class ActionModule(ActionBase):
                 elif remote_checksum == '4':
                     result['msg'] = "python isn't present on the system.  Unable to compute checksum"
                 elif remote_checksum == '5':
-                    result['msg'] = "stdlib json or simplejson was not found on the remote machine. Only the raw module can work without those installed"
+                    result['msg'] = "stdlib json was not found on the remote machine. Only the raw module can work without those installed"
                 # Historically, these don't fail because you may want to transfer
                 # a log file that possibly MAY exist but keep going to fetch other
                 # log files. Today, this is better achieved by adding
@@ -214,6 +204,6 @@ class ActionModule(ActionBase):
                 result.update(dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum))
 
         finally:
-            self._remove_tmp_path(tmp)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

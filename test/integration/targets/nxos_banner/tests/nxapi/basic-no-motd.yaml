@@ -7,14 +7,14 @@
     text: |
       Junk motd banner
       over multiple lines
+    provider: "{{ connection }}"
     state: present
-    provider: "{{ nxapi }}"
 
 - name: remove motd
   nxos_banner: &rm-motd
     banner: motd
+    provider: "{{ connection }}"
     state: absent
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:

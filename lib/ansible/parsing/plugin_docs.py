@@ -8,6 +8,7 @@ __metaclass__ = type
 import ast
 import yaml
 
+from ansible.module_utils._text import to_text
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
 
@@ -38,8 +39,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     }
 
     try:
-        b_module_data = open(filename, 'rb').read()
-        M = ast.parse(b_module_data)
+        with open(filename, 'rb') as b_module_data:
+            M = ast.parse(b_module_data.read())
 
         for child in M.body:
             if isinstance(child, ast.Assign):
@@ -61,7 +62,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                             else:
                                 # not yaml, should be a simple string
-                                data[varkey] = child.value.s
+                                data[varkey] = to_text(child.value.s)
                         display.debug('assigned :%s' % varkey)
 
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
@@ -77,5 +78,43 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
             display.error("unable to parse %s" % filename)
         if not ignore_errors:
             raise
+
+    return data
+
+
+def read_docstub(filename):
+    """
+    Quickly find short_description using string methods instead of node parsing.
+    This does not return a full set of documentation strings and is intended for
+    operations like ansible-doc -l.
+    """
+
+    t_module_data = open(filename, 'r')
+    in_documentation = False
+    capturing = False
+    indent_detection = ''
+    doc_stub = []
+
+    for line in t_module_data:
+        if in_documentation:
+            # start capturing the stub until indentation returns
+            if capturing and line.startswith(indent_detection):
+                doc_stub.append(line)
+
+            elif capturing and not line.startswith(indent_detection):
+                break
+
+            elif line.lstrip().startswith('short_description:'):
+                capturing = True
+                # Detect that the short_description continues on the next line if it's indented more
+                # than short_description itself.
+                indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
+                doc_stub.append(line)
+
+        elif line.startswith('DOCUMENTATION') and '=' in line:
+            in_documentation = True
+
+    short_description = r''.join(doc_stub).strip().rstrip('.')
+    data = AnsibleLoader(short_description, file_name=filename).get_single_data()
 
     return data

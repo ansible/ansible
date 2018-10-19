@@ -20,21 +20,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: datadog_event
-short_description: Posts events to DataDog  service
+short_description: Posts events to Datadog  service
 description:
-- "Allows to post events to DataDog (www.datadoghq.com) service."
+- "Allows to post events to Datadog (www.datadoghq.com) service."
 - "Uses http://docs.datadoghq.com/api/#events API."
 version_added: "1.3"
 author:
 - "Artūras `arturaz` Šlajus (@arturaz)"
 - "Naoya Nakazawa (@n0ts)"
-notes: []
-requirements: []
 options:
     api_key:
         description: ["Your DataDog API key."]
         required: true
-        default: null
     app_key:
         description: ["Your DataDog app key."]
         required: true
@@ -42,47 +39,36 @@ options:
     title:
         description: ["The event title."]
         required: true
-        default: null
     text:
         description: ["The body of the event."]
         required: true
-        default: null
     date_happened:
         description:
         - POSIX timestamp of the event.
         - Default value is now.
-        required: false
         default: now
     priority:
         description: ["The priority of the event."]
-        required: false
         default: normal
         choices: [normal, low]
     host:
         description: ["Host name to associate with the event."]
-        required: false
         default: "{{ ansible_hostname }}"
         version_added: "2.4"
     tags:
         description: ["Comma separated list of tags to apply to the event."]
-        required: false
-        default: null
     alert_type:
         description: ["Type of alert."]
-        required: false
         default: info
         choices: ['error', 'warning', 'info', 'success']
     aggregation_key:
         description: ["An arbitrary string to use for aggregation."]
-        required: false
-        default: null
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
-        required: false
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
         version_added: 1.5.1
 '''
 

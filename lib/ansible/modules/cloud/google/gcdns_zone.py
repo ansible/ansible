@@ -31,7 +31,6 @@ options:
     state:
         description:
             - Whether the given zone should or should not be present.
-        required: false
         choices: ["present", "absent"]
         default: "present"
     zone:
@@ -45,33 +44,24 @@ options:
     description:
         description:
             - An arbitrary text string to use for the zone description.
-        required: false
         default: ""
     service_account_email:
         description:
             - The e-mail address for a service account with access to Google
               Cloud DNS.
-        required: false
-        default: null
     pem_file:
         description:
             - The path to the PEM file associated with the service account
               email.
             - This option is deprecated and may be removed in a future release.
               Use I(credentials_file) instead.
-        required: false
-        default: null
     credentials_file:
         description:
             - The path to the JSON file associated with the service account
               email.
-        required: false
-        default: null
     project_id:
         description:
             - The Google Cloud Platform project ID to use.
-        required: false
-        default: null
 notes:
     - See also M(gcdns_record).
     - Zones that are newly created must still be set up with a domain registrar

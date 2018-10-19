@@ -28,23 +28,17 @@ options:
     required: true
   metadata:
     description: Metadata dict.
-    required: false
-    default: None
   availability_zone:
     description: Availability zone to create aggregate into.
-    required: false
-    default: None
   hosts:
     description: List of hosts to set for an aggregate.
-    required: false
-    default: None
   state:
     description: Should the resource be present or absent.
     choices: [present, absent]
     default: present
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -69,16 +63,8 @@ RETURN = '''
 
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, aggregate):
@@ -123,12 +109,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.9.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.9.0")
-
     name = module.params['name']
     metadata = module.params['metadata']
     availability_zone = module.params['availability_zone']
@@ -138,8 +118,8 @@ def main():
     if metadata is not None:
         metadata.pop('availability_zone', None)
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         aggregates = cloud.search_aggregates(name_or_id=name)
 
         if len(aggregates) == 1:
@@ -191,7 +171,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

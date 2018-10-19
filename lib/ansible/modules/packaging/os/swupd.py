@@ -27,55 +27,38 @@ options:
     description:
       - URL pointing to the contents of available bundles.
         If not specified, the contents are retrieved from clearlinux.org.
-    required: false
-    default: null
   format:
     description:
       - The format suffix for version file downloads. For example [1,2,3,staging,etc].
         If not specified, the default format is used.
-    required: false
-    default: null
   manifest:
     description:
       - The manifest contains information about the bundles at certaion version of the OS.
         Specify a Manifest version to verify against that version or leave unspecified to
         verify against the current version.
-    required: false
-    default: null
     aliases: [release, version]
   name:
     description:
       - Name of the (I)bundle to install or remove.
-    required: false
-    default: null
     aliases: [bundle]
   state:
     description:
       - Indicates the desired (I)bundle state. C(present) ensures the bundle
         is installed while C(absent) ensures the (I)bundle is not installed.
-    required: false
     default: present
     choices: [present, absent]
   update:
     description:
       - Updates the OS to the latest version.
-    required: false
-    default: no
   url:
     description:
       - Overrides both I(contenturl) and I(versionurl).
-    required: false
-    default: null
   verify:
     description:
       - Verify content for OS version.
-    required: false
-    default: null
   versionurl:
     description:
       - URL for version string download.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''

@@ -1,0 +1,549 @@
+diag post rbridge-id 104 enable
+ntp server 10.10.10.1 use-vrf mgmt-vrf
+logging raslog console INFO
+logging auditlog class SECURITY
+logging auditlog class CONFIGURATION
+logging auditlog class FIRMWARE
+logging syslog-facility local LOG_LOCAL7
+logging syslog-client localip CHASSIS_IP
+switch-attributes 104
+ chassis-name VDX6740
+ host-name LEAF4
+!
+no support autoupload enable
+line vty
+ exec-timeout 10
+!
+zoning enabled-configuration cfg-name ""
+zoning enabled-configuration default-zone-access allaccess
+zoning enabled-configuration cfg-action cfg-save
+dpod 104/0/1
+ reserve
+!
+dpod 104/0/2
+!
+dpod 104/0/3
+!
+dpod 104/0/4
+!
+dpod 104/0/5
+!
+dpod 104/0/6
+!
+dpod 104/0/7
+!
+dpod 104/0/8
+!
+dpod 104/0/9
+!
+dpod 104/0/10
+!
+dpod 104/0/11
+!
+dpod 104/0/12
+!
+dpod 104/0/13
+!
+dpod 104/0/14
+!
+dpod 104/0/15
+!
+dpod 104/0/16
+!
+dpod 104/0/17
+!
+dpod 104/0/18
+!
+dpod 104/0/19
+!
+dpod 104/0/20
+!
+dpod 104/0/21
+!
+dpod 104/0/22
+!
+dpod 104/0/23
+!
+dpod 104/0/24
+!
+dpod 104/0/25
+!
+dpod 104/0/26
+!
+dpod 104/0/27
+!
+dpod 104/0/28
+!
+dpod 104/0/29
+!
+dpod 104/0/30
+!
+dpod 104/0/31
+!
+dpod 104/0/32
+!
+dpod 104/0/33
+!
+dpod 104/0/34
+!
+dpod 104/0/35
+!
+dpod 104/0/36
+!
+dpod 104/0/37
+!
+dpod 104/0/38
+!
+dpod 104/0/39
+!
+dpod 104/0/40
+!
+dpod 104/0/41
+!
+dpod 104/0/42
+!
+dpod 104/0/43
+!
+dpod 104/0/44
+!
+dpod 104/0/45
+!
+dpod 104/0/46
+!
+dpod 104/0/47
+!
+dpod 104/0/48
+!
+dpod 104/0/49
+!
+dpod 104/0/50
+!
+dpod 104/0/51
+!
+dpod 104/0/52
+!
+role name admin desc Administrator
+role name user desc User
+aaa authentication login local
+aaa accounting exec default start-stop none
+aaa accounting commands default start-stop none
+service password-encryption
+username admin password "BwrsDbB+tABWGWpINOVKoQ==\n" encryption-level 7 role admin desc Administrator
+username user password "BwrsDbB+tABWGWpINOVKoQ==\n" encryption-level 7 role user desc User
+ip access-list extended test
+ seq 10 permit ip host 1.1.1.1 any log
+!
+snmp-server contact "Field Support."
+snmp-server location "End User Premise."
+snmp-server sys-descr "Extreme VDX Switch."
+snmp-server enable trap
+snmp-server community private groupname admin
+snmp-server community public groupname user
+snmp-server view All 1 included
+snmp-server group admin v1 read All write All notify All
+snmp-server group public v1 read All
+snmp-server group public v2c read All
+snmp-server group user v1 read All
+snmp-server group user v2c read All
+hardware
+ connector-group 104/0/1
+  speed LowMixed
+ !
+ connector-group 104/0/3
+  speed LowMixed
+ !
+ connector-group 104/0/5
+  speed LowMixed
+ !
+ connector-group 104/0/6
+  speed LowMixed
+ !
+!
+cee-map default
+ precedence 1
+ priority-group-table 1 weight 40 pfc on
+ priority-group-table 15.0 pfc off
+ priority-group-table 15.1 pfc off
+ priority-group-table 15.2 pfc off
+ priority-group-table 15.3 pfc off
+ priority-group-table 15.4 pfc off
+ priority-group-table 15.5 pfc off
+ priority-group-table 15.6 pfc off
+ priority-group-table 15.7 pfc off
+ priority-group-table 2 weight 60 pfc off
+ priority-table 2 2 2 1 2 2 2 15.0
+ remap fabric-priority priority 0
+ remap lossless-priority priority 0
+!
+fcoe
+ fabric-map default
+  vlan 1002
+  san-mode local
+  priority 3
+  virtual-fabric 128
+  fcmap 0E:FC:00
+  advertisement interval 8000
+  keep-alive timeout
+ !
+!
+interface Vlan 1
+!
+fabric route mcast rbridge-id 104
+!
+protocol lldp
+ advertise dcbx-fcoe-app-tlv
+ advertise dcbx-fcoe-logical-link-tlv
+ advertise dcbx-tlv
+ advertise bgp-auto-nbr-tlv
+ advertise optional-tlv management-address
+ advertise optional-tlv system-name
+ system-description Extreme-VDX-VCS 120
+!
+vlan dot1q tag native
+port-profile UpgradedVlanProfile
+ vlan-profile
+  switchport
+  switchport mode trunk
+  switchport trunk allowed vlan all
+ !
+!
+port-profile default
+ vlan-profile
+  switchport
+  switchport mode trunk
+  switchport trunk native-vlan 1
+ !
+!
+port-profile-domain default
+ port-profile UpgradedVlanProfile
+!
+class-map cee
+!
+class-map default
+!
+rbridge-id 104
+ switch-attributes chassis-name VDX6740
+ switch-attributes host-name LEAF4
+ vrf mgmt-vrf
+  address-family ipv4 unicast
+   ip route 0.0.0.0/0 10.26.0.1
+  !
+  address-family ipv6 unicast
+  !
+ !
+ system-monitor fan threshold marginal-threshold 1 down-threshold 2
+ system-monitor fan alert state removed action raslog
+ system-monitor power threshold marginal-threshold 1 down-threshold 2
+ system-monitor power alert state removed action raslog
+ system-monitor temp threshold marginal-threshold 1 down-threshold 2
+ system-monitor cid-card threshold marginal-threshold 1 down-threshold 2
+ system-monitor cid-card alert state none action none
+ system-monitor sfp alert state none action none
+ system-monitor compact-flash threshold marginal-threshold 1 down-threshold 0
+ system-monitor MM threshold marginal-threshold 1 down-threshold 0
+ system-monitor LineCard threshold marginal-threshold 1 down-threshold 2
+ system-monitor LineCard alert state none action none
+ system-monitor SFM threshold marginal-threshold 1 down-threshold 2
+ resource-monitor cpu enable
+ resource-monitor memory enable threshold 100 action raslog
+ resource-monitor process memory enable alarm 500 critical 600
+ no protocol vrrp
+ no protocol vrrp-extended
+ hardware-profile tcam default
+ hardware-profile route-table default maximum_paths 8 openflow off
+ hardware-profile kap default
+ fabric neighbor-discovery
+ clock timezone America/Los_Angeles
+ ag
+  enable
+  counter reliability 25
+  timeout fnm 120
+  pg 0
+   modes lb
+   rename pg0
+  !
+ !
+ telnet server use-vrf default-vrf
+ telnet server use-vrf mgmt-vrf
+ ssh server key rsa 2048
+ ssh server key ecdsa 256
+ ssh server key dsa
+ ssh server use-vrf default-vrf
+ ssh server use-vrf mgmt-vrf
+ http server use-vrf default-vrf
+ http server use-vrf mgmt-vrf
+ fcoe
+  fcoe-enodes 0
+ !
+!
+interface Management 104/0
+ no tcp burstrate
+ ip icmp echo-reply
+ no ip address dhcp
+ ip address 10.26.7.226/17
+ ipv6 icmpv6 echo-reply
+ no ipv6 address autoconfig
+ no ipv6 address dhcp
+ vrf forwarding mgmt-vrf
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/1
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/2
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/3
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/4
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/5
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/6
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/7
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/8
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/9
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/10
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/11
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/12
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/13
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/14
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/15
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/16
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/17
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/18
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/19
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/20
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/21
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/22
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/23
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/24
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/25
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/26
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/27
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/28
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/29
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/30
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/31
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/32
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/33
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/34
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/35
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/36
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/37
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/38
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/39
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/40
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/41
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/42
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/43
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/44
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/45
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/46
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/47
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface TenGigabitEthernet 104/0/48
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface FortyGigabitEthernet 104/0/49
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface FortyGigabitEthernet 104/0/50
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface FortyGigabitEthernet 104/0/51
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!
+interface FortyGigabitEthernet 104/0/52
+ fabric isl enable
+ fabric trunk enable
+ no shutdown
+!

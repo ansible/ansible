@@ -36,15 +36,16 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
-        required: false
     orchestration_platform:
         description:
             - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+        choices:
+            - 'DCOS'
+            - 'Kubernetes'
+            - 'Swarm'
         required: true
     master_profile:
         description:
@@ -105,21 +106,18 @@ options:
     service_principal:
         description:
             - The service principal suboptions.
-        required: false
-        default: null
         suboptions:
             client_id:
                 description:
                     - The ID for the Service Principal.
-                required: false
             client_secret:
                 description:
                     - The secret password associated with the service principal.
-                required: false
     diagnostics_profile:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
         required: true
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -469,13 +467,11 @@ class AzureRMContainerService(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             orchestration_platform=dict(
                 type='str',
@@ -495,8 +491,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                 required=True
             ),
             service_principal=dict(
-                type='list',
-                required=False
+                type='list'
             ),
             diagnostics_profile=dict(
                 type='bool',

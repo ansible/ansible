@@ -20,7 +20,7 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage L2 interfaces on Arista EOS network devices.
 description:
   - This module provides declarative management of L2 interfaces
-    on Arist EOS network devices.
+    on Arista EOS network devices.
 notes:
   - Tested against EOS 4.15
 options:
@@ -207,8 +207,9 @@ def map_config_to_obj(module):
     instances = list()
 
     for item in set(match):
-        command = 'sh int {0} switchport | include Switchport'
-        switchport_cfg = run_commands(module, command.format(item))[0].split(':')[1].strip()
+        command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
+                   'output': 'text'}
+        switchport_cfg = run_commands(module, command)[0].split(':')[1].strip()
         if switchport_cfg == 'Enabled':
             state = 'present'
         else:

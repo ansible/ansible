@@ -28,7 +28,7 @@ DOCUMENTATION = '''
           - name: ANSIBLE_CACHE_PLUGIN_PREFIX
         ini:
           - key: fact_caching_prefix
-          - section: defaults
+            section: defaults
       _timeout:
         default: 86400
         description: Expiration timeout for the cache plugin data
@@ -116,7 +116,8 @@ class CacheModule(BaseCacheModule):
         return (self._db.zrank(self._keys_set, key) is not None)
 
     def delete(self, key):
-        del self._cache[key]
+        if key in self._cache:
+            del self._cache[key]
         self._db.delete(self._make_key(key))
         self._db.zrem(self._keys_set, key)
 

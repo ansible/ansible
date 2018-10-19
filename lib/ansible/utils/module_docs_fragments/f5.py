@@ -23,33 +23,32 @@ options:
   password:
     description:
       - The password for the user account used to connect to the BIG-IP.
-        You can omit this option if the environment variable C(F5_PASSWORD)
-        is set.
+      - You may omit this option by setting the environment variable C(F5_PASSWORD).
     required: true
     aliases: ['pass', 'pwd']
   server:
     description:
-      - The BIG-IP host. You can omit this option if the environment
-        variable C(F5_SERVER) is set.
+      - The BIG-IP host.
+      - You may omit this option by setting the environment variable C(F5_SERVER).
     required: true
   server_port:
     description:
-      - The BIG-IP server port. You can omit this option if the environment
-        variable C(F5_SERVER_PORT) is set.
+      - The BIG-IP server port.
+      - You may omit this option by setting the environment variable C(F5_SERVER_PORT).
     default: 443
     version_added: 2.2
   user:
     description:
       - The username to connect to the BIG-IP with. This user must have
-        administrative privileges on the device. You can omit this option
-        if the environment variable C(F5_USER) is set.
+        administrative privileges on the device.
+      - You may omit this option by setting the environment variable C(F5_USER).
     required: true
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated. Use this only
+      - If C(no), SSL certificates are not validated. Use this only
         on personally controlled sites using self-signed certificates.
-        You can omit this option if the environment variable
-        C(F5_VALIDATE_CERTS) is set.
+      - You may omit this option by setting the environment variable
+        C(F5_VALIDATE_CERTS).
     default: yes
     type: bool
     version_added: 2.0
@@ -62,32 +61,30 @@ options:
       password:
         description:
           - The password for the user account used to connect to the BIG-IP.
-            You can omit this option if the environment variable C(F5_PASSWORD)
-            is set.
+          - You may omit this option by setting the environment variable C(F5_PASSWORD).
         required: true
         aliases: ['pass', 'pwd']
       server:
         description:
-          - The BIG-IP host. You can omit this option if the environment
-            variable C(F5_SERVER) is set.
+          - The BIG-IP host.
+          - You may omit this option by setting the environment variable C(F5_SERVER).
         required: true
       server_port:
         description:
-          - The BIG-IP server port. You can omit this option if the environment
-            variable C(F5_SERVER_PORT) is set.
+          - The BIG-IP server port.
+          - You may omit this option by setting the environment variable C(F5_SERVER_PORT).
         default: 443
       user:
         description:
           - The username to connect to the BIG-IP with. This user must have
-            administrative privileges on the device. You can omit this option
-            if the environment variable C(F5_USER) is set.
+            administrative privileges on the device.
+          - You may omit this option by setting the environment variable C(F5_USER).
         required: true
       validate_certs:
         description:
-          - If C(no), SSL certificates will not be validated. Use this only
+          - If C(no), SSL certificates are not validated. Use this only
             on personally controlled sites using self-signed certificates.
-            You can omit this option if the environment variable
-            C(F5_VALIDATE_CERTS) is set.
+          - You may omit this option by setting the environment variable C(F5_VALIDATE_CERTS).
         default: yes
         type: bool
       timeout:
@@ -100,21 +97,24 @@ options:
         description:
           - Specifies the SSH keyfile to use to authenticate the connection to
             the remote device.  This argument is only used for I(cli) transports.
-            If the value is not specified in the task, the value of environment
-            variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
+          - You may omit this option by setting the environment variable C(ANSIBLE_NET_SSH_KEYFILE).
       transport:
         description:
           - Configures the transport connection to use when connecting to the
             remote device.
         required: true
         choices:
-            - rest
-            - cli
+          - rest
+          - cli
         default: cli
-
 notes:
   - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/integrations/networks/f5).
   - Requires the f5-sdk Python package on the host. This is as easy as C(pip install f5-sdk).
+  - Requires BIG-IP software version >= 12.
+  - The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP
+    specific configuration persists to disk, be sure to include at least one task that uses the
+    M(bigip_config) module to save the running configuration. Refer to the module's documentation for
+    the correct usage of the module to save your running configuration.
 requirements:
-  - f5-sdk >= 3.0.9
+  - f5-sdk >= 3.0.16
 '''

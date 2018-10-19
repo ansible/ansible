@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_bgp_neighbor
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -47,8 +47,8 @@ class TestNxosBgpNeighborModule(TestNxosModule):
         self.load_config.return_value = []
 
     def test_nxos_bgp_neighbor(self):
-        set_module_args(dict(asn=65535, neighbor='3.3.3.3', description='some words'))
-        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.3', 'description some words'])
+        set_module_args(dict(asn=65535, neighbor='192.0.2.3', description='some words'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 192.0.2.3', 'description some words'])
 
     def test_nxos_bgp_neighbor_remove_private_as(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.4', remove_private_as='all'))

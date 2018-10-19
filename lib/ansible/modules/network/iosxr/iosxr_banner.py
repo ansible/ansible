@@ -32,13 +32,11 @@ options:
     description:
       - Specifies the type of banner to configure on remote device.
     required: true
-    default: null
     choices: ['login', 'motd']
   text:
     description:
       - Banner text to be configured. Accepts multiline string,
         without empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Existential state of the configuration on the device.
@@ -237,7 +235,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate(msg="cli support for 'iosxr_banner' is deprecated. Use transport netconf instead",
-                         version="4 releases from v2.5")
+                         version="2.9")
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)

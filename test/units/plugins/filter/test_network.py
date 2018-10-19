@@ -20,8 +20,12 @@ __metaclass__ = type
 import os
 import sys
 
-from ansible.compat.tests import unittest
-from ansible.plugins.filter.network import parse_xml
+import pytest
+
+from units.compat import unittest
+from ansible.plugins.filter.network import parse_xml, type5_pw, hash_salt, comp_type5, vlan_parser
+
+from ansible.errors import AnsibleFilterError
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'network')
 
@@ -73,8 +77,110 @@ class TestNetworkParseFilter(unittest.TestCase):
 
         with self.assertRaises(Exception) as e:
             parse_xml(output_xml, 'junk_path')
-        self.assertEqual("unable to locate parse_cli template: junk_path", str(e.exception))
+        self.assertEqual("unable to locate parse_xml template: junk_path", str(e.exception))
 
         with self.assertRaises(Exception) as e:
             parse_xml(output, spec_file_path)
         self.assertEqual("parse_xml works on string input, but given input of : %s" % type(output), str(e.exception))
+
+
+class TestNetworkType5(unittest.TestCase):
+
+    def test_defined_salt_success(self):
+        password = 'cisco'
+        salt = 'nTc1'
+        expected = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
+        parsed = type5_pw(password, salt)
+        self.assertEqual(parsed, expected)
+
+    def test_undefined_salt_success(self):
+        password = 'cisco'
+        parsed = type5_pw(password)
+        self.assertEqual(len(parsed), 30)
+
+    def test_wrong_data_type(self):
+
+        with self.assertRaises(Exception) as e:
+            type5_pw([])
+        self.assertEqual("type5_pw password input should be a string, but was given a input of list", str(e.exception))
+
+        with self.assertRaises(Exception) as e:
+            type5_pw({})
+        self.assertEqual("type5_pw password input should be a string, but was given a input of dict", str(e.exception))
+
+        with self.assertRaises(Exception) as e:
+            type5_pw('pass', [])
+        self.assertEqual("type5_pw salt input should be a string, but was given a input of list", str(e.exception))
+
+        with self.assertRaises(Exception) as e:
+            type5_pw('pass', {})
+        self.assertEqual("type5_pw salt input should be a string, but was given a input of dict", str(e.exception))
+
+    def test_bad_salt_char(self):
+
+        with self.assertRaises(Exception) as e:
+            type5_pw('password', '*()')
+        self.assertEqual("type5_pw salt used inproper characters, must be one of "
+                         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./", str(e.exception))
+
+        with self.assertRaises(Exception) as e:
+            type5_pw('password', 'asd$')
+        self.assertEqual("type5_pw salt used inproper characters, must be one of "
+                         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./", str(e.exception))
+
+
+class TestHashSalt(unittest.TestCase):
+
+    def test_retrieve_salt(self):
+        password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
+        parsed = hash_salt(password)
+        self.assertEqual(parsed, 'nTc1')
+
+        password = '$2y$14$wHhBmAgOMZEld9iJtV.'
+        parsed = hash_salt(password)
+        self.assertEqual(parsed, '14')
+
+    def test_unparseable_salt(self):
+        password = '$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
+        with self.assertRaises(Exception) as e:
+            parsed = hash_salt(password)
+        self.assertEqual("Could not parse salt out password correctly from $nTc1$Z28sUTcWfXlvVe2x.3XAa.", str(e.exception))
+
+
+class TestCompareType5(unittest.TestCase):
+
+    def test_compare_type5_boolean(self):
+        unencrypted_password = 'cisco'
+        encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
+        parsed = comp_type5(unencrypted_password, encrypted_password)
+        self.assertEqual(parsed, True)
+
+    def test_compare_type5_string(self):
+        unencrypted_password = 'cisco'
+        encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
+        parsed = comp_type5(unencrypted_password, encrypted_password, True)
+        self.assertEqual(parsed, '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.')
+
+    def test_compate_type5_fail(self):
+        unencrypted_password = 'invalid_password'
+        encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
+        parsed = comp_type5(unencrypted_password, encrypted_password)
+        self.assertEqual(parsed, False)
+
+
+class TestVlanParser(unittest.TestCase):
+
+    def test_compression(self):
+        raw_list = [1, 2, 3]
+        parsed_list = ['1-3']
+        self.assertEqual(vlan_parser(raw_list), parsed_list)
+
+    def test_single_line(self):
+        raw_list = [100, 1688, 3002, 3003, 3004, 3005, 3102, 3103, 3104, 3105, 3802, 3900, 3998, 3999]
+        parsed_list = ['100,1688,3002-3005,3102-3105,3802,3900,3998,3999']
+        self.assertEqual(vlan_parser(raw_list), parsed_list)
+
+    def test_multi_line(self):
+        raw_list = [100, 1688, 3002, 3004, 3005, 3050, 3102, 3104, 3105, 3151, 3802, 3900, 3998, 3999]
+        parsed_list = ['100,1688,3002,3004,3005,3050,3102,3104,3105,3151', '3802,3900,3998,3999']
+        self.assertEqual(vlan_parser(raw_list), parsed_list)

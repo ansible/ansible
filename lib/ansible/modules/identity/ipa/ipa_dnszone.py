@@ -35,7 +35,7 @@ version_added: "2.5"
 
 EXAMPLES = '''
 # Ensure dns zone is present
-- ipa_dnsrecord:
+- ipa_dnszone:
     ipa_host: spider.example.com
     ipa_pass: Passw0rd!
     state: present

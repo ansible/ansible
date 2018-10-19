@@ -52,10 +52,12 @@ options:
         description:
             - Select the ip address management scheme for this network.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     exclude_discovered_subnets:
         description:
             - When selected, excludes all discovered subnets in this network from consideration for virtual service placement.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     name:
         description:
             - Name of the object.
@@ -64,6 +66,7 @@ options:
         description:
             - Boolean flag to set synced_from_se.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -77,6 +80,7 @@ options:
         description:
             - Boolean flag to set vcenter_dvs.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     vimgrnw_ref:
         description:
             - It is a reference to an object of type vimgrnwruntime.
@@ -141,6 +145,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'network',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

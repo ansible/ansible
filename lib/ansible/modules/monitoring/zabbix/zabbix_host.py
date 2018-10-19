@@ -22,10 +22,10 @@ description:
 version_added: "2.0"
 author:
     - "(@cove)"
-    - "Tony Minfei Ding"
-    - "Harrison Gu (@harrisongu)"
-    - "Werner Dijkerman"
-    - "Eike Frost (@eikef)"
+    - Tony Minfei Ding
+    - Harrison Gu (@harrisongu)
+    - Werner Dijkerman (@dj-wasabi)
+    - Eike Frost (@eikef)
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
@@ -46,11 +46,9 @@ options:
     host_groups:
         description:
             - List of host groups the host is part of.
-        required: false
     link_templates:
         description:
             - List of templates linked to the host.
-        default: None
     inventory_mode:
         description:
             - Configure the inventory mode.
@@ -76,8 +74,7 @@ options:
         default: 'present'
     proxy:
         description:
-            - The name of the Zabbix Proxy to be used
-        default: None
+            - The name of the Zabbix proxy to be used.
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
@@ -90,9 +87,7 @@ options:
     tls_connect:
         description:
             - Specifies what encryption to use for outgoing connections.
-            - The tls_connect parameter accepts values of 1 to 7
             - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
-            - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
         version_added: '2.5'
@@ -107,13 +102,13 @@ options:
         version_added: '2.5'
     tls_psk_identity:
         description:
-            - PSK value is a hard to guess string of hexadecimal digits.
             - It is a unique name by which this specific PSK is referred to by Zabbix components
-            - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
+            - Do not put sensitive information in the PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
     tls_psk:
         description:
+            - PSK value is a hard to guess string of hexadecimal digits.
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
@@ -159,9 +154,9 @@ options:
         version_added: '2.5'
     force:
         description:
-            - Overwrite the host configuration, even if already present
+            - Overwrite the host configuration, even if already present.
+        type: bool
         default: 'yes'
-        choices: [ 'yes', 'no' ]
         version_added: '2.0'
 extends_documentation_fragment:
     - zabbix
@@ -401,7 +396,7 @@ class Host(object):
         if len(proxy_list) < 1:
             self._module.fail_json(msg="Proxy not found: %s" % proxy_name)
         else:
-            return proxy_list[0]['proxyid']
+            return int(proxy_list[0]['proxyid'])
 
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
@@ -514,27 +509,27 @@ class Host(object):
             if proposed_inventory != host['inventory']:
                 return True
 
-        if tls_accept is not None:
+        if tls_accept is not None and 'tls_accept' in host:
             if int(host['tls_accept']) != tls_accept:
                 return True
 
-        if tls_psk_identity is not None:
+        if tls_psk_identity is not None and 'tls_psk_identity' in host:
             if host['tls_psk_identity'] != tls_psk_identity:
                 return True
 
-        if tls_psk is not None:
+        if tls_psk is not None and 'tls_psk' in host:
             if host['tls_psk'] != tls_psk:
                 return True
 
-        if tls_issuer is not None:
+        if tls_issuer is not None and 'tls_issuer' in host:
             if host['tls_issuer'] != tls_issuer:
                 return True
 
-        if tls_subject is not None:
+        if tls_subject is not None and 'tls_subject' in host:
             if host['tls_subject'] != tls_subject:
                 return True
 
-        if tls_connect is not None:
+        if tls_connect is not None and 'tls_connect' in host:
             if int(host['tls_connect']) != tls_connect:
                 return True
         if ipmi_authtype is not None:
@@ -768,7 +763,7 @@ def main():
 
         # If proxy is not specified as a module parameter, use the existing setting
         if proxy is None:
-            proxy_id = zabbix_host_obj['proxy_hostid']
+            proxy_id = int(zabbix_host_obj['proxy_hostid'])
 
         if state == "absent":
             # remove host
@@ -794,7 +789,7 @@ def main():
             if not force or not interfaces:
                 for interface in copy.deepcopy(exist_interfaces):
                     # remove values not used during hostinterface.add/update calls
-                    for key in interface.keys():
+                    for key in tuple(interface.keys()):
                         if key in ['interfaceid', 'hostid', 'bulk']:
                             interface.pop(key, None)
 
@@ -819,12 +814,12 @@ def main():
                                          description, host_name, inventory_mode, inventory_zabbix,
                                          tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,
                                          ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password):
-                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
-                                            ipmi_username, ipmi_password)
                 host.update_host(host_name, group_ids, status, host_id,
                                  interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
                                  tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
+                                            ipmi_username, ipmi_password)
                 host.update_inventory_mode(host_id, inventory_mode)
                 host.update_inventory_zabbix(host_id, inventory_zabbix)
 

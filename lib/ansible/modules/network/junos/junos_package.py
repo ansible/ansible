@@ -33,7 +33,6 @@ options:
         The I(src) argument can be either a localized path or a full
         path to the package file to install.
     required: true
-    default: null
     aliases: ['package']
   version:
     description:
@@ -41,8 +40,6 @@ options:
         version of the package that should be installed on the remote
         device.  If the I(version) argument is not specified, then
         the version is extracts from the I(src) filename.
-    required: false
-    default: null
   reboot:
     description:
       - In order for a package to take effect, the remote device must be
@@ -51,16 +48,15 @@ options:
         If disabled or the remote package does not need to be changed,
         the device will not be started.
     required: true
-    default: true
-    choices: ['true', 'false']
+    type: bool
+    default: 'yes'
   no_copy:
     description:
       - The I(no_copy) argument is responsible for instructing the remote
         device on where to install the package from.  When enabled, the
         package is transferred to the remote device prior to installing.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
   validate:
     description:
       - The I(validate) argument is responsible for instructing the remote
@@ -68,17 +64,16 @@ options:
         compatibility with the package being installed. When set to false
         validation is not performed.
     version_added: 2.5
-    required: false
-    default: true
-    choices: ['true', 'false']
+    type: bool
+    default: 'yes'
   force:
     description:
       - The I(force) argument instructs the module to bypass the package
         version check and install the packaged identified in I(src) on
         the remote device.
     required: true
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)
@@ -86,6 +81,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Works with C(local) connections only.
 """
 
 EXAMPLES = """
@@ -103,7 +99,7 @@ EXAMPLES = """
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     from jnpr.junos import Device
@@ -134,9 +130,8 @@ def connect(module):
         device = Device(host, **kwargs)
         device.open()
         device.timeout = get_param(module, 'timeout') or 10
-    except ConnectError:
-        exc = get_exception()
-        module.fail_json(msg='unable to connect to %s: %s' % (host, str(exc)))
+    except ConnectError as exc:
+        module.fail_json(msg='unable to connect to %s: %s' % (host, to_native(exc)))
 
     return device
 

@@ -13,6 +13,7 @@ except ImportError:
 
 try:
     from influxdb import InfluxDBClient
+    from influxdb import __version__ as influxdb_version
     from influxdb import exceptions
     HAS_INFLUXDB = True
 except ImportError:
@@ -54,7 +55,7 @@ class InfluxDb():
         )
 
     def connect_to_influxdb(self):
-        return InfluxDBClient(
+        args = dict(
             host=self.hostname,
             port=self.port,
             username=self.username,
@@ -63,8 +64,13 @@ class InfluxDb():
             ssl=self.params['ssl'],
             verify_ssl=self.params['validate_certs'],
             timeout=self.params['timeout'],
-            retries=self.params['retries'],
             use_udp=self.params['use_udp'],
             udp_port=self.params['udp_port'],
             proxies=self.params['proxies'],
         )
+        influxdb_api_version = tuple(influxdb_version.split("."))
+        if influxdb_api_version >= ('4', '1', '0'):
+            # retries option is added in version 4.1.0
+            args.update(retries=self.params['retries'])
+
+        return InfluxDBClient(**args)

@@ -1,7 +1,9 @@
-<!---
-Verify first that your issue/request is not already reported on GitHub.
-Also test if the latest release, and master branch are affected too.
--->
+<!--- Verify first that your issue is not already reported on GitHub -->
+<!--- Also test if the latest release and devel branch are affected too -->
+<!--- Complete *all* sections as described, this form is processed automatically -->
+
+##### SUMMARY
+<!--- Explain the problem briefly below -->
 
 ##### ISSUE TYPE
 <!--- Pick one below and delete the rest -->
@@ -10,55 +12,40 @@ Also test if the latest release, and master branch are affected too.
  - Documentation Report
 
 ##### COMPONENT NAME
-<!---
-Name of the module, plugin, task or feature
-Do not include extra details here, e.g. "vyos_command" not "the network module vyos_command" or the full path
--->
+<!--- Write the short name of the module, plugin, task or feature below -->
 
 ##### ANSIBLE VERSION
-<!--- Paste verbatim output from "ansible --version" between quotes below -->
-```
+<!--- Paste verbatim output from "ansible --version" between quotes -->
+```paste below
 
 ```
 
 ##### CONFIGURATION
-<!---
-If using Ansible 2.4 or above, paste the results of "ansible-config dump --only-changed"
-Otherwise, mention any settings you have changed/added/removed in ansible.cfg
-(or using the ANSIBLE_* environment variables).
--->
+<!--- Paste verbatim output from "ansible-config dump --only-changed" between quotes -->
+```paste below
+
+```
 
 ##### OS / ENVIRONMENT
-<!---
-Mention the OS you are running Ansible from, and the OS you are
-managing, or say "N/A" for anything that is not platform-specific.
-Also mention the specific version of what you are trying to control,
-e.g. if this is a network bug the version of firmware on the network device.
--->
-
-##### SUMMARY
-<!--- Explain the problem briefly -->
+<!--- Provide all relevant information below, e.g. target OS versions, network device firmware, etc. -->
 
 ##### STEPS TO REPRODUCE
-<!---
-For bugs, show exactly how to reproduce the problem, using a minimal test-case.
-For new features, show how the feature would be used.
--->
+<!--- Describe exactly how to reproduce the problem, using a minimal test-case -->
 
 <!--- Paste example playbooks or commands between quotes below -->
 ```yaml
 
 ```
 
-<!--- You can also paste gist.github.com links for larger files -->
+<!--- HINT: You can paste gist.github.com links for larger files -->
 
 ##### EXPECTED RESULTS
-<!--- What did you expect to happen when running the steps above? -->
+<!--- Describe what you expected to happen when running the steps above -->
 
 ##### ACTUAL RESULTS
-<!--- What actually happened? If possible run with extra verbosity (-vvvv) -->
+<!--- Describe what actually happened. If possible run with extra verbosity (-vvvv) -->
 
-<!--- Paste verbatim command output between quotes below -->
-```
+<!--- Paste verbatim command output between quotes -->
+```paste below
 
 ```

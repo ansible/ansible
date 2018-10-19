@@ -1,129 +1,167 @@
 {
-    "status_code": 200, 
     "data": {
         "VpnConnections": [
             {
-                "VpnConnectionId": "vpn-d6d1cac4", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9e06e28b",
+                "Category": "VPN",
+                "Tags": [
+                    {
+                        "Key": "Ansible-Test",
+                        "Value": "VPN"
+                    }
+                ],
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-d4d1cac6", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9f06e28a",
+                "Category": "VPN",
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-dad1cac8", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9c06e289",
+                "Category": "VPN",
+                "Tags": [
+                    {
+                        "Key": "One",
+                        "Value": "one"
+                    },
+                    {
+                        "Key": "Two",
+                        "Value": "two"
+                    }
+                ],
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-d8d1caca", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9d06e288",
+                "Category": "VPN",
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-d9d1cacb", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9206e287",
+                "Category": "VPN",
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-ded1cacc", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9306e286",
+                "Category": "VPN",
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-dfd1cacd", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9006e285",
+                "Category": "VPN",
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-dcd1cace", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9706e282",
+                "Category": "VPN",
+                "Tags": [
+                    {
+                        "Key": "Correct",
+                        "Value": "Tag"
+                    }
+                ],
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-ddd1cacf", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-6a06e27f",
+                "Category": "VPN",
+                "Tags": [
+                    {
+                        "Key": "Wrong",
+                        "Value": "Tag"
+                    }
+                ],
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
-            }, 
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            },
             {
-                "VpnConnectionId": "vpn-c2d1cad0", 
-                "Routes": [], 
-                "State": "deleted", 
-                "VpnGatewayId": "vgw-35d70c2b", 
-                "CustomerGatewayId": "cgw-6113c87f", 
-                "Type": "ipsec.1", 
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-6f06e27a",
+                "Category": "VPN",
+                "Routes": [],
                 "Options": {
                     "StaticRoutesOnly": true
-                }
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
             }
-        ], 
+        ],
         "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 200, 
-            "RequestId": "6e8bb9f0-077a-4205-9f63-fc0bb35a08f5", 
+            "HTTPStatusCode": 200,
+            "RequestId": "0a7676c6-68de-4301-b107-5ef0fcf5136e",
             "HTTPHeaders": {
-                "transfer-encoding": "chunked", 
-                "vary": "Accept-Encoding", 
-                "server": "AmazonEC2", 
-                "content-type": "text/xml;charset=UTF-8", 
-                "date": "Mon, 12 Jun 2017 20:23:20 GMT"
-            }
+                "vary": "Accept-Encoding",
+                "content-length": "5448",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8",
+                "date": "Mon, 16 Apr 2018 13:12:25 GMT"
+            },
+            "RetryAttempts": 0
         }
-    }
+    },
+    "status_code": 200
 }

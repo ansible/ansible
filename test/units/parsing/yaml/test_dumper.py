@@ -20,7 +20,7 @@ __metaclass__ = type
 
 import io
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.parsing import vault
 from ansible.parsing.yaml import dumper, objects
 from ansible.parsing.yaml.loader import AnsibleLoader

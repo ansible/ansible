@@ -30,7 +30,7 @@ from ansible.galaxy.token import GalaxyToken
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 
 try:
@@ -152,7 +152,7 @@ class GalaxyAPI(object):
             args['alternate_role_name'] = role_name
         elif github_repo.startswith('ansible-role'):
             args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
-        data = self.__call_galaxy(url, args=urlencode(args))
+        data = self.__call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']
         return data
@@ -178,7 +178,7 @@ class GalaxyAPI(object):
         """
         Find a role by name.
         """
-        role_name = urlquote(role_name)
+        role_name = to_text(urlquote(to_bytes(role_name)))
 
         try:
             parts = role_name.split(".")
@@ -203,7 +203,7 @@ class GalaxyAPI(object):
         """
 
         try:
-            url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
+            url = '%s/roles/%s/%s/?page_size=50' % (self.baseurl, role_id, related)
             data = self.__call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
@@ -246,7 +246,7 @@ class GalaxyAPI(object):
         search_url = self.baseurl + '/search/roles/?'
 
         if search:
-            search_url += '&autocomplete=' + urlquote(search)
+            search_url += '&autocomplete=' + to_text(urlquote(to_bytes(search)))
 
         tags = kwargs.get('tags', None)
         platforms = kwargs.get('platforms', None)
@@ -279,7 +279,7 @@ class GalaxyAPI(object):
             "github_repo": github_repo,
             "secret": secret
         })
-        data = self.__call_galaxy(url, args=args)
+        data = self.__call_galaxy(url, args=args, method="POST")
         return data
 
     @g_connect

@@ -25,7 +25,7 @@ import time
 import glob
 
 from ansible.plugins.action.iosxr import ActionModule as _ActionModule
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.vars import merge_hash
 
@@ -43,6 +43,7 @@ class ActionModule(_ActionModule):
                 return dict(failed=True, msg=to_text(exc))
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.

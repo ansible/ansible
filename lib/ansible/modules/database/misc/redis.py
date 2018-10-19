@@ -41,7 +41,6 @@ options:
     master_host:
         description:
             - The host of the master instance [slave command]
-        default: null
     master_port:
         description:
             - The port of the master instance [slave command]

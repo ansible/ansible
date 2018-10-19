@@ -1,7 +1,7 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Afterburn <http://github.com/afterburn>
+# (c) 2012, Afterburn <https://github.com/afterburn>
 # (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
 # (c) 2015, Jonathan Lestrelin <jonathan.lestrelin@gmail.com>
 #
@@ -34,14 +34,11 @@ options:
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent", "latest"]
     executable:
       description:
         - Path to the pear executable
-      required: false
-      default: null
       version_added: "2.4"
 '''
 
@@ -204,10 +201,9 @@ def check_packages(module, packages, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['pkg']),
+            name=dict(aliases=['pkg'], required=True),
             state=dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             executable=dict(default=None, required=False, type='path')),
-        required_one_of=[['name']],
         supports_check_mode=True)
 
     p = module.params

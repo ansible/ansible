@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -21,7 +21,7 @@ description:
 - This module can be used to gather facts about an ESXi host's services.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -48,6 +48,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
   register: cluster_host_services
 
 - name: Gather facts about ESXi Host
@@ -56,10 +57,36 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
   register: host_services
 '''
 
-RETURN = r'''#
+RETURN = r'''
+host_service_facts:
+    description:
+    - dict with hostname as key and dict with host service config facts
+    returned: always
+    type: dict
+    sample: {
+        "10.76.33.226": [
+            {
+                "key": "DCUI",
+                "label": "Direct Console UI",
+                "policy": "on",
+                "required": false,
+                "running": true,
+                "uninstallable": false
+            },
+            {
+                "key": "TSM",
+                "label": "ESXi Shell",
+                "policy": "off",
+                "required": false,
+                "running": false,
+                "uninstallable": false
+            },
+        ]
+    }
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -71,19 +98,7 @@ class VmwareServiceManager(PyVmomi):
         super(VmwareServiceManager, self).__init__(module)
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
-        self.hosts = []
-        if cluster_name:
-            cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-            if cluster_obj:
-                self.hosts = [host for host in cluster_obj.host]
-            else:
-                module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-        elif esxi_host_name:
-            esxi_host_obj = self.find_hostsystem_by_name(host_name=esxi_host_name)
-            if esxi_host_obj:
-                self.hosts = [esxi_host_obj]
-            else:
-                module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
+        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
 
     def gather_host_facts(self):
         hosts_facts = {}
@@ -93,16 +108,18 @@ class VmwareServiceManager(PyVmomi):
             if host_service_system:
                 services = host_service_system.serviceInfo.service
                 for service in services:
-                    host_service_facts.append(dict(key=service.key,
-                                                   label=service.label,
-                                                   required=service.required,
-                                                   uninstallable=service.uninstallable,
-                                                   running=service.running,
-                                                   policy=service.policy,
-                                                   source_package_name=service.sourcePackage.sourcePackageName,
-                                                   source_package_desc=service.sourcePackage.description,
-                                                   )
-                                              )
+                    host_service_facts.append(
+                        dict(
+                            key=service.key,
+                            label=service.label,
+                            required=service.required,
+                            uninstallable=service.uninstallable,
+                            running=service.running,
+                            policy=service.policy,
+                            source_package_name=service.sourcePackage.sourcePackageName if service.sourcePackage else 'NA',
+                            source_package_desc=service.sourcePackage.description if service.sourcePackage else 'NA',
+                        )
+                    )
             hosts_facts[host.name] = host_service_facts
         return hosts_facts
 
@@ -118,7 +135,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     vmware_host_service_config = VmwareServiceManager(module)

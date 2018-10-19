@@ -23,13 +23,17 @@ __metaclass__ = type
 import re
 import os
 import traceback
+import string
 
-from collections import Mapping
 from xml.etree.ElementTree import fromstring
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import Template
 from ansible.module_utils.six import iteritems, string_types
-from ansible.errors import AnsibleError
+from ansible.module_utils.common._collections_compat import Mapping
+from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.utils.encrypt import random_password
+
 
 try:
     import yaml
@@ -49,6 +53,12 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+try:
+    from passlib.hash import md5_crypt
+    HAS_PASSLIB = True
+except ImportError:
+    HAS_PASSLIB = False
 
 
 def re_matchall(regex, value):
@@ -314,7 +324,7 @@ def _extract_param(template, root, attrs, value):
 
 def parse_xml(output, tmpl):
     if not os.path.exists(tmpl):
-        raise AnsibleError('unable to locate parse_cli template: %s' % tmpl)
+        raise AnsibleError('unable to locate parse_xml template: %s' % tmpl)
 
     if not isinstance(output, string_types):
         raise AnsibleError('parse_xml works on string input, but given input of : %s' % type(output))
@@ -345,13 +355,134 @@ def parse_xml(output, tmpl):
     return obj
 
 
+def type5_pw(password, salt=None):
+    if not HAS_PASSLIB:
+        raise AnsibleFilterError('type5_pw filter requires PassLib library to be installed')
+
+    if not isinstance(password, string_types):
+        raise AnsibleFilterError("type5_pw password input should be a string, but was given a input of %s" % (type(password).__name__))
+
+    salt_chars = u''.join((
+        to_text(string.ascii_letters),
+        to_text(string.digits),
+        u'./'
+    ))
+    if salt is not None and not isinstance(salt, string_types):
+        raise AnsibleFilterError("type5_pw salt input should be a string, but was given a input of %s" % (type(salt).__name__))
+    elif not salt:
+        salt = random_password(length=4, chars=salt_chars)
+    elif not set(salt) <= set(salt_chars):
+        raise AnsibleFilterError("type5_pw salt used inproper characters, must be one of %s" % (salt_chars))
+
+    encrypted_password = md5_crypt.encrypt(password, salt=salt)
+
+    return encrypted_password
+
+
+def hash_salt(password):
+
+    split_password = password.split("$")
+    if len(split_password) != 4:
+        raise AnsibleFilterError('Could not parse salt out password correctly from {0}'.format(password))
+    else:
+        return split_password[2]
+
+
+def comp_type5(unencrypted_password, encrypted_password, return_original=False):
+
+    salt = hash_salt(encrypted_password)
+    if type5_pw(unencrypted_password, salt) == encrypted_password:
+        if return_original is True:
+            return encrypted_password
+        else:
+            return True
+    return False
+
+
+def vlan_parser(vlan_list, first_line_len=48, other_line_len=44):
+
+    '''
+        Input: Unsorted list of vlan integers
+        Output: Sorted string list of integers according to IOS-like vlan list rules
+
+        1. Vlans are listed in ascending order
+        2. Runs of 3 or more consecutive vlans are listed with a dash
+        3. The first line of the list can be first_line_len characters long
+        4. Subsequent list lines can be other_line_len characters
+    '''
+
+    # Sort and remove duplicates
+    sorted_list = sorted(set(vlan_list))
+
+    if sorted_list[0] < 1 or sorted_list[-1] > 4094:
+        raise AnsibleFilterError('Valid VLAN range is 1-4094')
+
+    parse_list = []
+    idx = 0
+    while idx < len(sorted_list):
+        start = idx
+        end = start
+        while end < len(sorted_list) - 1:
+            if sorted_list[end + 1] - sorted_list[end] == 1:
+                end += 1
+            else:
+                break
+
+        if start == end:
+            # Single VLAN
+            parse_list.append(str(sorted_list[idx]))
+        elif start + 1 == end:
+            # Run of 2 VLANs
+            parse_list.append(str(sorted_list[start]))
+            parse_list.append(str(sorted_list[end]))
+        else:
+            # Run of 3 or more VLANs
+            parse_list.append(str(sorted_list[start]) + '-' + str(sorted_list[end]))
+        idx = end + 1
+
+    line_count = 0
+    result = ['']
+    for vlans in parse_list:
+        # First line (" switchport trunk allowed vlan ")
+        if line_count == 0:
+            if len(result[line_count] + vlans) > first_line_len:
+                result.append('')
+                line_count += 1
+                result[line_count] += vlans + ','
+            else:
+                result[line_count] += vlans + ','
+
+        # Subsequent lines (" switchport trunk allowed vlan add ")
+        else:
+            if len(result[line_count] + vlans) > other_line_len:
+                result.append('')
+                line_count += 1
+                result[line_count] += vlans + ','
+            else:
+                result[line_count] += vlans + ','
+
+    # Remove trailing orphan commas
+    for idx in range(0, len(result)):
+        result[idx] = result[idx].rstrip(',')
+
+    # Sometimes text wraps to next line, but there are no remaining VLANs
+    if '' in result:
+        result.remove('')
+
+    return result
+
+
 class FilterModule(object):
     """Filters for working with output from network devices"""
 
     filter_map = {
         'parse_cli': parse_cli,
         'parse_cli_textfsm': parse_cli_textfsm,
-        'parse_xml': parse_xml
+        'parse_xml': parse_xml,
+        'type5_pw': type5_pw,
+        'hash_salt': hash_salt,
+        'comp_type5': comp_type5,
+        'vlan_parser': vlan_parser
     }
 
     def filters(self):

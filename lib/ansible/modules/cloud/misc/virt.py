@@ -25,7 +25,7 @@ options:
     description:
       - name of the guest VM being managed. Note that VM must be previously
         defined with xml.
-    required: true
+      - This option is required unless I(command) is C(list_vms).
   state:
     description:
       - Note that there may be some lag for state requests like C(shutdown)
@@ -48,6 +48,7 @@ options:
   xml:
     description:
       - XML document used with the define command.
+      - Must be raw XML content using C(lookup). XML cannot be reference to a file.
 requirements:
     - python >= 2.6
     - libvirt-python

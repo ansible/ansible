@@ -44,6 +44,8 @@ _NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
         socket_path = None
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
@@ -93,7 +95,8 @@ class ActionModule(ActionBase):
         else:
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
-                display.warning('provider is unnecessary when using connection=%s and will be ignored' % play_context.connection)
+                display.warning('provider is unnecessary when using %s and will be ignored' % play_context.connection)
+                del self._task.args['provider']
 
         if play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -110,7 +113,7 @@ class ActionModule(ActionBase):
         if 'fail_on_missing_module' not in self._task.args:
             self._task.args['fail_on_missing_module'] = False
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         module = self._get_implementation_module(play_context.network_os, self._task.action)
 
@@ -147,6 +150,8 @@ class ActionModule(ActionBase):
         display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
+
+        connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)

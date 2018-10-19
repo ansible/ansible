@@ -1,33 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Ansible, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2016, Ansible, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_shell
-short_description: Execute shell commands on target hosts.
+short_description: Execute shell commands on target hosts
 version_added: 2.2
 description:
      - The C(win_shell) module takes the command name followed by a list of space-delimited arguments.
@@ -37,22 +21,26 @@ description:
 options:
   free_form:
     description:
-      - The C(win_shell) module takes a free form command to run.  There is no parameter actually named 'free form'.
-        See the examples!
-    required: true
+      - The C(win_shell) module takes a free form command to run.
+      - There is no parameter actually named 'free form'. See the examples!
+    required: yes
   creates:
     description:
-      - a path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+      - A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+    type: path
   removes:
     description:
-      - a path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
+      - A path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
+    type: path
   chdir:
     description:
-      - set the specified path as the current working directory before executing a command
+      - Set the specified path as the current working directory before executing a command
+    type: path
   executable:
     description:
-      - change the shell used to execute the command (eg, C(cmd)). The target shell must accept a C(/c) parameter followed by the raw command line to be
-        executed.
+      - Change the shell used to execute the command (eg, C(cmd)).
+      - The target shell must accept a C(/c) parameter followed by the raw command line to be executed.
+    type: path
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.
@@ -74,18 +62,18 @@ author:
 EXAMPLES = r'''
 # Execute a command in the remote shell; stdout goes to the specified
 # file on the remote.
-- win_shell: C:\somescript.ps1 >> c:\somelog.txt
+- win_shell: C:\somescript.ps1 >> C:\somelog.txt
 
 # Change the working directory to somedir/ before executing the command.
-- win_shell: C:\somescript.ps1 >> c:\somelog.txt chdir=c:\somedir
+- win_shell: C:\somescript.ps1 >> C:\somelog.txt chdir=C:\somedir
 
 # You can also use the 'args' form to provide the options. This command
 # will change the working directory to somedir/ and will only run when
 # somedir/somelog.txt doesn't exist.
-- win_shell: C:\somescript.ps1 >> c:\somelog.txt
+- win_shell: C:\somescript.ps1 >> C:\somelog.txt
   args:
-    chdir: c:\somedir
-    creates: c:\somelog.txt
+    chdir: C:\somedir
+    creates: C:\somelog.txt
 
 # Run a command under a non-Powershell interpreter (cmd in this case)
 - win_shell: echo %HOMEDIR%

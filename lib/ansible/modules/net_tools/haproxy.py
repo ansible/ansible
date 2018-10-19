@@ -33,7 +33,6 @@ options:
   backend:
     description:
       - Name of the HAProxy backend pool.
-    required: false
     default: auto-detected
   drain:
     description:
@@ -41,25 +40,22 @@ options:
         determined by wait_interval and wait_retries is reached.  Continue only
         after the status changes to 'MAINT'.  This overrides the
         shutdown_sessions option.
-    default: false
     version_added: "2.4"
   host:
     description:
       - Name of the backend host to change.
     required: true
-    default: null
   shutdown_sessions:
     description:
       - When disabling a server, immediately terminate all the sessions attached
         to the specified server. This can be used to terminate long-running
         sessions after a server is put into maintenance mode. Overridden by the
         drain option.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   socket:
     description:
       - Path to the HAProxy socket file.
-    required: false
     default: /var/run/haproxy.sock
   state:
     description:
@@ -67,31 +63,28 @@ options:
       - Note that C(drain) state was added in version 2.4. It is supported only by HAProxy version 1.5 or later,
         if used on versions < 1.5, it will be ignored.
     required: true
-    default: null
     choices: [ "enabled", "disabled", "drain" ]
   fail_on_not_found:
     description:
       - Fail whenever trying to enable/disable a backend host that does not exist
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.2"
   wait:
     description:
       - Wait until the server reports a status of 'UP' when `state=enabled`,
         status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drain`
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
   wait_interval:
     description:
       - Number of seconds to wait between retries.
-    required: false
     default: 5
     version_added: "2.0"
   wait_retries:
     description:
       - Number of times to check for status after changing the state.
-    required: false
     default: 25
     version_added: "2.0"
   weight:
@@ -100,8 +93,6 @@ options:
         the new weight will be relative to the initially configured weight.
         Relative weights are only permitted between 0 and 100% and absolute
         weights are permitted between 0 and 256.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''
@@ -202,6 +193,7 @@ import time
 from string import Template
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_text
 
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
@@ -241,7 +233,7 @@ class HAProxy(object):
         self.wait = self.module.params['wait']
         self.wait_retries = self.module.params['wait_retries']
         self.wait_interval = self.module.params['wait_interval']
-        self.drain = self.module.params['drain']
+        self._drain = self.module.params['drain']
         self.command_results = {}
 
     def execute(self, cmd, timeout=200, capture_output=True):
@@ -251,13 +243,16 @@ class HAProxy(object):
         """
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
-        self.client.sendall('%s\n' % cmd)
-        result = ''
-        buf = ''
+        self.client.sendall(to_bytes('%s\n' % cmd))
+
+        result = b''
+        buf = b''
         buf = self.client.recv(RECV_SIZE)
         while buf:
             result += buf
             buf = self.client.recv(RECV_SIZE)
+        result = to_text(result, errors='surrogate_or_strict')
+
         if capture_output:
             self.capture_command_output(cmd, result.strip())
         self.client.close()
@@ -315,7 +310,8 @@ class HAProxy(object):
             # Fail when backends were not found
             state = self.get_state_for(backend, svname)
             if (self.fail_on_not_found) and state is None:
-                self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
+                self.module.fail_json(
+                    msg="The specified backend '%s/%s' was not found!" % (backend, svname))
 
             if state is not None:
                 self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
@@ -332,7 +328,8 @@ class HAProxy(object):
         state = tuple(
             map(
                 lambda d: {'status': d['status'], 'weight': d['weight'], 'scur': d['scur']},
-                filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)
+                filter(lambda d: (pxname is None or d['pxname']
+                                  == pxname) and d['svname'] == svname, r)
             )
         )
         return state or None
@@ -349,12 +346,13 @@ class HAProxy(object):
 
             # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
             if state[0]['status'] == status:
-                if not self.drain or (state[0]['scur'] == '0' and state == 'MAINT'):
+                if not self._drain or (state[0]['scur'] == '0' and state == 'MAINT'):
                     return True
             else:
                 time.sleep(self.wait_interval)
 
-        self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. Aborting." % (pxname, svname, status, self.wait_retries))
+        self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. Aborting." %
+                              (pxname, svname, status, self.wait_retries))
 
     def enabled(self, host, backend, weight):
         """
@@ -402,7 +400,7 @@ class HAProxy(object):
         # toggle enable/disbale server
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
-        elif self.state == 'disabled' and self.drain:
+        elif self.state == 'disabled' and self._drain:
             self.drain(self.host, self.backend, status='MAINT')
         elif self.state == 'disabled':
             self.disabled(self.host, self.backend, self.shutdown_sessions)

@@ -32,6 +32,13 @@ the AWS_PROFILE variable:
 
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
 
+You can filter for specific EC2 instances by creating an environment variable
+named EC2_INSTANCE_FILTERS, which has the same format as the instance_filters
+entry documented in ec2.ini.  For example, to find all hosts whose name begins
+with 'webserver', one might use:
+
+    export EC2_INSTANCE_FILTERS='tag:Name=webserver*'
+
 When run against a specific host, this script returns the following variables:
  - ec2_ami_launch_index
  - ec2_architecture
@@ -152,6 +159,7 @@ import os
 import argparse
 import re
 from time import time
+from copy import deepcopy
 import boto
 from boto import ec2
 from boto import rds
@@ -172,10 +180,7 @@ except ImportError:
 from six.moves import configparser
 from collections import defaultdict
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 DEFAULTS = {
     'all_elasticache_clusters': 'False',
@@ -183,16 +188,16 @@ DEFAULTS = {
     'all_elasticache_replication_groups': 'False',
     'all_instances': 'False',
     'all_rds_instances': 'False',
-    'aws_access_key_id': None,
-    'aws_secret_access_key': None,
-    'aws_security_token': None,
-    'boto_profile': None,
+    'aws_access_key_id': '',
+    'aws_secret_access_key': '',
+    'aws_security_token': '',
+    'boto_profile': '',
     'cache_max_age': '300',
     'cache_path': '~/.ansible/tmp',
     'destination_variable': 'public_dns_name',
     'elasticache': 'True',
     'eucalyptus': 'False',
-    'eucalyptus_host': None,
+    'eucalyptus_host': '',
     'expand_csv_tags': 'False',
     'group_by_ami_id': 'True',
     'group_by_availability_zone': 'True',
@@ -214,19 +219,19 @@ DEFAULTS = {
     'group_by_tag_keys': 'True',
     'group_by_tag_none': 'True',
     'group_by_vpc_id': 'True',
-    'hostname_variable': None,
-    'iam_role': None,
+    'hostname_variable': '',
+    'iam_role': '',
     'include_rds_clusters': 'False',
     'nested_groups': 'False',
-    'pattern_exclude': None,
-    'pattern_include': None,
+    'pattern_exclude': '',
+    'pattern_include': '',
     'rds': 'False',
     'regions': 'all',
     'regions_exclude': 'us-gov-west-1, cn-north-1',
     'replace_dash_in_groups': 'True',
     'route53': 'False',
     'route53_excluded_zones': '',
-    'route53_hostnames': None,
+    'route53_hostnames': '',
     'stack_filters': 'False',
     'vpc_destination_variable': 'ip_address'
 }
@@ -340,18 +345,18 @@ class Ec2Inventory(object):
 
         # Regions
         self.regions = []
-        configRegions = config.get('ec2', 'regions')
-        if (configRegions == 'all'):
+        config_regions = config.get('ec2', 'regions')
+        if (config_regions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
-                configRegions_exclude = config.get('ec2', 'regions_exclude')
+                config_regions_exclude = config.get('ec2', 'regions_exclude')
 
-                for regionInfo in ec2.regions():
-                    if regionInfo.name not in configRegions_exclude:
-                        self.regions.append(regionInfo.name)
+                for region_info in ec2.regions():
+                    if region_info.name not in config_regions_exclude:
+                        self.regions.append(region_info.name)
         else:
-            self.regions = configRegions.split(",")
+            self.regions = config_regions.split(",")
         if 'auto' in self.regions:
             env_region = os.environ.get('AWS_REGION')
             if env_region is None:
@@ -494,8 +499,8 @@ class Ec2Inventory(object):
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = []
 
-        if config.has_option('ec2', 'instance_filters'):
-            filters = config.get('ec2', 'instance_filters')
+        if config.has_option('ec2', 'instance_filters') or 'EC2_INSTANCE_FILTERS' in os.environ:
+            filters = os.getenv('EC2_INSTANCE_FILTERS', config.get('ec2', 'instance_filters') if config.has_option('ec2', 'instance_filters') else '')
 
             if self.stack_filters and '&' in filters:
                 self.fail_with_error("AND filters along with stack_filter enabled is not supported.\n")
@@ -565,7 +570,7 @@ class Ec2Inventory(object):
         return connect_args
 
     def connect_to_aws(self, module, region):
-        connect_args = self.credentials
+        connect_args = deepcopy(self.credentials)
 
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:
@@ -775,13 +780,26 @@ class Ec2Inventory(object):
         # ElastiCache boto module doesn't provide a get_all_instances method,
         # that's why we need to call describe directly (it would be called by
         # the shorthand method anyway...)
+        clusters = []
         try:
             conn = self.connect_to_aws(elasticache, region)
             if conn:
                 # show_cache_node_info = True
                 # because we also want nodes' information
-                response = conn.describe_cache_clusters(None, None, None, True)
-
+                _marker = 1
+                while _marker:
+                    if _marker == 1:
+                        _marker = None
+                    response = conn.describe_cache_clusters(None, None, _marker, True)
+                    _marker = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['Marker']
+                    try:
+                        # Boto also doesn't provide wrapper classes to CacheClusters or
+                        # CacheNodes. Because of that we can't make use of the get_list
+                        # method in the AWSQueryConnection. Let's do the work manually
+                        clusters = clusters + response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
+                    except KeyError as e:
+                        error = "ElastiCache query to AWS failed (unexpected format)."
+                        self.fail_with_error(error, 'getting ElastiCache clusters')
         except boto.exception.BotoServerError as e:
             error = e.reason
 
@@ -793,16 +811,6 @@ class Ec2Inventory(object):
                     "or set 'elasticache = False' in ec2.ini"
             elif not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting ElastiCache clusters')
-
-        try:
-            # Boto also doesn't provide wrapper classes to CacheClusters or
-            # CacheNodes. Because of that we can't make use of the get_list
-            # method in the AWSQueryConnection. Let's do the work manually
-            clusters = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
-
-        except KeyError as e:
-            error = "ElastiCache query to AWS failed (unexpected format)."
             self.fail_with_error(error, 'getting ElastiCache clusters')
 
         for cluster in clusters:

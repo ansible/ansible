@@ -586,7 +586,7 @@ class NCConfiguration(ConfigBase):
                 elif item['dest'] == 'host' and item['name'] in host_list:
                     item['level'] = severity_level[item['level']]
                     host_params.append(item)
-                elif item['dest'] == 'console' and have_console and have_console_enable:
+                elif item['dest'] == 'console' and have_console:
                     console_params.update({'console-level': item['level']})
                 elif item['dest'] == 'monitor' and have_monitor:
                     monitor_params.update({'monitor-level': item['level']})
@@ -712,7 +712,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate(msg="cli support for 'iosxr_logging' is deprecated. Use transport netconf instead",
-                         version="4 releases from v2.5")
+                         version="2.9")
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)
@@ -720,6 +720,7 @@ def main():
     if config_object:
         result = config_object.run()
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

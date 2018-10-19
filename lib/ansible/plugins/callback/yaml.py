@@ -24,9 +24,12 @@ import json
 import re
 import string
 import sys
+
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import string_types
+from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.callback import CallbackBase, strip_internal_keys
 from ansible.plugins.callback.default import CallbackModule as Default
-from ansible.parsing.yaml.dumper import AnsibleDumper
 
 
 # from http://stackoverflow.com/a/15423007/115478
@@ -47,7 +50,7 @@ def my_represent_scalar(self, tag, value, style=None):
             # ...no trailing space
             value = value.rstrip()
             # ...and non-printable characters
-            value = filter(lambda x: x in string.printable, value)
+            value = ''.join(x for x in value if x in string.printable)
             # ...tabs prevent blocks from expanding
             value = value.expandtabs()
             # ...and odd bits of whitespace
@@ -79,7 +82,7 @@ class CallbackModule(Default):
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
-            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
+            return json.dumps(dict(censored="The output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
         abridged_result = strip_internal_keys(result)
@@ -113,7 +116,7 @@ class CallbackModule(Default):
 
         if abridged_result:
             dumped += '\n'
-            dumped += yaml.dump(abridged_result, width=1000, Dumper=AnsibleDumper, default_flow_style=False)
+            dumped += to_text(yaml.dump(abridged_result, allow_unicode=True, width=1000, Dumper=AnsibleDumper, default_flow_style=False))
 
         # indent by a couple of spaces
         dumped = '\n  '.join(dumped.split('\n')).rstrip()

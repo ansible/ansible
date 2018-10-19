@@ -27,60 +27,46 @@ options:
   name:
     description:
       - "The name of the Kinesis Stream you are managing."
-    default: None
     required: true
   shards:
     description:
       - "The number of shards you want to have with this stream."
       - "This is required when state == present"
-    required: false
-    default: None
   retention_period:
     description:
       - "The default retention period is 24 hours and can not be less than 24
       hours."
       - "The retention period can be modified during any point in time."
-    required: false
-    default: None
   state:
     description:
       - "Create or Delete the Kinesis Stream."
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   wait:
     description:
       - Wait for operation to complete before returning.
-    required: false
     default: true
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
-    required: false
     default: 300
   tags:
     description:
       - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }."
-    required: false
-    default: null
     aliases: [ "resource_tags" ]
   encryption_state:
     description:
       - "Enable or Disable encryption on the Kinesis Stream."
-    required: false
     choices: [ 'enabled', 'disabled' ]
     version_added: "2.5"
   encryption_type:
     description:
       - "The type of encryption."
-    required: false
     default: KMS
     version_added: "2.5"
   key_id:
     description:
       - "The GUID or alias for the KMS key."
-    required: false
-    default: None
     version_added: "2.5"
 extends_documentation_fragment:
     - aws

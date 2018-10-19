@@ -45,8 +45,6 @@ options:
             - Remote file path of the copy. Remote directories must exist.
               If omitted, the name of the local file will be used.
               The maximum length of I(remote_file) is C(4096).
-        required: false
-        default: null
     file_system:
         description:
             - The remote file system of the device. If omitted,
@@ -59,7 +57,6 @@ options:
               3) C(chassis ID/slot number#flash) is root directory of the flash memory on
                  a device in a stack. For example, C(1/5#flash) indicates the flash memory
                  whose chassis ID is 1 and slot number is 5.
-        required: false
         default: 'flash:'
 '''
 
@@ -111,9 +108,10 @@ remote_file:
 
 import re
 import os
+import sys
 import time
 from xml.etree import ElementTree
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
 
 try:
@@ -158,7 +156,7 @@ def get_cli_exception(exc=None):
 
     msg = list()
     if not exc:
-        exc = get_exception()
+        exc = sys.exc_info[1]
     if exc:
         errs = str(exc).split("\r\n")
         for err in errs:

@@ -42,6 +42,10 @@ options:
       - State of the link aggregation group.
     default: present
     choices: ['present', 'absent']
+  purge:
+    description:
+      - Purge links not defined in the I(aggregate) parameter.
+    default: no
 extends_documentation_fragment: ios
 """
 
@@ -223,7 +227,7 @@ def parse_members(module, config, group):
 
 
 def get_channel(module, config, group):
-    match = re.findall(r'interface (\S+)', config, re.M)
+    match = re.findall(r'^interface (\S+)', config, re.M)
 
     if not match:
         return {}
@@ -307,6 +311,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

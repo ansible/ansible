@@ -32,7 +32,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
     VALID_ALL = ['name']
 
@@ -48,7 +48,7 @@ class ActionModule(ActionBase):
         if not self.ignore_files:
             self.ignore_files = list()
 
-        if isinstance(self.ignore_files, str):
+        if isinstance(self.ignore_files, string_types):
             self.ignore_files = self.ignore_files.split()
 
         elif isinstance(self.ignore_files, dict):
@@ -68,6 +68,7 @@ class ActionModule(ActionBase):
 
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)
+        self.ignore_unknown_extensions = self._task.args.get('ignore_unknown_extensions', False)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
 
@@ -80,6 +81,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
+        del tmp  # tmp no longer has any effect
+
         if task_vars is None:
             task_vars = dict()
 
@@ -97,10 +100,10 @@ class ActionModule(ActionBase):
             elif arg in self.VALID_ALL:
                 pass
             else:
-                raise AnsibleError('{0} is not a valid option in debug'.format(arg))
+                raise AnsibleError('{0} is not a valid option in include_vars'.format(arg))
 
         if dirs and files:
-            raise AnsibleError("Your are mixing file only and dir only arguments, these are incompatible")
+            raise AnsibleError("You are mixing file only and dir only arguments, these are incompatible")
 
         # set internal vars from args
         self._set_args()
@@ -139,7 +142,7 @@ class ActionModule(ActionBase):
             scope[self.return_results_as_name] = results
             results = scope
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         if failed:
             result['failed'] = failed
@@ -234,7 +237,7 @@ class ActionModule(ActionBase):
             data = to_text(b_data, errors='surrogate_or_strict')
 
             self.show_content = show_content
-            data = self._loader.load(data, show_content)
+            data = self._loader.load(data, file_name=filename, show_content=show_content)
             if not data:
                 data = dict()
             if not isinstance(data, dict):
@@ -272,9 +275,15 @@ class ActionModule(ActionBase):
                     stop_iter = True
 
             if not stop_iter and not failed:
-                if path.exists(filepath) and not self._ignore_file(filename):
-                    failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
-                    if not failed:
-                        results.update(loaded_data)
+                if self.ignore_unknown_extensions:
+                    if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(loaded_data)
+                else:
+                    if path.exists(filepath) and not self._ignore_file(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(loaded_data)
 
         return failed, err_msg, results

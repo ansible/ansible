@@ -1,7 +1,5 @@
 ---
-- debug: msg="START connection={{ ansible_connection }}/save.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
+- debug: msg="START common/save.yaml on connection={{ ansible_connection }}"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -38,4 +36,4 @@
     that:
       - "result.changed == true"
 
-- debug: msg="END connection={{ ansible_connection }}/save.yaml"
+- debug: msg="END common/save.yaml on connection={{ ansible_connection }}"

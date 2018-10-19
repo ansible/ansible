@@ -40,7 +40,7 @@ options:
     force:
         required: false
         default: False
-        choices: [ True, False ]
+        type: bool
         description:
             - Should the parameters be regenerated even it it already exists
     path:

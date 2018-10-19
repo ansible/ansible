@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: Ansible Project
+
+# Copyright: (c) 2016, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -24,46 +25,33 @@ options:
     description:
       - Name of the schema to add or remove.
     required: true
-    default: null
   database:
     description:
       - Name of the database to connect to.
-    required: false
     default: postgres
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database.
-    required: false
     default: localhost
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
-    required: false
-    default: null
   owner:
     description:
       - Name of the role to set as owner of the schema.
-    required: false
-    default: null
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   state:
     description:
       - The schema state.
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:
@@ -72,7 +60,7 @@ notes:
      on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before
      using this module.
 requirements: [ psycopg2 ]
-author: "Flavien Chantelot <contact@flavien.io>"
+author: Flavien Chantelot (@Dorn-) <contact@flavien.io>
 '''
 
 EXAMPLES = '''

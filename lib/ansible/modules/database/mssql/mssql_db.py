@@ -26,52 +26,42 @@ options:
     description:
       - name of the database to add or remove
     required: true
-    default: null
     aliases: [ db ]
   login_user:
     description:
       - The username used to authenticate with
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database
-    required: false
   login_port:
     description:
       - Port of the MSSQL server. Requires login_host be defined as other then localhost if login_port is used
-    required: false
     default: 1433
   state:
     description:
       - The database state
-    required: false
     default: present
     choices: [ "present", "absent", "import" ]
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
         files (C(.sql)) files are supported.
-    required: false
   autocommit:
     description:
       - Automatically commit the change only if the import succeed. Sometimes it is necessary to use autocommit=true, since some content can't be changed
         within a transaction.
-    required: false
-    default: false
-    choices: [ "false", "true" ]
+    type: bool
+    default: 'no'
 notes:
    - Requires the pymssql Python package on the remote host. For Ubuntu, this
      is as easy as pip install pymssql (See M(pip).)
 requirements:
    - python >= 2.7
    - pymssql
-author: Vedit Firat Arig
+author: Vedit Firat Arig (@vedit)
 '''
 
 EXAMPLES = '''

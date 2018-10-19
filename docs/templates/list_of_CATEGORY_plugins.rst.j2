@@ -1,3 +1,5 @@
+.. _@{ title.lower() + '_' + plugin_type + 's' }@:
+
 @{ title }@ @{ plugin_type }@
 @{ '`' * title | length }@````````
 
@@ -14,13 +16,16 @@
 {% endif %}
 
 {% for name, info in subcategories.items() | sort %}
+
+.. _@{ name.lower() + '_' + title.lower() + '_' + plugin_type + 's' }@:
+
 @{ name.title() }@
 @{ '-' * name | length }@
 
 .. toctree:: :maxdepth: 1
 
 {% for module in info['_modules'] | sort %}
-  :ref:`@{ module }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@
+  :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} -- @{ module_info[module]['doc']['short_description'] }@
 {% endfor %}
 
 {% endfor %}

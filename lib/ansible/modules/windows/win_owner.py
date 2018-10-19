@@ -1,11 +1,12 @@
 #!/usr/bin/python
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -18,17 +19,19 @@ options:
   path:
     description:
       - Path to be used for changing owner
-    required: true
+    required: yes
+    type: path
   user:
     description:
       - Name to be used for changing owner
-    required: true
+    required: yes
   recurse:
     description:
       - Indicates if the owner should be changed recursively
     type: bool
     default: 'no'
-author: Hans-Joachim Kliemeck (@h0nIg)
+author:
+- Hans-Joachim Kliemeck (@h0nIg)
 '''
 
 EXAMPLES = r'''

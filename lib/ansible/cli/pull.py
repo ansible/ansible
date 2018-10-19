@@ -29,8 +29,9 @@ import sys
 import time
 
 from ansible.cli import CLI
+from ansible import constants as C
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -91,6 +92,7 @@ class PullCLI(CLI):
             vault_opts=True,
             runtask_opts=True,
             subset_opts=True,
+            check_opts=False,  # prevents conflict of --checkout/-C and --check/-C
             inventory_opts=True,
             module_opts=True,
             runas_prompt_opts=True,
@@ -123,8 +125,12 @@ class PullCLI(CLI):
                                help='modified files in the working repository will be discarded')
         self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
                                help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
+        # add a subset of the check_opts flag group manually, as the full set's
+        # shortcodes conflict with above --checkout/-C
         self.parser.add_option("--check", default=False, dest='check', action='store_true',
                                help="don't make any changes; instead, try to predict some of the changes that may occur")
+        self.parser.add_option("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
+                               help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
         super(PullCLI, self).parse()
 
@@ -238,14 +244,14 @@ class PullCLI(CLI):
         # RUN the Checkout command
         display.debug("running ansible with VCS module to checkout repo")
         display.vvvv('EXEC: %s' % cmd)
-        rc, out, err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = run_cmd(cmd, live=True)
 
         if rc != 0:
             if self.options.force:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif self.options.ifchanged and '"changed": true' not in out:
+        elif self.options.ifchanged and b'"changed": true' not in b_out:
             display.display("Repository has not changed, quitting.")
             return 0
 
@@ -276,6 +282,8 @@ class PullCLI(CLI):
             cmd += ' -l "%s"' % limit_opts
         if self.options.check:
             cmd += ' -C'
+        if self.options.diff:
+            cmd += ' -D'
 
         os.chdir(self.options.dest)
 
@@ -287,14 +295,14 @@ class PullCLI(CLI):
         # RUN THE PLAYBOOK COMMAND
         display.debug("running ansible-playbook to do actual work")
         display.debug('EXEC: %s' % cmd)
-        rc, out, err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = run_cmd(cmd, live=True)
 
         if self.options.purge:
             os.chdir('/')
             try:
                 shutil.rmtree(self.options.dest)
             except Exception as e:
-                display.error("Failed to remove %s: %s" % (self.options.dest, str(e)))
+                display.error(u"Failed to remove %s: %s" % (self.options.dest, to_text(e)))
 
         return rc
 

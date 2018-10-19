@@ -15,13 +15,13 @@ DOCUMENTATION = '''
 module: rhsm_repository
 short_description: Manage RHSM repositories using the subscription-manager command
 description:
-  - Manage(List/Enable/Disable) RHSM repositories to the Red Hat Subscription
+  - Manage(Enable/Disable) RHSM repositories to the Red Hat Subscription
     Management entitlement platform using the C(subscription-manager) command.
 version_added: '2.5'
 author: Giovanni Sciortino (@giovannisciortino)
 notes:
   - In order to manage RHSM repositories the system must be already registered
-    to RHSM manually or using the ansible module redhat_subscription.
+    to RHSM manually or using the Ansible C(redhat_subscription) module.
 
 requirements:
   - subscription-manager
@@ -30,7 +30,7 @@ options:
     description:
       - If state is equal to present or disabled, indicates the desired
         repository state.
-    choices: [present, absent]
+    choices: [present, enabled, absent, disabled]
     required: True
     default: "present"
   name:
@@ -88,7 +88,8 @@ def run_subscription_manager(module, arguments):
     if not rhsm_bin:
         module.fail_json(msg='The executable file subscription-manager was not found in PATH')
 
-    rc, out, err = module.run_command("%s %s" % (rhsm_bin, " ".join(arguments)))
+    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    rc, out, err = module.run_command("%s %s" % (rhsm_bin, " ".join(arguments)), environ_update=lang_env)
 
     if rc == 1 and (err == 'The password you typed is invalid.\nPlease try again.\n' or os.getuid() != 0):
         module.fail_json(msg='The executable file subscription-manager must be run using root privileges')
@@ -183,14 +184,14 @@ def repository_modify(module, state, name):
             results.append("%s is not a valid repository ID" % repoid)
             module.fail_json(results=results, msg="%s is not a valid repository ID" % repoid)
         for repo in matched_existing_repo[repoid]:
-            if state == 'disabled':
+            if state in ['disabled', 'absent']:
                 if repo['enabled']:
                     changed = True
                     diff_before += "Repository '%s' is enabled for this system\n" % repo['id']
                     diff_after += "Repository '%s' is disabled for this system\n" % repo['id']
                 results.append("Repository '%s' is disabled for this system" % repo['id'])
                 rhsm_arguments += ['--disable', repo['id']]
-            elif state == 'enabled':
+            elif state in ['enabled', 'present']:
                 if not repo['enabled']:
                     changed = True
                     diff_before += "Repository '%s' is disabled for this system\n" % repo['id']
@@ -213,7 +214,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='list', required=True),
-            state=dict(choices=['enabled', 'disabled'], default='enabled'),
+            state=dict(choices=['enabled', 'disabled', 'present', 'absent'], default='enabled'),
         ),
         supports_check_mode=True,
     )

@@ -21,7 +21,7 @@ description:
    - It will check first via de get-backend-prop if configuration needs to be applied.
 version_added: "2.2"
 author:
-    - Werner Dijkerman
+    - Werner Dijkerman (@dj-wasabi)
 options:
     opendj_bindir:
         description:
@@ -198,6 +198,7 @@ def main():
             module.exit_json(changed=False)
     else:
         module.exit_json(changed=False)
+
 
 if __name__ == '__main__':
     main()

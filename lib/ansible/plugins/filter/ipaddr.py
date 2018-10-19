@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from functools import partial
 import types
+from ansible.module_utils import six
 
 try:
     import netaddr
@@ -175,6 +176,7 @@ def _ip_netmask_query(v):
     elif v.size > 1:
         if v.ip != v.network:
             return str(v.ip) + ' ' + str(v.netmask)
+
 
 '''
 def _ip_wildcard_query(v):
@@ -413,6 +415,38 @@ def _win_query(v):
 
 
 # ---- IP address and network filters ----
+
+# Returns a minified list of subnets or a single subnet that spans all of
+# the inputs.
+def cidr_merge(value, action='merge'):
+    if not hasattr(value, '__iter__'):
+        raise errors.AnsibleFilterError('cidr_merge: expected iterable, got ' + repr(value))
+
+    if action == 'merge':
+        try:
+            return [str(ip) for ip in netaddr.cidr_merge(value)]
+        except Exception as e:
+            raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    elif action == 'span':
+        # spanning_cidr needs at least two values
+        if len(value) == 0:
+            return None
+        elif len(value) == 1:
+            try:
+                return str(netaddr.IPNetwork(value[0]))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+        else:
+            try:
+                return str(netaddr.spanning_cidr(value))
+            except Exception as e:
+                raise errors.AnsibleFilterError('cidr_merge: error in netaddr:\n%s' % e)
+
+    else:
+        raise errors.AnsibleFilterError("cidr_merge: invalid action '%s'" % action)
+
+
 def ipaddr(value, query='', version=False, alias='ipaddr'):
     ''' Check if string is an IP address or network and filter it '''
 
@@ -638,6 +672,23 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     return False
 
 
+def ipmath(value, amount):
+    try:
+        ip = netaddr.IPAddress(value)
+    except netaddr.AddrFormatError:
+        msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
+        raise errors.AnsibleFilterError(msg)
+
+    if not isinstance(amount, int):
+        msg = (
+            'You must pass an integer for arithmetic; '
+            '{0} is not a valid integer'
+        ).format(amount)
+        raise errors.AnsibleFilterError(msg)
+
+    return str(ip + amount)
+
+
 def ipwrap(value, query=''):
     try:
         if isinstance(value, (list, tuple, types.GeneratorType)):
@@ -686,6 +737,9 @@ def ipv6(value, query=''):
 #
 #  - address | ipsubnet(cidr, index)
 #      returns next indexed subnet which contains given address
+#
+#  - address/prefix | ipsubnet(subnet/prefix)
+#      return the index of the subnet in the subnet
 def ipsubnet(value, query='', index='x'):
     ''' Manipulate IPv4/IPv6 subnets '''
 
@@ -699,11 +753,11 @@ def ipsubnet(value, query='', index='x'):
         value = netaddr.IPNetwork(v)
     except:
         return False
-
+    query_string = str(query)
     if not query:
         return str(value)
 
-    elif str(query).isdigit():
+    elif query_string.isdigit():
         vsize = ipaddr(v, 'size')
         query = int(query)
 
@@ -736,6 +790,21 @@ def ipsubnet(value, query='', index='x'):
                 except:
                     return False
 
+    elif query_string:
+        vtype = ipaddr(query, 'type')
+        if vtype == 'address':
+            v = ipaddr(query, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(query, 'subnet')
+        else:
+            msg = 'You must pass a valid subnet or IP address; {0} is invalid'.format(query_string)
+            raise errors.AnsibleFilterError(msg)
+        query = netaddr.IPNetwork(v)
+        for i, subnet in enumerate(query.subnet(value.prefixlen), 1):
+            if subnet == value:
+                return str(i)
+        msg = '{0} is not in the subnet {1}'.format(value.cidr, query.cidr)
+        raise errors.AnsibleFilterError(msg)
     return False
 
 
@@ -785,7 +854,7 @@ def next_nth_usable(value, offset):
         return False
 
     if type(offset) != int:
-        raise errors.AnsibleFilterError('Must pass in an interger')
+        raise errors.AnsibleFilterError('Must pass in an integer')
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
@@ -807,7 +876,7 @@ def previous_nth_usable(value, offset):
         return False
 
     if type(offset) != int:
-        raise errors.AnsibleFilterError('Must pass in an interger')
+        raise errors.AnsibleFilterError('Must pass in an integer')
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
@@ -1011,8 +1080,8 @@ def macaddr(value, query=''):
 
 
 def _need_netaddr(f_name, *args, **kwargs):
-    raise errors.AnsibleFilterError('The %s filter requires python-netaddr be '
-                                    'installed on the ansible controller' % f_name)
+    raise errors.AnsibleFilterError("The %s filter requires python's netaddr be "
+                                    "installed on the ansible controller" % f_name)
 
 
 def ip4_hex(arg, delimiter=''):
@@ -1026,7 +1095,9 @@ class FilterModule(object):
     ''' IP address and network manipulation filters '''
     filter_map = {
         # IP addresses and networks
+        'cidr_merge': cidr_merge,
         'ipaddr': ipaddr,
+        'ipmath': ipmath,
         'ipwrap': ipwrap,
         'ip4_hex': ip4_hex,
         'ipv4': ipv4,
@@ -1049,5 +1120,5 @@ class FilterModule(object):
         if netaddr:
             return self.filter_map
         else:
-            # Need to install python-netaddr for these filters to work
+            # Need to install python's netaddr for these filters to work
             return dict((f, partial(_need_netaddr, f)) for f in self.filter_map)

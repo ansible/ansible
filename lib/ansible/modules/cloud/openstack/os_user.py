@@ -32,11 +32,8 @@ options:
    password:
      description:
         - Password for the user
-     required: false
-     default: None
    update_password:
      required: false
-     default: always
      choices: ['always', 'on_create']
      version_added: "2.3"
      description:
@@ -45,8 +42,6 @@ options:
    email:
      description:
         - Email address for the user
-     required: false
-     default: None
    description:
      description:
         - Description about the user
@@ -54,18 +49,14 @@ options:
    default_project:
      description:
         - Project name or ID that the user should be associated with by default
-     required: false
-     default: None
    domain:
      description:
         - Domain to create the user in if the cloud supports domains
-     required: false
-     default: None
    enabled:
      description:
         - Is the user enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
@@ -74,10 +65,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -104,6 +94,15 @@ EXAMPLES = '''
     name: demouser
     password: secret
     update_password: on_create
+    email: demo@example.com
+    domain: default
+    default_project: demo
+
+# Create a user without password
+- os_user:
+    cloud: mycloud
+    state: present
+    name: demouser
     email: demo@example.com
     domain: default
     default_project: demo
@@ -139,14 +138,8 @@ user:
 '''
 from distutils.version import StrictVersion
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(params_dict, user):
@@ -197,7 +190,7 @@ def main():
         domain=dict(required=False, default=None),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
-        update_password=dict(default='always', choices=['always', 'on_create']),
+        update_password=dict(default=None, choices=['always', 'on_create']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -205,11 +198,8 @@ def main():
         argument_spec,
         **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
-    password = module.params.pop('password')
+    password = module.params.get('password')
     email = module.params['email']
     default_project = module.params['default_project']
     domain = module.params['domain']
@@ -218,17 +208,13 @@ def main():
     update_password = module.params['update_password']
     description = module.params['description']
 
-    if description and StrictVersion(shade.__version__) < StrictVersion('1.13.0'):
-        module.fail_json(msg="To utilize description, the installed version of the shade library MUST be >=1.13.0")
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         user = cloud.get_user(name)
 
         domain_id = None
         if domain:
-            opcloud = shade.operator_cloud(**module.params)
-            domain_id = _get_domain_id(opcloud, domain)
+            domain_id = _get_domain_id(cloud, domain)
 
         if state == 'present':
             if update_password in ('always', 'on_create'):
@@ -298,7 +284,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

@@ -10,14 +10,14 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: configure domain_search using platform agnostic module
   net_system:
     domain_search:
       - ansible.com
       - redhat.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -32,6 +32,6 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
 - debug: msg="END ios cli/net_system.yaml on connection={{ ansible_connection }}"

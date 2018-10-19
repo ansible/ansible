@@ -1,5 +1,8 @@
+.. _community_development_process:
+
+*******************************
 The Ansible Development Process
-===============================
+*******************************
 
 .. contents:: Topics
 
@@ -8,7 +11,7 @@ This section discusses how the Ansible development and triage process works.
 Road Maps
 =========
 
-The Ansible Core team provides a road map for each upcoming release. These road maps can be found `here <http://docs.ansible.com/ansible/devel/roadmap/>`_.
+The Ansible Core team provides a road map for each upcoming release. These road maps can be found :ref:`here <roadmaps>`.
 
 .. Roadmaps are User-oriented.  We should also list the Roadmap Projects and the Blocker Bug
    Projects here
@@ -22,6 +25,71 @@ Pull Requests
 Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general.
 
 Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by **Ansibullbot**.
+
+Backport Pull Request Process
+-----------------------------
+
+After the pull request submitted to Ansible for the ``devel`` branch is
+accepted and merged, the following instructions will help you create a
+pull request to backport the change to a previous stable branch.
+
+.. note::
+
+    These instructions assume that ``stable-2.5`` is the targeted release
+    branch for the backport.
+
+.. note::
+
+    These instructions assume that ``https://github.com/ansible/ansible.git``
+    is configured as a ``git remote`` named ``upstream``. If you do not use
+    a ``git remote`` named ``upstream``, adjust the instructions accordingly.
+
+.. note::
+
+   These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
+   is configured as a ``git remote`` named ``origin``. If you do not use
+   a ``git remote`` named ``origin``, adjust the instructions accordingly.
+
+#. Prepare your devel, stable, and feature branches:
+
+   ::
+
+       git fetch upstream
+       git checkout -b backport/2.5/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.5
+
+#. Cherry pick the relevant commit SHA from the devel branch into your feature
+   branch, handling merge conflicts as necessary:
+
+   ::
+
+       git cherry-pick -x [SHA_FROM_DEVEL]
+
+#. Add a :ref:`changelog fragment <changelogs_how_to>` for the change, and commit it.
+
+#. Push your feature branch to your fork on GitHub:
+
+   ::
+
+       git push origin backport/2.5/[PR_NUMBER_FROM_DEVEL]
+
+#. Submit the pull request for ``backport/2.5/[PR_NUMBER_FROM_DEVEL]``
+   against the ``stable-2.5`` branch
+
+.. note::
+
+    The choice to use ``backport/2.5/[PR_NUMBER_FROM_DEVEL]`` as the
+    name for the feature branch is somewhat arbitrary, but conveys meaning
+    about the purpose of that branch. It is not required to use this format,
+    but it can be helpful, especially when making multiple backport PRs for
+    multiple stable branches.
+
+.. note::
+
+    If you prefer, you can use CPython's cherry-picker tool to backport commits
+    from devel to stable branches in Ansible. Take a look at the `cherry-picker
+    documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for
+    details on installing, configuring, and using it.
+
 
 Ansibullbot
 ===========
@@ -93,7 +161,7 @@ Workflow Labels
 -  **community_review**: Pull requests for modules that are currently awaiting review by their maintainers in the Ansible community.
 -  **core_review**: Pull requests for modules that are currently awaiting review by their maintainers on the Ansible Core team.
 -  **needs_info**: Waiting on info from the submitter.
--  **needs_rebase**: Waiting on the submitter to rebase. (Note: no longer used by the bot.)
+-  **needs_rebase**: Waiting on the submitter to rebase.
 -  **needs_revision**: Waiting on the submitter to make changes.
 -  **shipit**: Waiting for final review by the core team for potential merge.
 

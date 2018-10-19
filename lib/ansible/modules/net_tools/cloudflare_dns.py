@@ -27,77 +27,90 @@ options:
   account_api_token:
     description:
       - >
-        Account API token. You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://www.cloudflare.com/a/account)
+        Account API token. You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://dash.cloudflare.com/)
     required: true
   account_email:
     description:
       - "Account email."
     required: true
+  algorithm:
+    description:
+      - Algorithm number. Required for C(type=DS) and C(type=SSHFP) when C(state=present).
+    type: int
+    version_added: 2.7
+  cert_usage:
+    description:
+      - Certificate usage number. Required for C(type=TLSA) when C(state=present).
+    choices: [ 0, 1, 2, 3 ]
+    type: int
+    version_added: 2.7
+  hash_type:
+    description:
+      - Hash type number. Required for C(type=DS), C(type=SSHFP) and C(type=TLSA) when C(state=present).
+    choices: [ 1, 2 ]
+    type: int
+    version_added: 2.7
+  key_tag:
+    description:
+      - DNSSEC key tag. Needed for C(type=DS) when C(state=present).
+    type: int
+    version_added: 2.7
   port:
-    description: Service port. Required for C(type=SRV)
-    required: false
-    default: null
+    description: Service port. Required for C(type=SRV) and C(type=TLSA).
   priority:
     description: Record priority. Required for C(type=MX) and C(type=SRV)
-    required: false
     default: "1"
   proto:
-    description: Service protocol. Required for C(type=SRV)
-    required: false
-    choices: [ 'tcp', 'udp' ]
-    default: null
+    description:
+    - Service protocol. Required for C(type=SRV) and C(type=TLSA).
+    - Common values are tcp and udp.
+    - Before Ansible 2.6 only tcp and udp were available.
   proxied:
     description: Proxy through cloudflare network or just use DNS
-    required: false
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.3"
   record:
     description:
       - Record to add. Required if C(state=present). Default is C(@) (e.g. the zone name)
-    required: false
     default: "@"
     aliases: [ "name" ]
+  selector:
+    description:
+      - Selector number. Required for C(type=TLSA) when C(state=present).
+    choices: [ 0, 1 ]
+    type: int
+    version_added: 2.7
   service:
     description: Record service. Required for C(type=SRV)
-    required: false
-    default: null
   solo:
     description:
       - Whether the record should be the only one for that record type and record name. Only use with C(state=present)
       - This will delete all other records with the same record name and type.
-    required: false
-    default: null
   state:
     description:
       - Whether the record(s) should exist or not
-    required: false
     choices: [ 'present', 'absent' ]
     default: present
   timeout:
     description:
       - Timeout for Cloudflare API calls
-    required: false
     default: 30
   ttl:
     description:
       - The TTL to give the new record. Must be between 120 and 2,147,483,647 seconds, or 1 for automatic.
-    required: false
     default: 1 (automatic)
   type:
     description:
       - The type of DNS record to create. Required if C(state=present)
-    required: false
-    choices: [ 'A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'SPF' ]
-    default: null
+      - C(type=DS), C(type=SSHFP) and C(type=TLSA) added in Ansible 2.7.
+    choices: [ 'A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'DS', 'SPF', 'SSHFP', 'TLSA' ]
   value:
     description:
       - The record value. Required for C(state=present)
-    required: false
-    default: null
     aliases: [ "content" ]
   weight:
     description: Service weight. Required for C(type=SRV)
-    required: false
     default: "1"
   zone:
     description:
@@ -177,6 +190,37 @@ EXAMPLES = '''
     weight: 20
     type: SRV
     value: fooserver.my.com
+
+# create a SSHFP record login.example.com
+- cloudflare_dns:
+    zone: example.com
+    record: login
+    type: SSHFP
+    algorithm: 4
+    hash_type: 2
+    value: 9dc1d6742696d2f51ca1f1a78b3d16a840f7d111eb9454239e70db31363f33e1
+
+# create a TLSA record _25._tcp.mail.example.com
+- cloudflare_dns:
+    zone: example.com
+    record: mail
+    port: 25
+    proto: tcp
+    type: TLSA
+    cert_usage: 3
+    selector: 1
+    hash_type: 1
+    value: 6b76d034492b493e15a7376fccd08e63befdad0edab8e442562f532338364bf3
+
+# Create a DS record for subdomain.example.com
+- cloudflare_dns:
+    zone: example.com
+    record: subdomain
+    type: DS
+    key_tag: 5464
+    algorithm: 8
+    hash_type: 2
+    value: B4EB5AC4467D2DFB3BAF9FB9961DC1B6FED54A58CDFAA3E465081EC86F89BFAB
 '''
 
 RETURN = '''
@@ -197,7 +241,7 @@ record:
             sample: 2016-03-25T19:09:42.516553Z
         data:
             description: additional record data
-            returned: success, if type is SRV
+            returned: success, if type is SRV, DS, SSHFP or TLSA
             type: dictionary
             sample: {
                 name: "jabber",
@@ -278,6 +322,12 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 
 
+def lowercase_string(param):
+    if not isinstance(param, str):
+        return param
+    return param.lower()
+
+
 class CloudflareAPI(object):
 
     cf_api_endpoint = 'https://api.cloudflare.com/client/v4'
@@ -287,12 +337,17 @@ class CloudflareAPI(object):
         self.module = module
         self.account_api_token = module.params['account_api_token']
         self.account_email = module.params['account_email']
+        self.algorithm = module.params['algorithm']
+        self.cert_usage = module.params['cert_usage']
+        self.hash_type = module.params['hash_type']
+        self.key_tag = module.params['key_tag']
         self.port = module.params['port']
         self.priority = module.params['priority']
-        self.proto = module.params['proto']
+        self.proto = lowercase_string(module.params['proto'])
         self.proxied = module.params['proxied']
-        self.record = module.params['record']
-        self.service = module.params['service']
+        self.selector = module.params['selector']
+        self.record = lowercase_string(module.params['record'])
+        self.service = lowercase_string(module.params['service'])
         self.is_solo = module.params['solo']
         self.state = module.params['state']
         self.timeout = module.params['timeout']
@@ -300,13 +355,16 @@ class CloudflareAPI(object):
         self.type = module.params['type']
         self.value = module.params['value']
         self.weight = module.params['weight']
-        self.zone = module.params['zone']
+        self.zone = lowercase_string(module.params['zone'])
 
         if self.record == '@':
             self.record = self.zone
 
         if (self.type in ['CNAME', 'NS', 'MX', 'SRV']) and (self.value is not None):
-            self.value = self.value.rstrip('.')
+            self.value = self.value.rstrip('.').lower()
+
+        if (self.type == 'AAAA') and (self.value is not None):
+            self.value = self.value.lower()
 
         if (self.type == 'SRV'):
             if (self.proto is not None) and (not self.proto.startswith('_')):
@@ -314,8 +372,18 @@ class CloudflareAPI(object):
             if (self.service is not None) and (not self.service.startswith('_')):
                 self.service = '_' + self.service
 
+        if (self.type == 'TLSA'):
+            if (self.proto is not None) and (not self.proto.startswith('_')):
+                self.proto = '_' + self.proto
+            if (self.port is not None):
+                self.port = '_' + str(self.port)
+
         if not self.record.endswith(self.zone):
             self.record = self.record + '.' + self.zone
+
+        if (self.type == 'DS'):
+            if self.record == self.zone:
+                self.module.fail_json(msg="DS records only apply to subdomains.")
 
     def _cf_simple_api_call(self, api_call, method='GET', payload=None):
         headers = {'X-Auth-Email': self.account_email,
@@ -370,11 +438,11 @@ class CloudflareAPI(object):
         if content:
             try:
                 result = json.loads(to_text(content, errors='surrogate_or_strict'))
-            except (json.JSONDecodeError, UnicodeError) as e:
+            except (getattr(json, 'JSONDecodeError', ValueError)) as e:
                 error_msg += "; Failed to parse API response with error {0}: {1}".format(to_native(e), content)
 
-        # received an error status but no data with details on what failed
-        if (info['status'] not in [200, 304]) and (result is None):
+        # Without a valid/parsed JSON response no more error processing can be done
+        if result is None:
             self.module.fail_json(msg=error_msg)
 
         if not result['success']:
@@ -463,7 +531,8 @@ class CloudflareAPI(object):
 
     def delete_dns_records(self, **kwargs):
         params = {}
-        for param in ['port', 'proto', 'service', 'solo', 'type', 'record', 'value', 'weight', 'zone']:
+        for param in ['port', 'proto', 'service', 'solo', 'type', 'record', 'value', 'weight', 'zone',
+                      'algorithm', 'cert_usage', 'hash_type', 'selector', 'key_tag']:
             if param in kwargs:
                 params[param] = kwargs[param]
             else:
@@ -476,6 +545,16 @@ class CloudflareAPI(object):
             if not (params['value'] is None or params['value'] == ''):
                 content = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
             search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
+        elif params['type'] == 'DS':
+            if not (params['value'] is None or params['value'] == ''):
+                content = str(params['key_tag']) + '\t' + str(params['algorithm']) + '\t' + str(params['hash_type']) + '\t' + params['value']
+        elif params['type'] == 'SSHFP':
+            if not (params['value'] is None or params['value'] == ''):
+                content = str(params['algorithm']) + '\t' + str(params['hash_type']) + '\t' + params['value']
+        elif params['type'] == 'TLSA':
+            if not (params['value'] is None or params['value'] == ''):
+                content = str(params['cert_usage']) + '\t' + str(params['selector']) + '\t' + str(params['hash_type']) + '\t' + params['value']
+            search_record = params['port'] + '.' + params['proto'] + '.' + params['record']
         if params['solo']:
             search_value = None
         else:
@@ -497,7 +576,8 @@ class CloudflareAPI(object):
 
     def ensure_dns_record(self, **kwargs):
         params = {}
-        for param in ['port', 'priority', 'proto', 'proxied', 'service', 'ttl', 'type', 'record', 'value', 'weight', 'zone']:
+        for param in ['port', 'priority', 'proto', 'proxied', 'service', 'ttl', 'type', 'record', 'value', 'weight', 'zone',
+                      'algorithm', 'cert_usage', 'hash_type', 'selector', 'key_tag']:
             if param in kwargs:
                 params[param] = kwargs[param]
             else:
@@ -559,6 +639,60 @@ class CloudflareAPI(object):
             search_value = str(params['weight']) + '\t' + str(params['port']) + '\t' + params['value']
             search_record = params['service'] + '.' + params['proto'] + '.' + params['record']
 
+        if params['type'] == 'DS':
+            for attr in [params['key_tag'], params['algorithm'], params['hash_type'], params['value']]:
+                if (attr is None) or (attr == ''):
+                    self.module.fail_json(msg="You must provide key_tag, algorithm, hash_type and a value to create this record type")
+            ds_data = {
+                "key_tag": params['key_tag'],
+                "algorithm": params['algorithm'],
+                "digest_type": params['hash_type'],
+                "digest": params['value'],
+            }
+            new_record = {
+                "type": params['type'],
+                "name": params['record'],
+                'data': ds_data,
+                "ttl": params['ttl'],
+            }
+            search_value = str(params['key_tag']) + '\t' + str(params['algorithm']) + '\t' + str(params['hash_type']) + '\t' + params['value']
+
+        if params['type'] == 'SSHFP':
+            for attr in [params['algorithm'], params['hash_type'], params['value']]:
+                if (attr is None) or (attr == ''):
+                    self.module.fail_json(msg="You must provide algorithm, hash_type and a value to create this record type")
+            sshfp_data = {
+                "fingerprint": params['value'],
+                "type": params['hash_type'],
+                "algorithm": params['algorithm'],
+            }
+            new_record = {
+                "type": params['type'],
+                "name": params['record'],
+                'data': sshfp_data,
+                "ttl": params['ttl'],
+            }
+            search_value = str(params['algorithm']) + '\t' + str(params['hash_type']) + '\t' + params['value']
+
+        if params['type'] == 'TLSA':
+            for attr in [params['port'], params['proto'], params['cert_usage'], params['selector'], params['hash_type'], params['value']]:
+                if (attr is None) or (attr == ''):
+                    self.module.fail_json(msg="You must provide port, proto, cert_usage, selector, hash_type and a value to create this record type")
+            search_record = params['port'] + '.' + params['proto'] + '.' + params['record']
+            tlsa_data = {
+                "usage": params['cert_usage'],
+                "selector": params['selector'],
+                "matching_type": params['hash_type'],
+                "certificate": params['value'],
+            }
+            new_record = {
+                "type": params['type'],
+                "name": search_record,
+                'data': tlsa_data,
+                "ttl": params['ttl'],
+            }
+            search_value = str(params['cert_usage']) + '\t' + str(params['selector']) + '\t' + str(params['hash_type']) + '\t' + params['value']
+
         zone_id = self._get_zone_id(params['zone'])
         records = self.get_dns_records(params['zone'], params['type'], search_record, search_value)
         # in theory this should be impossible as cloudflare does not allow
@@ -573,8 +707,10 @@ class CloudflareAPI(object):
                 do_update = True
             if (params['priority'] is not None) and ('priority' in cur_record) and (cur_record['priority'] != params['priority']):
                 do_update = True
+            if ('proxied' in new_record) and ('proxied' in cur_record) and (cur_record['proxied'] != params['proxied']):
+                do_update = True
             if ('data' in new_record) and ('data' in cur_record):
-                if (cur_record['data'] > new_record['data']) - (cur_record['data'] < new_record['data']):
+                if (cur_record['data'] != new_record['data']):
                     do_update = True
             if (params['type'] == 'CNAME') and (cur_record['content'] != new_record['content']):
                 do_update = True
@@ -600,17 +736,22 @@ def main():
         argument_spec=dict(
             account_api_token=dict(required=True, no_log=True, type='str'),
             account_email=dict(required=True, type='str'),
+            algorithm=dict(required=False, default=None, type='int'),
+            cert_usage=dict(required=False, default=None, choices=[0, 1, 2, 3], type='int'),
+            hash_type=dict(required=False, default=None, choices=[1, 2], type='int'),
+            key_tag=dict(required=False, default=None, type='int'),
             port=dict(required=False, default=None, type='int'),
             priority=dict(required=False, default=1, type='int'),
-            proto=dict(required=False, default=None, choices=['tcp', 'udp'], type='str'),
+            proto=dict(required=False, default=None, type='str'),
             proxied=dict(required=False, default=False, type='bool'),
             record=dict(required=False, default='@', aliases=['name'], type='str'),
+            selector=dict(required=False, default=None, choices=[0, 1], type='int'),
             service=dict(required=False, default=None, type='str'),
             solo=dict(required=False, default=None, type='bool'),
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             timeout=dict(required=False, default=30, type='int'),
             ttl=dict(required=False, default=1, type='int'),
-            type=dict(required=False, default=None, choices=['A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'SPF'], type='str'),
+            type=dict(required=False, default=None, choices=['A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'DS', 'SPF', 'SSHFP', 'TLSA'], type='str'),
             value=dict(required=False, default=None, aliases=['content'], type='str'),
             weight=dict(required=False, default=1, type='int'),
             zone=dict(required=True, default=None, aliases=['domain'], type='str'),
@@ -620,6 +761,7 @@ def main():
             ('state', 'present', ['record', 'type', 'value']),
             ('state', 'absent', ['record']),
             ('type', 'SRV', ['proto', 'service']),
+            ('type', 'TLSA', ['proto', 'port']),
         ]
         ),
     )
@@ -630,6 +772,27 @@ def main():
                 or (module.params['weight'] is None and module.params['port'] is None
                     and (module.params['value'] is None or module.params['value'] == ''))):
             module.fail_json(msg="For SRV records the params weight, port and value all need to be defined, or not at all.")
+
+    if module.params['type'] == 'SSHFP':
+        if not ((module.params['algorithm'] is not None and module.params['hash_type'] is not None
+                 and not (module.params['value'] is None or module.params['value'] == ''))
+                or (module.params['algorithm'] is None and module.params['hash_type'] is None
+                    and (module.params['value'] is None or module.params['value'] == ''))):
+            module.fail_json(msg="For SSHFP records the params algorithm, hash_type and value all need to be defined, or not at all.")
+
+    if module.params['type'] == 'TLSA':
+        if not ((module.params['cert_usage'] is not None and module.params['selector'] is not None and module.params['hash_type'] is not None
+                 and not (module.params['value'] is None or module.params['value'] == ''))
+                or (module.params['cert_usage'] is None and module.params['selector'] is None and module.params['hash_type'] is None
+                    and (module.params['value'] is None or module.params['value'] == ''))):
+            module.fail_json(msg="For TLSA records the params cert_usage, selector, hash_type and value all need to be defined, or not at all.")
+
+    if module.params['type'] == 'DS':
+        if not ((module.params['key_tag'] is not None and module.params['algorithm'] is not None and module.params['hash_type'] is not None
+                 and not (module.params['value'] is None or module.params['value'] == ''))
+                or (module.params['key_tag'] is None and module.params['algorithm'] is None and module.params['hash_type'] is None
+                    and (module.params['value'] is None or module.params['value'] == ''))):
+            module.fail_json(msg="For DS records the params key_tag, algorithm, hash_type and value all need to be defined, or not at all.")
 
     changed = False
     cf_api = CloudflareAPI(module)

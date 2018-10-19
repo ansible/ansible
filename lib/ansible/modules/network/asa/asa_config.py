@@ -32,17 +32,13 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -50,8 +46,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -59,16 +53,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -79,7 +69,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -90,7 +79,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct
-    required: false
     default: line
     choices: ['line', 'block']
   backup:
@@ -100,43 +88,37 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   config:
     description:
       - The C(config) argument allows the playbook designer to supply
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
-    required: false
-    default: null
   defaults:
     description:
       - This argument specifies whether or not to collect all defaults
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   passwords:
     description:
       - This argument specifies to include passwords in the config
         when retrieving the running-config from the remote device.  This
         includes passwords related to VPN endpoints.  This argument is
         mutually exclusive with I(defaults).
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   save:
     description:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -179,6 +161,51 @@ vars:
     parents: tunnel-group 1.1.1.1 ipsec-attributes
     passwords: yes
     provider: "{{ cli }}"
+
+- name: attach ASA acl on interface vlan13/nameif cloud13
+  asa_config:
+    lines:
+      - access-group cloud-acl_access_in in interface cloud13
+    provider: "{{ cli }}"
+
+- name: configure ASA (>=9.2) default BGP
+  asa_config:
+    lines:
+      - bgp log-neighbor-changes
+      - bgp bestpath compare-routerid
+    provider: "{{ cli }}"
+    parents:
+      - router bgp 65002
+  register: bgp
+  when: bgp_default_config is defined
+
+- name: configure ASA (>=9.2) BGP neighbor in default/single context mode
+  asa_config:
+    lines:
+      - "bgp router-id {{ bgp_router_id }}"
+      - "neighbor {{ bgp_neighbor_ip }} remote-as {{ bgp_neighbor_as }}"
+      - "neighbor {{ bgp_neighbor_ip }} description {{ bgp_neighbor_name }}"
+    provider: "{{ cli }}"
+    parents:
+      - router bgp 65002
+      - address-family ipv4 unicast
+  register: bgp
+  when: bgp_neighbor_as is defined
+
+- name: configure ASA interface with standby
+  asa_config:
+    lines:
+      - description my cloud interface
+      - nameif cloud13
+      - security-level 50
+      - ip address 192.168.13.1 255.255.255.0 standby 192.168.13.2
+    provider: "{{ cli }}"
+    parents: ["interface Vlan13"]
+  register: interface
+
+- name: Show changes to interface from task above
+  debug:
+    var: interface
 
 """
 

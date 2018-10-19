@@ -23,8 +23,8 @@ options:
   auto_increment:
     description:
       - Whether or not to increment a single number in the name for created virtual machines.
-    default: yes
-    choices: ["yes", "no"]
+    type: bool
+    default: 'yes'
   name:
     description:
       - The name of the virtual machine.
@@ -36,87 +36,69 @@ options:
   image_password:
     description:
       - Password set for the administrative user.
-    required: false
     version_added: '2.2'
   ssh_keys:
     description:
       - Public SSH keys allowing access to the virtual machine.
-    required: false
     version_added: '2.2'
   datacenter:
     description:
       - The datacenter to provision this virtual machine.
-    required: false
-    default: null
   cores:
     description:
       - The number of CPU cores to allocate to the virtual machine.
-    required: false
     default: 2
   ram:
     description:
       - The amount of memory to allocate to the virtual machine.
-    required: false
     default: 2048
   cpu_family:
     description:
       - The CPU family type to allocate to the virtual machine.
-    required: false
     default: AMD_OPTERON
     choices: [ "AMD_OPTERON", "INTEL_XEON" ]
     version_added: '2.2'
   volume_size:
     description:
       - The size in GB of the boot volume.
-    required: false
     default: 10
   bus:
     description:
       - The bus type for the volume.
-    required: false
     default: VIRTIO
     choices: [ "IDE", "VIRTIO"]
   instance_ids:
     description:
       - list of instance ids, currently only used when state='absent' to remove instances.
-    required: false
   count:
     description:
       - The number of virtual machines to create.
-    required: false
     default: 1
   location:
     description:
       - The datacenter location. Use only if you want to create the Datacenter or else this value is ignored.
-    required: false
     default: us/las
     choices: [ "us/las", "de/fra", "de/fkb" ]
   assign_public_ip:
     description:
       - This will assign the machine to the public LAN. If no LAN exists with public Internet access it is created.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   lan:
     description:
       - The ID of the LAN you wish to add the servers to.
-    required: false
     default: 1
   subscription_user:
     description:
       - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environment variable.
-    required: false
-    default: null
   subscription_password:
     description:
       - THe ProfitBricks password. Overrides the PB_PASSWORD environment variable.
-    required: false
-    default: null
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -124,13 +106,11 @@ options:
   remove_boot_volume:
     description:
       - remove the bootVolume of the virtual machine you're destroying.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
+    type: bool
+    default: 'yes'
   state:
     description:
       - create or terminate instances
-    required: false
     default: 'present'
     choices: [ "running", "stopped", "absent", "present" ]
 

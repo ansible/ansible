@@ -39,13 +39,15 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
         socket_path = None
+        force_cli = self._task.action in ('iosxr_netconf', 'iosxr_config', 'iosxr_command', 'iosxr_facts')
 
         if self._play_context.connection == 'local':
             provider = load_provider(iosxr_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
-            if self._task.action in ['iosxr_netconf', 'iosxr_config', 'iosxr_command'] or \
-                    (provider['transport'] == 'cli'):
+            if force_cli or provider['transport'] == 'cli':
                 pc.connection = 'network_cli'
                 pc.port = int(provider['port'] or self._play_context.port or 22)
             elif provider['transport'] == 'netconf':
@@ -59,10 +61,12 @@ class ActionModule(_ActionModule):
             pc.port = int(provider['port'] or self._play_context.port or 22)
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+
+            command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
+            connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -73,9 +77,13 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
         elif self._play_context.connection in ('netconf', 'network_cli'):
+            if force_cli and self._play_context.connection != 'network_cli':
+                return {'failed': True, 'msg': 'Connection type %s is not valid for module %s' %
+                        (self._play_context.connection, self._task.action)}
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using {0} and will be ignored'.format(self._play_context.connection))
+                del self._task.args['provider']
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
@@ -92,5 +100,5 @@ class ActionModule(_ActionModule):
                 conn.send_command('abort')
                 out = conn.get_prompt()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result

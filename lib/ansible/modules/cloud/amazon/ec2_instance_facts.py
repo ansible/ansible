@@ -18,8 +18,8 @@ description:
     - Gather facts about ec2 instances in AWS
 version_added: "2.4"
 author:
-  - Michael Schuett, @michaeljs1990
-  - Rob White, @wimnat
+  - Michael Schuett (@michaeljs1990)
+  - Rob White (@wimnat)
 requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:
@@ -30,7 +30,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
-        U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) for possible filters. Filter
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) for possible filters. Filter
         names and values are case sensitive.
     required: false
     default: {}
@@ -113,6 +113,21 @@ instances:
                             returned: always
                             type: string
                             sample: vol-12345678
+        cpu_options:
+            description: The CPU options set for the instance.
+            returned: always if botocore version >= 1.10.16
+            type: complex
+            contains:
+                core_count:
+                     description: The number of CPU cores for the instance.
+                     returned: always
+                     type: int
+                     sample: 1
+                threads_per_core:
+                     description: The number of threads per CPU core. On supported instance, a value of 1 means Intel Hyper-Threading Technology is disabled.
+                     returned: always
+                     type: int
+                     sample: 1
         client_token:
             description: The idempotency token you provided when you launched the instance, if applicable.
             returned: always
