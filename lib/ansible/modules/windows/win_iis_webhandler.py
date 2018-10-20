@@ -126,15 +126,15 @@ EXAMPLES = r'''
     name: php-fastcgi
     scriptprocessor: C:\ProgramData\php\php-cgi.exe
     modules: FastCgiModule
-    path: *.php
-    verb: *
+    path: '*.php'
+    verb: '*'
     state: present
 
 - name: Adds a handler named "testHandler" to the Default Web Site
   win_iis_webhandler:
     name: testHandler
     modules: IsapiModule
-    path: *.test
+    path: '*.test'
     verb: 'GET,POST'
     sitename: Default Web Site
     state: present
