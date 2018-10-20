@@ -293,6 +293,111 @@
       - output.changed == False
       - output.rules | length == 0
 
+
+# SQL Virtual Network Rule tests
+
+- name: Create a virtual network
+  azure_rm_virtualnetwork:
+    name: zimsvnet
+    resource_group: "{{ resource_group }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    dns_servers:
+      - 127.0.0.1
+      - 127.0.0.2
+- name: Create a subnet
+  azure_rm_subnet:
+    name: zimssubnet
+    virtual_network_name: zimsvnet
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: 10.1.0.0/24
+  register: subnet_output  
+
+- name: Create instance of Virtual Network Rule -- check mode
+  azure_rm_sqlvirtualnetworkrule:
+    resource_group: "{{ resource_group }}"
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Virtual Network Rule
+  azure_rm_sqlvirtualnetworkrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: rule1
+    virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Virtual Network Rule
+  azure_rm_sqlvirtualnetworkrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: rule1
+    virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete instance of Virtual Network Rule -- check mode
+  azure_rm_sqlvirtualnetworkrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: rule1
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of Virtual Network Rule
+  azure_rm_sqlvirtualnetworkrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: rule1
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of Virtual Network Rule
+  azure_rm_sqlvirtualnetworkrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: rule1
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Create a subnet
+  azure_rm_subnet:
+    name: zimssubnet
+    virtual_network_name: zimsvnet
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: subnet_output  
+- name: Create a virtual network
+  azure_rm_virtualnetwork:
+    name: zimsvnet
+    resource_group: "{{ resource_group }}"
+    state: absent
+
 # finalise & clean up azure_rm_sqlserver test
 
 - name: Delete instance of SQL Server -- check mode
