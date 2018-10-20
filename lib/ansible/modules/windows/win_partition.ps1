@@ -17,7 +17,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -failifempty $f
 $drive_letter = Get-AnsibleParam -obj $params -name "drive_letter" -type "str" -failifempty $false
 $disk_number = Get-AnsibleParam -obj $params -name "disk_number" -type "int" -failifempty $false
 $partition_number = Get-AnsibleParam -obj $params -name "partition_number" -type "int" -failifempty $false
-$partition_size = Get-AnsibleParam -obj $params -name "partition_size" -type "int" -failifempty $false
+$partition_size = Get-AnsibleParam -obj $params -name "partition_size" -type "str" -failifempty $false
 $read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -failifempty $false
 $active = Get-AnsibleParam -obj $params -name "active" -type "bool" -failifempty $false
 $hidden = Get-AnsibleParam -obj $params -name "hidden" -type "bool" -failifempty $false
@@ -50,17 +50,36 @@ $mbr_styles = @{
     fat32 = 12
 }
 
-# We're allowing postitive and -1 partition sizes; -1 is maximum possible size
-if ($null -ne $partition_size) {
-    if ($partition_size -lt -1 -or $partition_size -eq 0) {
-        Fail-Json -obj $result -message "Please enter positive partition sizes. Use -1 for maximum size"
+function Convert-SizeToBytes {
+    param(
+        $Size,
+        $Units
+    )
+
+    switch ($Units) {
+        "B"   { return $Size }
+        "KB"  { return 1000 * $Size }
+        "KiB" { return 1024 * $Size }
+        "MB"  { return [Math]::Pow(1000, 2) * $Size }
+        "MiB" { return [Math]::Pow(1024, 2) * $Size }
+        "GB"  { return [Math]::Pow(1000, 3) * $Size }
+        "GiB" { return [Math]::Pow(1024, 3) * $Size }
+        "TB"  { return [Math]::Pow(1000, 4) * $Size }
+        "TiB" { return [Math]::Pow(1024, 4) * $Size }
     }
-    elseif ($partition_size -eq -1) {
+}
+
+if ($null -ne $partition_size) {
+    if ($partition_size -eq -1) {
         $size_is_maximum = $true
     }
-    else {
-        $ansible_partition_size = [int64] $partition_size * 1GB
+    elseif ($partition_size -match '(?<Size>[0-9]+)[ ]*(?<Units>b|kb|kib|mb|mib|gb|gib|tb|tib)') {
+
+        $ansible_partition_size = Convert-SizeToBytes -Size $Matches.Size -Units $Matches.Units
     }
+    else {
+        Fail-Json -obj $result -message "Invalid partition size. B, KB, KiB, MB, MiB, GB, GiB, TB, TiB are valid partition size units"
+    }    
 }
 
 # If partition_exists, we can change or delete it; otherwise we only need the disk to create a new partition

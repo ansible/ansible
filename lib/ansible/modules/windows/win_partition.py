@@ -40,9 +40,12 @@ options:
     type: int
   partition_size:
     description:
-      - Specify size of the partition in GB. Use -1 to specify maximum supported size.
+      - Specify size of the partition in B, KB, KiB, MB, MiB, GB, GiB, TB or TiB. Use -1 to specify maximum supported size.
       - Partition size is mandatory for creating a new partition but not for updating or deleting a partition.
-    type: int
+      - The decimal SI prefixes kilo, mega, giga, tera, etc., are powers of 10^3 = 1000. The binary prefixes kibi, mebi, gibi, tebi, etc.
+        respectively refer to the corresponding power of 2^10 = 1024.
+        Thus, a gigabyte (GB) is 1000000000 (1000^3) bytes while 1 gibibyte (GiB) is 1073741824 (1024^3) bytes.
+    type: str
   read_only:
     description:
       - Make the partition read only, restricting changes from being made to the partition.
@@ -90,7 +93,7 @@ EXAMPLES = r'''
 - name: Create a partition with drive letter D and size 5 GiB
   win_partition:
     drive_letter: D
-    partition_size: 5
+    partition_size: 5 GiB
     disk_number: 1
 
 - name: Resize previously created partition to it's maximum size and change it's drive letter to E

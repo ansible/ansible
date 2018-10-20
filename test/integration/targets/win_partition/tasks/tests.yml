@@ -26,7 +26,7 @@
   win_partition:
     drive_letter: D
     disk_number: 1
-    partition_size: 20
+    partition_size: 20 GiB
   register: incorrect_attempt_3
   ignore_errors: True
 
@@ -35,30 +35,30 @@
       - incorrect_attempt_3 is failed
       - '"Partition size is not supported by disk" in incorrect_attempt_3.msg'
 
-- name: Create 1 gb partition using drive_letter and default (huge) mbr type (check mode)
+- name: Create 1 gib partition using drive_letter and default (huge) mbr type (check mode)
   win_partition:
     drive_letter: D
     state: present
-    partition_size: 1
+    partition_size: 1 GiB
     disk_number: 1
     active: True
   register: create_small_part_check
   check_mode: True
 
-- name: Create 1 gb partition using drive_letter and default (huge) mbr type
+- name: Create 1 gib partition using drive_letter and default (huge) mbr type
   win_partition:
     drive_letter: D
     state: present
-    partition_size: 1
+    partition_size: 1 GiB
     disk_number: 1
     active: True
   register: create_small_part
 
-- name: Create 1 gb partition using drive_letter and default (huge) mbr type (idempotence)
+- name: Create 1 gib partition using drive_letter and default (huge) mbr type (idempotence)
   win_partition:
     drive_letter: D
     state: present
-    partition_size: 1
+    partition_size: 1 GiB
     disk_number: 1
     active: True
   register: create_small_part_idempotence
@@ -119,7 +119,7 @@
 - name: "Changing size of a read only partition"
   win_partition:
     drive_letter: E
-    partition_size: 1
+    partition_size: 1 GiB
   register: modify_read_only_partition
   ignore_errors: True
 
