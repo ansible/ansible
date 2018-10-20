@@ -48,7 +48,6 @@ options:
         description:
             - Add the LACP configuration
         required: True
-        version_added: 2.8
     uplink_quantity:
         description:
             - Quantity of uplink per ESXi host added to the switch
@@ -209,7 +208,7 @@ def main():
     argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
                               switch_name=dict(required=True, type='str'),
                               mtu=dict(required=True, type='int'),
-                              lacp=dict(required=True, type='str'),
+                              lacp=dict(required=False, type='str'),
                               switch_version=dict(type='str'),
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
