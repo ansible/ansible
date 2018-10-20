@@ -69,10 +69,7 @@
         name: role3
         tasks_from: vartest.yml
         vars_from: role3vars.yml
-        private: no
 
-    # FIXME Setting private: no in previous task does not make the variables
-    # available to the play
     - name: Assert that variables defined in previous task are available to play
       assert:
         that:

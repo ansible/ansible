@@ -132,23 +132,6 @@ $env:TMP = $original_tmp
 ########################
 ### HELPER FUNCTIONS ###
 ########################
-Function ConvertTo-HashtableFromPsCustomObject($object) {
-    if ($object -is [Hashtable]) {
-        return ,$object
-    }
-
-    $hashtable = @{}
-    $object | Get-Member -MemberType *Property | % {
-        $value = $object.$($_.Name)
-        if ($value -is [PSObject]) {
-            $value = ConvertTo-HashtableFromPsCustomObject -object $value
-        }
-        $hashtable.$($_.Name) = $value
-    }
-
-    return ,$hashtable
-}
-
 Function Convert-SnakeToPascalCase($snake) {
     # very basic function to convert snake_case to PascalCase for use in COM
     # objects
@@ -275,9 +258,9 @@ Function Compare-PropertyList {
                     $property_value = $new_property.$property_arg
 
                     if ($property_value -is [Hashtable]) {
-                        foreach ($sub_property_arg in $property_value.Keys) {
-                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
-                            $sub_property_value = $property_value.$sub_property_arg
+                        foreach ($kv in $property_value.GetEnumerator()) {
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
+                            $sub_property_value = $kv.Value
                             [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
                         }
                     } else {
@@ -299,9 +282,9 @@ Function Compare-PropertyList {
                         $property_value = $new_property.$property_arg
 
                         if ($property_value -is [Hashtable]) {
-                            foreach ($sub_property_arg in $property_value.Keys) {
-                                $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
-                                $sub_property_value = $property_value.$sub_property_arg
+                            foreach ($kv in $property_value.GetEnumerator()) {
+                                $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
+                                $sub_property_value = $kv.Value
                                 [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
                             }
                         } else {
@@ -320,9 +303,9 @@ Function Compare-PropertyList {
                     $existing_value = $existing_property.$com_name
 
                     if ($property_value -is [Hashtable]) {
-                        foreach ($sub_property_arg in $property_value.Keys) {
-                            $sub_property_value = $property_value.$sub_property_arg
-                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                        foreach ($kv in $property_value.GetEnumerator()) {
+                            $sub_property_value = $kv.Value
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
                             $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
                             if ($sub_property_value -ne $null) {
@@ -356,11 +339,11 @@ Function Compare-PropertyList {
                 $existing_value = $existing_property.$com_name
                 
                 if ($property_value -is [Hashtable]) {
-                    foreach ($sub_property_arg in $property_value.Keys) {
-                        $sub_property_value = $property_value.$sub_property_arg
+                    foreach ($kv in $property_value.GetEnumerator()) {
+                        $sub_property_value = $kv.Value
                         
                         if ($sub_property_value -ne $null) {
-                            $sub_com_name = Convert-SnakeToPascalCase -snake $sub_property_arg
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
                             $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
                             if ($sub_property_value -cne $sub_existing_value) {
@@ -388,10 +371,10 @@ Function Compare-PropertyList {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
                 $new_object_property = $new_object.$com_name
     
-                foreach ($key in $new_value.Keys) {
-                    $value = $new_value.$key
+                foreach ($kv in $new_value.GetEnumerator()) {
+                    $value = $kv.Value
                     if ($value -ne $null) {
-                        Set-PropertyForComObject -com_object $new_object_property -name $property_name -arg $key -value $value
+                        Set-PropertyForComObject -com_object $new_object_property -name $property_name -arg $kv.Key -value $value
                     }
                 }
             } elseif ($new_value -ne $null) {
@@ -731,7 +714,7 @@ if ($run_level -ne $null) {
 
 # manually add the only support action type for each action - also convert PSCustomObject to Hashtable
 for ($i = 0; $i -lt $actions.Count; $i++) {
-    $action = ConvertTo-HashtableFromPsCustomObject -object $actions[$i]
+    $action = $actions[$i]
     $action.type = [TASK_ACTION_TYPE]::TASK_ACTION_EXEC
     if (-not $action.ContainsKey("path")) {
         Fail-Json -obj $result -message "action entry must contain the key 'path'"
@@ -741,7 +724,7 @@ for ($i = 0; $i -lt $actions.Count; $i++) {
 
 # convert and validate the triggers - and convert PSCustomObject to Hashtable
 for ($i = 0; $i -lt $triggers.Count; $i++) {
-    $trigger = ConvertTo-HashtableFromPsCustomObject -object $triggers[$i]
+    $trigger = $triggers[$i]
     $valid_trigger_types = @('event', 'time', 'daily', 'weekly', 'monthly', 'monthlydow', 'idle', 'registration', 'boot', 'logon', 'session_state_change')
     if (-not $trigger.ContainsKey("type")) {
         Fail-Json -obj $result -message "a trigger entry must contain a key 'type' with a value of '$($valid_trigger_types -join "', '")'"
@@ -781,7 +764,10 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
     }
 
     if ($trigger.ContainsKey("repetition")) {
-        $trigger.repetition = ConvertTo-HashtableFromPsCustomObject -object $trigger.repetition
+        if ($trigger.repetition -is [Array]) {
+            Add-DeprecationWarning -obj $result -message "repetition is a list, should be defined as a dict" -version "2.12"
+            $trigger.repetition = $trigger.repetition[0]
+        }
 
         $interval_timespan = $null
         if ($trigger.repetition.ContainsKey("interval") -and $trigger.repetition.interval -ne $null) {

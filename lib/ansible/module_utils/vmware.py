@@ -58,7 +58,7 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             finally:
                 raise_from(TaskError(error_msg), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
-            sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
+            sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
             failure_counter += 1
 
@@ -67,8 +67,9 @@ def wait_for_vm_ip(content, vm, timeout=300):
     facts = dict()
     interval = 15
     while timeout > 0:
-        facts = gather_vm_facts(content, vm)
-        if facts['ipv4'] or facts['ipv6']:
+        _facts = gather_vm_facts(content, vm)
+        if _facts['ipv4'] or _facts['ipv6']:
+            facts = _facts
             break
         time.sleep(interval)
         timeout -= interval
@@ -974,7 +975,7 @@ class PyVmomi(object):
 
     def get_vm_or_template(self, template_name=None):
         """
-        Function to find the virtual machine or virtual machine template using name
+        Find the virtual machine or virtual machine template using name
         used for cloning purpose.
         Args:
             template_name: Name of virtual machine or virtual machine template
@@ -983,8 +984,20 @@ class PyVmomi(object):
 
         """
         template_obj = None
+        if not template_name:
+            return template_obj
 
-        if template_name:
+        if "/" in template_name:
+            vm_obj_path = os.path.dirname(template_name)
+            vm_obj_name = os.path.basename(template_name)
+            template_obj = find_vm_by_id(self.content, vm_obj_name, vm_id_type="inventory_path", folder=vm_obj_path)
+            if template_obj:
+                return template_obj
+        else:
+            template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
+            if template_obj:
+                return template_obj
+
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             templates = []
 
@@ -1001,6 +1014,7 @@ class PyVmomi(object):
                 self.module.fail_json(msg="Multiple virtual machines or templates with same name [%s] found." % template_name)
             elif templates:
                 template_obj = templates[0]
+
         return template_obj
 
     # Cluster related functions

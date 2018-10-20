@@ -11,14 +11,14 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
 ---
 
 module: na_ontap_interface
-short_description: ONTAP LIF configuration
+short_description: NetApp ONTAP LIF configuration
 
 extends_documentation_fragment:
     - netapp.na_ontap

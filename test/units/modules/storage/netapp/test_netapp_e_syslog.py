@@ -8,7 +8,7 @@ from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 import time
 
 __metaclass__ = type
-from ansible.compat.tests import mock
+from units.compat import mock
 
 
 class AsupTest(ModuleTestCase):

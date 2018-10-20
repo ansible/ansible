@@ -71,6 +71,25 @@ In Ansible 2.7 a new module argument named ``public`` was added to the ``include
 
 There is an important difference in the way that ``include_role`` (dynamic) will expose the role's variables, as opposed to ``import_role`` (static). ``import_role`` is a pre-processor, and the ``defaults`` and ``vars`` are evaluated at playbook parsing, making the variables available to tasks and roles listed at any point in the play. ``include_role`` is a conditional task, and the ``defaults`` and ``vars`` are evaluated at execution time, making the variables available to tasks and roles listed *after* the ``include_role`` task.
 
+include_tasks/import_tasks inline variables
+-------------------------------------------
+
+As of Ansible 2.7, `include_tasks` and `import_tasks` can no longer accept inline variables. Instead of using inline variables, tasks should supply variables under the ``vars`` keyword.
+
+**OLD** In Ansible 2.6 (and earlier) the following was valid syntax for specifying variables:
+
+.. code-block:: yaml
+
+    - include_tasks: include_me.yml variable=value
+
+**NEW** In Ansible 2.7 the task should be changed to use the ``vars`` keyword:
+
+.. code-block:: yaml
+
+    - include_tasks: include_me.yml
+      vars:
+        variable: value
+
 vars_prompt with unknown algorithms
 -----------------------------------
 
@@ -145,12 +164,6 @@ Major changes in popular modules are detailed here
   :ref:`DEFAULT_SYSLOG_FACILITY`. If you have :ref:`DEFAULT_SYSLOG_FACILITY` configured, the
   location of remote logs on systems which use journald may change.
 
-* The ``lineinfile`` module was changed to show a warning when using an empty string as a regexp.
-  Since an empty regexp matches every line in a file, it will replace the last line in a file rather
-  than inserting. If this is the desired behavior, use ``'^'`` which will match every line and
-  will not trigger the warning.
-
-
 Modules removed
 ---------------
 
@@ -203,6 +216,10 @@ Noteworthy module changes
 
 * The ``win_disk_image`` module has deprecated the return value ``mount_path``, use ``mount_paths[0]`` instead. This will
   be removed in Ansible 2.11.
+
+* ``include_role`` and ``include_tasks`` can now be used directly from ``ansible`` (adhoc) and ``ansible-console``::
+
+    #> ansible -m include_role -a 'name=myrole' all
 
 Plugins
 =======

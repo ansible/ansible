@@ -32,7 +32,7 @@ description:
       Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/).
       Aliases are provided so camelCased versions can be used as well.
 
-    - The Keycloak API does not always enforce for only sensible settings to be used -- you can set
+    - The Keycloak API does not always sanity check inputs e.g. you can set
       SAML-specific settings on an OpenID Connect client for instance and vice versa. Be careful.
       If you do not specify a setting, usually a sensible default is chosen.
 
@@ -44,6 +44,10 @@ options:
             - On C(absent), the client will be removed if it exists
         choices: ['present', 'absent']
         default: 'present'
+
+    realm:
+        description:
+            - The realm to create the client in.
 
     client_id:
         description:

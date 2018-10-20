@@ -158,16 +158,17 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-import time
 import re
 import shlex
+import time
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities, tostring
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
+from ansible.module_utils.network.common.utils import to_lines
 from ansible.module_utils.six import string_types, iteritems
 
 
@@ -183,15 +184,6 @@ except ImportError:
     HAS_JXMLEASE = False
 
 USE_PERSISTENT_CONNECTION = True
-
-
-def to_lines(stdout):
-    lines = list()
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        lines.append(item)
-    return lines
 
 
 def rpc(module, items):
@@ -438,7 +430,7 @@ def main():
         'changed': False,
         'warnings': warnings,
         'stdout': responses,
-        'stdout_lines': to_lines(responses)
+        'stdout_lines': list(to_lines(responses)),
     }
 
     if output:

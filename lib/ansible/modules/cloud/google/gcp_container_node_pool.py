@@ -198,6 +198,11 @@ options:
     cluster:
         description:
             - The cluster this node pool belongs to.
+            - 'This field represents a link to a Cluster resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
+              task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
+              you can set this cluster to a dictionary with the name key where the value is the
+              name of your Cluster.'
         required: true
     zone:
         description:
@@ -225,7 +230,7 @@ EXAMPLES = '''
       cluster: "{{ cluster }}"
       zone: us-central1-a
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -242,19 +247,19 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            machine_type:
+            machineType:
                 description:
                     - The name of a Google Compute Engine machine type (e.g.
                     - n1-standard-1).  If unspecified, the default machine type is n1-standard-1.
                 returned: success
                 type: str
-            disk_size_gb:
+            diskSizeGb:
                 description:
                     - Size of the disk attached to each node, specified in GB. The smallest allowed disk
                       size is 10GB. If unspecified, the default disk size is 100GB.
                 returned: success
                 type: int
-            oauth_scopes:
+            oauthScopes:
                 description:
                     - The set of Google API scopes to be made available on all of the node VMs under the
                       "default" service account.
@@ -267,7 +272,7 @@ RETURN = '''
                       enabled, in which case their required scopes will be added.
                 returned: success
                 type: list
-            service_account:
+            serviceAccount:
                 description:
                     - The Google Cloud Platform Service Account to be used by the node VMs.  If no Service
                       Account is specified, the "default" service account is used.
@@ -288,7 +293,7 @@ RETURN = '''
                     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
                 returned: success
                 type: dict
-            image_type:
+            imageType:
                 description:
                     - The image type to use for this node.  Note that for a given image type, the latest
                       version of it will be used.
@@ -306,7 +311,7 @@ RETURN = '''
                     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
                 returned: success
                 type: dict
-            local_ssd_count:
+            localSsdCount:
                 description:
                     - The number of local SSD disks to be attached to the node.
                     - 'The limit for this value is dependant upon the maximum number of disks available
@@ -327,7 +332,7 @@ RETURN = '''
                       for more inforamtion about preemptible VM instances.'
                 returned: success
                 type: bool
-    initial_node_count:
+    initialNodeCount:
         description:
             - The initial node count for the pool. You must ensure that your Compute Engine resource
               quota is sufficient for this number of instances. You must also have available firewall
@@ -351,12 +356,12 @@ RETURN = '''
                     - Is autoscaling enabled for this node pool.
                 returned: success
                 type: bool
-            min_node_count:
+            minNodeCount:
                 description:
                     - Minimum number of nodes in the NodePool. Must be >= 1 and <= maxNodeCount.
                 returned: success
                 type: int
-            max_node_count:
+            maxNodeCount:
                 description:
                     - Maximum number of nodes in the NodePool. Must be >= minNodeCount.
                     - There has to enough quota to scale up the cluster.
@@ -368,27 +373,27 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            auto_upgrade:
+            autoUpgrade:
                 description:
                     - A flag that specifies whether node auto-upgrade is enabled for the node pool. If
                       enabled, node auto-upgrade helps keep the nodes in your node pool up to date with
                       the latest release version of Kubernetes.
                 returned: success
                 type: bool
-            auto_repair:
+            autoRepair:
                 description:
                     - A flag that specifies whether the node auto-repair is enabled for the node pool.
                       If enabled, the nodes in this node pool will be monitored and, if they fail health
                       checks too many times, an automatic repair action will be triggered.
                 returned: success
                 type: bool
-            upgrade_options:
+            upgradeOptions:
                 description:
                     - Specifies the Auto Upgrade knobs for the node pool.
                 returned: success
                 type: complex
                 contains:
-                    auto_upgrade_start_time:
+                    autoUpgradeStartTime:
                         description:
                             - This field is set when upgrades are about to commence with the approximate start
                               time for the upgrades, in RFC3339 text format.
@@ -474,7 +479,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -524,9 +530,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'container')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -548,9 +554,9 @@ def collection(module):
     return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.

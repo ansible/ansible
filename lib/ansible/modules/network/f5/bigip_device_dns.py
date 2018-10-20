@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -206,7 +206,7 @@ class ModuleManager(object):
         self.have = None
         self.changes = Parameters()
 
-    def _update_changed_options(self):
+    def _update_changed_options(self):  # lgtm [py/similar-function]
         changed = {}
         for key in Parameters.updatables:
             if getattr(self.want, key) is not None:
@@ -219,7 +219,7 @@ class ModuleManager(object):
             return True
         return False
 
-    def exec_module(self):
+    def exec_module(self):  # lgtm [py/similar-function]
         changed = False
         result = dict()
         state = self.want.state

@@ -147,8 +147,7 @@ To configure the PPA on your machine and install ansible run these commands:
 
     $ sudo apt-get update
     $ sudo apt-get install software-properties-common
-    $ sudo apt-add-repository ppa:ansible/ansible
-    $ sudo apt-get update
+    $ sudo apt-add-repository --yes --update ppa:ansible/ansible
     $ sudo apt-get install ansible
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
@@ -195,24 +194,36 @@ To install the newest version, you may need to unmask the ansible package prior 
 
     $ echo 'app-admin/ansible' >> /etc/portage/package.accept_keywords
 
-.. note::
-
-    The current default Python slot on Gentoo is version 3.4.  Ansible needs Python-3.5 or higher so
-    you will need to `:ref:`bootstrap <managed_node_requirements>` a compatible version onto the
-    machines.
-
 Latest Releases via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
 
+Though Ansible works with both Python 2 and 3 versions, FreeBSD has different packages for each Python version.
+So to install you can use:
+
 .. code-block:: bash
 
-    $ sudo pkg install ansible
+    $ sudo pkg install py27-ansible
+
+or:
+
+.. code-block:: bash
+
+    $ sudo pkg install py36-ansible
+
 
 You may also wish to install from ports, run:
 
 .. code-block:: bash
 
     $ sudo make -C /usr/ports/sysutils/ansible install
+
+You can also choose a specific version, i.e  ``ansible25``.
+
+Older versions of FreeBSD worked with something like this (substitute for your choice of package manager):
+
+.. code-block:: bash
+
+    $ sudo pkg install ansible
 
 .. _on_macos:
 

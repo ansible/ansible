@@ -6,6 +6,7 @@ when it comes to components like path separators and OS-specific tasks.
 This document covers details specific to using Ansible for Windows.
 
 .. contents:: Topics
+   :local:
 
 Use Cases
 `````````
@@ -152,7 +153,7 @@ access a folder on the same host::
         groups: LocalGroup
         update_password: no
         password_never_expired: yes
-      with_items:
+      loop:
       - name: User1
         password: Password1
       - name: User2
@@ -194,7 +195,7 @@ are created::
         - Application
         company: Ansible
         update_password: on_create
-      with_items:
+      loop:
       - name: Test User
         password: Password
       - name: Admin User

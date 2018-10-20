@@ -58,6 +58,7 @@ options:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
+      - Note that image IDs (hashes) are not supported.
     required: true
   path:
     description:
@@ -128,7 +129,7 @@ options:
     description:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
-      - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
+      - Requires Docker API >= 1.21.
     required: false
     version_added: "2.2"
   container_limits:
@@ -167,7 +168,7 @@ extends_documentation_fragment:
 
 requirements:
   - "python >= 2.6"
-  - "docker-py >= 1.7.0"
+  - "docker-py >= 1.8.0"
   - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
      module has been superseded by L(docker,https://pypi.org/project/docker/)
      (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
@@ -597,6 +598,7 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        min_docker_api_version='1.20',
     )
 
     results = dict(

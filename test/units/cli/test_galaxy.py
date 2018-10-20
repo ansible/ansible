@@ -27,8 +27,8 @@ import tempfile
 import yaml
 
 from ansible.cli.galaxy import GalaxyCLI
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import call, patch
+from units.compat import unittest
+from units.compat.mock import call, patch
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import PY3
 
@@ -38,6 +38,9 @@ class TestGalaxy(unittest.TestCase):
     def setUpClass(cls):
         '''creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested.'''
         # class data for easy viewing: role_dir, role_tar, role_name, role_req, role_path
+
+        cls.temp_dir = tempfile.mkdtemp(prefix='ansible-test_galaxy-')
+        os.chdir(cls.temp_dir)
 
         if os.path.exists("./delete_me"):
             shutil.rmtree("./delete_me")
@@ -88,6 +91,9 @@ class TestGalaxy(unittest.TestCase):
             os.remove(cls.role_tar)
         if os.path.isdir(cls.role_path):
             shutil.rmtree(cls.role_path)
+
+        os.chdir('/')
+        shutil.rmtree(cls.temp_dir)
 
     def setUp(self):
         self.default_args = ['ansible-galaxy']

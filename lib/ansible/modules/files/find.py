@@ -36,12 +36,17 @@ options:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
+            - This parameter expects a list, which can be either comma separated or YAML. If any of the
+              patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
+              in undesirable ways.
+        type: list
         aliases: ['pattern']
     excludes:
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - Items matching an C(excludes) pattern are culled from C(patterns) matches.
               Multiple patterns can be specified using a list.
+        type: list
         aliases: ['exclude']
         version_added: "2.5"
     contains:
@@ -52,6 +57,7 @@ options:
         aliases: [ name, path ]
         description:
             - List of paths of directories to search. All paths must be fully qualified.
+        type: list
     file_type:
         description:
             - Type of file to select.
@@ -147,6 +153,24 @@ EXAMPLES = r'''
     recurse: no
     file_type: directory
     excludes: 'nginx,mysql'
+
+# When using patterns that contain a comma, make sure they are formatted as lists to avoid splitting the pattern
+- name: Use a single pattern that contains a comma formatted as a list
+  find:
+    paths: /var/log
+    file_type: file
+    use_regex: yes
+    patterns: ['^_[0-9]{2,4}_.*.log$']
+
+- name: Use multiple patterns that contain a comma formatted as a YAML list
+  find:
+    paths: /var/log
+    file_type: file
+    use_regex: yes
+    patterns:
+      - '^_[0-9]{2,4}_.*.log$'
+      - '^[a-z]{1,5}_.*log$'
+
 '''
 
 RETURN = r'''

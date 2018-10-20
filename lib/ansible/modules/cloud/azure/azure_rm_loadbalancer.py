@@ -212,17 +212,14 @@ options:
             - public_ip_address
             - public_ip_name
             - public_ip
-        required: false
     probe_port:
         description:
             - (deprecated) The port that the health probe will use.
             - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-        required: false
     probe_protocol:
         description:
             - (deprecated) The protocol to use for the health probe.
             - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-        required: false
         choices:
             - Tcp
             - Http
@@ -231,23 +228,19 @@ options:
             - (deprecated) Time (in seconds) between endpoint health probes.
             - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
         default: 15
-        required: false
     probe_fail_count:
         description:
             - (deprecated) The amount of probe failures for the load balancer to make a health determination.
             - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
         default: 3
-        required: false
     probe_request_path:
         description:
             - (deprecated) The URL that an HTTP probe will use (only relevant if probe_protocol is set to Http).
             - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-        required: false
     protocol:
         description:
             - (deprecated) The protocol (TCP or UDP) that the load balancer will use.
             - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-        required: false
         choices:
             - Tcp
             - Udp
@@ -255,7 +248,6 @@ options:
         description:
             - (deprecated) The type of load distribution that the load balancer will employ.
             - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-        required: false
         choices:
             - Default
             - SourceIP
@@ -264,38 +256,31 @@ options:
         description:
             - (deprecated) Frontend port that will be exposed for the load balancer.
             - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-        required: false
     backend_port:
         description:
             - (deprecated) Backend port that will be exposed for the load balancer.
             - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-        required: false
     idle_timeout:
         description:
             - (deprecated) Timeout for TCP idle connection in minutes.
             - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
         default: 4
-        required: false
     natpool_frontend_port_start:
         description:
             - (deprecated) Start of the port range for a NAT pool.
             - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
-        required: false
     natpool_frontend_port_end:
         description:
             - (deprecated) End of the port range for a NAT pool.
             - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
-        required: false
     natpool_backend_port:
         description:
             - (deprecated) Backend port used by the NAT pool.
             - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
-        required: false
     natpool_protocol:
         description:
             - (deprecated) The protocol for the NAT pool.
             - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
-        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -910,7 +895,7 @@ def load_balancer_to_dict(load_balancer):
             frontend_port=_.frontend_port,
             backend_port=_.backend_port,
             idle_timeout_in_minutes=_.idle_timeout_in_minutes,
-            enable_floating_point_ip=_.enable_floating_point_ip,
+            enable_floating_point_ip=_.enable_floating_point_ip if hasattr(_, 'enable_floating_point_ip') else False,
             provisioning_state=_.provisioning_state,
             etag=_.etag
         ) for _ in load_balancer.inbound_nat_rules]

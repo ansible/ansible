@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -370,7 +370,7 @@ class ModuleParameters(Parameters):
         return int(self._values['timeout'])
 
     @property
-    def ip(self):
+    def ip(self):  # lgtm [py/similar-function]
         if self._values['ip'] is None:
             return None
         if self._values['ip'] in ['*', '0.0.0.0']:

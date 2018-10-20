@@ -95,7 +95,7 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.7.0"
+    - "docker-py >= 1.8.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
@@ -163,7 +163,7 @@ try:
     from docker import utils
     if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import IPAMPool, IPAMConfig
-except:
+except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
@@ -384,6 +384,7 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True
+        # "The docker server >= 1.9.0"
     )
 
     cm = DockerNetworkManager(client)

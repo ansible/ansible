@@ -29,6 +29,15 @@ extends_documentation_fragment: scaleway
 
 options:
 
+  public_ip:
+    description:
+    - Manage public IP on a Scaleway server
+    - Could be Scaleway IP address UUID
+    - C(dynamic) Means that IP is destroyed at the same time the host is destroyed
+    - C(absent) Means no public IP at all
+    version_added: '2.8'
+    default: absent
+
   enable_ipv6:
     description:
       - Enable public IPv6 connectivity on the instance
@@ -234,16 +243,45 @@ def wait_to_complete_state_transition(compute_api, server):
         compute_api.module.fail_json(msg="Server takes too long to finish its transition")
 
 
+def public_ip_payload(compute_api, public_ip):
+    # We don't want a public ip
+    if public_ip in ("absent",):
+        return {"dynamic_ip_required": False}
+
+    # IP is only attached to the instance and is released as soon as the instance terminates
+    if public_ip in ("dynamic", "allocated"):
+        return {"dynamic_ip_required": True}
+
+    # We check that the IP we want to attach exists, if so its ID is returned
+    response = compute_api.get("ips")
+    if not response.ok:
+        msg = 'Error during public IP validation: (%s) %s' % (response.status_code, response.json)
+        compute_api.module.fail_json(msg=msg)
+
+    ip_list = []
+    try:
+        ip_list = response.json["ips"]
+    except KeyError:
+        compute_api.module.fail_json(msg="Error in getting the IP information from: %s" % response.json)
+
+    lookup = [ip["id"] for ip in ip_list]
+    if public_ip in lookup:
+        return {"public_ip": public_ip}
+
+
 def create_server(compute_api, server):
     compute_api.module.debug("Starting a create_server")
     target_server = None
+    payload = {"enable_ipv6": server["enable_ipv6"],
+               "tags": server["tags"],
+               "commercial_type": server["commercial_type"],
+               "image": server["image"],
+               "dynamic_ip_required": server["dynamic_ip_required"],
+               "name": server["name"],
+               "organization": server["organization"]}
+
     response = compute_api.post(path="servers",
-                                data={"enable_ipv6": server["enable_ipv6"],
-                                      "tags": server["tags"],
-                                      "commercial_type": server["commercial_type"],
-                                      "image": server["image"],
-                                      "name": server["name"],
-                                      "organization": server["organization"]})
+                                data=payload)
 
     if not response.ok:
         msg = 'Error during server creation: (%s) %s' % (response.status_code, response.json)
@@ -338,7 +376,7 @@ def absent_strategy(compute_api, wished_server):
         return changed, {"status": "Server %s would be made absent." % target_server["id"]}
 
     # A server MUST be stopped to be deleted.
-    while not fetch_state(compute_api=compute_api, server=target_server) == "stopped":
+    while fetch_state(compute_api=compute_api, server=target_server) != "stopped":
         wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
         response = stop_server(compute_api=compute_api, server=target_server)
 
@@ -577,6 +615,10 @@ def core(module):
 
     compute_api = Scaleway(module=module)
 
+    # IP parameters of the wished server depends on the configuration
+    ip_payload = public_ip_payload(compute_api=compute_api, public_ip=module.params["public_ip"])
+    wished_server.update(ip_payload)
+
     changed, summary = state_strategy[wished_server["state"]](compute_api=compute_api, wished_server=wished_server)
     module.exit_json(changed=changed, msg=summary)
 
@@ -589,6 +631,7 @@ def main():
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
         commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES),
         enable_ipv6=dict(default=False, type="bool"),
+        public_ip=dict(default="absent"),
         state=dict(choices=state_strategy.keys(), default='present'),
         tags=dict(type="list", default=[]),
         organization=dict(required=True),

@@ -141,6 +141,10 @@ webapps:
             description: Publishing profile password.
             returned: only when I(return_publish_profile) is True.
             type: str
+        tags:
+            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            type: dict
+            sample: { tag1: abc }
 '''
 try:
     from msrestazure.azure_exceptions import CloudError

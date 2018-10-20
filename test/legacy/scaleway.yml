@@ -8,6 +8,7 @@
   roles:
     - { role: scaleway_compute, tags: test_scaleway_compute }
     - { role: scaleway_image_facts, tags: test_scaleway_image_facts }
+    - { role: scaleway_ip, tags: test_scaleway_ip }
     - { role: scaleway_ip_facts, tags: test_scaleway_ip_facts }
     - { role: scaleway_organization_facts, tags: test_scaleway_organization_facts }
     - { role: scaleway_security_group_facts, tags: test_scaleway_security_group_facts }
@@ -17,3 +18,5 @@
     - { role: scaleway_user_data, tags: test_scaleway_user_data }
     - { role: scaleway_volume, tags: test_scaleway_volume }
     - { role: scaleway_volume_facts, tags: test_scaleway_volume_facts }
+    - { role: scaleway_security_group, tags: test_scaleway_security_group }
+    - { role: scaleway_security_group_rule, tags: test_scaleway_security_group_rule }

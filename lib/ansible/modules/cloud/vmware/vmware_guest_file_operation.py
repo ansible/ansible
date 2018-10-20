@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Stéphane Travassac <stravassac () gmail.com>
+# Copyright: (c) 2017, Stéphane Travassac <stravassac@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -346,7 +346,7 @@ class VmwareGuestFileManager(PyVmomi):
 
             status_code = info["status"]
             if status_code != 200:
-                self.module.fail_json(msg='initiateFileTransferToGuest : problem during file transfer',
+                self.module.fail_json(msg='problem during file transfer, http message:%s' % info,
                                       uuid=self.vm.summary.config.uuid)
         except vim.fault.FileAlreadyExists:
             result['changed'] = False

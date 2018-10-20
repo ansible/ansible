@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -174,7 +174,8 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
         if HAS_AZURE:
             for key in self.storage_models.SkuName:
-                self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
+                if getattr(key, 'value') not in self.module_arg_spec['account_type']['choices']:
+                    self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,

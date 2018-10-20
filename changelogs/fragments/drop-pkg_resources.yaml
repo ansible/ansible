@@ -1,0 +1,8 @@
+---
+minor_changes:
+  - Drop the use of pkg_resources.  Importing pkg_resources was the costliest
+    part of startup time for Ansible.  pkg_resources was used so that platforms
+    with old versions of PyCrypto and Jinja2 could use parallel installed,
+    updated versions.  Since we no longer support Python-2.6 on the controller
+    side, we no longer have to support parallel installation to work around
+    those old stacks.

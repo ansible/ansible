@@ -38,7 +38,16 @@ Function Get-AnsibleItem {
         [Parameter(Mandatory=$true)][string]$Path
     )
     # Replacement for Get-Item
-    $file_attributes = [System.IO.File]::GetAttributes($Path)
+    try {
+        $file_attributes = [System.IO.File]::GetAttributes($Path)
+    } catch {
+        # if -ErrorAction SilentlyCotinue is set on the cmdlet and we failed to
+        # get the attributes, just return $null, otherwise throw the error
+        if ($ErrorActionPreference -ne "SilentlyContinue") {
+            throw $_
+        }
+        return $null
+    }
     if ([Int32]$file_attributes -eq -1) {
         throw New-Object -TypeName System.Management.Automation.ItemNotFoundException -ArgumentList "Cannot find path '$Path' because it does not exist."
     } elseif ($file_attributes.HasFlag([System.IO.FileAttributes]::Directory)) {

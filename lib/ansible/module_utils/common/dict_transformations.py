@@ -121,3 +121,21 @@ def dict_merge(a, b):
         else:
             result[k] = deepcopy(v)
     return result
+
+
+def recursive_diff(dict1, dict2):
+    left = dict((k, v) for (k, v) in dict1.items() if k not in dict2)
+    right = dict((k, v) for (k, v) in dict2.items() if k not in dict1)
+    for k in (set(dict1.keys()) & set(dict2.keys())):
+        if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
+            result = recursive_diff(dict1[k], dict2[k])
+            if result:
+                left[k] = result[0]
+                right[k] = result[1]
+        elif dict1[k] != dict2[k]:
+            left[k] = dict1[k]
+            right[k] = dict2[k]
+    if left or right:
+        return left, right
+    else:
+        return None

@@ -25,7 +25,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
@@ -62,13 +62,12 @@ version_added: "2.5"
 
 EXAMPLES = '''
 - name: Sync NSO device
-  nso_config:
+  nso_action:
     url: http://localhost:8080/jsonrpc
     username: username
     password: password
     path: /ncs:devices/device{ce0}/sync-from
-    output_required:
-      result: true
+    input: {}
 '''
 
 RETURN = '''
