@@ -12,19 +12,19 @@
 - debug:
     msg: "Using name prefix {{ name_prefix }} and test registry name {{ registry_name }}"
 
-- name: Start test registry
-  docker_container:
-    name: "{{ registry_name }}"
-    image: registry:2.6.1
-    ports: 5000
-
-- name: Get registry URL
-  set_fact:
-    registry_address: "localhost:{{ docker_container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}"
-
-- debug: msg="Registry available under {{ registry_address }}"
-
 - block:
+  - name: Start test registry
+    docker_container:
+      name: "{{ registry_name }}"
+      image: registry:2.6.1
+      ports: 5000
+
+  - name: Get registry URL
+    set_fact:
+      registry_address: "localhost:{{ docker_container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}"
+
+  - debug: msg="Registry available under {{ registry_address }}"
+
   - include_tasks: run-test.yml
     with_fileglob:
     - "tests/*.yml"
