@@ -195,6 +195,8 @@ class Connection(ConnectionBase):
             self.authManager.ValidateCredentialsInGuest(vm=self.vm, auth=self.vm_auth)
         except vim.fault.InvalidPowerState as e:
             raise AnsibleError("VM Power State Error: %s" % to_native(e.msg))
+        except vim.fault.RestrictedVersion as e:
+            raise AnsibleError("Restricted Version Error: %s" % to_native(e.msg))
         except vim.fault.GuestOperationsUnavailable as e:
             raise AnsibleError("VM Guest Operations (VMware Tools) Error: %s" % to_native(e.msg))
         except vim.fault.InvalidGuestLogin as e:
