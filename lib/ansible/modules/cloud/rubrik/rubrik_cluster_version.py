@@ -53,9 +53,6 @@ def main():
     """ Main entry point for Ansible module execution.
     """
 
-    if sdk_present is False:
-        module.fail_json(msg="The Rubrik Python SDK is required for this module (pip install rubrik_cdm).")
-
     results = {}
 
     argument_spec = rubrik_argument_spec
@@ -69,6 +66,9 @@ def main():
     # End Parameters
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+
+    if sdk_present is False:
+        module.fail_json(msg="The Rubrik Python SDK is required for this module (pip install rubrik_cdm).")
 
     load_provider_variables(module)
 
@@ -84,7 +84,7 @@ def main():
                 ansible["password"]
             except KeyError:
                 module.fail_json(
-                    msg="Error: The Rubrik login credentials are missing. Verify the correct env vars are present or provide them through the `provider` param.")
+                    msg="Error: The Rubrik login credentials are missing. Verify the correct env vars are present or provide them through the provider param.")
         else:
             module.fail_json(msg=str(error))
 
