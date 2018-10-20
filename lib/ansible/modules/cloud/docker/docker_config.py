@@ -77,10 +77,10 @@ author:
 
 EXAMPLES = '''
 
-- name: Create config foo
+- name: Create config foo (from a file on the control machine)
   docker_config:
     name: foo
-    data: Hello World!
+    data: "{{ lookup('file', '/path/to/config/file') }}"
     state: present
 
 - name: Change the config data
