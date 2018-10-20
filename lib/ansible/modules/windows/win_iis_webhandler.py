@@ -114,7 +114,7 @@ options:
 notes:
 - This must be run on a host that has the WebAdministration powershell module installed.
 - Works with Windows Server 2012 and newer.
-- All parameter' description and other techical information was taken from
+- All parameter description and other techical information was taken from
   U(https://docs.microsoft.com/en-us/iis/configuration/system.webserver/handlers/add) article.
 author:
 - Andrii Bilousko (@arestarh)
@@ -123,20 +123,20 @@ author:
 EXAMPLES = r'''
 - name: Create http handler to process php files
   win_iis_webhandler:
-    name: 'php-fastcgi'
-    scriptprocessor: 'C:\ProgramData\php\php-cgi.exe'
+    name: php-fastcgi
+    scriptprocessor: C:\ProgramData\php\php-cgi.exe
     modules: FastCgiModule
-    path: '*.php'
-    verb: '*'
+    path: *.php
+    verb: *
     state: present
 
 - name: Adds a handler named "testHandler" to the Default Web Site
   win_iis_webhandler:
     name: testHandler
     modules: IsapiModule
-    path: '*.test'
+    path: *.test
     verb: 'GET,POST'
-    sitename: 'Default Web Site'
+    sitename: Default Web Site
     state: present
 '''
 
