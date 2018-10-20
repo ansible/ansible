@@ -1,0 +1,107 @@
+---
+####################################################################
+## basic ###########################################################
+####################################################################
+
+- name: Make sure image is not there
+  docker_image:
+    name: "hello-world:latest"
+    state: absent
+  register: absent_1
+
+- name: Make sure image is not there (idempotency)
+  docker_image:
+    name: "hello-world:latest"
+    state: absent
+  register: absent_2
+
+- assert:
+    that:
+    - absent_2 is not changed
+
+- name: Make sure image is there
+  docker_image:
+    name: "hello-world:latest"
+    state: present
+    pull: no
+  register: present_1
+
+- name: Make sure image is there (idempotent)
+  docker_image:
+    name: "hello-world:latest"
+    state: present
+    pull: yes
+  register: present_2
+
+- assert:
+    that:
+    - present_1 is changed
+    - present_2 is not changed
+
+####################################################################
+## interact with test registry #####################################
+####################################################################
+
+- name: Make sure image is not there
+  docker_image:
+    name: "{{ registry_address }}/test/hello-world:latest"
+    state: absent
+
+- name: Push image to test registry
+  docker_image:
+    name: "hello-world:latest"
+    repository: "{{ registry_address }}/test/hello-world"
+    push: yes
+  register: push_1
+
+- name: Push image to test registry (idempotent)
+  docker_image:
+    name: "hello-world:latest"
+    repository: "{{ registry_address }}/test/hello-world"
+    push: yes
+  register: push_2
+
+- assert:
+    that:
+    - push_1 is changed
+    - push_2 is not changed
+
+- name: Get facts of local image
+  docker_image_facts:
+    name: "{{ registry_address }}/test/hello-world:latest"
+  register: facts_1
+
+- name: Make sure image is not there
+  docker_image:
+    name: "{{ registry_address }}/test/hello-world:latest"
+    state: absent
+
+- name: Get facts of local image (absent)
+  docker_image_facts:
+    name: "{{ registry_address }}/test/hello-world:latest"
+  register: facts_2
+
+- name: Pull image from test registry
+  docker_image:
+    name: "{{ registry_address }}/test/hello-world:latest"
+    state: present
+  register: pull_1
+
+- name: Pull image from test registry (idempotency)
+  docker_image:
+    name: "{{ registry_address }}/test/hello-world:latest"
+    state: present
+  register: pull_2
+
+- name: Get facts of local image (present)
+  docker_image_facts:
+    name: "{{ registry_address }}/test/hello-world:latest"
+  register: facts_3
+
+- assert:
+    that:
+    - pull_1 is changed
+    - pull_2 is not changed
+    - facts_1.images | length == 1
+    - facts_2.images | length == 0
+    - facts_3.images | length == 1
