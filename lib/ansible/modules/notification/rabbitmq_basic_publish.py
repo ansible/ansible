@@ -61,6 +61,7 @@ options:
     description:
       - A file to upload to the queue.  Automatic mime type detection is attempted if content_type is not defined (left as default).
       - A C(src) cannot be provided if a C(body) is specified.
+      - The filename is added to the headers of the posted message to RabbitMQ. Key being the C(filename), value is the filename.
     aliases: ['file']
   content_type:
     description:

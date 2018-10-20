@@ -13,6 +13,7 @@ from ansible.module_utils.basic import env_fallback
 from mimetypes import MimeTypes
 
 import json
+import os
 
 try:
     import pika
@@ -189,13 +190,19 @@ class RabbitClient():
                 body=self._read_file(self.params.get("src")),
                 exchange=self.params.get("exchange"),
                 routing_key=self.params.get("routing_key"),
-                properties=pika.BasicProperties(content_type=self.content_type, delivery_mode=1))
+                properties=pika.BasicProperties(content_type=self.content_type,
+                                                delivery_mode=1,
+                                                headers={'filename': os.path.basename(self.params.get("src"))}
+                                                ))
         elif self.params.get("src") is not None:
             args = dict(
                 body=self._read_file(self.params.get("src")),
                 exchange=self.params.get("exchange"),
                 routing_key=self.params.get("routing_key"),
-                properties=pika.BasicProperties(content_type=self.content_type, delivery_mode=1))
+                properties=pika.BasicProperties(content_type=self.content_type,
+                                                delivery_mode=1,
+                                                headers={'filename': os.path.basename(self.params.get("src"))}
+                                                ))
 
         try:
             # If queue is not defined, RabbitMQ will return the queue name of the automatically generated queue.
