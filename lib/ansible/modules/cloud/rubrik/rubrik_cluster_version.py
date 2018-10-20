@@ -26,6 +26,9 @@ requirements: [rubrik_cdm]
 
 EXAMPLES = '''
 - rubrik_cluster_version:
+
+- rubrik_cluster_version:
+    provider: "{{ credentials }}"
 '''
 
 RETURN = '''
@@ -37,12 +40,23 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.rubrik_cdm import sdk_validation, connect, load_provider_variables, rubrik_argument_spec
+from ansible.module_utils.rubrik_cdm import load_provider_variables, rubrik_argument_spec
+
+try:
+    import rubrik_cdm
+    sdk_present = True
+except BaseException:
+    sdk_present = False
 
 
 def main():
     """ Main entry point for Ansible module execution.
     """
+
+    if sdk_present is False:
+        module.fail_json(msg="The Rubrik Python SDK is required for this module (pip install rubrik_cdm).")
+
+    results = {}
 
     argument_spec = rubrik_argument_spec
 
@@ -56,20 +70,35 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
-    sdk_present, rubrik_cdm = sdk_validation()
-
-    if sdk_present is False:
-        module.fail_json(msg="The Rubrik Python SDK is required for this module (pip install rubrik_cdm).")
-
-    results = {}
-
     load_provider_variables(module)
 
-    rubrik = connect(rubrik_cdm, module)
-    if isinstance(rubrik, str):
-        module.fail_json(msg=rubrik)
+    ansible = module.params
 
-    results["version"] = rubrik.cluster_version()
+    try:
+        rubrik = rubrik_cdm.Connect()
+    except SystemExit as error:
+        if "has not been provided" in str(error):
+            try:
+                ansible["node_ip"]
+                ansible["username"]
+                ansible["password"]
+            except KeyError:
+                module.fail_json(
+                    msg="Error: The Rubrik login credentials are missing. Verify the correct env vars are present or provide them through the `provider` param.")
+        else:
+            module.fail_json(msg=str(error))
+
+        try:
+            rubrik = rubrik_cdm.Connect(ansible['node_ip'], ansible['username'], ansible['password'])
+        except SystemExit as error:
+            module.fail_json(msg=str(error))
+
+    try:
+        api_request = rubrik.cluster_version()
+    except SystemExit as error:
+        module.fail_json(msg=str(error))
+
+    results["version"] = api_request
 
     module.exit_json(**results)
 

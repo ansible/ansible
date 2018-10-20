@@ -37,61 +37,6 @@ except ImportError:
     pass
 
 
-def sdk_validation():
-    """Verify that the rubrik_cdm SDK is present.
-
-    Returns:
-        bool -- Flag that determines whether or not the SDK is present.
-        class -- The rubrik_cdm module class.
-    """
-
-    try:
-        import rubrik_cdm
-        sdk_present = True
-    except BaseException:
-        sdk_present = False
-
-    return sdk_present, rubrik_cdm
-
-
-def connect(rubrik_cdm, module):
-    """Helper function to establish inital connectivity to the Rubrik cluster. The function will first attempt
-    to read the relevant credentials from environment variables and then if those are not found try to manually provie
-    the values through supplied parameters.
-
-    Arguments:
-        rubrik_cdm {class} -- The rubrik_cdm module class.
-        module {class} -- Ansible module helper class.
-
-    Returns:
-        [str] -- Any potential error that may occur during the initial connection.
-        [class] -- On success, return rubrik_cdm.Connect
-    """
-
-    ansible = module.params
-
-    try:
-        rubrik = rubrik_cdm.Connect()
-        return rubrik
-    except SystemExit as error:
-        if "has not been provided" in str(error):
-            try:
-                ansible["node_ip"]
-                ansible["username"]
-                ansible["password"]
-            except KeyError:
-                return "Error: The Rubrik login credentials are missing. Verify the correct env vars are present or provide them through the `provider` param."
-        else:
-            return str(error)
-
-        try:
-            rubrik = rubrik_cdm.Connect(ansible['node_ip'], ansible['username'], ansible['password'])
-        except SystemExit as error:
-            return str(error)
-
-        return rubrik
-
-
 login_credentials_spec = {
     'node_ip': dict(),
     'username': dict(),
