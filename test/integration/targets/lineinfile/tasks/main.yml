@@ -818,3 +818,31 @@
       The regular expression is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
       If this is desired, use '^' to match every line in the file and avoid this warning.
+
+- name: deploy the test file for lineinfile
+  copy:
+    src: test.txt
+    dest: "{{ output_dir }}/test.txt"
+  register: result
+
+- name: assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - "result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
+      - "result.state == 'file'"
+
+- name: insert a line at the beginning of the file, using file lock
+  lineinfile:
+    dest: "{{ output_dir }}/test.txt"
+    state: present
+    line: "New line at the beginning"
+    insertbefore: "BOF"
+    lock: yes
+  register: result1
+
+- name: assert that the line was inserted at the head of the file
+  assert:
+    that:
+      - result1 is changed
+      - result1.msg == 'line added'
