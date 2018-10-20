@@ -114,7 +114,8 @@ class ActionModule(ActionBase):
         # launched by systemd, the update of utmp/wtmp is not done correctly.
         # Fall back to using uptime -s for those systems.
         # https://github.com/systemd/systemd/issues/6057
-        if '1970-01-01 00:00' in command_result['stdout']:
+        # if '1970-01-01 00:00' in command_result['stdout']:
+        if int(''.join(c for c in command_result['stdout'] if c.isdigit())[:4]) <= 1970:
             stdout += command_result['stdout']
             stderr += command_result['stderr']
             command_result = self._low_level_execute_command('uptime -s', sudoable=self.DEFAULT_SUDOABLE)
