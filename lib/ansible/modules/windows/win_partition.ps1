@@ -73,8 +73,7 @@ if ($null -ne $partition_size) {
     if ($partition_size -eq -1) {
         $size_is_maximum = $true
     }
-    elseif ($partition_size -match '(?<Size>[0-9]+)[ ]*(?<Units>b|kb|kib|mb|mib|gb|gib|tb|tib)') {
-
+    elseif ($partition_size -match '^(?<Size>[0-9]+)[ ]*(?<Units>b|kb|kib|mb|mib|gb|gib|tb|tib)$') {
         $ansible_partition_size = Convert-SizeToBytes -Size $Matches.Size -Units $Matches.Units
     }
     else {
