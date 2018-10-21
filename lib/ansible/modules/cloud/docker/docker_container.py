@@ -2154,12 +2154,10 @@ class ContainerManager(DockerBaseClass):
                         self.fail("Error disconnecting container from network %s - %s" % (diff['parameter']['name'],
                                                                                           str(exc)))
             # connect to the network
-            params = dict(
-                ipv4_address=diff['parameter'].get('ipv4_address', None),
-                ipv6_address=diff['parameter'].get('ipv6_address', None),
-                links=diff['parameter'].get('links', None),
-                aliases=diff['parameter'].get('aliases', None)
-            )
+            params = dict()
+            for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
+                if diff['parameter'].get(para):
+                    params[para] = diff['parameter'][para]
             self.results['actions'].append(dict(added_to_network=diff['parameter']['name'], network_parameters=params))
             if not self.check_mode:
                 try:
