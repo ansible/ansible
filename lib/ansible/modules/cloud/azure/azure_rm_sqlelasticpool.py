@@ -262,7 +262,7 @@ class AzureRMElasticPools(AzureRMModuleBase):
             self.results['changed'] = False
             response = old_response
 
-        if self.to_do != Actions.Delete:
+        if isinstance(response, dict):
             self.results.update(self.format_item(response))
         return self.results
 
