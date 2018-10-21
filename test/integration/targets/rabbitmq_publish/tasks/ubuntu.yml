@@ -9,10 +9,10 @@
     state: present
 
 - name: RabbitMQ basic publish test
-  rabbitmq_basic_publish:
+  rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     queue: 'publish_test'
-    body: "Hello world from ansible module rabitmq_basic_publish"
+    body: "Hello world from ansible module rabbitmq_publish"
     content_type: "text/plain"
   register: rabbit_basic_output1
   delegate_to: localhost
@@ -26,8 +26,8 @@
 
 
 # Testing random queue
-- name: Post to random queue
-  rabbitmq_basic_publish:
+- name: Publish to random queue
+  rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     body: "RANDOM QUEUE POST"
     content_type: "text/plain"
@@ -41,8 +41,8 @@
       - "'amq.gen' in rabbit_random_queue_output.result.queue"
       - "'text/plain' in rabbit_random_queue_output.result.content_type"
 
-- name: Post binary to a queue
-  rabbitmq_basic_publish:
+- name: Publish binary to a queue
+  rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     queue: publish_test
     src: "{{ role_path }}/files/image.gif"
@@ -56,10 +56,10 @@
       - "'image/gif' in rabbitmq_publish_file.result.content_type"
 
 - name: Raise error for src and body defined
-  rabbitmq_basic_publish:
+  rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     queue: 'publish_test'
-    src: 'ajax-loader.gif'
+    src: "{{ role_path }}/files/image.gif"
     body: blah
   register: rabbit_basic_fail_output1
   ignore_errors: yes
@@ -71,7 +71,7 @@
       - "'src and body cannot be specified at the same time' in rabbit_basic_fail_output1.msg"
 
 - name: Publish a file that does not exist
-  rabbitmq_basic_publish:
+  rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     queue: 'publish_test'
     src: 'aaaaaaajax-loader.gif'
@@ -85,7 +85,7 @@
       - "'Unable to open file' in file_missing_fail.msg"
 
 - name: Publish with proto/host/port/user/pass
-  rabbitmq_basic_publish:
+  rabbitmq_publish:
     proto: amqp
     host: localhost
     port: 5672
@@ -102,7 +102,7 @@
       - "host_port_output is not failed"
 
 - name: Publish with host/port/user but missing proto
-  rabbitmq_basic_publish:
+  rabbitmq_publish:
     host: localhost
     port: 5672
     username: guest
@@ -120,7 +120,7 @@
       - "'Connection parameters must be passed via' in host_port_missing_proto_output.msg"
 
 - name: Publish with proto/host/port/user and url
-  rabbitmq_basic_publish:
+  rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     proto: amqp
     host: localhost
@@ -139,6 +139,29 @@
       - "host_and_url_output is failed"
       - "'cannot be specified at the same time' in host_and_url_output.msg"
 
+- name: Publish headers to queue
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    body: blah
+    headers:
+      myHeader: Value1
+      secondHeader: Value2
+  register: test_headers1
+  ignore_errors: yes
+  delegate_to: localhost
+
+- name: Publish headers with file
+  rabbitmq_publish:
+    url: "amqp://guest:guest@localhost:5672/%2F"
+    queue: 'publish_test'
+    src: "{{ role_path }}/files/image.gif"
+    headers:
+      myHeader: Value1
+      secondHeader: Value2
+  register: test_headers2
+  ignore_errors: yes
+  delegate_to: localhost
 
 - name: Collect all messages off the publish queue
   set_fact:
@@ -147,8 +170,11 @@
 - name: Check contents of published messages
   assert:
     that:
-      - messages|length == 3
-      - "'Hello world from ansible module rabitmq_basic_publish' in messages[0]['msg']"
+      - messages|length == 5
+      - "'Hello world from ansible module rabbitmq_publish' in messages[0]['msg']"
       - "'text/plain' in messages[0]['content_type']"
       - "'image/gif' in messages[1]['content_type']"
       - "'Testing with proto/host/port/username/password/vhost' in messages[2]['msg']"
+#      - messages[3]['headers']['myHeader'] is defined
+#      - messages[4]['headers']['filename'] is defined
+#      - messages[4]['headers']['secondHeader'] is defined
