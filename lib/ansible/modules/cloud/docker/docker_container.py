@@ -688,6 +688,15 @@ EXAMPLES = '''
       timeout: 10s
       retries: 3
       start_period: 30s
+
+- name: Remove healthcheck from container
+  docker_container:
+    name: nginx-proxy
+    image: nginx:1.13
+    state: started
+    healthcheck:
+      # The "NONE" check needs to be specified
+      test: ["NONE"]
 '''
 
 RETURN = '''
@@ -948,7 +957,7 @@ class TaskParameters(DockerBaseClass):
         self.ulimits = self._parse_ulimits()
         self.sysctls = self._parse_sysctls()
         self.log_config = self._parse_log_config()
-        self.healthcheck = self._parse_healthcheck()
+        self.healthcheck, self.disable_healthcheck = self._parse_healthcheck()
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
 
@@ -1370,7 +1379,7 @@ class TaskParameters(DockerBaseClass):
         Return dictionary of healthcheck parameters
         '''
         if (not self.healthcheck) or (not self.healthcheck.get('test')):
-            return None
+            return None, None
 
         result = dict()
 
@@ -1393,8 +1402,24 @@ class TaskParameters(DockerBaseClass):
                         result[key] = time
                 elif self.healthcheck.get(value):
                     result[key] = self.healthcheck.get(value)
+                    if key == 'test':
+                        if isinstance(result[key], (tuple, list)):
+                            result[key] = [str(e) for e in result[key]]
+                        else:
+                            result[key] = str(result[key])
+                    elif key == 'retries':
+                        try:
+                            result[key] = int(result[key])
+                        except Exception as e:
+                            self.fail('Cannot parse number of retries for healthcheck. '
+                                      'Expected an integer, got "{0}".'.format(result[key]))
 
-        return result
+        if result['test'] == ['NONE']:
+            # If the user explicitly disables the healthcheck, return None
+            # as the healthcheck object, and set disable_healthcheck to True
+            return None, True
+
+        return result, False
 
     def _convert_duration_to_nanosecond(self, time_str):
         '''
@@ -1676,7 +1701,8 @@ class Container(DockerBaseClass):
             volumes_from=host_config.get('VolumesFrom'),
             working_dir=config.get('WorkingDir'),
             publish_all_ports=host_config.get('PublishAllPorts'),
-            expected_healthcheck=(config.get('Healthcheck') or dict())
+            expected_healthcheck=config.get('Healthcheck'),
+            disable_healthcheck=(not config.get('Healthcheck') or config.get('Healthcheck').get('Test') == ['NONE']),
         )
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
@@ -2486,6 +2512,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Add implicit options
         comparisons['publish_all_ports'] = dict(type='value', comparison='strict', name='published_ports')
         comparisons['expected_ports'] = dict(type='dict', comparison=comparisons['published_ports']['comparison'], name='expected_ports')
+        comparisons['disable_healthcheck'] = dict(type='value', comparison='ignore' if comparisons['healthcheck']['comparison'] == 'ignore' else 'strict', name='disable_healthcheck')
         # Check legacy values
         if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
             self.module.warn('The ignore_image option has been overridden by the comparisons option!')
