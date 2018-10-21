@@ -298,9 +298,9 @@ def _recover_package_name(names):
             if name_parts:
                 package_names.append(",".join(name_parts))
             name_parts = []
-        if name.find("[") != -1:
+        if "[" in name:
             in_brackets = True
-        if in_brackets and name.find("]") != -1:
+        if in_brackets and "]" in name:
             in_brackets = False
         name_parts.append(name)
     package_names.append(",".join(name_parts))
