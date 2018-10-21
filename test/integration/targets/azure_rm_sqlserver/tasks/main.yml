@@ -293,6 +293,10 @@
       - output.changed == False
       - output.rules | length == 0
 
+# SQL Elastic Pool tests
+
+
+
 # finalise & clean up azure_rm_sqlserver test
 
 - name: Delete instance of SQL Server -- check mode
