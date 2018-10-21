@@ -213,6 +213,34 @@ EXAMPLES = '''
     tags:
       Environment: Testing
 
+# start an instance and Add EBS
+- ec2_instance:
+    name: "public-withebs-instance"
+    vpc_subnet_id: subnet-5ca1ab1e
+    instance_type: t2.micro
+    key_name: "prod-ssh-key"
+    security_group: default
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 16
+          delete_on_termination: true
+
+# start an instance with a cpu_options
+- ec2_instance:
+    name: "public-cpuoption-instance"
+    vpc_subnet_id: subnet-5ca1ab1e
+    tags:
+      Environment: Testing
+    instance_type: c4.large
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+    cpu_options:
+        core_count: 1
+        threads_per_core: 1
+
 # start an instance and have it begin a Tower callback on boot
 - ec2_instance:
     name: "tower-callback-test"
@@ -230,6 +258,35 @@ EXAMPLES = '''
     cpu_credit_specification: unlimited
     tags:
       SomeThing: "A value"
+
+# start an instance with ENI (An existing ENI ID is required)
+- ec2_instance:
+    name: "public-eni-instance"
+    key_name: "prod-ssh-key"
+    vpc_subnet_id: subnet-5ca1ab1e
+    network:
+      interfaces:
+        - id: "eni-12345"
+    tags:
+      Env: "eni_on"
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+    instance_type: t2.micro
+    image_id: ami-123456
+
+# add second ENI interface
+- ec2_instance:
+    name: "public-eni-instance"
+    network:
+      interfaces:
+        - id: "eni-12345"
+        - id: "eni-67890"
+    image_id: ami-123456
+    tags:
+      Env: "eni_on"
+    instance_type: t2.micro
 '''
 
 RETURN = '''
