@@ -2512,7 +2512,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Add implicit options
         comparisons['publish_all_ports'] = dict(type='value', comparison='strict', name='published_ports')
         comparisons['expected_ports'] = dict(type='dict', comparison=comparisons['published_ports']['comparison'], name='expected_ports')
-        comparisons['disable_healthcheck'] = dict(type='value', comparison='ignore' if comparisons['healthcheck']['comparison'] == 'ignore' else 'strict', name='disable_healthcheck')
+        comparisons['disable_healthcheck'] = dict(type='value',
+                                                  comparison='ignore' if comparisons['healthcheck']['comparison'] == 'ignore' else 'strict',
+                                                  name='disable_healthcheck')
         # Check legacy values
         if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
             self.module.warn('The ignore_image option has been overridden by the comparisons option!')
