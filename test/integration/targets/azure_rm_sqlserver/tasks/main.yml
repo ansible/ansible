@@ -317,6 +317,10 @@
 - name: Create instance of Virtual Network Rule -- check mode
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: rule1
+    virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
+    virtual_network_rule_name: rule1
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -328,7 +332,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    name: rule1
+    virtual_network_rule_name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
   register: output
 - name: Assert the resource instance is well created
@@ -340,7 +344,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    name: rule1
+    virtual_network_rule_name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
   register: output
 - name: Assert the state has not changed
@@ -352,7 +356,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    name: rule1
+    virtual_network_rule_name: rule1
     state: absent
   check_mode: yes
   register: output
@@ -365,7 +369,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    name: rule1
+    virtual_network_rule_name: rule1
     state: absent
   register: output
 - name: Assert the state has changed
@@ -377,7 +381,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    name: rule1
+    virtual_network_rule_name: rule1
     state: absent
   register: output
 - name: Assert the state has changed
@@ -385,14 +389,14 @@
     that:
       - output.changed == false
 
-- name: Create a subnet
+- name: Delete a subnet
   azure_rm_subnet:
     name: zimssubnet
     virtual_network_name: zimsvnet
     resource_group: "{{ resource_group }}"
     state: absent
   register: subnet_output  
-- name: Create a virtual network
+- name: Delete a virtual network
   azure_rm_virtualnetwork:
     name: zimsvnet
     resource_group: "{{ resource_group }}"
