@@ -232,7 +232,6 @@ EXAMPLES = '''
     vpc_subnet_id: subnet-5ca1ab1e
     tags:
       Environment: Testing
-    vpc_subnet_id: subnet-5ca1ab1e
     instance_type: c4.large
     volumes:
     - device_name: /dev/sda1
