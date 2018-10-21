@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vm - Fix issue in setting the custom_compatibility_version to NULL (https://github.com/ansible/ansible/pull/47388).

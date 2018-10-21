@@ -789,14 +789,14 @@ class BaseModule(object):
         return entity
 
     def _get_major(self, full_version):
-        if full_version is None:
+        if full_version is None or full_version == "":
             return None
         if isinstance(full_version, otypes.Version):
             return int(full_version.major)
         return int(full_version.split('.')[0])
 
     def _get_minor(self, full_version):
-        if full_version is None:
+        if full_version is None or full_version == "":
             return None
         if isinstance(full_version, otypes.Version):
             return int(full_version.minor)
