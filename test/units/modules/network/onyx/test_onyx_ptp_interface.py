@@ -73,19 +73,19 @@ class TestOnyxPtpInterface(TestOnyxModule):
     def test_ptp_attributs_no_change(self):
         self.enabled = True
         for interface in self.interfaces:
-            set_module_args(dict(state='enabled', name=interface, delay_request=0, announce_interval=-2,
-                                 announce_timeout=3, sync_interval=-3))
+            set_module_args(dict(state='enabled', name=interface, delay_request=0,
+                                 announce_interval=-2, announce_timeout=3,
+                                 sync_interval=-3))
         self.execute_module(changed=False)
 
     def test_ptp_attributs_with_change(self):
         self.enabled = True
         for interface in self.interfaces:
-            set_module_args(dict(state='enabled', name=interface, delay_request=2, announce_interval=-1,
-                                 announce_timeout=5, sync_interval=-1))
+            set_module_args(dict(state='enabled', name=interface, delay_request=2,
+                                 announce_interval=-1, announce_timeout=5, sync_interval=-1))
             interface_type, interface_id = self.interfaces.get(interface)
             commands = ['interface %s %s ptp delay-req interval 2' % (interface_type, interface_id),
                         'interface %s %s ptp announce interval -1' % (interface_type, interface_id),
                         'interface %s %s ptp announce timeout 5' % (interface_type, interface_id),
                         'interface %s %s ptp sync interval -1' % (interface_type, interface_id)]
         self.execute_module(changed=True, commands=commands)
-
