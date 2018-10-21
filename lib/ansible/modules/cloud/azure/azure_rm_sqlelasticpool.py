@@ -262,7 +262,8 @@ class AzureRMElasticPools(AzureRMModuleBase):
             self.results['changed'] = False
             response = old_response
 
-        self.results.update(self.format_item(response))
+        if self.to_do != Actions.Delete:
+            self.results.update(self.format_item(response))
         return self.results
 
     def create_update_sqlelasticpool(self):
