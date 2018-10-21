@@ -2428,6 +2428,16 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 self.module.warn("docker API version is %s. Minimum version required is 1.25 to set or "
                                  "update the container's stop_timeout configuration." % (docker_api_version,))
 
+        ipvX_address_supported = LooseVersion(docker_version) >= LooseVersion('1.9')
+        if not ipvX_address_supported:
+            ipvX_address_used = False
+            for network in self.module.params.get("networks", []):
+                if 'ipv4_address' in network or 'ipv6_address' in network:
+                    ipvX_address_used = True
+            if ipvX_address_used:
+                self.fail("docker or docker-py version is %s. Minimum version required is 1.9 to use "
+                          "ipv4_address or ipv6_address in networks." % (docker_version,))
+
         runtime_supported = LooseVersion(docker_api_version) >= LooseVersion('1.12')
         if self.module.params.get("runtime") and not runtime_supported:
             self.fail('docker API version is %s. Minimum version required is 1.12 to set runtime option.' % (docker_api_version,))
