@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: rabbitmq_basic_publish
-short_description: Publish a message on a RabbitMQ queue.
+module: rabbitmq_publish
+short_description: Publish a message to a RabbitMQ queue.
 version_added: "2.8"
 description:
-   - Publish a message on a rabbitmq queue using a blocking connection.
+   - Publish a message on a RabbitMQ queue using a blocking connection.
 options:
   url:
     description:
@@ -97,24 +97,28 @@ author: "John Imison (@Im0)"
 '''
 
 EXAMPLES = '''
-- rabbitmq_basic_publish:
+- name: Publish a message to a queue with headers
+  rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     queue: 'test'
-    body: "Hello world from ansible module rabitmq_basic_publish"
+    body: "Hello world from ansible module rabitmq_publish"
     content_type: "text/plain"
+    headers:
+      myHeader: myHeaderValue
   delegate_to: localhost
 
 
-- rabbitmq_basic_publish:
+- name: Publish a file to a queue
+  rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     queue: 'images'
     file: 'path/to/logo.gif'
   delegate_to: localhost
 
 - name: RabbitMQ auto generated queue
-  rabbitmq_basic_publish:
+  rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
-    body: "Hello world random queue from ansible module rabitmq_basic_publish"
+    body: "Hello world random queue from ansible module rabitmq_publish"
     content_type: "text/plain"
   delegate_to: localhost
 '''
