@@ -295,7 +295,79 @@
 
 # SQL Elastic Pool tests
 
+- name: Create instance of SQL Elastic Pool -- check mode
+  azure_rm_sqlelasticpool:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: elasticpool{{ rpfx }}
+    location: eastus
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
 
+- name: Create instance of SQL Elastic Pool
+  azure_rm_sqlelasticpool:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: elasticpool{{ rpfx }}
+    location: eastus
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of SQL Elastic Pool
+  azure_rm_sqlelasticpool:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: elasticpool{{ rpfx }}
+    location: eastus
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete instance of SQL Elastic Pool -- check mode
+  azure_rm_sqlelasticpool:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: elasticpool{{ rpfx }}
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of SQL Elastic Pool
+  azure_rm_sqlelasticpool:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: elasticpool{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of SQL Elastic Pool
+  azure_rm_sqlelasticpool:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ rpfx }}
+    name: elasticpool{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
 
 # finalise & clean up azure_rm_sqlserver test
 
