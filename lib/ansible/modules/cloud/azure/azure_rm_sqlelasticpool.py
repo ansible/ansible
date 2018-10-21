@@ -326,10 +326,9 @@ class AzureRMElasticPools(AzureRMModuleBase):
         return False
 
     def format_item(self, item):
-        #d = item.as_dict()
         d = {
-            'id': d['id'],
-            'state': d['state']
+            'id': item['id'],
+            'state': item['state']
         }
         return d
 
