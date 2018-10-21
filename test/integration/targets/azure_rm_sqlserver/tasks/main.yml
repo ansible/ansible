@@ -298,8 +298,8 @@
 - name: Create instance of SQL Elastic Pool -- check mode
   azure_rm_sqlelasticpool:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: elasticpool{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    name: elasticpool{{ random_postfix }}
     location: eastus
   check_mode: yes
   register: output
@@ -311,8 +311,8 @@
 - name: Create instance of SQL Elastic Pool
   azure_rm_sqlelasticpool:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: elasticpool{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    name: elasticpool{{ random_postfix }}
     location: eastus
   register: output
 - name: Assert the resource instance is well created
@@ -323,8 +323,8 @@
 - name: Create again instance of SQL Elastic Pool
   azure_rm_sqlelasticpool:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: elasticpool{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    name: elasticpool{{ random_postfix }}
     location: eastus
   register: output
 - name: Assert the state has not changed
@@ -335,8 +335,8 @@
 - name: Delete instance of SQL Elastic Pool -- check mode
   azure_rm_sqlelasticpool:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: elasticpool{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    name: elasticpool{{ random_postfix }}
     state: absent
   check_mode: yes
   register: output
@@ -348,8 +348,8 @@
 - name: Delete instance of SQL Elastic Pool
   azure_rm_sqlelasticpool:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: elasticpool{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    name: elasticpool{{ random_postfix }}
     state: absent
   register: output
 - name: Assert the state has changed
@@ -360,8 +360,8 @@
 - name: Delete unexisting instance of SQL Elastic Pool
   azure_rm_sqlelasticpool:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: elasticpool{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    name: elasticpool{{ random_postfix }}
     state: absent
   register: output
 - name: Assert the state has changed
