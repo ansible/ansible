@@ -96,6 +96,17 @@
     that:
       - output.failed
 
+- name: Remove config
+  docker_config:
+    name: db_password
+    state: absent
+  register: output
+
+- name: assert remove config is idempotent
+  assert:
+    that:
+      - not output.changed
+
 - name: Remove a Swarm cluster
   docker_swarm:
     state: absent
