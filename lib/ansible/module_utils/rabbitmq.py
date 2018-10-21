@@ -52,6 +52,7 @@ class RabbitClient():
         self.port = self.params['port']
         self.vhost = self.params['vhost']
         self.queue = self.params['queue']
+        self.headers = self.params['headers']
 
         if self.host is not None:
             self.build_url()
@@ -180,11 +181,14 @@ class RabbitClient():
                 body=self.params.get("body"),
                 exchange=self.params.get("exchange"),
                 routing_key=self.params.get("routing_key"),
-                properties=pika.BasicProperties(content_type=self.content_type, delivery_mode=1))
+                properties=pika.BasicProperties(content_type=self.content_type, delivery_mode=1, headers=self.headers))
 
         # If src (file) is defined and content_type is left as default, do a mime lookup on the file
         if self.params.get("src") is not None and self.content_type == 'text/plain':
             self.content_type = RabbitClient._check_file_mime_type(self.params.get("src"))[0]
+            self.headers.update(
+                filename=os.path.basename(self.params.get("src"))
+            )
 
             args = dict(
                 body=self._read_file(self.params.get("src")),
@@ -192,7 +196,7 @@ class RabbitClient():
                 routing_key=self.params.get("routing_key"),
                 properties=pika.BasicProperties(content_type=self.content_type,
                                                 delivery_mode=1,
-                                                headers={'filename': os.path.basename(self.params.get("src"))}
+                                                headers=self.headers
                                                 ))
         elif self.params.get("src") is not None:
             args = dict(
@@ -201,7 +205,7 @@ class RabbitClient():
                 routing_key=self.params.get("routing_key"),
                 properties=pika.BasicProperties(content_type=self.content_type,
                                                 delivery_mode=1,
-                                                headers={'filename': os.path.basename(self.params.get("src"))}
+                                                headers=self.headers
                                                 ))
 
         try:

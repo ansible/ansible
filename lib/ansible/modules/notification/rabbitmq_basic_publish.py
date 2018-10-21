@@ -82,6 +82,11 @@ options:
       - Set the queue to auto delete.
     default: False
     type: bool
+  headers:
+    description:
+      - A dictionary of headers to post with the message.
+    default: {}
+    type: dict
 
 
 requirements: [ pika ]
@@ -146,7 +151,8 @@ def main():
         content_type=dict(default="text/plain", type='str'),
         durable=dict(default=False, type='bool'),
         exclusive=dict(default=False, type='bool'),
-        auto_delete=dict(default=False, type='bool')
+        auto_delete=dict(default=False, type='bool'),
+        headers=dict(default={}, type='dict')
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
