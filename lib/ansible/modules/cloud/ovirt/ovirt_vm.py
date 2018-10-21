@@ -1103,7 +1103,7 @@ class VmsModule(BaseModule):
             custom_compatibility_version=otypes.Version(
                 major=self._get_major(self.param('custom_compatibility_version')),
                 minor=self._get_minor(self.param('custom_compatibility_version')),
-            ) if self.param('custom_compatibility_version') else None,
+            ) if self.param('custom_compatibility_version') is not None else None,
             description=self.param('description'),
             comment=self.param('comment'),
             time_zone=otypes.TimeZone(
@@ -1169,12 +1169,19 @@ class VmsModule(BaseModule):
                 return self.param('host') in [self._connection.follow_link(host).name for host in getattr(entity.placement_policy, 'hosts', None) or []]
             return True
 
+        def check_custom_compatibility_version():
+            if self.param('custom_compatibility_version') is not None:
+                return (self._get_minor(self.param('custom_compatibility_version')) == self._get_minor(entity.custom_compatibility_version) and
+                        self._get_major(self.param('custom_compatibility_version')) == self._get_major(entity.custom_compatibility_version))
+            return True
+
         cpu_mode = getattr(entity.cpu, 'mode')
         vm_display = entity.display
         return (
             check_cpu_pinning() and
             check_custom_properties() and
             check_host() and
+            check_custom_compatibility_version() and
             not self.param('cloud_init_persist') and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
@@ -1190,9 +1197,7 @@ class VmsModule(BaseModule):
             equal(self.param('smartcard_enabled'), getattr(vm_display, 'smartcard_enabled', False)) and
             equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
-            equal(self.param('serial_console'), entity.console.enabled) and
-            equal(self._get_minor(self.param('custom_compatibility_version')), self._get_minor(entity.custom_compatibility_version)) and
-            equal(self._get_major(self.param('custom_compatibility_version')), self._get_major(entity.custom_compatibility_version)) and
+            equal(self.param('serial_console'), getattr(entity.console, 'enabled', None)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
