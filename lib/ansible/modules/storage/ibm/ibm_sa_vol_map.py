@@ -4,7 +4,8 @@
 # Copyright (C) 2018 IBM CORPORATION
 # Author(s): Tzur Eliyahu <tzure@il.ibm.com>
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ (see COPYING or
+# https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -92,8 +93,8 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ibm_sa_utils import execute_pyxcli_command, \
-    connect_ssl, spectrum_accelerate_spec, is_pyxcli_installed
+from ansible.module_utils.ibm_sa_utils import (execute_pyxcli_command,
+                                               connect_ssl, spectrum_accelerate_spec, is_pyxcli_installed)
 
 
 def main():
