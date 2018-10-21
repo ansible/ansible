@@ -166,7 +166,7 @@ EXAMPLES = '''
     port: 80
     vpc_id: vpc-01234567
     health_check_path: /
-    successful_response_codes: "200, 250-260"
+    successful_response_codes: "200,250-260"
     state: present
 
 # Delete a target group
