@@ -2043,6 +2043,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_one_of=[['id', 'name']],
+        required_if=[
+            ('state', 'registered', ['storage_domain']),
+        ]
     )
 
     check_sdk(module)
