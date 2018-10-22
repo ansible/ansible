@@ -207,6 +207,7 @@ options:
           - license-included
           - bring-your-own-license
           - general-public-license
+          - postgresql-license
     master_user_password:
         description:
           - An 8-41 character password for the master database user. The password can contain any printable ASCII character
@@ -1038,7 +1039,7 @@ def main():
         force_failover=dict(type='bool'),
         iops=dict(type='int'),
         kms_key_id=dict(),
-        license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license']),
+        license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license']),
         master_user_password=dict(aliases=['password'], no_log=True),
         master_username=dict(aliases=['username']),
         monitoring_interval=dict(type='int'),
