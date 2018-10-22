@@ -325,7 +325,7 @@
 - name: Assert the resource instance is well created
   assert:
     that:
-      - output.changedfix 
+      - output.changed
 
 - name: Create instance of Virtual Network Rule
   azure_rm_sqlvirtualnetworkrule:
