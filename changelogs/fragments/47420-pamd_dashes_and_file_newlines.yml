@@ -1,0 +1,4 @@
+---
+bugfixes:
+- "pamd: allow leading dash per pamd config spec and always end file with newline
+   (see https://github.com/ansible/ansible/pull/47420 and https://github.com/ansible/ansible/issues/47418)" 
