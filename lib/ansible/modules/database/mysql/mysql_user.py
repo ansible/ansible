@@ -273,9 +273,9 @@ def get_mode(cursor):
 
 def user_exists(cursor, user, host, host_all):
     if host_all:
-        cursor.execute("SELECT count(*) FROM user WHERE user = %s", ([user]))
+        cursor.execute("SELECT count(*) FROM mysql.user WHERE user = %s", ([user]))
     else:
-        cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user, host))
+        cursor.execute("SELECT count(*) FROM mysql.user WHERE user = %s AND host = %s", (user, host))
 
     count = cursor.fetchone()
     return count[0] > 0
@@ -346,7 +346,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                         CASE WHEN %s = '' THEN NULL ELSE %s END,
                         CASE WHEN %s = '' THEN NULL ELSE %s END
                     )
-                FROM user WHERE user = %%s AND host = %%s
+                FROM mysql.user WHERE user = %%s AND host = %%s
                 """ % (colA[0], colA[0], colB[0], colB[0]), (user, host))
             current_pass_hash = cursor.fetchone()[0]
 
