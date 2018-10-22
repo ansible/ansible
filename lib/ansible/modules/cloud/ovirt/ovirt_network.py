@@ -215,9 +215,9 @@ class ClusterNetworksModule(BaseModule):
         self._network_id = network_id
         self._cluster_network = cluster_network
         self._old_usages = []
-        self._cluster_network_service = get_entity(self._service.network_service(network_id))
-        if self._cluster_network_service is not None:
-            self._old_usages = self._cluster_network_service.usages
+        self._cluster_network_entity = get_entity(self._service.network_service(network_id))
+        if self._cluster_network_entity is not None:
+            self._old_usages = self._cluster_network_entity.usages
 
     def build_entity(self):
         return otypes.Network(
