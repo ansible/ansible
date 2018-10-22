@@ -40,7 +40,7 @@ options:
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
       - When using state=latest, this can be C('*') which means run C(yum -y update).
       - You can also pass a url or a local path to a rpm file (using state=present).
-        To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
+        To operate on several packages this can accept a comma separated string of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
   exclude:
     description:
