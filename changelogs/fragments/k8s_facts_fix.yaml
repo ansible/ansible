@@ -1,0 +1,3 @@
+---
+bugfixes:
+- k8s_facts now returns a resources key in all situations
