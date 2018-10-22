@@ -1,13 +1,13 @@
-import boto3
 import pytest
 
 from units.modules.utils import set_module_args
 from ansible.module_utils.ec2 import HAS_BOTO3
-from ansible.modules.cloud.amazon import iam_password_policy
 
 if not HAS_BOTO3:
     pytestmark = pytest.mark.skip("iam_password_policy.py requires the `boto3` and `botocore` modules")
-
+else:
+    import boto3
+    from ansible.modules.cloud.amazon import iam_password_policy
 
 def test_warn_if_state_not_specified():
     set_module_args({
