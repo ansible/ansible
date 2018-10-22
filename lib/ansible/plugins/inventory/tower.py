@@ -65,6 +65,13 @@ DOCUMENTATION = '''
             type: bool
             default: False
             version_added: "2.8"
+        parent_group:
+            description: Parent group to being inventory graph
+            type: string
+            default: all
+            env:
+                - name: TOWER_PARENT_GROUP
+            required: False
 '''
 
 EXAMPLES = '''
@@ -97,6 +104,7 @@ inventory_id: the_ID_of_targeted_ansible_tower_inventory
 import re
 import os
 import json
+import networkx
 from ansible.module_utils import six
 from ansible.module_utils.urls import Request, urllib_error, ConnectionError, socket, httplib
 from ansible.module_utils._text import to_native
@@ -144,6 +152,19 @@ class InventoryModule(BaseInventoryPlugin):
         else:
             return False
 
+    def populate_inventory(self, inv_graph, start):
+        parents = inv_graph.predecessors(start)
+        if parents:
+            for parent in parents:
+                self.inventory.add_group(parent)
+
+                if inv_graph.node[start]['type'] == 'host':
+                    self.inventory.add_host(start, parent)
+                elif inv_graph.node[start]['type'] == 'group':
+                    self.inventory.add_child(parent, start)
+
+            self.populate_inventory(inv_graph, parent)
+
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
         if not self.no_config_file_supplied and os.path.isfile(path):
@@ -164,31 +185,44 @@ class InventoryModule(BaseInventoryPlugin):
         inventory_url = urljoin(tower_host, inventory_url)
 
         inventory = self.make_request(request_handler, inventory_url)
-        # To start with, create all the groups.
+
+        # Create Inventory Graph
+        inv_graph = networkx.DiGraph()
+
+        # Create nodes for inventory groups
         for group_name in inventory:
             if group_name != '_meta':
-                self.inventory.add_group(group_name)
+                inv_graph.add_node(group_name, type='group')
 
         # Then, create all hosts and add the host vars.
         all_hosts = inventory['_meta']['hostvars']
         for host_name, host_vars in six.iteritems(all_hosts):
-            self.inventory.add_host(host_name)
-            for var_name, var_value in six.iteritems(host_vars):
-                self.inventory.set_variable(host_name, var_name, var_value)
+            inv_graph.add_node(host_name, type='host')
+            inv_graph.add_edge('all', host_name)
 
         # Lastly, create to group-host and group-group relationships, and set group vars.
         for group_name, group_content in six.iteritems(inventory):
             if group_name != 'all' and group_name != '_meta':
                 # First add hosts to groups
                 for host_name in group_content.get('hosts', []):
-                    self.inventory.add_host(host_name, group_name)
+                    inv_graph.add_edge(group_name, host_name)
                 # Then add the parent-children group relationships.
                 for child_group_name in group_content.get('children', []):
-                    self.inventory.add_child(group_name, child_group_name)
-            # Set the group vars. Note we should set group var for 'all', but not '_meta'.
-            if group_name != '_meta':
-                for var_name, var_value in six.iteritems(group_content.get('vars', {})):
-                    self.inventory.set_variable(group_name, var_name, var_value)
+                    inv_graph.add_edge(group_name, child_group_name)
+
+        # Identify hosts from parent tree
+        inv_tree = networkx.DiGraph(list(networkx.dfs_edges(inv_graph, self.get_option('parent_group'))))
+        inv_hosts = [x for x in inv_tree.nodes() if inv_graph.node[x]['type'] == 'host']
+
+        # populate inventory data from tree
+        for host in inv_hosts:
+            self.populate_inventory(inv_graph, host)
+
+        # add variables to host
+        for host_name, host_vars in six.iteritems(all_hosts):
+            if host_name in inv_hosts:
+                for var_name, var_value in six.iteritems(host_vars):
+                    self.inventory.set_variable(host_name, var_name, var_value)
 
         # Fetch extra variables if told to do so
         if self.get_option('include_metadata'):
