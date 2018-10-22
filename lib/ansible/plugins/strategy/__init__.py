@@ -952,9 +952,12 @@ class StrategyBase:
                         iterator._play.handlers.append(block)
                         iterator.cache_block_tasks(block)
                         for task in block.block:
+                            task_name = task.get_name()
+                            display.debug("adding task '%s' included in handler '%s'" % (task_name, handler_name))
+                            self._notified_handlers[task._uuid] = included_file._hosts[:]
                             result = self._do_handler_run(
                                 handler=task,
-                                handler_name=task.get_name(),
+                                handler_name=task_name,
                                 iterator=iterator,
                                 play_context=play_context,
                                 notified_hosts=included_file._hosts[:],

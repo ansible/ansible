@@ -1,0 +1,2 @@
+bugfixes:
+  - "handlers - fix crash when handler task include tasks"
