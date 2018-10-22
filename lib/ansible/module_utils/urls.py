@@ -51,6 +51,7 @@ except ImportError:
 import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+import ansible.module_utils.six.moves.urllib.parse.unquote as urllib_parse_unquote
 
 from ansible.module_utils.six import PY3
 
@@ -744,7 +745,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):
-                        credentials = "%s:%s" % (proxy_parts.get('username', ''), proxy_parts.get('password', ''))
+                        credentials = "%s:%s" % (urllib_parse_unquote(proxy_parts.get('username', '')), urllib_parse_unquote(proxy_parts.get('password', '')))
                         s.sendall(b'Proxy-Authorization: Basic %s\r\n' % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
                     s.sendall(b'\r\n')
                     connect_result = b""
