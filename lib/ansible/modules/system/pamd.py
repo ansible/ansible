@@ -775,7 +775,7 @@ def main():
         try:
             temp_file = NamedTemporaryFile(mode='w', dir=module.tmpdir, delete=False)
             with open(temp_file.name, 'w') as fd:
-                fd.write(str(service))
+                fd.write(str(service) + '\n')
 
         except IOError:
             module.fail_json(msg='Unable to create temporary \
