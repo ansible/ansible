@@ -1,0 +1,2 @@
+bugfixes:
+- mail - Fix regression when sending mail without TLS/SSL
