@@ -317,7 +317,7 @@ Other inventory scripts
 
 You can find all included inventory scripts in the `contrib/inventory directory <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`_. General usage is similar across all inventory scripts. You can also :ref:`write your own inventory script <developing_inventory>`.
 
-.. _using_multiple_sources:
+.. _using_multiple_sources_with_dynamic:
 
 Using Inventory Directories and Multiple Inventory Sources
 ==========================================================
@@ -332,7 +332,7 @@ In an inventory directory, executable files will be treated as dynamic inventory
 
 You can replace this list with your own selection by configuring an ``inventory_ignore_extensions`` list in ansible.cfg, or setting the :envvar:`ANSIBLE_INVENTORY_IGNORE` environment variable. The value in either case should be a comma-separated list of patterns, as shown above.
 
-Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations.
+Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations. See :ref:`using_multiple_inventory_sources` for more information.
 
 .. _static_groups_of_dynamic:
 

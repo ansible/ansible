@@ -505,6 +505,81 @@ Here is an example of how to instantly deploy to created containers::
 .. note:: If you're reading the docs from the beginning, this may be the first example you've seen of an Ansible playbook. This is not an inventory file.
           Playbooks will be covered in great detail later in the docs.
 
+.. _using_multiple_inventory_sources:
+
+Using multiple inventory sources
+++++++++++++++++++++++++++++++++
+
+You can use multiple inventory sources if you want to target multiple environments or reuse common
+groups and variables across multiple environments. The targeted inventories are merged and run just like
+only one inventory was given. One inventory can depend on groups or group variables of another inventory.
+Variable defined in the last inventory wins in precedence in accordance with :ref:`ansible_variable_precedence`.
+
+In this example we have two different environments: production and staging. Both have some
+common variables and groups but may also have some own environment specific configurations.
+To avoid copy pasting the commmon groups and variables the following directory layout is created::
+
+    inventories/
+       production/
+          hosts               # inventory file for production servers
+          group_vars/
+             db-servers.yml   # assign variables to db servers in production environment
+       staging
+          hosts               # inventory file for staging environment
+       common/
+          hosts               # inventory file for defining common groups for all environments
+          group_vars/
+             all-servers.yml  # assign variables to all servers in all environments
+
+The production inventory is defined like this:
+
+.. code-block:: guess
+
+    [web-servers]
+    web1.example.com
+
+    [db-servers]
+    db1.example.com
+
+The staging environment is very similar:
+
+.. code-block:: guess
+
+    [web-servers]
+    web1.staging.example.com
+
+    [db-servers]
+    db1.staging.example.com
+
+The common inventory composes a new group named all-servers:
+
+.. code-block:: guess
+
+    [web-servers]
+
+    [db-servers]
+
+    [all-servers:children]
+    web-servers
+    db-servers
+
+The inventories are merged, so when you target common and production
+inventories all-servers group will have web1.example.com and db1.example.com as members and
+db1.example.com will have host variables from both db-servers.yml and all-servers.yml.
+In case of conflict a variable defined in db-servers.yml wins over all-servers.yml's variable.
+
+Without the empty web-servers and db-servers groups the common inventory would have a dependency on those
+groups and would need to be read after the production inventory. This would make it harder for the 
+production inventory to override the common group variables.
+
+You can target these inventories like this (note the order of the inventory parameters)::
+
+    ansible-playbook example.yml -i inventories/common -i inventories/production
+
+It is also possible to configure :envvar:`ANSIBLE_INVENTORY` to use multiple inventories.
+
+Multiple inventory sources can be useful with dynamic inventories :ref:`using_multiple_sources_with_dynamic`.
+
 .. seealso::
 
    :ref:`intro_dynamic_inventory`
