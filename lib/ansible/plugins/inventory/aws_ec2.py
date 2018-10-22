@@ -388,31 +388,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._add_hosts(hosts=groups[group], group=group, hostnames=hostnames)
             self.inventory.add_child('all', group)
 
-    def _populate_from_source(self, source_data):
-        hostvars = source_data.pop('_meta', {}).get('hostvars', {})
-        for group in source_data:
-            if group == 'all':
-                continue
-            else:
-                self.inventory.add_group(group)
-                hosts = source_data[group].get('hosts', [])
-                for host in hosts:
-                    self._populate_host_vars([host], hostvars.get(host, {}), group)
-                self.inventory.add_child('all', group)
-
-    def _format_inventory(self, groups, hostnames):
-        results = {'_meta': {'hostvars': {}}}
-        for group in groups:
-            results[group] = {'hosts': []}
-            for host in groups[group]:
-                hostname = self._get_hostname(host, hostnames)
-                if not hostname:
-                    continue
-                results[group]['hosts'].append(hostname)
-                h = self.inventory.get_host(hostname)
-                results['_meta']['hostvars'][h.name] = h.vars
-        return results
-
     def _add_hosts(self, hosts, group, hostnames):
         '''
             :param hosts: a list of hosts to be added to a group
@@ -538,7 +513,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             cache = self.get_option('cache')
 
         # Generate inventory
-        formatted_inventory = {}
         cache_needs_update = False
         if cache:
             try:
@@ -546,15 +520,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             except KeyError:
                 # if cache expires or cache file doesn't exist
                 cache_needs_update = True
-            else:
-                self._populate_from_source(results)
 
         if not cache or cache_needs_update:
             results = self._query(regions, filters, strict_permissions)
-            self._populate(results, hostnames)
-            formatted_inventory = self._format_inventory(results, hostnames)
+
+        self._populate(results, hostnames)
 
         # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
-            self.cache.set(cache_key, formatted_inventory)
+            self.cache.set(cache_key, results)
