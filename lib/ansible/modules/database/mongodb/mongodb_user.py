@@ -77,7 +77,6 @@ options:
               'dbAdminAnyDatabase'
             - "Or the following dictionary '{ db: DATABASE_NAME, role: ROLE_NAME }'."
             - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+  is required."
-        default: "readWrite"
     state:
         description:
             - The database user state
@@ -342,7 +341,7 @@ def main():
             name=dict(required=True, aliases=['user']),
             password=dict(aliases=['pass'], no_log=True),
             ssl=dict(default=False, type='bool'),
-            roles=dict(default="readWrite", type='list'),
+            roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),
             update_password=dict(default="always", choices=["always", "on_create"]),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
