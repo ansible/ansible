@@ -1,0 +1,6 @@
+---
+bugfixes:
+- Update the signatures of many cliconf plugins' get() methods to support the check_all paramter.
+  Specifically, aireos, aruba, asa, ce, cnos, dellos6, dellos9, dellos10,
+  edgeos, enos, exos, ironware, nos, onyx, routeros, slxos, and voss were
+  updated. This fixes the cli_command module for these platforms
