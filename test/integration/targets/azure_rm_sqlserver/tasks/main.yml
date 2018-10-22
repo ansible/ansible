@@ -320,13 +320,12 @@
     server_name: "sqlsrv{{ random_postfix }}"
     virtual_network_rule_name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
-    virtual_network_rule_name: rule1
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
   assert:
     that:
-      - output.changed
+      - output.changedfix 
 
 - name: Create instance of Virtual Network Rule
   azure_rm_sqlvirtualnetworkrule:
