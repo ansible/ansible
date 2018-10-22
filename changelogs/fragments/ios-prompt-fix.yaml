@@ -1,0 +1,2 @@
+bugfixes:
+- Fix prompt mismatch issue for ios (https://github.com/ansible/ansible/issues/47004)
