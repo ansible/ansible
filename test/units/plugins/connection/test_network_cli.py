@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import time
 import json
 
 from io import StringIO
@@ -28,6 +29,7 @@ from io import StringIO
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
+from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleConnectionFailure
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
@@ -131,15 +133,14 @@ class TestConnectionClass(unittest.TestCase):
         device#
         """
 
-        mock__shell.recv.return_value = response
-
+        mock__shell.recv.side_effect = [response, None]
         output = conn.send(b'command', None, None, None)
 
         mock__shell.sendall.assert_called_with(b'command\r')
-        self.assertEqual(output, 'command response')
+        self.assertEqual(to_text(conn._command_response), 'command response')
 
         mock__shell.reset_mock()
-        mock__shell.recv.return_value = b"ERROR: error message device#"
+        mock__shell.recv.side_effect = [b"ERROR: error message device#"]
 
         with self.assertRaises(AnsibleConnectionFailure) as exc:
             conn.send(b'command', None, None, None)
