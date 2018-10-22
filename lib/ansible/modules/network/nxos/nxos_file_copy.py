@@ -116,7 +116,7 @@ def md5sum_check(module, dst, file_system):
 
     local_file = module.params['local_file']
     try:
-        with open(local_file, 'r') as f:
+        with open(local_file, 'rb') as f:
             filecontent = f.read()
     except (OSError, IOError) as exc:
         module.fail_json(msg="Error reading the file: %s" % to_text(exc))
