@@ -318,7 +318,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    virtual_network_rule_name: rule1
+    name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
   check_mode: yes
   register: output
@@ -331,7 +331,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    virtual_network_rule_name: rule1
+    name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
   register: output
 - name: Assert the resource instance is well created
@@ -343,7 +343,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    virtual_network_rule_name: rule1
+    name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
   register: output
 - name: Assert the state has not changed
@@ -355,7 +355,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    virtual_network_rule_name: rule1
+    name: rule1
     state: absent
   check_mode: yes
   register: output
@@ -368,7 +368,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    virtual_network_rule_name: rule1
+    name: rule1
     state: absent
   register: output
 - name: Assert the state has changed
@@ -380,7 +380,7 @@
   azure_rm_sqlvirtualnetworkrule:
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
-    virtual_network_rule_name: rule1
+    name: rule1
     state: absent
   register: output
 - name: Assert the state has changed

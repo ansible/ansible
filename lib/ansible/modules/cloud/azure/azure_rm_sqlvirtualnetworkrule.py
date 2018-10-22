@@ -30,7 +30,7 @@ options:
         description:
             - The name of the server.
         required: True
-    virtual_network_rule_name:
+    name:
         description:
             - The name of the virtual network rule.
         required: True
@@ -63,7 +63,7 @@ EXAMPLES = '''
     azure_rm_sqlvirtualnetworkrule:
       resource_group: Default
       server_name: vnet-test-svr
-      virtual_network_rule_name: vnet-firewall-rule
+      name: vnet-firewall-rule
       virtual_network_subnet_id: NOT FOUND
       ignore_missing_vnet_service_endpoint: NOT FOUND
 '''
@@ -114,7 +114,7 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            virtual_network_rule_name=dict(
+            name=dict(
                 type='str',
                 required=True
             ),
@@ -134,7 +134,7 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
 
         self.resource_group = None
         self.server_name = None
-        self.virtual_network_rule_name = None
+        self.name = None
         self.virtual_network_subnet_id = None
         self.ignore_missing_vnet_service_endpoint = None
 
@@ -176,7 +176,10 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if Virtual Network Rule instance has to be deleted or may be updated")
-                self.to_do = Actions.Update
+                if (self.virtual_network_subnet_id is not None) and (self.virtual_network_subnet_id != old_response['virtual_network_subnet_id']):
+                    self.to_do = Actions.Update
+                if (self.ignore_missing_vnet_service_endpoint is not None) and (self.ignore_missing_vnet_service_endpoint != old_response['ignore_missing_vnet_service_endpoint']):
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Virtual Network Rule instance")
@@ -209,7 +212,8 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
             self.results['changed'] = False
             response = old_response
 
-        self.results.update(self.format_item(response))
+        if self.state == 'present':
+            self.results.update(self.format_item(response))
         return self.results
 
     def create_update_virtualnetworkrule(self):
@@ -218,12 +222,12 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
 
         :return: deserialized Virtual Network Rule instance state dictionary
         '''
-        self.log("Creating / Updating the Virtual Network Rule instance {0}".format(self.virtual_network_rule_name))
+        self.log("Creating / Updating the Virtual Network Rule instance {0}".format(self.name))
 
         try:
             response = self.mgmt_client.virtual_network_rules.create_or_update(resource_group_name=self.resource_group,
                                                                                server_name=self.server_name,
-                                                                               virtual_network_rule_name=self.virtual_network_rule_name,
+                                                                               virtual_network_rule_name=self.name,
                                                                                virtual_network_subnet_id=self.virtual_network_subnet_id)
             if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
@@ -239,11 +243,11 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
 
         :return: True
         '''
-        self.log("Deleting the Virtual Network Rule instance {0}".format(self.virtual_network_rule_name))
+        self.log("Deleting the Virtual Network Rule instance {0}".format(self.name))
         try:
             response = self.mgmt_client.virtual_network_rules.delete(resource_group_name=self.resource_group,
                                                                      server_name=self.server_name,
-                                                                     virtual_network_rule_name=self.virtual_network_rule_name)
+                                                                     virtual_network_rule_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Virtual Network Rule instance.')
             self.fail("Error deleting the Virtual Network Rule instance: {0}".format(str(e)))
@@ -256,12 +260,12 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
 
         :return: deserialized Virtual Network Rule instance state dictionary
         '''
-        self.log("Checking if the Virtual Network Rule instance {0} is present".format(self.virtual_network_rule_name))
+        self.log("Checking if the Virtual Network Rule instance {0} is present".format(self.name))
         found = False
         try:
             response = self.mgmt_client.virtual_network_rules.get(resource_group_name=self.resource_group,
                                                                   server_name=self.server_name,
-                                                                  virtual_network_rule_name=self.virtual_network_rule_name)
+                                                                  virtual_network_rule_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Virtual Network Rule instance : {0} found".format(response.name))
@@ -272,8 +276,7 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
 
         return False
 
-    def format_item(self, item):
-        d = item.as_dict()
+    def format_item(self, d):
         d = {
             'id': d['id'],
             'state': d['state']
