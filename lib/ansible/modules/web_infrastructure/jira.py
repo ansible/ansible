@@ -31,7 +31,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit, fetch, transition , link ]
+    choices: [ create, comment, edit, fetch, link, search, transition ]
     description:
       - The operation to perform.
 
@@ -67,6 +67,7 @@ options:
 
   issue:
     required: false
+    aliases: [ ticket ]
     description:
      - An existing issue key to operate on.
 
@@ -109,7 +110,34 @@ options:
      - This is a free-form data structure that can contain arbitrary data. This is passed directly to the JIRA REST API
        (possibly after merging with other required data, as when passed to create). See examples for more information,
        and the JIRA REST API for the structure required for various fields.
+       
+  jql:
+    required: false
+    version_added: 2.8
+    description:
+     - Used with search. The Jira Query Language string to search for. 
+       https://confluence.atlassian.com/jirasoftwarecloud/advanced-searching-764478330.html has examples of JQL
 
+  startAt:
+    required: false
+    version_added: 2.8
+    description:
+     - Used with search. Integer ID of the ticket to search from. Defaults to 0 (all tickets)
+
+  maxResults:
+    required: false
+    version_added: 2.8
+    description:
+     - Used with search. Integer number of search results to return. If undefined, search returns all issues up to the
+       maximum the Jira instance returns.
+       
+  searchFields:
+    required: false
+    version_added: 2.8
+    description:
+     - Used with search. List of strings, names of what fields to return in the search. If undefined, search returns all
+       fields.
+       
   timeout:
     required: false
     version_added: 2.3
@@ -228,6 +256,42 @@ EXAMPLES = """
     issue: '{{ issue.meta.key }}'
     operation: transition
     status: Done
+    
+# Search for jira issues
+# See https://confluence.atlassian.com/jirasoftwarecloud/advanced-searching-764478330.html
+- name: Search for Done QA Issues
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    operation: search
+    jql: 'project = QA and status = Done'
+
+# Search for jira issues, starting at issue 200 and return the first 5
+# See https://confluence.atlassian.com/jirasoftwarecloud/advanced-searching-764478330.html
+- name: Search for Done QA Issues
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    operation: search
+    jql: 'project = QA and status = Done'
+    startAt: 200
+    maxResults: 5
+
+# Search for jira issues and return their keys and ids
+# See https://confluence.atlassian.com/jirasoftwarecloud/advanced-searching-764478330.html
+- name: Search for Done QA Issues
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    operation: search
+    jql: 'project = QA and status = Done'
+    searchFields:
+      - "id"
+      - "key"
+
 """
 
 import base64
@@ -329,6 +393,19 @@ def fetch(restbase, user, passwd, params):
     return ret
 
 
+def search(restbase, user, passwd, params):
+    data = dict()
+    url = restbase + '/search/'
+    # get only the keys we want from params and rename searchFields to fields
+    search_keys = ['jql', 'startAt', 'maxResults', 'searchFields']
+    rename_keys = {'searchFields': 'fields'}
+    data = {rename_keys.get(key, key): val for key, val in params.items() if
+            (key in search_keys and params[key] is not None)}
+
+    ret = post(url, user, passwd, params['timeout'], data)
+    return ret
+
+
 def transition(restbase, user, passwd, params):
     # Find the transition id
     turl = restbase + '/issue/' + params['issue'] + "/transitions"
@@ -374,7 +451,8 @@ OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    edit=[],
                    fetch=['issue'],
                    transition=['status'],
-                   link=['linktype', 'inwardissue', 'outwardissue'])
+                   link=['linktype', 'inwardissue', 'outwardissue'],
+                   search=['jql'])
 
 
 def main():
@@ -383,7 +461,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'link'],
+            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'link', 'search'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
@@ -400,6 +478,10 @@ def main():
             inwardissue=dict(),
             outwardissue=dict(),
             timeout=dict(type='float', default=10),
+            jql=dict(type='str'),
+            startAt=dict(type='int', default=0),
+            maxResults=dict(type='int'),
+            searchFields=dict(type="list"),
             validate_certs=dict(default=True, type='bool'),
         ),
         supports_check_mode=False
