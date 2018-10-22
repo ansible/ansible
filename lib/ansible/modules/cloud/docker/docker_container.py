@@ -218,7 +218,7 @@ options:
   memory_swappiness:
     description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
-    default: 0
+        - If not set, the value will be remain the same if container exists and will be inherited from the host machine if it is (re-)created.
   name:
     description:
       - Assign a name to a new container or match an existing container.
