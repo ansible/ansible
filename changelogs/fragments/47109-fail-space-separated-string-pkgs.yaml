@@ -1,2 +1,2 @@
 minor_changes:
-  - yum/dnf: fail when space separated string of names (https://github.com/ansible/ansible/pull/47109)
+  - yum/dnf - fail when space separated string of names (https://github.com/ansible/ansible/pull/47109)
