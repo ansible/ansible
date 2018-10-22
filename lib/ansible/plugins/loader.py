@@ -772,3 +772,10 @@ httpapi_loader = PluginLoader(
     C.DEFAULT_HTTPAPI_PLUGIN_PATH,
     'httpapi_plugins',
 )
+
+target_loader = PluginLoader(
+    'TargetModule',
+    'ansible.plugins.target',
+    C.DEFAULT_TARGET_PLUGIN_PATH,
+    'target_plugins',
+)

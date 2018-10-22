@@ -17,7 +17,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
-from ansible.plugins.loader import shell_loader, connection_loader
+from ansible.plugins.loader import connection_loader, shell_loader, target_loader
 from ansible.utils.path import unfrackpath
 
 try:
@@ -55,6 +55,9 @@ class ConnectionBase(AnsiblePlugin):
     # language means any language.
     module_implementation_preferences = ('',)
     allow_executable = True
+
+    # Preferred target plugin to use with the connection.
+    target_plugin = 'shell'
 
     # the following control whether or not the connection supports the
     # persistent connection framework or not
@@ -107,6 +110,13 @@ class ConnectionBase(AnsiblePlugin):
         self._shell = shell_loader.get(shell_type)
         if not self._shell:
             raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
+
+    def get_target(self):
+        '''
+        Construct a target plugin matching this connection. The default
+        implementation constructs the plugin named in :attr:`target_plugin`.
+        '''
+        return target_loader.get(self.target_plugin, self, self._play_context)
 
     @property
     def connected(self):
@@ -242,6 +252,36 @@ class ConnectionBase(AnsiblePlugin):
     def close(self):
         """Terminate the connection"""
         pass
+
+    def get_admin_users(self):
+        '''
+        Returns a list of admin users that are configured for the current shell
+        plugin
+        '''
+        try:
+            return self._shell.get_option('admin_users')
+        except AnsibleError:
+            # fallback for old custom plugins w/o get_option
+            return ['root']
+
+    def is_become_unprivileged(self):
+        '''
+        The user is not the same as the connection user and is not part of the
+        shell configured admin users
+        '''
+        # if we don't use become then we know we aren't switching to a
+        # different unprivileged user
+        if not self._play_context.become:
+            return False
+
+        # if we use become and the user is not an admin (or same user) then
+        # we need to return become_unprivileged as True
+        admin_users = self.get_admin_users()
+        try:
+            remote_user = self._connection.get_option('remote_user')
+        except AnsibleError:
+            remote_user = self._play_context.remote_user
+        return bool(self._play_context.become_user not in admin_users + [remote_user])
 
     def check_become_success(self, b_output):
         b_success_key = to_bytes(self._play_context.success_key)
