@@ -1441,7 +1441,7 @@ class TaskParameters(DockerBaseClass):
                 time_params[name] = int(value)
 
         time = timedelta(**time_params)
-        time_in_nanoseconds = (time.seconds * 1000000 + time.microseconds) * 1000
+        time_in_nanoseconds = int(time.total_seconds() * 1000000000)
 
         return time_in_nanoseconds
 
