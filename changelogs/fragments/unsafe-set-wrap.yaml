@@ -1,2 +1,0 @@
-bugfixes:
-- unsafe - Add special casing to sets, to support wrapping elements of sets correctly in Python 3 (https://github.com/ansible/ansible/issues/47372)
