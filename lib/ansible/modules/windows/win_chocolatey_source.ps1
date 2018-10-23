@@ -25,7 +25,6 @@ $priority = Get-AnsibleParam -obj $params -name "priority" -type "int"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str" -failifempty ($state -ne "absent")
 $source_username = Get-AnsibleParam -obj $params -name "source_username" -type "str"
 $source_password = Get-AnsibleParam -obj $params -name "source_password" -type "str" -failifempty ($null -ne $source_username)
-$source_api = Get-AnsibleParam -obj $params -name "source_api" -type "str"
 $update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always", "on_create"
 
 $result = @{
@@ -116,7 +115,6 @@ Function New-ChocolateySource {
         $source,
         $source_username,
         $source_password,
-        $source_api,
         $certificate,
         $certificate_password,
         $priority,
@@ -174,24 +172,6 @@ Function New-ChocolateySource {
     $res = Run-Command -command $command
     if ($res.rc -ne 0) {
         Fail-Json -obj $result -message "Failed to add Chocolatey source '$name': $($res.stderr)"
-    }
-
-    if($null -ne $source_api){
-        $arguments = [System.Collections.ArrayList]@($choco_app.Path,"setapikey","--source", $source, "--api-key", $source_api)
-        if($check_mode){
-            $arguments.Add("--what-if") > $null
-        }
-        if ($admin_only -eq $true) {
-            $arguments.Add("--admin-only") > $null
-        } 
-        else {
-            $admin_only = $false
-        }
-        $command = Argv-ToString -arguments $arguments
-        $res = Run-Command -command $command
-        if ($res.rc -ne 0) {
-            Fail-Json -obj $result -message "Failed to set API key for Chocolatey source '$name': $($res.stderr)"
-        }
     }
 
     $source_info = @{
@@ -256,9 +236,6 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
         if ($null -ne $source_password -and $update_password -eq "always") {
             $change = $true
         }
-        if($null -ne $source_api){ #need to double check if key can be pulled
-            $change = $true
-        }
         if ($null -ne $certificate -and $certificate -ne $actual_source.certificate) {
             $change = $true
         }
@@ -286,7 +263,7 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
 
     if ($change) {
         $actual_source = New-ChocolateySource -choco_app $choco_app -name $name -source $source `
-            -source_username $source_username -source_password $source_password -source_api $source_api  `
+            -source_username $source_username -source_password $source_password  `
             -certificate $certificate -certificate_password $certificate_password `
             -priority $priority -bypass_proxy $bypass_proxy -allow_self_service $allow_self_service `
             -admin_only $admin_only

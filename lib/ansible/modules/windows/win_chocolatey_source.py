@@ -67,10 +67,6 @@ options:
     description:
     - The password for I(source_username).
     - Required if I(source_username) is set.
-  source_api:
-    description:
-    - The api key of the source.
-    - This will run as a secondary command if included.
   state:
     description:
     - When C(absent), will remove the source.
