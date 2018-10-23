@@ -48,34 +48,34 @@ options:
     user:
         description:
             - The etcd user to authenticate with.
-        version_added: '2.7'
+        version_added: '2.8'
     password:
         description:
             - The password to use for authentication.
             - Required if I(user) is defined.
-        version_added: '2.7'
+        version_added: '2.8'
     ca_cert:
         description:
             - The Certificate Authority to use to verify the etcd host.
             - Required if I(client_cert) and I(client_key) are defined.
-        version_added: '2.7'
+        version_added: '2.8'
     client_cert:
         description:
             - PEM formatted certificate chain file to be used for SSL client authentication.
             - Required if I(client_key) is defined.
-        version_added: '2.7'
+        version_added: '2.8'
     client_key:
         description:
             - PEM formatted file that contains your private key to be used for SSL client authentication.
             - Required if I(client_cert) is defined.
-        version_added: '2.7'
+        version_added: '2.8'
     timeout:
         description:
             - The socket level timeout in seconds.
-        version_added: '2.7'
+        version_added: '2.8'
 author:
     - Jean-Philippe Evrard (@evrardjp)
-    - Victor Fauth (@Fauth)
+    - Victor Fauth (@vfauth)
 """
 
 EXAMPLES = """
