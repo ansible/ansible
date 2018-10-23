@@ -82,3 +82,4 @@ test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
 
 ansible-playbook public_exposure/playbook.yml -i ../../inventory "$@"
 ansible-playbook public_exposure/no_bleeding.yml -i ../../inventory "$@"
+ansible-playbook public_exposure/no_overwrite_roles.yml -i ../../inventory "$@"
