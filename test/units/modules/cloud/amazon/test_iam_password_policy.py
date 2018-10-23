@@ -9,6 +9,7 @@ else:
     import boto3
     from ansible.modules.cloud.amazon import iam_password_policy
 
+
 def test_warn_if_state_not_specified():
     set_module_args({
         "min_pw_length": "8",
