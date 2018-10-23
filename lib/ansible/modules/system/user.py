@@ -891,16 +891,16 @@ class User(object):
                             chunk = os.read(master_out_fd, 10240)
                             out_buffer += chunk
                             if prompt in out_buffer:
-                                os.write(master_in_fd, self.ssh_passphrase + b'\r')
+                                os.write(master_in_fd, to_bytes(self.ssh_passphrase, errors='strict') + b'\r')
                                 prompt = second_prompt
                         else:
                             chunk = os.read(master_err_fd, 10240)
                             err_buffer += chunk
                             if prompt in err_buffer:
-                                os.write(master_in_fd, self.ssh_passphrase + b'\r')
+                                os.write(master_in_fd, to_bytes(self.ssh_passphrase, errors='strict') + b'\r')
                                 prompt = second_prompt
                         if b'Overwrite (y/n)?' in out_buffer or b'Overwrite (y/n)?' in err_buffer:
-                            # This created between us checking for existence and now
+                            # The key was created between us checking for existence and now
                             return (None, 'Key already exists', '')
 
                 rc = p.returncode
