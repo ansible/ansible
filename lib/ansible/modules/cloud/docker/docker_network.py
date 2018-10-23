@@ -62,13 +62,22 @@ options:
     aliases:
       - incremental
 
+  enable_ipv6:
+    version_added: 2.8
+    description:
+      - Enable IPv6 networking.
+    type: bool
+    default: null
+    required: false
+
   ipam_driver:
     description:
       - Specify an IPAM driver.
 
-  ipam_options:
+  ipam_config:
+    version_added: 2.8
     description:
-      - Dictionary of IPAM options.
+      - List of IPAM config blocks. Consult docker docs for valid options and values.
 
   state:
     description:
@@ -141,19 +150,38 @@ EXAMPLES = '''
       - container_a
     appends: yes
 
-- name: Create a network with options
+- name: Create a network with driver options
   docker_network:
     name: network_two
     driver_options:
       com.docker.network.bridge.name: net2
-    ipam_options:
-      subnet: '172.3.26.0/16'
-      gateway: 172.3.26.1
-      iprange: '192.168.1.0/24'
+
+- name: Create a network with custom IPAM config
+  docker_network:
+    name: network_three
+    ipam_config:
+      - subnet: 172.3.27.0/24
+        gateway: 172.3.27.1
+        iprange: 192.168.1.0/24
+
+- name: Create a network with ipv6 IPAM config
+  docker_network:
+    name: network_ipv6_one
+    enable_ipv6: yes
+    ipam_config:
+      - subnet: fdd1:ac8c:0557:7ce1::/64
+
+- name: Create a network with ipv6 and custom ipv4 IPAM config
+  docker_network:
+    name: network_ipv6_two
+    enable_ipv6: true
+    ipam_config:
+      - subnet: 172.4.27.0/24
+      - subnet: fdd1:ac8c:0557:7ce2::/64
 
 - name: Delete a network, disconnecting all containers
   docker_network:
-    name: network_one
+    name: network_four
     state: absent
     force: yes
 '''
@@ -165,6 +193,8 @@ facts:
     type: dict
     sample: {}
 '''
+
+import re
 
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3
 
@@ -188,11 +218,12 @@ class TaskParameters(DockerBaseClass):
         self.driver = None
         self.driver_options = None
         self.ipam_driver = None
-        self.ipam_options = None
+        self.ipam_config = None
         self.appends = None
         self.force = None
         self.internal = None
         self.debug = None
+        self.enable_ipv6 = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -257,25 +288,43 @@ class DockerNetworkManager(object):
             if not net.get('IPAM') or net['IPAM']['Driver'] != self.parameters.ipam_driver:
                 different = True
                 differences.append('ipam_driver')
-        if self.parameters.ipam_options:
-            if not net.get('IPAM') or not net['IPAM'].get('Config'):
+        if self.parameters.ipam_config:
+            if not net.get('IPAM') or not net['IPAM']['Config']:
                 different = True
-                differences.append('ipam_options')
+                differences.append('ipam_config')
             else:
-                for key, value in self.parameters.ipam_options.items():
-                    camelkey = None
-                    for net_key in net['IPAM']['Config'][0]:
-                        if key == net_key.lower():
-                            camelkey = net_key
-                            break
-                    if not camelkey:
-                        # key not found
-                        different = True
-                        differences.append('ipam_options.%s' % key)
-                    elif net['IPAM']['Config'][0].get(camelkey) != value:
-                        # key has different value
-                        different = True
-                        differences.append('ipam_options.%s' % key)
+                for idx, ipam_config in enumerate(self.parameters.ipam_config):
+                    is_ipv4 = re.match(r'^([0-9]{1,3}\.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$',
+                                       ipam_config['subnet'])
+                    if is_ipv4:
+                        net_config = net['IPAM']['Config'][0]
+                    # assume ipv6 if not ipv4
+                    else:
+                        # ipv6 currently does not exist
+                        if len(net['IPAM']['Config']) < 2:
+                            net_config = dict()
+                        # ipv6 already exists
+                        else:
+                            net_config = net['IPAM']['Config'][1]
+
+                    for key, value in ipam_config.items():
+                        camelkey = None
+                        for net_key in net_config:
+                            if key == net_key.lower():
+                                camelkey = net_key
+                                break
+                        if not camelkey:
+                            # key not found
+                            different = True
+                            differences.append('ipam_config[%s].%s' % (idx, key))
+                        elif net_config.get(camelkey) != value:
+                            # key has different value
+                            different = True
+                            differences.append('ipam_config[%s].%s' % (idx, key))
+        if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net['EnableIPv6']:
+            different = True
+            differences.append('enable_ipv6')
+
         if self.parameters.internal is not None:
             if self.parameters.internal:
                 if not net.get('Internal'):
@@ -290,11 +339,12 @@ class DockerNetworkManager(object):
     def create_network(self):
         if not self.existing_network:
             ipam_pools = []
-            if self.parameters.ipam_options:
-                if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
-                    ipam_pools.append(IPAMPool(**self.parameters.ipam_options))
-                else:
-                    ipam_pools.append(utils.create_ipam_pool(**self.parameters.ipam_options))
+            if self.parameters.ipam_config:
+                for ipam_pool in self.parameters.ipam_config:
+                    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+                        ipam_pools.append(IPAMPool(**ipam_pool))
+                    else:
+                        ipam_pools.append(utils.create_ipam_pool(**ipam_pool))
 
             if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                 ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
@@ -308,6 +358,7 @@ class DockerNetworkManager(object):
                                                   driver=self.parameters.driver,
                                                   options=self.parameters.driver_options,
                                                   ipam=ipam_config,
+                                                  enable_ipv6=self.parameters.enable_ipv6,
                                                   internal=self.parameters.internal)
 
                 self.existing_network = self.client.inspect_network(resp['Id'])
@@ -394,7 +445,8 @@ def main():
         force=dict(type='bool', default=False),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
-        ipam_options=dict(type='dict', default={}),
+        ipam_config=dict(type='list', elements='dict', default=[]),
+        enable_ipv6=dict(type='bool', default=None),
         internal=dict(type='bool', default=None),
         debug=dict(type='bool', default=False)
     )
