@@ -79,6 +79,8 @@ To work with documentation on your local machine, you need the following package
 
     On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work wth ``sphinx``.
 
+.. _testing_documentation_locally:
+
 Testing the documentation locally
 ---------------------------------
 
@@ -114,10 +116,9 @@ This process compiles all the links but provides minimal log output. If you're w
 
     ``make htmlsingle`` adds ``rst/`` to the beginning of the path you provide in ``rst=``, so you can't type the filename with autocomplete. Here are the error messages you will see if you get this wrong:
 
-    - If you run ``make htmlsingle`` from the ``docs/docsite/rst/`` directory:  ``make: *** No rule to make target `htmlsingle'.  Stop.``
+      - If you run ``make htmlsingle`` from the ``docs/docsite/rst/`` directory: ``make: *** No rule to make target `htmlsingle'.  Stop.``
+      - If you run ``make htmlsingle`` from the ``docs/docsite/`` directory with the full path to your rST document: ``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']``.
 
-    - If you run ``make htmlsingle`` from the ``docs/docsite/`` directory with the full path to your rST document:
-    ``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']``.
 
 Building all the rST pages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
