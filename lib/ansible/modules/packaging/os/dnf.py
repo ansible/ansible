@@ -481,6 +481,7 @@ class DnfModule(YumDnf):
 
         # Set whether to check gpg signatures
         conf.gpgcheck = not disable_gpg_check
+        conf.localpkg_gpgcheck = not disable_gpg_check
 
         # Don't prompt for user confirmations
         conf.assumeyes = True
