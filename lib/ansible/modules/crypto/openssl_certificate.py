@@ -521,11 +521,11 @@ class SelfSignedCertificate(Certificate):
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
             if self.notBefore:
-                cert.set_notBefore(self.notBefore)
+                cert.set_notBefore(self.notBefore.encode())
             else:
                 cert.gmtime_adj_notBefore(0)
             if self.notAfter:
-                cert.set_notAfter(self.notAfter)
+                cert.set_notAfter(self.notAfter.encode())
             else:
                 # If no NotAfter specified, expire in
                 # 10 years. 315360000 is 10 years in seconds.
