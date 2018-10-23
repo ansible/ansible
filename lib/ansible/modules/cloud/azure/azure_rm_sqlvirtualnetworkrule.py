@@ -123,7 +123,7 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
                 required=True
             ),
             ignore_missing_vnet_service_endpoint=dict(
-                type='str'
+                type='bool'
             ),
             state=dict(
                 type='str',
