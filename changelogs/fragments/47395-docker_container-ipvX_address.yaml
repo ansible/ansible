@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - fail if ``ipv4_address`` or ``ipv6_address`` is used with a too old docker-py version."
