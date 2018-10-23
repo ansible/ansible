@@ -16,7 +16,6 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 author: "Jan Christian Grünhage (@jcgruenhage)"
-requirements: [ matrix-client ]
 module: matrix
 short_description: Send notifications to matrix
 description:
