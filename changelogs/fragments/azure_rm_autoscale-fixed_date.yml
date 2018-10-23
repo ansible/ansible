@@ -1,0 +1,2 @@
+bugfixes:
+- fix azure_rm_autoscale module can create a schedule with fixed start/end date (https://github.com/ansible/ansible/pull/47186)
