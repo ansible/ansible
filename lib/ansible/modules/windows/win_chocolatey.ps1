@@ -34,7 +34,6 @@ $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "st
 $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($null -ne $proxy_username)
 $skip_scripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
-$install_source = Get-AnsibleParam -obj $params -name "install_source" -type "str"
 $source_username = Get-AnsibleParam -obj $params -name "source_username" -type "str"
 $source_password = Get-AnsibleParam -obj $params -name "source_password" -type "str" -failifempty ($null -ne $source_username)
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
@@ -170,8 +169,7 @@ Function Install-Chocolatey {
         [String]$proxy_password,
         [String]$source,
         [String]$source_username,
-        [String]$source_password,
-        [String]$install_source
+        [String]$source_password
     )
 
     $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
@@ -203,10 +201,7 @@ Function Install-Chocolatey {
             }
         }
 
-        if($install_source){
-            $script_url = $install_source
-        }
-        elseif ($source) {
+        if($source) {
             # check if the URL already contains the path to install.ps1
             if ($source.EndsWith("install.ps1")) {
                 $script_url = $source
@@ -485,7 +480,7 @@ Function Uninstall-ChocolateyPackage {
 
 # get the full path to choco.exe, otherwise install/upgrade to at least 0.10.5
 $choco_path = Install-Chocolatey -proxy_url $proxy_url -proxy_username $proxy_username `
-    -proxy_password $proxy_password -source $source -install_source $install_source `
+    -proxy_password $proxy_password -source $source `
     -source_username $source_username -source_password $source_password `
 
 # get the version of all specified packages

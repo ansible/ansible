@@ -138,11 +138,6 @@ options:
     - This value is also used when Chocolatey is not installed as the location
       of the install.ps1 script and only supports URLs for this case.
     type: str
-  install_source:
-    description:
-    - Specify the source of the install script.
-    - This uses the exact URL given and does not attempt to append 'install.ps1'.
-    type: str    
   source_username:
     description:
     - A username to use with I(source) when accessing a feed that requires
