@@ -1,0 +1,2 @@
+bugfixes:
+- Fix nxos_ospf_vrf module auto-cost idempotency and module check mode (https://github.com/ansible/ansible/pull/47190).
