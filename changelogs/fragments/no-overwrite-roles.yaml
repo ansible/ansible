@@ -1,0 +1,2 @@
+bugfixes:
+- roles - Ensure that we don't overwrite roles that have been registered (from imports) while parsing roles under the roles header (https://github.com/ansible/ansible/issues/47454)
