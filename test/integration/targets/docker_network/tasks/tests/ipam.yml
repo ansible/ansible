@@ -1,13 +1,57 @@
 ---
 - name: Registering network names
   set_fact:
+    nname_ipam_0: "{{ name_prefix ~ '-network-ipam-0' }}"
     nname_ipam_1: "{{ name_prefix ~ '-network-ipam-1' }}"
     nname_ipam_2: "{{ name_prefix ~ '-network-ipam-2' }}"
     nname_ipam_3: "{{ name_prefix ~ '-network-ipam-3' }}"
 
 - name: Registering network names
   set_fact:
-    dnetworks: "{{ dnetworks }} + [nname_ipam_1, nname_ipam_2, nname_ipam_3]"
+    dnetworks: "{{ dnetworks }} + [nname_ipam_0, nname_ipam_1, nname_ipam_2, nname_ipam_3]"
+
+
+#################### network-ipam-0 deprecated ####################
+
+- name: Create network with ipam_config and deprecated ipam_options
+  docker_network:
+    name: "{{ nname_ipam_0 }}"
+    ipam_options:
+      subnet: 172.3.29.0/24
+    ipam_config:
+      - subnet: 172.3.29.0/24
+  register: network
+  ignore_errors: yes
+
+- assert:
+    that:
+      - network is failed
+      - network.msg == "Only one of `ipam_options` and `ipam_config` can be defined."
+
+- name: Create network with deprecated custom IPAM config
+  docker_network:
+    name: "{{ nname_ipam_0 }}"
+    ipam_options:
+      subnet: 172.3.29.0/24
+  register: network
+
+- assert:
+    that:
+      - network is changed
+
+- name: Change subnet of network with deprecated custom IPAM config
+  docker_network:
+    name: "{{ nname_ipam_0 }}"
+    ipam_options:
+      subnet: 172.3.30.0/24
+  register: network
+  diff: yes
+
+- assert:
+    that:
+      - network is changed
+      - network['diff'] | length == 1
+      - network['diff'][0] == "ipam_config[0].subnet"
 
 
 #################### network-ipam-1 ####################

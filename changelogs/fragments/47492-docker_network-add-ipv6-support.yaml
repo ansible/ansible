@@ -1,0 +1,5 @@
+minor_changes:
+  - "docker_network - Add support for ipv6 networks."
+  - "docker_network - Minimum docker-py version increased from ``1.9.0`` to ``1.10.0``."
+deprecated_features:
+  - "docker_network - Deprecate ``ipam_options`` in favour of ``ipam_config``."

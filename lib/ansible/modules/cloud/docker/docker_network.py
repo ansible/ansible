@@ -74,10 +74,23 @@ options:
     description:
       - Specify an IPAM driver.
 
+  ipam_options:
+    description:
+      - Dictionary of IPAM options.
+    deprecated:
+      removed_in: "2.12"
+      alternative: ipam_config
+      why: >
+        Ipam options were introduced in Docker 1.10.0 (see L(here,https://github.com/moby/moby/pull/17316)). This
+        module parameter addresses the ipam config not the newly introduced ipam options.
+
   ipam_config:
     version_added: 2.8
     description:
       - List of IPAM config blocks. Consult docker docs for valid options and values.
+    type: list
+    default: []
+    required: false
 
   state:
     description:
@@ -218,6 +231,7 @@ class TaskParameters(DockerBaseClass):
         self.driver = None
         self.driver_options = None
         self.ipam_driver = None
+        self.ipam_options = None
         self.ipam_config = None
         self.appends = None
         self.force = None
@@ -249,6 +263,11 @@ class DockerNetworkManager(object):
 
         if not self.parameters.connected and self.existing_network:
             self.parameters.connected = container_names_in_network(self.existing_network)
+
+        if self.parameters.ipam_options and self.parameters.ipam_config:
+            self.client.fail("Only one of `ipam_options` and `ipam_config` can be defined.")
+        elif self.parameters.ipam_options:
+            self.parameters.ipam_config.append(self.parameters.ipam_options)
 
         state = self.parameters.state
         if state == 'present':
@@ -284,10 +303,12 @@ class DockerNetworkManager(object):
                     if not (key in net['Options']) or value != net['Options'][key]:
                         different = True
                         differences.append('driver_options.%s' % key)
+
         if self.parameters.ipam_driver:
             if not net.get('IPAM') or net['IPAM']['Driver'] != self.parameters.ipam_driver:
                 different = True
                 differences.append('ipam_driver')
+
         if self.parameters.ipam_config:
             if not net.get('IPAM') or not net['IPAM']['Config']:
                 different = True
@@ -321,6 +342,7 @@ class DockerNetworkManager(object):
                             # key has different value
                             different = True
                             differences.append('ipam_config[%s].%s' % (idx, key))
+
         if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net['EnableIPv6']:
             different = True
             differences.append('enable_ipv6')
@@ -445,6 +467,7 @@ def main():
         force=dict(type='bool', default=False),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
+        ipam_options=dict(type='dict', default={}),
         ipam_config=dict(type='list', elements='dict', default=[]),
         enable_ipv6=dict(type='bool', default=None),
         internal=dict(type='bool', default=None),
@@ -454,7 +477,7 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        min_docker_version='1.9.0'
+        min_docker_version='1.10.0'
         # "The docker server >= 1.9.0"
     )
 
