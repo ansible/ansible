@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_file_copy fix for binary files (https://github.com/ansible/ansible/pull/46822).
