@@ -183,12 +183,12 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
                                                              check_rc=False)
     diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
-        return module.exit_json(changed=True, msg=import_out,
-                                rc=import_rc, cmd=import_cmd, stdout=import_out,
-                                diff=diff)
+        module.exit_json(changed=True, msg=import_out,
+                         rc=import_rc, cmd=import_cmd, stdout=import_out,
+                         diff=diff)
     else:
-        return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd,
-                                error=import_err)
+        module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd,
+                         error=import_err)
 
 
 def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias):
@@ -209,11 +209,11 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
 
     diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
-        return module.exit_json(changed=True, msg=import_out,
-                                rc=import_rc, cmd=import_cmd, stdout=import_out,
-                                error=import_err, diff=diff)
+        module.exit_json(changed=True, msg=import_out,
+                         rc=import_rc, cmd=import_cmd, stdout=import_out,
+                         error=import_err, diff=diff)
     else:
-        return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
+        module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
 
 def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, pkcs12_pass, pkcs12_alias, alias):
@@ -233,11 +233,11 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
 
     diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
-        return module.exit_json(changed=True, msg=import_out,
-                                rc=import_rc, cmd=import_cmd, stdout=import_out,
-                                error=import_err, diff=diff)
+        module.exit_json(changed=True, msg=import_out,
+                         rc=import_rc, cmd=import_cmd, stdout=import_out,
+                         error=import_err, diff=diff)
     else:
-        return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
+        module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
 
 def delete_cert(module, executable, keystore_path, keystore_pass, alias):
@@ -253,9 +253,9 @@ def delete_cert(module, executable, keystore_path, keystore_pass, alias):
 
     diff = {'before': '%s\n' % alias, 'after': None}
 
-    return module.exit_json(changed=True, msg=del_out,
-                            rc=del_rc, cmd=del_cmd, stdout=del_out,
-                            error=del_err, diff=diff)
+    module.exit_json(changed=True, msg=del_out,
+                     rc=del_rc, cmd=del_cmd, stdout=del_out,
+                     error=del_err, diff=diff)
 
 
 def test_keytool(module, executable):
@@ -272,9 +272,8 @@ def test_keystore(module, keystore_path):
 
     if not os.path.exists(keystore_path) and not os.path.isfile(keystore_path):
         # Keystore doesn't exist we want to create it
-        return module.fail_json(changed=False,
-                                msg="Module require existing keystore at keystore_path '%s'"
-                                    % (keystore_path))
+        module.fail_json(changed=False,
+                         msg="Module require existing keystore at keystore_path '%s'" % (keystore_path))
 
 
 def main():
