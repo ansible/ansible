@@ -229,7 +229,18 @@ class AzureRMElasticPools(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if SQL Elastic Pool instance has to be deleted or may be updated")
-                self.to_do = Actions.Update
+                if ('edition' in self.parameters) and (self.parameters['edition'] != old_response['edition']):
+                    self.to_do = Actions.Update
+                if ('dtu' in self.parameters) and (self.parameters['dtu'] != old_response['dtu']):
+                    self.to_do = Actions.Update
+                if ('database_dtu_max' in self.parameters) and (self.parameters['database_dtu_max'] != old_response['database_dtu_max']):
+                    self.to_do = Actions.Update
+                if ('database_dtu_min' in self.parameters) and (self.parameters['database_dtu_min'] != old_response['database_dtu_min']):
+                    self.to_do = Actions.Update
+                if ('storage_mb' in self.parameters) and (self.parameters['storage_mb'] != old_response['storage_mb']):
+                    self.to_do = Actions.Update
+                if ('zone_redundant' in self.parameters) and (self.parameters['zone_redundant'] != old_response['zone_redundant']):
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the SQL Elastic Pool instance")
@@ -262,7 +273,7 @@ class AzureRMElasticPools(AzureRMModuleBase):
             self.results['changed'] = False
             response = old_response
 
-        if isinstance(response, dict):
+        if self.state == 'present':
             self.results.update(self.format_item(response))
         return self.results
 
@@ -326,10 +337,10 @@ class AzureRMElasticPools(AzureRMModuleBase):
 
         return False
 
-    def format_item(self, item):
+    def format_item(self, d):
         d = {
-            'id': item['id'],
-            'state': item['state']
+            'id': d['id'],
+            'state': d['state']
         }
         return d
 
