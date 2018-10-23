@@ -41,6 +41,7 @@ options:
     ignore_missing_vnet_service_endpoint:
         description:
             - Create firewall rule before the virtual network has vnet service endpoint enabled.
+        type: bool
     state:
       description:
         - Assert the state of the Virtual Network Rule.
@@ -229,7 +230,8 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
             response = self.mgmt_client.virtual_network_rules.create_or_update(resource_group_name=self.resource_group,
                                                                                server_name=self.server_name,
                                                                                virtual_network_rule_name=self.name,
-                                                                               virtual_network_subnet_id=self.virtual_network_subnet_id)
+                                                                               virtual_network_subnet_id=self.virtual_network_subnet_id,
+                                                                               ignore_missing_vnet_service_endpoint=self.ignore_missing_vnet_service_endpoint)
             if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
