@@ -100,9 +100,9 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
-        mutually_exclusive=(['password', 'token']),
+        mutually_exclusive=[['password', 'token']],
         required_one_of=[['password', 'token']],
-        required_together=(['user_id', 'password']),
+        required_together=[['user_id', 'password']],
         supports_check_mode=True
     )
 
