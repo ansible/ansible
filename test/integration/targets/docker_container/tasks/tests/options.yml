@@ -480,7 +480,56 @@
 ## detach ##########################################################
 ####################################################################
 
-# TODO: - detach
+- name: detach without cleanup
+  docker_container:
+    name: "{{ cname }}"
+    image: hello-world
+    detach: no
+  register: detach_no_cleanup
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: detach_no_cleanup_cleanup
+
+- name: detach with cleanup
+  docker_container:
+    name: "{{ cname }}"
+    image: hello-world
+    detach: no
+    cleanup: yes
+  register: detach_cleanup
+
+- name: cleanup (unnecessary)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: detach_cleanup_cleanup
+
+- name: detach with auto_remove and cleanup
+  docker_container:
+    name: "{{ cname }}"
+    image: hello-world
+    detach: no
+    auto_remove: yes
+    cleanup: yes
+  register: detach_auto_remove
+
+- name: cleanup (unnecessary)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: detach_auto_remove_cleanup
+
+- assert:
+    that:
+    - "'Hello from Docker!' in detach_no_cleanup.ansible_facts.docker_container.Output"
+    - detach_no_cleanup_cleanup is changed
+    - "'Hello from Docker!' in detach_cleanup.ansible_facts.docker_container.Output"
+    - detach_cleanup_cleanup is not changed
+    - "'Cannot retrieve result as auto_remove is enabled' == detach_auto_remove.ansible_facts.docker_container.Output"
+    - detach_auto_remove_cleanup is not changed
 
 ####################################################################
 ## devices #########################################################
