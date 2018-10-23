@@ -1996,12 +1996,10 @@ class ContainerManager(DockerBaseClass):
                         self.fail("Error disconnecting container from network %s - %s" % (diff['parameter']['name'],
                                                                                           str(exc)))
             # connect to the network
-            params = dict(
-                ipv4_address=diff['parameter'].get('ipv4_address', None),
-                ipv6_address=diff['parameter'].get('ipv6_address', None),
-                links=diff['parameter'].get('links', None),
-                aliases=diff['parameter'].get('aliases', None)
-            )
+            params = dict()
+            for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
+                if diff['parameter'].get(para):
+                    params[para] = diff['parameter'][para]
             self.results['actions'].append(dict(added_to_network=diff['parameter']['name'], network_parameters=params))
             if not self.check_mode:
                 try:
@@ -2209,6 +2207,16 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         if self.module.params.get("cpuset_mems") is not None and not cpuset_mems_supported:
             self.fail("docker or docker-py version is %s. Minimum version required is 2.3 to set cpuset_mems option. "
                       "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+
+        ipvX_address_supported = LooseVersion(docker_version) >= LooseVersion('1.9')
+        if not ipvX_address_supported:
+            ipvX_address_used = False
+            for network in self.module.params.get("networks", []):
+                if 'ipv4_address' in network or 'ipv6_address' in network:
+                    ipvX_address_used = True
+            if ipvX_address_used:
+                self.fail("docker or docker-py version is %s. Minimum version required is 1.9 to use "
+                          "ipv4_address or ipv6_address in networks." % (docker_version,))
 
         self.HAS_INIT_OPT = init_supported
         self.HAS_UTS_MODE_OPT = uts_mode_supported
