@@ -1,0 +1,11 @@
+{
+  "TABLE_vlanbriefxbrief": {
+    "ROW_vlanbriefxbrief": {
+      "vlanshowbr-vlanid": 16777216, 
+      "vlanshowbr-vlanid-utf": 1, 
+      "vlanshowbr-vlanname": "default", 
+      "vlanshowbr-vlanstate": "active", 
+      "vlanshowbr-shutstate": "noshutdown"
+    }
+  }
+}

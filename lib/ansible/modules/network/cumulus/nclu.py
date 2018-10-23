@@ -64,6 +64,12 @@ EXAMPLES = '''
         - add int swp1
         - add int swp2
 
+- name: Modify hostname to Cumulus-1 and commit the change
+  nclu:
+    commands:
+        - add hostname Cumulus-1
+    commit: true
+
 - name: Add 48 interfaces and commit the change.
   nclu:
     template: |
@@ -99,6 +105,11 @@ EXAMPLES = '''
         - add int swp1
     atomic: true
     description: "Ansible - add swp1"
+
+- name: Remove IP address from interface swp1
+  nclu:
+    commands:
+        - del int swp1 ip address 1.1.1.1/24
 
 - name: Configure BGP AS and add 2 EBGP neighbors using BGP Unnumbered
   nclu:

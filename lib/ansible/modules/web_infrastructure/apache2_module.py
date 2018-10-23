@@ -108,6 +108,9 @@ stderr:
 
 import re
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
 
 def _run_threaded(module):
     control_binary = _get_ctl_binary(module)
@@ -259,7 +262,6 @@ def main():
     if module.params['state'] in ['present', 'absent']:
         _set_state(module, module.params['state'])
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == '__main__':
     main()

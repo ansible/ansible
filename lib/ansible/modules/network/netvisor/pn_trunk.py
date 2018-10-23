@@ -163,6 +163,9 @@ changed:
 
 import shlex
 
+# Ansible boiler-plate
+from ansible.module_utils.basic import AnsibleModule
+
 TRUNK_EXISTS = None
 
 
@@ -445,8 +448,6 @@ def main():
 
     run_cli(module, cli)
 
-# Ansible boiler-plate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

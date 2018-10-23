@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -852,6 +852,7 @@ def main():
     except F5ModuleError as e:
         cleanup_tokens(client)
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

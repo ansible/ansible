@@ -71,12 +71,12 @@ from ansible.config.manager import ConfigManager, get_ini_config_value
 def main():
     config = ConfigManager()
     username = get_ini_config_value(
-        config._parser,
+        config._parsers[config._config_file],
         dict(section='vault', key='username')
     ) or getpass.getuser()
 
     keyname = get_ini_config_value(
-        config._parser,
+        config._parsers[config._config_file],
         dict(section='vault', key='keyname')
     ) or 'ansible'
 

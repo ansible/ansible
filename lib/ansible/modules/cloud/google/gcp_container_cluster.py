@@ -44,7 +44,6 @@ options:
     state:
         description:
             - Whether the given object should exist in GCP
-        required: true
         choices: ['present', 'absent']
         default: 'present'
     name:
@@ -91,9 +90,9 @@ options:
                     - The set of Google API scopes to be made available on all of the node VMs under the
                       "default" service account.
                     - 'The following scopes are recommended, but not required, and by default are not
-                      included:  https://www.googleapis.com/auth/compute is required for mounting persistent
+                      included:  U(https://www.googleapis.com/auth/compute) is required for mounting persistent
                       storage on your nodes.'
-                    - https://www.googleapis.com/auth/devstorage.read_only is required for communicating
+                    - U(https://www.googleapis.com/auth/devstorage.read_only) is required for communicating
                       with gcr.io (the Google Container Registry).
                     - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring are
                       enabled, in which case their required scopes will be added.
@@ -124,22 +123,20 @@ options:
                 required: false
             labels:
                 description:
-                    - 'The map of Kubernetes labels (key/value pairs) to be
-                      applied to each node. These will added in addition to any
-                      default label(s) that Kubernetes may apply to the node. In
-                      case of conflict in label keys, the applied set may differ
-                      depending on the Kubernetes version -- it''s best to assume
-                      the behavior is undefined and conflicts should be avoided. For
-                      more information, including usage and the valid values, see:
-                      http://kubernetes.io/v1.1/docs/user-guide/labels.html An
-                      object containing a list of "key": value pairs.'
+                    - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
+                      These will added in addition to any default label(s) that Kubernetes may apply to
+                      the node. In case of conflict in label keys, the applied set may differ depending
+                      on the Kubernetes version -- it''s best to assume the behavior is undefined and
+                      conflicts should be avoided. For more information, including usage and the valid
+                      values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An object
+                      containing a list of "key": value pairs.'
                     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
                 required: false
             local_ssd_count:
                 description:
                     - The number of local SSD disks to be attached to the node.
                     - 'The limit for this value is dependant upon the maximum number of disks available
-                      on a machine per zone. See:  https://cloud.google.com/compute/docs/disks/   local-ssd#local_ssd_limits  for
+                      on a machine per zone. See:  U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)  for
                       more information.'
                 required: false
             tags:
@@ -150,7 +147,7 @@ options:
                 required: false
             preemptible:
                 description:
-                    - 'Whether the nodes are created as preemptible VM instances. See: https://cloud.google.com/compute/docs/instances/preemptible
+                    - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
                       for more inforamtion about preemptible VM instances.'
                 required: false
                 type: bool
@@ -261,20 +258,18 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a cluster
   gcp_container_cluster:
-      name: testObject
+      name: "test_object"
       initial_node_count: 2
       master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
+        username: cluster_admin
+        password: my-secret-password
       node_config:
-        machine_type: "n1-standard-4"
+        machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: 'us-central1-a'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
+      zone: us-central1-a
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -291,7 +286,7 @@ RETURN = '''
             - An optional description of this cluster.
         returned: success
         type: str
-    initial_node_count:
+    initialNodeCount:
         description:
             - The number of nodes to create in this cluster. You must ensure that your Compute
               Engine resource quota is sufficient for this number of instances. You must also
@@ -301,7 +296,7 @@ RETURN = '''
               this and a nodePool at the same time.
         returned: success
         type: int
-    node_config:
+    nodeConfig:
         description:
             - Parameters used in creating the cluster's nodes.
             - For requests, this field should only be used in lieu of a "nodePool" object, since
@@ -312,32 +307,32 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            machine_type:
+            machineType:
                 description:
                     - The name of a Google Compute Engine machine type (e.g.
                     - n1-standard-1).  If unspecified, the default machine type is n1-standard-1.
                 returned: success
                 type: str
-            disk_size_gb:
+            diskSizeGb:
                 description:
                     - Size of the disk attached to each node, specified in GB. The smallest allowed disk
                       size is 10GB. If unspecified, the default disk size is 100GB.
                 returned: success
                 type: int
-            oauth_scopes:
+            oauthScopes:
                 description:
                     - The set of Google API scopes to be made available on all of the node VMs under the
                       "default" service account.
                     - 'The following scopes are recommended, but not required, and by default are not
-                      included:  https://www.googleapis.com/auth/compute is required for mounting persistent
+                      included:  U(https://www.googleapis.com/auth/compute) is required for mounting persistent
                       storage on your nodes.'
-                    - https://www.googleapis.com/auth/devstorage.read_only is required for communicating
+                    - U(https://www.googleapis.com/auth/devstorage.read_only) is required for communicating
                       with gcr.io (the Google Container Registry).
                     - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring are
                       enabled, in which case their required scopes will be added.
                 returned: success
                 type: list
-            service_account:
+            serviceAccount:
                 description:
                     - The Google Cloud Platform Service Account to be used by the node VMs.  If no Service
                       Account is specified, the "default" service account is used.
@@ -358,7 +353,7 @@ RETURN = '''
                     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
                 returned: success
                 type: dict
-            image_type:
+            imageType:
                 description:
                     - The image type to use for this node.  Note that for a given image type, the latest
                       version of it will be used.
@@ -366,23 +361,21 @@ RETURN = '''
                 type: str
             labels:
                 description:
-                    - 'The map of Kubernetes labels (key/value pairs) to be
-                      applied to each node. These will added in addition to any
-                      default label(s) that Kubernetes may apply to the node. In
-                      case of conflict in label keys, the applied set may differ
-                      depending on the Kubernetes version -- it''s best to assume
-                      the behavior is undefined and conflicts should be avoided. For
-                      more information, including usage and the valid values, see:
-                      http://kubernetes.io/v1.1/docs/user-guide/labels.html An
-                      object containing a list of "key": value pairs.'
+                    - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
+                      These will added in addition to any default label(s) that Kubernetes may apply to
+                      the node. In case of conflict in label keys, the applied set may differ depending
+                      on the Kubernetes version -- it''s best to assume the behavior is undefined and
+                      conflicts should be avoided. For more information, including usage and the valid
+                      values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An object
+                      containing a list of "key": value pairs.'
                     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
                 returned: success
                 type: dict
-            local_ssd_count:
+            localSsdCount:
                 description:
                     - The number of local SSD disks to be attached to the node.
                     - 'The limit for this value is dependant upon the maximum number of disks available
-                      on a machine per zone. See:  https://cloud.google.com/compute/docs/disks/   local-ssd#local_ssd_limits  for
+                      on a machine per zone. See:  U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)  for
                       more information.'
                 returned: success
                 type: int
@@ -395,11 +388,11 @@ RETURN = '''
                 type: list
             preemptible:
                 description:
-                    - 'Whether the nodes are created as preemptible VM instances. See: https://cloud.google.com/compute/docs/instances/preemptible
+                    - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
                       for more inforamtion about preemptible VM instances.'
                 returned: success
                 type: bool
-    master_auth:
+    masterAuth:
         description:
             - The authentication information for accessing the master endpoint.
         returned: success
@@ -416,23 +409,23 @@ RETURN = '''
                       the master endpoint is open to the Internet, you should create a strong password.
                 returned: success
                 type: str
-            cluster_ca_certificate:
+            clusterCaCertificate:
                 description:
                     - Base64-encoded public certificate that is the root of trust for the cluster.
                 returned: success
                 type: str
-            client_certificate:
+            clientCertificate:
                 description:
                     - Base64-encoded public certificate used by clients to authenticate to the cluster
                       endpoint.
                 returned: success
                 type: str
-            client_key:
+            clientKey:
                 description:
                     - Base64-encoded private key used by clients to authenticate to the cluster endpoint.
                 returned: success
                 type: str
-    logging_service:
+    loggingService:
         description:
             - 'The logging service the cluster should use to write logs. Currently available options:  logging.googleapis.com
               - the Google Cloud Logging service.'
@@ -440,7 +433,7 @@ RETURN = '''
             - if left as an empty string,logging.googleapis.com will be used.
         returned: success
         type: str
-    monitoring_service:
+    monitoringService:
         description:
             - The monitoring service the cluster should use to write metrics.
             - 'Currently available options:  monitoring.googleapis.com - the Google Cloud Monitoring
@@ -457,20 +450,20 @@ RETURN = '''
               resource.
         returned: success
         type: str
-    cluster_ipv4_cidr:
+    clusterIpv4Cidr:
         description:
             - The IP address range of the container pods in this cluster, in CIDR notation (e.g.
               10.96.0.0/14). Leave blank to have one automatically chosen or specify a /14 block
               in 10.0.0.0/8.
         returned: success
         type: str
-    addons_config:
+    addonsConfig:
         description:
             - Configurations for the various addons available to run in the cluster.
         returned: success
         type: complex
         contains:
-            http_load_balancing:
+            httpLoadBalancing:
                 description:
                     - Configuration for the HTTP (L7) load balancing controller addon, which makes it
                       easy to set up HTTP load balancers for services in a cluster.
@@ -483,7 +476,7 @@ RETURN = '''
                               it runs a small pod in the cluster that manages the load balancers.
                         returned: success
                         type: bool
-            horizontal_pod_autoscaling:
+            horizontalPodAutoscaling:
                 description:
                     - Configuration for the horizontal pod autoscaling feature, which increases or decreases
                       the number of replica pods a replication controller has based on the resource usage
@@ -516,48 +509,48 @@ RETURN = '''
               the masterAuth property of this resource for username and password information.
         returned: success
         type: str
-    initial_cluster_version:
+    initialClusterVersion:
         description:
             - The software version of the master endpoint and kubelets used in the cluster when
               it was first created. The version can be upgraded over time.
         returned: success
         type: str
-    current_master_version:
+    currentMasterVersion:
         description:
             - The current software version of the master endpoint.
         returned: success
         type: str
-    current_node_version:
+    currentNodeVersion:
         description:
             - The current version of the node software components. If they are currently at multiple
               versions because they're in the process of being upgraded, this reflects the minimum
               version of all nodes.
         returned: success
         type: str
-    create_time:
+    createTime:
         description:
             - The time the cluster was created, in RFC3339 text format.
         returned: success
         type: str
-    node_ipv4_cidr_size:
+    nodeIpv4CidrSize:
         description:
             - The size of the address space on each node for hosting containers.
             - This is provisioned from within the container_ipv4_cidr range.
         returned: success
         type: int
-    services_ipv4_cidr:
+    servicesIpv4Cidr:
         description:
             - The IP address range of the Kubernetes services in this cluster, in CIDR notation
               (e.g. 1.2.3.4/29). Service addresses are typically put in the last /16 from the
               container CIDR.
         returned: success
         type: str
-    current_node_count:
+    currentNodeCount:
         description:
             - The number of nodes currently in the cluster.
         returned: success
         type: int
-    expire_time:
+    expireTime:
         description:
             - The time the cluster will be automatically deleted in RFC3339 text format.
         returned: success
@@ -628,6 +621,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
+
     state = module.params['state']
 
     fetch = fetch_resource(module, self_link(module))
@@ -636,10 +632,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), fetch)
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
-            delete(module, self_link(module), fetch)
+            delete(module, self_link(module))
             fetch = {}
             changed = True
     else:
@@ -659,12 +656,12 @@ def create(module, link):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, fetch):
+def update(module, link):
     auth = GcpSession(module, 'container')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, fetch):
+def delete(module, link):
     auth = GcpSession(module, 'container')
     return wait_for_operation(module, auth.delete(link))
 
@@ -693,9 +690,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'container')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -706,9 +703,9 @@ def collection(module):
     return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters".format(**module.params)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -785,7 +782,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response)
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']))
@@ -900,18 +897,18 @@ class ClusterAddonsConfig(object):
 
     def to_request(self):
         return remove_nones_from_dict({
-            u'httpLoadBalancing': ClustHttpLoadBalan(self.request.get('http_load_balancing', {}), self.module).to_request(),
-            u'horizontalPodAutoscaling': ClustHorizPodAutos(self.request.get('horizontal_pod_autoscaling', {}), self.module).to_request()
+            u'httpLoadBalancing': ClusterHttpLoadBalancing(self.request.get('http_load_balancing', {}), self.module).to_request(),
+            u'horizontalPodAutoscaling': ClusterHorizontalPodAutoscaling(self.request.get('horizontal_pod_autoscaling', {}), self.module).to_request()
         })
 
     def from_response(self):
         return remove_nones_from_dict({
-            u'httpLoadBalancing': ClustHttpLoadBalan(self.request.get(u'httpLoadBalancing', {}), self.module).from_response(),
-            u'horizontalPodAutoscaling': ClustHorizPodAutos(self.request.get(u'horizontalPodAutoscaling', {}), self.module).from_response()
+            u'httpLoadBalancing': ClusterHttpLoadBalancing(self.request.get(u'httpLoadBalancing', {}), self.module).from_response(),
+            u'horizontalPodAutoscaling': ClusterHorizontalPodAutoscaling(self.request.get(u'horizontalPodAutoscaling', {}), self.module).from_response()
         })
 
 
-class ClustHttpLoadBalan(object):
+class ClusterHttpLoadBalancing(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -930,7 +927,7 @@ class ClustHttpLoadBalan(object):
         })
 
 
-class ClustHorizPodAutos(object):
+class ClusterHorizontalPodAutoscaling(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -947,6 +944,7 @@ class ClustHorizPodAutos(object):
         return remove_nones_from_dict({
             u'disabled': self.request.get(u'disabled')
         })
+
 
 if __name__ == '__main__':
     main()

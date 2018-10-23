@@ -174,6 +174,11 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+elapsed:
+  description: The number of seconds that elapsed while performing the download
+  returned: always
+  type: float
+  sample: 23.2
 url:
   description: The Target URL
   returned: always

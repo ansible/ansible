@@ -9,17 +9,16 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 module: na_ontap_job_schedule
-short_description: Manage NetApp Ontap Job Schedule
+short_description: NetApp ONTAP Job Schedule
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author:
-- Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Create/Delete/Modify_minute job-schedules on ONTAP
 options:

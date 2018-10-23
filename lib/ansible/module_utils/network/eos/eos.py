@@ -135,7 +135,11 @@ class Cli:
             return self._device_configs[cmd]
         except KeyError:
             conn = self._get_connection()
-            out = conn.get_config(filter=flags)
+            try:
+                out = conn.get_config(flags=flags)
+            except ConnectionError as exc:
+                self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
             cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -144,7 +148,11 @@ class Cli:
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
-        return connection.run_commands(commands=commands, check_rc=check_rc)
+        try:
+            response = connection.run_commands(commands=commands, check_rc=check_rc)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return response
 
     def load_config(self, commands, commit=False, replace=False):
         """Loads the config commands onto the remote device
@@ -164,8 +172,12 @@ class Cli:
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         conn = self._get_connection()
-        return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
-                             diff_replace=diff_replace)
+        try:
+            diff = conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                 diff_replace=diff_replace)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return diff
 
 
 class Eapi:
@@ -401,8 +413,10 @@ def to_command(module, commands):
     transform = ComplexList(dict(
         command=dict(key=True),
         output=dict(default=default_output),
-        prompt=dict(),
-        answer=dict()
+        prompt=dict(type='list'),
+        answer=dict(type='list'),
+        sendonly=dict(type='bool', default=False),
+        check_all=dict(type='bool', default=False),
     ), module)
 
     return transform(to_list(commands))

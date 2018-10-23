@@ -62,27 +62,33 @@ options:
         required: true
     url_map:
         description:
-            - A reference to UrlMap resource.
+            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
+            - 'This field represents a link to a UrlMap resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_compute_url_map task
+              and then set this url_map field to "{{ name-of-resource }}" Alternatively, you can
+              set this url_map to a dictionary with the selfLink key where the value is the selfLink
+              of your UrlMap.'
         required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetHttpProxies)"
+    - "Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies)"
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targethttpproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targethttpproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-targethttpproxy'
+      name: "httphealthcheck-targethttpproxy"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -90,53 +96,45 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targethttpproxy'
+      name: "backendservice-targethttpproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
 
 - name: create a url map
   gcp_compute_url_map:
-      name: 'urlmap-targethttpproxy'
+      name: "urlmap-targethttpproxy"
       default_service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: urlmap
 
 - name: create a target http proxy
   gcp_compute_target_http_proxy:
-      name: testObject
+      name: "test_object"
       url_map: "{{ urlmap }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -161,9 +159,9 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    url_map:
+    urlMap:
         description:
-            - A reference to UrlMap resource.
+            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         returned: success
         type: dict
 '''
@@ -193,6 +191,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#targetHttpProxy'
 
@@ -202,10 +203,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -226,11 +228,30 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('urlMap') != request.get('urlMap'):
+        url_map_update(module, request, response)
+
+
+def url_map_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/targetHttpProxies/{name}/setUrlMap"
+        ]).format(**module.params),
+        {
+            u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')
+        }
+    )
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -250,9 +271,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -263,9 +284,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/targetHttpProxies".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -280,8 +301,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -328,7 +347,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#targetHttpProxy')
@@ -351,6 +370,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

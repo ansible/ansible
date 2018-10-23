@@ -8,9 +8,21 @@ class ModuleDocFragment(object):
 
     # Standard files documentation fragment
     DOCUMENTATION = """
+notes:
+  - "If a new enough version of the C(cryptography) library
+     is available (see Requirements for details), it will be used
+     instead of the C(openssl) binary. This can be explicitly disabled
+     or enabled with the C(select_crypto_backend) option. Note that using
+     the C(openssl) binary will be slower and less secure, as private key
+     contents always have to be stored on disk (see
+     C(account_key_content))."
+  - "Although the defaults are chosen so that the module can be used with
+     the L(Let's Encrypt,https://letsencrypt.org/) CA, the module can in
+     principle be used with any CA providing an ACME endpoint."
 requirements:
   - "python >= 2.6"
-  - openssl
+  - "either openssl, ..."
+  - "... or L(cryptography,https://cryptography.io/) >= 1.5"
 options:
   account_key_src:
     description:
@@ -32,7 +44,17 @@ options:
          important private key — it can be used to change the account key,
          or to revoke your certificates without knowing their private keys
          —, this might not be acceptable."
+      - "In case C(cryptography) is used, the content is not written into a
+         temporary file. It can still happen that it is written to disk by
+         Ansible in the process of moving the module with its argument to
+         the node where it is executed."
     version_added: "2.5"
+  account_uri:
+    description:
+      - "If specified, assumes that the account URI is as given. If the
+         account key does not match this account, or an account with this
+         URI does not exist, the module fails."
+    version_added: "2.7"
   acme_version:
     description:
       - "The ACME version of the endpoint."
@@ -54,8 +76,8 @@ options:
          U(https://acme-v01.api.letsencrypt.org/directory), and the production
          directory URL for ACME v2 is U(https://acme-v02.api.letsencrypt.org/directory)."
       - "I(Warning): So far, the module has only been tested against Let's Encrypt
-         (staging and production) and against the Pebble testing server
-         (U(https://github.com/letsencrypt/Pebble))."
+         (staging and production) and against the
+         L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     default: https://acme-staging.api.letsencrypt.org/directory
   validate_certs:
     description:
@@ -64,5 +86,20 @@ options:
          for example when testing against a local Pebble server."
     type: bool
     default: 'yes'
-    version_added: 2.5
+    version_added: "2.5"
+  select_crypto_backend:
+    description:
+      - "Determines which crypto backend to use. The default choice is C(auto),
+         which tries to use C(cryptography) if available, and falls back to
+         C(openssl)."
+      - "If set to C(openssl), will try to use the C(openssl) binary."
+      - "If set to C(cryptography), will try to use the
+         L(cryptography,https://cryptography.io/) library."
+    type: str
+    default: 'auto'
+    choices:
+      - auto
+      - cryptography
+      - openssl
+    version_added: "2.7"
 """

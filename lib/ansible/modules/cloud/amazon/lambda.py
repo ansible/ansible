@@ -73,7 +73,7 @@ options:
       - A short, user-defined function description. Lambda does not use this value. Assign a meaningful description as you see fit.
   timeout:
     description:
-      - The function execution time at which Lambda should terminate the function.
+      - The function maximum execution time in seconds after which Lambda should terminate the function.
     default: 3
   memory_size:
     description:
@@ -125,7 +125,7 @@ EXAMPLES = '''
     environment_variables: '{{ item.env_vars }}'
     tags:
       key1: 'value1'
-  with_items:
+  loop:
     - name: HelloWorld
       zip_file: hello-code.zip
       env_vars:
@@ -153,7 +153,7 @@ EXAMPLES = '''
   lambda:
     name: '{{ item }}'
     state: absent
-  with_items:
+  loop:
     - HelloWorld
     - ByeBye
 '''
@@ -554,6 +554,7 @@ def main():
                                               'SecurityGroupIds': vpc_security_group_ids}})
 
         # Finally try to create function
+        current_version = None
         try:
             if not check_mode:
                 response = client.create_function(**func_kwargs)

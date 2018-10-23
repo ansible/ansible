@@ -1,3 +1,0 @@
----
-minor_changes:
-- Restore module_utils.basic.BOOLEANS variable for backwards compatibility with the module API in older ansible releases.

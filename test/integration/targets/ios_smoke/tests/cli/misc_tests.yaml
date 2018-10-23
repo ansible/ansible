@@ -34,7 +34,7 @@
 - assert:
     that:
       - 'result.failed == true'
-      - "'timeout trying to send command' in result.module_stderr"
+      - "'command timeout triggered' in result.msg"
   when: ansible_connection == 'network_cli'
 
 - debug: msg="END ios_smoke cli/misc_tests.yaml on connection={{ ansible_connection }}"

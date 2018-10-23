@@ -178,6 +178,9 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six import string_types, iteritems
 
 
+g_config = None
+
+
 class FactsBase(object):
 
     def __init__(self, module):
@@ -194,12 +197,18 @@ class FactsBase(object):
             'command': command,
             'output': output
         }
-        resp = run_commands(self.module, [command], check_rc=False)
+        resp = run_commands(self.module, [command], check_rc='retry_json')
         try:
             return resp[0]
         except IndexError:
             self.warnings.append('command %s failed, facts for this command will not be populated' % command_string)
             return None
+
+    def get_config(self):
+        global g_config
+        if not g_config:
+            g_config = get_config(self.module)
+        return g_config
 
     def transform_dict(self, data, keymap):
         transform = dict()
@@ -234,10 +243,8 @@ class Default(FactsBase):
     def populate(self):
         data = None
 
-        try:
-            data = self.run('show version', output='json')
-        except ConnectionError:
-            data = self.run('show version')
+        data = self.run('show version', output='json')
+
         if data:
             if isinstance(data, dict):
                 if data.get('sys_ver_str'):
@@ -289,7 +296,22 @@ class Config(FactsBase):
 
     def populate(self):
         super(Config, self).populate()
-        self.facts['config'] = get_config(self.module)
+        self.facts['config'] = self.get_config()
+
+
+class Features(FactsBase):
+
+    def populate(self):
+        super(Features, self).populate()
+        data = self.get_config()
+
+        if data:
+            features = []
+            for line in data.splitlines():
+                if line.startswith('feature'):
+                    features.append(line.replace('feature', '').strip())
+
+            self.facts['features_enabled'] = features
 
 
 class Hardware(FactsBase):
@@ -300,10 +322,8 @@ class Hardware(FactsBase):
             self.facts['filesystems'] = self.parse_filesystems(data)
 
         data = None
-        try:
-            data = self.run('show system resources', output='json')
-        except ConnectionError:
-            data = self.run('show system resources')
+        data = self.run('show system resources', output='json')
+
         if data:
             if isinstance(data, dict):
                 self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
@@ -380,10 +400,8 @@ class Interfaces(FactsBase):
         self.facts['all_ipv6_addresses'] = list()
         data = None
 
-        try:
-            data = self.run('show interface', output='json')
-        except ConnectionError:
-            data = self.run('show interface')
+        data = self.run('show interface', output='json')
+
         if data:
             if isinstance(data, dict):
                 self.facts['interfaces'] = self.populate_structured_interfaces(data)
@@ -392,10 +410,7 @@ class Interfaces(FactsBase):
                 self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
         if self.ipv6_structure_op_supported():
-            try:
-                data = self.run('show ipv6 interface', output='json')
-            except ConnectionError:
-                data = self.run('show ipv6 interface')
+            data = self.run('show ipv6 interface', output='json')
         else:
             data = None
         if data:
@@ -409,10 +424,7 @@ class Interfaces(FactsBase):
         if data:
             self.facts['neighbors'] = self.populate_neighbors(data)
 
-        try:
-            data = self.run('show cdp neighbors detail', output='json')
-        except ConnectionError:
-            data = self.run('show cdp neighbors detail')
+        data = self.run('show cdp neighbors detail', output='json')
         if data:
             if isinstance(data, dict):
                 self.facts['neighbors'] = self.populate_structured_neighbors_cdp(data)
@@ -642,7 +654,7 @@ class Interfaces(FactsBase):
             fact = dict()
             fact['port'] = self.parse_lldp_port(item)
             fact['sysname'] = self.parse_lldp_sysname(item)
-            facts[local_intf].append(facts)
+            facts[local_intf].append(fact)
 
         return facts
 
@@ -718,10 +730,7 @@ class Legacy(FactsBase):
     def populate(self):
         data = None
 
-        try:
-            data = self.run('show version')
-        except ConnectionError:
-            data = self.run('show version', output='json')
+        data = self.run('show version', output='json')
         if data:
             if isinstance(data, dict):
                 self.facts.update(self.transform_dict(data, self.VERSION_MAP))
@@ -730,50 +739,35 @@ class Legacy(FactsBase):
                 self.facts['_os'] = self.parse_os(data)
                 self.facts['_platform'] = self.parse_platform(data)
 
-        try:
-            data = self.run('show interface', output='json')
-        except ConnectionError:
-            data = self.run('show interface')
+        data = self.run('show interface', output='json')
         if data:
             if isinstance(data, dict):
                 self.facts['_interfaces_list'] = self.parse_structured_interfaces(data)
             else:
                 self.facts['_interfaces_list'] = self.parse_interfaces(data)
 
-        try:
-            data = self.run('show vlan brief', output='json')
-        except ConnectionError:
-            data = self.run('show vlan brief')
+        data = self.run('show vlan brief', output='json')
         if data:
             if isinstance(data, dict):
                 self.facts['_vlan_list'] = self.parse_structured_vlans(data)
             else:
                 self.facts['_vlan_list'] = self.parse_vlans(data)
 
-        try:
-            data = self.run('show module', output='json')
-        except ConnectionError:
-            data = self.run('show module')
+        data = self.run('show module', output='json')
         if data:
             if isinstance(data, dict):
                 self.facts['_module'] = self.parse_structured_module(data)
             else:
                 self.facts['_module'] = self.parse_module(data)
 
-        try:
-            data = self.run('show environment fan', output='json')
-        except ConnectionError:
-            data = self.run('show environment fan')
+        data = self.run('show environment fan', output='json')
         if data:
             if isinstance(data, dict):
                 self.facts['_fan_info'] = self.parse_structured_fan_info(data)
             else:
                 self.facts['_fan_info'] = self.parse_fan_info(data)
 
-        try:
-            data = self.run('show environment power', output='json')
-        except ConnectionError:
-            data = self.run('show environment power')
+        data = self.run('show environment power', output='json')
         if data:
             if isinstance(data, dict):
                 self.facts['_power_supply_info'] = self.parse_structured_power_supply_info(data)
@@ -933,6 +927,7 @@ FACT_SUBSETS = dict(
     hardware=Hardware,
     interfaces=Interfaces,
     config=Config,
+    features=Features
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())

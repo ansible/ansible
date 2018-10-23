@@ -205,9 +205,11 @@ def main():
     if not binary:
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
-    if state == 'present' and not remote_exists(module, binary, name, method):
+    remote_already_exists = remote_exists(module, binary, bytes(name, 'utf-8'), method)
+
+    if state == 'present' and not remote_already_exists:
         add_remote(module, binary, name, flatpakrepo_url, method)
-    elif state == 'absent' and remote_exists(module, binary, name, method):
+    elif state == 'absent' and remote_already_exists:
         remove_remote(module, binary, name, method)
 
     module.exit_json(**result)

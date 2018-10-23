@@ -75,11 +75,10 @@ extends_documentation_fragment: vmware.documentation
 '''
 EXAMPLES = '''
 - name: Create dvswitch
-  local_action:
-    module: vmware_dvswitch
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
+  vmware_dvswitch:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     datacenter_name: datacenter
     switch_name: dvSwitch
     switch_version: 6.0.0
@@ -88,6 +87,7 @@ EXAMPLES = '''
     discovery_proto: lldp
     discovery_operation: both
     state: present
+  delegate_to: localhost
 '''
 
 try:

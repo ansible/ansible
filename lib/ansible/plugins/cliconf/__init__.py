@@ -95,7 +95,7 @@ class CliconfBase(AnsiblePlugin):
         display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
         self.close()
 
-    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
+    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False):
         """Executes a command over the device connection
 
         This method will execute a command over the device connection and
@@ -108,14 +108,16 @@ class CliconfBase(AnsiblePlugin):
         :param sendonly: Bool value that will send the command but not wait for a result.
         :param newline: Bool value that will append the newline character to the command
         :param prompt_retry_check: Bool value for trying to detect more prompts
-
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
         :returns: The output from the device after executing the command
         """
         kwargs = {
             'command': to_bytes(command),
             'sendonly': sendonly,
             'newline': newline,
-            'prompt_retry_check': prompt_retry_check
+            'prompt_retry_check': prompt_retry_check,
+            'check_all': check_all
         }
 
         if prompt is not None:
@@ -124,7 +126,10 @@ class CliconfBase(AnsiblePlugin):
             else:
                 kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
-            kwargs['answer'] = to_bytes(answer)
+            if isinstance(answer, list):
+                kwargs['answer'] = [to_bytes(p) for p in answer]
+            else:
+                kwargs['answer'] = to_bytes(answer)
 
         resp = self._connection.send(**kwargs)
 
@@ -165,7 +170,7 @@ class CliconfBase(AnsiblePlugin):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', filter=None, format=None):
+    def get_config(self, source='running', flags=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -175,7 +180,7 @@ class CliconfBase(AnsiblePlugin):
         :param source: The configuration source to return from the device.
             This argument accepts either `running` or `startup` as valid values.
 
-        :param filter: For devices that support configuration filtering, this
+        :param flags: For devices that support configuration filtering, this
             keyword argument is used to filter the returned configuration.
             The use of this keyword argument is device dependent adn will be
             silently ignored on devices that do not support it.
@@ -212,14 +217,15 @@ class CliconfBase(AnsiblePlugin):
                  response on executing configuration commands and platform relevant data.
                {
                    "diff": "",
-                   "response": []
+                   "response": [],
+                   "request": []
                }
 
         """
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None, check_all=False):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -230,9 +236,11 @@ class CliconfBase(AnsiblePlugin):
         :param sendonly: bool to disable waiting for response, default is false
         :param newline: bool to indicate if newline should be added at end of answer or not
         :param output: For devices that support fetching command output in different
-            format, this keyword argument is used to specify the output in which
-            response is to be retrieved.
-        :return:
+                       format, this keyword argument is used to specify the output in which
+                        response is to be retrieved.
+        :param check_all: Bool value to indicate if all the values in prompt sequence should be matched or any one of
+                          given prompt.
+        :return: The output from the device after executing the command
         """
         pass
 
@@ -264,9 +272,11 @@ class CliconfBase(AnsiblePlugin):
                     'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
                     'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
-                    'supports_diff_match: <bool>,           # identify if match is supported
-                    'supports_diff_ignore_lines: <bool>,    # identify if ignore line in diff is supported
-                    'supports_config_replace': <bool>,      # identify if running config replace with candidate config is supported
+                    'supports_diff_match: <bool>,          # identify if match is supported
+                    'supports_diff_ignore_lines: <bool>,   # identify if ignore line in diff is supported
+                    'supports_config_replace': <bool>,     # identify if running config replace with candidate config is supported
+                    'supports_admin': <bool>,              # identify if admin configure mode is supported or not
+                    'supports_commit_label': <bool>,       # identify if commit label is supported or not
                 }
                 'format': [list of supported configuration format],
                 'diff_match': [list of supported match values],
@@ -300,6 +310,15 @@ class CliconfBase(AnsiblePlugin):
         :returns: None
         """
         return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
+
+    def rollback(self, rollback_id, commit=True):
+        """
+
+        :param rollback_id: The commit id to which configuration should be rollbacked
+        :param commit: Flag to indicate if changes should be committed or not
+        :return: Returns diff between before and after change.
+        """
+        pass
 
     def copy_file(self, source=None, destination=None, proto='scp', timeout=30):
         """Copies file over scp/sftp to remote device
@@ -399,7 +418,7 @@ class CliconfBase(AnsiblePlugin):
         """
         pass
 
-    def check_edit_config_capabiltiy(self, operations, candidate=None, commit=True, replace=None, comment=None):
+    def check_edit_config_capability(self, operations, candidate=None, commit=True, replace=None, comment=None):
 
         if not candidate and not replace:
             raise ValueError("must provide a candidate or replace to load configuration")

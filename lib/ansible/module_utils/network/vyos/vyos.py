@@ -81,7 +81,11 @@ def get_capabilities(module):
     if hasattr(module, '_vyos_capabilities'):
         return module._vyos_capabilities
 
-    capabilities = Connection(module._socket_path).get_capabilities()
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     module._vyos_capabilities = json.loads(capabilities)
     return module._vyos_capabilities
 
@@ -93,7 +97,10 @@ def get_config(module):
         return _DEVICE_CONFIGS
     else:
         connection = get_connection(module)
-        out = connection.get_config()
+        try:
+            out = connection.get_config()
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS = cfg
         return cfg
@@ -101,15 +108,19 @@ def get_config(module):
 
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
-    return connection.run_commands(commands=commands, check_rc=check_rc)
+    try:
+        response = connection.run_commands(commands=commands, check_rc=check_rc)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    return response
 
 
 def load_config(module, commands, commit=False, comment=None):
     connection = get_connection(module)
 
     try:
-        resp = connection.edit_config(candidate=commands, commit=commit, comment=comment)
+        response = connection.edit_config(candidate=commands, commit=commit, comment=comment)
     except ConnectionError as exc:
-        module.fail_json(msg=to_text(exc))
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-    return resp.get('diff')
+    return response.get('diff')

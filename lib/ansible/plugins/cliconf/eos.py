@@ -41,12 +41,12 @@ options:
         version_added: '2.7'
 """
 
-import collections
 import json
 import time
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.plugins.cliconf import CliconfBase, enable_mode
@@ -75,20 +75,20 @@ class Cliconf(CliconfBase):
         return resp
 
     @enable_mode
-    def get_config(self, source='running', format='text', filter=None):
+    def get_config(self, source='running', format='text', flags=None):
         options_values = self.get_option_values()
         if format not in options_values['format']:
             raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(options_values['format'])))
 
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show %s ' % lookup[source]
         if format and format is not 'text':
             cmd += '| %s ' % format
 
-        cmd += ' '.join(to_list(filter))
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
         return self.send_command(cmd)
 
@@ -96,7 +96,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
 
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         if (commit is False) and (not self.supports_sessions):
             raise ValueError('check mode is not supported without configuration session')
@@ -116,7 +116,7 @@ class Cliconf(CliconfBase):
         requests = []
         multiline = False
         for line in to_list(candidate):
-            if not isinstance(line, collections.Mapping):
+            if not isinstance(line, Mapping):
                 line = {'command': line}
 
             cmd = line['command']
@@ -153,10 +153,10 @@ class Cliconf(CliconfBase):
             self.send_command('end')
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self):
         self.send_command('commit')
@@ -175,7 +175,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'commands' value is required")
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -268,14 +268,14 @@ class Cliconf(CliconfBase):
         return {
             'supports_diff_replace': True,
             'supports_commit': True if self.supports_sessions else False,
-            'supports_rollback': True if self.supports_sessions else False,
+            'supports_rollback': False,
             'supports_defaults': False,
             'supports_onbox_diff': True if self.supports_sessions else False,
             'supports_commit_comment': False,
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
-            'supports_generate_diff': True,
+            'supports_generate_diff': False if self.supports_sessions else True,
             'supports_replace': True if self.supports_sessions else False
         }
 
@@ -289,8 +289,8 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['device_info'] = self.get_device_info()
+        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
+        result['rpc'] = self.get_base_rpc() + rpc_list
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())

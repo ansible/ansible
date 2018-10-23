@@ -88,12 +88,9 @@ Function Set-CultureLegacy($culture) {
     $reg_key = 'HKCU:\Control Panel\International'
 
     $original_tmp = $env:TMP
-    $original_temp = $env:TEMP
     $env:TMP = $_remote_tmp
-    $env:TEMP = $_remote_tmp
     Add-Type -TypeDefinition $lctype_util
     $env:TMP = $original_tmp
-    $env:TEMP = $original_temp
 
     $lookup = New-Object Ansible.LocaleHelper($culture)
     # hex values are from http://www.pinvoke.net/default.aspx/kernel32/GetLocaleInfoEx.html

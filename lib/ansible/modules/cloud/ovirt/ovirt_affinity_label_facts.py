@@ -83,7 +83,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_affinity_labels:
-    description: "List of dictionaries describing the affinity labels. Affinity labels attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the affinity labels. Affinity labels attributes are mapped to dictionary keys,
                   all affinity labels attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/affinity_label."
     returned: On success.
     type: list
@@ -109,9 +109,6 @@ def main():
         vm=dict(default=None),
     )
     module = AnsibleModule(argument_spec)
-
-    if module._name == 'ovirt_affinity_labels_facts':
-        module.deprecate("The 'ovirt_affinity_labels_facts' module is being renamed 'ovirt_affinity_label_facts'", version=2.8)
 
     check_sdk(module)
 

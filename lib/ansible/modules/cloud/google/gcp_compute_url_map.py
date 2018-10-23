@@ -49,7 +49,12 @@ options:
         default: 'present'
     default_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to BackendService resource if none of the hostRules match.
+            - 'This field represents a link to a BackendService resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+              task and then set this default_service field to "{{ name-of-resource }}" Alternatively,
+              you can set this default_service to a dictionary with the selfLink key where the
+              value is the selfLink of your BackendService.'
         required: true
     description:
         description:
@@ -71,12 +76,12 @@ options:
                     - The list of host patterns to match. They must be valid hostnames, except * will
                       match any string of ([a-z0-9-.]*). In that case, * must be the first character and
                       must be followed in the pattern by either - or .
-                required: false
+                required: true
             path_matcher:
                 description:
                     - The name of the PathMatcher to use to match the path portion of the URL if the hostRule
                       matches the URL's host portion.
-                required: false
+                required: true
     name:
         description:
             - Name of the resource. Provided by the client when the resource is created. The name
@@ -85,7 +90,7 @@ options:
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
-        required: false
+        required: true
     path_matchers:
         description:
             - The list of named PathMatchers to use against the URL.
@@ -93,8 +98,14 @@ options:
         suboptions:
             default_service:
                 description:
-                    - A reference to BackendService resource.
-                required: false
+                    - A reference to a BackendService resource. This will be used if none of the pathRules
+                      defined by this PathMatcher is matched by the URL's path portion.
+                    - 'This field represents a link to a BackendService resource in GCP. It can be specified
+                      in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+                      task and then set this default_service field to "{{ name-of-resource }}" Alternatively,
+                      you can set this default_service to a dictionary with the selfLink key where the
+                      value is the selfLink of your BackendService.'
+                required: true
             description:
                 description:
                     - An optional description of this resource.
@@ -102,7 +113,7 @@ options:
             name:
                 description:
                     - The name to which this PathMatcher is referred by the HostRule.
-                required: false
+                required: true
             path_rules:
                 description:
                     - The list of path rules.
@@ -116,8 +127,13 @@ options:
                         required: false
                     service:
                         description:
-                            - A reference to BackendService resource.
-                        required: false
+                            - A reference to the BackendService resource if this rule is matched.
+                            - 'This field represents a link to a BackendService resource in GCP. It can be specified
+                              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+                              task and then set this service field to "{{ name-of-resource }}" Alternatively,
+                              you can set this service to a dictionary with the selfLink key where the value is
+                              the selfLink of your BackendService.'
+                        required: true
     tests:
         description:
             - The list of expected URL mappings. Request to update this UrlMap will succeed only
@@ -131,34 +147,37 @@ options:
             host:
                 description:
                     - Host portion of the URL.
-                required: false
+                required: true
             path:
                 description:
                     - Path portion of the URL.
-                required: false
+                required: true
             service:
                 description:
-                    - A reference to BackendService resource.
-                required: false
+                    - A reference to expected BackendService resource the given URL should be mapped to.
+                    - 'This field represents a link to a BackendService resource in GCP. It can be specified
+                      in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+                      task and then set this service field to "{{ name-of-resource }}" Alternatively,
+                      you can set this service to a dictionary with the selfLink key where the value is
+                      the selfLink of your BackendService.'
+                required: true
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-urlmap'
-      zone: 'us-central1-a'
+      name: "instancegroup-urlmap"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-urlmap'
+      name: "httphealthcheck-urlmap"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -166,48 +185,42 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-urlmap'
+      name: "backendservice-urlmap"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
 
 - name: create a url map
   gcp_compute_url_map:
-      name: testObject
+      name: "test_object"
       default_service: "{{ backendservice }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
         type: str
-    default_service:
+    defaultService:
         description:
-            - A reference to BackendService resource.
+            - A reference to BackendService resource if none of the hostRules match.
         returned: success
         type: dict
     description:
@@ -216,7 +229,7 @@ RETURN = '''
               the resource.
         returned: success
         type: str
-    host_rules:
+    hostRules:
         description:
             - The list of HostRules to use against the URL.
         returned: success
@@ -235,7 +248,7 @@ RETURN = '''
                       must be followed in the pattern by either - or .
                 returned: success
                 type: list
-            path_matcher:
+            pathMatcher:
                 description:
                     - The name of the PathMatcher to use to match the path portion of the URL if the hostRule
                       matches the URL's host portion.
@@ -246,6 +259,12 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
+    fingerprint:
+        description:
+            - Fingerprint of this resource. This field is used internally during updates of this
+              resource.
+        returned: success
+        type: str
     name:
         description:
             - Name of the resource. Provided by the client when the resource is created. The name
@@ -256,15 +275,16 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    path_matchers:
+    pathMatchers:
         description:
             - The list of named PathMatchers to use against the URL.
         returned: success
         type: complex
         contains:
-            default_service:
+            defaultService:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to a BackendService resource. This will be used if none of the pathRules
+                      defined by this PathMatcher is matched by the URL's path portion.
                 returned: success
                 type: dict
             description:
@@ -277,7 +297,7 @@ RETURN = '''
                     - The name to which this PathMatcher is referred by the HostRule.
                 returned: success
                 type: str
-            path_rules:
+            pathRules:
                 description:
                     - The list of path rules.
                 returned: success
@@ -292,7 +312,7 @@ RETURN = '''
                         type: list
                     service:
                         description:
-                            - A reference to BackendService resource.
+                            - A reference to the BackendService resource if this rule is matched.
                         returned: success
                         type: dict
     tests:
@@ -319,7 +339,7 @@ RETURN = '''
                 type: str
             service:
                 description:
-                    - A reference to BackendService resource.
+                    - A reference to expected BackendService resource the given URL should be mapped to.
                 returned: success
                 type: dict
 '''
@@ -347,27 +367,30 @@ def main():
             description=dict(type='str'),
             host_rules=dict(type='list', elements='dict', options=dict(
                 description=dict(type='str'),
-                hosts=dict(type='list', elements='str'),
-                path_matcher=dict(type='str')
+                hosts=dict(required=True, type='list', elements='str'),
+                path_matcher=dict(required=True, type='str')
             )),
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
             path_matchers=dict(type='list', elements='dict', options=dict(
-                default_service=dict(type='dict'),
+                default_service=dict(required=True, type='dict'),
                 description=dict(type='str'),
-                name=dict(type='str'),
+                name=dict(required=True, type='str'),
                 path_rules=dict(type='list', elements='dict', options=dict(
                     paths=dict(type='list', elements='str'),
-                    service=dict(type='dict')
+                    service=dict(required=True, type='dict')
                 ))
             )),
             tests=dict(type='list', elements='dict', options=dict(
                 description=dict(type='str'),
-                host=dict(type='str'),
-                path=dict(type='str'),
-                service=dict(type='dict')
+                host=dict(required=True, type='str'),
+                path=dict(required=True, type='str'),
+                service=dict(required=True, type='dict')
             ))
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#urlMap'
@@ -378,10 +401,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -401,12 +425,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -418,7 +442,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'hostRules': UrlMapHostRulesArray(module.params.get('host_rules', []), module).to_request(),
         u'name': module.params.get('name'),
-        u'pathMatchers': UrlMapPathMatchArray(module.params.get('path_matchers', []), module).to_request(),
+        u'pathMatchers': UrlMapPathMatchersArray(module.params.get('path_matchers', []), module).to_request(),
         u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request()
     }
     return_vals = {}
@@ -429,9 +453,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -442,9 +466,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/urlMaps".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -459,8 +483,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -492,8 +514,9 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'hostRules': UrlMapHostRulesArray(response.get(u'hostRules', []), module).from_response(),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name'),
-        u'pathMatchers': UrlMapPathMatchArray(response.get(u'pathMatchers', []), module).from_response(),
+        u'fingerprint': response.get(u'fingerprint'),
+        u'name': module.params.get('name'),
+        u'pathMatchers': UrlMapPathMatchersArray(response.get(u'pathMatchers', []), module).from_response(),
         u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response()
     }
 
@@ -510,7 +533,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#urlMap')
@@ -570,7 +593,7 @@ class UrlMapHostRulesArray(object):
         })
 
 
-class UrlMapPathMatchArray(object):
+class UrlMapPathMatchersArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -675,6 +698,7 @@ class UrlMapTestsArray(object):
             u'path': item.get(u'path'),
             u'service': item.get(u'service')
         })
+
 
 if __name__ == '__main__':
     main()

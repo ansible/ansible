@@ -304,7 +304,7 @@ is an excellent way to track changes to your inventory and host variables.
 How Variables Are Merged
 ++++++++++++++++++++++++
 
-By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really survive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see the `hash_merge` setting to change this) . The order/precedence is (from lowest to highest):
+By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really survive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see :ref:`DEFAULT_HASH_BEHAVIOUR<DEFAULT_HASH_BEHAVIOUR>`). The order/precedence is (from lowest to highest):
 
 - all group (because it is the 'parent' of all other groups)
 - parent group
@@ -486,7 +486,7 @@ Here is an example of how to instantly deploy to created containers::
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning Ansible's configuration, deployment, and orchestration language.
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

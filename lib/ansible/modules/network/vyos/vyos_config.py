@@ -105,6 +105,10 @@ EXAMPLES = """
     src: vyos.cfg
     backup: yes
 
+- name: render a Jinja2 template onto the VyOS router
+  vyos_config:
+    src: vyos_template.j2
+
 - name: for idempotency, use full-form commands
   vyos_config:
     lines:
@@ -131,7 +135,9 @@ backup_path:
 """
 import re
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.vyos.vyos import load_config, get_config, run_commands
 from ansible.module_utils.network.vyos.vyos import vyos_argument_spec, get_connection
 
@@ -208,7 +214,11 @@ def run(module, result):
 
     # create loadable config that includes only the configuration updates
     connection = get_connection(module)
-    response = connection.get_diff(candidate=candidate, running=config, diff_match=module.params['match'])
+    try:
+        response = connection.get_diff(candidate=candidate, running=config, diff_match=module.params['match'])
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     commands = response.get('config_diff')
     sanitize_config(commands, result)
 

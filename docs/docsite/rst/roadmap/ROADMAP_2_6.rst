@@ -26,6 +26,12 @@ Expected
 
 - 2018-06-28 Final Release
 
+
+Release Manager
+---------------
+Matt Clay (IRC/GitHub: @mattclay)
+
+
 Engine improvements
 -------------------
 

@@ -73,7 +73,9 @@ requirements:
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
        For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
        install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time."
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
     - "The docker server >= 1.9.0"
 '''
 
@@ -221,7 +223,7 @@ class DockerVolumeManager(object):
         if self.existing_volume:
             differences = self.has_different_config()
 
-        if differences and self.parameters.force:
+        if differences or self.parameters.force:
             self.remove_volume()
             self.existing_volume = None
 
@@ -252,7 +254,9 @@ def main():
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_version='1.10.0',
+        # "The docker server >= 1.9.0"
     )
 
     cm = DockerVolumeManager(client)

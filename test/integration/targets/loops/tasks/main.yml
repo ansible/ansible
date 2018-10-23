@@ -223,3 +223,38 @@
 - assert:
     that:
       - with_list_passed_a_dict is failed
+
+- debug:
+    var: "item"
+  loop:
+    - "{{ ansible_search_path }}"
+  register: loop_search_path
+
+- assert:
+    that:
+      - ansible_search_path == loop_search_path.results.0.item
+
+# https://github.com/ansible/ansible/issues/45189
+- name: with_X conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  with_list: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: loop conditional delegate_to shortcircuit on templating error
+  debug:
+      msg: "loop"
+  when: false
+  delegate_to: localhost
+  loop: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: Loop on literal empty list
+  debug:
+  loop: []
+  register: literal_empty_list
+  failed_when: literal_empty_list is not skipped

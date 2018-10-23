@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -16,7 +16,7 @@ module: ec2_vpc_peer
 short_description: create, delete, accept, and reject VPC peering connections between two VPCs.
 description:
   - Read the AWS documentation for VPC Peering Connections
-    U(http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html)
+    U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html).
 version_added: "2.2"
 options:
   vpc_id:
@@ -50,7 +50,7 @@ options:
     required: false
     default: present
     choices: ['present', 'absent', 'accept', 'reject']
-author: Mike Mochan(@mmochan)
+author: Mike Mochan (@mmochan)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -126,7 +126,7 @@ EXAMPLES = '''
     region: us-east-1
     vpc_id: vpc-12345678
     peer_vpc_id: vpc-87654321
-    peer_vpc_region: us-west-2
+    peer_region: us-west-2
     state: present
     tags:
       Name: Peering connection for us-east-1 VPC to us-west-2 VPC

@@ -46,8 +46,8 @@ description:
       to another virtual machine destination, a virtual machine gateway or a Compute Engine-operated
       gateway. Packets that do not match any route in the sending virtual machine's routing
       table will be dropped.
-    - A Routes resources must have exactly one specification of either nextHopGateway,
-      nextHopInstance, nextHopIp, or nextHopVpnTunnel.
+    - A Route resource must have exactly one specification of either nextHopGateway, nextHopInstance,
+      nextHopIp, or nextHopVpnTunnel.
 short_description: Creates a GCP Route
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -65,7 +65,13 @@ options:
         description:
             - The destination range of outgoing packets that this route applies to.
             - Only IPv4 is supported.
+        required: true
+    description:
+        description:
+            - An optional description of this resource. Provide this property when you create
+              the resource.
         required: false
+        version_added: 2.7
     name:
         description:
             - Name of the resource. Provided by the client when the resource is created. The name
@@ -74,11 +80,16 @@ options:
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
-        required: false
+        required: true
     network:
         description:
-            - A reference to Network resource.
-        required: false
+            - The network that this route applies to.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
+        required: true
     priority:
         description:
             - The priority of this route. Priority is used to break ties in cases where there
@@ -102,11 +113,9 @@ options:
     next_hop_instance:
         description:
             - URL to an instance that should handle matching packets.
-            - 'You can specify this as a full or partial URL. For example: *
-              U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
-              instances/instance *
-              projects/project/zones/zone/instances/instance *
-              zones/zone/instances/instance .'
+            - 'You can specify this as a full or partial URL. For example:  * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
+              instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
+              .'
         required: false
     next_hop_ip:
         description:
@@ -117,42 +126,47 @@ options:
             - URL to a VpnTunnel that should handle matching packets.
         required: false
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)"
+    - "Using Routes: U(https://cloud.google.com/vpc/docs/using-routes)"
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-route'
+      name: "network-route"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: network
 
 - name: create a route
   gcp_compute_route:
-      name: testObject
-      dest_range: '192.168.6.0/24'
-      next_hop_gateway: 'global/gateways/default-internet-gateway'
+      name: "test_object"
+      dest_range: 192.168.6.0/24
+      next_hop_gateway: global/gateways/default-internet-gateway
       network: "{{ network }}"
       tags:
-        - backends
-        - databases
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      - backends
+      - databases
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    dest_range:
+    destRange:
         description:
             - The destination range of outgoing packets that this route applies to.
             - Only IPv4 is supported.
+        returned: success
+        type: str
+    description:
+        description:
+            - An optional description of this resource. Provide this property when you create
+              the resource.
         returned: success
         type: str
     name:
@@ -167,7 +181,7 @@ RETURN = '''
         type: str
     network:
         description:
-            - A reference to Network resource.
+            - The network that this route applies to.
         returned: success
         type: dict
     priority:
@@ -184,7 +198,7 @@ RETURN = '''
             - A list of instance tags to which this route applies.
         returned: success
         type: list
-    next_hop_gateway:
+    nextHopGateway:
         description:
             - URL to a gateway that should handle matching packets.
             - 'Currently, you can only specify the internet gateway, using a full or partial valid
@@ -193,24 +207,27 @@ RETURN = '''
               .'
         returned: success
         type: str
-    next_hop_instance:
+    nextHopInstance:
         description:
             - URL to an instance that should handle matching packets.
-            - 'You can specify this as a full or partial URL. For example: *
-              U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
-              instances/instance *
-              projects/project/zones/zone/instances/instance *
-              zones/zone/instances/instance .'
+            - 'You can specify this as a full or partial URL. For example:  * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
+              instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
+              .'
         returned: success
         type: str
-    next_hop_ip:
+    nextHopIp:
         description:
             - Network IP address of an instance that should handle matching packets.
         returned: success
         type: str
-    next_hop_vpn_tunnel:
+    nextHopVpnTunnel:
         description:
             - URL to a VpnTunnel that should handle matching packets.
+        returned: success
+        type: str
+    nextHopNetwork:
+        description:
+            - URL to a Network that should handle matching packets.
         returned: success
         type: str
 '''
@@ -234,9 +251,10 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            dest_range=dict(type='str'),
-            name=dict(type='str'),
-            network=dict(type='dict'),
+            dest_range=dict(required=True, type='str'),
+            description=dict(type='str'),
+            name=dict(required=True, type='str'),
+            network=dict(required=True, type='dict'),
             priority=dict(type='int'),
             tags=dict(type='list', elements='str'),
             next_hop_gateway=dict(type='str'),
@@ -245,6 +263,9 @@ def main():
             next_hop_vpn_tunnel=dict(type='str')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#route'
@@ -255,7 +276,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -279,8 +301,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="Route cannot be edited")
 
 
 def delete(module, link, kind):
@@ -292,6 +313,7 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#route',
         u'destRange': module.params.get('dest_range'),
+        u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'priority': module.params.get('priority'),
@@ -309,9 +331,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -322,9 +344,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/routes".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -339,8 +361,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -368,6 +388,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'destRange': response.get(u'destRange'),
+        u'description': response.get(u'description'),
         u'name': response.get(u'name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'priority': module.params.get('priority'),
@@ -375,7 +396,8 @@ def response_to_hash(module, response):
         u'nextHopGateway': module.params.get('next_hop_gateway'),
         u'nextHopInstance': module.params.get('next_hop_instance'),
         u'nextHopIp': module.params.get('next_hop_ip'),
-        u'nextHopVpnTunnel': module.params.get('next_hop_vpn_tunnel')
+        u'nextHopVpnTunnel': module.params.get('next_hop_vpn_tunnel'),
+        u'nextHopNetwork': response.get(u'nextHopNetwork')
     }
 
 
@@ -391,7 +413,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#route')
@@ -414,6 +436,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

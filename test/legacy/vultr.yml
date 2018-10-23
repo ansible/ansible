@@ -5,20 +5,25 @@
   gather_facts: no
   connection: local
   roles:
-    - { role: vr_account_facts, tags: test_vr_account_facts }
-    - { role: vr_dns_domain, tags: test_vr_dns_domain }
-    - { role: vr_dns_domain_facts, tags: test_vr_dns_domain_facts }
-    - { role: vr_dns_record, tags: test_vr_dns_record }
-    - { role: vr_firewall_group, tags: test_vr_firewall_group }
-    - { role: vr_firewall_group_facts, tags: test_vr_firewall_group_facts }
-    - { role: vr_firewall_rule, tags: test_vr_firewall_rule }
-    - { role: vr_os_facts, tags: test_vr_os_facts }
-    - { role: vr_plan_facts, tags: test_vr_plan_facts }
-    - { role: vr_region_facts, tags: test_vr_region_facts }
-    - { role: vr_server, tags: test_vr_server }
-    - { role: vr_ssh_key, tags: test_vr_ssh_key }
-    - { role: vr_ssh_key_facts, tags: test_vr_ssh_key_facts }
-    - { role: vr_startup_script, tags: test_vr_startup_script }
-    - { role: vr_startup_script_facts, tags: test_vr_startup_script_facts }
-    - { role: vr_user, tags: test_vr_user }
-    - { role: vr_user_facts, tags: test_vr_user_facts }
+    - { role: vultr_account_facts, tags: test_vultr_account_facts }
+    - { role: vultr_block_storage, tags: test_vultr_block_storage }
+    - { role: vultr_block_storage_facts, tags: test_vultr_block_storage_facts }
+    - { role: vultr_dns_domain, tags: test_vultr_dns_domain }
+    - { role: vultr_dns_domain_facts, tags: test_vultr_dns_domain_facts }
+    - { role: vultr_dns_record, tags: test_vultr_dns_record }
+    - { role: vultr_firewall_group, tags: test_vultr_firewall_group }
+    - { role: vultr_firewall_group_facts, tags: test_vultr_firewall_group_facts }
+    - { role: vultr_firewall_rule, tags: test_vultr_firewall_rule }
+    - { role: vultr_network, tags: test_vultr_network }
+    - { role: vultr_network_facts, tags: test_vultr_network_facts }
+    - { role: vultr_os_facts, tags: test_vultr_os_facts }
+    - { role: vultr_plan_facts, tags: test_vultr_plan_facts }
+    - { role: vultr_region_facts, tags: test_vultr_region_facts }
+    - { role: vultr_server, tags: test_vultr_server }
+    - { role: vultr_server_facts, tags: test_vultr_server_facts }
+    - { role: vultr_ssh_key, tags: test_vultr_ssh_key }
+    - { role: vultr_ssh_key_facts, tags: test_vultr_ssh_key_facts }
+    - { role: vultr_startup_script, tags: test_vultr_startup_script }
+    - { role: vultr_startup_script_facts, tags: test_vultr_startup_script_facts }
+    - { role: vultr_user, tags: test_vultr_user }
+    - { role: vultr_user_facts, tags: test_vultr_user_facts }

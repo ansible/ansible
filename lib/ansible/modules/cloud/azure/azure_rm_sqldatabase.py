@@ -303,7 +303,6 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.parameters = dict()
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
@@ -346,13 +345,10 @@ class AzureRMDatabases(AzureRMModuleBase):
                         ev = 'AdventureWorksLT'
                     self.parameters["sample_name"] = ev
                 elif key == "zone_redundant":
-                    self.parameters["zone_redundant"] = 'Enabled' if kwargs[key] else 'Disabled'
+                    self.parameters["zone_redundant"] = True if kwargs[key] else False
 
         old_response = None
         response = None
-
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -432,10 +428,10 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.log("Creating / Updating the SQL Database instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.databases.create_or_update(resource_group_name=self.resource_group,
-                                                                   server_name=self.server_name,
-                                                                   database_name=self.name,
-                                                                   parameters=self.parameters)
+            response = self.sql_client.databases.create_or_update(resource_group_name=self.resource_group,
+                                                                  server_name=self.server_name,
+                                                                  database_name=self.name,
+                                                                  parameters=self.parameters)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -452,9 +448,9 @@ class AzureRMDatabases(AzureRMModuleBase):
         '''
         self.log("Deleting the SQL Database instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.databases.delete(resource_group_name=self.resource_group,
-                                                         server_name=self.server_name,
-                                                         database_name=self.name)
+            response = self.sql_client.databases.delete(resource_group_name=self.resource_group,
+                                                        server_name=self.server_name,
+                                                        database_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the SQL Database instance.')
             self.fail("Error deleting the SQL Database instance: {0}".format(str(e)))
@@ -470,9 +466,9 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.log("Checking if the SQL Database instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
-                                                      server_name=self.server_name,
-                                                      database_name=self.name)
+            response = self.sql_client.databases.get(resource_group_name=self.resource_group,
+                                                     server_name=self.server_name,
+                                                     database_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("SQL Database instance : {0} found".format(response.name))
@@ -494,6 +490,7 @@ def _snake_to_camel(snake, capitalize_first=False):
 def main():
     """Main execution"""
     AzureRMDatabases()
+
 
 if __name__ == '__main__':
     main()

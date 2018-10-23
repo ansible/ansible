@@ -46,6 +46,8 @@ if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
 
 from requests.auth import HTTPBasicAuth
 
+from ansible.module_utils._text import to_text
+
 
 def json_format_dict(data, pretty=False):
     """Converts a dict to a JSON object and dumps it as a formatted string"""
@@ -285,20 +287,32 @@ class ForemanInventory(object):
             group = 'hostgroup'
             val = host.get('%s_title' % group) or host.get('%s_name' % group)
             if val:
-                safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                safe_key = self.to_safe('%s%s_%s' % (
+                    to_text(self.group_prefix),
+                    group,
+                    to_text(val).lower()
+                ))
                 self.inventory[safe_key].append(dns_name)
 
             # Create ansible groups for environment, location and organization
             for group in ['environment', 'location', 'organization']:
                 val = host.get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                    safe_key = self.to_safe('%s%s_%s' % (
+                        to_text(self.group_prefix),
+                        group,
+                        to_text(val).lower()
+                    ))
                     self.inventory[safe_key].append(dns_name)
 
             for group in ['lifecycle_environment', 'content_view']:
                 val = host.get('content_facet_attributes', {}).get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                    safe_key = self.to_safe('%s%s_%s' % (
+                        to_text(self.group_prefix),
+                        group,
+                        to_text(val).lower()
+                    ))
                     self.inventory[safe_key].append(dns_name)
 
             params = self._resolve_params(host_params)
@@ -307,7 +321,7 @@ class ForemanInventory(object):
             # attributes.
             groupby = dict()
             for k, v in params.items():
-                groupby[k] = self.to_safe(str(v))
+                groupby[k] = self.to_safe(to_text(v))
 
             # The name of the ansible groups is given by group_patterns:
             for pattern in self.group_patterns:
@@ -435,6 +449,7 @@ class ForemanInventory(object):
         self.get_inventory()
         self._print_data()
         return True
+
 
 if __name__ == '__main__':
     sys.exit(not ForemanInventory().run())

@@ -36,9 +36,10 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Gather facts about all Users on given ESXi host system
   vmware_local_user_facts:
-    hostname: esxi_hostname
-    username: root
-    password: vmware
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+  delegate_to: localhost
   register: all_user_facts
 '''
 
@@ -64,11 +65,6 @@ local_user_facts:
         },
     ]
 '''
-
-try:
-    from pyVmomi import vim, vmodl
-except ImportError:
-    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
@@ -106,6 +102,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
     vmware_local_user_facts = VMwareUserFactsManager(module)
     vmware_local_user_facts.gather_user_facts()
+
 
 if __name__ == '__main__':
     main()

@@ -82,7 +82,7 @@ EXAMPLES = '''
     msg: "Name is {{ my_instance.instance.name }}"
 
 - debug:
-    msg: "IP is {{ my_instance.instance.publicIpAddress }}"
+    msg: "IP is {{ my_instance.instance.public_ip_address }}"
 
 # Delete an instance if present
 - lightsail:

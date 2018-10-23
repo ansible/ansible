@@ -4,12 +4,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import io
 import os
+import os.path
 import sys
 import stat
 import tempfile
-
-import io
+import traceback
 from collections import namedtuple
 
 from yaml import load as yaml_load
@@ -26,8 +27,10 @@ from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
+from ansible.utils import py3compat
 from ansible.utils.path import unfrackpath
 from ansible.utils.path import makedirs_safe
+
 
 Plugin = namedtuple('Plugin', 'name type')
 Setting = namedtuple('Setting', 'name value origin type')
@@ -150,37 +153,68 @@ def find_ini_config_file(warnings=None):
     ''' Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
     # FIXME: eventually deprecate ini configs
 
-    path0 = os.getenv("ANSIBLE_CONFIG", None)
-    if path0 is not None:
-        path0 = unfrackpath(path0, follow=False)
-        if os.path.isdir(path0):
-            path0 += "/ansible.cfg"
-    try:
-        path1 = os.getcwd()
-        perms1 = os.stat(path1)
-        if perms1.st_mode & stat.S_IWOTH:
-            if warnings is not None:
-                warnings.add("Ansible is in a world writable directory (%s), ignoring it as an ansible.cfg source." % to_text(path1))
-            path1 = None
-        else:
-            path1 += "/ansible.cfg"
-    except OSError:
-        path1 = None
-    path2 = unfrackpath("~/.ansible.cfg", follow=False)
-    path3 = "/etc/ansible/ansible.cfg"
+    if warnings is None:
+        # Note: In this case, warnings does nothing
+        warnings = set()
 
-    for path in [path0, path1, path2, path3]:
-        if path is not None and os.path.exists(path):
+    # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
+    # We can't use None because we could set path to None.
+    SENTINEL = object
+
+    potential_paths = []
+
+    # Environment setting
+    path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
+    if path_from_env is not SENTINEL:
+        path_from_env = unfrackpath(path_from_env, follow=False)
+        if os.path.isdir(path_from_env):
+            path_from_env = os.path.join(path_from_env, "ansible.cfg")
+        potential_paths.append(path_from_env)
+
+    # Current working directory
+    warn_cmd_public = False
+    try:
+        cwd = os.getcwd()
+        perms = os.stat(cwd)
+        cwd_cfg = os.path.join(cwd, "ansible.cfg")
+        if perms.st_mode & stat.S_IWOTH:
+            # Working directory is world writable so we'll skip it.
+            # Still have to look for a file here, though, so that we know if we have to warn
+            if os.path.exists(cwd_cfg):
+                warn_cmd_public = True
+        else:
+            potential_paths.append(cwd_cfg)
+    except OSError:
+        # If we can't access cwd, we'll simply skip it as a possible config source
+        pass
+
+    # Per user location
+    potential_paths.append(unfrackpath("~/.ansible.cfg", follow=False))
+
+    # System location
+    potential_paths.append("/etc/ansible/ansible.cfg")
+
+    for path in potential_paths:
+        if os.path.exists(path):
             break
     else:
         path = None
+
+    # Emit a warning if all the following are true:
+    # * We did not use a config from ANSIBLE_CONFIG
+    # * There's an ansible.cfg in the current working directory that we skipped
+    if path_from_env != path and warn_cmd_public:
+        warnings.add(u"Ansible is being run in a world writable directory (%s),"
+                     u" ignoring it as an ansible.cfg source."
+                     u" For more information see"
+                     u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
+                     % to_text(cwd))
 
     return path
 
 
 class ConfigManager(object):
 
-    UNABLE = {}
     DEPRECATED = []
     WARNINGS = set()
 
@@ -193,18 +227,7 @@ class ConfigManager(object):
         self._config_file = conf_file
         self.data = ConfigData()
 
-        if defs_file is None:
-            # Create configuration definitions from source
-            b_defs_file = to_bytes('%s/base.yml' % os.path.dirname(__file__))
-        else:
-            b_defs_file = to_bytes(defs_file)
-
-        # consume definitions
-        if os.path.exists(b_defs_file):
-            with open(b_defs_file, 'rb') as config_def:
-                self._base_defs = yaml_load(config_def, Loader=SafeLoader)
-        else:
-            raise AnsibleError("Missing base configuration definition file (bad install?): %s" % to_native(b_defs_file))
+        self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
 
         if self._config_file is None:
             # set config using ini
@@ -218,6 +241,22 @@ class ConfigManager(object):
 
         # update constants
         self.update_config_data()
+        try:
+            self.update_module_defaults_groups()
+        except Exception as e:
+            # Since this is a 2.7 preview feature, we want to have it fail as gracefully as possible when there are issues.
+            sys.stderr.write('Could not load module_defaults_groups: %s: %s\n\n' % (type(e).__name__, e))
+            self.module_defaults_groups = {}
+
+    def _read_config_yaml_file(self, yml_file):
+        # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
+        # Currently this is only used with absolute paths to the `ansible/config` directory
+        yml_file = to_bytes(yml_file)
+        if os.path.exists(yml_file):
+            with open(yml_file, 'rb') as config_def:
+                return yaml_load(config_def, Loader=SafeLoader) or {}
+        raise AnsibleError(
+            "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
 
     def _parse_config_file(self, cfile=None):
         ''' return flat configuration settings from file(s) '''
@@ -309,13 +348,14 @@ class ConfigManager(object):
         try:
             value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
                                                             keys=keys, variables=variables, direct=direct)
+        except AnsibleError:
+            raise
         except Exception as e:
-            raise AnsibleError("Invalid settings supplied for %s: %s" % (config, to_native(e)))
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, traceback.format_exc()))
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
-
         if cfile is None:
             # use default config
             cfile = self._config_file
@@ -351,7 +391,7 @@ class ConfigManager(object):
 
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):
-                    value, origin = self._loop_entries(os.environ, defs[config]['env'])
+                    value, origin = self._loop_entries(py3compat.environ, defs[config]['env'])
                     origin = 'env: %s' % origin
 
                 # try config file entries next, if we have one
@@ -413,6 +453,14 @@ class ConfigManager(object):
 
         self._plugins[plugin_type][name] = defs
 
+    def update_module_defaults_groups(self):
+        defaults_config = self._read_config_yaml_file(
+            '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
+        )
+        if defaults_config.get('version') not in ('1', '1.0', 1, 1.0):
+            raise AnsibleError('module_defaults.yml has an invalid version "%s" for configuration. Could be a bad install.' % defaults_config.get('version'))
+        self.module_defaults_groups = defaults_config.get('groupings', {})
+
     def update_config_data(self, defs=None, configfile=None):
         ''' really: update constants '''
 
@@ -438,10 +486,17 @@ class ConfigManager(object):
             try:
                 value, origin = self.get_config_value_and_origin(config, configfile)
             except Exception as e:
-                # when building constants.py we ignore invalid configs
-                # CLI takes care of warnings once 'display' is loaded
-                self.UNABLE[config] = to_text(e)
-                continue
+                # Printing the problem here because, in the current code:
+                # (1) we can't reach the error handler for AnsibleError before we
+                #     hit a different error due to lack of working config.
+                # (2) We don't have access to display yet because display depends on config
+                #     being properly loaded.
+                #
+                # If we start getting double errors printed from this section of code, then the
+                # above problem #1 has been fixed.  Revamp this to be more like the try: except
+                # in get_config_value() at that time.
+                sys.stderr.write("Unhandled error:\n %s\n\n" % traceback.format_exc())
+                raise AnsibleError("Invalid settings supplied for %s: %s\n%s" % (config, to_native(e), traceback.format_exc()))
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))

@@ -103,7 +103,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import load_config, run_commands, normalize_interface
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
@@ -231,7 +231,7 @@ def parse_to_logical_rows(out):
 
 
 def map_ports_str_to_list(ports_str):
-    return list(filter(bool, (p.strip().replace('Gi', 'GigabitEthernet') for p in ports_str.split(', '))))
+    return list(filter(bool, (normalize_interface(p.strip()) for p in ports_str.split(', '))))
 
 
 def parse_to_obj(logical_rows):

@@ -272,6 +272,16 @@ EXAMPLES = """
       - shutdown
     # parents: int gig1/0/11
     parents: interface GigabitEthernet1/0/11
+
+# Set boot image based on comparison to a group_var (version) and the version
+# that is returned from the `ios_facts` module
+- name: SETTING BOOT IMAGE
+  ios_config:
+    lines:
+      - no boot system
+      - boot system flash bootflash:{{new_image}}
+    host: "{{ inventory_hostname }}"
+  when: ansible_net_version != version
 """
 
 RETURN = """
@@ -293,6 +303,8 @@ backup_path:
 """
 import json
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ios.ios import run_commands, get_config
 from ansible.module_utils.network.ios.ios import get_defaults_flag, get_connection
 from ansible.module_utils.network.ios.ios import ios_argument_spec
@@ -307,6 +319,13 @@ def check_args(module, warnings):
         if len(module.params['multiline_delimiter']) != 1:
             module.fail_json(msg='multiline_delimiter value can only be a '
                                  'single character')
+
+
+def edit_config_or_macro(connection, commands):
+    if "macro name" in commands[0]:
+        connection.edit_macro(candidate=commands)
+    else:
+        connection.edit_config(candidate=commands)
 
 
 def get_candidate_config(module):
@@ -419,9 +438,12 @@ def main():
 
         candidate = get_candidate_config(module)
         running = get_running_config(module, contents, flags=flags)
+        try:
+            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                           diff_replace=replace)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-        response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
-                                       diff_replace=replace)
         config_diff = response['config_diff']
         banner_diff = response['banner_diff']
 
@@ -442,7 +464,7 @@ def main():
             # them with the current running config
             if not module.check_mode:
                 if commands:
-                    connection.edit_config(candidate=commands)
+                    edit_config_or_macro(connection, commands)
                 if banner_diff:
                     connection.edit_banner(candidate=json.dumps(banner_diff), multiline_delimiter=module.params['multiline_delimiter'])
 
@@ -508,6 +530,7 @@ def main():
                 })
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

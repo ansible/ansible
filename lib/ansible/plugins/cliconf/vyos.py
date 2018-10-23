@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import re
 import json
 
@@ -27,6 +26,7 @@ from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
@@ -54,7 +54,7 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, filter=None, format=None):
+    def get_config(self, flags=None, format=None):
         if format:
             option_values = self.get_option_values()
             if format not in option_values['format']:
@@ -69,13 +69,13 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
         requests = []
         self.send_command('configure')
         for cmd in to_list(candidate):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             results.append(self.send_command(**cmd))
@@ -99,19 +99,20 @@ class Cliconf(CliconfBase):
         else:
             self.send_command('exit')
 
-        resp['diff'] = diff_config
+        if diff_config:
+            resp['diff'] = diff_config
         resp['response'] = results
         resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
 
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:
@@ -198,7 +199,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -220,14 +221,14 @@ class Cliconf(CliconfBase):
         return {
             'supports_diff_replace': False,
             'supports_commit': True,
-            'supports_rollback': True,
+            'supports_rollback': False,
             'supports_defaults': False,
             'supports_onbox_diff': True,
             'supports_commit_comment': True,
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': False,
-            'supports_generate_diff': True,
+            'supports_generate_diff': False,
             'supports_replace': False
         }
 

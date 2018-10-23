@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -69,6 +69,7 @@ EXAMPLES = r'''
     switch_1_id: 1011
     switch_2_id: 1012
     state: present
+  delegate_to: localhost
 
 - name: Remove Explicit vPC Protection Group
   aci_switch_policy_vpc_protection_group:
@@ -77,6 +78,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     protection_group: leafPair101-vpcGrp
     state: absent
+  delegate_to: localhost
 
 - name: Query vPC Protection Groups
   aci_switch_policy_vpc_protection_group:
@@ -84,6 +86,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query our vPC Protection Group
   aci_switch_policy_vpc_protection_group:
@@ -92,6 +96,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     protection_group: leafPair101-vpcGrp
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -235,8 +241,8 @@ def main():
         root_class=dict(
             aci_class='fabricExplicitGEp',
             aci_rn='fabric/protpol/expgep-{0}'.format(protection_group),
-            filter_target='eq(fabricExplicitGEp.name, "{0}")'.format(protection_group),
             module_object=protection_group,
+            target_filter={'name': protection_group},
         ),
         child_classes=['fabricNodePEp', 'fabricNodePEp', 'fabricRsVpcInstPol'],
     )
@@ -249,14 +255,12 @@ def main():
             class_config=dict(
                 name=protection_group,
                 id=protection_group_id,
-                rn='expgep-{0}'.format(protection_group),
             ),
             child_configs=[
                 dict(
                     fabricNodePEp=dict(
                         attributes=dict(
                             id='{0}'.format(switch_1_id),
-                            rn='nodepep-{0}'.format(switch_1_id),
                         ),
                     ),
                 ),
@@ -264,7 +268,6 @@ def main():
                     fabricNodePEp=dict(
                         attributes=dict(
                             id='{0}'.format(switch_2_id),
-                            rn='nodepep-{0}'.format(switch_2_id),
                         ),
                     ),
                 ),

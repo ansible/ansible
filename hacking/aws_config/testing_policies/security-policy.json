@@ -3,16 +3,24 @@
     "Statement": [
         {
             "Action": [
+                "iam:GetGroup",
+                "iam:GetInstanceProfile",
                 "iam:GetPolicy",
                 "iam:GetPolicyVersion",
                 "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetUser",
+                "iam:ListAttachedGroupPolicies",
                 "iam:ListAttachedRolePolicies",
+                "iam:ListAttachedUserPolicies",
                 "iam:ListGroups",
+                "iam:ListInstanceProfiles",
                 "iam:ListInstanceProfilesForRole",
                 "iam:ListPolicies",
                 "iam:ListRoles",
                 "iam:ListRolePolicies",
-                "iam:ListUsers"
+                "iam:ListUsers",
+                "iam:ListAccountAliases"
             ],
             "Resource": "*",
             "Effect": "Allow",

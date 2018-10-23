@@ -111,7 +111,7 @@ EXAMPLES = '''
 
 RETURN = '''
 put_parameter:
-    description: Add one or more paramaters to the system.
+    description: Add one or more parameters to the system.
     returned: success
     type: dictionary
 delete_parameter:
@@ -153,7 +153,7 @@ def create_update_parameter(client, module):
         Type=module.params.get('string_type')
     )
 
-    if (module.params.get('overwrite_value') == "always" or "changed"):
+    if (module.params.get('overwrite_value') in ("always", "changed")):
         args.update(Overwrite=True)
     else:
         args.update(Overwrite=False)
@@ -185,7 +185,10 @@ def create_update_parameter(client, module):
                 # Description field not available from get_parameter function so get it from describe_parameters
                 describe_existing_parameter = None
                 try:
-                    describe_existing_parameter = client.describe_parameters(Filters=[{"Key": "Name", "Values": [args['Name']]}])
+                    describe_existing_parameter_paginator = client.get_paginator('describe_parameters')
+                    describe_existing_parameter = describe_existing_parameter_paginator.paginate(
+                        Filters=[{"Key": "Name", "Values": [args['Name']]}]).build_full_result()
+
                 except ClientError as e:
                     module.fail_json_aws(e, msg="getting description value")
 

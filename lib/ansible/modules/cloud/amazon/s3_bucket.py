@@ -43,7 +43,7 @@ options:
       - The JSON policy as a string.
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc. Otherwise assumes AWS
+      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
     aliases: [ S3_URL ]
   ceph:
     description:
@@ -230,6 +230,8 @@ def create_or_update_bucket(s3_client, module, location):
         module.fail_json_aws(e, msg="Failed to get bucket tags")
 
     if tags is not None:
+        # Tags are always returned as text
+        tags = dict((to_text(k), to_text(v)) for k, v in tags.items())
         if current_tags_dict != tags:
             if tags:
                 try:
@@ -444,8 +446,23 @@ def destroy_bucket(s3_client, module):
         try:
             for key_version_pairs in paginated_versions_list(s3_client, Bucket=name):
                 formatted_keys = [{'Key': key, 'VersionId': version} for key, version in key_version_pairs]
+                for fk in formatted_keys:
+                    # remove VersionId from cases where they are `None` so that
+                    # unversioned objects are deleted using `DeleteObject`
+                    # rather than `DeleteObjectVersion`, improving backwards
+                    # compatibility with older IAM policies.
+                    if not fk.get('VersionId'):
+                        fk.pop('VersionId')
+
                 if formatted_keys:
-                    s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
+                    resp = s3_client.delete_objects(Bucket=name, Delete={'Objects': formatted_keys})
+                    if resp.get('Errors'):
+                        module.fail_json(
+                            msg='Could not empty bucket before deleting. Could not delete objects: {0}'.format(
+                                ', '.join([k['Key'] for k in resp['Errors']])
+                            ),
+                            errors=resp['Errors'], response=resp
+                        )
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed while deleting bucket")
 

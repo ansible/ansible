@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -55,6 +55,7 @@ EXAMPLES = r'''
     mcp: '{{ mcp }}'
     description: '{{ descr }}'
     admin_state: '{{ admin_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -195,8 +196,8 @@ def main():
         root_class=dict(
             aci_class='mcpIfPol',
             aci_rn='infra/mcpIfP-{0}'.format(mcp),
-            filter_target='eq(mcpIfPol.name, "{0}")'.format(mcp),
             module_object=mcp,
+            target_filter={'name': mcp},
         ),
     )
 

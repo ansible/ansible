@@ -1,0 +1,73 @@
+# test code for the Windows xml module
+# (c) 2017, Richard Levenberg <richard.levenberg@cosocloud.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: copy a test .xml file
+  win_copy:
+    src: config.xml
+    dest: "{{win_output_dir}}\\config.xml"
+
+- name: add an element that only has a text child node
+  win_xml:
+    path: "{{win_output_dir}}\\config.xml"
+    fragment: '<string key="answer">42</string>'
+    xpath: '/config'
+  register: element_add_result
+
+- name: check element add result
+  assert:
+    that:
+    - element_add_result is changed
+
+- name: try to add the  element that only has a text child node again
+  win_xml:
+    path: "{{win_output_dir}}\\config.xml"
+    fragment: '<string key="answer">42</string>'
+    xpath: '/config'
+  register: element_add_result_second
+
+- name: check element add result
+  assert:
+    that:
+    - not element_add_result_second is changed
+
+- name: copy a test log4j.xml
+  win_copy:
+    src: log4j.xml
+    dest: "{{win_output_dir}}\\log4j.xml"
+
+- name: change an attribute to fatal logging
+  win_xml:
+    path: "{{win_output_dir}}\\log4j.xml"
+    xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
+    type: attribute
+    attribute: 'value'
+    fragment: 'FATAL'
+
+- name: try to change the attribute again
+  win_xml:
+    path: "{{win_output_dir}}\\log4j.xml"
+    xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
+    type: attribute
+    attribute: 'value'
+    fragment: 'FATAL'
+  register: attribute_changed_result
+
+- name: check attribute change result
+  assert:
+    that:
+    - not attribute_changed_result is changed

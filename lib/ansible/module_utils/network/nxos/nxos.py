@@ -36,6 +36,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
@@ -139,7 +140,11 @@ class Cli:
             return self._device_configs[cmd]
         except KeyError:
             connection = self._get_connection()
-            out = connection.get_config(filter=flags)
+            try:
+                out = connection.get_config(flags=flags)
+            except ConnectionError as exc:
+                self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
             cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
@@ -150,7 +155,18 @@ class Cli:
         connection = self._get_connection()
 
         try:
-            return connection.run_commands(commands, check_rc)
+            out = connection.run_commands(commands, check_rc)
+            if check_rc == 'retry_json':
+                capabilities = self.get_capabilities()
+                network_api = capabilities.get('network_api')
+
+                if network_api == 'cliconf' and out:
+                    for index, resp in enumerate(out):
+                        if ('Invalid command at' in resp or 'Ambiguous command at' in resp) and 'json' in resp:
+                            if commands[index]['output'] == 'json':
+                                commands[index]['output'] = 'text'
+                                out = connection.run_commands(commands, check_rc)
+            return out
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc))
 
@@ -164,7 +180,7 @@ class Cli:
         responses = []
         try:
             resp = connection.edit_config(config, replace=replace)
-            if isinstance(resp, collections.Mapping):
+            if isinstance(resp, Mapping):
                 resp = resp['response']
         except ConnectionError as e:
             code = getattr(e, 'code', 1)
@@ -188,8 +204,12 @@ class Cli:
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         conn = self._get_connection()
-        return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
-                             diff_replace=diff_replace)
+        try:
+            response = conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                     diff_replace=diff_replace)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return response
 
     def get_capabilities(self):
         """Returns platform info of the remove device
@@ -198,9 +218,30 @@ class Cli:
             return self._module._capabilities
 
         connection = self._get_connection()
-        capabilities = connection.get_capabilities()
+        try:
+            capabilities = connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         self._module._capabilities = json.loads(capabilities)
         return self._module._capabilities
+
+    def read_module_context(self, module_key):
+        connection = self._get_connection()
+        try:
+            module_context = connection.read_module_context(module_key)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+        return module_context
+
+    def save_module_context(self, module_key, module_context):
+        connection = self._get_connection()
+        try:
+            connection.save_module_context(module_key, module_context)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+        return None
 
 
 class Nxapi:
@@ -216,6 +257,7 @@ class Nxapi:
         self._module = module
         self._nxapi_auth = None
         self._device_configs = {}
+        self._module_context = {}
 
         self._module.params['url_username'] = self._module.params['username']
         self._module.params['url_password'] = self._module.params['password']
@@ -319,7 +361,7 @@ class Nxapi:
             if response['ins_api'].get('outputs'):
                 output = response['ins_api']['outputs']['output']
                 for item in to_list(output):
-                    if check_status and item['code'] != '200':
+                    if check_status is True and item['code'] != '200':
                         if return_error:
                             result.append(item)
                         else:
@@ -381,6 +423,9 @@ class Nxapi:
         """Sends the ordered set of commands to the device
         """
         if replace:
+            device_info = self.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                self._module.fail_json(msg='replace is supported only on Nexus 9K devices')
             commands = 'config replace {0}'.format(replace)
 
         commands = to_list(commands)
@@ -439,6 +484,17 @@ class Nxapi:
         result['network_api'] = 'nxapi'
         return result
 
+    def read_module_context(self, module_key):
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
+
+        return None
+
 
 def is_json(cmd):
     return str(cmd).endswith('| json')
@@ -463,8 +519,10 @@ def to_command(module, commands):
     transform = ComplexList(dict(
         command=dict(key=True),
         output=dict(default=default_output),
-        prompt=dict(),
-        answer=dict()
+        prompt=dict(type='list'),
+        answer=dict(type='list'),
+        sendonly=dict(type='bool', default=False),
+        check_all=dict(type='bool', default=False),
     ), module)
 
     commands = transform(to_list(commands))
@@ -562,3 +620,13 @@ def get_interface_type(interface):
         return 'nve'
     else:
         return 'unknown'
+
+
+def read_module_context(module):
+    conn = get_connection(module)
+    return conn.read_module_context(module._name)
+
+
+def save_module_context(module, module_context):
+    conn = get_connection(module)
+    return conn.save_module_context(module._name, module_context)

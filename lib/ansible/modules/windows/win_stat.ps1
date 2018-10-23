@@ -70,7 +70,13 @@ If ($info -ne $null) {
         # checksum = a file and get_checksum: True
         # md5 = a file and get_md5: True
     }
-    $stat.owner = $info.GetAccessControl().Owner
+    try {
+        $stat.owner = $info.GetAccessControl().Owner
+    } catch {
+        # may not have rights, historical behaviour was to just set to $null
+        # due to ErrorActionPreference being set to "Continue"
+        $stat.owner = $null
+    }
 
     # values that are set according to the type of file
     if ($info.Attributes.HasFlag([System.IO.FileAttributes]::Directory)) {

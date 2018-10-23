@@ -1,0 +1,20 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    string_var: "no"
+  tasks:
+    - set_fact:
+        this_is_string: "yes"
+        this_is_not_string: yes
+        this_is_also_string: "{{ string_var }}"
+        this_is_another_string: !!str "{% set thing = '' + string_var + '' %}{{ thing }}"
+        this_is_more_strings: '{{ string_var + "" }}'
+
+    - assert:
+        that:
+          - string_var == 'no'
+          - this_is_string == 'yes'
+          - this_is_not_string == True
+          - this_is_also_string == 'no'
+          - this_is_another_string == 'no'
+          - this_is_more_strings == 'no'

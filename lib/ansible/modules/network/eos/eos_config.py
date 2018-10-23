@@ -213,18 +213,13 @@ EXAMPLES = """
   eos_config:
     lines: hostname {{ inventory_hostname }}
 
-- name: diff against a provided master config
-  eos_config:
-    diff_against: config
-    config: "{{ lookup('file', 'master.cfg') }}"
-
 - name: load an acl into the device
   eos_config:
     lines:
-      - 10 permit ip 192.0.2.1/32 any log
-      - 20 permit ip 192.0.2.2/32 any log
-      - 30 permit ip 192.0.2.3/32 any log
-      - 40 permit ip 192.0.2.4/32 any log
+      - 10 permit ip host 192.0.2.1 any log
+      - 20 permit ip host 192.0.2.2 any log
+      - 30 permit ip host 192.0.2.3 any log
+      - 40 permit ip host 192.0.2.4 any log
     parents: ip access-list test
     before: no ip access-list test
     replace: block
@@ -232,6 +227,11 @@ EXAMPLES = """
 - name: load configuration from file
   eos_config:
     src: eos.cfg
+
+- name: render a Jinja2 template onto an Arista switch
+  eos_config:
+    backup: yes
+    src: eos_template.j2
 
 - name: diff the running config against a master config
   eos_config:
@@ -264,7 +264,9 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
 """
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.eos.eos import get_config, load_config, get_connection
 from ansible.module_utils.network.eos.eos import run_commands
@@ -382,8 +384,12 @@ def main():
         candidate = get_candidate(module)
         running = get_running_config(module, contents, flags=flags)
 
-        response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
-                                       diff_replace=replace)
+        try:
+            response = connection.get_diff(candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, path=path,
+                                           diff_replace=replace)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
         config_diff = response['config_diff']
 
         if config_diff:

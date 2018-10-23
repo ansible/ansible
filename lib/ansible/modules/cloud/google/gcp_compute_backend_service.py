@@ -83,7 +83,17 @@ options:
                 required: false
             group:
                 description:
-                    - A reference to InstanceGroup resource.
+                    - This instance group defines the list of instances that serve traffic. Member virtual
+                      machine instances from each instance group must live in the same zone as the instance
+                      group itself.
+                    - No two backends in a backend service are allowed to use same Instance Group resource.
+                    - When the BackendService has load balancing scheme INTERNAL, the instance group must
+                      be in a zone within the same region as the BackendService.
+                    - 'This field represents a link to a InstanceGroup resource in GCP. It can be specified
+                      in two ways. You can add `register: name-of-resource` to a gcp_compute_instance_group
+                      task and then set this group field to "{{ name-of-resource }}" Alternatively, you
+                      can set this group to a dictionary with the selfLink key where the value is the
+                      selfLink of your InstanceGroup.'
                 required: false
             max_connections:
                 description:
@@ -190,6 +200,37 @@ options:
               and a health check is required.
             - For internal load balancing, a URL to a HealthCheck resource must be specified instead.
         required: false
+    iap:
+        description:
+            - Settings for enabling Cloud Identity Aware Proxy.
+        required: false
+        version_added: 2.7
+        suboptions:
+            enabled:
+                description:
+                    - Enables IAP.
+                required: false
+                type: bool
+            oauth2_client_id:
+                description:
+                    - OAuth2 Client ID for IAP.
+                required: false
+            oauth2_client_secret:
+                description:
+                    - OAuth2 Client Secret for IAP.
+                required: false
+            oauth2_client_secret_sha256:
+                description:
+                    - OAuth2 Client Secret SHA-256 for IAP.
+                required: false
+    load_balancing_scheme:
+        description:
+            - Indicates whether the backend service will be used with internal or external load
+              balancing. A backend service created for one type of load balancing cannot be used
+              with the other.
+        required: false
+        version_added: 2.7
+        choices: ['INTERNAL', 'EXTERNAL']
     name:
         description:
             - Name of the resource. Provided by the client when the resource is created. The name
@@ -215,7 +256,8 @@ options:
         choices: ['HTTP', 'HTTPS', 'TCP', 'SSL']
     region:
         description:
-            - A reference to Region resource.
+            - The region where the regional backend service resides.
+            - This field is not applicable to global backend services.
         required: false
     session_affinity:
         description:
@@ -238,19 +280,17 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-backendservice'
-      zone: 'us-central1-a'
+      name: "instancegroup-backendservice"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-backendservice'
+      name: "httphealthcheck-backendservice"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -258,29 +298,25 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: testObject
+      name: "test_object"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    affinity_cookie_ttl_sec:
+    affinityCookieTtlSec:
         description:
             - Lifetime of cookies in seconds if session_affinity is GENERATED_COOKIE. If set to
               0, the cookie is non-persistent and lasts only until the end of the browser session
@@ -294,7 +330,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            balancing_mode:
+            balancingMode:
                 description:
                     - Specifies the balancing mode for this backend.
                     - For global HTTP(S) or TCP/SSL load balancing, the default is UTILIZATION. Valid
@@ -302,7 +338,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: str
-            capacity_scaler:
+            capacityScaler:
                 description:
                     - A multiplier applied to the group's maximum servicing capacity (based on UTILIZATION,
                       RATE or CONNECTION).
@@ -320,10 +356,15 @@ RETURN = '''
                 type: str
             group:
                 description:
-                    - A reference to InstanceGroup resource.
+                    - This instance group defines the list of instances that serve traffic. Member virtual
+                      machine instances from each instance group must live in the same zone as the instance
+                      group itself.
+                    - No two backends in a backend service are allowed to use same Instance Group resource.
+                    - When the BackendService has load balancing scheme INTERNAL, the instance group must
+                      be in a zone within the same region as the BackendService.
                 returned: success
                 type: dict
-            max_connections:
+            maxConnections:
                 description:
                     - The max number of simultaneous connections for the group. Can be used with either
                       CONNECTION or UTILIZATION balancing modes.
@@ -332,7 +373,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: int
-            max_connections_per_instance:
+            maxConnectionsPerInstance:
                 description:
                     - The max number of simultaneous connections that a single backend instance can handle.
                       This is used to calculate the capacity of the group. Can be used in either CONNECTION
@@ -342,7 +383,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: int
-            max_rate:
+            maxRate:
                 description:
                     - The max requests per second (RPS) of the group.
                     - Can be used with either RATE or UTILIZATION balancing modes, but required if RATE
@@ -350,7 +391,7 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: int
-            max_rate_per_instance:
+            maxRatePerInstance:
                 description:
                     - The max requests per second (RPS) that a single backend instance can handle. This
                       is used to calculate the capacity of the group. Can be used in either balancing
@@ -358,43 +399,43 @@ RETURN = '''
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: str
-            max_utilization:
+            maxUtilization:
                 description:
                     - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization target
                       for the group. The default is 0.8. Valid range is [0.0, 1.0].
                     - This cannot be used for internal load balancing.
                 returned: success
                 type: str
-    cdn_policy:
+    cdnPolicy:
         description:
             - Cloud CDN configuration for this BackendService.
         returned: success
         type: complex
         contains:
-            cache_key_policy:
+            cacheKeyPolicy:
                 description:
                     - The CacheKeyPolicy for this CdnPolicy.
                 returned: success
                 type: complex
                 contains:
-                    include_host:
+                    includeHost:
                         description:
                             - If true requests to different hosts will be cached separately.
                         returned: success
                         type: bool
-                    include_protocol:
+                    includeProtocol:
                         description:
                             - If true, http and https requests will be cached separately.
                         returned: success
                         type: bool
-                    include_query_string:
+                    includeQueryString:
                         description:
                             - If true, include query string parameters in the cache key according to query_string_whitelist
                               and query_string_blacklist. If neither is set, the entire query string will be included.
                             - If false, the query string will be excluded from the cache key entirely.
                         returned: success
                         type: bool
-                    query_string_blacklist:
+                    queryStringBlacklist:
                         description:
                             - Names of query string parameters to exclude in cache keys.
                             - All other parameters will be included. Either specify query_string_whitelist or
@@ -402,7 +443,7 @@ RETURN = '''
                             - "'&' and '=' will be percent encoded and not treated as delimiters."
                         returned: success
                         type: list
-                    query_string_whitelist:
+                    queryStringWhitelist:
                         description:
                             - Names of query string parameters to include in cache keys.
                             - All other parameters will be excluded. Either specify query_string_whitelist or
@@ -410,19 +451,19 @@ RETURN = '''
                             - "'&' and '=' will be percent encoded and not treated as delimiters."
                         returned: success
                         type: list
-    connection_draining:
+    connectionDraining:
         description:
             - Settings for connection draining.
         returned: success
         type: complex
         contains:
-            draining_timeout_sec:
+            drainingTimeoutSec:
                 description:
                     - Time for which instance will be drained (not accept new connections, but still work
                       to finish started).
                 returned: success
                 type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -432,13 +473,13 @@ RETURN = '''
             - An optional description of this resource.
         returned: success
         type: str
-    enable_cdn:
+    enableCDN:
         description:
             - If true, enable Cloud CDN for this BackendService.
             - When the load balancing scheme is INTERNAL, this field is not used.
         returned: success
         type: bool
-    health_checks:
+    healthChecks:
         description:
             - The list of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
               checking this BackendService. Currently at most one health check can be specified,
@@ -451,6 +492,39 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
+    iap:
+        description:
+            - Settings for enabling Cloud Identity Aware Proxy.
+        returned: success
+        type: complex
+        contains:
+            enabled:
+                description:
+                    - Enables IAP.
+                returned: success
+                type: bool
+            oauth2ClientId:
+                description:
+                    - OAuth2 Client ID for IAP.
+                returned: success
+                type: str
+            oauth2ClientSecret:
+                description:
+                    - OAuth2 Client Secret for IAP.
+                returned: success
+                type: str
+            oauth2ClientSecretSha256:
+                description:
+                    - OAuth2 Client Secret SHA-256 for IAP.
+                returned: success
+                type: str
+    loadBalancingScheme:
+        description:
+            - Indicates whether the backend service will be used with internal or external load
+              balancing. A backend service created for one type of load balancing cannot be used
+              with the other.
+        returned: success
+        type: str
     name:
         description:
             - Name of the resource. Provided by the client when the resource is created. The name
@@ -461,7 +535,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    port_name:
+    portName:
         description:
             - Name of backend port. The same name should appear in the instance groups referenced
               by this service. Required when the load balancing scheme is EXTERNAL.
@@ -478,10 +552,11 @@ RETURN = '''
         type: str
     region:
         description:
-            - A reference to Region resource.
+            - The region where the regional backend service resides.
+            - This field is not applicable to global backend services.
         returned: success
         type: str
-    session_affinity:
+    sessionAffinity:
         description:
             - Type of session affinity to use. The default is NONE.
             - When the load balancing scheme is EXTERNAL, can be NONE, CLIENT_IP, or GENERATED_COOKIE.
@@ -490,7 +565,7 @@ RETURN = '''
             - When the protocol is UDP, this field is not used.
         returned: success
         type: str
-    timeout_sec:
+    timeoutSec:
         description:
             - How many seconds to wait for the backend before considering it a failed request.
               Default is 30 seconds. Valid range is [1, 86400].
@@ -545,6 +620,13 @@ def main():
             description=dict(type='str'),
             enable_cdn=dict(type='bool'),
             health_checks=dict(type='list', elements='str'),
+            iap=dict(type='dict', options=dict(
+                enabled=dict(type='bool'),
+                oauth2_client_id=dict(type='str'),
+                oauth2_client_secret=dict(type='str'),
+                oauth2_client_secret_sha256=dict(type='str')
+            )),
+            load_balancing_scheme=dict(type='str', choices=['INTERNAL', 'EXTERNAL']),
             name=dict(type='str'),
             port_name=dict(type='str'),
             protocol=dict(type='str', choices=['HTTP', 'HTTPS', 'TCP', 'SSL']),
@@ -553,6 +635,9 @@ def main():
             timeout_sec=dict(type='int', aliases=['timeout_seconds'])
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#backendService'
@@ -563,10 +648,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -586,12 +672,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -600,12 +686,14 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#backendService',
         u'affinityCookieTtlSec': module.params.get('affinity_cookie_ttl_sec'),
-        u'backends': BackendServiceBackendArray(module.params.get('backends', []), module).to_request(),
-        u'cdnPolicy': BackeServiCdnPolic(module.params.get('cdn_policy', {}), module).to_request(),
-        u'connectionDraining': BackeServiConneDrain(module.params.get('connection_draining', {}), module).to_request(),
+        u'backends': BackendServiceBackendsArray(module.params.get('backends', []), module).to_request(),
+        u'cdnPolicy': BackendServiceCdnPolicy(module.params.get('cdn_policy', {}), module).to_request(),
+        u'connectionDraining': BackendServiceConnectionDraining(module.params.get('connection_draining', {}), module).to_request(),
         u'description': module.params.get('description'),
         u'enableCDN': module.params.get('enable_cdn'),
         u'healthChecks': module.params.get('health_checks'),
+        u'iap': BackendServiceIap(module.params.get('iap', {}), module).to_request(),
+        u'loadBalancingScheme': module.params.get('load_balancing_scheme'),
         u'name': module.params.get('name'),
         u'portName': module.params.get('port_name'),
         u'protocol': module.params.get('protocol'),
@@ -621,9 +709,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -634,9 +722,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/backendServices".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -651,8 +739,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -680,14 +766,16 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'affinityCookieTtlSec': response.get(u'affinityCookieTtlSec'),
-        u'backends': BackendServiceBackendArray(response.get(u'backends', []), module).from_response(),
-        u'cdnPolicy': BackeServiCdnPolic(response.get(u'cdnPolicy', {}), module).from_response(),
-        u'connectionDraining': BackeServiConneDrain(response.get(u'connectionDraining', {}), module).from_response(),
+        u'backends': BackendServiceBackendsArray(response.get(u'backends', []), module).from_response(),
+        u'cdnPolicy': BackendServiceCdnPolicy(response.get(u'cdnPolicy', {}), module).from_response(),
+        u'connectionDraining': BackendServiceConnectionDraining(response.get(u'connectionDraining', {}), module).from_response(),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'enableCDN': response.get(u'enableCDN'),
         u'healthChecks': response.get(u'healthChecks'),
         u'id': response.get(u'id'),
+        u'iap': BackendServiceIap(response.get(u'iap', {}), module).from_response(),
+        u'loadBalancingScheme': response.get(u'loadBalancingScheme'),
         u'name': response.get(u'name'),
         u'portName': response.get(u'portName'),
         u'protocol': response.get(u'protocol'),
@@ -718,7 +806,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#backendService')
@@ -743,7 +831,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class BackendServiceBackendArray(object):
+class BackendServiceBackendsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -790,7 +878,7 @@ class BackendServiceBackendArray(object):
         })
 
 
-class BackeServiCdnPolic(object):
+class BackendServiceCdnPolicy(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -800,16 +888,16 @@ class BackeServiCdnPolic(object):
 
     def to_request(self):
         return remove_nones_from_dict({
-            u'cacheKeyPolicy': BackServCachKeyPoli(self.request.get('cache_key_policy', {}), self.module).to_request()
+            u'cacheKeyPolicy': BackendServiceCacheKeyPolicy(self.request.get('cache_key_policy', {}), self.module).to_request()
         })
 
     def from_response(self):
         return remove_nones_from_dict({
-            u'cacheKeyPolicy': BackServCachKeyPoli(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response()
+            u'cacheKeyPolicy': BackendServiceCacheKeyPolicy(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response()
         })
 
 
-class BackServCachKeyPoli(object):
+class BackendServiceCacheKeyPolicy(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -836,7 +924,7 @@ class BackServCachKeyPoli(object):
         })
 
 
-class BackeServiConneDrain(object):
+class BackendServiceConnectionDraining(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -853,6 +941,32 @@ class BackeServiConneDrain(object):
         return remove_nones_from_dict({
             u'drainingTimeoutSec': self.request.get(u'drainingTimeoutSec')
         })
+
+
+class BackendServiceIap(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({
+            u'enabled': self.request.get('enabled'),
+            u'oauth2ClientId': self.request.get('oauth2_client_id'),
+            u'oauth2ClientSecret': self.request.get('oauth2_client_secret'),
+            u'oauth2ClientSecretSha256': self.request.get('oauth2_client_secret_sha256')
+        })
+
+    def from_response(self):
+        return remove_nones_from_dict({
+            u'enabled': self.request.get(u'enabled'),
+            u'oauth2ClientId': self.request.get(u'oauth2ClientId'),
+            u'oauth2ClientSecret': self.request.get(u'oauth2ClientSecret'),
+            u'oauth2ClientSecretSha256': self.request.get(u'oauth2ClientSecretSha256')
+        })
+
 
 if __name__ == '__main__':
     main()

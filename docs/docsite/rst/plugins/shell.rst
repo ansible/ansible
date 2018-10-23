@@ -48,7 +48,7 @@ detailed in the plugin themselves (linked below).
        Jinja2 test plugins
    :doc:`../user_guide/playbooks_lookups`
        Jinja2 lookup plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

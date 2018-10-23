@@ -344,7 +344,7 @@ Also see dynamic_variables_.
 How do I access a group variable?
 +++++++++++++++++++++++++++++++++
 
-Techinically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
+Technically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
 
 That said, you could just access the variable by selecting a host that is part of that group, see first_host_in_a_group_ below for an example.
 
@@ -446,14 +446,16 @@ In OpenBSD, a similar option is available in the base system called encrypt(1):
 
     encrypt
 
-.. _commercial_support:
+.. _dot_or_array_notation:
 
 Ansible supports dot notation and array notation for variables. Which notation should I use?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The dot notation comes from Jinja and works fine for variables without special
-characters. If your variable contains dots (.), colons (:), or dashes (-) it is
-safer to use the array notation for variables.
+characters. If your variable contains dots (.), colons (:), or dashes (-), if
+a key begins and ends with two underscores, or if a key uses any of the known
+public attributes, it is safer to use the array notation. See :ref:`playbooks_variables`
+for a list of the known public attributes.
 
 .. code-block:: jinja
 
@@ -464,12 +466,51 @@ safer to use the array notation for variables.
 
 Also array notation allows for dynamic variable composition, see dynamic_variables_.
 
+Another problem with 'dot notation' is that some keys can cause problems because they collide with attributes and methods of python dictionaries.
+
+.. code-block:: jinja
+
+    item.update # this breaks if item is a dictionary, as 'update()' is a python method for dictionaries
+    item['update'] # this works
+
+
+.. _argsplat_unsafe:
+
+When is it unsafe to bulk-set task arguments from a variable?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+You can set all of a task's arguments from a dictionary-typed variable. This
+technique can be useful in some dynamic execution scenarios. However, it
+introduces a security risk. We do not recommend it, so Ansible issues a
+warning when you do something like this::
+
+    #...
+    vars:
+      usermod_args:
+        name: testuser
+        state: present
+        update_password: always
+    tasks:
+    - user: '{{ usermod_args }}'
+
+This particular example is safe. However, constructing tasks like this is
+risky because the parameters and values passed to ``usermod_args`` could
+be overwritten by malicious values in the ``host facts`` on a compromised
+target machine. To mitigate this risk:
+
+* set bulk variables at a level of precedence greater than ``host facts`` in the order of precedence found in :ref:`ansible_variable_precedence` (the example above is safe because play vars take precedence over facts)
+* disable the :ref:`inject_facts_as_vars` configuration setting to prevent fact values from colliding with variables (this will also disable the original warning)
+
+
+.. _commercial_support:
+
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
-Yes!  See our `services page <https://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <https://www.ansible.com/products/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
-We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
+We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/resources/webinars-training>`_ for more info on upcoming webinars.
 
 
 .. _web_interface:
@@ -539,7 +580,7 @@ The above DOES NOT WORK as you expect, if you need to use a dynamic variable use
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
-For 'non host vars' you can use the vars lookup plugin:
+For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 
 .. code-block:: jinja
 
@@ -568,7 +609,7 @@ Please see the section below for a link to IRC and the Google Group, where you c
        An introduction to playbooks
    :doc:`../user_guide/playbooks_best_practices`
        Best practices advice
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -58,6 +58,7 @@ options:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
+      - Note that image IDs (hashes) are not supported.
     required: true
   path:
     description:
@@ -128,7 +129,7 @@ options:
     description:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
-      - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
+      - Requires Docker API >= 1.21.
     required: false
     version_added: "2.2"
   container_limits:
@@ -167,13 +168,15 @@ extends_documentation_fragment:
 
 requirements:
   - "python >= 2.6"
-  - "docker-py >= 1.7.0"
+  - "docker-py >= 1.8.0"
   - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
      module has been superseded by L(docker,https://pypi.org/project/docker/)
      (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
      For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
      install the C(docker) Python module. Note that both modules should I(not)
-     be installed at the same time."
+     be installed at the same time. Also note that when both modules are installed
+     and one of them is uninstalled, the other might no longer function and a
+     reinstall of it is required."
   - "Docker API >= 1.20"
 
 author:
@@ -247,7 +250,9 @@ image:
 import os
 import re
 
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import (
+    HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
+)
 from ansible.module_utils._text import to_native
 
 try:
@@ -290,10 +295,11 @@ class ImageManager(DockerBaseClass):
         self.buildargs = parameters.get('buildargs')
 
         # If name contains a tag, it takes precedence over tag parameter.
-        repo, repo_tag = parse_repository_tag(self.name)
-        if repo_tag:
-            self.name = repo
-            self.tag = repo_tag
+        if not is_image_name_id(self.name):
+            repo, repo_tag = parse_repository_tag(self.name)
+            if repo_tag:
+                self.name = repo
+                self.tag = repo_tag
 
         if self.state in ['present', 'build']:
             self.present()
@@ -360,11 +366,14 @@ class ImageManager(DockerBaseClass):
 
         :return None
         '''
-        image = self.client.find_image(self.name, self.tag)
-        if image:
-            name = self.name
+        name = self.name
+        if is_image_name_id(name):
+            image = self.client.find_image_by_id(name)
+        else:
+            image = self.client.find_image(name, self.tag)
             if self.tag:
                 name = "%s:%s" % (self.name, self.tag)
+        if image:
             if not self.check_mode:
                 try:
                     self.client.remove_image(name, force=self.force)
@@ -595,6 +604,7 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        min_docker_api_version='1.20',
     )
 
     results = dict(

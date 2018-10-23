@@ -15,13 +15,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: iptables
-short_description: Modify the systems iptables
+short_description: Modify iptables rules
 version_added: "2.0"
 author:
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 - Sébastien DA ROCHA (@sebastiendarocha)
 description:
-  - Iptables is used to set up, maintain, and inspect the tables of IP packet
+  - C(iptables) is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
   - This module does not handle the saving and/or loading of rules, but rather
     only manipulates the current rules that are present in memory. This is the
@@ -64,10 +64,14 @@ options:
     default: ipv4
   chain:
     description:
-      - Chain to operate on.
-      - "This option can either be the name of a user defined chain or any of
-        the builtin chains: 'INPUT', 'FORWARD', 'OUTPUT', 'PREROUTING',
-        'POSTROUTING', 'SECMARK', 'CONNSECMARK'."
+      - "Specify the iptables chain to modify. This could be a user-defined chain or one of the standard iptables chains:"
+      - C(INPUT)
+      - C(FORWARD)
+      - C(OUTPUT)
+      - C(PREROUTING)
+      - C(POSTROUTING)
+      - C(SECMARK)
+      - C(CONNSECMARK)
   protocol:
     description:
       - The protocol of the rule or of the packet to check.
@@ -178,11 +182,13 @@ options:
         greater than the second one they will be swapped.
   destination_port:
     description:
-      - Destination port or port range specification. This can either be
+      - "Destination port or port range specification. This can either be
         a service name or a port number. An inclusive range can also be
         specified, using the format first:last. If the first port is omitted,
         '0' is assumed; if the last is omitted, '65535' is assumed. If the
         first port is greater than the second one they will be swapped.
+        This is only valid if the rule also specifies one of the following
+        protocols: tcp, udp, dccp or sctp."
   to_ports:
     description:
       - "This specifies a destination port or range of ports to use: without
@@ -225,9 +231,14 @@ options:
   ctstate:
     description:
       - "C(ctstate) is a list of the connection states to match in the conntrack
-        module.
-        Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED',
-        'UNTRACKED', 'SNAT', 'DNAT'"
+        module. Possible states are:"
+      - C(INVALID)
+      - C(NEW)
+      - C(ESTABLISHED)
+      - C(RELATED)
+      - C(UNTRACKED)
+      - C(SNAT)
+      - C(DNAT)
     choices: [ DNAT, ESTABLISHED, INVALID, NEW, RELATED, SNAT, UNTRACKED ]
     default: []
   limit:

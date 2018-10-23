@@ -61,13 +61,13 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-  - name: Gather facts about the virtual machine in given vCenter
+  - name: Gather snapshot facts about the virtual machine in the given vCenter
     vmware_guest_snapshot_facts:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      datacenter: datacenter_name
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ guest_name }}"
     delegate_to: localhost
     register: snapshot_facts
 '''

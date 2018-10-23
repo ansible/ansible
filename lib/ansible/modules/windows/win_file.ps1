@@ -52,12 +52,9 @@ namespace Ansible.Command {
 }
 "@
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 # Used to delete directories and files with logic on handling symbolic links
 function Remove-File($file, $checkmode) {

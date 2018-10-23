@@ -23,8 +23,8 @@ from units.mock.loader import DictDataLoader
 from copy import deepcopy
 import uuid
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -269,6 +269,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_task._role = None
         mock_task._parent = None
         mock_task.ignore_errors = False
+        mock_task.ignore_unreachable = False
         mock_task._uuid = uuid.uuid4()
         mock_task.loop = None
         mock_task.copy.return_value = mock_task

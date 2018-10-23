@@ -418,9 +418,8 @@ For example:
 
 Suggestions to resolve:
 
-Options 1:
+Options 1 (Global command timeout setting):
 Increase value of command timeout in configuration file or by setting environment variable.
-Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
 .. code-block:: yaml
 
@@ -433,13 +432,13 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    command_timeout = 30
 
-Option 2:
+Option 2 (Per task command timeout setting):
 Increase command timeout per task basis. All network modules support a
 timeout value that can be set on a per task basis.
 The timeout value controls the amount of time in seconds before the
 task will fail if the command has not returned.
 
-For example:
+For local connection type:
 
 .. FIXME: Detail error here
 
@@ -453,12 +452,25 @@ Suggestions to resolve:
         provider: "{{ cli }}"
         timeout: 30
 
+For network_cli, netconf connection type (applicable from 2.7 onwards):
+
+.. FIXME: Detail error here
+
+Suggestions to resolve:
+
+.. code-block:: yaml
+
+    - name: save running-config
+      ios_command:
+        commands: copy running-config startup-config
+      vars:
+        ansible_command_timeout: 30
+
 Some operations take longer than the default 10 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value form the default 10 seconds to 30
+In this case, changing the timeout value from the default 10 seconds to 30
 seconds will prevent the task from failing before the command completes
 successfully.
-Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
 Persistent socket connect timeout:
 For example:
@@ -644,3 +656,38 @@ Example Ansible inventory file
    This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
    We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.
+
+Miscellaneous Issues
+====================
+
+
+Intermittent failure while using ``network_cli`` connection type
+----------------------------------------------------------------
+
+If the command prompt received in response is not matched correctly within
+the ``network_cli`` connection plugin the task might fail intermittently with truncated
+response or with the error message ``operation requires privilege escalation``.
+Starting in 2.7.1 a new buffer read timer is added to ensure prompts are matched properly
+and a complete response is send in output. The timer default value is 0.2 seconds and
+can be adjusted on a per task basis or can be set globally in seconds.
+
+Example Per task timer setting
+
+.. code-block:: yaml
+
+  - name: gather ios facts
+    ios_facts:
+      gather_subset: all
+    register: result
+    vars:
+      ansible_buffer_read_timeout: 2
+
+
+To make this a global setting, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   buffer_read_timeout = 2
+
+This timer delay per command executed on remote host can be disabled by setting the value to zero.

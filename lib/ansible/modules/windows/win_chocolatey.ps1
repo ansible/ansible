@@ -71,8 +71,6 @@ Function Get-CommonChocolateyArguments {
 }
 
 Function Get-InstallChocolateyArguments {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the cmdline, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param(
         [bool]$allow_downgrade,
         [bool]$allow_empty_checksums,
@@ -165,9 +163,6 @@ Function Get-InstallChocolateyArguments {
 }
 
 Function Install-Chocolatey {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the env vars, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "", Justification="See above")]
     param(
         [String]$proxy_url,
         [String]$proxy_username,
@@ -294,12 +289,6 @@ Function Get-ChocolateyPackageVersion {
         [Parameter(Mandatory=$true)][String]$choco_path,
         [Parameter(Mandatory=$true)][String]$name
     )
-    # returns the package version or null if it isn't installed
-    # all is a special case where we want to say it isn't installed, in choco
-    # it means runs on all the packages installed
-    if ($name -eq "all") {
-        return $null
-    }
 
     $command = Argv-ToString -arguments @($choco_path, "list", "--local-only", "--exact", "--limit-output", $name)
     $res = Run-Command -command $command
@@ -323,8 +312,6 @@ Function Get-ChocolateyPackageVersion {
 }
 
 Function Update-ChocolateyPackage {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the cmdline, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param(
         [Parameter(Mandatory=$true)][String]$choco_path,
         [Parameter(Mandatory=$true)][String[]]$packages,
@@ -384,8 +371,6 @@ Function Update-ChocolateyPackage {
 }
 
 Function Install-ChocolateyPackage {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the cmdline, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param(
         [Parameter(Mandatory=$true)][String]$choco_path,
         [Parameter(Mandatory=$true)][String[]]$packages,
@@ -501,7 +486,16 @@ $choco_path = Install-Chocolatey -proxy_url $proxy_url -proxy_username $proxy_us
 # get the version of all specified packages
 $package_info = @{}
 foreach ($package in $name) {
-    $package_version = Get-ChocolateyPackageVersion -choco_path $choco_path -name $package
+    # all is a special package name that means all installed packages, we set
+    # a dummy version so absent, latest, and downgrade will run with all
+    if ($package -eq "all") {
+        if ($state -in @("present", "reinstalled")) {
+            Fail-Json -obj $result -message "Cannot specify the package name as 'all' when state=$state"
+        }
+        $package_version = "0.0.0"
+    } else {
+        $package_version = Get-ChocolateyPackageVersion -choco_path $choco_path -name $package
+    }
     $package_info.$package = $package_version
 }
 
@@ -535,7 +529,7 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         foreach ($package in $name) {
             $package_version = ($package_info.GetEnumerator() | Where-Object { $name -eq $_.Key -and $null -ne $_.Value }).Value
             if ($null -ne $package_version -and $package_version -ne $version) {
-                Fail-Json -obj $result -message "Chocolatey package '$package' is already installed at version '$package_version' but was expecting '$version'. Either change the expected version, set state=latest, set allow_multiple_versions=yes, or set force=yes to continue"
+                Fail-Json -obj $result -message "Chocolatey package '$package' is already installed at version '$package_version' but was expecting '$version'. Either change the expected version, set state=latest, or set force=yes to continue"
             }
         }
     }

@@ -59,26 +59,26 @@ class Play(Base, Taggable, Become):
     # Facts
     _fact_path = FieldAttribute(isa='string', default=None)
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
 
     # Variable Attributes
-    _vars_files = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _vars_files = FieldAttribute(isa='list', default=list, priority=99)
+    _vars_prompt = FieldAttribute(isa='list', default=list, always_post_validate=False)
 
     # Role Attributes
-    _roles = FieldAttribute(isa='list', default=[], priority=90)
+    _roles = FieldAttribute(isa='list', default=list, priority=90)
 
     # Block (Task) Lists Attributes
-    _handlers = FieldAttribute(isa='list', default=[])
-    _pre_tasks = FieldAttribute(isa='list', default=[])
-    _post_tasks = FieldAttribute(isa='list', default=[])
-    _tasks = FieldAttribute(isa='list', default=[])
+    _handlers = FieldAttribute(isa='list', default=list)
+    _pre_tasks = FieldAttribute(isa='list', default=list)
+    _post_tasks = FieldAttribute(isa='list', default=list)
+    _tasks = FieldAttribute(isa='list', default=list)
 
     # Flag/Setting Attributes
     _force_handlers = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
-    _serial = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _serial = FieldAttribute(isa='list', default=list, always_post_validate=True)
     _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
     _order = FieldAttribute(isa='string', always_post_validate=True)
 
@@ -203,18 +203,7 @@ class Play(Base, Taggable, Become):
         if new_ds is not None:
             for prompt_data in new_ds:
                 if 'name' not in prompt_data:
-                    display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
-                    for vname, prompt in prompt_data.items():
-                        vars_prompts.append(dict(
-                            name=vname,
-                            prompt=prompt,
-                            default=None,
-                            private=None,
-                            confirm=None,
-                            encrypt=None,
-                            salt_size=None,
-                            salt=None,
-                        ))
+                    raise AnsibleParserError("Invalid vars_prompt data structure", obj=ds)
                 else:
                     vars_prompts.append(prompt_data)
         return vars_prompts
@@ -250,6 +239,8 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
+                if r.from_include:
+                    continue
                 block_list.extend(r.get_handler_blocks(play=self))
 
         return block_list

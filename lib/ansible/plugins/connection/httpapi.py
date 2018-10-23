@@ -24,9 +24,9 @@ options:
   port:
     type: int
     description:
-      - Specifies the port on the remote device to listening for connections
+      - Specifies the port on the remote device that listens for connections
         when establishing the HTTP(S) connection.
-        When unspecified, will pick 80 or 443 based on the value of use_ssl
+      - When unspecified, will pick 80 or 443 based on the value of use_ssl.
     ini:
       - section: defaults
         key: remote_port
@@ -46,7 +46,7 @@ options:
       - The username used to authenticate to the remote device when the API
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the C(--user) or C(-u) options
+      - Can be configured from the CLI via the C(--user) or C(-u) options.
     ini:
       - section: defaults
         key: remote_user
@@ -56,17 +56,20 @@ options:
       - name: ansible_user
   password:
     description:
-      - Secret used to authenticate
+      - Configures the user password used to authenticate to the remote device
+        when needed for the device API.
     vars:
       - name: ansible_password
       - name: ansible_httpapi_pass
   use_ssl:
+    type: boolean
     description:
-      - Whether to connect using SSL (HTTPS) or not (HTTP)
+      - Whether to connect using SSL (HTTPS) or not (HTTP).
     default: False
     vars:
       - name: ansible_httpapi_use_ssl
   validate_certs:
+    type: boolean
     version_added: '2.7'
     description:
       - Whether to validate SSL certificates
@@ -76,10 +79,10 @@ options:
   timeout:
     type: int
     description:
-      - Sets the connection time, in seconds, for the communicating with the
+      - Sets the connection time, in seconds, for communicating with the
         remote device.  This timeout is used as the default timeout value for
         commands when issuing a command to the network CLI.  If the command
-        does not return in timeout seconds, the an error is generated.
+        does not return in timeout seconds, an error is generated.
     default: 120
   become:
     type: boolean
@@ -89,12 +92,12 @@ options:
         transitioning from user mode to C(enable) mode in the CLI session.
         If become is set to True and the remote device does not support
         privilege escalation or the privilege has already been elevated, then
-        this option is silently ignored
-      - Can be configured form the CLI via the C(--become) or C(-b) options
+        this option is silently ignored.
+      - Can be configured from the CLI via the C(--become) or C(-b) options.
     default: False
     ini:
-      section: privilege_escalation
-      key: become
+      - section: privilege_escalation
+        key: become
     env:
       - name: ANSIBLE_BECOME
     vars:
@@ -106,8 +109,8 @@ options:
         C(enable) but could be defined as other values.
     default: sudo
     ini:
-      section: privilege_escalation
-      key: become_method
+      - section: privilege_escalation
+        key: become_method
     env:
       - name: ANSIBLE_BECOME_METHOD
     vars:
@@ -118,7 +121,7 @@ options:
       - Configures, in seconds, the amount of time to wait when trying to
         initially establish a persistent connection.  If this value expires
         before the connection to the remote device is completed, the connection
-        will fail
+        will fail.
     default: 30
     ini:
       - section: persistent_connection
@@ -131,20 +134,24 @@ options:
       - Configures, in seconds, the amount of time to wait for a command to
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
-        close
+        close.
     default: 10
     ini:
       - section: persistent_connection
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
 """
+
+from io import BytesIO
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import cliconf_loader, httpapi_loader
@@ -169,7 +176,22 @@ class Connection(NetworkConnectionBase):
         self._url = None
         self._auth = None
 
-        if not self._network_os:
+        if self._network_os:
+
+            self.httpapi = httpapi_loader.get(self._network_os, self)
+            if self.httpapi:
+                self._sub_plugins.append({'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi})
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os)
+            else:
+                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
+
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
+                self._sub_plugins.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+        else:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
@@ -204,21 +226,8 @@ class Connection(NetworkConnectionBase):
             port = self.get_option('port') or (443 if protocol == 'https' else 80)
             self._url = '%s://%s:%s' % (protocol, host, port)
 
-            httpapi = httpapi_loader.get(self._network_os, self)
-            if httpapi:
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=self._play_context.remote_addr)
-                self._implementation_plugins.append(httpapi)
-                httpapi.set_become(self._play_context)
-                httpapi.login(self.get_option('remote_user'), self.get_option('password'))
-            else:
-                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
-
-            cliconf = cliconf_loader.get(self._network_os, self)
-            if cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(cliconf)
-            else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+            self.httpapi.set_become(self._play_context)
+            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
 
             self._connected = True
 
@@ -243,7 +252,10 @@ class Connection(NetworkConnectionBase):
         )
         url_kwargs.update(kwargs)
         if self._auth:
-            url_kwargs['headers'].update(self._auth)
+            # Avoid modifying passed-in headers
+            headers = dict(kwargs.get('headers', {}))
+            headers.update(self._auth)
+            url_kwargs['headers'] = headers
         else:
             url_kwargs['url_username'] = self.get_option('remote_user')
             url_kwargs['url_password'] = self.get_option('password')
@@ -251,16 +263,20 @@ class Connection(NetworkConnectionBase):
         try:
             response = open_url(self._url + path, data=data, **url_kwargs)
         except HTTPError as exc:
-            if exc.code == 401 and self._auth:
-                # Stored auth appears to be invalid, clear and retry
-                self._auth = None
-                self.login(self.get_option('remote_user'), self.get_option('password'))
+            is_handled = self.handle_httperror(exc)
+            if is_handled is True:
                 return self.send(path, data, **kwargs)
-            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url, exc.reason))
+            elif is_handled is False:
+                raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
+            else:
+                raise
+        except URLError as exc:
+            raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
-        response_text = response.read()
+        response_buffer = BytesIO()
+        response_buffer.write(response.read())
 
         # Try to assign a new auth token if one is given
-        self._auth = self.update_auth(response, response_text) or self._auth
+        self._auth = self.update_auth(response, response_buffer) or self._auth
 
-        return response, response_text
+        return response, response_buffer

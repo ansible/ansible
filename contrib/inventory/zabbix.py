@@ -49,10 +49,7 @@ except:
           file=sys.stderr)
     sys.exit(1)
 
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 
 class ZabbixInventory(object):
@@ -151,5 +148,6 @@ class ZabbixInventory(object):
         else:
             print("Error: Configuration of server and credentials are required. See zabbix.ini.", file=sys.stderr)
             sys.exit(1)
+
 
 ZabbixInventory()

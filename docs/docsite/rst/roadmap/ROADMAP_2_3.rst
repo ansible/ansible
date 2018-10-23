@@ -163,4 +163,4 @@ ansible-ssh
 
   - https://github.com/2ndQuadrant/ansible-ssh
   - https://github.com/haad/ansible-ssh
-  - https://github.com/mlvnd/ansible-ssh
+  - https://github.com/mlvnd/ansible-tools

@@ -63,31 +63,34 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Perform vMotion of virtual machine
   vmware_vmotion:
-    hostname: 'vcenter_hostname'
-    username: 'vcenter_username'
-    password: 'vcenter_password'
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
     vm_name: 'vm_name_as_per_vcenter'
     destination_host: 'destination_host_as_per_vcenter'
+  delegate_to: localhost
 
 - name: Perform storage vMotion of of virtual machine
   vmware_vmotion:
-    hostname: 'vcenter_hostname'
-    username: 'vcenter_username'
-    password: 'vcenter_password'
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
     vm_name: 'vm_name_as_per_vcenter'
     destination_datastore: 'destination_datastore_as_per_vcenter'
+  delegate_to: localhost
 
 - name: Perform storage vMotion and host vMotion of virtual machine
   vmware_vmotion:
-    hostname: 'vcenter_hostname'
-    username: 'vcenter_username'
-    password: 'vcenter_password'
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
     vm_name: 'vm_name_as_per_vcenter'
     destination_host: 'destination_host_as_per_vcenter'
     destination_datastore: 'destination_datastore_as_per_vcenter'
+  delegate_to: localhost
 '''
 
 RETURN = '''

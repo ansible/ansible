@@ -102,7 +102,7 @@ options:
   state:
     description:
       - Create or destroy the load balancer.
-    required: true
+    default: present
     choices: [ 'present', 'absent' ]
   tags:
     description:
@@ -528,7 +528,7 @@ def main():
             subnets=dict(type='list'),
             security_groups=dict(type='list'),
             scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
-            state=dict(choices=['present', 'absent'], type='str'),
+            state=dict(choices=['present', 'absent'], default='present'),
             tags=dict(type='dict'),
             wait_timeout=dict(type='int'),
             wait=dict(default=False, type='bool'),
@@ -540,9 +540,9 @@ def main():
                               required_if=[
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
-                              required_together=(
+                              required_together=[
                                   ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
-                              )
+                              ]
                               )
 
     # Quick check of listeners parameters
@@ -568,6 +568,7 @@ def main():
         create_or_update_elb(elb)
     else:
         delete_elb(elb)
+
 
 if __name__ == '__main__':
     main()

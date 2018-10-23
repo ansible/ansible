@@ -49,8 +49,8 @@ Text
 
 Read more about Ansible for Network Automation:
 
-- Network Automation on the `Ansible website <https://ansible.com/overview/networking>`_
-- Ansible Network `Blog posts <https://ansible.com/blog/topic/networks>`_
+- Network Automation on the `Ansible website <https://www.ansible.com/overview/networking>`_
+- Ansible Network `Blog posts <https://www.ansible.com/blog/topic/networks>`_
 
 Events (on Video and in Person)
 --------------------------------

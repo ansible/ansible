@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "dnf - group removal does not work if group was installed with Ansible because of dnf upstream bug https://bugzilla.redhat.com/show_bug.cgi?id=1620324"
+  - "dnf removal with wildcards now works: Fixes https://github.com/ansible/ansible/issues/27744"

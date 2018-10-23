@@ -50,6 +50,10 @@ options:
     rhsm_baseurl:
         description:
             - Specify CDN baseurl
+    rhsm_repo_ca_cert:
+        description:
+            - Specify an alternative location for a CA certificate for CDN
+        version_added: "2.7"
     server_proxy_hostname:
         description:
             - Specify a HTTP proxy hostname
@@ -621,6 +625,7 @@ def main():
                                  required=False),
             rhsm_baseurl=dict(default=None,
                               required=False),
+            rhsm_repo_ca_cert=dict(default=None, required=False),
             auto_attach=dict(aliases=['autosubscribe'], default=False, type='bool'),
             activationkey=dict(default=None,
                                required=False,
@@ -674,6 +679,7 @@ def main():
     server_hostname = module.params['server_hostname']
     server_insecure = module.params['server_insecure']
     rhsm_baseurl = module.params['rhsm_baseurl']
+    rhsm_repo_ca_cert = module.params['rhsm_repo_ca_cert']
     auto_attach = module.params['auto_attach']
     activationkey = module.params['activationkey']
     org_id = module.params['org_id']

@@ -159,7 +159,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1"
+    rf_uri = "/redfish/v1/"
     rf_utils = RedfishUtils(creds, root_uri)
 
     # Build Category list
@@ -261,6 +261,7 @@ def main():
 
     # Return data back
     module.exit_json(ansible_facts=dict(redfish_facts=result))
+
 
 if __name__ == '__main__':
     main()

@@ -65,7 +65,13 @@ options:
         required: false
     instance_template:
         description:
-            - A reference to InstanceTemplate resource.
+            - The instance template that is specified for this managed instance group. The group
+              uses this template to create all new instances in the managed instance group.
+            - 'This field represents a link to a InstanceTemplate resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_instance_template
+              task and then set this instance_template field to "{{ name-of-resource }}" Alternatively,
+              you can set this instance_template to a dictionary with the selfLink key where the
+              value is the selfLink of your InstanceTemplate.'
         required: true
     name:
         description:
@@ -100,7 +106,7 @@ options:
         required: false
     zone:
         description:
-            - A reference to Zone resource.
+            - The zone the managed instance group resides.
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -108,24 +114,20 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: 'network-instancetemplate'
+      name: "network-instancetemplate"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: network
 
 - name: create a address
   gcp_compute_address:
-      name: 'address-instancetemplate'
-      region: 'us-west1'
+      name: "address-instancetemplate"
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: address
 
@@ -134,42 +136,38 @@ EXAMPLES = '''
       name: "{{ resource_name }}"
       properties:
         disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+        - auto_delete: true
+          boot: true
+          initialize_params:
+            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
         machine_type: n1-standard-1
         network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
+        - network: "{{ network }}"
+          access_configs:
+          - name: test-config
+            type: ONE_TO_ONE_NAT
+            nat_ip: "{{ address }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancetemplate
 
 - name: create a instance group manager
   gcp_compute_instance_group_manager:
-      name: testObject
-      base_instance_name: 'test1-child'
+      name: "test_object"
+      base_instance_name: test1-child
       instance_template: "{{ instancetemplate }}"
       target_size: 3
-      zone: 'us-west1-a'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      zone: us-west1-a
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    base_instance_name:
+    baseInstanceName:
         description:
             - The base instance name to use for instances in this group. The value must be 1-58
               characters long. Instances are named by appending a hyphen and a random four-character
@@ -177,12 +175,12 @@ RETURN = '''
             - The base instance name must comply with RFC1035.
         returned: success
         type: str
-    creation_timestamp:
+    creationTimestamp:
         description:
             - The creation timestamp for this managed instance group in RFC3339 text format.
         returned: success
         type: str
-    current_actions:
+    currentActions:
         description:
             - The list of instance actions and the number of instances in this managed instance
               group that are scheduled for each of those actions.
@@ -205,7 +203,7 @@ RETURN = '''
                       the creatingWithoutRetries field will be populated.
                 returned: success
                 type: int
-            creating_without_retries:
+            creatingWithoutRetries:
                 description:
                     - The number of instances that the managed instance group will attempt to create.
                       The group attempts to create each instance only once. If the group fails to create
@@ -256,14 +254,15 @@ RETURN = '''
             - A unique identifier for this resource.
         returned: success
         type: int
-    instance_group:
+    instanceGroup:
         description:
-            - A reference to InstanceGroup resource.
+            - The instance group being managed.
         returned: success
         type: dict
-    instance_template:
+    instanceTemplate:
         description:
-            - A reference to InstanceTemplate resource.
+            - The instance template that is specified for this managed instance group. The group
+              uses this template to create all new instances in the managed instance group.
         returned: success
         type: dict
     name:
@@ -272,7 +271,7 @@ RETURN = '''
               comply with RFC1035.
         returned: success
         type: str
-    named_ports:
+    namedPorts:
         description:
             - Named ports configured for the Instance Groups complementary to this Instance Group
               Manager.
@@ -292,17 +291,17 @@ RETURN = '''
                 type: int
     region:
         description:
-            - A reference to Region resource.
+            - The region this managed instance group resides (for regional resources).
         returned: success
         type: str
-    target_pools:
+    targetPools:
         description:
             - TargetPool resources to which instances in the instanceGroup field are added. The
               target pools automatically apply to all of the instances in the managed instance
               group.
         returned: success
         type: list
-    target_size:
+    targetSize:
         description:
             - The target number of running instances for this managed instance group. Deleting
               or abandoning instances reduces this number. Resizing the group changes this number.
@@ -310,7 +309,7 @@ RETURN = '''
         type: int
     zone:
         description:
-            - A reference to Zone resource.
+            - The zone the managed instance group resides.
         returned: success
         type: str
 '''
@@ -349,6 +348,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#instanceGroupManager'
 
@@ -358,7 +360,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -398,7 +401,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'instanceTemplate': replace_resource_dict(module.params.get(u'instance_template', {}), 'selfLink'),
         u'name': module.params.get('name'),
-        u'namedPorts': InstGrouManaNamePortArray(module.params.get('named_ports', []), module).to_request(),
+        u'namedPorts': InstanceGroupManagerNamedPortsArray(module.params.get('named_ports', []), module).to_request(),
         u'targetPools': replace_resource_dict(module.params.get('target_pools', []), 'selfLink'),
         u'targetSize': module.params.get('target_size')
     }
@@ -410,9 +413,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -423,9 +426,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instanceGroupManagers".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -440,8 +443,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -470,13 +471,13 @@ def response_to_hash(module, response):
     return {
         u'baseInstanceName': response.get(u'baseInstanceName'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'currentActions': InstGrouManaCurrActi(response.get(u'currentActions', {}), module).from_response(),
+        u'currentActions': InstanceGroupManagerCurrentActions(response.get(u'currentActions', {}), module).from_response(),
         u'description': module.params.get('description'),
         u'id': response.get(u'id'),
         u'instanceGroup': response.get(u'instanceGroup'),
         u'instanceTemplate': response.get(u'instanceTemplate'),
         u'name': response.get(u'name'),
-        u'namedPorts': InstGrouManaNamePortArray(response.get(u'namedPorts', []), module).from_response(),
+        u'namedPorts': InstanceGroupManagerNamedPortsArray(response.get(u'namedPorts', []), module).from_response(),
         u'region': response.get(u'region'),
         u'targetPools': response.get(u'targetPools'),
         u'targetSize': response.get(u'targetSize')
@@ -504,7 +505,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceGroupManager')
@@ -529,7 +530,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class InstGrouManaCurrActi(object):
+class InstanceGroupManagerCurrentActions(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -562,7 +563,7 @@ class InstGrouManaCurrActi(object):
         })
 
 
-class InstGrouManaNamePortArray(object):
+class InstanceGroupManagerNamedPortsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -593,6 +594,7 @@ class InstGrouManaNamePortArray(object):
             u'name': item.get(u'name'),
             u'port': item.get(u'port')
         })
+
 
 if __name__ == '__main__':
     main()

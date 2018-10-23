@@ -19,7 +19,7 @@ DOCUMENTATION = r'''
 module: vmware_drs_rule_facts
 short_description: Gathers facts about DRS rule on the given cluster
 description:
-- 'This module can be used to gather facts about DRS VM-VM and VM-HOST rules from the given cluster'
+- 'This module can be used to gather facts about DRS VM-VM and VM-HOST rules from the given cluster.'
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -48,7 +48,8 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
+  delegate_to: localhost
   register: cluster_drs_facts
 
 - name: Gather DRS facts about all Clusters in given datacenter
@@ -56,7 +57,8 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    datacenter: datacenter_name
+    datacenter: '{{ datacenter_name }}'
+  delegate_to: localhost
   register: datacenter_drs_facts
 '''
 
@@ -79,12 +81,33 @@ drs_rule_facts:
                         "VM_146"
                     ]
                 },
-            ]
+            ],
+            "DC1_C1": [
+                {
+                    "rule_affine_host_group_name": "host_group_1",
+                    "rule_affine_hosts": [
+                        "10.76.33.204"
+                    ],
+                    "rule_anti_affine_host_group_name": null,
+                    "rule_anti_affine_hosts": [],
+                    "rule_enabled": true,
+                    "rule_key": 1,
+                    "rule_mandatory": false,
+                    "rule_name": "vm_host_rule_0001",
+                    "rule_type": "vm_host_rule",
+                    "rule_uuid": "52687108-4d3a-76f2-d29c-b708c40dbe40",
+                    "rule_vm_group_name": "test_vm_group_1",
+                    "rule_vms": [
+                        "VM_8916",
+                        "VM_4010"
+                    ]
+                }
+            ],
             }
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -114,10 +137,36 @@ class VmwareDrsFactManager(PyVmomi):
             else:
                 self.cluster_obj_list = [cluster_obj]
 
+    def get_all_from_group(self, group_name=None, cluster_obj=None, hostgroup=False):
+        """
+        Return all VM / Host names using given group name
+        Args:
+            group_name: Rule name
+            cluster_obj: Cluster managed object
+            hostgroup: True if we want only host name from group
+
+        Returns: List of VM / Host names belonging to given group object
+
+        """
+        obj_name_list = []
+        if not all([group_name, cluster_obj]):
+            return obj_name_list
+
+        for group in cluster_obj.configurationEx.group:
+            if group.name == group_name:
+                if not hostgroup and isinstance(group, vim.cluster.VmGroup):
+                    obj_name_list = [vm.name for vm in group.vm]
+                    break
+                elif hostgroup and isinstance(group, vim.cluster.HostGroup):
+                    obj_name_list = [host.name for host in group.host]
+                    break
+
+        return obj_name_list
+
     @staticmethod
     def normalize_vm_vm_rule_spec(rule_obj=None):
         """
-        Function to return human readable rule spec
+        Return human readable rule spec
         Args:
             rule_obj: Rule managed object
 
@@ -135,17 +184,17 @@ class VmwareDrsFactManager(PyVmomi):
                     rule_type="vm_vm_rule",
                     )
 
-    @staticmethod
-    def normalize_vm_host_rule_spec(rule_obj=None):
+    def normalize_vm_host_rule_spec(self, rule_obj=None, cluster_obj=None):
         """
-        Function to return human readable rule spec
+        Return human readable rule spec
         Args:
             rule_obj: Rule managed object
+            cluster_obj: Cluster managed object
 
         Returns: Dictionary with DRS VM HOST Rule info
 
         """
-        if rule_obj is None:
+        if not all([rule_obj, cluster_obj]):
             return {}
         return dict(rule_key=rule_obj.key,
                     rule_enabled=rule_obj.enabled,
@@ -155,13 +204,21 @@ class VmwareDrsFactManager(PyVmomi):
                     rule_vm_group_name=rule_obj.vmGroupName,
                     rule_affine_host_group_name=rule_obj.affineHostGroupName,
                     rule_anti_affine_host_group_name=rule_obj.antiAffineHostGroupName,
+                    rule_vms=self.get_all_from_group(group_name=rule_obj.vmGroupName,
+                                                     cluster_obj=cluster_obj),
+                    rule_affine_hosts=self.get_all_from_group(group_name=rule_obj.affineHostGroupName,
+                                                              cluster_obj=cluster_obj,
+                                                              hostgroup=True),
+                    rule_anti_affine_hosts=self.get_all_from_group(group_name=rule_obj.antiAffineHostGroupName,
+                                                                   cluster_obj=cluster_obj,
+                                                                   hostgroup=True),
                     rule_type="vm_host_rule",
                     )
 
     def gather_drs_rule_facts(self):
         """
-        Function to gather DRS rule facts about given cluster
-        Returns: Dictinary of clusters with DRS facts
+        Gather DRS rule facts about given cluster
+        Returns: Dictionary of clusters with DRS facts
 
         """
         cluster_rule_facts = dict()
@@ -169,7 +226,8 @@ class VmwareDrsFactManager(PyVmomi):
             cluster_rule_facts[cluster_obj.name] = []
             for drs_rule in cluster_obj.configuration.rule:
                 if isinstance(drs_rule, vim.cluster.VmHostRuleInfo):
-                    cluster_rule_facts[cluster_obj.name].append(self.normalize_vm_host_rule_spec(rule_obj=drs_rule))
+                    cluster_rule_facts[cluster_obj.name].append(self.normalize_vm_host_rule_spec(rule_obj=drs_rule,
+                                                                                                 cluster_obj=cluster_obj))
                 else:
                     cluster_rule_facts[cluster_obj.name].append(self.normalize_vm_vm_rule_spec(rule_obj=drs_rule))
 
@@ -187,7 +245,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'datacenter'],
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     vmware_drs_facts = VmwareDrsFactManager(module)

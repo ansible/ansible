@@ -1,0 +1,31 @@
+---
+- name: Create random container name prefix
+  set_fact:
+    cname_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+    cnames: []
+    dnetworks: []
+
+- debug:
+    msg: "Using container name prefix {{ cname_prefix }}"
+
+- block:
+  - include_tasks: run-test.yml
+    with_fileglob:
+    - "tests/*.yml"
+
+  always:
+  - name: "Make sure all containers are removed"
+    docker_container:
+      name: "{{ item }}"
+      state: absent
+      stop_timeout: 1
+    with_items: "{{ cnames }}"
+  - name: "Make sure all networks are removed"
+    docker_network:
+      name: "{{ item }}"
+      state: absent
+      force: yes
+    with_items: "{{ dnetworks }}"
+
+  # Skip for CentOS 6
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6

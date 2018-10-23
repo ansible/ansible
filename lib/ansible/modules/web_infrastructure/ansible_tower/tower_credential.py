@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# Copyright: (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -42,9 +42,10 @@ options:
     organization:
       description:
         - Organization that should own the credential.
+      required: True
     kind:
       description:
-        - Type of credential being added.
+        - Type of credential being added.  The ssh choice refers to a Tower Machine credential.
       required: True
       choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower"]
     host:
@@ -58,7 +59,8 @@ options:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
     ssh_key_data:
       description:
-        - Path to SSH private key.
+        - SSH private key content. To extract the content from a file path, use the lookup function (see examples).
+      required: False
     ssh_key_unlock:
       description:
         - Unlock password for ssh_key. Use ASK for prompting.
@@ -73,13 +75,9 @@ options:
     client:
       description:
         - Client or application ID for azure_rm type.
-      required: False
-      default: null
     security_token:
       description:
         - STS token for aws type.
-      required: False
-      default: null
       version_added: "2.6"
     secret:
       description:
@@ -121,14 +119,38 @@ EXAMPLES = '''
     name: Team Name
     description: Team Description
     organization: test-org
+    kind: ssh
     state: present
     tower_config_file: "~/tower_cli.cfg"
+
+- name: Create a valid SCM credential from a private_key file
+  tower_credential:
+    name: SCM Credential
+    organization: Default
+    state: present
+    kind: scm
+    username: joe
+    password: secret
+    ssh_key_data: "{{ lookup('file', '/tmp/id_rsa') }}"
+    ssh_key_unlock: "passphrase"
+
+- name: Add Credential Into Tower
+  tower_credential:
+    name: Workshop Credential
+    ssh_key_data: "/home/{{ansible_user}}/.ssh/aws-private.pem"
+    kind: ssh
+    organization: Default
+    tower_username: admin
+    tower_password: ansible
+    tower_host: https://localhost
+  run_once: true
+  delegate_to: localhost
 '''
 
 import os
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
@@ -178,8 +200,7 @@ def credential_type_for_v1_kind(params, module):
 
 def main():
 
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         user=dict(),
         team=dict(),
@@ -188,7 +209,7 @@ def main():
         host=dict(),
         username=dict(),
         password=dict(no_log=True),
-        ssh_key_data=dict(no_log=True, type='path'),
+        ssh_key_data=dict(no_log=True, type='str'),
         ssh_key_unlock=dict(no_log=True),
         authorize=dict(type='bool', default=False),
         authorize_password=dict(no_log=True),
@@ -206,12 +227,9 @@ def main():
         organization=dict(required=True),
         project=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     organization = module.params.get('organization')
@@ -258,13 +276,18 @@ def main():
                 params['team'] = team['id']
 
             if module.params.get('ssh_key_data'):
-                filename = module.params.get('ssh_key_data')
-                if not os.path.exists(filename):
-                    module.fail_json(msg='file not found: %s' % filename)
-                if os.path.isdir(filename):
-                    module.fail_json(msg='attempted to read contents of directory: %s' % filename)
-                with open(filename, 'rb') as f:
-                    module.params['ssh_key_data'] = to_text(f.read())
+                data = module.params.get('ssh_key_data')
+                if os.path.exists(data):
+                    module.deprecate(
+                        msg='ssh_key_data should be a string, not a path to a file. Use lookup(\'file\', \'/path/to/file\') instead',
+                        version="2.12"
+                    )
+                    if os.path.isdir(data):
+                        module.fail_json(msg='attempted to read contents of directory: %s' % data)
+                    with open(data, 'rb') as f:
+                        module.params['ssh_key_data'] = to_text(f.read())
+                else:
+                    module.params['ssh_key_data'] = data
 
             for key in ('authorize', 'authorize_password', 'client',
                         'security_token', 'secret', 'tenant', 'subscription',
@@ -291,6 +314,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

@@ -53,18 +53,21 @@ options:
     state:
         description:
             - Whether the given object should exist in GCP
-        required: true
         choices: ['present', 'absent']
         default: 'present'
     bucket:
         description:
-            - A reference to Bucket resource.
+            - The name of the bucket.
+            - 'This field represents a link to a Bucket resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_storage_bucket task
+              and then set this bucket field to "{{ name-of-resource }}" Alternatively, you can
+              set this bucket to a dictionary with the name key where the value is the name of
+              your Bucket.'
         required: true
     entity:
         description:
-            - 'The entity holding the permission, in one of the following
-              forms: user-userId user-email group-groupId group-email
-              domain-domain project-team-projectId allUsers
+            - 'The entity holding the permission, in one of the following forms: user-userId
+              user-email group-groupId group-email domain-domain project-team-projectId allUsers
               allAuthenticatedUsers Examples: The user liz@example.com would be
               user-liz@example.com.'
             - The group example@googlegroups.com would be   group-example@googlegroups.com.
@@ -100,32 +103,28 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: 'bucket-bac'
+      name: "bucket-bac"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: bucket
 
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
       bucket: "{{ bucket }}"
-      entity: 'user-alexstephen@google.com'
-      role: 'WRITER'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
+      entity: user-alexstephen@google.com
+      role: WRITER
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
     bucket:
         description:
-            - A reference to Bucket resource.
+            - The name of the bucket.
         returned: success
         type: dict
     domain:
@@ -140,9 +139,8 @@ RETURN = '''
         type: str
     entity:
         description:
-            - 'The entity holding the permission, in one of the following
-              forms: user-userId user-email group-groupId group-email
-              domain-domain project-team-projectId allUsers
+            - 'The entity holding the permission, in one of the following forms: user-userId
+              user-email group-groupId group-email domain-domain project-team-projectId allUsers
               allAuthenticatedUsers Examples: The user liz@example.com would be
               user-liz@example.com.'
             - The group example@googlegroups.com would be   group-example@googlegroups.com.
@@ -150,7 +148,7 @@ RETURN = '''
               entity would be domain-example.com.
         returned: success
         type: str
-    entity_id:
+    entityId:
         description:
             - The ID for the entity.
         returned: success
@@ -160,13 +158,13 @@ RETURN = '''
             - The ID of the access-control entry.
         returned: success
         type: str
-    project_team:
+    projectTeam:
         description:
             - The project team associated with the entity.
         returned: success
         type: complex
         contains:
-            project_number:
+            projectNumber:
                 description:
                     - The project team associated with the entity.
                 returned: success
@@ -212,6 +210,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/devstorage.full_control']
+
     state = module.params['state']
     kind = 'storage#bucketAccessControl'
 
@@ -221,7 +222,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -260,7 +262,7 @@ def resource_to_request(module):
         u'bucket': replace_resource_dict(module.params.get(u'bucket', {}), 'name'),
         u'entity': module.params.get('entity'),
         u'entityId': module.params.get('entity_id'),
-        u'projectTeam': BuckAcceContProjTeam(module.params.get('project_team', {}), module).to_request(),
+        u'projectTeam': BucketAccessControlProjectTeam(module.params.get('project_team', {}), module).to_request(),
         u'role': module.params.get('role')
     }
     return_vals = {}
@@ -271,9 +273,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'storage')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -284,9 +286,9 @@ def collection(module):
     return "https://www.googleapis.com/storage/v1/b/{bucket}/acl".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -301,8 +303,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -335,12 +335,12 @@ def response_to_hash(module, response):
         u'entity': response.get(u'entity'),
         u'entityId': response.get(u'entityId'),
         u'id': response.get(u'id'),
-        u'projectTeam': BuckAcceContProjTeam(response.get(u'projectTeam', {}), module).from_response(),
+        u'projectTeam': BucketAccessControlProjectTeam(response.get(u'projectTeam', {}), module).from_response(),
         u'role': response.get(u'role')
     }
 
 
-class BuckAcceContProjTeam(object):
+class BucketAccessControlProjectTeam(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -359,6 +359,7 @@ class BuckAcceContProjTeam(object):
             u'projectNumber': self.request.get(u'projectNumber'),
             u'team': self.request.get(u'team')
         })
+
 
 if __name__ == '__main__':
     main()

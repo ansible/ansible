@@ -62,12 +62,6 @@ options:
             - An optional description of this resource. Provide this property when you create
               the resource.
         required: false
-    gateway_ipv4:
-        description:
-            - A gateway address for default routing to other networks. This value is read only
-              and is selected by the Google Compute Engine, typically as the first usable address
-              in the IPv4Range.
-        required: false
     ipv4_range:
         description:
             - 'The range of internal addresses that are legal on this network. This range is a
@@ -82,7 +76,7 @@ options:
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
-        required: false
+        required: true
     auto_create_subnetworks:
         description:
             - When set to true, the network is created in "auto subnet mode". When set to false,
@@ -91,19 +85,35 @@ options:
               and it automatically creates one subnetwork per region.
         required: false
         type: bool
+    routing_config:
+        description:
+            - The network-level routing configuration for this network. Used by Cloud Router to
+              determine what type of network-wide routing behavior to enforce.
+        required: false
+        version_added: 2.8
+        suboptions:
+            routing_mode:
+                description:
+                    - The network-wide routing mode to use. If set to REGIONAL, this network's cloud routers
+                      will only advertise routes with subnetworks of this network in the same region as
+                      the router. If set to GLOBAL, this network's cloud routers will advertise routes
+                      with all subnetworks of this network, across regions.
+                required: true
+                choices: ['REGIONAL', 'GLOBAL']
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/networks)"
+    - "Official Documentation: U(https://cloud.google.com/vpc/docs/vpc)"
 '''
 
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: testObject
+      name: "test_object"
       auto_create_subnetworks: true
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -148,7 +158,7 @@ RETURN = '''
             - Server-defined fully-qualified URLs for all subnetworks in this network.
         returned: success
         type: list
-    auto_create_subnetworks:
+    autoCreateSubnetworks:
         description:
             - When set to true, the network is created in "auto subnet mode". When set to false,
               the network is in "custom subnet mode".
@@ -156,18 +166,33 @@ RETURN = '''
               and it automatically creates one subnetwork per region.
         returned: success
         type: bool
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
         type: str
+    routingConfig:
+        description:
+            - The network-level routing configuration for this network. Used by Cloud Router to
+              determine what type of network-wide routing behavior to enforce.
+        returned: success
+        type: complex
+        contains:
+            routingMode:
+                description:
+                    - The network-wide routing mode to use. If set to REGIONAL, this network's cloud routers
+                      will only advertise routes with subnetworks of this network in the same region as
+                      the router. If set to GLOBAL, this network's cloud routers will advertise routes
+                      with all subnetworks of this network, across regions.
+                returned: success
+                type: str
 '''
 
 ################################################################################
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
 import time
 
@@ -183,12 +208,17 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
-            gateway_ipv4=dict(type='str'),
             ipv4_range=dict(type='str'),
-            name=dict(type='str'),
-            auto_create_subnetworks=dict(type='bool')
+            name=dict(required=True, type='str'),
+            auto_create_subnetworks=dict(type='bool'),
+            routing_config=dict(type='list', elements='dict', options=dict(
+                routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL'])
+            ))
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#network'
@@ -199,10 +229,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -223,11 +254,31 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    return wait_for_operation(module, auth.patch(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def update_fields(module, request, response):
+    if response.get('routingConfig') != request.get('routingConfig'):
+        routing_config_update(module, request, response)
+
+
+def routing_config_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.patch(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/subnetworks/{name}"
+        ]).format(**module.params),
+        {
+            u'routingConfig': NetworkRoutingConfigArray(module.params.get('routing_config', []), module).to_request()
+        }
+    )
+
+
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -236,10 +287,10 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#network',
         u'description': module.params.get('description'),
-        u'gatewayIPv4': module.params.get('gateway_ipv4'),
         u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
-        u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks')
+        u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
+        u'routingConfig': NetworkRoutingConfigArray(module.params.get('routing_config', []), module).to_request()
     }
     return_vals = {}
     for k, v in request.items():
@@ -249,9 +300,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -262,9 +313,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/networks".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -279,8 +330,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -307,14 +356,15 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'description': response.get(u'description'),
+        u'description': module.params.get('description'),
         u'gatewayIPv4': response.get(u'gateway_ipv4'),
         u'id': response.get(u'id'),
-        u'IPv4Range': response.get(u'ipv4_range'),
-        u'name': response.get(u'name'),
+        u'IPv4Range': module.params.get('ipv4_range'),
+        u'name': module.params.get('name'),
         u'subnetworks': response.get(u'subnetworks'),
-        u'autoCreateSubnetworks': response.get(u'autoCreateSubnetworks'),
-        u'creationTimestamp': response.get(u'creationTimestamp')
+        u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
+        u'creationTimestamp': response.get(u'creationTimestamp'),
+        u'routingConfig': NetworkRoutingConfigArray(response.get(u'routingConfig', []), module).from_response()
     }
 
 
@@ -330,7 +380,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#network')
@@ -353,6 +403,38 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+class NetworkRoutingConfigArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({
+            u'routingMode': item.get('routing_mode')
+        })
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({
+            u'routingMode': item.get(u'routingMode')
+        })
+
 
 if __name__ == '__main__':
     main()

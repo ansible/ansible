@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -85,7 +85,6 @@ RETURN = r'''
 '''
 
 import os
-import subprocess
 import time
 
 from ansible.module_utils.basic import AnsibleModule

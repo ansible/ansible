@@ -175,12 +175,12 @@ def main():
 
     # figure out started status, everyone does it different!
     is_started = False
+    worked = False
 
     # user knows other methods fail and supplied pattern
     if pattern:
-        is_started = get_ps(module, pattern)
+        worked = is_started = get_ps(module, pattern)
     else:
-        worked = False
         if location.get('service'):
             # standard tool that has been 'destandarized' by reimplementation in other OS/distros
             cmd = '%s %s status' % (location['service'], name)

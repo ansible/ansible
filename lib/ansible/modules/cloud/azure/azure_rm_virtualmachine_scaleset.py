@@ -183,6 +183,20 @@ options:
             - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']."
             - Any other input will be ignored.
         default: ['all']
+    enable_accelerated_networking:
+        description:
+            - Indicates whether user wants to allow accelerated networking for virtual machines in scaleset being created.
+        version_added: "2.7"
+        type: bool
+    security_group:
+        description:
+            - Existing security group with which to associate the subnet.
+            - It can be the security group name which is in the same resource group.
+            - It can be the resource Id.
+            - It can be a dict which contains C(name) and C(resource_group) of the security group.
+        version_added: "2.7"
+        aliases:
+            - security_group_name
 
 extends_documentation_fragment:
     - azure
@@ -351,7 +365,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, format_resource_id
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachineScaleSet'
@@ -388,6 +402,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
+            enable_accelerated_networking=dict(type='bool'),
+            security_group=dict(type='raw', aliases=['security_group_name'])
         )
 
         self.resource_group = None
@@ -414,6 +430,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.tags = None
         self.differences = None
         self.load_balancer = None
+        self.enable_accelerated_networking = None
+        self.security_group = None
 
         self.results = dict(
             changed=False,
@@ -427,6 +445,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         )
 
     def exec_module(self, **kwargs):
+
+        nsg = None
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -531,6 +551,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     differences.append('Data Disks')
                     changed = True
 
+                if self.upgrade_policy and \
+                   self.upgrade_policy != vmss_dict['properties']['upgradePolicy']['mode']:
+                    self.log('CHANGED: virtual machine scale set {0} - Upgrade Policy'.format(self.name))
+                    differences.append('Upgrade Policy')
+                    changed = True
+                    vmss_dict['properties']['upgradePolicy']['mode'] = self.upgrade_policy
+
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
                     differences.append('Tags')
@@ -597,6 +624,11 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(storage_account_type=self.managed_disk_type)
 
+                    if self.security_group:
+                        nsg = self.parse_nsg()
+                        if nsg:
+                            self.security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
+
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         self.location,
                         tags=self.tags,
@@ -636,7 +668,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 load_balancer_backend_address_pools=load_balancer_backend_address_pools,
                                                 load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools
                                             )
-                                        ]
+                                        ],
+                                        enable_accelerated_networking=self.enable_accelerated_networking,
+                                        network_security_group=self.security_group
                                     )
                                 ]
                             )
@@ -847,9 +881,24 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 return True
         return False
 
+    def parse_nsg(self):
+        nsg = self.security_group
+        resource_group = self.resource_group
+        if isinstance(self.security_group, dict):
+            nsg = self.security_group.get('name')
+            resource_group = self.security_group.get('resource_group', self.resource_group)
+        id = format_resource_id(val=nsg,
+                                subscription_id=self.subscription_id,
+                                namespace='Microsoft.Network',
+                                types='networkSecurityGroups',
+                                resource_group=resource_group)
+        name = azure_id_to_dict(id).get('name')
+        return dict(id=id, name=name)
+
 
 def main():
     AzureRMVirtualMachineScaleSet()
+
 
 if __name__ == '__main__':
     main()

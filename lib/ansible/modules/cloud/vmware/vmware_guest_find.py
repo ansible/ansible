@@ -46,20 +46,21 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Find Guest's Folder using name
   vmware_guest_find:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     name: testvm
+  delegate_to: localhost
   register: vm_folder
 
 - name: Find Guest's Folder using UUID
   vmware_guest_find:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     uuid: 38c4c89c-b3d7-4ae6-ae4e-43c5118eae49
+  delegate_to: localhost
   register: vm_folder
 '''
 

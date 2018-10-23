@@ -22,6 +22,7 @@ description:
 - This module can be used to gather facts about vmnics available on the given ESXi host.
 - If C(cluster_name) is provided, then vmnic facts about all hosts from given cluster will be returned.
 - If C(esxi_hostname) is provided, then vmnic facts about given host system will be returned.
+- Additional details about vswitch and dvswitch with respective vmnic is also provided which is added in 2.7 version.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -50,7 +51,8 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
+  delegate_to: localhost
   register: cluster_host_vmnics
 
 - name: Gather facts about vmnics of an ESXi Host
@@ -59,20 +61,50 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
   register: host_vmnics
 '''
 
 RETURN = r'''
 hosts_vmnics_facts:
     description:
-    - dict with hostname as key and dict with vmnics facts as value
+    - dict with hostname as key and dict with vmnics facts as value.
+    - details about vswitch and dvswitch is added in version 2.7.
     returned: hosts_vmnics_facts
     type: dict
-    sample: { "hosts_vmnics_facts": { "localhost.localdomain": { "all": [ "vmnic0" ], "available": [], "used": [ "vmnic0" ] }}}
+    sample:
+        {
+            "10.76.33.204": {
+                "all": [
+                    "vmnic0",
+                    "vmnic1"
+                ],
+                "available": [],
+                "dvswitch": {
+                    "dvs_0002": [
+                        "vmnic1"
+                    ]
+                },
+                "used": [
+                    "vmnic1",
+                    "vmnic0"
+                ],
+                "vswitch": {
+                    "vSwitch0": [
+                        "vmnic0"
+                    ]
+                }
+            }
+        }
 '''
 
+try:
+    from pyVmomi import vim
+except ImportError:
+    pass
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
+from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, get_all_objs
 
 
 class HostVmnicMgr(PyVmomi):
@@ -82,10 +114,23 @@ class HostVmnicMgr(PyVmomi):
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
 
+    def find_dvs_by_uuid(self, uuid=None):
+        dvs_obj = None
+        if uuid is None:
+            return dvs_obj
+
+        dvswitches = get_all_objs(self.content, [vim.DistributedVirtualSwitch])
+        for dvs in dvswitches:
+            if dvs.uuid == uuid:
+                dvs_obj = dvs
+                break
+
+        return dvs_obj
+
     def gather_host_vmnic_facts(self):
         hosts_vmnic_facts = {}
         for host in self.hosts:
-            host_vmnic_facts = dict(all=[], available=[], used=[])
+            host_vmnic_facts = dict(all=[], available=[], used=[], vswitch=dict(), dvswitch=dict())
             host_nw_system = host.configManager.networkSystem
             if host_nw_system:
                 nw_config = host_nw_system.networkConfig
@@ -95,13 +140,20 @@ class HostVmnicMgr(PyVmomi):
                 proxy_switch_vmnics = []
                 if nw_config.vswitch:
                     for vswitch in nw_config.vswitch:
+                        host_vmnic_facts['vswitch'][vswitch.name] = []
                         for vnic in vswitch.spec.bridge.nicDevice:
                             vswitch_vmnics.append(vnic)
+                            host_vmnic_facts['vswitch'][vswitch.name].append(vnic)
 
                 if nw_config.proxySwitch:
                     for proxy_config in nw_config.proxySwitch:
+                        dvs_obj = self.find_dvs_by_uuid(uuid=proxy_config.uuid)
+                        if dvs_obj:
+                            host_vmnic_facts['dvswitch'][dvs_obj.name] = []
                         for proxy_nic in proxy_config.spec.backing.pnicSpec:
                             proxy_switch_vmnics.append(proxy_nic.pnicDevice)
+                            if dvs_obj:
+                                host_vmnic_facts['dvswitch'][dvs_obj.name].append(proxy_nic.pnicDevice)
 
                 used_vmics = proxy_switch_vmnics + vswitch_vmnics
                 host_vmnic_facts['used'] = used_vmics
@@ -122,7 +174,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     host_vmnic_mgr = HostVmnicMgr(module)

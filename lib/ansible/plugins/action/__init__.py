@@ -1,3 +1,4 @@
+# coding: utf-8
 # Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -45,6 +46,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     action in use.
     '''
 
+    # A set of valid arguments
+    _VALID_ARGS = frozenset([])
+
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
         self._connection = connection
@@ -59,6 +63,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
+
+        self._used_interpreter = None
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -92,6 +98,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleActionSkip('check mode is not supported for this task.')
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
+
+        # Error if invalid argument is passed
+        if self._VALID_ARGS:
+            task_opts = frozenset(self._task.args.keys())
+            bad_opts = task_opts.difference(self._VALID_ARGS)
+            if bad_opts:
+                raise AnsibleActionFail('Invalid options for %s: %s' % (self._task.action, ','.join(list(bad_opts))))
 
         if self._connection._shell.tmpdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()
@@ -339,8 +352,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # If ssh breaks we could leave tmp directories out on the remote system.
             tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False)
 
-            tmp_rm_data = self._parse_returned_data(tmp_rm_res)
-            if tmp_rm_data.get('rc', 0) != 0:
+            if tmp_rm_res.get('rc', 0) != 0:
                 display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
             else:
@@ -375,30 +387,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             os.unlink(afile)
 
         return remote_path
-
-    def _fixup_perms(self, remote_path, remote_user=None, execute=True, recursive=True):
-        """
-        We need the files we upload to be readable (and sometimes executable)
-        by the user being sudo'd to but we want to limit other people's access
-        (because the files could contain passwords or other private
-        information.
-
-        Deprecated in favor of _fixup_perms2. Ansible code has been updated to
-        use _fixup_perms2. This code is maintained to provide partial support
-        for custom actions (non-recursive mode only).
-
-        """
-        if remote_user is None:
-            remote_user = self._play_context.remote_user
-
-        display.deprecated('_fixup_perms is deprecated. Use _fixup_perms2 instead.', version='2.4', removed=False)
-
-        if recursive:
-            raise AnsibleError('_fixup_perms with recursive=True (the default) is no longer supported. ' +
-                               'Use _fixup_perms2 if support for previous releases is not required. '
-                               'Otherwise use fixup_perms with recursive=False.')
-
-        return self._fixup_perms2([remote_path], remote_user, execute)
 
     def _fixup_perms2(self, remote_paths, remote_user=None, execute=True):
         """
@@ -573,8 +561,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 x = "2"  # cannot read file
             elif errormsg.endswith(u'MODULE FAILURE'):
                 x = "4"  # python not found or module uncaught exception
-            elif 'json' in errormsg or 'simplejson' in errormsg:
-                x = "5"  # json or simplejson modules needed
+            elif 'json' in errormsg:
+                x = "5"  # json module needed
         finally:
             return x  # pylint: disable=lost-exception
 
@@ -747,12 +735,37 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._update_module_args(module_name, module_args, task_vars)
 
+        # FIXME: convert async_wrapper.py to not rely on environment variables
+        # make sure we get the right async_dir variable, backwards compatibility
+        # means we need to lookup the env value ANSIBLE_ASYNC_DIR first
+        remove_async_dir = None
+        if wrap_async or self._task.async_val:
+            env_async_dir = [e for e in self._task.environment if
+                             "ANSIBLE_ASYNC_DIR" in e]
+            if len(env_async_dir) > 0:
+                msg = "Setting the async dir from the environment keyword " \
+                      "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
+                      "shell option instead"
+                self._display.deprecated(msg, "2.12")
+            else:
+                # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
+                # from the shell option and temporarily add to the environment
+                # list for async_wrapper to pick up
+                try:
+                    async_dir = self._connection._shell.get_option('async_dir')
+                except KeyError:
+                    # in case 3rd party plugin has not set this, use the default
+                    async_dir = "~/.ansible_async"
+                remove_async_dir = len(self._task.environment)
+                self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
+
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
+        self._used_interpreter = shebang
         remote_module_path = None
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
@@ -787,6 +800,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
+
+        # remove the ANSIBLE_ASYNC_DIR env entry if we added a temporary one for
+        # the async_wrapper task - this is so the async_status plugin doesn't
+        # fire a deprecation warning when it runs after this task
+        if remove_async_dir is not None:
+            del self._task.environment[remove_async_dir]
 
         remote_files = []
         if tmpdir and remote_module_path:
@@ -896,12 +915,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, _ansible_parsed=False)
-            data['msg'] = "MODULE FAILURE"
             data['module_stdout'] = res.get('stdout', u'')
             if 'stderr' in res:
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
+
+            # try to figure out if we are missing interpreter
+            if self._used_interpreter is not None and '%s: No such file or directory' % self._used_interpreter.lstrip('!#') in data['module_stderr']:
+                data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
+            else:
+                data['msg'] = "MODULE FAILURE"
+
+            data['msg'] += '\nSee stdout/stderr for the exact error'
+
             if 'rc' in res:
                 data['rc'] = res['rc']
         return data
@@ -987,6 +1014,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
+        # Note: Since we do not diff the source and destination before we transform from bytes into
+        # text the diff between source and destination may not be accurate.  To fix this, we'd need
+        # to move the diffing from the callback plugins into here.
+        #
+        # Example of data which would cause trouble is src_content == b'\xff' and dest_content ==
+        # b'\xfe'.  Neither of those are valid utf-8 so both get turned into the replacement
+        # character: diff['before'] = u'�' ; diff['after'] = u'�'  When the callback plugin later
+        # diffs before and after it shows an empty diff.
+
         diff = {}
         display.debug("Going to peek to see if file has changed permissions")
         peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
@@ -994,22 +1030,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
             if peek_result.get('state') == 'absent':
-                diff['before'] = ''
+                diff['before'] = u''
             elif peek_result.get('appears_binary'):
                 diff['dst_binary'] = 1
             elif peek_result.get('size') and C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
-                display.debug("Slurping the file %s" % source)
+                display.debug(u"Slurping the file %s" % source)
                 dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, persist_files=True)
                 if 'content' in dest_result:
                     dest_contents = dest_result['content']
-                    if dest_result['encoding'] == 'base64':
+                    if dest_result['encoding'] == u'base64':
                         dest_contents = base64.b64decode(dest_contents)
                     else:
-                        raise AnsibleError("unknown encoding in content option, failed: %s" % dest_result)
+                        raise AnsibleError("unknown encoding in content option, failed: %s" % to_native(dest_result))
                     diff['before_header'] = destination
-                    diff['before'] = dest_contents
+                    diff['before'] = to_text(dest_contents)
 
             if source_file:
                 st = os.stat(source)
@@ -1027,17 +1063,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         diff['src_binary'] = 1
                     else:
                         diff['after_header'] = source
-                        diff['after'] = src_contents
+                        diff['after'] = to_text(src_contents)
             else:
-                display.debug("source of file passed in")
-                diff['after_header'] = 'dynamically generated'
+                display.debug(u"source of file passed in")
+                diff['after_header'] = u'dynamically generated'
                 diff['after'] = source
 
         if self._play_context.no_log:
             if 'before' in diff:
-                diff["before"] = ""
+                diff["before"] = u""
             if 'after' in diff:
-                diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]\n"
+                diff["after"] = u" [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]\n"
 
         return diff
 

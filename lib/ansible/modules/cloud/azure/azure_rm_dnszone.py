@@ -236,5 +236,6 @@ def zone_to_dict(zone):
 def main():
     AzureRMDNSZone()
 
+
 if __name__ == '__main__':
     main()

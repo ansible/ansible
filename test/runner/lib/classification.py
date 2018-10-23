@@ -25,6 +25,10 @@ from lib.import_analysis import (
     get_python_module_utils_imports,
 )
 
+from lib.csharp_import_analysis import (
+    get_csharp_module_utils_imports,
+)
+
 from lib.powershell_import_analysis import (
     get_powershell_module_utils_imports,
 )
@@ -168,6 +172,7 @@ class PathMapper(object):
         self.units_targets = list(walk_units_targets())
         self.sanity_targets = list(walk_sanity_targets())
         self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.ps1']
+        self.csharp_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.cs']
 
         self.units_modules = set(t.module for t in self.units_targets if t.module)
         self.units_paths = set(a for t in self.units_targets for a in t.aliases)
@@ -189,6 +194,7 @@ class PathMapper(object):
 
         self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
         self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
 
     def get_dependent_paths(self, path):
         """
@@ -203,6 +209,9 @@ class PathMapper(object):
 
             if ext == '.psm1':
                 return self.get_powershell_module_utils_usage(path)
+
+            if ext == '.cs':
+                return self.get_csharp_module_utils_usage(path)
 
         if path.startswith('test/integration/targets/'):
             return self.get_integration_target_usage(path)
@@ -246,6 +255,22 @@ class PathMapper(object):
         name = os.path.splitext(os.path.basename(path))[0]
 
         return sorted(self.powershell_module_utils_imports[name])
+
+    def get_csharp_module_utils_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        if not self.csharp_module_utils_imports:
+            display.info('Analyzing C# module_utils imports...')
+            before = time.time()
+            self.csharp_module_utils_imports = get_csharp_module_utils_imports(self.powershell_targets, self.csharp_targets)
+            after = time.time()
+            display.info('Processed %d C# module_utils in %d second(s).' % (len(self.csharp_module_utils_imports), after - before))
+
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        return sorted(self.csharp_module_utils_imports[name])
 
     def get_integration_target_usage(self, path):
         """
@@ -320,7 +345,7 @@ class PathMapper(object):
                 return {
                     'units': module_name if module_name in self.units_modules else None,
                     'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
-                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext == '.ps1' else None,
+                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext in ['.cs', '.ps1'] else None,
                     'network-integration': self.network_integration_by_module.get(module_name),
                     FOCUSED_TARGET: True,
                 }
@@ -328,6 +353,9 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/module_utils/'):
+            if ext == '.cs':
+                return minimal  # already expanded using get_dependent_paths
+
             if ext == '.psm1':
                 return minimal  # already expanded using get_dependent_paths
 
@@ -395,7 +423,7 @@ class PathMapper(object):
 
             # entire integration test commands depend on these connection plugins
 
-            if name == 'winrm':
+            if name in ['winrm', 'psrp']:
                 return {
                     'windows-integration': self.integration_all_target,
                     'units': units_path,
@@ -419,6 +447,39 @@ class PathMapper(object):
             return {
                 'integration': integration_name,
                 'units': units_path,
+            }
+
+        if path.startswith('lib/ansible/plugins/inventory/'):
+            if name == '__init__':
+                return all_tests(self.args)  # broad impact, run all tests
+
+            # These inventory plugins are enabled by default (see INVENTORY_ENABLED).
+            # Without dedicated integration tests for these we must rely on the incidental coverage from other tests.
+            test_all = [
+                'host_list',
+                'script',
+                'yaml',
+                'ini',
+                'auto',
+            ]
+
+            if name in test_all:
+                posix_integration_fallback = get_integration_all_target(self.args)
+            else:
+                posix_integration_fallback = None
+
+            target = self.integration_targets_by_name.get('inventory_%s' % name)
+            units_path = 'test/units/plugins/inventory/test_%s.py' % name
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            return {
+                'integration': target.name if target and 'posix/' in target.aliases else posix_integration_fallback,
+                'windows-integration': target.name if target and 'windows/' in target.aliases else None,
+                'network-integration': target.name if target and 'network/' in target.aliases else None,
+                'units': units_path,
+                FOCUSED_TARGET: target is not None,
             }
 
         if (path.startswith('lib/ansible/plugins/terminal/') or
@@ -553,6 +614,11 @@ class PathMapper(object):
                     'units': path,
                 }
 
+            if path.startswith('test/units/compat/'):
+                return {
+                    'units': 'test/units/',
+                }
+
             # changes to files which are not unit tests should trigger tests from the nearest parent directory
 
             test_path = os.path.dirname(path)
@@ -568,9 +634,6 @@ class PathMapper(object):
         if path.startswith('test/runner/completion/'):
             if path == 'test/runner/completion/docker.txt':
                 return all_tests(self.args, force=True)  # force all tests due to risk of breaking changes in new test environment
-
-        if path.startswith('test/runner/docker/'):
-            return minimal  # not used by tests, only used to build the default container
 
         if path.startswith('test/runner/lib/cloud/'):
             cloud_target = 'cloud/%s/' % name
@@ -614,12 +677,6 @@ class PathMapper(object):
                     }
 
         if path.startswith('test/runner/'):
-            if dirname == 'test/runner' and name in (
-                    'Dockerfile',
-                    '.dockerignore',
-            ):
-                return minimal  # not used by tests, only used to build the default container
-
             return all_tests(self.args)  # test infrastructure, run all tests
 
         if path.startswith('test/utils/shippable/tools/'):

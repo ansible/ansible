@@ -19,14 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import json
 import re
 
-from itertools import chain
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
@@ -38,7 +36,19 @@ from ansible.plugins.connection.httpapi import Connection as HttpApi
 class Cliconf(CliconfBase):
 
     def __init__(self, *args, **kwargs):
+        self._module_context = {}
         super(Cliconf, self).__init__(*args, **kwargs)
+
+    def read_module_context(self, module_key):
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
+
+        return None
 
     def send_command(self, command, **kwargs):
         """Executes a cli command and returns the results
@@ -131,21 +141,21 @@ class Cliconf(CliconfBase):
         diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         return diff
 
-    def get_config(self, source='running', format='text', filter=None):
+    def get_config(self, source='running', format='text', flags=None):
         options_values = self.get_option_values()
         if format not in options_values['format']:
             raise ValueError("'format' value %s is invalid. Valid values are %s" % (format, ','.join(options_values['format'])))
 
         lookup = {'running': 'running-config', 'startup': 'startup-config'}
         if source not in lookup:
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show {0} '.format(lookup[source])
         if format and format is not 'text':
             cmd += '| %s ' % format
 
-        if filter:
-            cmd += ' '.join(to_list(filter))
+        if flags:
+            cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
 
         return self.send_command(cmd)
@@ -153,18 +163,21 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
         results = []
         requests = []
 
         if replace:
+            device_info = self.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                raise ConnectionError(message=u'replace is supported only on Nexus 9K devices')
             candidate = 'config replace {0}'.format(replace)
 
         if commit:
             self.send_command('configure terminal')
 
             for line in to_list(candidate):
-                if not isinstance(line, collections.Mapping):
+                if not isinstance(line, Mapping):
                     line = {'command': line}
 
                 cmd = line['command']
@@ -180,10 +193,10 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def run_commands(self, commands=None, check_rc=True):
         if commands is None:
@@ -191,7 +204,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -201,7 +214,7 @@ class Cliconf(CliconfBase):
             try:
                 out = self.send_command(**cmd)
             except AnsibleConnectionFailure as e:
-                if check_rc:
+                if check_rc is True:
                     raise
                 out = getattr(e, 'err', e)
 
@@ -209,12 +222,12 @@ class Cliconf(CliconfBase):
                 try:
                     out = to_text(out, errors='surrogate_or_strict').strip()
                 except UnicodeError:
-                    raise ConnectionError(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+                    raise ConnectionError(message=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
                 try:
                     out = json.loads(out)
                 except ValueError:
-                    out = to_text(out, errors='surrogate_or_strict').strip()
+                    pass
 
                 responses.append(out)
         return responses
@@ -244,8 +257,9 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = {}
-        result['rpc'] = self.get_base_rpc()
+        result['rpc'] = self.get_base_rpc() + ['get_diff', 'run_commands']
         result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
 
         if isinstance(self._connection, NetworkCli):

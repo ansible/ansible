@@ -70,12 +70,9 @@ public enum TASK_TRIGGER_TYPE2
 "@
 
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $task_enums
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 Function Get-PropertyValue($task_property, $com, $property) {
     $raw_value = $com.$property
@@ -255,7 +252,10 @@ try {
     $result.folder_exists = $true
 } catch {
     $result.folder_exists = $false
-    $task_folder = $null
+    if ($null -ne $name) {
+        $result.task_exists = $false
+    }
+    Exit-Json -obj $result
 }
 
 $folder_tasks = $task_folder.GetTasks(1)

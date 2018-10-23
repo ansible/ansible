@@ -504,7 +504,7 @@ can do this::
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible-examples>`_
        Complete end-to-end playbook examples
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 
 

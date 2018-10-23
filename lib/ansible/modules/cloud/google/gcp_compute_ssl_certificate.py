@@ -32,8 +32,9 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_ssl_certificate
 description:
-    - An SslCertificate resource. This resource provides a mechanism to upload an SSL
-      key and certificate to the load balancer to serve secure connections from the user.
+    - An SslCertificate resource, used for HTTPS load balancing. This resource provides
+      a mechanism to upload an SSL key and certificate to the load balancer to serve secure
+      connections from the user.
 short_description: Creates a GCP SslCertificate
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -52,7 +53,7 @@ options:
             - The certificate in PEM format.
             - The certificate chain must be no greater than 5 certs long.
             - The chain must include at least one intermediate cert.
-        required: false
+        required: true
     description:
         description:
             - An optional description of this resource.
@@ -68,17 +69,19 @@ options:
         required: false
     private_key:
         description:
-            - The private key in PEM format.
-        required: false
+            - The write-only private key in PEM format.
+        required: true
 extends_documentation_fragment: gcp
+notes:
+    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslCertificates)"
+    - "Official Documentation: U(https://cloud.google.com/load-balancing/docs/ssl-certificates)"
 '''
 
 EXAMPLES = '''
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: testObject
-      description: |
-        "A certificate for testing. Do not use this certificate in production"
+      name: "test_object"
+      description: A certificate for testing. Do not use this certificate in production
       certificate: |
         -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
@@ -103,11 +106,9 @@ EXAMPLES = '''
         AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
         OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
         -----END EC PRIVATE KEY-----
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -119,7 +120,7 @@ RETURN = '''
             - The chain must include at least one intermediate cert.
         returned: success
         type: str
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -144,9 +145,9 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    private_key:
+    privateKey:
         description:
-            - The private key in PEM format.
+            - The write-only private key in PEM format.
         returned: success
         type: str
 '''
@@ -170,12 +171,15 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            certificate=dict(type='str'),
+            certificate=dict(required=True, type='str'),
             description=dict(type='str'),
             name=dict(type='str'),
-            private_key=dict(type='str')
+            private_key=dict(required=True, type='str')
         )
     )
+
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     state = module.params['state']
     kind = 'compute#sslCertificate'
@@ -186,10 +190,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -209,12 +214,11 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
-    auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+def update(module, link, kind):
+    module.fail_json(msg="SslCertificate cannot be edited")
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -235,9 +239,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -248,9 +252,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/sslCertificates".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -265,8 +269,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -314,7 +316,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#sslCertificate')
@@ -337,6 +339,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

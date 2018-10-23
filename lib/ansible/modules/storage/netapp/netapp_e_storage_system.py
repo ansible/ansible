@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: netapp_e_storage_system
 version_added: "2.2"
-short_description: Add/remove arrays from the Web Services Proxy
+short_description: NetApp E-Series Web Services Proxy manage storage arrays
 description:
 - Manage the arrays accessible via a NetApp Web Services Proxy for NetApp E-series storage arrays.
 options:

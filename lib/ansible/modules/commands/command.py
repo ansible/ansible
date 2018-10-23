@@ -3,7 +3,6 @@
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
 # Copyright: (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,10 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: command
-short_description: Executes a command on a remote node
+short_description: Execute commands on targets
 version_added: historical
 description:
      - The C(command) module takes the command name followed by a list of space-delimited arguments.
@@ -29,8 +28,9 @@ description:
 options:
   free_form:
     description:
-      - The command module takes a free form command to run.  There is no parameter actually named 'free form'.
-        See the examples!
+      - The command module takes a free form command to run.
+      - There is no actual parameter named 'free form'.
+      - See the examples on how to use this module.
     required: yes
   argv:
     description:
@@ -39,10 +39,10 @@ options:
     version_added: "2.6"
   creates:
     description:
-      - A filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
+      - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run.
   removes:
     description:
-      - A filename or (since 2.0) glob pattern, when it does not exist, this step will B(not) be run.
+      - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
     version_added: "0.8"
   chdir:
     description:
@@ -50,14 +50,14 @@ options:
     version_added: "0.6"
   warn:
     description:
-      - If command_warnings are on in ansible.cfg, do not warn about this particular line if set to C(no).
+      - Enable or disable task warnings.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "1.8"
   stdin:
-    version_added: "2.4"
     description:
       - Set the stdin of the command directly to the specified value.
+    version_added: "2.4"
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
@@ -73,7 +73,7 @@ author:
     - Michael DeHaan
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: return motd to registered var
   command: cat /etc/motd
   register: mymotd
@@ -102,7 +102,7 @@ EXAMPLES = '''
   register: myoutput
 '''
 
-RETURN = '''
+RETURN = r'''
 cmd:
   description: the cmd that was run on the remote machine
   returned: always
@@ -133,6 +133,8 @@ import os
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.common.collections import is_iterable
 
 
 def check_command(module, commandline):
@@ -214,6 +216,10 @@ def main():
         args = shlex.split(args)
 
     args = args or argv
+
+    # All args must be strings
+    if is_iterable(args, include_strings=False):
+        args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     if chdir:
         chdir = os.path.abspath(chdir)

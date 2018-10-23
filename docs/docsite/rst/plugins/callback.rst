@@ -13,7 +13,7 @@ but can also be used to add additional output, integrate with other tools and ma
 Example Callback Plugins
 ++++++++++++++++++++++++
 
-The :doc:`_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
+The :doc:`log_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
 and the :doc:`mail <callback/mail>` callback sends email on playbook failures.
 
 The :doc:`osx_say <callback/osx_say>` callback responds with computer synthesized speech on macOS in relation to playbook events.

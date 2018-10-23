@@ -26,7 +26,7 @@ DOCUMENTATION = """
           - name: ANSIBLE_SELECTIVE_DONT_COLORIZE
         ini:
           - section: defaults
-          - key: nocolor
+            key: nocolor
         type: boolean
 """
 

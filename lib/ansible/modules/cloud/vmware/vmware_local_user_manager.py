@@ -54,14 +54,13 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example vmware_local_user_manager command from Ansible Playbooks
 - name: Add local user to ESXi
-  local_action:
-      module: vmware_local_user_manager
-      hostname: esxi_hostname
-      username: root
-      password: vmware
-      local_user_name: foo
+  vmware_local_user_manager:
+    hostname: esxi_hostname
+    username: root
+    password: vmware
+    local_user_name: foo
+  delegate_to: localhost
 '''
 
 RETURN = '''# '''

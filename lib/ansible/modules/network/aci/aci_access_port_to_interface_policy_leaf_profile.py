@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -39,29 +39,53 @@ options:
     - The description to assign to the C(access_port_selector)
   leaf_port_blk:
     description:
+    - B(Deprecated)
+    - Starting with Ansible 2.8 we recommend using the module L(aci_access_port_block_to_access_port, aci_access_port_block_to_access_port.html).
+    - The parameter will be removed in Ansible 2.12.
+    - HORIZONTALLINE
     - The name of the Fabric access policy leaf interface profile access port block.
     required: yes
     aliases: [ leaf_port_blk_name ]
   leaf_port_blk_description:
     description:
+    - B(Deprecated)
+    - Starting with Ansible 2.8 we recommend using the module L(aci_access_port_block_to_access_port, aci_access_port_block_to_access_port.html).
+    - The parameter will be removed in Ansible 2.12.
+    - HORIZONTALLINE
     - The description to assign to the C(leaf_port_blk)
   from_port:
     description:
+    - B(Deprecated)
+    - Starting with Ansible 2.8 we recommend using the module L(aci_access_port_block_to_access_port, aci_access_port_block_to_access_port.html).
+    - The parameter will be removed in Ansible 2.12.
+    - HORIZONTALLINE
     - The beginning (from-range) of the port range block for the leaf access port block.
     aliases: [ from, fromPort, from_port_range ]
     required: yes
   to_port:
     description:
+    - B(Deprecated)
+    - Starting with Ansible 2.8 we recommend using the module L(aci_access_port_block_to_access_port, aci_access_port_block_to_access_port.html).
+    - The parameter will be removed in Ansible 2.12.
+    - HORIZONTALLINE
     - The end (to-range) of the port range block for the leaf access port block.
     aliases: [ to, toPort, to_port_range ]
     required: yes
   from_card:
     description:
+    - B(Deprecated)
+    - Starting with Ansible 2.8 we recommend using the module L(aci_access_port_block_to_access_port, aci_access_port_block_to_access_port.html).
+    - The parameter will be removed in Ansible 2.12.
+    - HORIZONTALLINE
     - The beginning (from-range) of the card range block for the leaf access port block.
     aliases: [ from_card_range ]
     version_added: '2.6'
   to_card:
     description:
+    - B(Deprecated)
+    - Starting with Ansible 2.8 we recommend using the module L(aci_access_port_block_to_access_port, aci_access_port_block_to_access_port.html).
+    - The parameter will be removed in Ansible 2.12.
+    - HORIZONTALLINE
     - The end (to-range) of the card range block for the leaf access port block.
     aliases: [ to_card_range ]
     version_added: '2.6'
@@ -97,6 +121,7 @@ EXAMPLES = r'''
     toi_port: 16
     policy_group: policygroupname
     state: present
+  delegate_to: localhost
 
 - name: Associate an interface access port selector to an Interface Policy Leaf Profile (w/o policy group) (check if this works)
   aci_access_port_to_interface_policy_leaf_profile:
@@ -109,6 +134,7 @@ EXAMPLES = r'''
     from_port: 13
     to_port: 16
     state: present
+  delegate_to: localhost
 
 - name: Remove an interface access port selector associated with an Interface Policy Leaf Profile
   aci_access_port_to_interface_policy_leaf_profile:
@@ -118,6 +144,7 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     state: absent
+  delegate_to: localhost
 
 - name: Query Specific access_port_selector under given leaf_interface_profile
   aci_access_port_to_interface_policy_leaf_profile:
@@ -127,6 +154,8 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     access_port_selector: accessportselectorname
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -282,15 +311,15 @@ def main():
         root_class=dict(
             aci_class='infraAccPortP',
             aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
             module_object=leaf_interface_profile,
+            target_filter={'name': leaf_interface_profile},
         ),
         subclass_1=dict(
             aci_class='infraHPortS',
             # NOTE: normal rn: hports-{name}-typ-{type}, hence here hardcoded to range for purposes of module
             aci_rn='hports-{0}-typ-range'.format(access_port_selector),
-            filter_target='eq(infraHPortS.name, "{0}")'.format(access_port_selector),
             module_object=access_port_selector,
+            target_filter={'name': access_port_selector},
         ),
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp'],
     )

@@ -32,9 +32,8 @@ DOCUMENTATION = '''
 ---
 module: gcp_dns_managed_zone
 description:
-    - A zone is a subtree of the DNS namespace under one administrative
-      responsibility. A ManagedZone is a resource that represents a DNS zone
-      hosted by the Cloud DNS service.
+    - A zone is a subtree of the DNS namespace under one administrative responsibility.
+      A ManagedZone is a resource that represents a DNS zone hosted by the Cloud DNS service.
 short_description: Creates a GCP ManagedZone
 version_added: 2.5
 author: Google Inc. (@googlecloudplatform)
@@ -46,14 +45,12 @@ options:
     state:
         description:
             - Whether the given object should exist in GCP
-        required: true
         choices: ['present', 'absent']
         default: 'present'
     description:
         description:
-            - A mutable string of at most 1024 characters associated with this
-              resource for the user's convenience. Has no effect on the managed
-              zone's function.
+            - A mutable string of at most 1024 characters associated with this resource for the
+              user's convenience. Has no effect on the managed zone's function.
         required: false
     dns_name:
         description:
@@ -66,9 +63,9 @@ options:
         required: true
     name_server_set:
         description:
-            - Optionally specifies the NameServerSet for this ManagedZone. A
-              NameServerSet is a set of DNS name servers that all host the same
-              ManagedZones. Most users will leave this field unset.
+            - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
+              a set of DNS name servers that all host the same ManagedZones. Most users will leave
+              this field unset.
         required: false
 extends_documentation_fragment: gcp
 '''
@@ -76,26 +73,23 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: testObject
+      name: "test_object"
       dns_name: test.somewild2.example.com.
-      description: 'test zone'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
+      description: test zone
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
     description:
         description:
-            - A mutable string of at most 1024 characters associated with this
-              resource for the user's convenience. Has no effect on the managed
-              zone's function.
+            - A mutable string of at most 1024 characters associated with this resource for the
+              user's convenience. Has no effect on the managed zone's function.
         returned: success
         type: str
-    dns_name:
+    dnsName:
         description:
             - The DNS name of this managed zone, for instance "example.com.".
         returned: success
@@ -111,20 +105,20 @@ RETURN = '''
             - Must be unique within the project.
         returned: success
         type: str
-    name_servers:
+    nameServers:
         description:
-            - Delegate your managed_zone to these virtual name servers; defined
-              by the server.
+            - Delegate your managed_zone to these virtual name servers; defined by the server
+              .
         returned: success
         type: list
-    name_server_set:
+    nameServerSet:
         description:
-            - Optionally specifies the NameServerSet for this ManagedZone. A
-              NameServerSet is a set of DNS name servers that all host the same
-              ManagedZones. Most users will leave this field unset.
+            - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
+              a set of DNS name servers that all host the same ManagedZones. Most users will leave
+              this field unset.
         returned: success
         type: list
-    creation_time:
+    creationTime:
         description:
             - The time that this resource was created on the server.
             - This is in RFC3339 text format.
@@ -157,6 +151,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
+
     state = module.params['state']
     kind = 'dns#managedZone'
 
@@ -166,7 +163,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -214,9 +212,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'dns')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -227,9 +225,9 @@ def collection(module):
     return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -244,8 +242,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -280,6 +276,7 @@ def response_to_hash(module, response):
         u'nameServerSet': response.get(u'nameServerSet'),
         u'creationTime': response.get(u'creationTime')
     }
+
 
 if __name__ == '__main__':
     main()

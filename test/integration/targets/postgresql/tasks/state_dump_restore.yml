@@ -22,32 +22,17 @@
 
 - set_fact:
      admin_str: "psql -U {{ pg_user }}"
-     admin_map:
-         name: "{{ db_name }}"
-         owner: "{{ db_user1 }}"
-         login_user: "{{ pg_user }}"
 
 - set_fact:
      user_str: "env PGPASSWORD=password psql -h localhost -U {{ db_user1 }} {{ db_name }}"
-     user_map:
-         name: "{{ db_name }}"
-         target: "{{ db_file_name }}"
-         target_opts: "-n public"
-         owner: "{{ db_user1 }}"
-         login_host: "localhost"
-         login_user: "{{ db_user1 }}"
-         login_password: "password"
   when: test_fixture == "user"
   # "-n public" is required to work around pg_restore issues with plpgsql
 
 - set_fact:
      user_str: "psql -U {{ pg_user }} {{ db_name }}"
-     user_map:
-         name: "{{ db_name }}"
-         target: "{{ db_file_name }}"
-         owner: "{{ db_user1 }}"
-         login_user: "{{ pg_user }}"
   when: test_fixture == "admin"
+
+
 
 - set_fact:
      sql_create: "create table employee(id int, name varchar(100));"
@@ -55,7 +40,11 @@
      sql_select: "select * from  employee;"
 
 - name: state dump/restore - create database
-  postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
 
 - name: state dump/restore - create table employee
   command: '{{ user_str }} -c "{{ sql_create }}"'
@@ -67,7 +56,15 @@
   file: name={{ db_file_name }} state=absent
 
 - name: test state=dump to backup the database (expect changed=true)
-  postgresql_db: "{{ user_map | combine({'state': 'dump'}) }}"
+  postgresql_db:
+    name: "{{ db_name }}"
+    target: "{{ db_file_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: '{{(test_fixture == "user")|ternary(db_user1, pg_user)}}'
+    target_opts: '{{(test_fixture == "user")|ternary("-n public", omit)}}'
+    login_host:  '{{(test_fixture == "user")|ternary("localhost", omit)}}'
+    login_password: '{{(test_fixture == "user")|ternary("password", omit)}}'
+    state: dump
   register: result
   become_user: "{{ pg_user }}"
   become: True
@@ -82,13 +79,33 @@
   register: result
 
 - name: state dump/restore - remove database for restore
-  postgresql_db: "{{ user_map | combine({'state': 'absent'}) }}"
+  postgresql_db:
+    name: "{{ db_name }}"
+    target: "{{ db_file_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: '{{(test_fixture == "user")|ternary(db_user1, pg_user)}}'
+    target_opts: '{{(test_fixture == "user")|ternary("-n public", omit)}}'
+    login_host:  '{{(test_fixture == "user")|ternary("localhost", omit)}}'
+    login_password: '{{(test_fixture == "user")|ternary("password", omit)}}'
+    state: absent
 
 - name: state dump/restore - re-create database
-  postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
 
 - name: test state=restore to restore the database (expect changed=true)
-  postgresql_db: "{{ user_map | combine({'state': 'restore'}) }}"
+  postgresql_db:
+    name: "{{ db_name }}"
+    target: "{{ db_file_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: '{{(test_fixture == "user")|ternary(db_user1, pg_user)}}'
+    target_opts: '{{(test_fixture == "user")|ternary("-n public", omit)}}'
+    login_host:  '{{(test_fixture == "user")|ternary("localhost", omit)}}'
+    login_password: '{{(test_fixture == "user")|ternary("password", omit)}}'
+    state: restore
   register: result
   become_user: "{{ pg_user }}"
   become: True
@@ -107,7 +124,15 @@
        - "'Joe Smith' in result.stdout"
 
 - name: state dump/restore - remove database name
-  postgresql_db: "{{ user_map | combine({'state': 'absent'}) }}"
+  postgresql_db:
+    name: "{{ db_name }}"
+    target: "{{ db_file_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: '{{(test_fixture == "user")|ternary(db_user1, pg_user)}}'
+    target_opts: '{{(test_fixture == "user")|ternary("-n public", omit)}}'
+    login_host:  '{{(test_fixture == "user")|ternary("localhost", omit)}}'
+    login_password: '{{(test_fixture == "user")|ternary("password", omit)}}'
+    state: absent
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent

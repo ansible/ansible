@@ -190,5 +190,6 @@ def main():
         for propname in props:
             print('{0}: {1}'.format(propname, getattr(v, propname)))
 
+
 if __name__ == '__main__':
     main()

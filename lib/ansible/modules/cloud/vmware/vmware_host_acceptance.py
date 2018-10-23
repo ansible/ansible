@@ -17,9 +17,10 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_host_acceptance
-short_description: Manage acceptance level of ESXi host
+short_description: Manage the host acceptance level of an ESXi host
 description:
-- This module can be used to manage acceptance level of an ESXi host.
+- This module can be used to manage the host acceptance level of an ESXi host.
+- The host acceptance level controls the acceptance level of each VIB on a ESXi host.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -68,6 +69,7 @@ EXAMPLES = r'''
     cluster_name: cluster_name
     acceptance_level: 'community'
     state: present
+  delegate_to: localhost
   register: cluster_acceptance_level
 
 - name: Set acceptance level to vmware_accepted for the given ESXi Host
@@ -78,6 +80,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     acceptance_level: 'vmware_accepted'
     state: present
+  delegate_to: localhost
   register: host_acceptance_level
 
 - name: Get acceptance level from the given ESXi Host
@@ -87,6 +90,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     state: list
+  delegate_to: localhost
   register: host_acceptance_level
 '''
 
@@ -100,7 +104,7 @@ facts:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 from ansible.module_utils.basic import AnsibleModule
@@ -136,9 +140,12 @@ class VMwareAccpetanceManager(PyVmomi):
                 host_image_config_mgr = host.configManager.imageConfigManager
                 if host_image_config_mgr:
                     try:
-                        host_image_config_mgr.UpdateHostImageAcceptanceLevel(newAcceptanceLevel=self.acceptance_level)
+                        if self.module.check_mode:
+                            self.hosts_facts[host.name]['level'] = self.acceptance_level
+                        else:
+                            host_image_config_mgr.UpdateHostImageAcceptanceLevel(newAcceptanceLevel=self.acceptance_level)
+                            self.hosts_facts[host.name]['level'] = host_image_config_mgr.HostImageConfigGetAcceptance()
                         host_changed = True
-                        self.hosts_facts[host.name]['level'] = host_image_config_mgr.HostImageConfigGetAcceptance()
                     except vim.fault.HostConfigFault as e:
                         self.hosts_facts[host.name]['error'] = to_native(e.msg)
 
@@ -173,6 +180,7 @@ def main():
         required_if=[
             ['state', 'present', ['acceptance_level']],
         ],
+        supports_check_mode=True
     )
 
     vmware_host_accept_config = VMwareAccpetanceManager(module)

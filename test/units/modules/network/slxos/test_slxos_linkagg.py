@@ -22,7 +22,7 @@ __metaclass__ = type
 import re
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.slxos import slxos_linkagg
 from units.modules.utils import set_module_args
 from .slxos_module import TestSlxosModule, load_fixture

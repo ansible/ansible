@@ -53,7 +53,12 @@ options:
         required: false
     topic:
         description:
-            - A reference to Topic resource.
+            - A reference to a Topic resource.
+            - 'This field represents a link to a Topic resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_pubsub_topic task and
+              then set this topic field to "{{ name-of-resource }}" Alternatively, you can set
+              this topic to a dictionary with the name key where the value is the name of your
+              Topic.'
         required: false
     push_config:
         description:
@@ -90,27 +95,23 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a topic
   gcp_pubsub_topic:
-      name: 'topic-subscription'
+      name: "topic-subscription"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
       state: present
   register: topic
 
 - name: create a subscription
   gcp_pubsub_subscription:
-      name: testObject
+      name: "test_object"
       topic: "{{ topic }}"
       push_config:
-        push_endpoint: 'https://myapp.graphite.cloudnativeapp.com/webhook/sub1'
+        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
@@ -122,10 +123,10 @@ RETURN = '''
         type: str
     topic:
         description:
-            - A reference to Topic resource.
+            - A reference to a Topic resource.
         returned: success
         type: dict
-    push_config:
+    pushConfig:
         description:
             - If push delivery is used with this subscription, this field is used to configure
               it. An empty pushConfig signifies that the subscriber will pull and ack messages
@@ -133,13 +134,13 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            push_endpoint:
+            pushEndpoint:
                 description:
                     - A URL locating the endpoint to which messages should be pushed.
                     - For example, a Webhook endpoint might use "U(https://example.com/push".)
                 returned: success
                 type: str
-    ack_deadline_seconds:
+    ackDeadlineSeconds:
         description:
             - This value is the maximum time after a subscriber receives a message before the
               subscriber should acknowledge the message. After message delivery but before the
@@ -186,6 +187,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
+
     state = module.params['state']
 
     fetch = fetch_resource(module, self_link(module))
@@ -194,7 +198,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -230,7 +235,7 @@ def resource_to_request(module):
     request = {
         u'name': module.params.get('name'),
         u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
-        u'pushConfig': SubscriPushConfig(module.params.get('push_config', {}), module).to_request(),
+        u'pushConfig': SubscriptionPushConfig(module.params.get('push_config', {}), module).to_request(),
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds')
     }
     request = encode_request(request, module)
@@ -242,9 +247,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'pubsub')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -255,9 +260,9 @@ def collection(module):
     return "https://pubsub.googleapis.com/v1/projects/{project}/subscriptions".format(**module.params)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -303,7 +308,7 @@ def response_to_hash(module, response):
     return {
         u'name': response.get(u'name'),
         u'topic': response.get(u'topic'),
-        u'pushConfig': SubscriPushConfig(response.get(u'pushConfig', {}), module).from_response(),
+        u'pushConfig': SubscriptionPushConfig(response.get(u'pushConfig', {}), module).from_response(),
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds')
     }
 
@@ -320,14 +325,14 @@ def decode_request(response, module):
 
 def encode_request(request, module):
     request['topic'] = '/'.join(['projects', module.params['project'],
-                                 'topics', module.params['topic']])
+                                 'topics', module.params['topic']['name']])
     request['name'] = '/'.join(['projects', module.params['project'],
                                 'subscriptions', module.params['name']])
 
     return request
 
 
-class SubscriPushConfig(object):
+class SubscriptionPushConfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -344,6 +349,7 @@ class SubscriPushConfig(object):
         return remove_nones_from_dict({
             u'pushEndpoint': self.request.get(u'pushEndpoint')
         })
+
 
 if __name__ == '__main__':
     main()

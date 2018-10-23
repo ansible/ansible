@@ -20,7 +20,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.network.common.parsing import Conditional
 
 test_results = ['result_1', 'result_2', 'result_3']
@@ -40,6 +40,7 @@ class TestNotKeyword(unittest.TestCase):
 
     def test_conditionals_w_not_keyword(self):
         assert c1(test_results) and c2(test_results) and c3(test_results)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -115,7 +115,7 @@ Using lookup vs query with loop
 
 In Ansible 2.5 a new jinja2 function was introduced named :ref:`query`, that offers several benefits over ``lookup`` when using the new ``loop`` keyword.
 
-This is described more in the lookup documentation, however, ``query`` provides a more simple interface and a more predictable output from lookup plugins, ensuring better compatibility with ``loop``.
+This is better described in the lookup documentation. However, ``query`` provides a simpler interface and a more predictable output from lookup plugins, ensuring better compatibility with ``loop``.
 
 In certain situations the ``lookup`` function may not return a list which ``loop`` requires.
 
@@ -348,7 +348,7 @@ Migrating from with_X to loop
        Conditional statements in playbooks
    :doc:`playbooks_variables`
        All about variables
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -148,3 +148,103 @@
       - "unmount_result['changed']"
       - "not dest_stat['stat']['exists']"
   when: ansible_system in ('FreeBSD', 'Linux')
+
+- name: Create fstab record for the first swap file
+  mount:
+    name: none
+    src: /tmp/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap1_created
+  when: ansible_system in ('Linux')
+
+- name: Try to create fstab record for the first swap file again
+  mount:
+    name: none
+    src: /tmp/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap1_created_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we created the swap1 record
+  assert:
+    that:
+      - "swap1_created['changed']"
+      - "not swap1_created_again['changed']"
+  when: ansible_system in ('Linux')
+
+- name: Create fstab record for the second swap file
+  mount:
+    name: none
+    src: /tmp/swap2
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap2_created
+  when: ansible_system in ('Linux')
+
+- name: Try to create fstab record for the second swap file again
+  mount:
+    name: none
+    src: /tmp/swap1
+    opts: sw
+    fstype: swap
+    state: present
+  register: swap2_created_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we created the swap2 record
+  assert:
+    that:
+      - "swap2_created['changed']"
+      - "not swap2_created_again['changed']"
+  when: ansible_system in ('Linux')
+
+- name: Remove the fstab record for the first swap file
+  mount:
+    name: none
+    src: /tmp/swap1
+    state: absent
+  register: swap1_removed
+  when: ansible_system in ('Linux')
+
+- name: Try to remove the fstab record for the first swap file again
+  mount:
+    name: none
+    src: /tmp/swap1
+    state: absent
+  register: swap1_removed_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we removed the swap1 record
+  assert:
+    that:
+      - "swap1_removed['changed']"
+      - "not swap1_removed_again['changed']"
+  when: ansible_system in ('Linux')
+
+- name: Remove the fstab record for the second swap file
+  mount:
+    name: none
+    src: /tmp/swap2
+    state: absent
+  register: swap2_removed
+  when: ansible_system in ('Linux')
+
+- name: Try to remove the fstab record for the second swap file again
+  mount:
+    name: none
+    src: /tmp/swap2
+    state: absent
+  register: swap2_removed_again
+  when: ansible_system in ('Linux')
+
+- name: Check that we removed the swap2 record
+  assert:
+    that:
+      - "swap2_removed['changed']"
+      - "not swap2_removed_again['changed']"
+  when: ansible_system in ('Linux')

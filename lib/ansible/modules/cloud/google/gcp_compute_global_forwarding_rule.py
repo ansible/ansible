@@ -84,7 +84,14 @@ options:
         choices: ['TCP', 'UDP', 'ESP', 'AH', 'SCTP', 'ICMP']
     backend_service:
         description:
-            - A reference to BackendService resource.
+            - A reference to a BackendService to receive the matched traffic.
+            - This is used for internal load balancing.
+            - "(not used for external load balancing) ."
+            - 'This field represents a link to a BackendService resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+              task and then set this backend_service field to "{{ name-of-resource }}" Alternatively,
+              you can set this backend_service to a dictionary with the selfLink key where the
+              value is the selfLink of your BackendService.'
         required: false
     ip_version:
         description:
@@ -105,14 +112,22 @@ options:
         description:
             - Name of the resource; provided by the client when the resource is created. The name
               must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression [a-z]([-a-z0-9]*[a-z0-9])?
+              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
         required: true
     network:
         description:
-            - A reference to Network resource.
+            - For internal load balancing, this field identifies the network that the load balanced
+              IP should belong to for this Forwarding Rule. If this field is not specified, the
+              default network will be used.
+            - This field is not used for external load balancing.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: false
     port_range:
         description:
@@ -138,7 +153,17 @@ options:
         required: false
     subnetwork:
         description:
-            - A reference to Subnetwork resource.
+            - A reference to a subnetwork.
+            - For internal load balancing, this field identifies the subnetwork that the load
+              balanced IP should belong to for this Forwarding Rule.
+            - If the network specified is in auto subnet mode, this field is optional. However,
+              if the network is in custom subnet mode, a subnetwork must be specified.
+            - This field is not used for external load balancing.
+            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
+              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
+              you can set this subnetwork to a dictionary with the selfLink key where the value
+              is the selfLink of your Subnetwork.'
         required: false
     target:
         description:
@@ -152,30 +177,26 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a global address
   gcp_compute_global_address:
-      name: 'globaladdress-globalforwardingrule'
+      name: "globaladdress-globalforwardingrule"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: globaladdress
 
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-globalforwardingrule'
-      zone: 'us-central1-a'
+      name: "instancegroup-globalforwardingrule"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-globalforwardingrule'
+      name: "httphealthcheck-globalforwardingrule"
       healthy_threshold: 10
       port: 8080
       timeout_sec: 2
@@ -183,68 +204,58 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-globalforwardingrule'
+      name: "backendservice-globalforwardingrule"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
+      - "{{ healthcheck.selfLink }}"
       enable_cdn: true
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
 
 - name: create a url map
   gcp_compute_url_map:
-      name: 'urlmap-globalforwardingrule'
+      name: "urlmap-globalforwardingrule"
       default_service: "{{ backendservice }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: urlmap
 
 - name: create a target http proxy
   gcp_compute_target_http_proxy:
-      name: 'targethttpproxy-globalforwardingrule'
+      name: "targethttpproxy-globalforwardingrule"
       url_map: "{{ urlmap }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: httpproxy
 
 - name: create a global forwarding rule
   gcp_compute_global_forwarding_rule:
-      name: testObject
+      name: "test_object"
       ip_address: "{{ globaladdress.address }}"
-      ip_protocol: 'TCP'
-      port_range: '80-80'
+      ip_protocol: TCP
+      port_range: 80-80
       target: "{{ httpproxy.selfLink }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -260,7 +271,7 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
-    ip_address:
+    IPAddress:
         description:
             - The IP address that this forwarding rule is serving on behalf of.
             - Addresses are restricted based on the forwarding rule's load balancing scheme (EXTERNAL
@@ -281,25 +292,27 @@ RETURN = '''
               * global/addresses/address * address .'
         returned: success
         type: str
-    ip_protocol:
+    IPProtocol:
         description:
             - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP, AH,
               SCTP or ICMP.
             - When the load balancing scheme is INTERNAL, only TCP and UDP are valid.
         returned: success
         type: str
-    backend_service:
+    backendService:
         description:
-            - A reference to BackendService resource.
+            - A reference to a BackendService to receive the matched traffic.
+            - This is used for internal load balancing.
+            - "(not used for external load balancing) ."
         returned: success
         type: dict
-    ip_version:
+    ipVersion:
         description:
             - The IP Version that will be used by this forwarding rule. Valid options are IPV4
               or IPV6. This can only be specified for a global forwarding rule.
         returned: success
         type: str
-    load_balancing_scheme:
+    loadBalancingScheme:
         description:
             - 'This signifies what the ForwardingRule will be used for and can only take the following
               values: INTERNAL, EXTERNAL The value of INTERNAL means that this will be used for
@@ -312,7 +325,7 @@ RETURN = '''
         description:
             - Name of the resource; provided by the client when the resource is created. The name
               must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression [a-z]([-a-z0-9]*[a-z0-9])?
+              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
               which means the first character must be a lowercase letter, and all following characters
               must be a dash, lowercase letter, or digit, except the last character, which cannot
               be a dash.
@@ -320,10 +333,13 @@ RETURN = '''
         type: str
     network:
         description:
-            - A reference to Network resource.
+            - For internal load balancing, this field identifies the network that the load balanced
+              IP should belong to for this Forwarding Rule. If this field is not specified, the
+              default network will be used.
+            - This field is not used for external load balancing.
         returned: success
         type: dict
-    port_range:
+    portRange:
         description:
             - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
               TargetSslProxy, TargetTcpProxy, TargetVpnGateway, TargetPool, TargetInstance.
@@ -349,12 +365,18 @@ RETURN = '''
         type: list
     subnetwork:
         description:
-            - A reference to Subnetwork resource.
+            - A reference to a subnetwork.
+            - For internal load balancing, this field identifies the subnetwork that the load
+              balanced IP should belong to for this Forwarding Rule.
+            - If the network specified is in auto subnet mode, this field is optional. However,
+              if the network is in custom subnet mode, a subnetwork must be specified.
+            - This field is not used for external load balancing.
         returned: success
         type: dict
     region:
         description:
-            - A reference to Region resource.
+            - A reference to the region where the regional forwarding rule resides.
+            - This field is not applicable to global forwarding rules.
         returned: success
         type: str
     target:
@@ -400,6 +422,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#forwardingRule'
 
@@ -409,7 +434,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -466,9 +492,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -479,9 +505,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/forwardingRules".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -496,8 +522,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -554,7 +578,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#forwardingRule')
@@ -577,6 +601,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

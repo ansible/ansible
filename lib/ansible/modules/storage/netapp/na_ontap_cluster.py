@@ -8,16 +8,16 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 module: na_ontap_cluster
-short_description: Create/Join ONTAP cluster. Apply license to cluster
+short_description: NetApp ONTAP cluster - create, join, add license
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Suhas Bangalore Shekar (bsuhas@netapp.com), Archana Ganesan (garchana@netapp.com)
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Create or join or apply licenses to ONTAP clusters
 options:

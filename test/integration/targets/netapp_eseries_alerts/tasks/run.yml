@@ -1,0 +1,39 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: NetApp Test ASUP module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    defaults: &defaults
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+      state: enabled
+      server: mail.example.com
+      sender: noreply@example.com
+      recipients:
+        - noreply@example.com
+
+- name: set default vars
+  set_fact:
+    vars: *defaults
+
+- name: Set the initial alerting settings
+  netapp_e_alerts:
+    <<: *defaults
+  register: result
+
+- name: Validate the idempotency of the module
+  netapp_e_alerts:
+    <<: *defaults
+  register: result
+
+- name: Ensure we still have the same settings, but had no change
+  assert:
+    that: not result.changed
