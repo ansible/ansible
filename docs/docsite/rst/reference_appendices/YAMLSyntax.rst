@@ -30,11 +30,10 @@ All members of a list are lines beginning at the same indentation level starting
 
     ---
     # A list of tasty fruits
-    fruits:
-        - Apple
-        - Orange
-        - Strawberry
-        - Mango
+    - Apple
+    - Orange
+    - Strawberry
+    - Mango
     ...
 
 A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
