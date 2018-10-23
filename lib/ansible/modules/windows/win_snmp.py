@@ -23,18 +23,16 @@ options:
     permitted_managers:
         description:
         - The list of permitted SNMP managers.
-        required: false
         type: list
     community_strings:
         description:
         - The list of read-only SNMP community strings.
-        required: false
         type: list
     action:
         description:
         - C(add) will add new SNMP community strings and/or SNMP managers
         - C(set) will replace SNMP community strings and/or SNMP managers. An
-          empty value for either C(community_strings) or C(permitted_managers)
+          empty list for either C(community_strings) or C(permitted_managers)
           will result in the respective lists being removed entirely.
         - C(remove) will remove SNMP community strings and/or SNMP managers
         default: set
@@ -51,6 +49,15 @@ EXAMPLES = '''
             - public
           managers:
             - 192.168.1.2
+          action: set
+
+  - hosts: Windows
+    tasks:
+      - name: Replace SNMP communities and clear managers
+        win_snmp:
+          communities:
+            - public
+          managers: []
           action: set
 '''
 

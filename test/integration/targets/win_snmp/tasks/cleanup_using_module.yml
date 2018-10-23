@@ -8,10 +8,21 @@
       permitted_managers:
         - 192.168.1.1
 
+  - name: Run without options to confirm no changes
+    register: snmp_no_change
+    win_snmp:
+
+  - name: Assert no changes occurred when no options provided
+    assert:
+      that:
+        - not snmp_no_change.changed
+
   - name: Set no SNMP community or SNMP manager
     register: snmp_cleanup
     win_snmp:
       action: set
+      community_strings: []
+      permitted_managers: []
 
   - name: Check registry for no SNMP community
     register: snmp_cleanup_reg_community

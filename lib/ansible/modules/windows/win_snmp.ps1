@@ -1,5 +1,8 @@
 #!powershell
 
+#FIXME
+$ErrorActionPreference = "Stop"
+
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -7,8 +10,8 @@
 
 $params      = Parse-Args -arguments $args -supports_check_mode $true;
 $check_mode  = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$managers    = Get-AnsibleParam -obj $params -name "permitted_managers"  -type "list" -default @()
-$communities = Get-AnsibleParam -obj $params -name "community_strings"   -type "list" -default @()
+$managers    = Get-AnsibleParam -obj $params -name "permitted_managers"  -type "list" -default $null
+$communities = Get-AnsibleParam -obj $params -name "community_strings"   -type "list" -default $null
 $action_in   = Get-AnsibleParam -obj $params -name "action"              -type "str"  -default "set" -ValidateSet @("set", "add", "remove")
 $action      = $action_in.ToLower()
 
@@ -17,13 +20,17 @@ $result = @{failed = $False; changed = $False;}
 # Make sure lists are modifyable
 [System.Collections.ArrayList]$managers    = $managers
 [System.Collections.ArrayList]$communities = $communities
+[System.Collections.ArrayList]$indexes     = @()
 
 # Type checking
-If ($managers.Count -gt 0 -And $managers[0] -IsNot [String]) {
+# You would think that "$managers -ne $null" would work, but it doesn't.
+# A proper type check is required. If a user provides an empty list then $managers
+# is still of the correct type. If a user provides no option then $managers is $null.
+If ($managers -Is [System.Collections.ArrayList] -And $managers.Count -gt 0 -And $managers[0] -IsNot [String]) {
   Fail-Json $result "Permitted managers must be an array of strings"
 }
 
-If ($communities.Count -gt 0 -And $communities[0] -IsNot [String]) {
+If ($communities -Is [System.Collections.ArrayList] -And $communities.Count -gt 0 -And $communities[0] -IsNot [String]) {
   Fail-Json $result "SNMP communities must be an array of strings"
 }
 
@@ -37,14 +44,14 @@ ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
   }
 
   $remove = $False
-  If ($managers.Contains($manager)) {
+  If ($managers -Is [System.Collections.ArrayList] -And $managers.Contains($manager)) {
     If ($action -eq "remove") {
       $remove = $True
     } Else {
       # Remove manager from list to add since it already exists
       $managers.Remove($manager)
     }
-  } ElseIf ($action -eq "set") {
+  } ElseIf ($action -eq "set" -And $managers -Is [System.Collections.ArrayList]) {
     # Will remove this manager since it is not in the set list
     $remove = $True
   }
@@ -52,6 +59,9 @@ ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
   If ($remove) {
     $result.changed = $True
     Remove-ItemProperty -Path $Managers_reg_key -Name $idx -WhatIf:$check_mode
+  } Else {
+    # Remember that this index is in use
+    $indexes.Add([int]$idx) | Out-Null
   }
 }
 
@@ -61,14 +71,14 @@ ForEach ($community in (Get-Item $Communities_reg_key).Property) {
   }
 
   $remove = $False
-  If ($communities.Contains($community)) {
+  If ($communities -Is [System.Collections.ArrayList] -And $communities.Contains($community)) {
     If ($action -eq "remove") {
       $remove = $True
     } Else {
       # Remove community from list to add since it already exists
       $communities.Remove($community)
     }
-  } ElseIf ($action -eq "set") {
+  } ElseIf ($action -eq "set" -And $communities -Is [System.Collections.ArrayList]) {
     # Will remove this community since it is not in the set list
     $remove = $True
   }
@@ -83,34 +93,27 @@ If ($action -eq "remove") {
   Exit-Json $result
 }
 
-# Get used manager indexes as integers
-[System.Collections.ArrayList]$indexes=@()
-ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
-  If ($idx.ToLower() -ne '(default)') {
-    $indexes.Add([int]$idx) | Out-Null
-  }
-}
-
 # Add managers that don't already exist
-ForEach ($manager in $managers) {
-  $result.changed = $True
-  If (-Not $check_mode) {
-    $next_index = 1;
-    While($True) {
+$next_index = 0
+If ($managers -Is [System.Collections.ArrayList]) {
+  ForEach ($manager in $managers) {
+    While ($True) {
+      $next_index = $next_index + 1
       If (-Not $indexes.Contains($next_index)) {
-        New-ItemProperty -Path $Managers_reg_key -Name $next_index -Value "$manager"
+        $result.changed = $True
+        New-ItemProperty -Path $Managers_reg_key -Name $next_index -Value "$manager" -WhatIf:$check_mode | Out-Null
         break
       }
-
-      $next_index = $next_index + 1
     }
   }
 }
 
 # Add communities that don't already exist
-ForEach ($community in $communities) {
-  $result.changed = $True
-  New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf:$check_mode
+If ($communities -Is [System.Collections.ArrayList]) {
+  ForEach ($community in $communities) {
+    $result.changed = $True
+    New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf:$check_mode | Out-Null
+  }
 }
 
 Exit-Json $result
