@@ -2018,18 +2018,21 @@ class ContainerManager(DockerBaseClass):
                     status = self.client.wait(container_id)['StatusCode']
                 else:
                     status = self.client.wait(container_id)
-                config = self.client.inspect_container(container_id)
-                logging_driver = config['HostConfig']['LogConfig']['Type']
-
-                if logging_driver == 'json-file' or logging_driver == 'journald':
-                    output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                if self.parameters.auto_remove:
+                    output = "Cannot retrieve result as auto_remove is enabled"
                 else:
-                    output = "Result logged using `%s` driver" % logging_driver
+                    config = self.client.inspect_container(container_id)
+                    logging_driver = config['HostConfig']['LogConfig']['Type']
+
+                    if logging_driver == 'json-file' or logging_driver == 'journald':
+                        output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                    else:
+                        output = "Result logged using `%s` driver" % logging_driver
 
                 if status != 0:
                     self.fail(output, status=status)
                 if self.parameters.cleanup:
-                    self.container_remove(container_id, force=True)
+                    self.container_remove(container_id, force=True, ignore_failure=self.parameters.auto_remove)
                 insp = self._get_container(container_id)
                 if insp.raw:
                     insp.raw['Output'] = output
@@ -2038,7 +2041,7 @@ class ContainerManager(DockerBaseClass):
                 return insp
         return self._get_container(container_id)
 
-    def container_remove(self, container_id, link=False, force=False):
+    def container_remove(self, container_id, link=False, force=False, ignore_failure=False):
         volume_state = (not self.parameters.keep_volumes)
         self.log("remove container container:%s v:%s link:%s force%s" % (container_id, volume_state, link, force))
         self.results['actions'].append(dict(removed=container_id, volume_state=volume_state, link=link, force=force))
@@ -2048,7 +2051,8 @@ class ContainerManager(DockerBaseClass):
             try:
                 response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
             except Exception as exc:
-                self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+                if not ignore_failure:
+                    self.fail("Error removing container %s: %s" % (container_id, str(exc)))
         return response
 
     def container_update(self, container_id, update_parameters):
