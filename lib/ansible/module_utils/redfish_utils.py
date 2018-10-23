@@ -504,7 +504,7 @@ class RedfishUtils(object):
                     return response
                 result['ret'] = True
                 data = response['data']
-                firmware.append({'Name': data[u'Name'],'Version': data[u'Version'],'Id': data[u'Id']})
+                firmware.append({'Name': data[u'Name'], 'Version': data[u'Version'], 'Id': data[u'Id']})
         result["entries"] = firmware
         return result
 
