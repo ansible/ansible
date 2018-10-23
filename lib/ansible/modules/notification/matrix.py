@@ -101,6 +101,9 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
+        mutually_exclusive=(['password', 'token']),
+        required_one_of=[['password', 'token']],
+        required_together=(['user_id', 'password']),
         supports_check_mode=True
     )
 
@@ -112,17 +115,10 @@ def run_module():
 
     # create a client object
     client = MatrixClient(module.params['hs_url'])
-    # try to log in with a password
-    if module.params['password'] is not None:
-        if module.params['user_id'] is None:
-            module.fail_json(msg='If you specify a password, you also need to specify a user_id.', **result)
-        else:
-            client.login(module.params['user_id'], module.params['password'], sync=False)
-    # use a token if password login isn't possible
-    elif module.params['token'] is not None:
+    if module.params['token'] is not None:
         client.api.token = module.params['token']
     else:
-        module.fail_json(msg='You need to either specify a token, or a user_id and password.', **result)
+        client.login(module.params['user_id'], module.params['password'], sync=False)
 
     # make sure we are in a given room and return a room object for it
     room = client.join_room(module.params['room_id'])
