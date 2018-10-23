@@ -996,7 +996,6 @@ try:
 except ImportError:
     HAS_PYFMGR = False
 
-
 ###############
 # START METHODS
 ###############
@@ -1023,29 +1022,15 @@ def fmgr_firewall_policy_addsetdelete(fmg, paramgram):
 
     # EVAL THE MODE PARAMETER FOR DELETE
     elif mode == "delete":
+
         # WE NEED TO GET THE POLICY ID FROM THE NAME OF THE POLICY
         url = '/pm/config/adom/{adom}/pkg/{pkg}/firewall' \
-              '/policy/'.format(adom=paramgram["adom"],
-                                pkg=paramgram["package_name"])
-
+              '/policy/{policyid}'.format(adom=paramgram["adom"],
+                                          pkg=paramgram["package_name"],
+                                          policyid=paramgram["policyid"])
         datagram = {
-            "filter": ["name", "==", paramgram["name"]]
+            "policyid": paramgram["policyid"]
         }
-
-        response = fmg.get(url, datagram)
-        try:
-            if response[1][0]["policyid"]:
-                policy_id = response[1][0]["policyid"]
-                datagram = {
-                    "policyid": policy_id
-                }
-                url = '/pm/config/adom/{adom}/pkg/{pkg}/firewall' \
-                      '/policy/{policyid}'.format(adom=paramgram["adom"],
-                                                  pkg=paramgram["package_name"],
-                                                  policyid=policy_id)
-        except:
-            response = [-200000, {"msg": "Couldn't get policy ID from policy name. Deleted failed"}]
-            return response
 
     # IF MODE = SET -- USE THE 'SET' API CALL MODE
     if mode == "set":
@@ -1483,16 +1468,35 @@ def main():
     if response[1]['status']['code'] != 0:
         module.fail_json(msg="Connection to FortiManager Failed")
 
+    if paramgram["mode"] == "delete":
+        # WE NEED TO GET THE POLICY ID FROM THE NAME OF THE POLICY TO DELETE IT
+        url = '/pm/config/adom/{adom}/pkg/{pkg}/firewall' \
+              '/policy/'.format(adom=paramgram["adom"],
+                                pkg=paramgram["package_name"])
+        datagram = {
+            "filter": ["name", "==", paramgram["name"]]
+        }
+        response = fmg.get(url, datagram)
+        try:
+            if response[1][0]["policyid"]:
+                policy_id = response[1][0]["policyid"]
+                paramgram["policyid"] = policy_id
+        except:
+            fmgr_logout(fmg, module, results=response, msg="Couldn't get Policy ID from name, delete failed")
+
     results = fmgr_firewall_policy_addsetdelete(fmg, paramgram)
     if results[0] == -10131:
-        fmgr_logout(fmg, module, results=results, good_codes=[0, -9998],
+        fmgr_logout(fmg, module, results=results, good_codes=[0, -9998, ],
                     msg=str(results[0]) + " - Object Dependency Failed. Do the objects named in parameters exist?!")
-    elif results[0] not in [0, -9998]:
-        fmgr_logout(fmg, module, results=results, good_codes=[0, -9998],
-                    msg=str(results[0]) + "Could not set FW policy.")
+    elif results[0] == -3:
+        fmgr_logout(fmg, module, results=results, good_codes=[0, -3],
+                    msg="Couldn't Delete - Policy Doesn't Exist")
     elif results[0] == 0:
         fmgr_logout(fmg, module, results=results, good_codes=[0, -9998],
                     msg="Successfully Set FW Policy")
+    elif results[0] not in [0, -9998]:
+        fmgr_logout(fmg, module, results=results, good_codes=[0, -9998],
+                    msg=str(results[0]) + "Could not set FW policy.")
 
     fmg.logout()
 

@@ -218,7 +218,7 @@ def test_fmgr_firewall_policy_addsetdelete(fixture_data, mocker):
     # diffservcode-forward: None
     # wanopt-profile: None
     # per-ip-shaper: None
-    # users: karen, kevin
+    # users: None
     # diffserv-forward: None
     # poolname: None
     # comments: Created by Ansible
@@ -418,7 +418,7 @@ def test_fmgr_firewall_policy_addsetdelete(fixture_data, mocker):
     # vlan-cos-rev: None
     # status: None
     # dsri: None
-    # users: karen, kevin
+    # users: None
     # voip-profile: None
     # dstaddr-negate: None
     # traffic-shaper-reverse: None
@@ -549,7 +549,7 @@ def test_fmgr_firewall_policy_addsetdelete(fixture_data, mocker):
     # dsri: None
     # profile-protocol-options: None
     # voip-profile: None
-    # policyid: None
+    # policyid: 25
     # traffic-shaper-reverse: None
     # internet-service-custom: None
     # diffserv-reverse: None
@@ -631,7 +631,7 @@ def test_fmgr_firewall_policy_addsetdelete(fixture_data, mocker):
     # fsso-agent-for-ntlm: None
     # logtraffic: None
     # vlan-filter: None
-    # policyid: None
+    # policyid: 26
     # logtraffic-start: None
     # webcache-https: None
     # webfilter-profile: None
@@ -807,7 +807,7 @@ def test_fmgr_firewall_policy_addsetdelete(fixture_data, mocker):
     # dsri: None
     # profile-protocol-options: None
     # voip-profile: None
-    # policyid: None
+    # policyid: 27
     # traffic-shaper-reverse: None
     # internet-service-custom: None
     # diffserv-reverse: None
