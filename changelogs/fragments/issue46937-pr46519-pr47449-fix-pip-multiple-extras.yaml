@@ -1,0 +1,2 @@
+bugfixes:
+- Fix pip module so that it can recognize multiple extras
