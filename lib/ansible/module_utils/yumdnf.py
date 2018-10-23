@@ -22,7 +22,7 @@ yumdnf_argument_spec = dict(
         autoremove=dict(type='bool', default=False),
         bugfix=dict(required=False, type='bool', default=False),
         conf_file=dict(type='str'),
-        disable_excludes=dict(type='str', default=None, choices=['all', 'main', 'repoid']),
+        disable_excludes=dict(type='str', default=None),
         disable_gpg_check=dict(type='bool', default=False),
         disable_plugin=dict(type='list', default=[]),
         disablerepo=dict(type='list', default=[]),

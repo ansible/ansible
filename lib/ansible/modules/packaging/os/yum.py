@@ -183,7 +183,6 @@ options:
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
     required: false
-    choices: [ all, main, repoid ]
     version_added: "2.7"
   download_only:
     description:
