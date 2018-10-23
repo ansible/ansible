@@ -1,0 +1,2 @@
+bugfixes:
+- psrp - Fix issue when dealing with unicode values in the output for Python 2
