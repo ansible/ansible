@@ -248,6 +248,10 @@ def grafana_create_dashboard(module, data):
     # test if dashboard already exists
     dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
 
+    # Check that the dashboard JSON is nested under the 'dashboard' key
+    if 'dashboard' not in payload:
+        payload = {'dashboard': payload}
+
     result = {}
     if dashboard_exists is True:
         if dashboard == payload:
@@ -278,8 +282,6 @@ def grafana_create_dashboard(module, data):
                 raise GrafanaAPIException('Unable to update the dashboard %s : %s' % (uid, body['message']))
     else:
         # create
-        if 'dashboard' not in payload:
-            payload = {'dashboard': payload}
         r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
             result['msg'] = "Dashboard %s created" % uid
