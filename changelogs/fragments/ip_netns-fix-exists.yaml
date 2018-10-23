@@ -1,0 +1,5 @@
+---
+bugfixes:
+- Fixes an error that occurs when attempting to see if the netns already exists
+  on the remote device. This change will now execute ``ip netns list`` and check
+  if the desired namespace is in the output.
