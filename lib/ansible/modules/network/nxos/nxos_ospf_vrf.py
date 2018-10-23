@@ -377,7 +377,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False, commands=[], warnings=warnings)
 
     state = module.params['state']
     args = PARAM_TO_COMMAND_KEYMAP.keys()
@@ -405,15 +405,12 @@ def main():
     if state == 'absent' and existing:
         state_absent(module, existing, proposed, candidate)
 
-    if not module.check_mode and candidate:
-        candidate = candidate.items_text()
-        load_config(module, candidate)
-        result['changed'] = True
-        result['commands'] = candidate
-
-    else:
+    if candidate:
         candidate = candidate.items_text()
         result['commands'] = candidate
+        if not module.check_mode:
+            load_config(module, candidate)
+            result['changed'] = True
     module.exit_json(**result)
 
 
