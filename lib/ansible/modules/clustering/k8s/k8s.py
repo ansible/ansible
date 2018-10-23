@@ -59,6 +59,20 @@ options:
     - strategic-merge
     type: list
     version_added: "2.7"
+  wait:
+    description:
+    - Whether to wait for certain resource kinds to end up in the desired state. By default the module exits once Kubernetes has
+      received the request
+    - Implemented for C(state=present) for C(Deployment), C(DaemonSet) and C(Pod), and for C(state=absent) for all resource kinds.
+    - For resource kinds without an implementation, C(wait) returns immediately.
+    default: no
+    type: bool
+    version_added: "2.8"
+  wait_timeout:
+    description:
+    - How long in seconds to wait for the resource to end up in the desired state. Ignored if C(wait) is not set.
+    default: 120
+    version_added: "2.8"
 
 requirements:
   - "python >= 2.7"
@@ -158,6 +172,11 @@ result:
        description: Returned only when multiple yaml documents are passed to src or resource_definition
        returned: when resource_definition or src contains list of objects
        type: list
+     duration:
+       description: elapsed time of task in seconds
+       returned: when C(wait) is true
+       type: int
+       sample: 48
 '''
 
 from ansible.module_utils.k8s.raw import KubernetesRawModule
