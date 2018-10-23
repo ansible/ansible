@@ -32,54 +32,60 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_global_address
 description:
-    - Represents a Global Address resource. Global addresses are used for HTTP(S) load
-      balancing.
+- Represents a Global Address resource. Global addresses are used for HTTP(S) load
+  balancing.
 short_description: Creates a GCP GlobalAddress
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - An optional description of this resource.
-            - Provide this property when you create the resource.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    ip_version:
-        description:
-            - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
-              The default value is IPV4.
-        required: false
-        choices: ['IPV4', 'IPV6']
-    address_type:
-        description:
-            - The type of the address to reserve, default is EXTERNAL.
-            - "* EXTERNAL indicates public/external single IP address."
-            - "* INTERNAL indicates internal IP ranges belonging to some network."
-        required: false
-        default: EXTERNAL
-        version_added: 2.8
-        choices: ['EXTERNAL', 'INTERNAL']
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - An optional description of this resource.
+    - Provide this property when you create the resource.
+    required: false
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  ip_version:
+    description:
+    - The IP Version that will be used by this address. Valid options are IPV4 or
+      IPV6. The default value is IPV4.
+    required: false
+    choices:
+    - IPV4
+    - IPV6
+  address_type:
+    description:
+    - The type of the address to reserve, default is EXTERNAL.
+    - "* EXTERNAL indicates public/external single IP address."
+    - "* INTERNAL indicates internal IP ranges belonging to some network."
+    required: false
+    default: EXTERNAL
+    version_added: 2.8
+    choices:
+    - EXTERNAL
+    - INTERNAL
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)"
-    - "Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)'
+- 'Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address)'
 '''
 
 EXAMPLES = '''
@@ -93,55 +99,55 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    address:
-        description:
-            - The static external IP address represented by this resource.
-        returned: success
-        type: str
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-            - Provide this property when you create the resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource. This identifier is defined by the server.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    ipVersion:
-        description:
-            - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
-              The default value is IPV4.
-        returned: success
-        type: str
-    region:
-        description:
-            - A reference to the region where the regional address resides.
-        returned: success
-        type: str
-    addressType:
-        description:
-            - The type of the address to reserve, default is EXTERNAL.
-            - "* EXTERNAL indicates public/external single IP address."
-            - "* INTERNAL indicates internal IP ranges belonging to some network."
-        returned: success
-        type: str
+address:
+  description:
+  - The static external IP address represented by this resource.
+  returned: success
+  type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  - Provide this property when you create the resource.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource. This identifier is defined by the server.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+ipVersion:
+  description:
+  - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
+    The default value is IPV4.
+  returned: success
+  type: str
+region:
+  description:
+  - A reference to the region where the regional address resides.
+  returned: success
+  type: str
+addressType:
+  description:
+  - The type of the address to reserve, default is EXTERNAL.
+  - "* EXTERNAL indicates public/external single IP address."
+  - "* INTERNAL indicates internal IP ranges belonging to some network."
+  returned: success
+  type: str
 '''
 
 ################################################################################

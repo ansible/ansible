@@ -32,24 +32,24 @@ DOCUMENTATION = '''
 ---
 module: gcp_sql_database_facts
 description:
-  - Gather facts for GCP Database
+- Gather facts for GCP Database
 short_description: Gather facts for GCP Database
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-            - 'This field represents a link to a Instance resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_sql_instance task
-              and then set this instance field to "{{ name-of-resource }}" Alternatively, you
-              can set this instance to a dictionary with the name key where the value is the name
-              of your Instance.'
-        required: true
+  instance:
+    description:
+    - The name of the Cloud SQL instance. This does not include the project ID.
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_sql_instance
+      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
+      you can set this instance to a dictionary with the name key where the value
+      is the name of your Instance'
+    required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -64,31 +64,31 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
-    returned: always
-    type: complex
-    contains:
-        charset:
-            description:
-                - The MySQL charset value.
-            returned: success
-            type: str
-        collation:
-            description:
-                - The MySQL collation value.
-            returned: success
-            type: str
-        name:
-            description:
-                - The name of the database in the Cloud SQL instance.
-                - This does not include the project ID or instance name.
-            returned: success
-            type: str
-        instance:
-            description:
-                - The name of the Cloud SQL instance. This does not include the project ID.
-            returned: success
-            type: dict
+  description: List of items
+  returned: always
+  type: complex
+  contains:
+    charset:
+      description:
+      - The MySQL charset value.
+      returned: success
+      type: str
+    collation:
+      description:
+      - The MySQL collation value.
+      returned: success
+      type: str
+    name:
+      description:
+      - The name of the database in the Cloud SQL instance.
+      - This does not include the project ID or instance name.
+      returned: success
+      type: str
+    instance:
+      description:
+      - The name of the Cloud SQL instance. This does not include the project ID.
+      returned: success
+      type: dict
 '''
 
 ################################################################################

@@ -32,42 +32,44 @@ DOCUMENTATION = '''
 ---
 module: gcp_sql_database
 description:
-    - Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
+- Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
 short_description: Creates a GCP Database
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    charset:
-        description:
-            - The MySQL charset value.
-        required: false
-    collation:
-        description:
-            - The MySQL collation value.
-        required: false
-    name:
-        description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
-        required: false
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-            - 'This field represents a link to a Instance resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_sql_instance task
-              and then set this instance field to "{{ name-of-resource }}" Alternatively, you
-              can set this instance to a dictionary with the name key where the value is the name
-              of your Instance.'
-        required: true
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  charset:
+    description:
+    - The MySQL charset value.
+    required: false
+  collation:
+    description:
+    - The MySQL collation value.
+    required: false
+  name:
+    description:
+    - The name of the database in the Cloud SQL instance.
+    - This does not include the project ID or instance name.
+    required: false
+  instance:
+    description:
+    - The name of the Cloud SQL instance. This does not include the project ID.
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_sql_instance
+      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
+      you can set this instance to a dictionary with the name key where the value
+      is the name of your Instance'
+    required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -100,27 +102,27 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    charset:
-        description:
-            - The MySQL charset value.
-        returned: success
-        type: str
-    collation:
-        description:
-            - The MySQL collation value.
-        returned: success
-        type: str
-    name:
-        description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
-        returned: success
-        type: str
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-        returned: success
-        type: dict
+charset:
+  description:
+  - The MySQL charset value.
+  returned: success
+  type: str
+collation:
+  description:
+  - The MySQL collation value.
+  returned: success
+  type: str
+name:
+  description:
+  - The name of the database in the Cloud SQL instance.
+  - This does not include the project ID or instance name.
+  returned: success
+  type: str
+instance:
+  description:
+  - The name of the Cloud SQL instance. This does not include the project ID.
+  returned: success
+  type: dict
 '''
 
 ################################################################################
