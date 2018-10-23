@@ -319,16 +319,14 @@ def main():
     cert_present = check_cert_present(module, executable, keystore_path,
                                       keystore_pass, cert_alias)
 
-    if state == 'absent':
-        if cert_present:
+    if state == 'absent' and cert_present:
 
             if module.check_mode:
                 module.exit_json(changed=True)
 
             delete_cert(module, executable, keystore_path, keystore_pass, cert_alias)
 
-    elif state == 'present':
-        if not cert_present:
+    elif state == 'present' and not cert_present:
 
             if module.check_mode:
                 module.exit_json(changed=True)
