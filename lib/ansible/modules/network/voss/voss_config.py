@@ -35,10 +35,10 @@ options:
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section or hierarchy
-        the commands should be checked against.  If the parents argument
-        is omitted, the commands are checked against the set of top
-        level or global commands.
+      - The parent line that uniquely identifies the section the commands
+        should be checked against. If this argument is omitted, the commands
+        are checked against the set of top level or global commands. Note
+        that VOSS configurations only support one level of nested commands.
   src:
     description:
       - Specifies the source path to the file that contains the configuration
