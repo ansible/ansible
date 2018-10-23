@@ -59,22 +59,29 @@ Importing and using shared code
 * Use shared code whenever possible - don't reinvent the wheel. Ansible offers the ``AnsibleModule`` common Python code, plus :ref:`utilities <appendix_module_utilities>` for many common use cases and patterns.
 * Import ``ansible.module_utils`` code in the same place as you import other libraries.
 * Do NOT use wildcards (*) for importing other python modules; instead, list the function(s) you are importing (for example, ``from some.other_python_module.basic import otherFunction``).
-* Import custom packages in ``try``/``except`` and handle them with ``fail_json()`` in ``main()``. For example:
+* Import custom packages in ``try``/``except``, capture any import errors, and handle them with ``fail_json()`` in ``main()``. For example:
 
 	.. code-block:: python
 
+	    import traceback
+
+	    from ansible.basic import missing_required_lib
+
+	    LIB_IMP_ERR = None
 	    try:
 	        import foo
-	        HAS_LIB=True
+	        HAS_LIB = True
 	    except:
-	        HAS_LIB=False
+	        HAS_LIB = False
+	        LIB_IMP_ERR = traceback.format_exc()
 
-  Then in main(), just after the argspec, do
+  Then in ``main()``, just after the argspec, do
 
 	.. code-block:: python
 
 		if not HAS_LIB:
-		    module.fail_json(msg='The foo Python module is required')
+		    module.fail_json(msg=missing_required_lib("foo"),
+		                     exception=LIB_IMP_ERR)
 
   And document the dependency in the ``requirements`` section of your module's :ref:`documentation_block`.
 

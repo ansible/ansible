@@ -785,6 +785,12 @@ def jsonify(data, **kwargs):
     raise UnicodeError('Invalid unicode encoding encountered')
 
 
+def missing_required_lib(library):
+    hostname = platform.node()
+    return "Failed to import the required Python library (%s) on %s's Python %s. Please read module documentation " \
+           "and install in the appropriate location." % (library, hostname, sys.executable)
+
+
 class AnsibleFallbackNotFound(Exception):
     pass
 
