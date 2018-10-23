@@ -256,7 +256,7 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
         if ($null -ne $source_password -and $update_password -eq "always") {
             $change = $true
         }
-        if($null -ne $source_api){ #need to double check if key can be pulled
+        if($null -ne $source_api){ 
             $change = $true
         }
         if ($null -ne $certificate -and $certificate -ne $actual_source.certificate) {
