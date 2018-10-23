@@ -110,12 +110,12 @@ options:
      - This is a free-form data structure that can contain arbitrary data. This is passed directly to the JIRA REST API
        (possibly after merging with other required data, as when passed to create). See examples for more information,
        and the JIRA REST API for the structure required for various fields.
-       
+
   jql:
     required: false
     version_added: 2.8
     description:
-     - Used with search. The Jira Query Language string to search for. 
+     - Used with search. The Jira Query Language string to search for.
        https://confluence.atlassian.com/jirasoftwarecloud/advanced-searching-764478330.html has examples of JQL
 
   startAt:
@@ -130,14 +130,14 @@ options:
     description:
      - Used with search. Integer number of search results to return. If undefined, search returns all issues up to the
        maximum the Jira instance returns.
-       
+
   searchFields:
     required: false
     version_added: 2.8
     description:
      - Used with search. List of strings, names of what fields to return in the search. If undefined, search returns all
        fields.
-       
+
   timeout:
     required: false
     version_added: 2.3
@@ -256,7 +256,7 @@ EXAMPLES = """
     issue: '{{ issue.meta.key }}'
     operation: transition
     status: Done
-    
+
 # Search for jira issues
 # See https://confluence.atlassian.com/jirasoftwarecloud/advanced-searching-764478330.html
 - name: Search for Done QA Issues
@@ -399,8 +399,12 @@ def search(restbase, user, passwd, params):
     # get only the keys we want from params and rename searchFields to fields
     search_keys = ['jql', 'startAt', 'maxResults', 'searchFields']
     rename_keys = {'searchFields': 'fields'}
-    data = {rename_keys.get(key, key): val for key, val in params.items() if
-            (key in search_keys and params[key] is not None)}
+    for key in search_keys:
+        if key in params and params[key] is not None:
+            if key in rename_keys:
+                data[rename_keys[key]] = params[key]
+            else:
+                data[key] = params[key]
 
     ret = post(url, user, passwd, params['timeout'], data)
     return ret

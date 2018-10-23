@@ -43,6 +43,7 @@ def module_mock(mocker):
                                  exit_json=exit_json,
                                  fail_json=fail_json)
 
+
 @pytest.fixture
 def fetch_url_mock(mocker):
     return mocker.patch('ansible.modules.web_infrastructure.jira.fetch_url')
@@ -82,7 +83,7 @@ def test_basic_search(fetch_url_mock, module_mock):
 
     assert fetch_url_mock.call_count == 1
     # check we called the right url
-    assert fetch_url_mock.call_args_list[0][0][1] ==  "test/rest/api/2/search/"
+    assert fetch_url_mock.call_args_list[0][0][1] == "test/rest/api/2/search/"
     # assert we called with the right method
     assert fetch_url_mock.call_args_list[0][1]['method'] == 'POST'
     # assert we posted the correct data. In this case, just jql
@@ -111,7 +112,7 @@ def test_advanced_search(fetch_url_mock, module_mock):
 
     assert fetch_url_mock.call_count == 1
     # check we called the right url
-    assert fetch_url_mock.call_args_list[0][0][1] ==  "test/rest/api/2/search/"
+    assert fetch_url_mock.call_args_list[0][0][1] == "test/rest/api/2/search/"
     # assert we called with the right method
     assert fetch_url_mock.call_args_list[0][1]['method'] == 'POST'
     # assert we posted the correct data. In this case, just jql
