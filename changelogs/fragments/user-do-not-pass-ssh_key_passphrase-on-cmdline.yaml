@@ -1,2 +1,2 @@
 bugfixes:
-  - user: do not pass ssh_key_passphrase on cmdline (CVE-2018-16837)
+  - user module - do not pass ssh_key_passphrase on cmdline (CVE-2018-16837)
