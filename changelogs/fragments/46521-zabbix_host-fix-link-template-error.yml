@@ -1,0 +1,2 @@
+bugfixes:
+- "zabbix_host - module was failing when zabbix host was updated with new interface and template depending on that interface at the same time"
