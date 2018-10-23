@@ -615,13 +615,15 @@ Using bastion/jump host with netconf connection
 Enabling jump host setting
 --------------------------
 
-Bastion/jump host with netconf connection can be enable using
-- Setting Ansible variable``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path
-- Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path
-- Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>``under ``netconf_connection`` section
+
+Bastion/jump host with netconf connection can be enabled by:
+ - Setting Ansible variable ``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path
+ - Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path
+ - Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>`` under ``netconf_connection`` section
 
 If the configuration variable is set to 1 the proxycommand and other ssh variables are read from
 default ssh config file (~/.ssh/config).
+
 If the configuration variable is set to file path the proxycommand and other ssh variables are read
 from the given custom ssh file path
 
@@ -630,11 +632,28 @@ Example ssh config file (~/.ssh/config)
 
 .. code-block:: ini
 
-   Host junos01
-   HostName junos01
-   User myuser
+  Host jumphost
+    HostName jumphost.domain.name.com
+    User jumphost-user
+    IdentityFile "/path/to/ssh-key.pem"
+    Port 22
 
-   ProxyCommand ssh user@bastion01 nc %h %p %r
+  # Note: Due to the way that Paramiko reads the SSH Config file, 
+  # you need to specify the NETCONF port that the host uses.
+  # i.e. It does not automatically use ansible_port
+  # As a result you need either:
+  
+  Host junos01
+    HostName junos01
+    ProxyCommand ssh -W %h:22 jumphost
+    
+  # OR
+  
+  Host junos01
+    HostName junos01
+    ProxyCommand ssh -W %h:830 jumphost
+    
+  # Depending on the netconf port used.
 
 Example Ansible inventory file
 
