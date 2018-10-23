@@ -66,17 +66,15 @@ clean:
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up generated rst"
-	-rm rst/cli/ansible-*.rst
-	-rm rst/cli/ansible.rst
-	-rm rst/modules/*_by_category.rst
-	-rm rst/modules/list_of_*.rst
-	-rm rst/modules/*_maintained.rst
-	-rm rst/modules/*_module.rst
-	-rm rst/modules/*_plugin.rst
-	-rm rst/playbooks_directives.rst
-	-rm rst/plugins/*/*.rst
-	-rm rst/reference_appendices/config.rst
-	-rm rst/reference_appendices/playbooks_keywords.rst
+	rm -f rst/modules/*_by_category.rst
+	rm -f rst/modules/list_of_*.rst
+	rm -f rst/modules/*_maintained.rst
+	rm -f rst/modules/*_module.rst
+	rm -f rst/modules/*_plugin.rst
+	rm -f rst/playbooks_directives.rst
+	rm -f rst/plugins/*/*.rst
+	rm -f rst/reference_appendices/config.rst
+	rm -f rst/reference_appendices/playbooks_keywords.rst
 
 .PHONY: docs clean
 

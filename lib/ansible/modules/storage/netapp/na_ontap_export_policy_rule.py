@@ -9,14 +9,14 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 
 module: na_ontap_export_policy_rule
 
-short_description: Manage ONTAP Export rules
+short_description: NetApp ONTAP manage export policy rules
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

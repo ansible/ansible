@@ -26,8 +26,8 @@ import pytest
 
 from ansible import constants as C
 from ansible.compat.selectors import SelectorKey, EVENT_READ
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes

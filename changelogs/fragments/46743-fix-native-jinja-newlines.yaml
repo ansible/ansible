@@ -1,0 +1,2 @@
+bugfixes:
+    - templar - Do not strip new lines in native jinja - https://github.com/ansible/ansible/issues/46743

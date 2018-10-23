@@ -176,6 +176,7 @@ try:
     from pypsrp.powershell import PowerShell, RunspacePool
     from pypsrp.shell import Process, SignalCode, WinRS
     from pypsrp.wsman import WSMan, AUTH_KWARGS
+    from requests.exceptions import ConnectionError, ConnectTimeout
 except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
@@ -243,6 +244,12 @@ class Connection(ConnectionBase):
                     "psrp connection failure during runspace open: %s"
                     % to_native(e)
                 )
+            except (ConnectionError, ConnectTimeout) as e:
+                raise AnsibleConnectionFailure(
+                    "Failed to connect to the host via PSRP: %s"
+                    % to_native(e)
+                )
+
             self._connected = True
         return self
 

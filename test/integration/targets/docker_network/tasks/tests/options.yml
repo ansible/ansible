@@ -1,0 +1,42 @@
+---
+- name: Registering network name
+  set_fact:
+    nname_1: "{{ name_prefix ~ '-network-1' }}"
+    nname_2: "{{ name_prefix ~ '-network-2' }}"
+- name: Registering network name
+  set_fact:
+    dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"
+
+####################################################################
+## internal ########################################################
+####################################################################
+
+- name: internal
+  docker_network:
+    name: "{{ nname_1 }}"
+    internal: yes
+  register: internal_1
+
+- name: internal (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    internal: yes
+  register: internal_2
+
+- name: internal (change)
+  docker_network:
+    name: "{{ nname_1 }}"
+    internal: no
+  register: internal_3
+
+- name: cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+    force: yes
+
+- assert:
+    that:
+    - internal_1 is changed
+    - internal_2 is not changed
+    - internal_3 is changed

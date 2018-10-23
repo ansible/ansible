@@ -77,11 +77,11 @@ options:
       - Name the hypervisor to be used for creating the new instance.
       - Relevant when using I(state=present), but only considered if not set on ISO/template.
       - If not set or found on ISO/template, first found hypervisor will be used.
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
+    choices: [ KVM, kvm, VMware, vmware, BareMetal, baremetal, XenServer, xenserver, LXC, lxc, HyperV, hyperv, UCS, ucs, OVM, ovm, Simulator, simulator ]
   keyboard:
     description:
       - Keyboard device type for the instance.
-    choices: [ de, de-ch, es, fi, fr, fr-be, fr-ch, is, it, jp, nl-be, no, pt, uk, us ]
+    choices: [ 'de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us' ]
   networks:
     description:
       - List of networks to use for the new instance.
@@ -189,7 +189,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 - name: for changing a running instance, use the 'force' parameter
-- cs_instance:
+  cs_instance:
     name: web-vm-1
     display_name: web-vm-01.example.com
     iso: Linux Debian 7 64-bit
@@ -840,7 +840,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 'hostid': self.get_host_id(),
             }
             if not self.module.check_mode:
-                res = self.query_api('migrateVirtualMachineWithVolume', **args_host)
+                res = self.query_api('migrateVirtualMachine', **args_host)
                 instance = self.poll_job(res, 'virtualmachine')
 
         return instance
@@ -1004,7 +1004,7 @@ def main():
         disk_offering=dict(),
         disk_size=dict(type='int'),
         root_disk_size=dict(type='int'),
-        keyboard=dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
+        keyboard=dict(type='str', choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
         hypervisor=dict(choices=CS_HYPERVISORS),
         host=dict(),
         security_groups=dict(type='list', aliases=['security_group']),

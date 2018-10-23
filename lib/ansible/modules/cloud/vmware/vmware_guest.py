@@ -89,6 +89,7 @@ options:
     - If the virtual machine already exists, this parameter will be ignored.
     - This parameter is case sensitive.
     - You can also specify template or VM UUID for identifying source. version_added 2.8. Use C(hw_product_uuid) from M(vmware_guest_facts) as UUID value.
+    - From version 2.8 onwards, absolute path to virtual machine or template can be used.
     aliases: [ 'template_src' ]
   is_template:
     description:
@@ -715,6 +716,22 @@ class PyVmomiDeviceHelper(object):
         """
         mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
         return bool(mac_addr_regex.match(mac_addr))
+
+    def integer_value(self, input_value, name):
+        """
+        Function to return int value for given input, else return error
+        Args:
+            input_value: Input value to retrive int value from
+            name:  Name of the Input value (used to build error message)
+        Returns: (int) if integer value can be obtained, otherwise will send a error message.
+        """
+        if isinstance(input_value, int):
+            return input_value
+        elif isinstance(input_value, str) and input_value.isdigit():
+            return int(input_value)
+        else:
+            self.module.fail_json(msg='"%s" attribute should be an'
+                                  ' integer value.' % name)
 
 
 class PyVmomiCache(object):
@@ -1513,7 +1530,10 @@ class PyVmomiHelper(PyVmomi):
                 ident.guiUnattended.autoLogonCount = self.params['customization'].get('autologoncount', 1)
 
             if 'timezone' in self.params['customization']:
-                ident.guiUnattended.timeZone = self.params['customization']['timezone']
+                # Check if timezone value is a int before proceeding.
+                ident.guiUnattended.timeZone = self.device_helper.integer_value(
+                    self.params['customization']['timezone'],
+                    'customization.timezone')
 
             ident.identification = vim.vm.customization.Identification()
 
@@ -2020,7 +2040,7 @@ class PyVmomiHelper(PyVmomi):
                     network_changes = True
                     break
 
-        if len(self.params['customization']) > 0 or network_changes is True:
+        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec'):
             self.customize_vm(vm_obj=vm_obj)
 
         clonespec = None

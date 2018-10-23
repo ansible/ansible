@@ -194,7 +194,7 @@ Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exer
 Exercising module code locally
 ------------------------------
 
-If you module does not need to target a remote host, you can quickly and easily exercise you code locally like this:
+If your module does not need to target a remote host, you can quickly and easily exercise your code locally like this:
 
 -  Create an arguments file, a basic JSON config file that passes parameters to your module so you can run it. Name the arguments file ``/tmp/args.json`` and add the following content:
 
@@ -211,9 +211,9 @@ If you module does not need to target a remote host, you can quickly and easily 
    development) activate it: ``$ . venv/bin/activate``
 -  Setup the environment for development: ``$ . hacking/env-setup``
 -  Run your test module locally and directly:
-   ``$ python ./my_new_test_module.py /tmp/args.json``
+   ``$ python -m ansible.modules.cloud.azure.my_new_test_module /tmp/args.json``
 
-This should return output something like this:
+This should return output like this:
 
 .. code:: json
 

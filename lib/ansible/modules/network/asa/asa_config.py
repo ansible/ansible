@@ -168,6 +168,45 @@ vars:
       - access-group cloud-acl_access_in in interface cloud13
     provider: "{{ cli }}"
 
+- name: configure ASA (>=9.2) default BGP
+  asa_config:
+    lines:
+      - bgp log-neighbor-changes
+      - bgp bestpath compare-routerid
+    provider: "{{ cli }}"
+    parents:
+      - router bgp 65002
+  register: bgp
+  when: bgp_default_config is defined
+
+- name: configure ASA (>=9.2) BGP neighbor in default/single context mode
+  asa_config:
+    lines:
+      - "bgp router-id {{ bgp_router_id }}"
+      - "neighbor {{ bgp_neighbor_ip }} remote-as {{ bgp_neighbor_as }}"
+      - "neighbor {{ bgp_neighbor_ip }} description {{ bgp_neighbor_name }}"
+    provider: "{{ cli }}"
+    parents:
+      - router bgp 65002
+      - address-family ipv4 unicast
+  register: bgp
+  when: bgp_neighbor_as is defined
+
+- name: configure ASA interface with standby
+  asa_config:
+    lines:
+      - description my cloud interface
+      - nameif cloud13
+      - security-level 50
+      - ip address 192.168.13.1 255.255.255.0 standby 192.168.13.2
+    provider: "{{ cli }}"
+    parents: ["interface Vlan13"]
+  register: interface
+
+- name: Show changes to interface from task above
+  debug:
+    var: interface
+
 """
 
 RETURN = """

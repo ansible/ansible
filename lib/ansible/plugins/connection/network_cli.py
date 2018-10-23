@@ -157,6 +157,21 @@ options:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
     vars:
       - name: ansible_command_timeout
+  persistent_buffer_read_timeout:
+    type: float
+    description:
+      - Configures, in seconds, the amount of time to wait for the data to be read
+        from Paramiko channel after the command prompt is matched. This timeout
+        value ensures that command prompt matched is correct and there is no more data
+        left to be received from remote host.
+    default: 0.1
+    ini:
+      - section: persistent_connection
+        key: buffer_read_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_BUFFER_READ_TIMEOUT
+    vars:
+      - name: ansible_buffer_read_timeout
 """
 
 import getpass
@@ -164,6 +179,7 @@ import json
 import logging
 import re
 import os
+import signal
 import socket
 import traceback
 from io import BytesIO
@@ -184,6 +200,10 @@ except ImportError:
     display = Display()
 
 
+class AnsibleCmdRespRecv(Exception):
+    pass
+
+
 class Connection(NetworkConnectionBase):
     ''' CLI (shell) SSH connections on Paramiko '''
 
@@ -200,6 +220,7 @@ class Connection(NetworkConnectionBase):
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
+        self._command_response = None
 
         self._terminal = None
         self.cliconf = None
@@ -207,6 +228,21 @@ class Connection(NetworkConnectionBase):
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
+
+        if self._network_os:
+
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
+                self._sub_plugins.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+        else:
+            raise AnsibleConnectionFailure(
+                'Unable to automatically determine host network os. Please '
+                'manually configure ansible_network_os value for this host'
+            )
+        display.display('network_os is set to %s' % self._network_os, log_only=True)
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -270,13 +306,6 @@ class Connection(NetworkConnectionBase):
         Connects to the remote device and starts the terminal
         '''
         if not self.connected:
-            if not self._network_os:
-                raise AnsibleConnectionFailure(
-                    'Unable to automatically determine host network os. Please '
-                    'manually configure ansible_network_os value for this host'
-                )
-            display.display('network_os is set to %s' % self._network_os, log_only=True)
-
             self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
             self.paramiko_conn._set_log_channel(self._get_log_channel())
             self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
@@ -294,15 +323,6 @@ class Connection(NetworkConnectionBase):
                 raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
             display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
-
-            self.cliconf = cliconf_loader.get(self._network_os, self)
-            if self.cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(self.cliconf)
-            else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
-
-            super(Connection, self)._connect()
 
             self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
                          newline=self._terminal.terminal_inital_prompt_newline)
@@ -343,15 +363,39 @@ class Connection(NetworkConnectionBase):
         '''
         Handles receiving of output from command
         '''
-        recv = BytesIO()
-        handled = False
-
         self._matched_prompt = None
         self._matched_cmd_prompt = None
+        recv = BytesIO()
+        handled = False
+        command_prompt_matched = False
         matched_prompt_window = window_count = 0
 
+        command_timeout = self.get_option('persistent_command_timeout')
+        self._validate_timeout_value(command_timeout, "persistent_command_timeout")
+
+        buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
+        self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
+
         while True:
-            data = self._ssh_shell.recv(256)
+            if command_prompt_matched:
+                try:
+                    signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
+                    signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
+                    data = self._ssh_shell.recv(256)
+                    signal.alarm(0)
+                    # if data is still received on channel it indicates the prompt string
+                    # is wrongly matched in between response chunks, continue to read
+                    # remaining response.
+                    command_prompt_matched = False
+
+                    # restart command_timeout timer
+                    signal.signal(signal.SIGALRM, self._handle_command_timeout)
+                    signal.alarm(command_timeout)
+
+                except AnsibleCmdRespRecv:
+                    return self._command_response
+            else:
+                data = self._ssh_shell.recv(256)
 
             # when a channel stream is closed, received data will be empty
             if not data:
@@ -377,7 +421,11 @@ class Connection(NetworkConnectionBase):
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
-                return self._sanitize(resp, command)
+                self._command_response = self._sanitize(resp, command)
+                if buffer_read_timeout == 0.0:
+                    return self._command_response
+                else:
+                    command_prompt_matched = True
 
     def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False, check_all=False):
         '''
@@ -398,6 +446,17 @@ class Connection(NetworkConnectionBase):
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
+
+    def _handle_buffer_read_timeout(self, signum, frame):
+        display.vvvv("Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds"
+                     % self.get_option('persistent_buffer_read_timeout'), host=self._play_context.remote_addr)
+        raise AnsibleCmdRespRecv()
+
+    def _handle_command_timeout(self, signum, frame):
+        msg = 'command timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and Troubleshooting Guide.'\
+              % self.get_option('persistent_command_timeout')
+        display.display(msg, log_only=True)
+        raise AnsibleConnectionFailure(msg)
 
     def _strip(self, data):
         '''
@@ -489,3 +548,7 @@ class Connection(NetworkConnectionBase):
             raise AnsibleConnectionFailure(errored_response)
 
         return False
+
+    def _validate_timeout_value(self, timeout, timer_name):
+        if timeout < 0:
+            raise AnsibleConnectionFailure("'%s' timer value '%s' is invalid, value should be greater than or equal to zero." % (timer_name, timeout))

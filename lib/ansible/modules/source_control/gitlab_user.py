@@ -247,7 +247,6 @@ class GitLabUser(object):
 
 
 def main():
-    global user_id
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(required=True),

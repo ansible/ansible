@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -16,7 +16,7 @@ module: ec2_vpc_peer
 short_description: create, delete, accept, and reject VPC peering connections between two VPCs.
 description:
   - Read the AWS documentation for VPC Peering Connections
-    U(http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html)
+    U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html).
 version_added: "2.2"
 options:
   vpc_id:

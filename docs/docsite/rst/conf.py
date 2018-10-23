@@ -28,7 +28,7 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 
-VERSION = '2.6'
+VERSION = '2.7'
 AUTHOR = 'Ansible, Inc'
 
 

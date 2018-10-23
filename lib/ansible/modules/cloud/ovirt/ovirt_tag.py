@@ -74,14 +74,14 @@ EXAMPLES = '''
       - vm1
       - vm2
 
-# Attach a tag to VM 'vm1', keeping the rest already attached tags on VM:
+# Attach a tag to VM 'vm3', keeping the rest already attached tags on VM:
 - ovirt_tag:
     name: mytag
     state: attached
     vms:
       - vm3
 
-# Detach a tag from VM 'vm1', keeping the rest already attached tags on VM:
+# Detach a tag from VM 'vm3', keeping the rest already attached tags on VM:
 - ovirt_tag:
     name: mytag
     state: detached
@@ -98,7 +98,7 @@ EXAMPLES = '''
     state: absent
     name: mytag
 
-# Change cluster Name
+# Change Tag Name
 - ovirt_tag:
     id: 00000000-0000-0000-0000-000000000000
     name: "new_tag_name"
@@ -227,9 +227,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_tags':
-        module.deprecate("The 'ovirt_tags' module is being renamed 'ovirt_tag'", version=2.8)
 
     check_sdk(module)
 

@@ -516,7 +516,16 @@ def main():
 
                 role = module.params['role']
                 clientToken = module.params['client_token']
-                loadBalancers = module.params['load_balancers']
+
+                loadBalancers = []
+                for loadBalancer in module.params['load_balancers']:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
+                    loadBalancers.append(loadBalancer)
+
+                for loadBalancer in loadBalancers:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
                     if (existing['loadBalancers'] or []) != loadBalancers:
@@ -529,10 +538,6 @@ def main():
                                                           deploymentConfiguration,
                                                           network_configuration)
                 else:
-                    for loadBalancer in loadBalancers:
-                        if 'containerPort' in loadBalancer:
-                            loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
-                    # doesn't exist. create it.
                     try:
                         response = service_mgr.create_service(module.params['name'],
                                                               module.params['cluster'],

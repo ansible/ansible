@@ -55,6 +55,7 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
+      network: point-to-point
       provider: "{{ connection }}"
       state: present
     register: result
@@ -80,6 +81,7 @@
       passive_interface: false
       hello_interval: 17
       dead_interval: 70
+      network: broadcast
       provider: "{{ connection }}"
       state: present
     register: result

@@ -1,6 +1,6 @@
 import sys
 
-from ansible.compat.tests.mock import patch, Mock
+from units.compat.mock import patch, Mock
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 base_modules_mock = Mock()
