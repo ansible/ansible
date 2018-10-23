@@ -532,9 +532,18 @@ class F5BaseClient(object):
 
     def merge_provider_params(self):
         result = dict()
-
         provider = self.params.get('provider', {})
 
+        self.merge_provider_server_param(result, provider)
+        self.merge_provider_server_port_param(result, provider)
+        self.merge_provider_validate_certs_param(result, provider)
+        self.merge_provider_auth_provider_param(result, provider)
+        self.merge_provider_user_param(result, provider)
+        self.merge_provider_password_param(result, provider)
+
+        return result
+
+    def merge_provider_server_param(self, result, provider):
         if self.validate_params('server', provider):
             result['server'] = provider['server']
         elif self.validate_params('server', self.params):
@@ -544,6 +553,7 @@ class F5BaseClient(object):
         else:
             raise F5ModuleError('Server parameter cannot be None or missing, please provide a valid value')
 
+    def merge_provider_server_port_param(self, result, provider):
         if self.validate_params('server_port', provider):
             result['server_port'] = provider['server_port']
         elif self.validate_params('server_port', self.params):
@@ -553,6 +563,7 @@ class F5BaseClient(object):
         else:
             result['server_port'] = 443
 
+    def merge_provider_validate_certs_param(self, result, provider):
         if self.validate_params('validate_certs', provider):
             result['validate_certs'] = provider['validate_certs']
         elif self.validate_params('validate_certs', self.params):
@@ -561,14 +572,37 @@ class F5BaseClient(object):
             result['validate_certs'] = os.environ['F5_VALIDATE_CERTS']
         else:
             result['validate_certs'] = True
+        if result['validate_certs'] in BOOLEANS_TRUE:
+            result['validate_certs'] = True
+        else:
+            result['validate_certs'] = False
 
+    def merge_provider_auth_provider_param(self, result, provider):
         if self.validate_params('auth_provider', provider):
             result['auth_provider'] = provider['auth_provider']
         elif self.validate_params('auth_provider', self.params):
             result['auth_provider'] = self.params['auth_provider']
+        elif self.validate_params('F5_AUTH_PROVIDER', os.environ):
+            result['auth_provider'] = os.environ['F5_AUTH_PROVIDER']
         else:
             result['auth_provider'] = None
 
+        # Handle a specific case of the user specifying ``|default(omit)``
+        # as the value to the auth_provider.
+        #
+        # In this case, Ansible will inject the omit-placeholder value
+        # and the module params incorrectly interpret this. This case
+        # can occur when specifying ``|default(omit)`` for a variable
+        # value defined in the ``environment`` section of a Play.
+        #
+        # An example of the omit placeholder is shown below.
+        #
+        #  __omit_place_holder__11bd71a2840bff144594b9cc2149db814256f253
+        #
+        if result['auth_provider'] is not None and '__omit_place_holder__' in result['auth_provider']:
+            result['auth_provider'] = None
+
+    def merge_provider_user_param(self, result, provider):
         if self.validate_params('user', provider):
             result['user'] = provider['user']
         elif self.validate_params('user', self.params):
@@ -580,6 +614,7 @@ class F5BaseClient(object):
         else:
             result['user'] = None
 
+    def merge_provider_password_param(self, result, provider):
         if self.validate_params('password', provider):
             result['password'] = provider['password']
         elif self.validate_params('password', self.params):
@@ -590,13 +625,6 @@ class F5BaseClient(object):
             result['password'] = os.environ.get('ANSIBLE_NET_PASSWORD')
         else:
             result['password'] = None
-
-        if result['validate_certs'] in BOOLEANS_TRUE:
-            result['validate_certs'] = True
-        else:
-            result['validate_certs'] = False
-
-        return result
 
 
 class AnsibleF5Parameters(object):

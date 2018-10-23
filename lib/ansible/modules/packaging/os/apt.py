@@ -30,9 +30,9 @@ options:
   state:
     description:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
-        are installed.
+        are installed. C(fixed) attempt to correct a system with broken dependencies in place.
     default: present
-    choices: [ absent, build-dep, latest, present ]
+    choices: [ absent, build-dep, latest, present, fixed ]
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
@@ -93,6 +93,7 @@ options:
      description:
        - Path to a .deb package on the remote machine.
        - If :// in the path, ansible will attempt to download deb before installing. (Version added 2.1)
+       - Requires the C(xz-utils) package to extract the control file of the deb package to install.
      required: false
      version_added: "1.6"
   autoremove:
@@ -266,7 +267,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_file
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -514,7 +515,7 @@ def mark_installed_manually(m, packages):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, autoremove=False, only_upgrade=False,
+            build_dep=False, fixed=False, autoremove=False, only_upgrade=False,
             allow_unauthenticated=False):
     pkg_list = []
     packages = ""
@@ -562,10 +563,15 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             only_upgrade = ''
 
-        if build_dep:
-            cmd = "%s -y %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, check_arg, packages)
+        if fixed:
+            fixed = '--fix-broken'
         else:
-            cmd = "%s -y %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, autoremove, check_arg, packages)
+            fixed = ''
+
+        if build_dep:
+            cmd = "%s -y %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
+        else:
+            cmd = "%s -y %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -846,36 +852,6 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
 
 
-def download(module, deb):
-    package = os.path.join(module.tmpdir, to_native(deb.rsplit('/', 1)[1], errors='surrogate_or_strict'))
-    # When downloading a deb, how much of the deb to download before
-    # saving to a tempfile (64k)
-    BUFSIZE = 65536
-
-    try:
-        rsp, info = fetch_url(module, deb, method='GET')
-        if info['status'] != 200:
-            module.fail_json(msg="Failed to download %s, %s" % (deb,
-                                                                info['msg']))
-        # Ensure file is open in binary mode for Python 3
-        f = open(package, 'wb')
-        # Read 1kb at a time to save on ram
-        while True:
-            data = rsp.read(BUFSIZE)
-            data = to_bytes(data, errors='surrogate_or_strict')
-
-            if len(data) < 1:
-                break  # End of file, break while loop
-
-            f.write(data)
-        f.close()
-        deb = package
-    except Exception as e:
-        module.fail_json(msg="Failure downloading %s, %s" % (deb, to_native(e)))
-
-    return deb
-
-
 def get_cache_mtime():
     """Return mtime of a valid apt cache file.
     Stat the apt cache file and if no cache file is found return 0
@@ -928,7 +904,7 @@ def get_cache(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present', 'fixed']),
             update_cache=dict(type='bool', aliases=['update-cache']),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
@@ -1053,7 +1029,7 @@ def main():
             if p['state'] != 'present':
                 module.fail_json(msg="deb only supports state=present")
             if '://' in p['deb']:
-                p['deb'] = download(module, p['deb'])
+                p['deb'] = fetch_file(module, p['deb'])
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
@@ -1082,13 +1058,16 @@ def main():
             if autoremove:
                 cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
 
-        if p['state'] in ('latest', 'present', 'build-dep'):
+        if p['state'] in ('latest', 'present', 'build-dep', 'fixed'):
             state_upgrade = False
             state_builddep = False
+            state_fixed = False
             if p['state'] == 'latest':
                 state_upgrade = True
             if p['state'] == 'build-dep':
                 state_builddep = True
+            if p['state'] == 'fixed':
+                state_fixed = True
 
             success, retvals = install(
                 module,
@@ -1100,6 +1079,7 @@ def main():
                 force=force_yes,
                 dpkg_options=dpkg_options,
                 build_dep=state_builddep,
+                fixed=state_fixed,
                 autoremove=autoremove,
                 only_upgrade=p['only_upgrade'],
                 allow_unauthenticated=allow_unauthenticated

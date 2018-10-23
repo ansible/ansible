@@ -1,0 +1,2 @@
+bugfixes:
+- mysql_*, proxysql_* - PyMySQL (a pure-Python MySQL driver) is now a preferred dependency also supporting Python 3.X.

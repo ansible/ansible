@@ -74,7 +74,7 @@ options:
     description:
       - Which version/alias of the function to run. This defaults to the
         C(LATEST) revision, but can be set to any existing version or alias.
-        See https;//docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html
+        See U(https://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html)
         for details.
     default: LATEST
   payload:
@@ -237,7 +237,7 @@ def main():
                          exception=traceback.format_exc())
     except botocore.exceptions.ParamValidationError as ve:
         module.fail_json(msg="Parameters to `invoke` failed to validate",
-                         exception=traceback.format_exc(ve))
+                         exception=traceback.format_exc())
     except Exception as e:
         module.fail_json(msg="Unexpected failure while invoking Lambda function",
                          exception=traceback.format_exc())

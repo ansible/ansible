@@ -439,7 +439,7 @@ class StorageDomainModule(BaseModule):
             else:
                 raise Exception(
                     "Can't bring storage to state `%s`, because Datacenter "
-                    "%s is not UP"
+                    "%s is not UP" % (self.param('state'), dc.name)
                 )
 
     def _attached_sds_service(self, dc_name):
@@ -565,6 +565,13 @@ def control_state(sd_module):
         return
 
     sd_service = sd_module._service.service(sd.id)
+
+    # In the case of no status returned, it's an attached storage domain.
+    # Redetermine the corresponding serivce and entity:
+    if sd.status is None:
+        sd_service = sd_module._attached_sd_service(sd)
+        sd = get_entity(sd_service)
+
     if sd.status == sdstate.LOCKED:
         wait(
             service=sd_service,
@@ -625,9 +632,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_storage_domains':
-        module.deprecate("The 'ovirt_storage_domains' module is being renamed 'ovirt_storage_domain'", version=2.8)
 
     check_sdk(module)
 

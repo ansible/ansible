@@ -68,6 +68,7 @@ import locale
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import types
@@ -82,6 +83,7 @@ import pwd
 import platform
 import errno
 import datetime
+from collections import deque
 from itertools import chain, repeat
 
 try:
@@ -148,7 +150,6 @@ except Exception:
         pass
 
 from ansible.module_utils.common._collections_compat import (
-    deque,
     KeysView,
     Mapping, MutableMapping,
     Sequence, MutableSequence,
@@ -2327,6 +2328,8 @@ class AnsibleModule(object):
                 for d in kwargs['deprecations']:
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
                         self.deprecate(d[0], version=d[1])
+                    elif isinstance(d, Mapping):
+                        self.deprecate(d['msg'], version=d.get('version', None))
                     else:
                         self.deprecate(d)
             else:
@@ -2679,6 +2682,11 @@ class AnsibleModule(object):
 
         return self._clean
 
+    def _restore_signal_handlers(self):
+        # Reset SIGPIPE to SIG_DFL, otherwise in Python2.7 it gets ignored in subprocesses.
+        if PY2 and sys.platform != 'win32':
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
                     expand_user_and_vars=True):
@@ -2823,6 +2831,7 @@ class AnsibleModule(object):
             stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            preexec_fn=self._restore_signal_handlers,
         )
 
         # store the pwd

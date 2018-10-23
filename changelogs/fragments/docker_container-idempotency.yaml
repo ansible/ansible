@@ -1,0 +1,7 @@
+bugfixes:
+- "docker_container - Makes ``blkio_weight``, ``cpuset_mems``, ``dns_opts`` and ``uts`` options actually work."
+- "docker_container - Fix idempotency problems with ``cap_drop`` and ``groups`` (when numeric group IDs were used)."
+- "docker_container - Fix type conversion errors for ``log_options``."
+- "docker_container - Fixing various comparison/idempotency problems related to wrong comparisons.
+   In particular, comparisons for ``command`` and ``entrypoint`` (both lists) no longer ignore missing
+   elements during idempotency checks."

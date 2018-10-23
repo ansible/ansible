@@ -124,7 +124,7 @@ EXAMPLES = '''
 - ec2_vol:
     instance: "{{ item.id }}"
     volume_size: 5
-  with_items: "{{ ec2.instances }}"
+  loop: "{{ ec2.instances }}"
   register: ec2_vol
 
 # Example: Launch an instance and then add a volume if not already attached
@@ -145,7 +145,7 @@ EXAMPLES = '''
     instance: "{{ item.id }}"
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
-  with_items: "{{ ec2.instances }}"
+  loop: "{{ ec2.instances }}"
   register: ec2_vol
 
 # Remove a volume
@@ -368,7 +368,7 @@ def attach_volume(module, ec2, volume, instance):
     changed = False
 
     # If device_name isn't set, make a choice based on best practices here:
-    # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
 
     # In future this needs to be more dynamic but combining block device mapping best practices
     # (bounds for devices, as above) with instance.block_device_mapping data would be tricky. For me ;)

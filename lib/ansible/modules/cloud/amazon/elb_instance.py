@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -83,7 +83,7 @@ post_tasks:
       ec2_elbs: "{{ item }}"
       state: present
     delegate_to: localhost
-    with_items: "{{ ec2_elbs }}"
+    loop: "{{ ec2_elbs }}"
 """
 
 import time

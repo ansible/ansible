@@ -43,12 +43,26 @@ By default in Ansible 2.7, or with ``AGNOSTIC_BECOME_PROMPT=False`` in Ansible 2
 Deprecated
 ==========
 
-No notable changes.
+* Setting the async directory using ``ANSIBLE_ASYNC_DIR`` as an task/play environment key is deprecated and will be
+  removed in Ansible 2.12. You can achieve the same result by setting ``ansible_async_dir`` as a variable like::
+
+      - name: run task with custom async directory
+        command: sleep 5
+        async: 10
+        vars:
+          ansible_aync_dir: /tmp/.ansible_async
+
 
 Modules
 =======
 
 Major changes in popular modules are detailed here
+
+The exec wrapper that runs PowerShell modules has been changed to set ``$ErrorActionPreference = "Stop"`` globally.
+This may mean that custom modules can fail if they implicitly relied on this behaviour. To get the old behaviour back,
+add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behaviour
+of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
+that may occur in execution.
 
 
 Modules removed
@@ -67,10 +81,15 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.12. Please update your playbooks accordingly.
 
+* ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+* ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+
 
 Noteworthy module changes
 -------------------------
 
+* The ``foreman`` and ``katello`` modules have been deprecated in favor of a set of modules that are broken out per entity with better idempotency in mind.
+* The ``foreman`` and ``katello`` modules replacement is officially part of the Foreman Community and supported there.
 * The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file.
   In order to work like Tower/AWX, ``ssh_key_data`` now contains the content of the file.
   The previous behavior can be achieved with ``lookup('file', '/path/to/file')``.
@@ -93,7 +112,9 @@ Noteworthy module changes
 Plugins
 =======
 
-No notable changes.
+* The ``powershell`` shell plugin now uses ``async_dir`` to define the async path for the results file and the default
+  has changed to ``%USERPROFILE%\.ansible_async``. To control this path now, either set the ``ansible_async_dir``
+  variable or the ``async_dir`` value in the ``powershell`` section of the config ini.
 
 Porting custom scripts
 ======================

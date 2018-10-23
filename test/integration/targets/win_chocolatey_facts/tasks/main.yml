@@ -1,0 +1,69 @@
+---
+- name: ensure Chocolatey is installed
+  win_chocolatey:
+    name: chocolatey
+    state: present
+
+- name: create test source
+  win_chocolatey_source:
+    name: test|repo  # use a pipe as that's a delimiter with Chocolatey, test edge case
+    state: disabled
+    admin_only: yes
+    allow_self_service: yes
+    bypass_proxy: yes
+    priority: 9
+    source: http://test-server/chocolatey
+    source_username: test-user
+    source_password: password
+    certificate: C:\temp\cert.pfx
+
+
+- name: set a config value
+  win_chocolatey_config:
+    name: proxyUser
+    state: present
+    value: test-user
+
+- block:
+  - name: Gather facts from chocolatey
+    win_chocolatey_facts:
+
+  always:
+  - name: remove test source
+    win_chocolatey_source:
+      name: test|repo
+      state: absent
+
+  - name: unset config value
+    win_chocolatey_config:
+      name: proxyUser
+      state: absent
+
+- name: assert facts from chocolatey
+  assert:
+    that:
+    - ansible_chocolatey is not changed
+    - ansible_chocolatey.config.commandExecutionTimeoutSeconds == 2700
+    - ansible_chocolatey.config.proxyBypassOnLocal == True
+    - ansible_chocolatey.config.proxyUser == 'test-user'
+    - ansible_chocolatey.feature.checksumFiles == true
+    - ansible_chocolatey.packages[0].package == 'chocolatey'
+    - ansible_chocolatey.packages[0].version is defined
+    - ansible_chocolatey.sources[0].admin_only == False
+    - ansible_chocolatey.sources[0].allow_self_service == False
+    - ansible_chocolatey.sources[0].bypass_proxy == False
+    - ansible_chocolatey.sources[0].certificate == None
+    - ansible_chocolatey.sources[0].disabled == False
+    - ansible_chocolatey.sources[0].name == 'chocolatey'
+    - ansible_chocolatey.sources[0].priority == 0
+    - ansible_chocolatey.sources[0].source == 'https://chocolatey.org/api/v2/'
+    - ansible_chocolatey.sources[0].source_username == None
+    - ansible_chocolatey.sources[1].admin_only == True
+    - ansible_chocolatey.sources[1].allow_self_service == True
+    - ansible_chocolatey.sources[1].bypass_proxy == True
+    - ansible_chocolatey.sources[1].certificate == 'C:\\temp\\cert.pfx'
+    - ansible_chocolatey.sources[1].disabled == True
+    - ansible_chocolatey.sources[1].name == 'test|repo'
+    - ansible_chocolatey.sources[1].priority == 9
+    - ansible_chocolatey.sources[1].source == 'http://test-server/chocolatey'
+    - ansible_chocolatey.sources[1].source_username == 'test-user'
