@@ -1,0 +1,4 @@
+---
+bugfixes:
+- Fix an issue with the default telnet prompt handling. The value needs to be
+  escaped otherwise it does not work when converted to bytes.
