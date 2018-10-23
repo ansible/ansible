@@ -171,9 +171,6 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
                   "-storepass '%s' -alias '%s'") % (executable, keystore_path,
                                                     keystore_pass, alias)
 
-    if module.check_mode:
-        module.exit_json(changed=True)
-
     # Fetch SSL certificate from remote host.
     (_, fetch_out, _) = module.run_command(fetch_cmd, check_rc=True)
 
@@ -200,9 +197,6 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
                                                                keystore_pass,
                                                                path, alias)
 
-    if module.check_mode:
-        module.exit_json(changed=True)
-
     # Use local certificate from local path and import it to a java keystore
     (import_rc, import_out, import_err) = module.run_command(import_cmd,
                                                              check_rc=False)
@@ -224,9 +218,6 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
                   "-srcalias '%s' -destalias '%s'") % (executable, keystore_path, keystore_pass,
                                                        keystore_pass, path, pkcs12_pass, pkcs12_alias, alias)
 
-    if module.check_mode:
-        module.exit_json(changed=True)
-
     # Use local certificate from local path and import it to a java keystore
     (import_rc, import_out, import_err) = module.run_command(import_cmd,
                                                              check_rc=False)
@@ -244,9 +235,6 @@ def delete_cert(module, executable, keystore_path, keystore_pass, alias):
     ''' Delete certificate identified with alias from keystore on keystore_path '''
     del_cmd = ("%s -delete -keystore '%s' -storepass '%s' "
                "-alias '%s'") % (executable, keystore_path, keystore_pass, alias)
-
-    if module.check_mode:
-        module.exit_json(changed=True)
 
     # Delete SSL certificate from keystore
     (del_rc, del_out, del_err) = module.run_command(del_cmd, check_rc=True)
@@ -333,10 +321,18 @@ def main():
 
     if state == 'absent':
         if cert_present:
+
+            if module.check_mode:
+                module.exit_json(changed=True)
+
             delete_cert(module, executable, keystore_path, keystore_pass, cert_alias)
 
     elif state == 'present':
         if not cert_present:
+
+            if module.check_mode:
+                module.exit_json(changed=True)
+
             if pkcs12_path:
                 import_pkcs12_path(module, executable, pkcs12_path, keystore_path,
                                    keystore_pass, pkcs12_pass, pkcs12_alias, cert_alias)
