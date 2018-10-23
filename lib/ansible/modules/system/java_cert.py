@@ -24,7 +24,7 @@ options:
       - Basic URL to fetch SSL certificate from. One of cert_url or cert_path is required to load certificate.
   cert_port:
     description:
-      - Port to connect to URL. This will be used to create server URL:PORT
+      - Port to connect to URL. This will be used to create server C(URL:PORT)
     default: 443
   cert_path:
     description:
@@ -59,7 +59,7 @@ options:
       - Create keystore if it doesn't exist
   executable:
     description:
-      - Path to keytool binary if not used we search in PATH for it.
+      - Path to keytool binary if not used we search in C(PATH) for it.
     default: keytool
   state:
     description:
