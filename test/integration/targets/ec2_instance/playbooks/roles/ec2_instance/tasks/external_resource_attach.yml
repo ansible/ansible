@@ -21,6 +21,13 @@
       - "{{ sg.group_id }}"
     <<: *aws_connection_info
   register: eni_b
+- ec2_eni:
+    delete_on_termination: true
+    subnet_id: "{{ testing_subnet_b.subnet.id }}"
+    security_groups:
+      - "{{ sg.group_id }}"
+    <<: *aws_connection_info
+  register: eni_c
 
 - ec2_key:
     name: "{{ resource_prefix }}_test_key"
@@ -63,6 +70,47 @@
     instance_type: t2.micro
     <<: *aws_connection_info
 
+- name: Make instance in the testing subnet created in the test VPC(check mode)
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-eni-vpc-checkmode"
+    key_name: "{{ resource_prefix }}_test_key"
+    network:
+      interfaces:
+        - id: "{{ eni_c.interface.id }}"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    availability_zone: '{{ aws_region }}b'
+    tags:
+      TestId: "{{ resource_prefix }}"
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+    instance_type: t2.micro
+    <<: *aws_connection_info
+  check_mode: yes
+
+- name: "fact presented ec2 instance"
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-eni-vpc"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: presented_instance_fact
+
+- name: "fact checkmode ec2 instance"
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-eni-vpc-checkmode"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: checkmode_instance_fact
+
+- name: "Confirm existence of instance id."
+  assert:
+    that:
+      - "{{ presented_instance_fact.instances | length }} > 0"
+      - "{{ checkmode_instance_fact.instances | length }} == 0"
+
 - name: Terminate instance
   ec2_instance:
     filters:
@@ -94,3 +142,4 @@
   with_items:
     - "{{ eni_a.interface.id }}"
     - "{{ eni_b.interface.id }}"
+    - "{{ eni_c.interface.id }}"

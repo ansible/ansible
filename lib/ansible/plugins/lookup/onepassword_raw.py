@@ -20,25 +20,46 @@ DOCUMENTATION = """
     version_added: "2.6"
     requirements:
       - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
-      - must have already logged into 1Password using op CLI
-    short_description: fetch raw json data from 1Password
+    short_description: fetch an entire item from 1Password
     description:
-      - onepassword_raw wraps C(op) command line utility to fetch an entire item from 1Password
+      - C(onepassword_raw) wraps C(op) command line utility to fetch an entire item from 1Password
     options:
       _terms:
         description: identifier(s) (UUID, name, or domain; case-insensitive) of item(s) to retrieve
         required: True
+      master_password:
+        description: The password used to unlock the specified vault.
+        default: None
+        version_added: '2.7'
+        aliases: ['vault_password']
+      section:
+        description: Item section containing the field to retrieve (case-insensitive). If absent will return first match from any section.
+        default: None
       subdomain:
         description: The 1Password subdomain to authenticate against.
         default: None
         version_added: '2.7'
-      vault:
-        description: vault containing the item to retrieve (case-insensitive); if absent will search all vaults
-        default: None
-      vault_password:
-        description: The password used to unlock the specified vault.
-        default: None
+      username:
+        description: The username used to sign in.
         version_added: '2.7'
+      secret_key:
+        description: The secret key used when performing an initial sign in.
+        version_added: '2.7'
+      vault:
+        description: Vault containing the item to retrieve (case-insensitive). If absent will search all vaults
+        default: None
+    notes:
+      - This lookup will use an existing 1Password session if one exists. If not, and you have already
+        performed an initial sign in (meaning C(~/.op/config exists)), then only the C(master_password) is required.
+        You may optionally specify C(subdomain) in this scenario, otherwise the last used subdomain will be used by C(op).
+      - This lookup can perform an initial login by providing C(subdomain), C(username), C(secret_key), and C(master_password).
+      - Due to the B(very) sensitive nature of these credentials, it is B(highly) recommeneded that you only pass in the minial credentials
+        needed at any given time. Also, store these credentials in an Ansible Vault using a key that is equal to or greater in strength
+        to the 1Password master password.
+      - This lookup stores potentially sensitive data from 1Password as Ansible facts.
+        Facts are subject to caching if enabled, which means this data could be stored in clear text
+        on disk or in a database.
+      - Tested with C(op) version 0.5.3
 """
 
 EXAMPLES = """
@@ -68,8 +89,10 @@ class LookupModule(LookupBase):
         op = OnePass()
 
         vault = kwargs.get('vault')
-        op._subdomain = kwargs.get('subdomain')
-        op._vault_password = kwargs.get('vault_password')
+        op.subdomain = kwargs.get('subdomain')
+        op.username = kwargs.get('username')
+        op.secret_key = kwargs.get('secret_key')
+        op.master_password = kwargs.get('master_password', kwargs.get('vault_password'))
 
         op.assert_logged_in()
 

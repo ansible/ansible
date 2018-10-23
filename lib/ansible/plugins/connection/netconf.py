@@ -217,6 +217,15 @@ class Connection(NetworkConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self._network_os = self._network_os or 'default'
+
+        netconf = netconf_loader.get(self._network_os, self)
+        if netconf:
+            self._sub_plugins.append({'type': 'netconf', 'name': self._network_os, 'obj': netconf})
+            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
+        else:
+            netconf = netconf_loader.get("default", self)
+            self._sub_plugins.append({'type': 'netconf', 'name': 'default', 'obj': netconf})
+            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
@@ -246,8 +255,6 @@ class Connection(NetworkConnectionBase):
             return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def _connect(self):
-        super(Connection, self)._connect()
-
         display.display('ssh connection done, starting ncclient', log_only=True)
 
         allow_agent = True
@@ -299,14 +306,6 @@ class Connection(NetworkConnectionBase):
         display.display('ncclient manager object created successfully', log_only=True)
 
         self._connected = True
-
-        netconf = netconf_loader.get(self._network_os, self)
-        if netconf:
-            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
-        else:
-            netconf = netconf_loader.get("default", self)
-            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        self._implementation_plugins.append(netconf)
 
         super(Connection, self)._connect()
 

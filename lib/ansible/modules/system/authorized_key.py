@@ -328,7 +328,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False)
     if follow:
         keysfile = os.path.realpath(keysfile)
 
-    if not write:
+    if not write or module.check_mode:
         return keysfile
 
     uid = user_entry.pw_uid

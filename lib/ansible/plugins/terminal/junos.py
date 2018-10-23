@@ -36,7 +36,7 @@ except ImportError:
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$|%"),
+        re.compile(br"[\r\n]?[\w@+\-\.:\/\[\]]+[>#%] ?$"),
     ]
 
     terminal_stderr_re = [
@@ -49,7 +49,7 @@ class TerminalModule(TerminalBase):
             prompt = self._get_prompt()
             if prompt.strip().endswith(b'%'):
                 display.vvv('starting cli', self._connection._play_context.remote_addr)
-                self._exec_cli_command('cli')
+                self._exec_cli_command(b'cli')
             for c in (b'set cli timestamp disable', b'set cli screen-length 0', b'set cli screen-width 1024'):
                 self._exec_cli_command(c)
         except AnsibleConnectionFailure:

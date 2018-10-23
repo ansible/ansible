@@ -87,6 +87,11 @@ options:
             - A reference to a BackendService to receive the matched traffic.
             - This is used for internal load balancing.
             - "(not used for external load balancing) ."
+            - 'This field represents a link to a BackendService resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+              task and then set this backend_service field to "{{ name-of-resource }}" Alternatively,
+              you can set this backend_service to a dictionary with the selfLink key where the
+              value is the selfLink of your BackendService.'
         required: false
     ip_version:
         description:
@@ -118,6 +123,11 @@ options:
               IP should belong to for this Forwarding Rule. If this field is not specified, the
               default network will be used.
             - This field is not used for external load balancing.
+            - 'This field represents a link to a Network resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+              set this network to a dictionary with the selfLink key where the value is the selfLink
+              of your Network.'
         required: false
     port_range:
         description:
@@ -149,6 +159,11 @@ options:
             - If the network specified is in auto subnet mode, this field is optional. However,
               if the network is in custom subnet mode, a subnetwork must be specified.
             - This field is not used for external load balancing.
+            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
+              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
+              you can set this subnetwork to a dictionary with the selfLink key where the value
+              is the selfLink of your Subnetwork.'
         required: false
     target:
         description:
@@ -234,13 +249,13 @@ EXAMPLES = '''
       port_range: 80-80
       target: "{{ httpproxy.selfLink }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -256,7 +271,7 @@ RETURN = '''
             - The unique identifier for the resource.
         returned: success
         type: int
-    ip_address:
+    IPAddress:
         description:
             - The IP address that this forwarding rule is serving on behalf of.
             - Addresses are restricted based on the forwarding rule's load balancing scheme (EXTERNAL
@@ -277,27 +292,27 @@ RETURN = '''
               * global/addresses/address * address .'
         returned: success
         type: str
-    ip_protocol:
+    IPProtocol:
         description:
             - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP, AH,
               SCTP or ICMP.
             - When the load balancing scheme is INTERNAL, only TCP and UDP are valid.
         returned: success
         type: str
-    backend_service:
+    backendService:
         description:
             - A reference to a BackendService to receive the matched traffic.
             - This is used for internal load balancing.
             - "(not used for external load balancing) ."
         returned: success
         type: dict
-    ip_version:
+    ipVersion:
         description:
             - The IP Version that will be used by this forwarding rule. Valid options are IPV4
               or IPV6. This can only be specified for a global forwarding rule.
         returned: success
         type: str
-    load_balancing_scheme:
+    loadBalancingScheme:
         description:
             - 'This signifies what the ForwardingRule will be used for and can only take the following
               values: INTERNAL, EXTERNAL The value of INTERNAL means that this will be used for
@@ -324,7 +339,7 @@ RETURN = '''
             - This field is not used for external load balancing.
         returned: success
         type: dict
-    port_range:
+    portRange:
         description:
             - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
               TargetSslProxy, TargetTcpProxy, TargetVpnGateway, TargetPool, TargetInstance.
@@ -419,7 +434,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -476,9 +492,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -489,9 +505,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/forwardingRules".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -506,8 +522,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 

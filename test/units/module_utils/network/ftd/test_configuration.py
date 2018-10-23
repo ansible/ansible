@@ -16,8 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests import mock
-from ansible.compat.tests.mock import call, patch
+from units.compat import mock
+from units.compat.mock import call, patch
 from ansible.module_utils.network.ftd.configuration import iterate_over_pageable_resource, BaseConfigurationResource
 
 

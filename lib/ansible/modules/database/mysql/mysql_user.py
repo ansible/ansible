@@ -196,16 +196,9 @@ import re
 import string
 import traceback
 
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -578,8 +571,8 @@ def main():
     db = 'mysql'
     sql_log_bin = module.params["sql_log_bin"]
 
-    if not mysqldb_found:
-        module.fail_json(msg="The MySQL-python module is required.")
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
 
     cursor = None
     try:
@@ -618,14 +611,14 @@ def main():
                 else:
                     changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
 
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error) as e:
+            except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         else:
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
                 changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error) as e:
+            except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):

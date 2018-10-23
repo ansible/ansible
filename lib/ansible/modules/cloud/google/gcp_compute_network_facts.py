@@ -56,7 +56,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -106,7 +106,7 @@ items:
                 - Server-defined fully-qualified URLs for all subnetworks in this network.
             returned: success
             type: list
-        auto_create_subnetworks:
+        autoCreateSubnetworks:
             description:
                 - When set to true, the network is created in "auto subnet mode". When set to false,
                   the network is in "custom subnet mode".
@@ -114,11 +114,26 @@ items:
                   and it automatically creates one subnetwork per region.
             returned: success
             type: bool
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
             type: str
+        routingConfig:
+            description:
+                - The network-level routing configuration for this network. Used by Cloud Router to
+                  determine what type of network-wide routing behavior to enforce.
+            returned: success
+            type: complex
+            contains:
+                routingMode:
+                    description:
+                        - The network-wide routing mode to use. If set to REGIONAL, this network's cloud routers
+                          will only advertise routes with subnetworks of this network in the same region as
+                          the router. If set to GLOBAL, this network's cloud routers will advertise routes
+                          with all subnetworks of this network, across regions.
+                    returned: success
+                    type: str
 '''
 
 ################################################################################
@@ -135,7 +150,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            filters=dict(type='list', elements='str'),
+            filters=dict(type='list', elements='str')
         )
     )
 

@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_interface_ospf
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -53,4 +53,6 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
 
     def test_loopback_interface_failed(self):
         set_module_args(dict(interface='loopback0', ospf=1, area=0, passive_interface=True))
+        self.execute_module(failed=True, changed=False)
+        set_module_args(dict(interface='loopback0', ospf=1, area=0, network='broadcast'))
         self.execute_module(failed=True, changed=False)
