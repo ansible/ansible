@@ -523,6 +523,10 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
                     loadBalancers.append(loadBalancer)
 
+                for loadBalancer in loadBalancers:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
+
                 if update:
                     if (existing['loadBalancers'] or []) != loadBalancers:
                         module.fail_json(msg="It is not possible to update the load balancers of an existing service")
