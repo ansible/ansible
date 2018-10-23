@@ -86,7 +86,8 @@ function cleanup
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
         # upload coverage report to codecov.io only when using complete on-demand coverage
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ]; then
+        # HACK: Only upload certain results to codecov to avoid overloading it
+        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [[ "$T" =~ /1$ ]] ; then
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"
