@@ -47,6 +47,10 @@ options:
            U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
            Each additional filter in the list will act be added as an AND condition
            (filter1 and filter2)
+    scopes:
+      required: true
+      description:
+          - Array of scopes to be used.
 extends_documentation_fragment: gcp
 '''
 
@@ -56,6 +60,8 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
+      scopes:
+      - https://www.googleapis.com/auth/compute
       auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
