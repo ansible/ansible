@@ -179,7 +179,7 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
                 if (self.virtual_network_subnet_id is not None) and (self.virtual_network_subnet_id != old_response['virtual_network_subnet_id']):
                     self.to_do = Actions.Update
                 if (self.ignore_missing_vnet_service_endpoint is not None) and
-                   (self.ignore_missing_vnet_service_endpoint != old_response['ignore_missing_vnet_service_endpoint']):
+                        (self.ignore_missing_vnet_service_endpoint != old_response['ignore_missing_vnet_service_endpoint']):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
