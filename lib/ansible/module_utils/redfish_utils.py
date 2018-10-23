@@ -486,7 +486,7 @@ class RedfishUtils(object):
 
     def get_firmware_inventory(self):
         result = {}
-        firmware = {}
+        firmware = []
         response = self.get_request(self.root_uri + self.firmware_uri)
         if response['ret'] is False:
             return response
@@ -504,7 +504,7 @@ class RedfishUtils(object):
                     return response
                 result['ret'] = True
                 data = response['data']
-                firmware[data[u'Name']] = data[u'Version']
+                firmware.append({'Name': data[u'Name'],'Version': data[u'Version'],'Id': data[u'Id']})
         result["entries"] = firmware
         return result
 
