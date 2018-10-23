@@ -546,26 +546,24 @@ if ($bytes_read -gt 0) {
         # TODO: figure out a better way of merging this with the host output
         stdout_list = []
         for output in pipeline.output:
-            # not all pipeline outputs can be casted to a string, we will
-            # create our own output based on the properties if that is the
-            # case+
-            try:
-                output_msg = str(output)
-            except TypeError:
-                if isinstance(output, GenericComplexObject):
-                    obj_lines = output.property_sets
-                    for key, value in output.adapted_properties.items():
-                        obj_lines.append("%s: %s" % (key, value))
-                    for key, value in output.extended_properties.items():
-                        obj_lines.append("%s: %s" % (key, value))
-                    output_msg = "\n".join(obj_lines)
-                else:
-                    output_msg = ""
+            # Not all pipeline outputs are a string or contain a __str__ value,
+            # we will create our own output based on the properties of the
+            # complex object if that is the case.
+            if isinstance(output, GenericComplexObject) and output.to_string is None:
+                obj_lines = output.property_sets
+                for key, value in output.adapted_properties.items():
+                    obj_lines.append(u"%s: %s" % (key, value))
+                for key, value in output.extended_properties.items():
+                    obj_lines.append(u"%s: %s" % (key, value))
+                output_msg = u"\n".join(obj_lines)
+            else:
+                output_msg = to_text(output, nonstring='simplerepr')
+
             stdout_list.append(output_msg)
 
-        stdout = "\r\n".join(stdout_list)
+        stdout = u"\r\n".join(stdout_list)
         if len(self.host.ui.stdout) > 0:
-            stdout += "\r\n" + "".join(self.host.ui.stdout)
+            stdout += u"\r\n" + u"".join(self.host.ui.stdout)
 
         stderr_list = []
         for error in pipeline.streams.error:
@@ -597,4 +595,4 @@ if ($bytes_read -gt 0) {
         self.host.ui.stdout = []
         self.host.ui.stderr = []
 
-        return rc, stdout, stderr
+        return rc, to_bytes(stdout, encoding='utf-8'), to_bytes(stderr, encoding='utf-8')
