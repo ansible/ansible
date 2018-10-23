@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -134,7 +134,7 @@ EXAMPLES = '''
 - name: associate new elastic IPs with each of the instances
   ec2_eip:
     device_id: "{{ item }}"
-  with_items: "{{ ec2.instance_ids }}"
+  loop: "{{ ec2.instance_ids }}"
 
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip:

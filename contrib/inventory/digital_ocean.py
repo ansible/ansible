@@ -221,7 +221,7 @@ class DoManager:
         return resp['droplet']
 
     def all_tags(self):
-        resp = self.send('tags/')
+        resp = self.send('tags')
         return resp['tags']
 
 

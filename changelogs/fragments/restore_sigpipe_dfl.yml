@@ -1,0 +1,2 @@
+bugfixes:
+    - Restore SIGPIPE to SIG_DFL when creating subprocesses to avoid it being ignored under Python 2.

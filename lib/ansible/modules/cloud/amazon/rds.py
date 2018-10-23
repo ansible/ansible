@@ -716,8 +716,7 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-        if self.instance.DBName:
-            d['DBName'] = self.instance.DBName
+        d['DBName'] = self.instance.DBName if hasattr(self.instance, 'DBName') else None
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
@@ -810,8 +809,7 @@ class RDS2DBInstance:
         else:
             d['endpoint'] = None
             d['port'] = None
-        if self.instance["DBName"]:
-            d['DBName'] = self.instance['DBName']
+        d['DBName'] = self.instance['DBName'] if hasattr(self.instance, 'DBName') else None
         return d
 
 

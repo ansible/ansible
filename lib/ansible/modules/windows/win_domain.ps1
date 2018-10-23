@@ -7,19 +7,19 @@
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 
-# FUTURE: consider action wrapper to manage reboots and credential changes
+# FUTURE: Consider action wrapper to manage reboots and credential changes
 
 Function Ensure-Prereqs {
     $gwf = Get-WindowsFeature AD-Domain-Services
-    If($gwf.InstallState -ne "Installed") {
+    if ($gwf.InstallState -ne "Installed") {
         $result.changed = $true
 
-        If($check_mode) {
-            Exit-Json $result
-        }
-        $awf = Add-WindowsFeature AD-Domain-Services
-        # FUTURE: check if reboot necessary
+        # NOTE: AD-Domain-Services includes: RSAT-AD-AdminCenter, RSAT-AD-Powershell and RSAT-ADDS-Tools
+        $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
+        # FUTURE: Check if reboot necessary
+        return $true
     }
+    return $false
 }
 
 $params = Parse-Args $args -supports_check_mode $true
@@ -29,51 +29,97 @@ $domain_netbios_name = Get-AnsibleParam -obj $params -name "domain_netbios_name"
 $safe_mode_admin_password = Get-AnsibleParam -obj $params -name "safe_mode_password" -failifempty $true
 $database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
 $sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
+$create_dns_delegation = Get-AnsibleParam -obj $params -name "create_dns_delegation" -type "bool"
+$domain_mode = Get-AnsibleParam -obj $params -name "domain_mode" -type "str"
+$forest_mode = Get-AnsibleParam -obj $params -name "forest_mode" -type "str"
 
-$forest = $null
-
-# FUTURE: support down to Server 2012?
-If([System.Environment]::OSVersion.Version -lt [Version]"6.3.9600.0") {
+# FUTURE: Support down to Server 2012?
+if ([System.Environment]::OSVersion.Version -lt [Version]"6.3.9600.0") {
     Fail-Json -message "win_domain requires Windows Server 2012R2 or higher"
 }
 
-$result = @{changed=$false; reboot_required=$false}
-
-# FUTURE: any sane way to do the detection under check-mode *without* installing the feature?
-
-Ensure-Prereqs
-
-Try {
-    $forest = Get-ADForest $dns_domain_name -ErrorAction SilentlyContinue
+# Check that domain_netbios_name is less than 15 characters
+if ($domain_netbios_name -and $domain_netbios_name.length -gt 15) {
+    Fail-Json -message "The parameter 'domain_netbios_name' should not exceed 15 characters in length"
 }
-Catch { }
 
-If(-not $forest) {
+$result = @{
+    changed=$false;
+    reboot_required=$false;
+}
+
+# FUTURE: Any sane way to do the detection under check-mode *without* installing the feature?
+$installed = Ensure-Prereqs
+
+# when in check mode and the prereq was "installed" we need to exit early as
+# the AD cmdlets weren't really installed
+if ($check_mode -and $installed) {
+    Exit-Json -obj $result
+}
+
+# Check that we got a valid domain_mode
+$valid_domain_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.DomainMode.ParameterType)
+if (($domain_mode -ne $null) -and -not ($domain_mode -in $valid_domain_modes)) {
+    Fail-Json -obj $result -message "The parameter 'domain_mode' does not accept '$domain_mode', please use one of: $valid_domain_modes"
+}
+
+# Check that we got a valid forest_mode
+$valid_forest_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.ForestMode.ParameterType)
+if (($forest_mode -ne $null) -and -not ($forest_mode -in $valid_forest_modes)) {
+    Fail-Json -obj $result -message "The parameter 'forest_mode' does not accept '$forest_mode', please use one of: $valid_forest_modes"
+}
+
+$forest = $null
+try {
+    $forest = Get-ADForest $dns_domain_name -ErrorAction SilentlyContinue
+} catch { }
+
+if (-not $forest) {
     $result.changed = $true
 
-    If(-not $check_mode) {
-        $sm_cred = ConvertTo-SecureString $safe_mode_admin_password -AsPlainText -Force
+    $sm_cred = ConvertTo-SecureString $safe_mode_admin_password -AsPlainText -Force
 
-        $install_forest_args = @{
-            DomainName=$dns_domain_name;
-            SafeModeAdministratorPassword=$sm_cred;
-            Confirm=$false;
-            SkipPreChecks=$true;
-            InstallDns=$true;
-            NoRebootOnCompletion=$true;
-        }
-        if ($database_path) {
-            $install_forest_args.DatabasePath = $database_path
-        }
-        if ($sysvol_path) {
-            $install_forest_args.SysvolPath = $sysvol_path
-        }
-        if ($domain_netbios_name) {
-            $install_forest_args.DomainNetBiosName = $domain_netbios_name
-        }
-        
-        $iaf = Install-ADDSForest @install_forest_args
+    $install_params = @{
+        DomainName=$dns_domain_name;
+        SafeModeAdministratorPassword=$sm_cred;
+        Confirm=$false;
+        SkipPreChecks=$true;
+        InstallDns=$true;
+        NoRebootOnCompletion=$true;
+        WhatIf=$check_mode;
+    }
 
+    if ($database_path) {
+        $install_params.DatabasePath = $database_path
+    }
+
+    if ($sysvol_path) {
+        $install_params.SysvolPath = $sysvol_path
+    }
+
+    if ($domain_netbios_name) {
+        $install_params.DomainNetBiosName = $domain_netbios_name
+    }
+
+    if ($create_dns_delegation -ne $null) {
+        $install_params.CreateDnsDelegation = $create_dns_delegation
+    }
+
+    if ($domain_mode) {
+        $install_params.DomainMode = $domain_mode
+    }
+
+    if ($forest_mode) {
+        $install_params.ForestMode = $forest_mode
+    }
+
+    $iaf = Install-ADDSForest @install_params
+
+    if ($check_mode) {
+        # the return value after -WhatIf does not have RebootRequired populated
+        # manually set to True as the domain would have been installed
+        $result.reboot_required = $true
+    } else {
         $result.reboot_required = $iaf.RebootRequired
 
         # The Netlogon service is set to auto start but is not started. This is

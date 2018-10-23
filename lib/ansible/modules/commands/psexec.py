@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2018, Jordan Borean <jborean93@gmail.com>
+# Copyright: (c) 2018, Jordan Borean <jborean93@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -31,6 +31,7 @@ options:
     description:
     - The remote Windows host to connect to, can be either an IP address or a
       hostname.
+    type: str
     required: yes
   connection_username:
     description:
@@ -43,6 +44,7 @@ options:
       local credential cache if the Kerberos library is installed.
     - If I(process_username) is not specified, then the remote process will run
       under a Network Logon under this account.
+    type: str
   connection_password:
     description:
     - The password for I(connection_user).
@@ -51,9 +53,11 @@ options:
     - Can be omitted to use a Kerberos principal ticket for the principal set
       by I(connection_user) if the Kerberos library is installed and the
       ticket has already been retrieved with the C(kinit) command before.
+    type: str
   port:
     description:
     - The port that the remote SMB service is listening on.
+    type: int
     default: 445
   encrypt:
     description:
@@ -65,22 +69,26 @@ options:
     - When setting to C(no), the packets are in plaintext and can be seen by
       anyone sniffing the network, any process options are included in this.
     type: bool
-    default: 'yes'
+    default: yes
   connection_timeout:
     description:
     - The timeout in seconds to wait when receiving the initial SMB negotiate
       response from the server.
+    type: str
     default: 60
   executable:
     description:
     - The executable to run on the Windows host.
+    type: str
     required: yes
   arguments:
     description:
     - Any arguments as a single string to use when running the executable.
+    type: str
   working_directory:
     description:
     - Changes the working directory set when starting the process.
+    type: str
     default: C:\Windows\System32
   asynchronous:
     description:
@@ -92,12 +100,12 @@ options:
     - The I(stdin) option does not work with this type of process.
     - The I(rc) return value is not set when this is C(yes)
     type: bool
-    default: 'no'
+    default: no
   load_profile:
     description:
     - Runs the remote command with the user's profile loaded.
     type: bool
-    default: 'yes'
+    default: yes
   process_username:
     description:
     - The user to run the process as.
@@ -111,10 +119,12 @@ options:
     - If I(encrypt) is C(no), the username and password are sent as a simple
       XOR scrambled byte string that is not encrypted. No special tools are
       required to get the username and password just knowledge of the protocol.
+    type: str
   process_password:
     description:
     - The password for I(process_username).
     - Required if I(process_username) is defined and not C(System).
+    type: str
   integrity_level:
     description:
     - The integrity level of the process when I(process_username) is defined
@@ -123,6 +133,7 @@ options:
     - When C(elevated), the command will be run with Administrative rights.
     - When C(limited), the command will be forced to run with
       non-Administrative rights.
+    type: str
     choices:
     - limited
     - default
@@ -136,19 +147,21 @@ options:
       to C(yes).
     - The I(stdin) option does not work with this type of process.
     type: bool
-    default: 'no'
+    default: no
   interactive_session:
     description:
     - The Windows session ID to use when displaying the interactive process on
       the remote Windows host.
     - This is only valid when I(interactive) is C(yes).
     - The default is C(0) which is the console session of the Windows host.
+    type: int
     default: 0
   priority:
     description:
     - Set the command's priority on the Windows host.
     - See U(https://msdn.microsoft.com/en-us/library/windows/desktop/ms683211.aspx)
       for more details.
+    type: str
     choices:
     - above_normal
     - below_normal
@@ -162,17 +175,19 @@ options:
     - Shows the process UI on the Winlogon secure desktop when
       I(process_username) is C(System).
     type: bool
-    default: 'no'
+    default: no
   process_timeout:
     description:
     - The timeout in seconds that is placed upon the running process.
     - A value of C(0) means no timeout.
+    type: int
     default: 0
   stdin:
     description:
     - Data to send on the stdin pipe once the process has started.
     - This option has no effect when I(interactive) or I(asynchronous) is
       C(yes).
+    type: str
 requirements:
 - pypsexec
 - smbprotocol[kerberos] for optional Kerberos authentication
@@ -193,7 +208,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: run a cmd.exe command
+- name: Run a cmd.exe command
   psexec:
     hostname: server
     connection_username: username
@@ -201,7 +216,7 @@ EXAMPLES = r'''
     executable: cmd.exe
     arguments: /c echo Hello World
 
-- name: run a PowerShell command
+- name: Run a PowerShell command
   psexec:
     hostname: server.domain.local
     connection_username: username@DOMAIN.LOCAL
@@ -209,7 +224,7 @@ EXAMPLES = r'''
     executable: powershell.exe
     arguments: Write-Host Hello World
 
-- name: send data through stdin
+- name: Send data through stdin
   psexec:
     hostname: 192.168.1.2
     connection_username: username
@@ -261,9 +276,9 @@ EXAMPLES = r'''
 
 - name: Download and run ConfigureRemotingForAnsible.ps1 to setup WinRM
   psexec:
-    hostname: windows-pc
-    connection_username: Administrator
-    connection_password: Password01
+    hostname: '{{ ansible_host }}'
+    connection_username: '{{ ansible_user }}'
+    connection_password: '{{ ansible_password }}'
     encrypt: yes
     executable: powershell.exe
     arguments: '-'
@@ -275,6 +290,7 @@ EXAMPLES = r'''
       $url = "https://github.com/ansible/ansible/raw/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
       Invoke-Expression ((New-Object Net.WebClient).DownloadString($url))
       exit
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -305,6 +321,9 @@ rc:
   sample: 0
 '''
 
+import sys
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -316,9 +335,10 @@ try:
     from pypsexec.paexec import ProcessPriority
     from smbprotocol.exceptions import SMBException, SMBAuthenticationError, \
         SMBResponseException
+    import socket
     HAS_PYPSEXEC = True
-except ImportError as exc:
-    PYPSEXEC_IMP_ERR = exc
+except ImportError:
+    PYPSEXEC_IMP_ERR = traceback.format_exc()
     HAS_PYPSEXEC = False
 
 KERBEROS_IMP_ERR = None
@@ -327,8 +347,8 @@ try:
     # GSSAPI extension required for Kerberos Auth in SMB
     from gssapi.raw import inquire_sec_context_by_oid
     HAS_KERBEROS = True
-except ImportError as exc:
-    KERBEROS_IMP_ERR = exc
+except ImportError:
+    KERBEROS_IMP_ERR = traceback.format_exc()
     HAS_KERBEROS = False
 
 
@@ -387,7 +407,9 @@ def main():
                              'running as System: process_username, '
                              'process_password')
     if not HAS_PYPSEXEC:
-        module.fail_json(msg='The pypsexec python module is required',
+        module.fail_json(msg="The pypsexec Python module is required to be "
+                             "installed for the Python environment at '%s'"
+                             % sys.executable,
                          exception=PYPSEXEC_IMP_ERR)
 
     hostname = module.params['hostname']
@@ -421,8 +443,10 @@ def main():
 
     if connection_username is None or connection_password is None and \
             not HAS_KERBEROS:
-        module.fail_json(msg='The gssapi python module with the GGF extension '
-                             'is required for Kerberos authentication',
+        module.fail_json(msg="The gssapi Python module with the GGF extension "
+                             "used for kerberos auth is required to be "
+                             "installed for the Python environment at '%s'"
+                             % sys.executable,
                          exception=KERBEROS_IMP_ERR)
 
     win_client = client.Client(server=hostname, username=connection_username,
@@ -444,6 +468,8 @@ def main():
         module.fail_json(msg='Received an exception when dealing with SCMR on '
                              'the Windows host: %s' % to_text(exc))
     except (SMBException, PypsexecException) as exc:
+        module.fail_json(msg=to_text(exc))
+    except socket.error as exc:
         module.fail_json(msg=to_text(exc))
 
     # create PAExec service and run the process

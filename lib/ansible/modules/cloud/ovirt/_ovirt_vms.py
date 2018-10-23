@@ -1,1 +1,0 @@
-ovirt_vm.py

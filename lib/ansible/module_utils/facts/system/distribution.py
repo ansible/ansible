@@ -88,7 +88,7 @@ class DistributionFiles:
     }
 
     # We can't include this in SEARCH_STRING because a name match on its keys
-    # causes a fallback to using the first whitespace seperated item from the file content
+    # causes a fallback to using the first whitespace separated item from the file content
     # as the name. For os-release, that is in form 'NAME=Arch'
     OS_RELEASE_ALIAS = {
         'Archlinux': 'Arch Linux'
@@ -421,7 +421,7 @@ class Distribution(object):
     # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
-                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer'],
+                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',

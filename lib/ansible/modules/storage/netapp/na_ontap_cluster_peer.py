@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -52,7 +52,7 @@ options:
     description:
      - Destination password.
      - Optional if this is same as source password.
-short_description: "NetApp ONTAP Manage Cluster peering"
+short_description: NetApp ONTAP Manage Cluster peering
 version_added: "2.7"
 '''
 

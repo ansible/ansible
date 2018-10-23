@@ -1,0 +1,26 @@
+# sep/25/2018 10:10:52 by RouterOS 6.42.5
+# software id = 9EER-511K
+#
+#
+#
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+/tool user-manager customer
+set admin access=own-routers,own-users,own-profiles,own-limits,config-payment-gw
+/ip address
+add address=192.168.88.1/24 comment=defconf interface=ether1 network=192.168.88.0
+/ip dhcp-client
+add dhcp-options=hostname,clientid disabled=no interface=ether1
+/system lcd
+set contrast=0 enabled=no port=parallel type=24x4
+/system lcd page
+set time disabled=yes display-time=5s
+set resources disabled=yes display-time=5s
+set uptime disabled=yes display-time=5s
+set packets disabled=yes display-time=5s
+set bits disabled=yes display-time=5s
+set version disabled=yes display-time=5s
+set identity disabled=yes display-time=5s
+set ether1 disabled=yes display-time=5s
+/tool user-manager database
+set db-path=user-manager

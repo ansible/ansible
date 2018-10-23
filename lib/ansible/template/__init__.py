@@ -27,7 +27,6 @@ import pwd
 import re
 import time
 
-from collections import Sequence, Mapping
 from functools import wraps
 from io import StringIO
 from numbers import Number
@@ -45,6 +44,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common._collections_compat import Sequence, Mapping
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
@@ -621,10 +621,7 @@ class Templar:
 
         # For preserving the number of input newlines in the output (used
         # later in this method)
-        if not USE_JINJA2_NATIVE:
-            data_newlines = _count_newlines_from_end(data)
-        else:
-            data_newlines = None
+        data_newlines = _count_newlines_from_end(data)
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -690,7 +687,7 @@ class Templar:
                     display.debug("failing because of a type error, template data is: %s" % to_native(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
 
-            if USE_JINJA2_NATIVE:
+            if USE_JINJA2_NATIVE and not isinstance(res, string_types):
                 return res
 
             if preserve_trailing_newlines:
