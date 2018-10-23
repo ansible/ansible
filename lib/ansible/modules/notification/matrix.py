@@ -48,21 +48,21 @@ options:
     password:
         description:
             - The password to log in with
-notes:
-    - Requires matrix-client (python library) on the executing host.
+requirements:
+    -  matrix-client (Python library)
 '''
 
 EXAMPLES = '''
-# Send matrix notification with token
-- matrix:
+- name: Send matrix notification with token
+  matrix:
     msg_plain: "**hello world**"
     msg_html: "<b>hello world</b>"
     room_id: "!12345678:server.tld"
     hs_url: "https://matrix.org"
     token: "{{ matrix_auth_token }}"
 
-# Send matrix notification with user_id and password
-- matrix:
+- name: Send matrix notification with user_id and password
+  matrix:
     msg_plain: "**hello world**"
     msg_html: "<b>hello world</b>"
     room_id: "!12345678:server.tld"
@@ -89,9 +89,9 @@ def run_module():
         msg_html=dict(type='str', required=True),
         room_id=dict(type='str', required=True),
         hs_url=dict(type='str', required=True),
-        token=dict(type='str', required=False),
+        token=dict(type='str', required=False, no_log=True),
         user_id=dict(type='str', required=False),
-        password=dict(type='str', required=False),
+        password=dict(type='str', required=False, no_log=True),
     )
 
     result = dict(
