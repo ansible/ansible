@@ -64,14 +64,14 @@ EXAMPLES = '''
 RETURN = '''
 community_strings:
     description: The list of community strings for this machine
-    type: list of strings
+    type: list
     returned: always
     sample:
       - public
       - snmp-ro
 permitted_managers:
     description: The list of permitted managers for this machine
-    type: list of strings
+    type: list
     returned: always
     sample:
       - 192.168.1.1
