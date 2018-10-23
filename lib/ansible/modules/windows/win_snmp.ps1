@@ -1,8 +1,5 @@
 #!powershell
 
-#FIXME
-$ErrorActionPreference = "Stop"
-
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,7 +12,12 @@ $communities = Get-AnsibleParam -obj $params -name "community_strings"   -type "
 $action_in   = Get-AnsibleParam -obj $params -name "action"              -type "str"  -default "set" -ValidateSet @("set", "add", "remove")
 $action      = $action_in.ToLower()
 
-$result = @{failed = $False; changed = $False;}
+$result = @{
+  failed = $False
+  changed = $False
+  community_strings = [System.Collections.ArrayList]@()
+  permitted_managers = [System.Collections.ArrayList]@()
+}
 
 # Make sure lists are modifyable
 [System.Collections.ArrayList]$managers    = $managers
@@ -62,6 +64,7 @@ ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
   } Else {
     # Remember that this index is in use
     $indexes.Add([int]$idx) | Out-Null
+    $result.permitted_managers.Add($manager) | Out-Null
   }
 }
 
@@ -86,6 +89,8 @@ ForEach ($community in (Get-Item $Communities_reg_key).Property) {
   If ($remove) {
     $result.changed = $True
     Remove-ItemProperty -Path $Communities_reg_key -Name $community -WhatIf:$check_mode
+  } Else {
+    $result.community_strings.Add($community) | Out-Null
   }
 }
 
@@ -102,6 +107,7 @@ If ($managers -Is [System.Collections.ArrayList]) {
       If (-Not $indexes.Contains($next_index)) {
         $result.changed = $True
         New-ItemProperty -Path $Managers_reg_key -Name $next_index -Value "$manager" -WhatIf:$check_mode | Out-Null
+        $result.permitted_managers.Add($manager) | Out-Null
         break
       }
     }
@@ -113,6 +119,7 @@ If ($communities -Is [System.Collections.ArrayList]) {
   ForEach ($community in $communities) {
     $result.changed = $True
     New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf:$check_mode | Out-Null
+    $result.community_strings.Add($community) | Out-Null
   }
 }
 

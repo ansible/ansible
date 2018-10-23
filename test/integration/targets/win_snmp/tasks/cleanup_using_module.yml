@@ -1,22 +1,4 @@
 ---
-  # Already tested
-  - name: Add an SNMP manager and an SNMP community
-    win_snmp:
-      action: add
-      community_strings:
-        - snmp-cleanup
-      permitted_managers:
-        - 192.168.1.1
-
-  - name: Run without options to confirm no changes
-    register: snmp_no_change
-    win_snmp:
-
-  - name: Assert no changes occurred when no options provided
-    assert:
-      that:
-        - not snmp_no_change.changed
-
   - name: Set no SNMP community or SNMP manager
     register: snmp_cleanup
     win_snmp:
