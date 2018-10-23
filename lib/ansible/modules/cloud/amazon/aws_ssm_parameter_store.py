@@ -111,7 +111,7 @@ EXAMPLES = '''
 
 RETURN = '''
 put_parameter:
-    description: Add one or more paramaters to the system.
+    description: Add one or more parameters to the system.
     returned: success
     type: dictionary
 delete_parameter:
