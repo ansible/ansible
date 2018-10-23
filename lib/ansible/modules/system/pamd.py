@@ -284,6 +284,7 @@ RULE_REGEX = re.compile(r"""(?P<rule_type>-?(auth|account|session|password))\s+
 
 VALID_TYPES = ['account', '-account', 'auth', '-auth', 'password', '-password', 'session', '-session']
 
+
 class PamdLine(object):
 
     def __init__(self, line):
