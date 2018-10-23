@@ -6,7 +6,7 @@ Contributing to the Ansible Documentation
 
 Ansible has a lot of documentation and a small team of writers. Community support helps us keep up with new features, fixes, and changes.
 
-Improving the documentation is an easy way to make your first contribution to the Ansible project. You don't have to be a programmer, since our documentation is written in YAML (module documentation) or reStructured Text. If you're using Ansible, you know YAML - playbooks are written in YAML. And rST is mostly just text. You don't even need git experience, if you use the ``Edit on GitHub`` option.
+Improving the documentation is an easy way to make your first contribution to the Ansible project. You don't have to be a programmer, since our documentation is written in YAML (module documentation) or `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ (rST). If you're using Ansible, you already use YAML in your playbooks. And rST is mostly just text. You don't even need git experience, if you use the ``Edit on GitHub`` option.
 
 If you find a typo, a broken example, a missing topic, or any other error or omission on this documentation website, let us know. Here are some ways to support Ansible documentation:
 
@@ -31,10 +31,19 @@ To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 #. Be patient while Ansibot, our automated script, adds labels, pings the docs maintainers, and kicks off a CI testing run.
 #. Keep an eye on your PR - the docs team may ask you for changes.
 
+Reviewing open PRs and issues
+=============================
+
+You can also contribute by reviewing open documentation issues and PRs. To add a helpful review, please:
+
+- Include a comment - "looks good to me" only helps if we know why.
+- For issues, reproduce the problem.
+- For PRs, test the change.
+
 Opening a new issue and/or PR
 =============================
 
-If the problem you've noticed is too complex to fix with the ``Edit on GitHub`` option, please open an issue and/or a PR on the ``ansible/ansible`` repo.
+If the problem you've noticed is too complex to fix with the ``Edit on GitHub`` option, and no open issue or PR already documents the problem, please open an issue and/or a PR on the ``ansible/ansible`` repo.
 
 A great documentation GitHub issue or PR includes:
 
@@ -87,9 +96,7 @@ Building the documentation is the best way to check for errors and review your c
 Building a single rST page
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To build a single rST file, you have two options:
-
-1. Building an rST file with the make utility:
+To build a single rST file with the make utility:
 
 .. code-block:: bash
 
@@ -101,27 +108,16 @@ For example:
 
    make htmlsingle rst=community/documentation_contributions.rst
 
-This method compiles all the links but provides minimal log output.
+This process compiles all the links but provides minimal log output. If you're writing a new page or want more detailed log output, refer to the instructions on :ref:``
 
 .. note::
 
-    ``make htmlsingle`` adds ``rst/`` to the beginning of the path you provide in ``rst=``, so you can't type the filename with autocomplete. If you run ``make htmlsingle`` from the ``docs/docsite/rst/`` directory, you'll get ``make: *** No rule to make target `htmlsingle'.  Stop.`` If you run it from ``docs/docsite/`` and provide the full path, you'll get ``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']``.
+    ``make htmlsingle`` adds ``rst/`` to the beginning of the path you provide in ``rst=``, so you can't type the filename with autocomplete. Here are the error messages you will see if you get this wrong:
 
-2. Building an rST file with sphinx-build:
+    - If you run ``make htmlsingle`` from the ``docs/docsite/rst/`` directory:  ``make: *** No rule to make target `htmlsingle'.  Stop.``
 
-.. code-block:: bash
-
-   sphinx-build [options] sourcedir outdir [filenames...]
-
-You can specify filenames, or ``–a`` for all files, or omit both to compile only new/changed files.
-
-For example:
-
-.. code-block:: bash
-
-   sphinx-build -b html -c rst/ rst/dev_guide/ _build/html/dev_guide/ rst/dev_guide/developing_modules_documenting.rst
-
-If you build a single file, Sphinx won't create reference links and you'll get bogus ``undefined label`` warnings. But ``sphinx-build`` provides good syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings.
+    - If you run ``make htmlsingle`` from the ``docs/docsite/`` directory with the full path to your rST document:
+    ``sphinx-build: error: cannot find files ['rst/rst/community/documentation_contributions.rst']``.
 
 Building all the rST pages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -147,14 +143,22 @@ To build all the module documentation plus all the rST files:
 
    make webdocs
 
-Reviewing open PRs and issues
-=============================
+Building rST files with ``sphinx-build``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can also contribute by reviewing open documentation issues and PRs. To add a helpful review, please:
+Advanced users can build one or more rST files with the sphinx utility directly. ``sphinx-build`` returns misleading ``undefined label`` warnings if you only build a single page, because it does not create internal links. However, ``sphinx-build`` returns more extensive syntax feedback, including warnings about indentation errors and ``x-string without end-string`` warnings. This can be useful, especially if you're creating a new page from scratch. To build a page or pages with ``sphinx-build``:
 
-- Include a comment - "looks good to me" only helps if we know why.
-- For issues, reproduce the problem.
-- For PRs, test the change.
+.. code-block:: bash
+
+  sphinx-build [options] sourcedir outdir [filenames...]
+
+You can specify filenames, or ``–a`` for all files, or omit both to compile only new/changed files.
+
+For example:
+
+.. code-block:: bash
+
+  sphinx-build -b html -c rst/ rst/dev_guide/ _build/html/dev_guide/ rst/dev_guide/developing_modules_documenting.rst
 
 Joining the documentation working group
 =======================================
