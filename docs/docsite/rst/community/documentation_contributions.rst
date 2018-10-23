@@ -167,5 +167,5 @@ Joining the documentation working group
 The Documentation Working Group is just getting started, please visit the `community repo <https://github.com/ansible/community>`_ for more information.
 
 .. seealso::
-   :ref:`More about testing module documentation <testing_documentation>`
+   :ref:`More about testing module documentation <testing_module_documentation>`
    :ref:`More about documenting modules <module_documenting>`
