@@ -451,6 +451,38 @@
           - bsd_account_expiration.stdout == '0'
   when: ansible_os_family == 'FreeBSD'
 
+# Test setting epoch 0 expiration when creating a new account, then removing the expiry
+# https://github.com/ansible/ansible/issues/47114
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: Create user account with epoch 0 expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: 0
+
+- name: Change the user account to remove the expiry time
+  user:
+    name: ansibulluser
+    expires: -1
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+
 # Test expiration with a very large negative number. This should have the same
 # result as setting -1.
 - name: Set expiration date using very long negative number
