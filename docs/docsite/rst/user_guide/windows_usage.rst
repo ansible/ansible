@@ -273,7 +273,7 @@ rules apply:
 * A double quote preceded by a backslash ``\`` is interpreted as just a double
   quote ``"`` and not as an argument delimiter.
 
-* Backslashes are interpreted literally unless it immediately preceeds double
+* Backslashes are interpreted literally unless it immediately precedes double
   quotes; for example ``\`` == ``\`` and ``\"`` == ``"``
 
 * If an even number of backslashes is followed by a double quote, one
@@ -294,7 +294,7 @@ With those rules in mind, here are some examples of quoting::
     argv[3] = C:\path\with space
     argv[4] = double "quoted"
 
-    - win_command: '"C:\Program Files\Program\program.exe" "escaped \\\" backslash" unqouted-end-backslash\'
+    - win_command: '"C:\Program Files\Program\program.exe" "escaped \\\" backslash" unquoted-end-backslash\'
 
     argv[0] = C:\Program Files\Program\program.exe
     argv[1] = escaped \" backslash
@@ -412,7 +412,7 @@ Here are some examples on how to write Windows paths::
 
 Legacy key=value Style
 ----------------------
-The legacy ``key=value`` syntax is used on the command line for adhoc commands,
+The legacy ``key=value`` syntax is used on the command line for ad-hoc commands,
 or inside playbooks. The use of this style is discouraged within playbooks
 because backslash characters need to be escaped, making playbooks harder to read.
 The legacy syntax depends on the specific implementation in Ansible, and quoting
