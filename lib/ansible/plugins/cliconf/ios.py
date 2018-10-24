@@ -291,7 +291,7 @@ class Cliconf(CliconfBase):
             except AnsibleConnectionFailure as e:
                 if check_rc:
                     raise
-                out = getattr(e, 'err', e)
+                out = getattr(e, 'err', to_text(e))
 
             responses.append(out)
 
