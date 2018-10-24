@@ -33,35 +33,11 @@ options:
         version_added: '2.5'
     category_names:
         description:
-        - A scalar or list of categories to install updates from
+        - A scalar or list of categories to install updates from. To get the list
+          of categories, run the module with C(state=query). The category must
+          be the full category string, but is case insensitive.
         type: list
         default: [ CriticalUpdates, SecurityUpdates, UpdateRollups ]
-        choices:
-        - Application
-        - Connectors
-        - CriticalUpdates
-        - DefinitionUpdates
-        - DeveloperKits
-        - FeaturePacks
-        - Guidance
-        - SecurityUpdates
-        - ServicePacks
-        - Tools
-        - UpdateRollups
-        - Updates
-    post_category_names:
-        description:
-        - A list of categories to check an update is in. This can be used to
-          confirm which product categories are applied. Category names here may
-          overlap with the C(category_names) option.
-        - Matches are a regular expression match. For example, C(Windows) will match
-          any Windows OS update, while the category string may be
-          C(Windows Server 2012 R2).
-        - These categories are filtered after searching for updates, while the
-          list in C(category_names) is applied during the search for updates.
-        - To get the list of categories, run the module with C(state=query).
-        type: list
-        version_added: '2.8'
     reboot:
         description:
         - Ansible will automatically reboot the remote host if it is required
@@ -217,12 +193,17 @@ updates:
 
 filtered_updates:
     description: List of updates that were found but were filtered based on
-      I(blacklist) or I(whitelist). The return value is in the same form as
-      I(updates).
+      I(blacklist), I(whitelist) or I(category_names). The return value is in
+      the same form as I(updates), along with I(filtered_reason).
     returned: success
     type: complex
     sample: see the updates return value
-    contains: {}
+    contains:
+        filtered_reason:
+            description: The reason why this update was filtered
+            returned: always
+            type: string
+            sample: 'skip_hidden'
 
 found_update_count:
     description: The number of updates found needing to be applied
