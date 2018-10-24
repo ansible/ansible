@@ -49,7 +49,15 @@ options:
     credential:
       description:
         - Name of the credential to use for the job template.
+        - Mutually exclusive with 'credentials'.
       version_added: 2.7
+    credentials:
+      description:
+        - List of credentials to use for the job template.
+        - Mutually exclusive with 'credential'.
+      version_added: 2.8
+      type: list
+      default: []
     vault_credential:
       description:
         - Name of the vault credential to use for the job template.
@@ -259,6 +267,7 @@ def main():
         playbook=dict(required=True),
         credential=dict(default=''),
         vault_credential=dict(default=''),
+        credentials=dict(type='list', default=[]),
         forks=dict(type='int'),
         limit=dict(default=''),
         verbosity=dict(type='int', choices=[0, 1, 2, 3, 4], default=0),
@@ -286,7 +295,11 @@ def main():
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
-    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = TowerModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        mutually_exclusive=[('credential', 'credentials')]
+    )
 
     name = module.params.get('name')
     state = module.params.pop('state')

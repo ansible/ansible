@@ -4,6 +4,12 @@
     organization: Default
     kind: scm
 
+- name: Create a ssh noop credential
+  tower_credential:
+    name: noop
+    organization: Default
+    kind: ssh
+
 - name: Create a Demo Project
   tower_project:
     name: Job Template Test Project
@@ -52,3 +58,38 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Create a Job Template with more than one credential
+  tower_job_template:
+    name: hello-worlds
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    credentials:
+      - Demo Credential
+      - noop
+    job_type: run
+    state: present
+  register: result_credentials
+
+- assert:
+    that:
+      - "result_credentials is changed"
+
+- name: Create a Job Template with credential and credentials
+  ignore_errors: yes
+  tower_job_template:
+    name: goodby-world
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    credential: Demo Credential
+    credentials:
+      - noop
+    job_type: run
+    state: present
+  register: result_exclusive
+
+- assert:
+    that:
+      - "result_exclusive is failed"
