@@ -265,7 +265,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             remote_user = self._connection.get_option('remote_user')
         except AnsibleError:
             remote_user = self._play_context.remote_user
-        return bool(self._play_context.become_user not in admin_users + [remote_user])
+        return bool(self._connection._become.get_option('become_user') not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
         '''
@@ -432,7 +432,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # start to we'll have to fix this.
                 setfacl_mode = 'r-X'
 
-            res = self._remote_set_user_facl(remote_paths, self._play_context.become_user, setfacl_mode)
+            res = self._remote_set_user_facl(remote_paths, self._connection._become.get_option('become_user'), setfacl_mode)
             if res['rc'] != 0:
                 # File system acls failed; let's try to use chown next
                 # Set executable bit first as on some systems an
@@ -442,7 +442,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
-                res = self._remote_chown(remote_paths, self._play_context.become_user)
+                res = self._remote_chown(remote_paths, self._connection._become.get_option('become_user'))
                 if res['rc'] != 0 and remote_user in self._get_admin_users():
                     # chown failed even if remote_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
@@ -581,8 +581,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
             if getattr(self._connection, '_remote_is_local', False):
                 pass
-            elif sudoable and self._play_context.become and self._play_context.become_user:
-                expand_path = '~%s' % self._play_context.become_user
+            elif sudoable and self._play_context.become and self._connection._become.get_option('become_user'):
+                expand_path = '~%s' % self._connection._become.get_option('become_user')
             else:
                 # use remote user instead, if none set default to current user
                 expand_path = '~%s' % (self._play_context.remote_user or self._connection.default_user or '')
@@ -678,21 +678,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         except KeyError:
             # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
             module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
-
-    def _update_connection_options(self, options, variables=None):
-        ''' ensures connections have the appropriate information '''
-        update = {}
-
-        if getattr(self.connection, 'glob_option_vars', False):
-            # if the connection allows for it, pass any variables matching it.
-            if variables is not None:
-                for varname in variables:
-                    if varname.match('ansible_%s_' % self.connection._load_name):
-                        update[varname] = variables[varname]
-
-        # always override existing with options
-        update.update(options)
-        self.connection.set_options(update)
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
@@ -934,6 +919,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
+    # FIXME: move to connection base
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
         '''
         This is the function which executes the low level shell command, which
@@ -960,12 +946,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        allow_same_user = C.BECOME_ALLOW_SAME_USER
-        same_user = self._play_context.become_user == self._play_context.remote_user
-        if sudoable and self._play_context.become and (allow_same_user or not same_user):
+        if sudoable and getattr(self._connection, '_become') and (C.BECOME_ALLOW_SAME_USER or
+           not self._connection._become.get_option('become_user') == self._play_context.remote_user):
             display.debug("_low_level_execute_command(): using become for this command")
-            if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
-                cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+            cmd = self._connection._become.build_become_command(cmd, self._connection._shell)
 
         if self._connection.allow_executable:
             if executable is None:

@@ -343,12 +343,20 @@ ACTION_WARNINGS:
   - {key: action_warnings, section: defaults}
   type: boolean
   version_added: "2.5"
+BECOME_PLUGIN_PATH:
+  name: Become plugins path
+  default: ~/.ansible/plugins/become:/usr/share/ansible/become
+  description: Colon separated paths in which Ansible will search for Become Plugins.
+  env: [{name: ANSIBLE_BECOME_PLUGINS}]
+  ini:
+  - {key: become_plugins, section: defaults}
+  type: pathspec
 COMMAND_WARNINGS:
   name: Command module warnings
   default: True
   description:
     - By default Ansible will issue a warning when the shell or command module is used and the command appears to be similar to an existing Ansible module.
-    - These warnings can be silenced by adjusting this setting to False. You can also control this at the task level with the module option ``warn``.
+    - These warnings Can be silenced by adjusting this setting to False. You can also control this at the task level with the module option ``warn``.
   env: [{name: ANSIBLE_COMMAND_WARNINGS}]
   ini:
   - {key: command_warnings, section: defaults}
@@ -632,6 +640,7 @@ DEFAULT_GATHER_SUBSET:
     - key: gather_subset
       section: defaults
   version_added: "2.1"
+  type: list
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
   default: 10
@@ -1081,50 +1090,6 @@ DEFAULT_SU:
   - {key: su, section: defaults}
   type: boolean
   yaml: {key: defaults.su}
-DEFAULT_SUDO:
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework
-    version: "2.9"
-    alternatives: become
-  description: 'Toggle the use of "sudo" for tasks.'
-  env: [{name: ANSIBLE_SUDO}]
-  ini:
-  - {key: sudo, section: defaults}
-  type: boolean
-DEFAULT_SUDO_EXE:
-  name: sudo executable
-  default: sudo
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.9"
-    alternatives: become
-  description: 'specify an "sudo" executable, otherwise it relies on PATH.'
-  env: [{name: ANSIBLE_SUDO_EXE}]
-  ini:
-  - {key: sudo_exe, section: defaults}
-DEFAULT_SUDO_FLAGS:
-  name: sudo flags
-  default: '-H -S -n'
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.9"
-    alternatives: become
-  description: 'Flags to pass to "sudo"'
-  env: [{name: ANSIBLE_SUDO_FLAGS}]
-  ini:
-  - {key: sudo_flags, section: defaults}
-DEFAULT_SUDO_USER:
-  name: sudo user
-  default:
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.9"
-    alternatives: become
-  description: 'User you become when using "sudo", leaving it blank will use the default configured on the target (normally root)'
-  env: [{name: ANSIBLE_SUDO_USER}]
-  ini:
-  - {key: sudo_user, section: defaults}
 DEFAULT_SU_EXE:
   name: su executable
   default: su

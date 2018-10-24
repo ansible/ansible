@@ -196,7 +196,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 check_mode=self.check_mode,
                 diff=self.diff,
             )
-            play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
+            play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader, options=self.options)
         except Exception as e:
             display.error(u"Unable to build command: %s" % to_text(e))
             return False

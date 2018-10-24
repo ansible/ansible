@@ -26,7 +26,8 @@ ifdef PLUGINS
 	PLUGIN_ARGS = -l $(PLUGINS)
 endif
 
-DOC_PLUGINS ?= cache callback connection inventory lookup shell strategy vars
+# FIXME: add cliconf and httpapi once landing pages are written
+DOC_PLUGINS ?= become cache callback connection inventory lookup shell strategy vars
 
 assertrst:
 ifndef rst
