@@ -23,10 +23,10 @@ DOCUMENTATION = '''
           individual tasks, and display a recap at the end of the playbook execution
     notes:
         - Requires ansible to be run from within a cgroup, such as with
-          C(cgexec -g cpuacct,memory:ansible_profile ansible-playbook ...)
+          C(cgexec -g cpuacct,memory,pids:ansible_profile ansible-playbook ...)
         - This cgroup should only be used by ansible to get accurate results
         - To create the cgroup, first use a command such as
-          C(sudo cgcreate -a ec2-user:ec2-user -t ec2-user:ec2-user -g cpuacct,memory:ansible_profile)
+          C(sudo cgcreate -a ec2-user:ec2-user -t ec2-user:ec2-user -g cpuacct,memory,pids:ansible_profile)
     options:
       control_group:
         required: True
