@@ -1,0 +1,2 @@
+minor_changes:
+- Task Parsing - Ignore reserved keywords when checking the action_loader and module_loader to improve performance and ignore files that shadow the name of a module (https://github.com/ansible/ansible/pull/47564)
