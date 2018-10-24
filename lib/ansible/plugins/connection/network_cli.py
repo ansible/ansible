@@ -392,7 +392,7 @@ class Connection(NetworkConnectionBase):
                 try:
                     signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
                     signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
-                    data = receive_ssh_data(256, receive_data_timeout)
+                    data = self.receive_ssh_data(256, receive_data_timeout)
                     signal.alarm(0)
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
@@ -406,7 +406,7 @@ class Connection(NetworkConnectionBase):
                 except AnsibleCmdRespRecv:
                     return self._command_response
             else:
-                data = receive_ssh_data(256, receive_data_timeout)
+                data = self.receive_ssh_data(256, receive_data_timeout)
 
             # when a channel stream is closed, received data will be empty
             if not data:
