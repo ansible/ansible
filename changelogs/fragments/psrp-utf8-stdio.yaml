@@ -1,0 +1,2 @@
+bugfixes:
+- psrp - Fix UTF-8 output - https://github.com/ansible/ansible/pull/46998
