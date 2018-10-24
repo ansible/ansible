@@ -68,6 +68,19 @@ options:
             - The str can be the name or resource id of the route table.
             - The dict can contains C(name) and C(resource_group) of the route_table.
         version_added: "2.7"
+    service_endpoints:
+        description:
+            - An array of service endpoints.
+        type: list
+        suboptions:
+            service:
+                description:
+                    - The type of the endpoint service.
+            locations:
+                description:
+                    - A list of locations.
+                type: list
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -183,7 +196,10 @@ class AzureRMSubnet(AzureRMModuleBase):
             virtual_network_name=dict(type='str', required=True, aliases=['virtual_network']),
             address_prefix_cidr=dict(type='str', aliases=['address_prefix']),
             security_group=dict(type='raw', aliases=['security_group_name']),
-            route_table=dict(type='raw')
+            route_table=dict(type='raw'),
+            service_endpoints=dict(
+                type='list'
+            )
         )
 
         required_if = [
@@ -202,6 +218,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.address_prefix_cidr = None
         self.security_group = None
         self.route_table = None
+        self.service_endpoints = None
 
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
@@ -290,6 +307,9 @@ class AzureRMSubnet(AzureRMModuleBase):
                         subnet.network_security_group = self.network_models.NetworkSecurityGroup(results['network_security_group'].get('id'))
                     if self.route_table:
                         subnet.route_table = self.network_models.RouteTable(id=self.route_table)
+
+                    if self.service_endpoints:
+                        subnet.service_endpoints = self.service_endpoints
 
                 self.results['state'] = self.create_or_update_subnet(subnet)
             elif self.state == 'absent' and changed:
