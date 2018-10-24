@@ -360,11 +360,6 @@ class Connection(NetworkConnectionBase):
                 display.debug("ssh connection has been closed successfully")
         super(Connection, self).close()
 
-    def receive_ssh_data(self, count):
-        while not self._ssh_shell.recv_ready():
-            time.sleep(0.001)
-        return self._ssh_shell.recv(count)
-
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
         '''
         Handles receiving of output from command
@@ -383,11 +378,14 @@ class Connection(NetworkConnectionBase):
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
         while True:
+            if self._ssh_shell.recv_ready() is False:
+                time.sleep(0.001)
+                continue
             if command_prompt_matched:
                 try:
                     signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
                     signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
-                    data = self.receive_ssh_data(256)
+                    data = self._ssh_shell.recv(256)
                     signal.alarm(0)
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
@@ -401,7 +399,7 @@ class Connection(NetworkConnectionBase):
                 except AnsibleCmdRespRecv:
                     return self._command_response
             else:
-                data = self.receive_ssh_data(256)
+                data = self._ssh_shell.recv(256)
 
             # when a channel stream is closed, received data will be empty
             if not data:
