@@ -53,7 +53,7 @@
   gcp_container_node_pool_facts:
       filters:
          - name = {{ resource_name }}
-      cluster: {{ cluster }}
+      cluster: "{{ cluster }}"
       zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -101,7 +101,7 @@
   gcp_container_node_pool_facts:
       filters:
          - name = {{ resource_name }}
-      cluster: {{ cluster }}
+      cluster: "{{ cluster }}"
       zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"

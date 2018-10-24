@@ -30,7 +30,7 @@ from ansible.galaxy.token import GalaxyToken
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 
 try:
@@ -178,7 +178,7 @@ class GalaxyAPI(object):
         """
         Find a role by name.
         """
-        role_name = urlquote(role_name)
+        role_name = to_text(urlquote(to_bytes(role_name)))
 
         try:
             parts = role_name.split(".")
@@ -246,7 +246,7 @@ class GalaxyAPI(object):
         search_url = self.baseurl + '/search/roles/?'
 
         if search:
-            search_url += '&autocomplete=' + urlquote(search)
+            search_url += '&autocomplete=' + to_text(urlquote(to_bytes(search)))
 
         tags = kwargs.get('tags', None)
         platforms = kwargs.get('platforms', None)

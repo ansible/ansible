@@ -18,7 +18,7 @@
 import os
 import sys
 
-from ansible.compat.tests import mock, unittest
+from units.compat import mock, unittest
 from ansible.module_utils.gcp import check_min_pkg_version, GCPUtils, GCPInvalidURLError
 
 

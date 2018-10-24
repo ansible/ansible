@@ -9,14 +9,14 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 
 module: na_ontap_volume
 
-short_description: Manage NetApp ONTAP volumes.
+short_description: NetApp ONTAP manage volumes.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'

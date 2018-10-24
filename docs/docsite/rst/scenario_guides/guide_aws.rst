@@ -202,9 +202,9 @@ with remote hosts.
 Ansible With (And Versus) CloudFormation
 ````````````````````````````````````````
 
-CloudFormation is a Amazon technology for defining a cloud stack as a JSON document.   
+CloudFormation is a Amazon technology for defining a cloud stack as a JSON or YAML document.   
 
-Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON document.
+Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON/YAML document.
 This is recommended for most users.
 
 However, for users that have decided to use CloudFormation, there is an Ansible module that can be used to apply a CloudFormation template

@@ -32,7 +32,7 @@ options:
       - name: ansible_system_tmpdirs
   async_dir:
     description:
-       - Directory in which ansible will keep async job inforamtion
+       - Directory in which ansible will keep async job information
     default: '~/.ansible_async'
     env: [{name: ANSIBLE_ASYNC_DIR}]
     ini:

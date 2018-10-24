@@ -25,8 +25,8 @@ def ansible_environment(args, color=True):
 
     ansible_path = os.path.join(os.getcwd(), 'bin')
 
-    if not path.startswith(ansible_path + os.pathsep):
-        path = ansible_path + os.pathsep + path
+    if not path.startswith(ansible_path + os.path.pathsep):
+        path = ansible_path + os.path.pathsep + path
 
     if isinstance(args, IntegrationConfig):
         ansible_config = 'test/integration/%s.cfg' % args.command
@@ -41,6 +41,7 @@ def ansible_environment(args, color=True):
         ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_HOST_KEY_CHECKING='false',
         ANSIBLE_CONFIG=os.path.abspath(ansible_config),
+        ANSIBLE_LIBRARY='/dev/null',
         PYTHONPATH=os.path.abspath('lib'),
         PAGER='/bin/cat',
         PATH=path,

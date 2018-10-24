@@ -74,6 +74,7 @@ vm_boot_facts:
         "current_boot_retry_enabled": true,
         "current_enter_bios_setup": true,
         "current_boot_firmware": "bios",
+        "current_secure_boot_enabled": false,
     }
 """
 
@@ -143,6 +144,7 @@ class VmBootFactsManager(PyVmomi):
                 current_boot_retry_enabled=self.vm.config.bootOptions.bootRetryEnabled,
                 current_boot_retry_delay=self.vm.config.bootOptions.bootRetryDelay,
                 current_boot_firmware=self.vm.config.firmware,
+                current_secure_boot_enabled=self.vm.config.bootOptions.efiSecureBootEnabled
             )
 
         self.module.exit_json(changed=False, vm_boot_facts=results)

@@ -148,6 +148,11 @@ options:
         description:
             - Refers to a gcompute_disk object You must provide either this property or the rawDisk.source
               property but not both to create an image.
+            - 'This field represents a link to a Disk resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_compute_disk task and
+              then set this source_disk field to "{{ name-of-resource }}" Alternatively, you can
+              set this source_disk to a dictionary with the selfLink key where the value is the
+              selfLink of your Disk.'
         required: false
     source_disk_encryption_key:
         description:
@@ -196,18 +201,18 @@ EXAMPLES = '''
       name: "test_object"
       source_disk: "{{ disk }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    archive_size_bytes:
+    archiveSizeBytes:
         description:
             - Size of the image tar.gz archive stored in Google Cloud Storage (in bytes).
         returned: success
         type: int
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -261,7 +266,7 @@ RETURN = '''
               the resource.
         returned: success
         type: str
-    disk_size_gb:
+    diskSizeGb:
         description:
             - Size of the image when restored onto a persistent disk (in GB).
         returned: success
@@ -274,7 +279,7 @@ RETURN = '''
               comply with RFC1035.
         returned: success
         type: str
-    guest_os_features:
+    guestOsFeatures:
         description:
             - A list of features to enable on the guest OS. Applicable for bootable images only.
               Currently, only one feature can be enabled, VIRTIO_SCSI_MULTIQUEUE, which allows
@@ -300,7 +305,7 @@ RETURN = '''
             - The unique identifier for the resource. This identifier is defined by the server.
         returned: success
         type: int
-    image_encryption_key:
+    imageEncryptionKey:
         description:
             - Encrypts the image using a customer-supplied encryption key.
             - After you encrypt an image with a customer-supplied key, you must provide the same
@@ -308,7 +313,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            raw_key:
+            rawKey:
                 description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                       to either encrypt or decrypt this resource.
@@ -335,20 +340,20 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    raw_disk:
+    rawDisk:
         description:
             - The parameters of the raw disk image.
         returned: success
         type: complex
         contains:
-            container_type:
+            containerType:
                 description:
                     - The format used to encode and transmit the block device, which should be TAR. This
                       is just a container and transmission format and not a runtime format. Provided by
                       the client when the disk image is created.
                 returned: success
                 type: str
-            sha1_checksum:
+            sha1Checksum:
                 description:
                     - An optional SHA1 checksum of the disk image before unpackaging.
                     - This is provided by the client when the disk image is created.
@@ -360,20 +365,20 @@ RETURN = '''
                       either this property or the sourceDisk property but not both.
                 returned: success
                 type: str
-    source_disk:
+    sourceDisk:
         description:
             - Refers to a gcompute_disk object You must provide either this property or the rawDisk.source
               property but not both to create an image.
         returned: success
         type: dict
-    source_disk_encryption_key:
+    sourceDiskEncryptionKey:
         description:
             - The customer-supplied encryption key of the source disk. Required if the source
               disk is protected by a customer-supplied encryption key.
         returned: success
         type: complex
         contains:
-            raw_key:
+            rawKey:
                 description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                       to either encrypt or decrypt this resource.
@@ -385,14 +390,14 @@ RETURN = '''
                       that protects this resource.
                 returned: success
                 type: str
-    source_disk_id:
+    sourceDiskId:
         description:
             - The ID value of the disk used to create this image. This value may be used to determine
               whether the image was taken from the current or a previous instance of a given disk
               name.
         returned: success
         type: str
-    source_type:
+    sourceType:
         description:
             - The type of the image used to create this disk. The default and only value is RAW
               .
@@ -458,7 +463,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -515,9 +521,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -528,9 +534,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/images".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -545,8 +551,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
