@@ -1,0 +1,2 @@
+bugfixes:
+  - django_manage - Changed the return type of the changed variable to bool.
