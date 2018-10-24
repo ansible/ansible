@@ -301,7 +301,7 @@ def main():
     if filt:
         filtered_output = list(filter(filt, lines))
         if len(filtered_output):
-            changed = filtered_output
+            changed = True
 
     module.exit_json(changed=changed, out=out, cmd=cmd, app_path=app_path, virtualenv=virtualenv,
                      settings=module.params['settings'], pythonpath=module.params['pythonpath'])
