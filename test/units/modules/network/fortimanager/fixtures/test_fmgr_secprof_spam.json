@@ -1,0 +1,1292 @@
+{
+   "fmgr_spamfilter_profile_addsetdelete": [
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "Object does not exist",
+               "code": -3
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url",
+               "code": -10
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": "enable"
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": "enable"
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": "enable",
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": "enable"
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": "bannedword"
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": "bannedword"
+         },
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url",
+               "code": -10
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": "enable"
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": "enable"
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": "enable",
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": "enable"
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": "bannedword"
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip"
+            ]
+         },
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": null
+            },
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "spam-log": null,
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "post_method": "delete"
+      },
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "Object does not exist",
+               "code": -3
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": null
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": null,
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip"
+            ]
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url",
+               "code": -10
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": "enable"
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": "enable"
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": "enable",
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": "enable"
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip",
+               "spamfsurl",
+               "spamrbl",
+               "spamfsphish",
+               "spambwl"
+            ]
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "Object does not exist",
+               "code": -3
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": null
+            },
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": null,
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip",
+               "spamfsurl",
+               "spamrbl",
+               "spamfsphish",
+               "spambwl"
+            ]
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url",
+               "code": -10
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": "enable"
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": "enable",
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": "enable"
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip",
+               "spamfsurl",
+               "spamrbl",
+               "spamfsphish",
+               "spambwl"
+            ]
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "Object does not exist",
+               "code": -3
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": null
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": "enable",
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip",
+               "spamfsurl",
+               "spamrbl",
+               "spamfsphish",
+               "spambwl"
+            ]
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "log": null,
+               "tag-type": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": null
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": "enable",
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip",
+               "spamfsurl",
+               "spamrbl",
+               "spamfsphish",
+               "spambwl"
+            ]
+         },
+         "post_method": "set"
+      },
+      {
+         "paramgram_used": {
+            "comment": null,
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "spam-log": null,
+            "gmail": {
+               "log": null
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": null,
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": null,
+            "yahoo-mail": {
+               "log": null
+            },
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "external": null,
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-msg": null,
+               "tag-type": null,
+               "log": null
+            },
+            "spam-iptrust-table": null,
+            "replacemsg-group": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "spam-bwl-table": null,
+            "spam-filtering": null,
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": null,
+            "mode": "delete",
+            "options": null
+         },
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile/Ansible_Spam_Filter_Profile"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/config/adom/root/obj/spamfilter/profile"
+         },
+         "paramgram_used": {
+            "comment": "Created by Ansible",
+            "smtp": {
+               "local-override": null,
+               "hdrip": null,
+               "log": null,
+               "tag-type": null,
+               "tag-msg": null,
+               "action": null
+            },
+            "yahoo-mail": {
+               "log": null
+            },
+            "gmail": {
+               "log": "enable"
+            },
+            "spam-bword-table": null,
+            "mapi": {
+               "action": null,
+               "log": null
+            },
+            "flow-based": "enable",
+            "spam-mheader-table": null,
+            "spam-log-fortiguard-response": "enable",
+            "spam-log": "enable",
+            "adom": "root",
+            "pop3": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "external": "enable",
+            "spam-rbl-table": null,
+            "imap": {
+               "action": null,
+               "tag-type": null,
+               "log": null,
+               "tag-msg": null
+            },
+            "spam-iptrust-table": null,
+            "name": "Ansible_Spam_Filter_Profile",
+            "replacemsg-group": null,
+            "spam-bwl-table": null,
+            "spam-filtering": "enable",
+            "msn-hotmail": {
+               "log": null
+            },
+            "spam-bword-threshold": 10,
+            "mode": "set",
+            "options": [
+               "bannedword",
+               "spamfsip",
+               "spamfsurl",
+               "spamrbl",
+               "spamfsphish",
+               "spambwl"
+            ]
+         },
+         "post_method": "set"
+      }
+   ]
+}
