@@ -1,1 +1,2 @@
 - include: nios_host_record_idempotence.yml
+- include: nios_cname_record_idempotence.yml

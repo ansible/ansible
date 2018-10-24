@@ -1,0 +1,83 @@
+    - name: Ensure Views are Created
+      nios_dns_view:
+        name: "{{item}}"
+        provider: "{{nios_provider}}"
+      with_items:
+        - Internal
+        - External
+
+    - name: create the parent object
+      nios_zone:
+        name: ansible.com
+        state: present
+        provider: "{{ nios_provider }}"
+        view: "{{item}}"
+      with_items:
+        - Internal
+        - External
+
+    - name: Create an ipv4 host record
+      nios_host_record:
+        name: "{{item.rec}}"
+        ipv4:
+          - address: "{{item.address}}"
+        state: present
+        view: "{{item.view}}"
+        provider: "{{ nios_provider }}"
+      with_items:
+        - rec: host1.ansible.com
+          view: Internal
+          address: 192.168.10.1
+        - rec: host1.ansible.com
+          view: External
+          address: 192.168.10.2
+
+    - name: Ensure CNAME Records are not there
+      nios_cname_record:
+        canonical: host1.ansible.com
+        name: testcname.ansible.com
+        view: "{{item}}"
+        provider: "{{nios_provider}}"
+        state: absent
+      with_items:
+        - Internal
+        - External
+
+    - name: Creates record in internal view
+      nios_cname_record:
+        canonical: host1.ansible.com
+        name: testcname.ansible.com
+        view: Internal
+        provider: "{{nios_provider}}"
+      register: cname_internal_created
+
+    - name: Creates record in external view
+      nios_cname_record:
+        canonical: host1.ansible.com
+        name: testcname.ansible.com
+        view: External
+        provider: "{{nios_provider}}"
+      register: cname_external_created
+
+    - name: Ensures Record still exists in Internal
+      nios_cname_record:
+        canonical: host1.ansible.com
+        name: testcname.ansible.com
+        view: Internal
+        provider: "{{nios_provider}}"
+      register: cname_internal_nochange
+
+    - name: Ensures Record still exists in External
+      nios_cname_record:
+        canonical: host1.ansible.com
+        name: testcname.ansible.com
+        view: External
+        provider: "{{nios_provider}}"
+      register: cname_external_nochange
+
+    - assert:
+        that:
+          - "cname_internal_created.changed"
+          - "cname_external_created.changed"
+          - "not cname_internal_nochange.changed"
+          - "not cname_external_nochange.changed"
