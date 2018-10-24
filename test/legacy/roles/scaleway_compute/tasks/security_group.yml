@@ -1,0 +1,147 @@
+- name: Create a scaleway security_group
+  scaleway_security_group:
+    state: present
+    region: '{{ scaleway_region }}'
+    name: test_compute
+    description: test_compute
+    organization: '{{ scaleway_organization }}'
+    stateful: true
+    inbound_default_policy: accept
+    outbound_default_policy: accept
+    organization_default: false
+  register: security_group
+
+- debug: var=security_group
+
+- block:
+  - name: Create a server with security_group (Check)
+    check_mode: yes
+    scaleway_compute:
+      name: '{{ scaleway_name }}'
+      state: present
+      image: '{{ scaleway_image_id }}'
+      organization: '{{ scaleway_organization }}'
+      region: '{{ scaleway_region }}'
+      commercial_type: '{{ scaleway_commerial_type }}'
+      security_group: '{{ security_group.scaleway_security_group.id }}'
+
+    register: server_creation_check_task
+
+  - debug: var=server_creation_check_task
+
+  - assert:
+      that:
+        - server_creation_check_task is success
+        - server_creation_check_task is changed
+
+  - name: Create a server
+    scaleway_compute:
+      name: '{{ scaleway_name }}'
+      state: present
+      image: '{{ scaleway_image_id }}'
+      organization: '{{ scaleway_organization }}'
+      region: '{{ scaleway_region }}'
+      commercial_type: '{{ scaleway_commerial_type }}'
+      security_group: '{{ security_group.scaleway_security_group.id }}'
+      wait: true
+
+    register: server_creation_task
+
+  - debug: var=server_creation_task
+
+  - assert:
+      that:
+        - server_creation_task is success
+        - server_creation_task is changed
+
+  - name: Create a server with security_group (Confirmation)
+    scaleway_compute:
+      name: '{{ scaleway_name }}'
+      state: present
+      image: '{{ scaleway_image_id }}'
+      organization: '{{ scaleway_organization }}'
+      region: '{{ scaleway_region }}'
+      commercial_type: '{{ scaleway_commerial_type }}'
+      security_group: '{{ security_group.scaleway_security_group.id }}'
+      wait: true
+
+    register: server_creation_confirmation_task
+
+  - debug: var=server_creation_confirmation_task
+
+  - assert:
+      that:
+        - server_creation_confirmation_task is success
+        - server_creation_confirmation_task is not changed
+
+  - name: Keep current security_group (Check)
+    check_mode: yes
+    scaleway_compute:
+      name: '{{ scaleway_name }}'
+      state: present
+      image: '{{ scaleway_image_id }}'
+      organization: '{{ scaleway_organization }}'
+      region: '{{ scaleway_region }}'
+      commercial_type: '{{ scaleway_commerial_type }}'
+      security_group: '{{ security_group.scaleway_security_group.id }}'
+      wait: true
+
+    register: server_creation_confirmation_task
+
+  - debug: var=server_creation_confirmation_task
+
+  - assert:
+      that:
+        - server_creation_confirmation_task is success
+        - server_creation_confirmation_task is not changed
+
+  - name: Keep current security_group
+    scaleway_compute:
+      name: '{{ scaleway_name }}'
+      state: present
+      image: '{{ scaleway_image_id }}'
+      organization: '{{ scaleway_organization }}'
+      region: '{{ scaleway_region }}'
+      commercial_type: '{{ scaleway_commerial_type }}'
+      wait: true
+
+    register: server_creation_confirmation_task
+
+  - debug: var=server_creation_confirmation_task
+
+  - assert:
+      that:
+        - server_creation_confirmation_task is success
+        - server_creation_confirmation_task is not changed
+
+  always:
+    - name: Destroy it
+      scaleway_compute:
+        name: '{{ scaleway_name }}'
+        state: absent
+        image: '{{ scaleway_image_id }}'
+        organization: '{{ scaleway_organization }}'
+        region: '{{ scaleway_region }}'
+        commercial_type: '{{ scaleway_commerial_type }}'
+        wait: true
+
+      register: server_destroy_task
+
+    - debug: var=server_destroy_task
+
+    - assert:
+        that:
+          - server_destroy_task is success
+          - server_destroy_task is changed
+
+    - name: Create a scaleway security_group
+      scaleway_security_group:
+        state: absent
+        region: '{{ scaleway_region }}'
+        name: test_compute
+        description: test_compute
+        organization: '{{ scaleway_organization }}'
+        stateful: true
+        inbound_default_policy: accept
+        outbound_default_policy: accept
+        organization_default: false
