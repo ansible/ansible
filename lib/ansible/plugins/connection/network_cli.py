@@ -361,11 +361,13 @@ class Connection(NetworkConnectionBase):
         super(Connection, self).close()
 
     def receive_ssh_data(self, count, timeout):
-        start = time.time()
-        while timeout and self._ssh_shell.recv_ready() is False:
-            if time.time() - start >= timeout:
-                raise AnsibleConnectionFailure("timeout waiting ouput from command")
-            time.sleep(0.001)
+        # a None timeout is a blocking call
+        if timeout is None or timeout > 0:
+            start = time.time()
+            while self._ssh_shell.recv_ready() is False:
+                if timeout is not None and time.time() - start >= timeout:
+                    raise AnsibleConnectionFailure("timeout waiting ouput from command")
+                time.sleep(0.001)
         return self._ssh_shell.recv(count)
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
