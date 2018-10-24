@@ -4,9 +4,9 @@
     name: chocolatey
     state: present
 
-- name: ensure notepadplusplus is installed
+- name: ensure putty is installed
   win_chocolatey:
-    name: notepadplusplus
+    name: putty
     state: present
 
 - block:
