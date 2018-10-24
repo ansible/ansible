@@ -1,26 +1,26 @@
 ---
 # tasks file for test.win_chocolatey_pin
 
-- name: pin notepadplusplus (check mode)
+- name: pin putty (check mode)
   win_chocolatey_pin:
-    name: notepadplusplus
-  register: register_pin_notepadplusplus
+    name: putty
+  register: register_pin_putty
   check_mode: true
 
-- name: assert pin notepadplusplus (check mode)
+- name: assert pin putty (check mode)
   assert:
     that:
-    - register_pin_notepadplusplus is changed
+    - register_pin_putty is changed
  
-- name: pin notepadplusplus
+- name: pin putty
   win_chocolatey_pin:
-    name: notepadplusplus
-  register: register_pin_notepadplusplus
+    name: putty
+  register: register_pin_putty
 
-- name: assert pin notepadplusplus 
+- name: assert pin putty 
   assert:
     that:
-    - register_pin_notepadplusplus is changed
+    - register_pin_putty is changed
 
 - name: failed invalid packges (check mode)
   win_chocolatey_pin:
@@ -45,25 +45,25 @@
     - register_failed_invalid_packages is changed
   ignore_errors: true
 
-- name: remove Pin notepadplusplus (check mode)
+- name: remove Pin putty (check mode)
   win_chocolatey_pin:
-    name: notepadplusplus
+    name: putty
     state: unpinned
-  register: register_remove_pin_notepadplusplus
+  register: register_remove_pin_putty
   check_mode: true
 
-- name: assert pin notepadplusplus (check mode)
+- name: assert pin putty (check mode)
   assert:
     that:
-    - register_remove_pin_notepadplusplus is changed
+    - register_remove_pin_putty is changed
 
-- name: remove pin notepadplusplus
+- name: remove pin putty
   win_chocolatey_pin:
-    name: firefox
+    name: putty
     state: unpinned
-  register: register_remove_pin_notepadplusplus
+  register: register_remove_pin_putty
 
-- name: assert pin notepadplusplus
+- name: assert pin putty
   assert:
     that:
-    - register_remove_pin_notepadplusplus is changed
+    - register_remove_pin_putty is changed
