@@ -33,7 +33,7 @@ def ingate_argument_spec(**kwargs):
         version=dict(choices=['v1'], required=True),
         scheme=dict(choices=['http', 'https'], required=True),
         address=dict(type='str', required=True),
-        username=dict(type='str', required=True, no_log=True),
+        username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True),
         port=dict(type='int'),
         timeout=dict(type='int'),
@@ -70,7 +70,7 @@ def ingate_create_client(**kwargs):
     # Authenticate and get hold of a security token.
     api_client.authenticate()
 
-    # Retrun the client.
+    # Return the client.
     return api_client
 
 
@@ -85,12 +85,14 @@ def ingate_create_client_noauth(**kwargs):
                                   client_params['scheme'],
                                   client_params['address'],
                                   client_params['username'],
-                                  client_params['password'])
+                                  client_params['password'],
+                                  port=client_params['port'],
+                                  timeout=client_params['timeout'])
 
     # Check if we should skip SSL Certificate verification.
     verify_ssl = client_params.get('verify_ssl')
     if verify_ssl and not verify_ssl:
         api_client.skip_verify_certificate()
 
-    # Retrun the client.
+    # Return the client.
     return api_client

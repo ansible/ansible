@@ -47,7 +47,7 @@ options:
         required: true
       port:
         description:
-          - Which HTTP port to connect to.
+          - Which HTTP(S) port to connect to.
         required: false
       timeout:
         description:

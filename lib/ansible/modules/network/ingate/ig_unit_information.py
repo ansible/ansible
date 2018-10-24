@@ -28,10 +28,10 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: ingate_unit_information
-short_description: Get unit information form an Ingate SBC.
+module: ig_unit_information
+short_description: Get unit information from an Ingate SBC.
 description:
-  - Get unit information form an Ingate SBC.
+  - Get unit information from an Ingate SBC.
 version_added: 2.8
 extends_documentation_fragment: ingate
 author:
@@ -40,7 +40,7 @@ author:
 
 EXAMPLES = '''
 - name: Get unit information
-  ingate_unit_information:
+  ig_unit_information:
     client:
       version: v1
       scheme: http
@@ -132,11 +132,24 @@ unit-information:
       sample: 6.2.0-beta2
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.ingate.common import (ingate_argument_spec,
+                                                        ingate_create_client)
+
 try:
     from ingate import ingatesdk
     HAS_INGATESDK = True
 except ImportError:
     HAS_INGATESDK = False
+
+
+def make_request(module):
+    # Create client and authenticate.
+    api_client = ingate_create_client(**module.params)
+
+    # Get unit information.
+    response = api_client.unit_information()
+    return response
 
 
 def main():
@@ -152,20 +165,12 @@ def main():
 
     result = dict(changed=False)
     try:
-        # Create client and authenticate.
-        api_client = ingate_create_client(**module.params)
-
-        # Get unit information.
-        response = api_client.unit_information()
+        response = make_request(module)
         result.update(response[0])
-
     except ingatesdk.SdkError as e:
         module.fail_json(msg=str(e))
     module.exit_json(**result)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.network.ingate.common import *
 
 if __name__ == '__main__':
     main()
