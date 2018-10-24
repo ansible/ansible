@@ -590,7 +590,6 @@ class TaskExecutor:
             self._connection._play_context = self._play_context
 
         self._set_connection_options(variables, templar)
-        self._set_shell_options(variables, templar)
 
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
@@ -869,12 +868,18 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
-        conn_type = self._play_context.connection
+        # load become plugin if needed
+        become_method = None
+        if self._play_context.become:
+            become_method = self._play_context.become_method
 
+        # load connection
+        conn_type = self._play_context.connection
         connection = self._shared_loader_obj.connection_loader.get(
             conn_type,
             self._play_context,
             self._new_stdin,
+            become_method=become_method,
             task_uuid=self._task._uuid,
             ansible_playbook_pid=to_text(os.getppid())
         )
@@ -912,6 +917,17 @@ class TaskExecutor:
 
         return options
 
+    def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
+
+        plugin = getattr(self._connection, '_%s' % plugin_type)
+        option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
+        options = {}
+        for k in option_vars:
+            if k in variables:
+                options[k] = templar.template(variables[k])
+        # TODO move to task method?
+        plugin.set_options(task_keys=task_keys, var_options=options)
+
     def _set_connection_options(self, variables, templar):
 
         # Keep the pre-delegate values for these keys
@@ -937,17 +953,19 @@ class TaskExecutor:
                 if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
                     options['_extras'][k] = templar.template(final_vars[k])
 
-        # set options with 'templated vars' specific to this plugin
-        self._connection.set_options(var_options=options)
-        self._set_shell_options(final_vars, templar)
+        # FIXME, this should take list of options from plugin config and create subset dict from task attributes
+        task_keys = dict((x, getattr(self._task, x)) for x in getattr(self._task, '_attributes'))
 
-    def _set_shell_options(self, variables, templar):
-        option_vars = C.config.get_plugin_vars('shell', self._connection._shell._load_name)
-        options = {}
-        for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
-        self._connection._shell.set_options(var_options=options)
+        # set options with 'templated vars' specific to this plugin and dependant ones
+        self._connection.set_options(task_keys=task_keys, var_options=options)
+        self._set_plugin_options('shell', final_vars, templar, task_keys)
+        if self._connection._become is not None:
+            self._set_plugin_options('become', final_vars, templar, task_keys)
+
+            # FOR BACKWARDS COMPAT:
+            for option in ('become_user', 'become_flags', 'become_exe', 'become_pass'):
+                setattr(self._play_context, option, self._connection._become.get_option(option))
+            self._play_context.prompt = self._connection._become.prompt
 
     def _get_action_handler(self, connection, templar):
         '''

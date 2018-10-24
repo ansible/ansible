@@ -26,7 +26,6 @@ from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
-from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.utils.display import Display
 
 display = Display()
@@ -37,17 +36,18 @@ __all__ = ['Playbook']
 
 class Playbook:
 
-    def __init__(self, loader):
+    def __init__(self, loader, options=None):
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
         self._loader = loader
         self._file_name = None
+        self._options = options
 
     @staticmethod
-    def load(file_name, variable_manager=None, loader=None):
-        pb = Playbook(loader=loader)
+    def load(file_name, variable_manager=None, loader=None, options=None):
+        pb = Playbook(loader=loader, options=options)
         pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
         return pb
 
@@ -63,13 +63,6 @@ class Playbook:
         self._loader.set_basedir(self._basedir)
 
         self._file_name = file_name
-
-        # dynamically load any plugins from the playbook directory
-        for name, obj in get_all_plugin_loaders():
-            if obj.subdir:
-                plugin_path = os.path.join(self._basedir, obj.subdir)
-                if os.path.isdir(to_bytes(plugin_path)):
-                    obj.add_directory(plugin_path)
 
         try:
             ds = self._loader.load_from_file(os.path.basename(file_name))
@@ -96,14 +89,14 @@ class Playbook:
             if any(action in entry for action in ('import_playbook', 'include')):
                 if 'include' in entry:
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead", version="2.12")
-                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
+                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader, options=self._options)
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
                     which = entry.get('import_playbook', entry.get('include', entry))
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
-                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
+                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars, options=self._options)
                 self._entries.append(entry_obj)
 
         # we're done, so restore the old basedir in the loader

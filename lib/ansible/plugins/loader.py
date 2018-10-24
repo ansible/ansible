@@ -18,18 +18,65 @@ from collections import defaultdict
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 
+
 display = Display()
 
 
 def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
+
+
+def add_all_plugin_dirs(mydir):
+    ''' add any existing plugin dirs in the path provided '''
+    if os.path.isdir(mydir):
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join(mydir, obj.subdir)
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(plugin_path)
+    else:
+        display.warning("Ignoring invalid path provided to plugin path: %s is not a directory" % to_native(mydir))
+
+
+def get_shell_plugin(shell_type=None, executable=None):
+
+    if not shell_type:
+        # default to sh
+        shell_type = 'sh'
+
+        # mostly for backwards compat
+        if executable:
+            if isinstance(executable, string_types):
+                shell_filename = os.path.basename(executable)
+                try:
+                    shell = shell_loader.get(shell_filename)
+                except Exception:
+                    shell = None
+
+                if shell is None:
+                    for shell in shell_loader.all():
+                        if shell_filename in shell.COMPATIBLE_SHELLS:
+                            shell_type = shell.SHELL_FAMILY
+                            break
+        else:
+            raise AnsibleError("Either a shell type or a shell executable must be provided ")
+
+    shell = shell_loader.get(shell_type)
+    if not shell:
+        raise AnsibleError("Could not find the shell plugin required (%s)." % shell_type)
+
+    if executable:
+        setattr(shell, 'executable', executable)
+
+    return shell
 
 
 class PluginLoader:
@@ -276,9 +323,9 @@ class PluginLoader:
                 full_name = os.path.basename(full_path)
 
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
-                # FIXME: I believe this is only correct for modules and module_utils.
                 # For all other plugins we want .pyc and .pyo should be valid
-                if full_path.endswith(('.pyc', '.pyo')):
+                # since module_utils and modules dont have a base class but rest of plugins do:
+                if not self.base_class and full_path.endswith(('.pyc', '.pyo')):
                     continue
 
                 splitname = os.path.splitext(full_name)
@@ -393,7 +440,12 @@ class PluginLoader:
             if not issubclass(obj, plugin_class):
                 return None
 
+        # load plugin config data
+        if not found_in_cache:
+            self._load_config_defs(name, path)
+
         self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+
         if not class_only:
             try:
                 obj = obj(*args, **kwargs)
@@ -512,7 +564,12 @@ class PluginLoader:
                 if not issubclass(obj, plugin_class):
                     continue
 
+            # load plugin config data
+            if not found_in_cache:
+                self._load_config_defs(basename, path)
+
             self._display_plugin_load(self.class_name, basename, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
@@ -773,4 +830,11 @@ httpapi_loader = PluginLoader(
     C.DEFAULT_HTTPAPI_PLUGIN_PATH,
     'httpapi_plugins',
     required_base_class='HttpApiBase',
+)
+
+become_loader = PluginLoader(
+    'BecomeModule',
+    'ansible.plugins.become',
+    C.BECOME_PLUGIN_PATH,
+    'become_plugins'
 )

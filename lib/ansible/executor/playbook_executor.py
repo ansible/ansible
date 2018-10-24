@@ -25,6 +25,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
+from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.plugins.loader import connection_loader, shell_loader
@@ -85,9 +86,10 @@ class PlaybookExecutor:
             # preload become/connecition/shell to set config defs cached
             list(connection_loader.all(class_only=True))
             list(shell_loader.all(class_only=True))
+            list(become_loader.all(class_only=True))
 
             for playbook_path in self._playbooks:
-                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
+                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader, options=self._options)
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing

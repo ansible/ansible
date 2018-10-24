@@ -27,6 +27,8 @@ from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 
+_option_map = {'check': 'check_mode'}
+
 
 def _generic_g(prop_name, self):
     try:
@@ -202,7 +204,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 return method(ds)
         return ds
 
-    def load_data(self, ds, variable_manager=None, loader=None):
+    def load_data(self, ds, variable_manager=None, loader=None, options=None):
         ''' walk the input datastructure and assign any values '''
 
         if ds is None:
@@ -241,11 +243,36 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 else:
                     self._attributes[target_name] = ds[name]
 
+        # set defaults from CLI
+        if options:
+            self._set_options(options)
+
         # run early, non-critical validation
         self.validate()
 
         # return the constructed object
         return self
+
+    def _set_options(self, options):
+        '''
+        Configures defaults using CLI options
+        '''
+        if options:
+            for flag in dir(options):
+
+                # skip private and incorrect matches: i.e tags is really only_these_tags
+                if flag.startswith('_') or flag in ('tags',):
+                    continue
+
+                # use mapping when they are not named the same
+                if flag in _option_map:
+                    attr = _option_map[flag]
+                else:
+                    attr = flag
+
+                attribute = getattr(options, attr, False)
+                if attribute and hasattr(self, attr):
+                    setattr(self, attr, attribute)
 
     def get_ds(self):
         try:

@@ -69,31 +69,6 @@ def set_constant(name, value, export=vars()):
 
 
 # CONSTANTS ### yes, actual ones
-BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun', 'enable', 'machinectl']
-BECOME_ERROR_STRINGS = {
-    'sudo': 'Sorry, try again.',
-    'su': 'Authentication failure',
-    'pbrun': '',
-    'pfexec': '',
-    'doas': 'Permission denied',
-    'dzdo': 'Sorry, try again.',
-    'ksu': 'Password incorrect',
-    'pmrun': 'You are not permitted to run this command',
-    'enable': '',
-    'machinectl': '',
-}  # FIXME: deal with i18n
-BECOME_MISSING_STRINGS = {
-    'sudo': 'sorry, a password is required to run sudo',
-    'su': '',
-    'pbrun': '',
-    'pfexec': '',
-    'doas': 'Authorization required',
-    'dzdo': '',
-    'ksu': 'No password given',
-    'pmrun': '',
-    'enable': '',
-    'machinectl': '',
-}  # FIXME: deal with i18n
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
 CONTROLLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
@@ -104,7 +79,7 @@ DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
 DEFAULT_SU_PASS = None
 # FIXME: expand to other plugins, but never doc fragments
-CONFIGURABLE_PLUGINS = ('cache', 'callback', 'connection', 'inventory', 'lookup', 'shell', 'cliconf', 'httpapi')
+CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'shell')
 # NOTE: always update the docs/docsite/Makefile to match
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'vars')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
