@@ -281,6 +281,7 @@ class CallbackModule(CallbackBase):
                 self._display.display('%s:\n' % name)
             for task, value in data:
                 self._display.display('%s (%s): %0.2f%s' % (task.get_name(), task._uuid, value, self._units[name]))
+            self._display.display('\n')
 
         for dummy, f in self._csv_files.items():
             try:
