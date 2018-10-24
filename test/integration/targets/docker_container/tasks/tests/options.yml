@@ -1221,6 +1221,28 @@
     stop_timeout: 1
   register: healthcheck_6
 
+- name: healthcheck (string in healthcheck test, changed)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test: "sleep 1"
+    stop_timeout: 1
+  register: healthcheck_7
+
+- name: healthcheck (string in healthcheck test, idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test: "sleep 1"
+    stop_timeout: 1
+  register: healthcheck_8
+
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
@@ -1235,6 +1257,8 @@
     - healthcheck_4 is not changed
     - healthcheck_5 is changed
     - healthcheck_6 is not changed
+    - healthcheck_7 is changed
+    - healthcheck_8 is not changed
 
 ####################################################################
 ## hostname ########################################################
