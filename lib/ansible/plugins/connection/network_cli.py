@@ -360,14 +360,9 @@ class Connection(NetworkConnectionBase):
                 display.debug("ssh connection has been closed successfully")
         super(Connection, self).close()
 
-    def receive_ssh_data(self, count, timeout):
-        # a None timeout is a blocking call
-        if timeout is None or timeout > 0:
-            start = time.time()
-            while self._ssh_shell.recv_ready() is False:
-                if timeout is not None and time.time() - start >= timeout:
-                    raise AnsibleConnectionFailure("timeout waiting ouput from command")
-                time.sleep(0.001)
+    def receive_ssh_data(self, count):
+        while not self._ssh_shell.recv_ready():
+            time.sleep(0.001)
         return self._ssh_shell.recv(count)
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
@@ -387,14 +382,12 @@ class Connection(NetworkConnectionBase):
         buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
-        receive_data_timeout = self._ssh_shell.gettimeout()
-
         while True:
             if command_prompt_matched:
                 try:
                     signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
                     signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
-                    data = self.receive_ssh_data(256, receive_data_timeout)
+                    data = self.receive_ssh_data(256)
                     signal.alarm(0)
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
@@ -408,7 +401,7 @@ class Connection(NetworkConnectionBase):
                 except AnsibleCmdRespRecv:
                     return self._command_response
             else:
-                data = self.receive_ssh_data(256, receive_data_timeout)
+                data = self.receive_ssh_data(256)
 
             # when a channel stream is closed, received data will be empty
             if not data:
