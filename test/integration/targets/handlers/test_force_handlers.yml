@@ -17,7 +17,7 @@
   connection: local
   force_handlers: True
   roles:
-  - { role: test_force_handlers, tags: force_true_in_play }
+  - { role: test_force_handlers }
 
 
 - name: test force handlers (set to false)
@@ -27,4 +27,4 @@
   connection: local
   force_handlers: False
   roles:
-  - { role: test_force_handlers, tags: force_false_in_play }
+  - { role: test_force_handlers }

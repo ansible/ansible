@@ -496,36 +496,6 @@ class TestActionBase(unittest.TestCase):
         action_base._supports_check_mode = False
         self.assertRaises(AnsibleError, action_base._execute_module)
 
-    def test_action_base_sudo_only_if_user_differs(self):
-        fake_loader = MagicMock()
-        fake_loader.get_basedir.return_value = os.getcwd()
-        play_context = PlayContext()
-        action_base = DerivedActionBase(None, None, play_context, fake_loader, None, None)
-        action_base._connection = MagicMock(exec_command=MagicMock(return_value=(0, '', '')))
-        action_base._connection._shell = MagicMock(append_command=MagicMock(return_value=('JOINED CMD')))
-
-        play_context.become = True
-        play_context.become_user = play_context.remote_user = 'root'
-        play_context.make_become_cmd = MagicMock(return_value='CMD')
-
-        action_base._low_level_execute_command('ECHO', sudoable=True)
-        play_context.make_become_cmd.assert_not_called()
-
-        play_context.remote_user = 'apo'
-        action_base._low_level_execute_command('ECHO', sudoable=True, executable='/bin/csh')
-        play_context.make_become_cmd.assert_called_once_with("ECHO", executable='/bin/csh')
-
-        play_context.make_become_cmd.reset_mock()
-
-        become_allow_same_user = C.BECOME_ALLOW_SAME_USER
-        C.BECOME_ALLOW_SAME_USER = True
-        try:
-            play_context.remote_user = 'root'
-            action_base._low_level_execute_command('ECHO SAME', sudoable=True)
-            play_context.make_become_cmd.assert_called_once_with("ECHO SAME", executable=None)
-        finally:
-            C.BECOME_ALLOW_SAME_USER = become_allow_same_user
-
 
 class TestActionBaseCleanReturnedData(unittest.TestCase):
     def test(self):
