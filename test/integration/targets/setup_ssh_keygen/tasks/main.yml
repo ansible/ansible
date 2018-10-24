@@ -1,0 +1,8 @@
+- name: Include OS-specific variables
+  include_vars: '{{ ansible_os_family }}.yml'
+  when: not ansible_os_family == "Darwin" and not ansible_os_family == "FreeBSD"
+
+- name: Install ssh-keygen
+  package:
+    name: '{{ openssh_client_package_name }}'
+  when: not ansible_os_family == "Darwin" and not ansible_os_family == "FreeBSD"
