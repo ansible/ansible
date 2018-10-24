@@ -16,6 +16,7 @@ To get started, please read and understand the :ref:`code_of_conduct`, and then 
    code_of_conduct
    how_can_I_help
    reporting_bugs_and_features
+   documentation_contributions
    communication
    development_process
    contributor_license_agreement
