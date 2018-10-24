@@ -69,7 +69,7 @@
       that:
       - command_unicode_output is changed
       - command_unicode_output.rc == 0
-      - command_unicode_output.stdout == "\U0001F4A9\n"
+      - "command_unicode_output.stdout == '\U0001F4A9\n'"
       - command_unicode_output.stderr == ''
 
   - name: Output unicode characters from Powershell using PSRP
@@ -81,5 +81,5 @@
       that:
       - shell_unicode_output is changed
       - shell_unicode_output.rc == 0
-      - shell_unicode_output.stdout == "\U0001F4A9\n"
+      - "shell_unicode_output.stdout == '\U0001F4A9\n'"
       - shell_unicode_output.stderr == ''
