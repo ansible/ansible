@@ -307,55 +307,55 @@ author:
 '''
 
 EXAMPLES = '''
-  # Example for 2.5+ module
-  - name: Create a master load balancer
-    azure_rm_loadbalancer:
-      name: myLoadBalancer
-      resource_group: myResourceGroup
-      location: northeurope
-      backend_address_pools:
-        - name: myBackendPool
-      frontend_ip_configurations:
-        - name: myFrontendIPcfg
-          public_ip_address: myPublicIP
-      probes:
-        - name: myProbe
-          fail_count: 3
-          interval: 5
-          port: 8443
-          protocol: Http
-          request_path: "/"
-      load_balancing_rules:
-        - name: myLoadBalancingRules
-          frontend_port: 8443
-          backend_port: 8443
-          frontend_ip_configuration: myFrontendIPcfg
-          load_distribution: SourceIP
-          protocol: Tcp
-          backend_address_pool: myBackendPool
-          probe: myProbe
-    # Example for <2.5 module
-    - name: Create a load balancer
+    # Example for 2.5+ module
+    - name: Create a master load balancer
       azure_rm_loadbalancer:
-        name: myloadbalancer
-        location: eastus
-        resource_group: my-rg
-        public_ip: mypublicip
-        probe_protocol: Tcp
-        probe_port: 80
-        probe_interval: 10
-        probe_fail_count: 3
-        protocol: Tcp
-        frontend_port_range_start: 80
-        frontend_port_range_end: 81
-        backend_port: 8080
-    load_balancing_rules:
-      - name: lbrbalancingrule0
-        frontend_ip_configuration: frontendipconf0
-        backend_address_pool: backendaddrpool0
-        frontend_port: 80
-        backend_port: 80
-        probe: prob0
+        name: myLoadBalancer
+        resource_group: myResourceGroup
+        location: northeurope
+        backend_address_pools:
+          - name: myBackendPool
+        frontend_ip_configurations:
+          - name: myFrontendIPcfg
+            public_ip_address: myPublicIP
+        probes:
+          - name: myProbe
+            fail_count: 3
+            interval: 5
+            port: 8443
+            protocol: Http
+            request_path: "/"
+        load_balancing_rules:
+          - name: myLoadBalancingRules
+            frontend_port: 8443
+            backend_port: 8443
+            frontend_ip_configuration: myFrontendIPcfg
+            load_distribution: SourceIP
+            protocol: Tcp
+            backend_address_pool: myBackendPool
+            probe: myProbe
+      # Example for <2.5 module
+      - name: Create a load balancer
+        azure_rm_loadbalancer:
+          name: myloadbalancer
+          location: eastus
+          resource_group: my-rg
+          public_ip: mypublicip
+          probe_protocol: Tcp
+          probe_port: 80
+          probe_interval: 10
+          probe_fail_count: 3
+          protocol: Tcp
+          frontend_port_range_start: 80
+          frontend_port_range_end: 81
+          backend_port: 8080
+      load_balancing_rules:
+        - name: lbrbalancingrule0
+          frontend_ip_configuration: frontendipconf0
+          backend_address_pool: backendaddrpool0
+          frontend_port: 80
+          backend_port: 80
+          probe: prob0
 '''
 
 RETURN = '''
