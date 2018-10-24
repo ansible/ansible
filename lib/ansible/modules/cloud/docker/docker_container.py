@@ -2570,8 +2570,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
 
         healthcheck_supported = LooseVersion(docker_version) >= LooseVersion('2.0')
         if self.module.params.get("healthcheck") and not healthcheck_supported:
-            self.module.warn("docker or docker-py version is %s. Minimum version required is 2.0 to set healthcheck option. "
-                             "healthcheck is ignored." % (docker_version,))
+            self.fail("docker or docker-py version is %s. Minimum version required is 2.0 to set healthcheck option." % (docker_version,))
 
         self.HAS_INIT_OPT = init_supported
         self.HAS_UTS_MODE_OPT = uts_mode_supported
