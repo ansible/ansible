@@ -12,14 +12,13 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $category_names = Get-AnsibleParam -obj $params -name "category_names" -type "list" -default @("CriticalUpdates", "SecurityUpdates", "UpdateRollups")
-$post_categories = Get-AnsibleParam -obj $params -name "post_category_names" -type "list" -default @()
 $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
 $blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
 $whitelist = Get-AnsibleParam -obj $params -name "whitelist" -type "list"
 
 # For backwards compatibility
-Function Category-Remap ($category_name) {
+Function Get-CategoryMapping ($category_name) {
     switch -exact ($category_name) {
         "CriticalUpdates"   {return "Critical Updates"}
         "DefinitionUpdates" {return "Definition Updates"}
@@ -32,7 +31,7 @@ Function Category-Remap ($category_name) {
     }
 }
 
-$category_names = $category_names | ForEach-Object { Category-Remap -category_name $_ }
+$category_names = $category_names | ForEach-Object { Get-CategoryMapping -category_name $_ }
 
 $common_functions = {
     Function Write-DebugLog($msg) {
