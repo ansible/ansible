@@ -329,7 +329,7 @@ def main():
         modify_fs(module, blade)
     elif state == 'absent' and fs and not fs.destroyed:
         delete_fs(module, blade)
-    elif state == 'absent' and fs and fs.destroyed:
+    elif state == 'absent' and fs and fs.destroyed and module.params['eradicate']:
         eradicate_fs(module, blade)
     elif state == 'absent' and not fs:
         module.exit_json(changed=False)
