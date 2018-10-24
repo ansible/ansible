@@ -15,7 +15,7 @@ By default these should be relative to the config file, some are specifically re
 Task paths
 ==========
 
-Here things start getting complicated, there are 2 different scopes to consider, task evalution (paths are all local, like in lookups) and task execution, which is normally on the remote, unless an action plugin is involved.
+Here things start getting complicated, there are 2 different scopes to consider, task evaluation (paths are all local, like in lookups) and task execution, which is normally on the remote, unless an action plugin is involved.
 
 Some tasks that require 'local' resources use action plugins (template and copy are examples of these), in which case the path is also local.
 

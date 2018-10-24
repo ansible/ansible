@@ -52,7 +52,7 @@ Support
 =======
 
 For more information on how included Ansible modules are supported by Red Hat,
-please refer to the following `knowledgebase article <https://access.redhat.com/articles/3166901>`_ as well as other resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
+please refer to the following `knowledge base article <https://access.redhat.com/articles/3166901>`_ as well as other resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
 
 .. seealso::
 
