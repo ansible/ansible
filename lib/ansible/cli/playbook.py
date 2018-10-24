@@ -25,8 +25,8 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook.block import Block
-from ansible.playbook.play_context import PlayContext
 from ansible.utils.display import Display
+from ansible.plugins.loader import add_all_plugin_dirs
 
 display = Display()
 
@@ -84,11 +84,13 @@ class PlaybookCLI(CLI):
 
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor
+        pb_dirs = []
         for playbook in self.args:
             if not os.path.exists(playbook):
                 raise AnsibleError("the playbook: %s could not be found" % playbook)
             if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
                 raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+            pb_dirs.append(os.path.dirname(os.path.abspath(playbook)))
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
@@ -96,15 +98,12 @@ class PlaybookCLI(CLI):
             (sshpass, becomepass) = self.ask_passwords()
             passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        loader, inventory, variable_manager = self._play_prereqs(self.options)
+        # load plugins from all playbooks in case they add callbacks/inventory/etc
+        for pbdir in pb_dirs:
+            add_all_plugin_dirs(pbdir)
 
-        # (which is not returned in list_hosts()) is taken into account for
-        # warning if inventory is empty.  But it can't be taken into account for
-        # checking if limit doesn't match any hosts.  Instead we don't worry about
-        # limit if only implicit localhost was in inventory to start with.
-        #
-        # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
-        hosts = CLI.get_host_list(inventory, self.options.subset)
+        # create base objects
+        loader, inventory, variable_manager = self._play_prereqs(self.options)
 
         # flush fact cache if requested
         if self.options.flush_cache:
@@ -167,9 +166,8 @@ class PlaybookCLI(CLI):
                             return taskmsg
 
                         all_vars = variable_manager.get_vars(play=play)
-                        play_context = PlayContext(play=play, options=self.options)
                         for block in play.compile():
-                            block = block.filter_tagged_tasks(play_context, all_vars)
+                            block = block.filter_tagged_tasks(all_vars)
                             if not block.has_tasks():
                                 continue
                             taskmsg += _process_block(block)

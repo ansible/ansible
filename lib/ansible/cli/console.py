@@ -191,7 +191,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 gather_facts='no',
                 tasks=[dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))]
             )
-            play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
+            play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader, options=self.options)
         except Exception as e:
             display.error(u"Unable to build command: %s" % to_text(e))
             return False

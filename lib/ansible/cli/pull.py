@@ -264,7 +264,7 @@ class PullCLI(CLI):
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
-        if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
+        if self.options.become_ask_pass:
             cmd += ' --ask-become-pass'
         if self.options.skip_tags:
             cmd += ' --skip-tags "%s"' % to_native(u','.join(self.options.skip_tags))

@@ -26,7 +26,6 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
-from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.utils.display import Display
 
 display = Display()
@@ -105,9 +104,7 @@ class AdHocCLI(CLI):
         (sshpass, becomepass) = self.ask_passwords()
         passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        # dynamically load any plugins
-        get_all_plugin_loaders()
-
+        # get basic objects
         loader, inventory, variable_manager = self._play_prereqs(self.options)
 
         try:
@@ -136,10 +133,10 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
-        play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
+        play = Play().load(play_ds, variable_manager=variable_manager, loader=loader, options=self.options)
 
         # used in start callback
-        playbook = Playbook(loader)
+        playbook = Playbook(loader, self.options)
         playbook._entries.append(play)
         playbook._file_name = '__adhoc_playbook__'
 
