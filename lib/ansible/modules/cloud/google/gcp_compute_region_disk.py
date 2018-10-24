@@ -443,8 +443,8 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#disk',
-        u'diskEncryptionKey': RegionDiskDiskEncryptionKey(module.params.get('disk_encryption_key', {}), module).to_request(),
-        u'sourceSnapshotEncryptionKey': RegionDiskSourceSnapshotEncryptionKey(module.params.get('source_snapshot_encryption_key', {}), module).to_request(),
+        u'diskEncryptionKey': RegionDiskDiskencryptionkey(module.params.get('disk_encryption_key', {}), module).to_request(),
+        u'sourceSnapshotEncryptionKey': RegionDiskSourcesnapshotencryptionkey(module.params.get('source_snapshot_encryption_key', {}), module).to_request(),
         u'description': module.params.get('description'),
         u'labels': module.params.get('labels'),
         u'licenses': module.params.get('licenses'),
@@ -588,7 +588,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class RegionDiskDiskEncryptionKey(object):
+class RegionDiskDiskencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -609,7 +609,7 @@ class RegionDiskDiskEncryptionKey(object):
         })
 
 
-class RegionDiskSourceSnapshotEncryptionKey(object):
+class RegionDiskSourcesnapshotencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:

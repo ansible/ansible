@@ -688,13 +688,13 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'description': module.params.get('description'),
         u'initialNodeCount': module.params.get('initial_node_count'),
-        u'nodeConfig': ClusterNodeConfig(module.params.get('node_config', {}), module).to_request(),
-        u'masterAuth': ClusterMasterAuth(module.params.get('master_auth', {}), module).to_request(),
+        u'nodeConfig': ClusterNodeconfig(module.params.get('node_config', {}), module).to_request(),
+        u'masterAuth': ClusterMasterauth(module.params.get('master_auth', {}), module).to_request(),
         u'loggingService': module.params.get('logging_service'),
         u'monitoringService': module.params.get('monitoring_service'),
         u'network': module.params.get('network'),
         u'clusterIpv4Cidr': module.params.get('cluster_ipv4_cidr'),
-        u'addonsConfig': ClusterAddonsConfig(module.params.get('addons_config', {}), module).to_request(),
+        u'addonsConfig': ClusterAddonsconfig(module.params.get('addons_config', {}), module).to_request(),
         u'subnetwork': module.params.get('subnetwork'),
         u'location': module.params.get('location')
     }
@@ -766,13 +766,13 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'description': response.get(u'description'),
         u'initialNodeCount': module.params.get('initial_node_count'),
-        u'nodeConfig': ClusterNodeConfig(module.params.get('node_config', {}), module).to_request(),
-        u'masterAuth': ClusterMasterAuth(response.get(u'masterAuth', {}), module).from_response(),
+        u'nodeConfig': ClusterNodeconfig(module.params.get('node_config', {}), module).to_request(),
+        u'masterAuth': ClusterMasterauth(response.get(u'masterAuth', {}), module).from_response(),
         u'loggingService': response.get(u'loggingService'),
         u'monitoringService': response.get(u'monitoringService'),
         u'network': response.get(u'network'),
         u'clusterIpv4Cidr': response.get(u'clusterIpv4Cidr'),
-        u'addonsConfig': ClusterAddonsConfig(response.get(u'addonsConfig', {}), module).from_response(),
+        u'addonsConfig': ClusterAddonsconfig(response.get(u'addonsConfig', {}), module).from_response(),
         u'subnetwork': response.get(u'subnetwork'),
         u'location': response.get(u'location'),
         u'endpoint': response.get(u'endpoint'),
@@ -840,7 +840,7 @@ def encode_request(resource_request, module):
     }
 
 
-class ClusterNodeConfig(object):
+class ClusterNodeconfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -877,7 +877,7 @@ class ClusterNodeConfig(object):
         })
 
 
-class ClusterMasterAuth(object):
+class ClusterMasterauth(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -904,7 +904,7 @@ class ClusterMasterAuth(object):
         })
 
 
-class ClusterAddonsConfig(object):
+class ClusterAddonsconfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -914,18 +914,18 @@ class ClusterAddonsConfig(object):
 
     def to_request(self):
         return remove_nones_from_dict({
-            u'httpLoadBalancing': ClusterHttpLoadBalancing(self.request.get('http_load_balancing', {}), self.module).to_request(),
-            u'horizontalPodAutoscaling': ClusterHorizontalPodAutoscaling(self.request.get('horizontal_pod_autoscaling', {}), self.module).to_request()
+            u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get('http_load_balancing', {}), self.module).to_request(),
+            u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get('horizontal_pod_autoscaling', {}), self.module).to_request()
         })
 
     def from_response(self):
         return remove_nones_from_dict({
-            u'httpLoadBalancing': ClusterHttpLoadBalancing(self.request.get(u'httpLoadBalancing', {}), self.module).from_response(),
-            u'horizontalPodAutoscaling': ClusterHorizontalPodAutoscaling(self.request.get(u'horizontalPodAutoscaling', {}), self.module).from_response()
+            u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get(u'httpLoadBalancing', {}), self.module).from_response(),
+            u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get(u'horizontalPodAutoscaling', {}), self.module).from_response()
         })
 
 
-class ClusterHttpLoadBalancing(object):
+class ClusterHttploadbalancing(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -944,7 +944,7 @@ class ClusterHttpLoadBalancing(object):
         })
 
 
-class ClusterHorizontalPodAutoscaling(object):
+class ClusterHorizontalpodautoscaling(object):
     def __init__(self, request, module):
         self.module = module
         if request:

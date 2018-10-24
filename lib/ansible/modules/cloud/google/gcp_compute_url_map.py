@@ -448,9 +448,9 @@ def resource_to_request(module):
         u'kind': 'compute#urlMap',
         u'defaultService': replace_resource_dict(module.params.get(u'default_service', {}), 'selfLink'),
         u'description': module.params.get('description'),
-        u'hostRules': UrlMapHostRulesArray(module.params.get('host_rules', []), module).to_request(),
+        u'hostRules': UrlMapHostrulesArray(module.params.get('host_rules', []), module).to_request(),
         u'name': module.params.get('name'),
-        u'pathMatchers': UrlMapPathMatchersArray(module.params.get('path_matchers', []), module).to_request(),
+        u'pathMatchers': UrlMapPathmatchersArray(module.params.get('path_matchers', []), module).to_request(),
         u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request()
     }
     return_vals = {}
@@ -520,11 +520,11 @@ def response_to_hash(module, response):
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'defaultService': response.get(u'defaultService'),
         u'description': response.get(u'description'),
-        u'hostRules': UrlMapHostRulesArray(response.get(u'hostRules', []), module).from_response(),
+        u'hostRules': UrlMapHostrulesArray(response.get(u'hostRules', []), module).from_response(),
         u'id': response.get(u'id'),
         u'fingerprint': response.get(u'fingerprint'),
         u'name': module.params.get('name'),
-        u'pathMatchers': UrlMapPathMatchersArray(response.get(u'pathMatchers', []), module).from_response(),
+        u'pathMatchers': UrlMapPathmatchersArray(response.get(u'pathMatchers', []), module).from_response(),
         u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response()
     }
 
@@ -566,7 +566,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class UrlMapHostRulesArray(object):
+class UrlMapHostrulesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -601,7 +601,7 @@ class UrlMapHostRulesArray(object):
         })
 
 
-class UrlMapPathMatchersArray(object):
+class UrlMapPathmatchersArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -626,7 +626,7 @@ class UrlMapPathMatchersArray(object):
             u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
             u'description': item.get('description'),
             u'name': item.get('name'),
-            u'pathRules': UrlMapPathRulesArray(item.get('path_rules', []), self.module).to_request()
+            u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request()
         })
 
     def _response_from_item(self, item):
@@ -634,11 +634,11 @@ class UrlMapPathMatchersArray(object):
             u'defaultService': item.get(u'defaultService'),
             u'description': item.get(u'description'),
             u'name': item.get(u'name'),
-            u'pathRules': UrlMapPathRulesArray(item.get(u'pathRules', []), self.module).from_response()
+            u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response()
         })
 
 
-class UrlMapPathRulesArray(object):
+class UrlMapPathrulesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:

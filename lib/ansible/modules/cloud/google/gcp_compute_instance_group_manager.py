@@ -405,7 +405,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'instanceTemplate': replace_resource_dict(module.params.get(u'instance_template', {}), 'selfLink'),
         u'name': module.params.get('name'),
-        u'namedPorts': InstanceGroupManagerNamedPortsArray(module.params.get('named_ports', []), module).to_request(),
+        u'namedPorts': InstanceGroupManagerNamedportsArray(module.params.get('named_ports', []), module).to_request(),
         u'targetPools': replace_resource_dict(module.params.get('target_pools', []), 'selfLink'),
         u'targetSize': module.params.get('target_size')
     }
@@ -475,13 +475,13 @@ def response_to_hash(module, response):
     return {
         u'baseInstanceName': response.get(u'baseInstanceName'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'currentActions': InstanceGroupManagerCurrentActions(response.get(u'currentActions', {}), module).from_response(),
+        u'currentActions': InstanceGroupManagerCurrentactions(response.get(u'currentActions', {}), module).from_response(),
         u'description': module.params.get('description'),
         u'id': response.get(u'id'),
         u'instanceGroup': response.get(u'instanceGroup'),
         u'instanceTemplate': response.get(u'instanceTemplate'),
         u'name': response.get(u'name'),
-        u'namedPorts': InstanceGroupManagerNamedPortsArray(response.get(u'namedPorts', []), module).from_response(),
+        u'namedPorts': InstanceGroupManagerNamedportsArray(response.get(u'namedPorts', []), module).from_response(),
         u'region': response.get(u'region'),
         u'targetPools': response.get(u'targetPools'),
         u'targetSize': response.get(u'targetSize')
@@ -534,7 +534,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class InstanceGroupManagerCurrentActions(object):
+class InstanceGroupManagerCurrentactions(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -567,7 +567,7 @@ class InstanceGroupManagerCurrentActions(object):
         })
 
 
-class InstanceGroupManagerNamedPortsArray(object):
+class InstanceGroupManagerNamedportsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:

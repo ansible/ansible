@@ -268,7 +268,7 @@ def resource_to_request(module):
         u'bucket': replace_resource_dict(module.params.get(u'bucket', {}), 'name'),
         u'entity': module.params.get('entity'),
         u'entityId': module.params.get('entity_id'),
-        u'projectTeam': BucketAccessControlProjectTeam(module.params.get('project_team', {}), module).to_request(),
+        u'projectTeam': BucketAccessControlProjectteam(module.params.get('project_team', {}), module).to_request(),
         u'role': module.params.get('role')
     }
     return_vals = {}
@@ -341,12 +341,12 @@ def response_to_hash(module, response):
         u'entity': response.get(u'entity'),
         u'entityId': response.get(u'entityId'),
         u'id': response.get(u'id'),
-        u'projectTeam': BucketAccessControlProjectTeam(response.get(u'projectTeam', {}), module).from_response(),
+        u'projectTeam': BucketAccessControlProjectteam(response.get(u'projectTeam', {}), module).from_response(),
         u'role': response.get(u'role')
     }
 
 
-class BucketAccessControlProjectTeam(object):
+class BucketAccessControlProjectteam(object):
     def __init__(self, request, module):
         self.module = module
         if request:
