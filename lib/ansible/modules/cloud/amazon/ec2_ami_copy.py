@@ -189,6 +189,7 @@ def copy_image(module, ec2):
         if module.params.get('wait'):
             delay = 15
             max_attempts = module.params.get('wait_timeout') // delay
+            image_id = image['ImageId']
             ec2.get_waiter('image_available').wait(
                 ImageIds=[image_id],
                 WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
