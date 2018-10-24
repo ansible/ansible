@@ -183,7 +183,6 @@ class FileLock:
             self.lockfd.close()
             raise LockTimeout('{0} sec'.format(lock_timeout))
 
-
     def unlock(self):
         '''
         Make sure lock file is available for everyone and Unlock the file descriptor
