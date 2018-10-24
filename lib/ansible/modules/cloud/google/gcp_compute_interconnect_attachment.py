@@ -327,7 +327,7 @@ def response_to_hash(module, response):
         u'customerRouterIpAddress': response.get(u'customerRouterIpAddress'),
         u'interconnect': response.get(u'interconnect'),
         u'description': response.get(u'description'),
-        u'privateInterconnectInfo': InterconnectAttachmentPrivateInterconnectInfo(response.get(u'privateInterconnectInfo', {}), module).from_response(),
+        u'privateInterconnectInfo': InterconnectAttachmentPrivateinterconnectinfo(response.get(u'privateInterconnectInfo', {}), module).from_response(),
         u'googleReferenceId': response.get(u'googleReferenceId'),
         u'router': response.get(u'router'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
@@ -382,7 +382,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class InterconnectAttachmentPrivateInterconnectInfo(object):
+class InterconnectAttachmentPrivateinterconnectinfo(object):
     def __init__(self, request, module):
         self.module = module
         if request:

@@ -510,9 +510,9 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#disk',
-        u'sourceImageEncryptionKey': DiskSourceImageEncryptionKey(module.params.get('source_image_encryption_key', {}), module).to_request(),
-        u'diskEncryptionKey': DiskDiskEncryptionKey(module.params.get('disk_encryption_key', {}), module).to_request(),
-        u'sourceSnapshotEncryptionKey': DiskSourceSnapshotEncryptionKey(module.params.get('source_snapshot_encryption_key', {}), module).to_request(),
+        u'sourceImageEncryptionKey': DiskSourceimageencryptionkey(module.params.get('source_image_encryption_key', {}), module).to_request(),
+        u'diskEncryptionKey': DiskDiskencryptionkey(module.params.get('disk_encryption_key', {}), module).to_request(),
+        u'sourceSnapshotEncryptionKey': DiskSourcesnapshotencryptionkey(module.params.get('source_snapshot_encryption_key', {}), module).to_request(),
         u'description': module.params.get('description'),
         u'labels': module.params.get('labels'),
         u'licenses': module.params.get('licenses'),
@@ -647,7 +647,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class DiskSourceImageEncryptionKey(object):
+class DiskSourceimageencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -668,7 +668,7 @@ class DiskSourceImageEncryptionKey(object):
         })
 
 
-class DiskDiskEncryptionKey(object):
+class DiskDiskencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -689,7 +689,7 @@ class DiskDiskEncryptionKey(object):
         })
 
 
-class DiskSourceSnapshotEncryptionKey(object):
+class DiskSourcesnapshotencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:

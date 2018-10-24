@@ -452,7 +452,7 @@ class RouterBgp(object):
             u'asn': self.request.get('asn'),
             u'advertiseMode': self.request.get('advertise_mode'),
             u'advertisedGroups': self.request.get('advertised_groups'),
-            u'advertisedIpRanges': RouterAdvertisedIpRangesArray(self.request.get('advertised_ip_ranges', []), self.module).to_request()
+            u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get('advertised_ip_ranges', []), self.module).to_request()
         })
 
     def from_response(self):
@@ -460,11 +460,11 @@ class RouterBgp(object):
             u'asn': self.request.get(u'asn'),
             u'advertiseMode': self.request.get(u'advertiseMode'),
             u'advertisedGroups': self.request.get(u'advertisedGroups'),
-            u'advertisedIpRanges': RouterAdvertisedIpRangesArray(self.request.get(u'advertisedIpRanges', []), self.module).from_response()
+            u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get(u'advertisedIpRanges', []), self.module).from_response()
         })
 
 
-class RouterAdvertisedIpRangesArray(object):
+class RouterAdvertisediprangesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:

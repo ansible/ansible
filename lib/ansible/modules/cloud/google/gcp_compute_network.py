@@ -278,7 +278,7 @@ def routing_config_update(module, request, response):
             "projects/{project}/regions/{region}/subnetworks/{name}"
         ]).format(**module.params),
         {
-            u'routingConfig': NetworkRoutingConfigArray(module.params.get('routing_config', []), module).to_request()
+            u'routingConfig': NetworkRoutingconfigArray(module.params.get('routing_config', []), module).to_request()
         }
     )
 
@@ -295,7 +295,7 @@ def resource_to_request(module):
         u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
-        u'routingConfig': NetworkRoutingConfigArray(module.params.get('routing_config', []), module).to_request()
+        u'routingConfig': NetworkRoutingconfigArray(module.params.get('routing_config', []), module).to_request()
     }
     return_vals = {}
     for k, v in request.items():
@@ -369,7 +369,7 @@ def response_to_hash(module, response):
         u'subnetworks': response.get(u'subnetworks'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'routingConfig': NetworkRoutingConfigArray(response.get(u'routingConfig', []), module).from_response()
+        u'routingConfig': NetworkRoutingconfigArray(response.get(u'routingConfig', []), module).from_response()
     }
 
 
@@ -410,7 +410,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class NetworkRoutingConfigArray(object):
+class NetworkRoutingconfigArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:

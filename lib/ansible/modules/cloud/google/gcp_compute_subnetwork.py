@@ -363,7 +363,7 @@ def enable_flow_logs_update(module, request, response):
         {
             u'enableFlowLogs': module.params.get('enable_flow_logs'),
             u'fingerprint': response.get('fingerprint'),
-            u'secondaryIpRanges': SubnetworkSecondaryIpRangesArray(module.params.get('secondary_ip_ranges', []), module).to_request()
+            u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request()
         }
     )
 
@@ -394,7 +394,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'enableFlowLogs': module.params.get('enable_flow_logs'),
-        u'secondaryIpRanges': SubnetworkSecondaryIpRangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
+        u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
         u'privateIpGoogleAccess': module.params.get('private_ip_google_access'),
         u'region': module.params.get('region')
     }
@@ -471,7 +471,7 @@ def response_to_hash(module, response):
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'enableFlowLogs': response.get(u'enableFlowLogs'),
         u'fingerprint': response.get(u'fingerprint'),
-        u'secondaryIpRanges': SubnetworkSecondaryIpRangesArray(response.get(u'secondaryIpRanges', []), module).from_response(),
+        u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(response.get(u'secondaryIpRanges', []), module).from_response(),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),
         u'region': module.params.get('region')
     }
@@ -514,7 +514,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class SubnetworkSecondaryIpRangesArray(object):
+class SubnetworkSecondaryiprangesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:

@@ -508,13 +508,13 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'diskSizeGb': module.params.get('disk_size_gb'),
         u'family': module.params.get('family'),
-        u'guestOsFeatures': ImageGuestOsFeaturesArray(module.params.get('guest_os_features', []), module).to_request(),
-        u'imageEncryptionKey': ImageImageEncryptionKey(module.params.get('image_encryption_key', {}), module).to_request(),
+        u'guestOsFeatures': ImageGuestosfeaturesArray(module.params.get('guest_os_features', []), module).to_request(),
+        u'imageEncryptionKey': ImageImageencryptionkey(module.params.get('image_encryption_key', {}), module).to_request(),
         u'licenses': module.params.get('licenses'),
         u'name': module.params.get('name'),
-        u'rawDisk': ImageRawDisk(module.params.get('raw_disk', {}), module).to_request(),
+        u'rawDisk': ImageRawdisk(module.params.get('raw_disk', {}), module).to_request(),
         u'sourceDisk': replace_resource_dict(module.params.get(u'source_disk', {}), 'selfLink'),
-        u'sourceDiskEncryptionKey': ImageSourceDiskEncryptionKey(module.params.get('source_disk_encryption_key', {}), module).to_request(),
+        u'sourceDiskEncryptionKey': ImageSourcediskencryptionkey(module.params.get('source_disk_encryption_key', {}), module).to_request(),
         u'sourceDiskId': module.params.get('source_disk_id'),
         u'sourceType': module.params.get('source_type')
     }
@@ -588,14 +588,14 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'diskSizeGb': response.get(u'diskSizeGb'),
         u'family': response.get(u'family'),
-        u'guestOsFeatures': ImageGuestOsFeaturesArray(response.get(u'guestOsFeatures', []), module).from_response(),
+        u'guestOsFeatures': ImageGuestosfeaturesArray(response.get(u'guestOsFeatures', []), module).from_response(),
         u'id': response.get(u'id'),
-        u'imageEncryptionKey': ImageImageEncryptionKey(response.get(u'imageEncryptionKey', {}), module).from_response(),
+        u'imageEncryptionKey': ImageImageencryptionkey(response.get(u'imageEncryptionKey', {}), module).from_response(),
         u'licenses': response.get(u'licenses'),
         u'name': response.get(u'name'),
-        u'rawDisk': ImageRawDisk(response.get(u'rawDisk', {}), module).from_response(),
+        u'rawDisk': ImageRawdisk(response.get(u'rawDisk', {}), module).from_response(),
         u'sourceDisk': response.get(u'sourceDisk'),
-        u'sourceDiskEncryptionKey': ImageSourceDiskEncryptionKey(response.get(u'sourceDiskEncryptionKey', {}), module).from_response(),
+        u'sourceDiskEncryptionKey': ImageSourcediskencryptionkey(response.get(u'sourceDiskEncryptionKey', {}), module).from_response(),
         u'sourceDiskId': response.get(u'sourceDiskId'),
         u'sourceType': response.get(u'sourceType')
     }
@@ -665,7 +665,7 @@ class ImageDeprecated(object):
         })
 
 
-class ImageGuestOsFeaturesArray(object):
+class ImageGuestosfeaturesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -696,7 +696,7 @@ class ImageGuestOsFeaturesArray(object):
         })
 
 
-class ImageImageEncryptionKey(object):
+class ImageImageencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -717,7 +717,7 @@ class ImageImageEncryptionKey(object):
         })
 
 
-class ImageRawDisk(object):
+class ImageRawdisk(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -740,7 +740,7 @@ class ImageRawDisk(object):
         })
 
 
-class ImageSourceDiskEncryptionKey(object):
+class ImageSourcediskencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:

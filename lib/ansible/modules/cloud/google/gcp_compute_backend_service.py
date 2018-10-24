@@ -715,8 +715,8 @@ def resource_to_request(module):
         u'kind': 'compute#backendService',
         u'affinityCookieTtlSec': module.params.get('affinity_cookie_ttl_sec'),
         u'backends': BackendServiceBackendsArray(module.params.get('backends', []), module).to_request(),
-        u'cdnPolicy': BackendServiceCdnPolicy(module.params.get('cdn_policy', {}), module).to_request(),
-        u'connectionDraining': BackendServiceConnectionDraining(module.params.get('connection_draining', {}), module).to_request(),
+        u'cdnPolicy': BackendServiceCdnpolicy(module.params.get('cdn_policy', {}), module).to_request(),
+        u'connectionDraining': BackendServiceConnectiondraining(module.params.get('connection_draining', {}), module).to_request(),
         u'description': module.params.get('description'),
         u'enableCDN': module.params.get('enable_cdn'),
         u'healthChecks': module.params.get('health_checks'),
@@ -795,8 +795,8 @@ def response_to_hash(module, response):
     return {
         u'affinityCookieTtlSec': response.get(u'affinityCookieTtlSec'),
         u'backends': BackendServiceBackendsArray(response.get(u'backends', []), module).from_response(),
-        u'cdnPolicy': BackendServiceCdnPolicy(response.get(u'cdnPolicy', {}), module).from_response(),
-        u'connectionDraining': BackendServiceConnectionDraining(response.get(u'connectionDraining', {}), module).from_response(),
+        u'cdnPolicy': BackendServiceCdnpolicy(response.get(u'cdnPolicy', {}), module).from_response(),
+        u'connectionDraining': BackendServiceConnectiondraining(response.get(u'connectionDraining', {}), module).from_response(),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'enableCDN': response.get(u'enableCDN'),
@@ -906,7 +906,7 @@ class BackendServiceBackendsArray(object):
         })
 
 
-class BackendServiceCdnPolicy(object):
+class BackendServiceCdnpolicy(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -916,16 +916,16 @@ class BackendServiceCdnPolicy(object):
 
     def to_request(self):
         return remove_nones_from_dict({
-            u'cacheKeyPolicy': BackendServiceCacheKeyPolicy(self.request.get('cache_key_policy', {}), self.module).to_request()
+            u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get('cache_key_policy', {}), self.module).to_request()
         })
 
     def from_response(self):
         return remove_nones_from_dict({
-            u'cacheKeyPolicy': BackendServiceCacheKeyPolicy(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response()
+            u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response()
         })
 
 
-class BackendServiceCacheKeyPolicy(object):
+class BackendServiceCachekeypolicy(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -952,7 +952,7 @@ class BackendServiceCacheKeyPolicy(object):
         })
 
 
-class BackendServiceConnectionDraining(object):
+class BackendServiceConnectiondraining(object):
     def __init__(self, request, module):
         self.module = module
         if request:

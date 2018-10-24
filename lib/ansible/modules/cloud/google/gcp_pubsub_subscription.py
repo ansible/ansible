@@ -237,7 +237,7 @@ def resource_to_request(module):
     request = {
         u'name': module.params.get('name'),
         u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
-        u'pushConfig': SubscriptionPushConfig(module.params.get('push_config', {}), module).to_request(),
+        u'pushConfig': SubscriptionPushconfig(module.params.get('push_config', {}), module).to_request(),
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds')
     }
     request = encode_request(request, module)
@@ -310,7 +310,7 @@ def response_to_hash(module, response):
     return {
         u'name': response.get(u'name'),
         u'topic': response.get(u'topic'),
-        u'pushConfig': SubscriptionPushConfig(response.get(u'pushConfig', {}), module).from_response(),
+        u'pushConfig': SubscriptionPushconfig(response.get(u'pushConfig', {}), module).from_response(),
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds')
     }
 
@@ -334,7 +334,7 @@ def encode_request(request, module):
     return request
 
 
-class SubscriptionPushConfig(object):
+class SubscriptionPushconfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:
