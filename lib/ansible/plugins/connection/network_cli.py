@@ -378,7 +378,7 @@ class Connection(NetworkConnectionBase):
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
         while True:
-            if self._ssh_shell.recv_ready() is False:
+            if not self._ssh_shell.recv_ready():
                 time.sleep(0.001)
                 continue
             if command_prompt_matched:
