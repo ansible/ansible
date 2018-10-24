@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 
 from ansible.module_utils.basic import env_fallback
@@ -27,6 +28,29 @@ class ScalewayException(Exception):
 
     def __init__(self, message):
         self.message = message
+
+
+# Specify a complete Link header, for validation purposes
+R_LINK_HEADER = r'''<[^>]+>;\srel="(first|previous|next|last)"
+    (,<[^>]+>;\srel="(first|previous|next|last)")*'''
+# Specify a single relation, for iteration and string extraction purposes
+R_RELATION = r'<(?P<target_IRI>[^>]+)>; rel="(?P<relation>first|previous|next|last)"'
+
+
+def parse_pagination_link(header):
+    if not re.match(R_LINK_HEADER, header, re.VERBOSE):
+        raise ScalewayException('Scaleway API answered with an invalid Link pagination header')
+    else:
+        relations = header.split(',')
+        parsed_relations = {}
+        rc_relation = re.compile(R_RELATION)
+        for relation in relations:
+            match = rc_relation.match(relation)
+            if not match:
+                raise ScalewayException('Scaleway API answered with an invalid relation in the Link pagination header')
+            data = match.groupdict()
+            parsed_relations[data['relation']] = data['target_IRI']
+        return parsed_relations
 
 
 class Response(object):
