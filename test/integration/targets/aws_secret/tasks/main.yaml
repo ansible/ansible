@@ -28,17 +28,22 @@
     pause:
       seconds: 10
 
+  - name: create a temporary directory
+    tempfile:
+      state: directory
+    register: tmp
+
   - name: move lambda into place for upload
     copy:
       src: "files/hello_world.zip"
-      dest: "/root/ansible_testing/hello_world.zip"
+      dest: "{{ tmp.path }}/ansible_testing/hello_world.zip"
 
   - name: dummy lambda for testing
     lambda:
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-hello-world"
       state: present
-      zip_file: "/root/ansible_testing/hello_world.zip"
+      zip_file: "{{ tmp.path }}/ansible_testing/hello_world.zip"
       runtime: 'python2.7'
       role: "arn:aws:iam::{{ test_caller_facts.account }}:role/{{ resource_prefix }}-test-secrets-manager-role"
       handler: 'hello_world.lambda_handler'
@@ -255,7 +260,7 @@
       <<: *aws_connection_info
       name: "{{ resource_prefix }}-hello-world"
       state: absent
-      zip_file: "/root/ansible_testing/hello_world.zip"
+      zip_file: "{{ tmp.path }}/ansible_testing/hello_world.zip"
       runtime: 'python2.7'
       role: "{{ resource_prefix }}-test-secrets-manager-role"
       handler: 'hello_world.lambda_handler'
@@ -271,3 +276,8 @@
       managed_policy:
         - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
     ignore_errors: yes
+
+  - name: remove temporary dir
+    file:
+      path: "{{ tmp.path }}"
+      state: absent
