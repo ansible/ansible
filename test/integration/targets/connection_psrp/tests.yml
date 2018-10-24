@@ -61,7 +61,7 @@
       - async_out.stdout_lines == ["abc"]
 
   - name: Output unicode characters from Powershell using PSRP
-    win_command: powershell.exe -ExecutionPolicy ByPass -Command "Write-Host '\U0001F4A9'"
+    win_command: "powershell.exe -ExecutionPolicy ByPass -Command \"Write-Host '\U0001F4A9'\""
     register: command_unicode_output
 
   - name: Assert unicode output
@@ -73,7 +73,7 @@
       - command_unicode_output.stderr == ''
 
   - name: Output unicode characters from Powershell using PSRP
-    win_shell: Write-Host "\U0001F4A9"
+    win_shell: "Write-Host '\U0001F4A9'"
     register: shell_unicode_output
 
   - name: Assert unicode output
