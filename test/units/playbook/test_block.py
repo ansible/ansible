@@ -54,9 +54,9 @@ class TestBlock(unittest.TestCase):
 
     def test_load_block_with_tasks(self):
         ds = dict(
-            block=[dict(action='block')],
-            rescue=[dict(action='rescue')],
-            always=[dict(action='always')],
+            block=[dict(action='ping')],
+            rescue=[dict(action='ping')],
+            always=[dict(action='ping')],
             # otherwise=[dict(action='otherwise')],
         )
         b = Block.load(ds)
@@ -78,9 +78,9 @@ class TestBlock(unittest.TestCase):
 
     def test_deserialize(self):
         ds = dict(
-            block=[dict(action='block')],
-            rescue=[dict(action='rescue')],
-            always=[dict(action='always')],
+            block=[dict(action='ping')],
+            rescue=[dict(action='ping')],
+            always=[dict(action='ping')],
         )
         b = Block.load(ds)
         data = dict(parent=ds, parent_type='Block')
