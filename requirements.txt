@@ -7,3 +7,6 @@ jinja2
 PyYAML
 paramiko
 cryptography
+voluptuous
+pycodestyle
+pylint
