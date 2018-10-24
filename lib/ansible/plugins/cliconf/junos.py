@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import json
 import re
 
@@ -27,6 +26,7 @@ from itertools import chain
 from functools import wraps
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -100,7 +100,7 @@ class Cliconf(CliconfBase):
             candidate = 'load replace {0}'.format(replace)
 
         for line in to_list(candidate):
-            if not isinstance(line, collections.Mapping):
+            if not isinstance(line, Mapping):
                 line = {'command': line}
             cmd = line['command']
             results.append(self.send_command(**line))

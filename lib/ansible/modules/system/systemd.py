@@ -48,6 +48,13 @@ options:
         type: bool
         default: 'no'
         aliases: [ daemon-reload ]
+    daemon_reexec:
+        description:
+            - run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
+        type: bool
+        default: 'no'
+        aliases: [ daemon-reexec ]
+        version_added: "2.8"
     user:
         description:
             - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
@@ -306,6 +313,7 @@ def main():
             force=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
+            daemon_reexec=dict(type='bool', default=False, aliases=['daemon-reexec']),
             user=dict(type='bool'),
             scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
@@ -355,6 +363,12 @@ def main():
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+
+    # Run daemon-reexec
+    if module.params['daemon_reexec'] and not module.check_mode:
+        (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
+        if rc != 0:
+            module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
         found = False
@@ -429,10 +443,11 @@ def main():
                 enabled = True
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if module.params['scope'] == 'system' and \
+                if module.params['scope'] in (None, 'system') and \
                         not module.params['user'] and \
                         is_initd and \
-                        (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
+                        not out.strip().endswith('disabled') and \
+                        sysv_is_enabled(unit):
                     enabled = True
 
             # default to current state

@@ -13,85 +13,90 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: assemble
-short_description: Assembles a configuration file from fragments
+short_description: Assemble configuration files from fragments
 description:
-     - Assembles a configuration file from fragments. Often a particular
-       program will take a single configuration file and does not support a
-       C(conf.d) style structure where it is easy to build up the configuration
-       from multiple sources. C(assemble) will take a directory of files that can be
-       local or have already been transferred to the system, and concatenate them
-       together to produce a destination file. Files are assembled in string sorting order.
-       Puppet calls this idea I(fragments).
-version_added: "0.5"
+- Assembles a configuration file from fragments.
+- Often a particular program will take a single configuration file and does not support a
+  C(conf.d) style structure where it is easy to build up the configuration
+  from multiple sources. C(assemble) will take a directory of files that can be
+  local or have already been transferred to the system, and concatenate them
+  together to produce a destination file.
+- Files are assembled in string sorting order.
+- Puppet calls this idea I(fragments).
+- This module is also supported for Windows targets.
+notes:
+- This module is also supported for Windows targets.
+- See also M(copy) and M(template).
+version_added: '0.5'
 options:
   src:
     description:
-      - An already existing directory full of source files.
+    - An already existing directory full of source files.
     required: true
   dest:
     description:
-      - A file to create using the concatenation of all of the source files.
+    - A file to create using the concatenation of all of the source files.
     required: true
   backup:
     description:
-      - Create a backup file (if C(yes)), including the timestamp information so
-        you can get the original file back if you somehow clobbered it
-        incorrectly.
+    - Create a backup file (if C(yes)), including the timestamp information so
+      you can get the original file back if you somehow clobbered it
+      incorrectly.
     type: bool
-    default: 'no'
+    default: no
   delimiter:
     description:
-      - A delimiter to separate the file contents.
-    version_added: "1.4"
+    - A delimiter to separate the file contents.
+    version_added: '1.4'
   remote_src:
     description:
-      - If False, it will search for src at originating/master machine, if True it will
-        go to the remote/target machine for the src. Default is True.
+    - If C(no), it will search for src at originating/master machine.
+    - If C(yes), it will go to the remote/target machine for the src.
     type: bool
-    default: 'yes'
-    version_added: "1.4"
+    default: yes
+    version_added: '1.4'
   regexp:
     description:
-      - Assemble files only if C(regex) matches the filename. If not set,
-        all files are assembled. All "\\" (backslash) must be escaped as
-        "\\\\" to comply yaml syntax. Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+    - Assemble files only if C(regex) matches the filename.
+    - If not set, all files are assembled.
+    - Every "\" (backslash) must be escaped as "\\" to comply to YAML syntax.
+    - Uses L(Python regular expressions,http://docs.python.org/2/library/re.html).
   ignore_hidden:
     description:
-      - A boolean that controls if files that start with a '.' will be included or not.
+    - A boolean that controls if files that start with a '.' will be included or not.
     type: bool
-    default: 'no'
-    version_added: "2.0"
+    default: no
+    version_added: '2.0'
   validate:
     description:
-      - The validation command to run before copying into place.  The path to the file to
-        validate is passed in via '%s' which must be present as in the sshd example below.
-        The command is passed securely so shell features like expansion and pipes won't work.
-    version_added: "2.0"
+    - The validation command to run before copying into place.
+    - The path to the file to validate is passed in via '%s' which must be present as in the sshd example below.
+    - The command is passed securely so shell features like expansion and pipes won't work.
+    version_added: '2.0'
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
-    - files
-    - decrypt
+- files
+- decrypt
 '''
 
-EXAMPLES = '''
-# Example from Ansible Playbooks
-- assemble:
+EXAMPLES = r'''
+- name: Assemble from fragments from a directory
+  assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
-# When a delimiter is specified, it will be inserted in between each fragment
-- assemble:
+- name: Inserted provided delimiter in between each fragment
+  assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
     delimiter: '### START FRAGMENT ###'
 
-# Copy a new "sshd_config" file into place, after passing validation with sshd
-- assemble:
+- name: Assemble a new "sshd_config" file into place, after passing validation with sshd
+  assemble:
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: '/usr/sbin/sshd -t -f %s'

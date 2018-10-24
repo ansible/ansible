@@ -28,7 +28,7 @@ options:
             - ID of the Virtual Machine to manage.
     state:
         description:
-            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered.
+            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported.
               When C(state) is I(registered) and the unregistered VM's name
               belongs to an already registered in engine VM in the same DC
               then we fail to register the unregistered template.
@@ -36,8 +36,9 @@ options:
             - I(running) state will create/update VM and start it.
             - I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted.
             - Please check I(notes) to more detailed description of states.
+            - I(exported) state will export the VM to export domain or as OVA.
             - I(registered) is supported since 2.4.
-        choices: [ absent, next_run, present, registered, running, stopped, suspended ]
+        choices: [ absent, next_run, present, registered, running, stopped, suspended, exported ]
         default: present
     cluster:
         description:
@@ -363,6 +364,12 @@ options:
         type: bool
         version_added: "2.5"
         aliases: [ 'sysprep_persist' ]
+    kernel_params_persist:
+        description:
+            - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
+               if I(False) it will be used for run once."
+        type: bool
+        version_added: "2.8"
     kernel_path:
         description:
             - Path to a kernel image used to boot the virtual machine.
@@ -552,6 +559,24 @@ options:
             - "C(headless_mode) - If I(true) disable the graphics console for this virtual machine."
             - "C(protocol) - Graphical protocol, a list of I(spice), I(vnc), or both."
         version_added: "2.5"
+    exclusive:
+        description:
+            - "When C(state) is I(exported) this parameter indicates if the existing VM with the
+               same name should be overwritten."
+        version_added: "2.8"
+        type: bool
+    export_domain:
+        description:
+            - "When C(state) is I(exported)this parameter specifies the name of the export storage domain."
+        version_added: "2.8"
+    export_ova:
+        description:
+            - Dictionary of values to be used to export VM as OVA.
+            - C(host) - The name of the destination host where the OVA has to be exported.
+            - C(directory) - The name of the directory where the OVA has to be exported.
+            - C(filename) - The name of the exported OVA file.
+        version_added: "2.8"
+
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -893,6 +918,15 @@ EXAMPLES = '''
       - name: pci_0000_00_08_0
         state: present
 
+- name: Export the VM as OVA
+  ovirt_vm:
+    name: myvm
+    state: exported
+    cluster: mycluster
+    export_ova:
+        host: myhost
+        filename: myvm.ova
+        directory: /tmp/
 '''
 
 
@@ -931,6 +965,7 @@ from ansible.module_utils.ovirt import (
     get_link_name,
     get_id_by_name,
     ovirt_full_argument_spec,
+    search_by_attributes,
     search_by_name,
     wait,
 )
@@ -1036,7 +1071,7 @@ class VmsModule(BaseModule):
                 otypes.Sso(
                     methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param('sso') else []
                 )
-            ),
+            ) if self.param('sso') is not None else None,
             quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,
             high_availability=otypes.HighAvailability(
                 enabled=self.param('high_availability'),
@@ -1081,8 +1116,11 @@ class VmsModule(BaseModule):
                         otypes.BootDevice(dev) for dev in self.param('boot_devices')
                     ],
                 ) if self.param('boot_devices') else None,
+                cmdline=self.param('kernel_params') if self.param('kernel_params_persist') else None,
+                initrd=self.param('initrd_path') if self.param('kernel_params_persist') else None,
+                kernel=self.param('kernel_path') if self.param('kernel_params_persist') else None,
             ) if (
-                self.param('operating_system') or self.param('boot_devices')
+                self.param('operating_system') or self.param('boot_devices') or self.param('kernel_params_persist')
             ) else None,
             type=otypes.VmType(
                 self.param('type')
@@ -1108,7 +1146,7 @@ class VmsModule(BaseModule):
             custom_compatibility_version=otypes.Version(
                 major=self._get_major(self.param('custom_compatibility_version')),
                 minor=self._get_minor(self.param('custom_compatibility_version')),
-            ) if self.param('custom_compatibility_version') else None,
+            ) if self.param('custom_compatibility_version') is not None else None,
             description=self.param('description'),
             comment=self.param('comment'),
             time_zone=otypes.TimeZone(
@@ -1150,7 +1188,23 @@ class VmsModule(BaseModule):
             initialization=self.get_initialization() if self.param('cloud_init_persist') else None,
         )
 
+    def _get_export_domain_service(self):
+        provider_name = self._module.params['export_domain']
+        export_sds_service = self._connection.system_service().storage_domains_service()
+        export_sd_id = get_id_by_name(export_sds_service, provider_name)
+        return export_sds_service.service(export_sd_id)
+
+    def post_export_action(self, entity):
+        self._service = self._get_export_domain_service().vms_service()
+
     def update_check(self, entity):
+        res = self._update_check(entity)
+        if entity.next_run_configuration_exists:
+            res = res and self._update_check(self._service.service(entity.id).get(next_run=True))
+
+        return res
+
+    def _update_check(self, entity):
         def check_cpu_pinning():
             if self.param('cpu_pinning'):
                 current = []
@@ -1174,13 +1228,21 @@ class VmsModule(BaseModule):
                 return self.param('host') in [self._connection.follow_link(host).name for host in getattr(entity.placement_policy, 'hosts', None) or []]
             return True
 
+        def check_custom_compatibility_version():
+            if self.param('custom_compatibility_version') is not None:
+                return (self._get_minor(self.param('custom_compatibility_version')) == self._get_minor(entity.custom_compatibility_version) and
+                        self._get_major(self.param('custom_compatibility_version')) == self._get_major(entity.custom_compatibility_version))
+            return True
+
         cpu_mode = getattr(entity.cpu, 'mode')
         vm_display = entity.display
         return (
             check_cpu_pinning() and
             check_custom_properties() and
             check_host() and
+            check_custom_compatibility_version() and
             not self.param('cloud_init_persist') and
+            not self.param('kernel_params_persist') and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
@@ -1196,9 +1258,7 @@ class VmsModule(BaseModule):
             equal(self.param('smartcard_enabled'), getattr(vm_display, 'smartcard_enabled', False)) and
             equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
-            equal(self.param('serial_console'), entity.console.enabled) and
-            equal(self._get_minor(self.param('custom_compatibility_version')), self._get_minor(entity.custom_compatibility_version)) and
-            equal(self._get_major(self.param('custom_compatibility_version')), self._get_major(entity.custom_compatibility_version)) and
+            equal(self.param('serial_console'), getattr(entity.console, 'enabled', None)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
@@ -1902,7 +1962,7 @@ def control_state(vm, vms_service, module):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended']),
+        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended', 'exported']),
         name=dict(type='str'),
         id=dict(type='str'),
         cluster=dict(type='str'),
@@ -1947,6 +2007,7 @@ def main():
         cloud_init=dict(type='dict'),
         cloud_init_nics=dict(type='list', default=[]),
         cloud_init_persist=dict(type='bool', default=False, aliases=['sysprep_persist']),
+        kernel_params_persist=dict(type='bool', default=False),
         sysprep=dict(type='dict'),
         host=dict(type='str'),
         clone=dict(type='bool', default=False),
@@ -1979,15 +2040,15 @@ def main():
         watchdog=dict(type='dict'),
         host_devices=dict(type='list'),
         graphical_console=dict(type='dict'),
+        exclusive=dict(type='bool'),
+        export_domain=dict(default=None),
+        export_ova=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_one_of=[['id', 'name']],
     )
-
-    if module._name == 'ovirt_vms':
-        module.deprecate("The 'ovirt_vms' module is being renamed 'ovirt_vm'", version=2.8)
 
     check_sdk(module)
     check_params(module)
@@ -2024,6 +2085,11 @@ def main():
             vms_module.post_present(ret['id'])
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
+                def kernel_persist_check():
+                    return (module.params.get('kernel_params') or
+                            module.params.get('initrd_path') or
+                            module.params.get('kernel_path')
+                            and not module.params.get('cloud_init_persist'))
                 initialization = vms_module.get_initialization()
                 ret = vms_module.action(
                     action='start',
@@ -2040,8 +2106,8 @@ def main():
                     ),
                     wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     # Start action kwargs:
-                    use_cloud_init=not module.params.get('cloud_init_persist') and module.params.get('cloud_init') is not None,
-                    use_sysprep=not module.params.get('cloud_init_persist') and module.params.get('sysprep') is not None,
+                    use_cloud_init=True if not module.params.get('cloud_init_persist') and module.params.get('cloud_init') is not None else None,
+                    use_sysprep=True if not module.params.get('cloud_init_persist') and module.params.get('sysprep') is not None else None,
                     vm=otypes.Vm(
                         placement_policy=otypes.VmPlacementPolicy(
                             hosts=[otypes.Host(name=module.params['host'])]
@@ -2051,17 +2117,12 @@ def main():
                             cmdline=module.params.get('kernel_params'),
                             initrd=module.params.get('initrd_path'),
                             kernel=module.params.get('kernel_path'),
-                        ) if (
-                            module.params.get('kernel_params') or
-                            module.params.get('initrd_path') or
-                            module.params.get('kernel_path')
-                        ) else None,
+                        ) if (kernel_persist_check()) else None,
                     ) if (
-                        module.params.get('kernel_params') or
-                        module.params.get('initrd_path') or
-                        module.params.get('kernel_path') or
+                        kernel_persist_check() or
                         module.params.get('host') or
-                        initialization is not None and not module.params.get('cloud_init_persist')
+                        initialization is not None
+                        and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
 
@@ -2184,6 +2245,29 @@ def main():
                 'id': vm.id,
                 'vm': get_dict_of_struct(vm)
             }
+        elif state == 'exported':
+            if module.params['export_domain']:
+                export_service = vms_module._get_export_domain_service()
+                export_vm = search_by_attributes(export_service.vms_service(), id=vm.id)
+
+                ret = vms_module.action(
+                    entity=vm,
+                    action='export',
+                    action_condition=lambda t: export_vm is None or module.params['exclusive'],
+                    wait_condition=lambda t: t is not None,
+                    post_action=vms_module.post_export_action,
+                    storage_domain=otypes.StorageDomain(id=export_service.get().id),
+                    exclusive=module.params['exclusive'],
+                )
+            elif module.params['export_ova']:
+                export_vm = module.params['export_ova']
+                ret = vms_module.action(
+                    entity=vm,
+                    action='export_to_path_on_host',
+                    host=otypes.Host(name=export_vm.get('host')),
+                    directory=export_vm.get('directory'),
+                    filename=export_vm.get('filename'),
+                )
 
         module.exit_json(**ret)
     except Exception as e:

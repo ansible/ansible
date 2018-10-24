@@ -1,0 +1,2 @@
+bugfixes:
+- FieldAttribute - Do not use mutable defaults, instead allow supplying a callable for defaults of mutable types (https://github.com/ansible/ansible/issues/46824)

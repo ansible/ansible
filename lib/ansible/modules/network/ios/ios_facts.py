@@ -83,6 +83,10 @@ ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
   type: string
+ansible_net_iostype:
+  description: The operating system type (IOS or IOS-XE) running on the remote device
+  returned: always
+  type: string
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
@@ -176,6 +180,7 @@ class Default(FactsBase):
         data = self.responses[0]
         if data:
             self.facts['version'] = self.parse_version(data)
+            self.facts['iostype'] = self.parse_iostype(data)
             self.facts['serialnum'] = self.parse_serialnum(data)
             self.facts['model'] = self.parse_model(data)
             self.facts['image'] = self.parse_image(data)
@@ -186,6 +191,13 @@ class Default(FactsBase):
         match = re.search(r'Version (\S+?)(?:,\s|\s)', data)
         if match:
             return match.group(1)
+
+    def parse_iostype(self, data):
+        match = re.search(r'\S+(X86_64_LINUX_IOSD-UNIVERSALK9-M)(\S+)', data)
+        if match:
+            return "IOS-XE"
+        else:
+            return "IOS"
 
     def parse_hostname(self, data):
         match = re.search(r'^(.+) uptime', data, re.M)
@@ -370,6 +382,8 @@ class Interfaces(FactsBase):
             if entry == '':
                 continue
             intf = self.parse_lldp_intf(entry)
+            if intf is None:
+                return facts
             if intf not in facts:
                 facts[intf] = list()
             fact = dict()
@@ -435,7 +449,7 @@ class Interfaces(FactsBase):
             return match.group(1)
 
     def parse_lineprotocol(self, data):
-        match = re.search(r'line protocol is (.+)$', data, re.M)
+        match = re.search(r'line protocol is (\S+)\s*$', data, re.M)
         if match:
             return match.group(1)
 
@@ -469,7 +483,6 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
-global warnings
 warnings = list()
 
 
