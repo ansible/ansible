@@ -37,6 +37,15 @@
         - 'default{{ python_suffix }}.yml'
       paths: '../vars'
 
+- name: Detect socket path
+  shell: >
+          echo "show variables like 'socket'\G" | mysql | grep 'Value: ' | sed 's/[ ]\+Value: //'
+  register: _socket_path
+
+- name: Set socket path
+  set_fact:
+    mysql_socket: '{{ _socket_path["stdout"] }}'
+
 - name: install mysqldb_test rpm dependencies
   yum: name={{ item }} state=latest
   with_items: "{{mysql_packages}}"
