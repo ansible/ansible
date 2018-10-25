@@ -248,6 +248,8 @@ Then the task runs again with new ``task_vars``.
 u(pdate_task)
 `````````````
 
+.. versionadded:: 2.8
+
 This command re-creates the task from the original task data structure, and templates with updated ``task_vars``
 
 See the above documentation for :ref:`update_vars_command` for an example of use.
