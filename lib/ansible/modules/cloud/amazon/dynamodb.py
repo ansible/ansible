@@ -212,6 +212,7 @@ except ImportError:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 def get(connection, table, primary_key, projection_expression, result):
 
     if projection_expression:
@@ -316,6 +317,8 @@ def delete(connection, table, primary_key, condition_expression, expression_attr
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
 =======
 >>>>>>> refactor main() to call small functions
+=======
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
@@ -399,13 +402,21 @@ def main():
         # expression_attribute_names = module.params.get(
         #     'expression_attribute_names')
 
-        result = {}
 
         if action == 'get':
-            get(connection, table, primary_key)
+            response = connection.get_item(
+                TableName=table,
+                Key=primary_key,
+                # ProjectionExpression=projection_expression
+            )
+
+            return response
 
         elif action == 'put':
-            put(connection, table, item)
+            result = connection.put_item(
+                TableName=table,
+                Item=item,
+            )
 
         elif action == 'update':
             result = connection.update_item(
@@ -419,6 +430,9 @@ def main():
 
         elif action == 'delete':
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
             result = connection.delete_item(
                 TableName=table,
                 Key=primary_key,
@@ -428,11 +442,14 @@ def main():
             )
 
             return result
+<<<<<<< HEAD
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
 =======
             delete(connection, table, primary_key,
                    condition_expression, expression_attribute_values)
 >>>>>>> refactor main() to call small functions
+=======
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {} not found'.format(table)
@@ -446,12 +463,17 @@ def main():
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     result = dict(changed=False, message=response)
 
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
 =======
 >>>>>>> refactor main() to call small functions
+=======
+    result = dict(changed=False, message=response)
+
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
     module.exit_json(**result)
 
 
