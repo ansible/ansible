@@ -192,9 +192,9 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.name is not None):
+        if self.name is not None:
             self.results['databases'] = self.get()
-        elif self.elastic_pool_name is not None):
+        elif self.elastic_pool_name is not None:
             self.results['databases'] = self.list_by_elastic_pool()
         else:
             self.results['databases'] = self.list_by_server()
