@@ -637,7 +637,7 @@ class Interfaces(FactsBase):
     def parse_lldp_intf(self, data):
         match = re.search(r'Interface:\s*(\S+)', data, re.M)
         if match:
-            return match.group(1)
+            return match.group(1).strip(',')
 
     def parse_lldp_port(self, data):
         match = re.search(r'Port ID \(outgoing port\):\s*(\S+)', data, re.M)
