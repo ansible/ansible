@@ -20,9 +20,7 @@ First and foremost, also check the [community guide](https://docs.ansible.com/an
 
 You can report bugs or make enhancement requests at the [Ansible GitHub issue page](http://github.com/ansible/ansible/issues/new/choose) by filling out the issue template that will be presented.
 
-Also please make sure you are testing on the latest released version of Ansible or the development branch. You can find the latest releases and development branch at:
+Also please make sure you are testing on the latest released version of Ansible or the development branch, see the [how to install Ansible Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
 
-- https://github.com/ansible/ansible/releases
-- https://github.com/ansible/ansible/archive/devel.tar.gz
 
 Thanks!

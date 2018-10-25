@@ -13,7 +13,7 @@ balancers.
 Read the documentation and more at https://ansible.com/
 
 You can find installation instructions
-`here <https://docs.ansible.com/intro_getting_started.html>`_ for a
+`here <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_ for a
 variety of platforms.
 
 Most users should probably install a released version of Ansible from ``pip``, a package manager or
@@ -43,7 +43,7 @@ Get Involved
 ============
 
 *  Read `Community
-   Information <https://docs.ansible.com/community.html>`_ for all
+   Information <https://docs.ansible.com/ansible/latest/community>`_ for all
    kinds of ways to contribute to and interact with the project,
    including mailing list information and how to submit bug reports and
    code to Ansible.
@@ -63,17 +63,22 @@ Get Involved
    `ansible-announce <https://groups.google.com/group/ansible-announce>`_
    -- read only
 *  irc.freenode.net: #ansible
+*  For the full list of Email Lists, IRC channels see the
+   `Communication page <https://docs.ansible.com/ansible/latest/community/communication.html>`_
 
 Branch Info
 ===========
 
 *  Releases are named after Led Zeppelin songs. (Releases prior to 2.0
    were named after Van Halen songs.)
-*  The devel branch corresponds to the release actively under
+*  The ``devel`` branch corresponds to the release actively under
    development.
+*  The ``stable-2.x`` branches exist for current branches
 *  Various release-X.Y branches exist for previous releases.
+*  For information about the active branches see the
+   `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page.
 *  We'd love to have your contributions, read `Community
-   Information <https://docs.ansible.com/community.html>`_ for notes on
+   Information <https://docs.ansible.com/ansible/latest/community>`_ for notes on
    how to get started.
 
 Roadmap
@@ -82,22 +87,7 @@ Roadmap
 Based on team and community feedback, an initial roadmap will be published for a major or minor version (ex: 2.0, 2.1).
 Subminor versions will generally not have roadmaps published.
 
-Ansible 2.1 was the first release which published this and asked for feedback in this manner.
-Feedback on the roadmap and the new process is quite welcome.
-The team is aiming for further transparency and better inclusion of both community desires and submissions.
-
-These are the team's *best guess* roadmaps based on the Ansible team's experience and are also based on requests and feedback from the community.
-There are things that may not make it due to time constraints, lack of community maintainers, etc.
-Each roadmap is published both as an idea of what is upcoming in Ansible, and as a medium for seeking further feedback from the community.
-
-There are multiple places for you to submit feedback:
-
-- Add to the agenda of an IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ (preferred)
-- Ansible's google-group: ansible-devel
-- AnsibleFest conferences
-- IRC Freenode channel: #ansible-devel (this one may have things lost in lots of conversation)
-
-For additional details consult the published `Ansible Roadmap <https://docs.ansible.com/ansible/devel/roadmap/>`_.
+The `Ansible Roadmap page <https://docs.ansible.com/ansible/devel/roadmap/>`_ details what is planned and how to influence the roadmap.
 
 Authors
 =======
