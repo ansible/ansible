@@ -26,15 +26,12 @@ from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
-def get_uname_version(module):
-    rc, out, err = module.run_command(['uname', '-v'])
-    if rc == 0:
-        return out
-    return None
-
-
-def get_uname_release(module):
-    rc, out, err = module.run_command(['uname', '-r'])
+def get_uname(module, flags=('-v')):
+    if isinstance(flags, str):
+        flags = flags.split()
+    command = ['uname']
+    command.extend(flags)
+    rc, out, err = module.run_command(command)
     if rc == 0:
         return out
     return None
@@ -595,7 +592,7 @@ class Distribution(object):
 
         if 'Solaris' in data:
             # for solaris 10 uname_r will contain 5.10, for solaris 11 it will have 5.11
-            uname_r = get_uname_release(self.module)
+            uname_r = get_uname(self.module,flags=['-r'])
             ora_prefix = ''
             if 'Oracle Solaris' in data:
                 data = data.replace('Oracle ', '')
@@ -606,7 +603,7 @@ class Distribution(object):
             sunos_facts['distribution_major_version'] = uname_r.split('.')[1]
             return sunos_facts
 
-        uname_v = get_uname_version(self.module)
+        uname_v = get_uname(self.module,flags=['-v'])
         distribution_version = None
 
         if 'SmartOS' in data:
