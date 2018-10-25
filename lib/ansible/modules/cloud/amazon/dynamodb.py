@@ -94,6 +94,45 @@ except ImportError:
     HAS_BOTO3 = False
 
 
+def get(connection, table, primary_key):
+
+    response = connection.get_item(
+        TableName=table,
+        Key=primary_key,
+        # ProjectionExpression=projection_expression
+    )
+
+    result = dict(changed=False, message=response)
+
+    return result
+
+
+def put(connection, table, item):
+
+    result = connection.put_item(
+        TableName=table,
+        Item=item,
+    )
+
+    result = dict(changed=True, message='Item added')
+
+    return result
+
+
+def delete(connection, table, primary_key, condition_expression, expression_attribute_values):
+
+    result = connection.delete_item(
+        TableName=table,
+        Key=primary_key,
+        ConditionExpression=condition_expression,
+        ExpressionAttributeValues=expression_attribute_values
+    )
+
+    result = dict(changed=True, message='Item deleted')
+
+    return result
+
+
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
@@ -146,21 +185,13 @@ def main():
         # expression_attribute_names = module.params.get(
         #     'expression_attribute_names')
 
+        result = {}
 
         if action == 'get':
-            response = connection.get_item(
-                TableName=table,
-                Key=primary_key,
-                # ProjectionExpression=projection_expression
-            )
-
-            return response
+            get(connection, table, primary_key)
 
         elif action == 'put':
-            result = connection.put_item(
-                TableName=table,
-                Item=item,
-            )
+            put(connection, table, item)
 
         elif action == 'update':
             result = connection.update_item(
@@ -173,15 +204,8 @@ def main():
             return result
 
         elif action == 'delete':
-            result = connection.delete_item(
-                TableName=table,
-                Key=primary_key,
-                ConditionExpression=condition_expression,
-                ExpressionAttributeValues=expression_attribute_values,
-                ReturnValues='ALL_OLD'
-            )
-
-            return result
+            delete(connection, table, primary_key,
+                   condition_expression, expression_attribute_values)
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {} not found'.format(table)
@@ -192,8 +216,6 @@ def main():
     except Exception as error:
         error_msg = boto_exception(error)
         module.fail_json(msg=error_msg)
-
-    result = dict(changed=False, message=response)
 
     module.exit_json(**result)
 
