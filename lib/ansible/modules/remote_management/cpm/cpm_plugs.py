@@ -85,9 +85,9 @@ EXAMPLES = """
 - name: Get the Plug status for ALL ports of a WTI device
   cpm_plugs:
     cpm_action: "getplug"
-    cpm_url: "nonexist.wti.com"
-    cpm_username: "super"
-    cpm_password: "super"
+    cpm_url: "rest.wti.com"
+    cpm_username: "restpower"
+    cpm_password: "restfulpowerpass12"
     use_https: true
     validate_certs: true
     plug_id: "all"
@@ -96,22 +96,22 @@ EXAMPLES = """
 - name: Get the Plug status for the given port of a WTI device
   cpm_plugs:
     cpm_action: "getplug"
-    cpm_url: "nonexist.wti.com"
-    cpm_username: "super"
-    cpm_password: "super"
+    cpm_url: "rest.wti.com"
+    cpm_username: "restpower"
+    cpm_password: "restfulpowerpass12"
     use_https: true
     validate_certs: false
     plug_id: "2"
 
-# Reboot plug 4
-- name: Reboot Plug 4 on a given WTI device
+# Reboot plug 5
+- name: Reboot Plug 5 on a given WTI device
   cpm_plugs:
     cpm_action: "setplug"
-    cpm_url: "nonexist.wti.com"
-    cpm_username: "super"
-    cpm_password: "super"
-    use_https: false
-    plug_id: "4"
+    cpm_url: "rest.wti.com"
+    cpm_username: "restpower"
+    cpm_password: "restfulpowerpass12"
+    use_https: true
+    plug_id: "5"
     plug_state: "boot"
 """
 
