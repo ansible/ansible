@@ -76,9 +76,9 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         server=dict(required=False),
-        detailed=dict(required=False, type='bool'),
+        detailed=dict(required=False, type='bool', default=False),
         filters=dict(required=False, type='dict', default=None),
-        all_projects=dict(required=False, type='bool'),
+        all_projects=dict(required=False, type='bool', default=False),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
