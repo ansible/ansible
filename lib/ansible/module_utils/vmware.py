@@ -32,7 +32,8 @@ from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
-    pass
+    def __init__(self, error_msg, host_thumbprint=None):
+        super(TaskError).__init__()
 
 
 def wait_for_task(task, max_backoff=64, timeout=3600):
@@ -56,12 +57,15 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
             error_msg = task.info.error
+            host_thumbprint = None
             try:
                 error_msg = error_msg.msg
+                if hasattr(task.info.error, 'thumbprint'):
+                    host_thumbprint = task.info.error.thumbprint
             except AttributeError:
                 pass
             finally:
-                raise_from(TaskError(error_msg), task.info.error)
+                raise_from(TaskError(error_msg, host_thumbprint), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
             sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
