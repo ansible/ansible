@@ -182,6 +182,8 @@ def subnet_to_dict(subnet):
         result['route_table']['id'] = subnet.route_table.id
         result['route_table']['name'] = id_keys['routeTables']
         result['route_table']['resource_group'] = id_keys['resourceGroups']
+    if subnet.service_endpoints:
+        result['service_endpoints'] = subnet.service_endpoints
     return result
 
 
@@ -274,6 +276,20 @@ class AzureRMSubnet(AzureRMModuleBase):
                     changed = True
                     results['route_table']['id'] = self.route_table
                     self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table['name']))
+
+                if self.service_endpoints:
+                    oldd = {}
+                    for item in self.service_endpoints:
+                        name = item['service']
+                        oldd[name] = item.sort()
+                    newd = {}
+                    for item in results['service_endpoints']:
+                        name = item['service']
+                        newd[name] = item.sort()
+                    if newd != oldd:
+                        changed = True
+                        results['service_endpoints'] = self.service_endpoints
+
             elif self.state == 'absent':
                 changed = True
         except CloudError:
