@@ -37,41 +37,6 @@ options:
     variables:
       description:
         - Variables to use for the group, use C(@) for a file.
-    credential:
-      description:
-        - Credential to use for the group.
-    source:
-      description:
-        - The source to use for this group.
-      choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
-    source_regions:
-      description:
-        - Regions for cloud provider.
-    source_vars:
-      description:
-        - Override variables from source with variables from this field.
-    instance_filters:
-      description:
-        - Comma-separated list of filter expressions for matching hosts.
-    group_by:
-      description:
-        - Limit groups automatically created from inventory source.
-    source_script:
-      description:
-        - Inventory script to be used when group type is C(custom).
-    overwrite:
-      description:
-        - Delete child groups and hosts not found in source.
-      type: bool
-      default: 'no'
-    overwrite_vars:
-      description:
-        - Override vars in child groups and hosts with those from external source.
-    update_on_launch:
-      description:
-        - Refresh inventory data from its source each time a job is run.
-      type: bool
-      default: 'no'
     state:
       description:
         - Desired state of the resource.
@@ -110,18 +75,6 @@ def main():
         description=dict(),
         inventory=dict(required=True),
         variables=dict(),
-        credential=dict(),
-        source=dict(choices=["manual", "file", "ec2", "rax", "vmware",
-                             "gce", "azure", "azure_rm", "openstack",
-                             "satellite6", "cloudforms", "custom"], default="manual"),
-        source_regions=dict(),
-        source_vars=dict(),
-        instance_filters=dict(),
-        group_by=dict(),
-        source_script=dict(),
-        overwrite=dict(type='bool', default=False),
-        overwrite_vars=dict(),
-        update_on_launch=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
@@ -129,7 +82,6 @@ def main():
 
     name = module.params.get('name')
     inventory = module.params.get('inventory')
-    credential = module.params.get('credential')
     state = module.params.pop('state')
 
     variables = module.params.get('variables')
@@ -153,11 +105,6 @@ def main():
             inv_res = tower_cli.get_resource('inventory')
             inv = inv_res.get(name=inventory)
             params['inventory'] = inv['id']
-
-            if credential:
-                cred_res = tower_cli.get_resource('credential')
-                cred = cred_res.get(name=credential)
-                params['credential'] = cred['id']
 
             if state == 'present':
                 result = group.modify(**params)
