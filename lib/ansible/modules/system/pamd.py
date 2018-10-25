@@ -277,10 +277,12 @@ from tempfile import NamedTemporaryFile
 from datetime import datetime
 
 
-RULE_REGEX = re.compile(r"""(?P<rule_type>auth|account|session|password)\s+
+RULE_REGEX = re.compile(r"""(?P<rule_type>-?(?:auth|account|session|password))\s+
                         (?P<control>\[.*\]|\S*)\s+
                         (?P<path>\S*)\s?
                         (?P<args>.*)""", re.X)
+
+VALID_TYPES = ['account', '-account', 'auth', '-auth', 'password', '-password', 'session', '-session']
 
 
 class PamdLine(object):
@@ -334,7 +336,6 @@ class PamdInclude(PamdLine):
 
 class PamdRule(PamdLine):
 
-    valid_types = ['account', 'auth', 'password', 'session']
     valid_simple_controls = ['required', 'requisite', 'sufficient', 'optional', 'include', 'substack', 'definitive']
     valid_control_values = ['success', 'open_err', 'symbol_err', 'service_err', 'system_err', 'buf_err',
                             'perm_denied', 'auth_err', 'cred_insufficient', 'authinfo_unavail', 'user_unknown',
@@ -422,7 +423,7 @@ class PamdRule(PamdLine):
 
     def validate(self):
         # Validate the rule type
-        if self.rule_type not in PamdRule.valid_types:
+        if self.rule_type not in VALID_TYPES:
             return False, "Rule type, " + self.rule_type + ", is not valid in rule " + self.line
         # Validate the rule control
         if isinstance(self._control, str) and self.rule_control not in PamdRule.valid_simple_controls:
@@ -764,13 +765,11 @@ def main():
         argument_spec=dict(
             name=dict(required=True, type='str'),
             type=dict(required=True,
-                      choices=['account', 'auth',
-                               'password', 'session']),
+                      choices=VALID_TYPES),
             control=dict(required=True, type='str'),
             module_path=dict(required=True, type='str'),
             new_type=dict(required=False,
-                          choices=['account', 'auth',
-                                   'password', 'session']),
+                          choices=VALID_TYPES),
             new_control=dict(required=False, type='str'),
             new_module_path=dict(required=False, type='str'),
             module_arguments=dict(required=False, type='list'),
