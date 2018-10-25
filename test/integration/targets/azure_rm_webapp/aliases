@@ -1,5 +1,4 @@
 cloud/azure
 shippable/azure/group4
 destructive
-unstable
 azure_rm_webapp_facts
