@@ -1,0 +1,2 @@
+bugfixes:
+    - assert - add 'success_msg' to valid args (https://github.com/ansible/ansible/pull/47030)
