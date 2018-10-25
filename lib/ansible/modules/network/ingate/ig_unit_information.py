@@ -154,11 +154,7 @@ def make_request(module):
 
 def main():
     argument_spec = ingate_argument_spec()
-    mutually_exclusive = []
-    required_if = []
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=mutually_exclusive,
-                           required_if=required_if,
                            supports_check_mode=False)
     if not HAS_INGATESDK:
         module.fail_json(msg='The Ingate Python SDK module is required')
