@@ -41,7 +41,7 @@
         - name: storage{{ rpfx }}.blob.core.windows.net 
           is_default: yes
           container: "cluster{{ rpfx }}"
-          key: "{{ storage_output.key }}"
+          key: "{{ storage_output.keys[0]['value'] }}"
     compute_profile:
       roles:
         - name: headnode
@@ -96,7 +96,7 @@
         - name: storage{{ rpfx }}.blob.core.windows.net 
           is_default: yes
           container: "cluster{{ rpfx }}"
-          key: "{{ storage_output.key }}"
+          key: "{{ storage_output.keys[0]['value'] }}"
     compute_profile:
       roles:
         - name: headnode
@@ -151,7 +151,7 @@
         - name: storage{{ rpfx }}.blob.core.windows.net 
           is_default: yes
           container: "cluster{{ rpfx }}"
-          key: "{{ storage_output.key }}"
+          key: "{{ storage_output.keys[0]['value'] }}"
     compute_profile:
       roles:
         - name: headnode
