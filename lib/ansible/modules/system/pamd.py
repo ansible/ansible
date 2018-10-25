@@ -756,7 +756,7 @@ class PamdService(object):
 
         lines.insert(1, "# Updated by Ansible - " + datetime.now().isoformat())
 
-        return '\n'.join(lines)
+        return '\n'.join(lines) + '\n'
 
 
 def main():
