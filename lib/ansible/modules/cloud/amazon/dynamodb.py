@@ -213,6 +213,7 @@ except ImportError:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 def get(connection, table, primary_key, projection_expression, result):
 
     if projection_expression:
@@ -232,6 +233,8 @@ def get(connection, table, primary_key, projection_expression, result):
     else:
         result = dict(failed=True, message='No item found')
 =======
+=======
+>>>>>>> refactor main() to call small functions
 def get(connection, table, primary_key):
 
     response = connection.get_item(
@@ -241,15 +244,24 @@ def get(connection, table, primary_key):
     )
 
     result = dict(changed=False, message=response)
+<<<<<<< HEAD
+>>>>>>> refactor main() to call small functions
+=======
 >>>>>>> refactor main() to call small functions
 
     return result
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def put(connection, table, item, result):
 
     connection.put_item(
+=======
+def put(connection, table, item):
+
+    result = connection.put_item(
+>>>>>>> refactor main() to call small functions
 =======
 def put(connection, table, item):
 
@@ -264,6 +276,7 @@ def put(connection, table, item):
     return result
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 def update(connection, table, primary_key, update_expression, condition_expression, expression_attribute_values, result):
 
@@ -301,6 +314,11 @@ def delete(connection, table, primary_key, condition_expression, expression_attr
 
     result = connection.delete_item(
 >>>>>>> refactor main() to call small functions
+=======
+def delete(connection, table, primary_key, condition_expression, expression_attribute_values):
+
+    result = connection.delete_item(
+>>>>>>> refactor main() to call small functions
         TableName=table,
         Key=primary_key,
         ConditionExpression=condition_expression,
@@ -313,12 +331,15 @@ def delete(connection, table, primary_key, condition_expression, expression_attr
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
 =======
 >>>>>>> refactor main() to call small functions
 =======
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
+=======
+>>>>>>> refactor main() to call small functions
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
@@ -402,21 +423,13 @@ def main():
         # expression_attribute_names = module.params.get(
         #     'expression_attribute_names')
 
+        result = {}
 
         if action == 'get':
-            response = connection.get_item(
-                TableName=table,
-                Key=primary_key,
-                # ProjectionExpression=projection_expression
-            )
-
-            return response
+            get(connection, table, primary_key)
 
         elif action == 'put':
-            result = connection.put_item(
-                TableName=table,
-                Item=item,
-            )
+            put(connection, table, item)
 
         elif action == 'update':
             result = connection.update_item(
@@ -429,6 +442,7 @@ def main():
             return result
 
         elif action == 'delete':
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -450,6 +464,10 @@ def main():
 >>>>>>> refactor main() to call small functions
 =======
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
+=======
+            delete(connection, table, primary_key,
+                   condition_expression, expression_attribute_values)
+>>>>>>> refactor main() to call small functions
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {} not found'.format(table)
@@ -464,6 +482,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     result = dict(changed=False, message=response)
 
@@ -474,6 +493,8 @@ def main():
     result = dict(changed=False, message=response)
 
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
+=======
+>>>>>>> refactor main() to call small functions
     module.exit_json(**result)
 
 
