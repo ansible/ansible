@@ -4,7 +4,8 @@
 The Ansible Development Process
 *******************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 This section discusses how the Ansible development and triage process works.
 
@@ -35,20 +36,14 @@ pull request to backport the change to a previous stable branch.
 
 .. note::
 
-    These instructions assume that ``stable-2.5`` is the targeted release
-    branch for the backport.
-
-.. note::
-
-    These instructions assume that ``https://github.com/ansible/ansible.git``
-    is configured as a ``git remote`` named ``upstream``. If you do not use
-    a ``git remote`` named ``upstream``, adjust the instructions accordingly.
-
-.. note::
-
-   These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
-   is configured as a ``git remote`` named ``origin``. If you do not use
-   a ``git remote`` named ``origin``, adjust the instructions accordingly.
+    * These instructions assume that ``stable-2.5`` is the targeted release
+      branch for the backport.
+    * These instructions assume that ``https://github.com/ansible/ansible.git``
+      is configured as a ``git remote`` named ``upstream``. If you do not use
+      a ``git remote`` named ``upstream``, adjust the instructions accordingly.
+    * These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
+      is configured as a ``git remote`` named ``origin``. If you do not use
+      a ``git remote`` named ``origin``, adjust the instructions accordingly.
 
 #. Prepare your devel, stable, and feature branches:
 
@@ -74,6 +69,10 @@ pull request to backport the change to a previous stable branch.
 
 #. Submit the pull request for ``backport/2.5/[PR_NUMBER_FROM_DEVEL]``
    against the ``stable-2.5`` branch
+
+#. The backport PR will be merged by the Release Manager in the lead up to the next
+   next release. There isn't any need to follow up. Just ensure that the automated
+   tests (CI) are green.
 
 .. note::
 
