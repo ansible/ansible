@@ -281,14 +281,15 @@ class AzureRMSubnet(AzureRMModuleBase):
                     oldd = {}
                     for item in self.service_endpoints:
                         name = item['service']
-                        oldd[name] = { 'service': name, 'locations': item['locations'].sort() }
+                        oldd[name] = {'service': name, 'locations': item['locations'].sort()}
                     newd = {}
-                    for item in results['service_endpoints']:
-                        name = item['service']
-                        newd[name] = { 'service': name, 'locations': item['locations'].sort() }
-                    if newd != oldd:
-                        changed = True
-                        results['service_endpoints'] = self.service_endpoints
+                    if 'service_endpoints' in results:
+                        for item in results['service_endpoints']:
+                            name = item['service']
+                            newd[name] = {'service': name, 'locations': item['locations'].sort()}
+                        if newd != oldd:
+                            changed = True
+                            results['service_endpoints'] = self.service_endpoints
 
             elif self.state == 'absent':
                 changed = True
