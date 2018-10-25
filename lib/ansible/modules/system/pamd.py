@@ -539,7 +539,7 @@ class PamdService(object):
                       new_type=None, new_control=None, new_path=None, new_args=None):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
-        changed = 0
+        changes = 0
         # There are two cases to consider.
         # 1. The new rule doesn't exist before the existing rule
         # 2. The new rule exists
@@ -565,7 +565,7 @@ class PamdService(object):
                 # Fourth, set the current rule's previous to the new_rule
                 current_rule.prev = new_rule
 
-                changed += 1
+                changes += 1
 
             # Handle the case where it is the first rule in the list.
             elif previous_rule is None:
@@ -579,15 +579,15 @@ class PamdService(object):
                 new_rule.prev = current_rule.prev
                 new_rule.next = current_rule
                 current_rule.prev = new_rule
-                changed += 1
+                changes += 1
 
-        return changed
+        return changes
 
     def insert_after(self, rule_type, rule_control, rule_path,
                      new_type=None, new_control=None, new_path=None, new_args=None):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
-        changed = 0
+        changes = 0
         # There are two cases to consider.
         # 1. The new rule doesn't exist after the existing rule
         # 2. The new rule exists
@@ -613,7 +613,7 @@ class PamdService(object):
                 # Fifth, set the current rule's next to the new_rule
                 current_rule.next = new_rule
 
-                changed += 1
+                changes += 1
 
             # This is the case where the current_rule is the last in the list
             elif next_rule is None:
@@ -623,9 +623,9 @@ class PamdService(object):
                 self._tail = new_rule
 
                 current_rule.next = new_rule
-                changed += 1
+                changes += 1
 
-        return changed
+        return changes
 
     def add_module_arguments(self, rule_type, rule_control, rule_path, args_to_add):
         # Get a list of rules we want to change
@@ -712,7 +712,7 @@ class PamdService(object):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
 
-        changed = 0
+        changes = 0
 
         for current_rule in rules_to_find:
             if isinstance(args_to_remove, str):
@@ -730,9 +730,9 @@ class PamdService(object):
             # to remove.
             current_rule.rule_args = [arg for arg in current_rule.rule_args if arg not in args_to_remove]
 
-            changed += 1
+            changes += 1
 
-        return changed
+        return changes
 
     def validate(self):
         current_line = self._head
