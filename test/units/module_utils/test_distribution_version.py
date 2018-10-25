@@ -910,6 +910,29 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         }
     },
     {
+        "name": "Solaris 11.4",
+        "uname_r": "5.11",
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": (
+                "                            Oracle Solaris 11.4 SPARC\n    Copyright (c) 1983, 2018, Oracle and/or its affiliates."
+                "  All rights reserved.\n                           Assembled 14 September 2018\n"
+            )
+        },
+        "platform.system": "SunOS",
+        "result": {
+            "distribution_release": "Oracle Solaris 11.4 SPARC",
+            "distribution": "Solaris",
+            "os_family": "Solaris",
+            "distribution_major_version": "11",
+            "distribution_version": "11.4"
+        }
+    },
+    {
         "name": "Solaris 10",
         "uname_r": "5.10",
         "platform.dist": [
