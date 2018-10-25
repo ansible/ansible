@@ -135,6 +135,13 @@ EXAMPLES = '''
       - django>1.11.0,<1.12.0
       - bottle>0.10,<0.20,!=0.11
 
+# Install python package using a proxy - it doesn't use the standard environment variables, please use the CAPITALIZED ones below
+- pip:
+    name: six
+  environment:
+    HTTP_PROXY: '127.0.0.1:8080'
+    HTTPS_PROXY: '127.0.0.1:8080'
+
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
