@@ -103,12 +103,8 @@ files:
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
   $modules/cloud/docker/:
     ignored: ThomasSteinbach
-    notified: felixfontein
-  $modules/cloud/docker/docker_container.py: $team_ansible felixfontein
-  $modules/cloud/docker/docker_image.py: $team_ansible
-  $modules/cloud/docker/docker_image_facts.py: $team_ansible
+    maintainers: $team_docker
   $modules/cloud/docker/docker_network.py: olsaki
-  $modules/cloud/docker/docker_service.py: $team_ansible
   $modules/cloud/google/:
     maintainers: rambleraptor erjohnso
     ignored: supertom
@@ -385,6 +381,7 @@ files:
     labels:
       - cloud
     support: community
+  contrib/inventory/docker: $team_docker
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
@@ -471,7 +468,7 @@ files:
     maintainers: Spredzy
     notified: felixfontein
   $module_utils/docker_common.py:
-    maintainers: $team_ansible dariko felixfontein jwitko kassiansun tbouvet
+    maintainers: $team_docker
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -829,7 +826,7 @@ files:
     support: core
   lib/ansible/plugins/connection/docker.py:
     support: community
-    maintainers: $team_ansible dariko felixfontein jwitko kassiansun tbouvet
+    maintainers: $team_docker
   lib/ansible/plugins/connection/httpapi.py:
     support: network
     maintainers: $team_networking
@@ -1061,6 +1058,7 @@ files:
     notified: mattclay
   test/integration/targets/aci: *aci
   test/integration/targets/meraki: *meraki
+  test/integration/targets/docker: $team_docker
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
@@ -1078,6 +1076,7 @@ files:
   test/legacy/scaleway:
     <<: *scaleway
     support: community
+  test/units/modules/cloud/docker: $team_docker
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
@@ -1103,6 +1102,7 @@ macros:
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
+  team_docker: akshay196 danihodovic dariko felixfontein jwitko kassiansun tbouvet
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
