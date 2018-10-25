@@ -39,6 +39,18 @@ DOCUMENTATION = """
         default: inventory_hostname
         vars:
           - name: ansible_host
+      remote_user:
+        description:
+            - User specified via name or ID which is used to execute commands inside the container. If you
+              specify the user via user ID please make sure to also set ANSIBLE_REMOTE_USER to e.g. /tmp so
+              that Ansible is able to put the temporary data into a well-known, writable directory.
+        ini:
+          - section: defaults
+            key: remote_user
+        env:
+          - name: ANSIBLE_REMOTE_USER
+        vars:
+          - name: ansible_user
 """
 
 
@@ -58,7 +70,7 @@ class Connection(ConnectionBase):
         self._connected = False
         # container filesystem will be mounted here on host
         self._mount_point = None
-        # self.user = self._play_context.remote_user
+        self.user = self._play_context.remote_user
 
     def _podman(self, cmd, cmd_args=None, in_data=None):
         """
@@ -101,10 +113,8 @@ class Connection(ConnectionBase):
 
         # shlex.split has a bug with text strings on Python-2.6 and can only handle text strings on Python-3
         cmd_args_list = shlex.split(to_native(cmd, errors='surrogate_or_strict'))
-        # FIXME: ansible guesses the remote tmpdir incorrectly if the user in not in passwd
-        #        https://github.com/ansible/ansible/pull/47519#issuecomment-432610892
-        # if self.user:
-        #     cmd_args_list += ["--user", self.user]
+        if self.user:
+            cmd_args_list += ["--user", self.user]
 
         rc, stdout, stderr = self._podman("exec", cmd_args_list)
 
@@ -115,11 +125,6 @@ class Connection(ConnectionBase):
         """ Place a local file located in 'in_path' inside container at 'out_path' """
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._container_id)
-
-        # if out_path.startswith("~"):
-        #     dummy, path = out_path.split(os.path.sep, 1)
-        #     out_path = os.path.join("/tmp", path)
-        #     display.vv("setting output path to %s" % out_path, host=self._container_id)
 
         real_out_path = self._mount_point + to_bytes(out_path, errors='surrogate_or_strict')
         shutil.copyfile(
