@@ -592,7 +592,7 @@ class Distribution(object):
 
         if 'Solaris' in data:
             # for solaris 10 uname_r will contain 5.10, for solaris 11 it will have 5.11
-            uname_r = get_uname(self.module,flags=['-r'])
+            uname_r = get_uname(self.module, flags=['-r'])
             ora_prefix = ''
             if 'Oracle Solaris' in data:
                 data = data.replace('Oracle ', '')
@@ -603,7 +603,7 @@ class Distribution(object):
             sunos_facts['distribution_major_version'] = uname_r.split('.')[1]
             return sunos_facts
 
-        uname_v = get_uname(self.module,flags=['-v'])
+        uname_v = get_uname(self.module, flags=['-v'])
         distribution_version = None
 
         if 'SmartOS' in data:
