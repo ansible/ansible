@@ -103,15 +103,15 @@ EXAMPLES = """
     validate_certs: false
     plug_id: "2"
 
-# Reboot plugs 3 and 4
-- name: Reboot Plugs 3 and 4 on a given WTI device
+# Reboot plug 4
+- name: Reboot Plug 4 on a given WTI device
   cpm_plugs:
     cpm_action: "setplug"
     cpm_url: "nonexist.wti.com"
     cpm_username: "super"
     cpm_password: "super"
     use_https: false
-    plug_id: "3,4"
+    plug_id: "4"
     plug_state: "boot"
 """
 
