@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqldatabase_facts
 version_added: "2.8"
-short_description: Get SQL Database facts.
+short_description: Get Azure SQL Database facts.
 description:
-    - Get facts of SQL Database.
+    - Get facts of Azure SQL Database.
 
 options:
     resource_group:
@@ -30,18 +30,15 @@ options:
         description:
             - The name of the server.
         required: True
-    name:
+    database_name:
         description:
-            - The name of the database to be retrieved.
-    filter:
-        description:
-            - An OData filter expression that describes a subset of databases to return.
+            - The name of the database.
     elastic_pool_name:
         description:
-            - The name of the elastic pool to be retrieved.
-    recommended_elastic_pool_name:
+            - The name of the elastic pool.
+    tags:
         description:
-            - The name of the recommended elastic pool to be retrieved.
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -56,13 +53,7 @@ EXAMPLES = '''
     azure_rm_sqldatabase_facts:
       resource_group: resource_group_name
       server_name: server_name
-      name: database_name
-
-  - name: List instances of SQL Database
-    azure_rm_sqldatabase_facts:
-      resource_group: resource_group_name
-      server_name: server_name
-      filter: filter
+      database_name: database_name
 
   - name: List instances of SQL Database
     azure_rm_sqldatabase_facts:
@@ -74,65 +65,79 @@ EXAMPLES = '''
     azure_rm_sqldatabase_facts:
       resource_group: resource_group_name
       server_name: server_name
-      recommended_elastic_pool_name: recommended_elastic_pool_name
 '''
 
 RETURN = '''
 databases:
-    description: A list of dict results where the key is the name of the SQL Database and the values are the facts for that SQL Database.
+    description: A list of dictionaries containing facts for SQL Database.
     returned: always
     type: complex
     contains:
-        sqldatabase_name:
-            description: The key is the name of the server that the values relate to.
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/servers/testsvr/dat
+                    abases/testdb"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: testdb
+        location:
+            description:
+                - Resource location.
+            returned: always
+            type: str
+            sample: southeastasia
+        tags:
+            description:
+                - Resource tags.
+            returned: always
             type: complex
+            sample: tags
+        sku:
+            description:
+                - The name and tier of the SKU.
+            returned: always
+            type: complex
+            sample: sku
             contains:
-                id:
-                    description:
-                        - Resource ID.
-                    returned: always
-                    type: str
-                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/sqlcrudtest-6852/providers/Microsoft.Sql/servers/sqlcrudtest-
-                            2080/databases/sqlcrudtest-9187"
                 name:
                     description:
-                        - Resource name.
+                        - The name of the SKU. Ex - P3. It is typically a letter+number code
                     returned: always
                     type: str
-                    sample: sqlcrudtest-9187
-                location:
+                    sample: BC_Gen4_2
+                tier:
                     description:
-                        - Resource location.
+                        - This field is required to be implemented by the Resource Provider if the service has more than one tier, but is not required on a PUT.
                     returned: always
                     type: str
-                    sample: Japan East
-                kind:
+                    sample: BusinessCritical
+                capacity:
                     description:
-                        - Kind of database.  This is metadata used for the Azure portal experience.
+                        - "If the SKU supports scale out/in then the capacity integer should be included. If scale out/in is not possible for the resource
+                           this may be omitted."
                     returned: always
-                    type: str
-                    sample: v12.0,user
-                collation:
-                    description:
-                        - The collation of the database. If createMode is not Default, this value is ignored.
-                    returned: always
-                    type: str
-                    sample: SQL_Latin1_General_CP1_CI_AS
-                edition:
-                    description:
-                        - "The edition of the database. The DatabaseEditions enumeration contains all the valid editions. If createMode is NonReadableSeconda
-                          ry or OnlineSecondary, this value is ignored. To see possible values, query the capabilities API (/subscriptions/{subscriptionId}/
-                          providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId: 'Capabilities_ListByLocation.'. Possible
-                          values include: 'Web', 'Business', 'Basic', 'Standard', 'Premium', 'Free', 'Stretch', 'DataWarehouse', 'System', 'System2'"
-                    returned: always
-                    type: str
-                    sample: Basic
-                status:
-                    description:
-                        - The status of the database.
-                    returned: always
-                    type: str
-                    sample: Online
+                    type: int
+                    sample: 2
+        kind:
+            description:
+                - Kind of database. This is metadata used for the Azure portal experience.
+            returned: always
+            type: str
+            sample: v12.0,user
+        status:
+            description:
+                - "The status of the database. Possible values include: 'Online', 'Restoring', 'RecoveryPending', 'Recovering', 'Suspect', 'Offline',
+                   'Standby', 'Shutdown', 'EmergencyMode', 'AutoClosed', 'Copying', 'Creating', 'Inaccessible', 'OfflineSecondary', 'Pausing', 'Paused',
+                   'Resuming', 'Scaling'"
+            returned: always
+            type: str
+            sample: Online
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -159,82 +164,60 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            name=dict(
-                type='str'
-            ),
-            filter=dict(
+            database_name=dict(
                 type='str'
             ),
             elastic_pool_name=dict(
                 type='str'
             ),
-            recommended_elastic_pool_name=dict(
-                type='str'
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
         self.results = dict(
-            changed=False,
-            ansible_facts=dict()
+            changed=False
         )
+        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.name = None
-        self.filter = None
+        self.database_name = None
         self.elastic_pool_name = None
-        self.recommended_elastic_pool_name = None
+        self.tags = None
         super(AzureRMDatabasesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
+        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
+                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
                 self.server_name is not None and
-                self.name is not None):
+                self.database_name is not None):
             self.results['databases'] = self.get()
-        elif (self.resource_group is not None and
-              self.server_name is not None):
-            self.results['databases'] = self.list_by_server()
         elif (self.resource_group is not None and
               self.server_name is not None and
               self.elastic_pool_name is not None):
             self.results['databases'] = self.list_by_elastic_pool()
         elif (self.resource_group is not None and
-              self.server_name is not None and
-              self.recommended_elastic_pool_name is not None):
-            self.results['databases'] = self.list_by_recommended_elastic_pool()
+              self.server_name is not None):
+            self.results['databases'] = self.list_by_server()
         return self.results
 
     def get(self):
         response = None
         results = []
         try:
-            response = self.sql_client.databases.get(resource_group_name=self.resource_group,
-                                                     server_name=self.server_name,
-                                                     database_name=self.name)
+            response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
+                                                      server_name=self.server_name,
+                                                      database_name=self.database_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
 
-        if response is not None:
+        if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_item(response))
-
-        return results
-
-    def list_by_server(self):
-        response = None
-        results = []
-        try:
-            response = self.sql_client.databases.list_by_server(resource_group_name=self.resource_group,
-                                                                server_name=self.server_name)
-            self.log("Response : {0}".format(response))
-        except CloudError as e:
-            self.log('Could not get facts for Databases.')
-
-        if response is not None:
-            for item in response:
-                results.append(self.format_item(item))
 
         return results
 
@@ -242,33 +225,34 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.sql_client.databases.list_by_elastic_pool(resource_group_name=self.resource_group,
-                                                                      server_name=self.server_name,
-                                                                      elastic_pool_name=self.elastic_pool_name)
+            response = self.mgmt_client.databases.list_by_elastic_pool(resource_group_name=self.resource_group,
+                                                                       server_name=self.server_name,
+                                                                       elastic_pool_name=self.elastic_pool_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
-                results.append(self.format_item(item))
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_item(item))
 
         return results
 
-    def list_by_recommended_elastic_pool(self):
+    def list_by_server(self):
         response = None
         results = []
         try:
-            response = self.sql_client.databases.list_by_recommended_elastic_pool(resource_group_name=self.resource_group,
-                                                                                  server_name=self.server_name,
-                                                                                  recommended_elastic_pool_name=self.recommended_elastic_pool_name)
+            response = self.mgmt_client.databases.list_by_server(resource_group_name=self.resource_group,
+                                                                 server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
-                results.append(self.format_item(item))
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_item(item))
 
         return results
 
@@ -276,21 +260,17 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'server_name': self.server_name,
+            'id': d['id'],
             'name': d['name'],
             'location': d['location'],
-            'collation': d['collation'],
-            # 'create_mode':
-            # 'source_database_id'
-            # 'restore_point_in_time'
-            # 'recovery_services_recovery_....'
-            # 'edition'
-            'max_size_bytes': d['max_size_bytes'],
-            #'elastic_pool_name'
-            'read_scale': d['read_scale'],
-            #' sample_name'
-            'zone_redundant': d['zone_redundant'],
-            'state': 'present'
+            'tags': d['tags'],
+            'sku': d{
+              'name': d['sku']['name'],
+              'tier': d['sku']['tier'],
+              'capacity': d['sku']['capacity']
+            },
+            'kind': d['kind'],
+            'status': d['status']
         }
         return d
 
