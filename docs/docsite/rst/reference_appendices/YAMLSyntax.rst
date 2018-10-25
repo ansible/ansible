@@ -66,7 +66,7 @@ Dictionaries and lists can also be represented in an abbreviated form if you rea
 
     ---
     martin: {name: Martin D'vloper, job: Developer, skill: Elite}
-    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
+    ['Apple', 'Orange', 'Strawberry', 'Mango']
 
 These are called "Flow collections".
 
