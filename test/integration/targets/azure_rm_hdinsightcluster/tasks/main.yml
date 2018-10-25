@@ -21,6 +21,9 @@
       - type: listkeys
   register: storage_output
 
+- debug:
+    var: storage_output
+
 - name: Create instance of Cluster -- check mode
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
@@ -151,7 +154,7 @@
         - name: storage{{ rpfx }}.blob.core.windows.net 
           is_default: yes
           container: "cluster{{ rpfx }}"
-          key: "{{ storage_output.keys[0]['value'] }}"
+          key: "{{ storage_output.keys[0].value }}"
     compute_profile:
       roles:
         - name: headnode
