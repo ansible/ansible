@@ -20,7 +20,10 @@
 - set_fact: db_file_name="{{tmp_dir}}/{{file}}"
 
 - name: state dump/import - create database
-  mysql_db: name={{ db_name }} state=present
+  mysql_db:
+    name: '{{ db_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: state dump/import - create table employee
   command: mysql {{ db_name }} '-e create table employee(id int, name varchar(100));'
@@ -32,7 +35,11 @@
   file: name={{ db_file_name }} state=absent
 
 - name: test state=dump to backup the database of type {{ format_type }} (expect changed=true)
-  mysql_db: name={{ db_name }} state=dump target={{ db_file_name }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: dump
+    target: '{{ db_file_name }}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message backup the database
@@ -52,7 +59,11 @@
   command: mysql {{ db_name }} "-e update employee set name='John Doe' where id=47;"
 
 - name: test state=import to restore the database of type {{ format_type }} (expect changed=true)
-  mysql_db: name={{ db_name }} state=import target={{ db_file_name }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: import
+    target: '{{ db_file_name }}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message restore the database
@@ -69,7 +80,10 @@
        - "'Joe Smith' in result.stdout"
 
 - name: remove database name
-  mysql_db: name={{ db_name }} state=absent
+  mysql_db:
+    name: '{{ db_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent
