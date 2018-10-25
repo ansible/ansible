@@ -18,6 +18,12 @@ namespace Ansible.Basic
 {
     public class AnsibleModule
     {
+        public delegate void ExitHandler(int rc);
+        public static ExitHandler Exit = new ExitHandler(ExitModule);
+
+        public delegate void WriteLineHandler(string line);
+        public static WriteLineHandler WriteLine = new WriteLineHandler(WriteLineModule);
+
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
 
@@ -56,14 +62,14 @@ namespace Ansible.Basic
             { "choices", new List<object>() { typeof(List<object>), typeof(List<object>) } },
             { "default", new List<object>() { null, null } },
             { "elements", new List<object>() { null, null } },
-            { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), typeof(List<List<string>>) } },
+            { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), null } },
             { "no_log", new List<object>() { false, typeof(bool) } },
-            { "options", new List<object>() { null, typeof(Hashtable) } },
+            { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
             { "required", new List<object>() { false, typeof(bool) } },
             { "required_if", new List<object>() { typeof(List<List<object>>), null } },
-            { "required_one_of", new List<object>() { typeof(List<List<string>>), typeof(List<List<string>>) } },
-            { "required_together", new List<object>() { typeof(List<List<string>>), typeof(List<List<string>>) } },
+            { "required_one_of", new List<object>() { typeof(List<List<string>>), null } },
+            { "required_together", new List<object>() { typeof(List<List<string>>), null } },
             { "supports_check_mode", new List<object>() { false, typeof(bool) } },
             { "type", new List<object>() { "str", null } },
         };
@@ -122,7 +128,7 @@ namespace Ansible.Basic
                             failedMsg = String.Format("Failed to create base tmpdir '{0}': {1}", baseDir, e.Message);
                         }
 
-                        if (failedMsg == null)
+                        if (failedMsg != null)
                         {
                             string envTmp = Path.GetTempPath();
                             Warn(String.Format("Unable to use '{0}' as temporary directory, falling back to system tmp '{1}': {2}", baseDir, envTmp, failedMsg));
@@ -138,7 +144,7 @@ namespace Ansible.Basic
                     }
 
                     string dateTime = DateTime.Now.ToFileTime().ToString();
-                    string dirName = String.Format("ansible-moduletmp-{0}-{0}", dateTime, new Random().Next(0, int.MaxValue));
+                    string dirName = String.Format("ansible-moduletmp-{0}-{1}", dateTime, new Random().Next(0, int.MaxValue));
                     string newTmpdir = Path.Combine(baseDir, dirName);
                     Directory.CreateDirectory(newTmpdir, dirSecurity);
                     tmpdir = newTmpdir;
@@ -227,7 +233,8 @@ namespace Ansible.Basic
         private void FailJson(string message, ErrorRecord psErrorRecord, Exception exception)
         {
             Result["failed"] = true;
-            Result["msg"] = message;
+            Result["msg"] = RemoveNoLogValues(message, noLogValues);
+
 
             if (!Result.ContainsKey("exception") && (Verbosity > 2 || DebugMode))
             {
@@ -348,10 +355,10 @@ namespace Ansible.Basic
         public static Dictionary<string, object> ParseDict(object value)
         {
             Type valueType = value.GetType();
-            if (valueType.IsGenericType && valueType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+            if (valueType == typeof(Dictionary<string, object>))
                 return (Dictionary<string, object>)value;
-            else if (valueType == typeof(Hashtable))
-                return ((Hashtable)value).Cast<DictionaryEntry>().ToDictionary(kvp => (string)kvp.Key, kvp => kvp.Value);
+            else if (value is IDictionary)
+                return ((IDictionary)value).Cast<DictionaryEntry>().ToDictionary(kvp => (string)kvp.Key, kvp => kvp.Value);
             else if (valueType == typeof(string))
             {
                 string stringValue = (string)value;
@@ -424,10 +431,10 @@ namespace Ansible.Basic
 
         public static string ParseJson(object value)
         {
-            // mostly used to ensure a dict or list is a json string as it may
+            // mostly used to ensure a dict is a json string as it may
             // have been converted on the controller side
             Type valueType = value.GetType();
-            if (valueType.GetGenericTypeDefinition() == typeof(Dictionary<,>) || valueType.GetGenericTypeDefinition() == typeof(List<>))
+            if (value is IDictionary)
                 return ToJson(value);
             else if (valueType == typeof(string))
                 return (string)value;
@@ -501,8 +508,8 @@ namespace Ansible.Basic
                 // validate the key is a valid argument spec key
                 if (!specDefaults.ContainsKey(key))
                 {
-                    string msg = String.Format("argument spec entry '{0}' contains an invalid key '{1}', valid keys: {2}",
-                        (string)entry.Key, key, String.Join(", ", specDefaults.Keys));
+                    string msg = String.Format("argument spec entry contains an invalid key '{0}', valid keys: {1}",
+                        key, String.Join(", ", specDefaults.Keys));
                     if (optionsContext.Count > 0)
                         msg += String.Format(" - found in {0}.", String.Join(" -> ", optionsContext));
                     throw new ArgumentException(msg);
@@ -702,11 +709,8 @@ namespace Ansible.Basic
                     }
                     catch (Exception e)
                     {
-                        if (type == "delegate")
-                            e = e.InnerException;
-
                         string msg = String.Format("argument for {0} is of type {1} and we were unable to convert to {2}: {3}",
-                            k, value.GetType(), type, e.Message);
+                            k, value.GetType(), type, e.InnerException.Message);
                         if (optionsContext.Count > 0)
                             msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
                         FailJson(msg);
@@ -767,8 +771,7 @@ namespace Ansible.Basic
                 string paramKey = (string)entry.Key;
                 if (!legalInputs.Contains(paramKey))
                     unsupportedParameters.Add(paramKey);
-
-                if (paramKey.StartsWith("_ansible_"))
+                else if (paramKey.StartsWith("_ansible_"))
                 {
                     removedParameters.Add(paramKey);
                     string key = paramKey.Replace("_ansible_", "");
@@ -918,7 +921,7 @@ namespace Ansible.Basic
                 bool oneRequired = false;
 
                 if (requiredCheck.Count < 3 && requiredCheck.Count < 4)
-                    FailJson(String.Format("internal error: invalid required if value count of {0}, expecting 3 or 4 entries", requiredCheck.Count));
+                    FailJson(String.Format("internal error: invalid required_if value count of {0}, expecting 3 or 4 entries", requiredCheck.Count));
                 else if (requiredCheck.Count == 4)
                     oneRequired = (bool)requiredCheck[3];
 
@@ -1002,20 +1005,17 @@ namespace Ansible.Basic
 
         private object ParseSubSpec(IDictionary spec, object value, string context)
         {
-            IDictionary optionsSpec = (IDictionary)spec["options"];
-            if (spec == null)
-                return value;
-
             bool applyDefaults = (bool)spec["apply_defaults"];
 
             // set entry to an empty dict if apply_defaults is set
-            if (applyDefaults && spec != null && value == null)
+            IDictionary optionsSpec = (IDictionary)spec["options"];
+            if (applyDefaults && optionsSpec.Keys.Count > 0 && value == null)
                 value = new Dictionary<string, object>();
-            else if (spec == null || value == null)
+            else if (optionsSpec.Keys.Count == 0 || value == null)
                 return value;
 
             optionsContext.Add(context);
-            Dictionary<string, object> newValue = ParseDict(value);
+            Dictionary<string, object> newValue = (Dictionary<string, object>)ParseDict(value);
             Dictionary<string, string> aliases = GetAliases(spec, newValue);
             SetNoLogValues(spec, newValue);
 
@@ -1030,7 +1030,7 @@ namespace Ansible.Basic
         private string GetFormattedResults(Dictionary<string, object> result)
         {
             if (!result.ContainsKey("invocation"))
-                result["invocation"] = new Dictionary<string, object>() { { "module_args", Params } };
+                result["invocation"] = new Dictionary<string, object>() { { "module_args", RemoveNoLogValues(Params, noLogValues) } };
 
             if (warnings.Count > 0)
                 result["warnings"] = warnings;
@@ -1041,8 +1041,7 @@ namespace Ansible.Basic
             if (Diff.Count > 0 && DiffMode)
                 result["diff"] = Diff;
 
-            object newResult = RemoveNoLogValues(result, noLogValues);
-            return ToJson(newResult);
+            return ToJson(result);
         }
 
         private string FormatLogData(object data, int indentLevel)
@@ -1051,26 +1050,25 @@ namespace Ansible.Basic
                 return "$null";
 
             string msg = "";
-            Type dataType = data.GetType();
-            if ((dataType.IsGenericType && dataType.GetGenericTypeDefinition() == typeof(List<>)) || dataType == typeof(ArrayList) || dataType.IsArray)
+            if (data is IList)
             {
                 string newMsg = "";
-                foreach (object value in ParseList(data))
+                foreach (object value in (IList)data)
                 {
                     string entryValue = FormatLogData(value, indentLevel + 2);
                     newMsg += String.Format("\r\n{0}- {1}", new String(' ', indentLevel), entryValue);
                 }
                 msg += newMsg;
             }
-            else if ((dataType.IsGenericType && dataType.GetGenericTypeDefinition() == typeof(Dictionary<,>)) || dataType == typeof(Hashtable))
+            else if (data is IDictionary)
             {
                 bool start = true;
-                foreach (KeyValuePair<string, object> entry in ParseDict(data))
+                foreach (DictionaryEntry entry in (IDictionary)data)
                 {
                     string newMsg = FormatLogData(entry.Value, indentLevel + 2);
                     if (!start)
                         msg += String.Format("\r\n{0}", new String(' ', indentLevel));
-                    msg += String.Format("{0}: {1}", entry.Key, newMsg);
+                    msg += String.Format("{0}: {1}", (string)entry.Key, newMsg);
                     start = false;
                 }
             }
@@ -1091,20 +1089,20 @@ namespace Ansible.Basic
                 object oldData = data.Item1;
                 object newData = data.Item2;
 
-                if (oldData.GetType() == typeof(Hashtable))
+                if (oldData is IDictionary)
                 {
-                    foreach (DictionaryEntry entry in (Hashtable)oldData)
+                    foreach (DictionaryEntry entry in (IDictionary)oldData)
                     {
                         object newElement = RemoveValueConditions(entry.Value, noLogStrings, deferredRemovals);
-                        ((Hashtable)newData).Add((string)entry.Key, newElement);
+                        ((IDictionary)newData).Add((string)entry.Key, newElement);
                     }
                 }
                 else
                 {
-                    foreach (object element in (List<object>)oldData)
+                    foreach (object element in (IList)oldData)
                     {
                         object newElement = RemoveValueConditions(element, noLogStrings, deferredRemovals);
-                        ((List<object>)newData).Add(newElement);
+                        ((IList)newData).Add(newElement);
                     }
                 }
             }
@@ -1135,42 +1133,16 @@ namespace Ansible.Basic
             }
             else if (valueType == typeof(DateTime))
                 value = ((DateTime)value).ToString("o");
-
-            // common list types in PowerShell
-            else if (valueType.IsGenericType && valueType.GetGenericTypeDefinition() == typeof(List<>))
+            else if (value is IList)
             {
                 List<object> newValue = new List<object>();
-                deferredRemovals.Enqueue(new Tuple<object, object>((List<object>)value, newValue));
-                value = newValue;
-
-            }
-            else if (valueType.IsArray)
-            {
-                List<object> newValue = new List<object>();
-                List<object> oldValue = ((object[])value).ToList();
-                deferredRemovals.Enqueue(new Tuple<object, object>(oldValue, newValue));
+                deferredRemovals.Enqueue(new Tuple<object, object>((IList)value, newValue));
                 value = newValue;
             }
-            else if (valueType == typeof(ArrayList))
-            {
-                List<object> newValue = new List<object>();
-                List<object> oldValue = ((ArrayList)value).Cast<object>().ToList();
-                deferredRemovals.Enqueue(new Tuple<object, object>(oldValue, newValue));
-                value = newValue;
-            }
-
-            // common Dictionary types in PowerShell
-            else if (valueType.IsGenericType && valueType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+            else if (value is IDictionary)
             {
                 Hashtable newValue = new Hashtable();
-                Hashtable oldValue = new Hashtable((IDictionary)value);
-                deferredRemovals.Enqueue(new Tuple<object, object>(oldValue, newValue));
-                value = newValue;
-            }
-            else if (valueType == typeof(Hashtable))
-            {
-                Hashtable newValue = new Hashtable();
-                deferredRemovals.Enqueue(new Tuple<object, object>((Hashtable)value, newValue));
+                deferredRemovals.Enqueue(new Tuple<object, object>((IDictionary)value, newValue));
                 value = newValue;
             }
             else
@@ -1179,7 +1151,8 @@ namespace Ansible.Basic
                 if (noLogStrings.Contains(stringValue))
                     return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
                 foreach (string omitMe in noLogStrings)
-                    return (stringValue).Replace(omitMe, new String('*', omitMe.Length));
+                    if (stringValue.Contains(omitMe))
+                        return (stringValue).Replace(omitMe, new String('*', omitMe.Length));
                 value = stringValue;
             }
             return value;
@@ -1200,7 +1173,7 @@ namespace Ansible.Basic
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetConsoleWindow();
 
-        private static void Exit(int rc)
+        private static void ExitModule(int rc)
         {
             // When running in a Runspace Environment.Exit will kill the entire
             // process which is not what we want, detect if we are in a
@@ -1219,7 +1192,7 @@ namespace Ansible.Basic
             }
         }
 
-        private static void WriteLine(string line)
+        private static void WriteLineModule(string line)
         {
             // When running over psrp there may not be a console to write the
             // line to, we check if there is a Console Window and fallback on
@@ -1231,3 +1204,4 @@ namespace Ansible.Basic
         }
     }
 }
+
