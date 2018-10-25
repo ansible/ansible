@@ -360,6 +360,7 @@
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
     name: rule1
+    virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
     state: absent
   check_mode: yes
   register: output
@@ -373,6 +374,7 @@
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
     name: rule1
+    virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
     state: absent
   register: output
 - name: Assert the state has changed
@@ -385,6 +387,7 @@
     resource_group: "{{ resource_group }}"
     server_name: "sqlsrv{{ random_postfix }}"
     name: rule1
+    virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
     state: absent
   register: output
 - name: Assert the state has changed
