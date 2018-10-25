@@ -39,6 +39,7 @@ options:
             - Resource location. If not set, location from the resource group will be used as default.
     sku:
         description:
+            - SQL Elastic Pool SKU
         suboptions:
             name:
                 description:
