@@ -8,18 +8,24 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: dynamodb
+<<<<<<< HEAD
 short_description: Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
 version_added: "2.8"
 description:
   - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
   More infomation can be found here:
   https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
+=======
+short_description: Reads, creates, updates or deletes items in AWS Dynamo DB tables.
+version_added: "2.7"
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 author:
   - David C. Martin @blastikman
 requirements:
   - boto3
 options:
   table:
+<<<<<<< HEAD
     type: string
     required: true
     description:
@@ -27,12 +33,18 @@ options:
   action:
     type: string
     required: true
+=======
+    description:
+      - Name of the DynamoDB table
+  action:
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
     description:
       - "get": Returns a set of attributes for the item with
       the given primary key.
       - "put": Creates a new item, or replaces an old item with a new item.
       If an item that has the same primary key as the new item already exists
       in the specified table, the new item completely replaces the existing item.
+<<<<<<< HEAD
       - "update": Edits an existing item's attributes, or adds a new item to the
       table if it does not already exist. You can also perform a conditional update on an
       existing item (insert a new attribute name-value pair if it doesn't exist,
@@ -83,6 +95,40 @@ EXAMPLES = '''
     action: get
     primary_key: {"bank": {"S": "hsbc"}}
 
+=======
+      - "delete": Deletes a single item in a table by primary key. You can
+      perform a conditional delete operation that deletes the item if it exists,
+       or if it has an expected attribute value.
+  primary_key:
+    description:
+      -
+  item:
+    description:
+      -
+  update_expression:
+    description:
+      -
+  update_expression:
+    description:
+      -
+  update_expression:
+    description:
+      -
+  update_expression:
+    description:
+      -
+  update_expression:
+    description:
+      -
+  update_expression:
+    description:
+      -
+
+
+"""
+
+EXAMPLES = '''
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 # Creates a single item in 'narcos' DynamoDB table where column 'bank' equals 'hsbc' string,
 # column 'quantity' equals '1000' numeric and column 'person' equals 'ochoa' string
 - name: Creates a new record
@@ -91,6 +137,7 @@ EXAMPLES = '''
     action: put
     item: {"bank": {"S": "hsbc"},"quantity": {"N": "1000"},"person": {"S": "ochoa"}}
 
+<<<<<<< HEAD
 # Updates the 'quantity' attibute value from a single item.
 - name: Updates arribute 'person'
   dynamodb:
@@ -109,6 +156,8 @@ EXAMPLES = '''
     primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
     update_expression: 'REMOVE person'
 
+=======
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 # Connects with awscli profile 'development' and
 # deletes a single item from 'releases' DynamoDB table
 # where the column 'project' equals string 'potatoes' (also primary key)
@@ -123,6 +172,7 @@ EXAMPLES = '''
     expression_attribute_values: {":number": {"N": "123456"}}
 '''
 
+<<<<<<< HEAD
 RETURN = '''
 ---
 item:
@@ -143,6 +193,8 @@ item:
         }
 '''
 
+=======
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 import boto3
 
 import ansible.module_utils.ec2
@@ -158,6 +210,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 
+<<<<<<< HEAD
 def get(connection, table, primary_key, projection_expression, result):
 
     if projection_expression:
@@ -234,6 +287,8 @@ def delete(connection, table, primary_key, condition_expression, expression_attr
     return result
 
 
+=======
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
@@ -243,9 +298,18 @@ def main():
         item=dict(required=False, type='dict'),
         condition_expression=dict(required=False, type='str'),
         expression_attribute_values=dict(required=False, type='dict'),
+<<<<<<< HEAD
         update_expression=dict(required=False, type='str'),
         projection_expression=dict(required=False, type='str')
         )
+=======
+        # projection_expression=dict(required=True)
+        # primary_key_type=dict(required=True),
+        # update_expression=dict(default='present', type='str', choices=[
+        #     "SET", "REMOVE", "ADD", "DELETE"]),
+        # expression_attribute_names=dict(required=False),
+    )
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
     )
 
     module = AnsibleModule(
@@ -276,6 +340,7 @@ def main():
         primary_key = module.params.get('primary_key')
         condition_expression = module.params.get('condition_expression')
         item = module.params.get('item')
+<<<<<<< HEAD
         update_expression = module.params.get('update_expression')
         expression_attribute_values = module.params.get(
             'expression_attribute_values')
@@ -299,6 +364,51 @@ def main():
         elif action == 'delete':
             result = delete(connection, table, primary_key,
                             condition_expression, expression_attribute_values, result)
+=======
+        expression_attribute_values = module.params.get(
+            'expression_attribute_values')
+        # projection_expression = module.params.get('projection_expression')
+        # update_expression = module.params.get('update_expression')
+        # expression_attribute_names = module.params.get(
+        #     'expression_attribute_names')
+
+
+        if action == 'get':
+            response = connection.get_item(
+                TableName=table,
+                Key=primary_key,
+                # ProjectionExpression=projection_expression
+            )
+
+            return response
+
+        elif action == 'put':
+            result = connection.put_item(
+                TableName=table,
+                Item=item,
+            )
+
+        elif action == 'update':
+            result = connection.update_item(
+                TableName=table,
+                Key={primary_key_type: primary_key},
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_attribute_values,
+            )
+
+            return result
+
+        elif action == 'delete':
+            result = connection.delete_item(
+                TableName=table,
+                Key=primary_key,
+                ConditionExpression=condition_expression,
+                ExpressionAttributeValues=expression_attribute_values,
+                ReturnValues='ALL_OLD'
+            )
+
+            return result
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {} not found'.format(table)
@@ -310,6 +420,11 @@ def main():
         error_msg = boto_exception(error)
         module.fail_json(msg=error_msg)
 
+<<<<<<< HEAD
+=======
+    result = dict(changed=False, message=response)
+
+>>>>>>> Merge branch 'dynamodb' into add_dynamodb
     module.exit_json(**result)
 
 
