@@ -32,34 +32,54 @@ options:
         required: True
     name:
         description:
-            - The name of the elastic pool to be operated on (updated or created).
+            - The name of the elastic pool.
         required: True
     location:
         description:
             - Resource location. If not set, location from the resource group will be used as default.
-    edition:
+    sku:
         description:
-            - The edition of the elastic pool.
-        choices:
-            - 'basic'
-            - 'standard'
-            - 'premium'
-    dtu:
+        suboptions:
+            name:
+                description:
+                    - The name of the SKU. Ex - P3. It is typically a letter+number code
+                required: True
+            tier:
+                description:
+                    - This field is required to be implemented by the Resource Provider if the service has more than one tier, but is not required on a PUT.
+            size:
+                description:
+                    - The SKU size. When the name field is the combination of I(tier) and some other value, this would be the standalone code.
+            family:
+                description:
+                    - If the service has different generations of hardware, for the same SKU, then that can be captured here.
+            capacity:
+                description:
+                    - "If the SKU supports scale out/in then the capacity integer should be included. If scale out/in is not possible for the resource this
+                       may be omitted."
+    max_size_bytes:
         description:
-            - The total shared DTU for the database elastic pool.
-    database_dtu_max:
+            - The storage limit for the database elastic pool in bytes.
+    per_database_settings:
         description:
-            - The maximum I(dtu) any one database can consume.
-    database_dtu_min:
-        description:
-            - The minimum I(dtu) all databases are guaranteed.
-    storage_mb:
-        description:
-            - Gets storage limit for the database elastic pool in MB.
+            - The per database settings for the elastic pool.
+        suboptions:
+            min_capacity:
+                description:
+                    - The minimum capacity all databases are guaranteed.
+            max_capacity:
+                description:
+                    - The maximum capacity any one database can consume.
     zone_redundant:
         description:
-            - "Whether or not this database elastic pool is zone redundant, which means the replicas of this database will be spread across multiple
-               availability zones."
+            - "Whether or not this elastic pool is zone redundant, which means the replicas of this elastic pool will be spread across multiple availability
+               zones."
+    license_type:
+        description:
+            - The license type to apply for this elastic pool.
+        choices:
+            - 'license_included'
+            - 'base_price'
     state:
       description:
         - Assert the state of the SQL Elastic Pool.
@@ -108,6 +128,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
@@ -140,26 +161,22 @@ class AzureRMElasticPools(AzureRMModuleBase):
             location=dict(
                 type='str'
             ),
-            edition=dict(
-                type='str',
-                choices=['basic',
-                         'standard',
-                         'premium']
+            sku=dict(
+                type='dict'
             ),
-            dtu=dict(
+            max_size_bytes=dict(
                 type='int'
             ),
-            database_dtu_max=dict(
-                type='int'
-            ),
-            database_dtu_min=dict(
-                type='int'
-            ),
-            storage_mb=dict(
-                type='int'
+            per_database_settings=dict(
+                type='dict'
             ),
             zone_redundant=dict(
                 type='str'
+            ),
+            license_type=dict(
+                type='str',
+                choices=['license_included',
+                         'base_price']
             ),
             state=dict(
                 type='str',
@@ -191,18 +208,16 @@ class AzureRMElasticPools(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "location":
                     self.parameters["location"] = kwargs[key]
-                elif key == "edition":
-                    self.parameters["edition"] = _snake_to_camel(kwargs[key], True)
-                elif key == "dtu":
-                    self.parameters["dtu"] = kwargs[key]
-                elif key == "database_dtu_max":
-                    self.parameters["database_dtu_max"] = kwargs[key]
-                elif key == "database_dtu_min":
-                    self.parameters["database_dtu_min"] = kwargs[key]
-                elif key == "storage_mb":
-                    self.parameters["storage_mb"] = kwargs[key]
+                elif key == "sku":
+                    self.parameters["sku"] = kwargs[key]
+                elif key == "max_size_bytes":
+                    self.parameters["max_size_bytes"] = kwargs[key]
+                elif key == "per_database_settings":
+                    self.parameters["per_database_settings"] = kwargs[key]
                 elif key == "zone_redundant":
                     self.parameters["zone_redundant"] = kwargs[key]
+                elif key == "license_type":
+                    self.parameters["license_type"] = _snake_to_camel(kwargs[key], True)
 
         old_response = None
         response = None
@@ -229,16 +244,6 @@ class AzureRMElasticPools(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if SQL Elastic Pool instance has to be deleted or may be updated")
-                if ('edition' in self.parameters) and (self.parameters['edition'] != old_response['edition']):
-                    self.to_do = Actions.Update
-                if ('dtu' in self.parameters) and (self.parameters['dtu'] != old_response['dtu']):
-                    self.to_do = Actions.Update
-                if ('database_dtu_max' in self.parameters) and (self.parameters['database_dtu_max'] != old_response['database_dtu_max']):
-                    self.to_do = Actions.Update
-                if ('database_dtu_min' in self.parameters) and (self.parameters['database_dtu_min'] != old_response['database_dtu_min']):
-                    self.to_do = Actions.Update
-                if ('storage_mb' in self.parameters) and (self.parameters['storage_mb'] != old_response['storage_mb']):
-                    self.to_do = Actions.Update
                 if ('zone_redundant' in self.parameters) and (self.parameters['zone_redundant'] != old_response['zone_redundant']):
                     self.to_do = Actions.Update
 
@@ -290,7 +295,7 @@ class AzureRMElasticPools(AzureRMModuleBase):
                                                                        server_name=self.server_name,
                                                                        elastic_pool_name=self.name,
                                                                        parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
