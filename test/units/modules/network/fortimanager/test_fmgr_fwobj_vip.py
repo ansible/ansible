@@ -115,7 +115,6 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: dns-translation
     # ssl-http-match-host: None
-
     # ssl-pfs: None
     # ssl-server-max-version: None
     # ssl-client-session-state-timeout: None
@@ -168,7 +167,6 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # websphere-server: None
     # nat-source-vip: None
     # portmapping-type: None
-
     # adom: ansible
     # ssl-client-session-state-max: None
     # http-ip-header: None
@@ -191,7 +189,6 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: static-nat
     # ssl-http-match-host: None
-
     # ssl-server-max-version: None
     # ssl-hpkp-report-uri: None
     # http-cookie-domain-from-host: None
@@ -252,7 +249,6 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # weblogic-server: None
     # ssl-client-session-state-max: None
     # http-ip-header: None
-
     # ssl-hsts: None
     # arp-reply: None
     # ssl-client-renegotiation: None
@@ -270,7 +266,6 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: static-nat
     # ssl-http-match-host: None
-
     # ssl-pfs: None
     # ssl-client-session-state-timeout: None
     # http-cookie-domain-from-host: None
@@ -321,7 +316,6 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # websphere-server: None
     # nat-source-vip: None
     # portmapping-type: None
-
     # adom: ansible
     # ssl-client-session-state-max: None
     # http-ip-header: None
@@ -345,7 +339,6 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: fqdn
     # ssl-http-match-host: None
-
     # ssl-server-max-version: None
     # ssl-hpkp-report-uri: None
     # http-cookie-domain-from-host: None
