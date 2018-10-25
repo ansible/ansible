@@ -5,6 +5,151 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.1
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-10-25
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fix yum module to properly check for empty conf_file value
+- added capability to set the scheme for the consul_kv lookup.
+- added optional certificate and certificate verification for consul_kv lookups
+- dnf - properly handle modifying the enable/disable excludes data field
+- dnf appropriately handles disable_excludes repoid argument
+- dnf properly honor disable_gpg_check for local (on local disk of remote node) package installation
+- fix yum module to handle list argument optional empty strings properly
+- netconf_config - Make default_operation optional in netconf_config module (https://github.com/ansible/ansible/pull/46333)
+- win_nssm - Drop support of literal YAML dictionnary for ``app_parameters`` option. Use the ``key=value;`` string form instead
+- yum - properly handle proxy password and username embedded in url
+- yum/dnf - fail when space separated string of names (https://github.com/ansible/ansible/pull/47109)
+
+Bugfixes
+--------
+
+- Ansible JSON Decoder - Switch from decode to object_hook to support nested use of __ansible_vault and __ansible_unsafe (https://github.com/ansible/ansible/pull/45514)
+- Don't parse parameters and options when ``state`` is ``absent`` (https://github.com/ansible/ansible/pull/45700).
+- FieldAttribute - Do not use mutable defaults, instead allow supplying a callable for defaults of mutable types (https://github.com/ansible/ansible/issues/46824)
+- Fix an issue with the default telnet prompt handling. The value needs to be escaped otherwise it does not work when converted to bytes.
+- Fix calling deprecate with correct arguments (https://github.com/ansible/ansible/pull/46062).
+- Fix iterator to list conversion in ldap_entry module.
+- Fix nxos_ospf_vrf module auto-cost idempotency and module check mode (https://github.com/ansible/ansible/pull/47190).
+- Fix pip module so that it can recognize multiple extras
+- Fix prompt mismatch issue for ios (https://github.com/ansible/ansible/issues/47004)
+- Fix the issue with refreshing the token by storing Authorization header inside HttpApi connection plugin.
+- Fix the quoting of vhost and other names in rabbitmq_binding
+- Fix the win_reboot plugin so that the post_reboot_delay parameter is honored
+- Fixed an issue with ansible-doc -l failing when parsing some plugin documentation.
+- Fixed: Appropriate code to expand value was missing so assigning SSL certificate is not working as described in the documentation. https://github.com/ansible/ansible/pull/45830
+- Fixes an error that occurs when attempting to see if the netns already exists on the remote device. This change will now execute ``ip netns list`` and check if the desired namespace is in the output.
+- Give user better error messages and more information on verbose about inventory plugin behaviour
+- Hardware fact gathering now completes on Solaris 8.  Previously, it aborted with error `Argument 'args' to run_command must be list or string`.
+- Ignore empty result of rabbitmqctl list_user_permissions.
+- In systemd module, allow scope to default to 'system'
+- In systemd module, fix check if a systemd+initd service is enabled - disabled in systemd means disabled
+- Only access EC2 volume tags when set
+- Only delete host key from redis in-memory cache if present.
+- PLUGIN_FILTERS_CFG - Ensure that the value is treated as type=path, and that we use the standard section of ``defaults`` instead of ``default`` (https://github.com/ansible/ansible/pull/45994)
+- Refactor virtual machine disk logic.
+- Restore SIGPIPE to SIG_DFL when creating subprocesses to avoid it being ignored under Python 2.
+- Rewrite get_resource_pool method for correct resource_pool selection.
+- The docker_* modules more uniformly check versions of docker-py/docker and (if necessary) the docker API.
+- Update callbacks to use Ansible's JSON encoder to avoid known serialization issues
+- Update the signatures of many cliconf plugins' get() methods to support the check_all paramter. Specifically, aireos, aruba, asa, ce, cnos, dellos6, dellos9, dellos10, edgeos, enos, exos, ironware, nos, onyx, routeros, slxos, and voss were updated. This fixes the cli_command module for these platforms
+- Vultr - fix for unreliable API behaviors resulting in timeouts (https://github.com/ansible/ansible/pull/45712/).
+- ansible-connection - Clean up socket files if playbook aborted before connection is started.
+- ansible-doc, removed local hardcoded listing, now uses the 'central' list from constants and other minor issues
+- aws_ec2 - fixed issue where cache did not contain the computed groups
+- aws_ssm_parameter_store - AWS Systems Manager Parameter Store may reach an internal limit before finding the expected parameter, causing misleading results. This is resolved by paginating the describe_parameters call.
+- azure_rm_deployment - fixed regression that prevents resource group from being created (https://github.com/ansible/ansible/issues/45941)
+- blockinfile - use bytes rather than a native string to prevent a stacktrace in Python 3 when writing to the file (https://github.com/ansible/ansible/issues/46237)
+- chroot connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- cs_instance - Fix docs and typo in examples (https://github.com/ansible/ansible/pull/46035).
+- cs_instance - Fix host migration without volume (https://github.com/ansible/ansible/pull/46115).
+- delegate_to - When templating ``delegate_to`` in a loop, don't use the task for a cache, return a special cache through ``get_vars`` allowing looping over a hostvar (https://github.com/ansible/ansible/issues/47207)
+- docker connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- docker_container - Fix idempotency problems with ``cap_drop`` and ``groups`` (when numeric group IDs were used).
+- docker_container - Fix type conversion errors for ``log_options``.
+- docker_container - Fixing various comparison/idempotency problems related to wrong comparisons. In particular, comparisons for ``command`` and ``entrypoint`` (both lists) no longer ignore missing elements during idempotency checks.
+- docker_container - Makes ``blkio_weight``, ``cpuset_mems``, ``dns_opts`` and ``uts`` options actually work.
+- docker_container - ``publish_ports: all`` was not used correctly when checking idempotency.
+- docker_container - fail if ``ipv4_address`` or ``ipv6_address`` is used with a too old docker-py version.
+- docker_container - fix ``memory_swappiness`` documentation.
+- docker_container - fix behavior of ``detach: yes`` if ``auto_remove: yes`` is specified.
+- docker_container - fix idempotency check for published_ports in some special cases.
+- docker_container - the behavior is improved in case ``image`` is not specified, but needed for (re-)creating the container.
+- docker_network - fixes idempotency issues (https://github.com/ansible/ansible/issues/33045) and name substring issue (https://github.com/ansible/ansible/issues/32926).
+- docker_service - correctly parse string values for the `scale` parameter https://github.com/ansible/ansible/pull/45508
+- docker_volume - fix ``force`` and change detection logic. If not both evaluated to ``True``, the volume was not recreated.
+- dynamic includes - Use the copied and merged task for calculating task vars in the free strategy (https://github.com/ansible/ansible/issues/47024)
+- ec2_group - There can be multiple security groups with the same name in different VPCs. Prior to 2.6 if a target group name was provided, the group matching the name and VPC had highest precedence. Restore this behavior by updated the dictionary with the groups matching the VPC last.
+- ec2_group - support EC2-Classic by not assuming security groups have VPCs.
+- ec2_metadata_facts - Parse IAM role name from metadata ARN instead of security credential field.
+- fetch_url did not always return lower-case header names in case of HTTP errors (https://github.com/ansible/ansible/pull/45628).
+- fix azure_rm_autoscale module can create a schedule with fixed start/end date (https://github.com/ansible/ansible/pull/47186)
+- fix flatten to properly handle multiple lists in lists https://github.com/ansible/ansible/issues/46343
+- get_url - improve code that parses checksums from a file so it is not fragile and reports a helpful error when no matching checksum is found
+- handlers - fix crash when handler task include tasks
+- jail connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- junos - fix terminal prompt regex (https://github.com/ansible/ansible/pull/47096)
+- k8s - allow kubeconfig or context to be set without the other
+- k8s_facts now returns a resources key in all situations
+- kubectl connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- libvirt_lxc connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- lineinfile - fix index out of range error when using insertbefore on a file with only one line (https://github.com/ansible/ansible/issues/46043)
+- mail - Fix regression when sending mail without TLS/SSL
+- mysql_*, proxysql_* - PyMySQL (a pure-Python MySQL driver) is now a preferred dependency also supporting Python 3.X.
+- netconf_config - Fix in confirmed_commit capability in netconf_config modules  (https://github.com/ansible/ansible/pull/46778)
+- netconf_config - Fix netconf module_utils dict changed size issue (https://github.com/ansible/ansible/pull/46778)
+- nmcli - fix syntax of vlan modification command (https://github.com/ansible/ansible/issues/42322)
+- nxos_file_copy fix for binary files (https://github.com/ansible/ansible/pull/46822).
+- openssl_csr - fix byte encoding issue on Python 3
+- openssl_pkcs12 - fix byte encoding issue on Python 3
+- os_router - ``enable_snat: no`` was ignored.
+- ovirt_host_network - check for empty user_opts (https://github.com/ansible/ansible/pull/47283).
+- ovirt_vm - Check next_run configuration update if exist (https://github.com/ansible/ansible/pull/47282/).
+- ovirt_vm - Fix initialization of cloud init (https://github.com/ansible/ansible/pull/47354).
+- ovirt_vm - Fix issue in SSO option (https://github.com/ansible/ansible/pull/47312).
+- ovirt_vm - Fix issue in setting the custom_compatibility_version to NULL (https://github.com/ansible/ansible/pull/47388).
+- pamd: add delete=False to NamedTemporaryFile() fixes OSError on module completion, and removes print statement from module code. (see https://github.com/ansible/ansible/pull/47281 and https://github.com/ansible/ansible/issues/47080)
+- pamd: use module.tmpdir for NamedTemporaryFile() (see https://github.com/ansible/ansible/pull/47133 and https://github.com/ansible/ansible/issues/36954)
+- postgresql_user - create pretty error message when creating a user without an encrypted password on newer PostgreSQL versions
+- psexec - Handle socket.error exceptions properly
+- psexec - give proper error message when the psexec requirements are not installed
+- psrp - Fix UTF-8 output - https://github.com/ansible/ansible/pull/46998
+- psrp - Fix issue when dealing with unicode values in the output for Python 2
+- reboot - add reboot_timeout parameter to the list of parameters so it can be used.
+- reboot - add support for OpenBSD
+- reboot - use correct syntax for fetching a value from a dict and account for bare Linux systems (https://github.com/ansible/ansible/pull/45607#issuecomment-422403177)
+- reboot - use unicode instead of bytes for stdout and stderr to match the type returned from low_level_execute()
+- roles - Ensure that we don't overwrite roles that have been registered (from imports) while parsing roles under the roles header (https://github.com/ansible/ansible/issues/47454)
+- route53 - fix CAA record ordering for idempotency.
+- ssh connection - Support empty files with piped transfer_method (https://github.com/ansible/ansible/issues/45426)
+- templar - Do not strip new lines in native jinja - https://github.com/ansible/ansible/issues/46743
+- unsafe - Add special casing to sets, to support wrapping elements of sets correctly in Python 3 (https://github.com/ansible/ansible/issues/47372)
+- use proper module_util to get Ansible version for Azure requests
+- user - add documentation on what underlying tools are used on each platform (https://github.com/ansible/ansible/issues/44266)
+- user module - do not pass ssh_key_passphrase on cmdline (CVE-2018-16837)
+- vmware - honor "wait_for_ip_address" when powering on a VM
+- vultr_server - fix diff for user data (https://github.com/ansible/ansible/pull/45753/).
+- vyos_facts - fix vyos_facts not returning version number issue (https://github.com/ansible/ansible/pull/39115)
+- win_copy - Fix issue where the dest return value would be enclosed in single quote when dest is a folder - https://github.com/ansible/ansible/issues/45281
+- win_nssm - Add missing space between parameters with ``app_parameters``
+- win_nssm - Correctly escape argument line when a parameter contains spaces, quotes or backslashes
+- win_nssm - Fix error when several services were given to the ``dependencies`` option
+- win_nssm - Fix extra space added in argument line with ``app_parameters`` or ``app_parameters_free_form`` when a parameter start by a dash and is followed by a period (https://github.com/ansible/ansible/issues/44079)
+- win_nssm - Fix service not started when ``state=started`` (https://github.com/ansible/ansible/issues/35442)
+- win_nssm - Fix several issues and idempotency problems (https://github.com/ansible/ansible/pull/44755)
+- winrm - Only use pexpect for auto kerb auth if it is installed and contains the required kwargs - https://github.com/ansible/ansible/issues/43462
+- zabbix_host - module was failing when zabbix host was updated with new interface and template depending on that interface at the same time
+- zone connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+
 v2.7.0
 ======
 
