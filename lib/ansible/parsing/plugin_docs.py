@@ -68,11 +68,15 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
         data['metadata'] = extract_metadata(module_ast=M)[0]
 
-        # remove version
         if data['metadata']:
+            # remove version
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
+        else:
+            # Add default metadata
+            data['metadata'] = {'supported_by': 'community',
+                                'status': ['preview']}
     except:
         if verbose:
             display.error("unable to parse %s" % filename)
