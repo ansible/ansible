@@ -74,6 +74,9 @@ EXAMPLES = '''
     state: absent
 
 '''
+RETURN = '''
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ibm_sa_utils import (execute_pyxcli_command, connect_ssl,
                                                spectrum_accelerate_spec, is_pyxcli_installed)
