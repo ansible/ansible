@@ -794,7 +794,7 @@ def main():
     )
     content = str()
     fname = os.path.join(module.params["path"], module.params["name"])
-    backupdest = ""
+
     # Open the file and read the content or fail
     try:
         with open(fname, 'r') as service_file_obj:
@@ -809,6 +809,8 @@ def main():
     service = PamdService(content)
     # Set the action
     action = module.params['state']
+
+    changes = 0
 
     # Take action
     if action == 'updated':
@@ -838,12 +840,17 @@ def main():
     if not valid:
         module.fail_json(msg=msg)
 
+    result = dict(
+        changed = (changes > 0),
+        change_count = changes,
+        backupdest = '',
+    )
+
     # If not check mode and something changed, backup the original if necessary then write out the file or fail
-    if not module.check_mode and changes > 0:
-        pamd_file = os.path.realpath(fname)
+    if not module.check_mode and result['changed']:
         # First, create a backup if desired.
         if module.params['backup']:
-            backupdest = module.backup_local(fname)
+            result['backupdest'] = module.backup_local(fname)
         try:
             temp_file = NamedTemporaryFile(mode='w', dir=module.tmpdir, delete=False)
             with open(temp_file.name, 'w') as fd:
@@ -853,15 +860,9 @@ def main():
             module.fail_json(msg='Unable to create temporary \
                                     file %s' % temp_file)
 
-        module.atomic_move(temp_file.name, pamd_file)
+        module.atomic_move(temp_file.name, os.path.realpath(fname))
 
-    facts = {}
-    facts['pamd'] = {'changed': changes > 0,
-                     'change_count': changes,
-                     'action': action,
-                     'backupdest': backupdest}
-
-    module.exit_json(changed=changes > 0, ansible_facts=facts)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
