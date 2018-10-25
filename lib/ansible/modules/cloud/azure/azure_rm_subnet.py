@@ -281,11 +281,11 @@ class AzureRMSubnet(AzureRMModuleBase):
                     oldd = {}
                     for item in self.service_endpoints:
                         name = item['service']
-                        oldd[name] = item.sort()
+                        oldd[name] = { 'service': name, 'locations': item['locations'].sort() }
                     newd = {}
                     for item in results['service_endpoints']:
                         name = item['service']
-                        newd[name] = item.sort()
+                        newd[name] = { 'service': name, 'locations': item['locations'].sort() }
                     if newd != oldd:
                         changed = True
                         results['service_endpoints'] = self.service_endpoints
