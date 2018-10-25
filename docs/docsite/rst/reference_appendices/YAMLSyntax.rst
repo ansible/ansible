@@ -30,11 +30,10 @@ All members of a list are lines beginning at the same indentation level starting
 
     ---
     # A list of tasty fruits
-    fruits:
-        - Apple
-        - Orange
-        - Strawberry
-        - Mango
+    - Apple
+    - Orange
+    - Strawberry
+    - Mango
     ...
 
 A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
@@ -67,7 +66,7 @@ Dictionaries and lists can also be represented in an abbreviated form if you rea
 
     ---
     martin: {name: Martin D'vloper, job: Developer, skill: Elite}
-    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
+    ['Apple', 'Orange', 'Strawberry', 'Mango']
 
 These are called "Flow collections".
 
