@@ -126,7 +126,7 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.9.0"
+    - "docker-py >= 1.10.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
@@ -135,7 +135,7 @@ requirements:
        be installed at the same time. Also note that when both modules are installed
        and one of them is uninstalled, the other might no longer function and a
        reinstall of it is required."
-    - "The docker server >= 1.9.0"
+    - "The docker server >= 1.10.0"
 '''
 
 EXAMPLES = '''
@@ -478,7 +478,7 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         min_docker_version='1.10.0'
-        # "The docker server >= 1.9.0"
+        # "The docker server >= 1.10.0"
     )
 
     cm = DockerNetworkManager(client)
