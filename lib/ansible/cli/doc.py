@@ -263,7 +263,7 @@ class DocCLI(CLI):
 
                 return text
             else:
-                if 'removed' in metadata.get('status', []):
+                if 'removed' in metadata['status']:
                     display.warning("%s %s has been removed\n" % (plugin_type, plugin))
                     return
 
@@ -512,26 +512,21 @@ class DocCLI(CLI):
                              'community': 'The Ansible Community',
                              'curated': 'A Third Party',
                              }
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
-
-        return []
+        return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
 
     @staticmethod
     def get_metadata_block(doc):
         text = []
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            text.append("METADATA:")
-            text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
 
-            for k in (m for m in doc['metadata'] if m not in ('version', 'metadata_version', 'supported_by')):
-                if isinstance(k, list):
-                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
-                else:
-                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
-            return text
+        text.append("METADATA:")
+        text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
 
-        return []
+        for k in (m for m in doc['metadata'] if m != 'supported_by'):
+            if isinstance(k, list):
+                text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+            else:
+                text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+        return text
 
     def get_man_text(self, doc):
 
