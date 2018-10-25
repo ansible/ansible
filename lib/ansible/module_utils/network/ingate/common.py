@@ -30,7 +30,7 @@ except ImportError:
 
 def ingate_argument_spec(**kwargs):
     client_options = dict(
-        version=dict(choices=['v1'], required=True),
+        version=dict(choices=['v1'], default='v1'),
         scheme=dict(choices=['http', 'https'], required=True),
         address=dict(type='str', required=True),
         username=dict(type='str', required=True),

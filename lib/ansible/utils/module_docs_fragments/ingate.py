@@ -27,6 +27,7 @@ options:
         description:
           - REST API version.
         choices: [v1]
+        default: v1
         required: true
       scheme:
         description:
