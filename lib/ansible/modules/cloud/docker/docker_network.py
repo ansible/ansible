@@ -77,12 +77,9 @@ options:
   ipam_options:
     description:
       - Dictionary of IPAM options.
-    deprecated:
-      removed_in: "2.12"
-      alternative: ipam_config
-      why: >
-        Ipam options were introduced in Docker 1.10.0 (see L(here,https://github.com/moby/moby/pull/17316)). This
-        module parameter addresses the ipam config not the newly introduced ipam options.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter ``ipam_config`` instead. In Docker 1.10.0, IPAM 
+        options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
+        the IPAM config not the newly introduced IPAM options.
 
   ipam_config:
     version_added: 2.8
@@ -467,7 +464,7 @@ def main():
         force=dict(type='bool', default=False),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
-        ipam_options=dict(type='dict', default={}),
+        ipam_options=dict(type='dict', default={}, removed_in_version='2.12'),
         ipam_config=dict(type='list', elements='dict', default=[]),
         enable_ipv6=dict(type='bool', default=None),
         internal=dict(type='bool', default=None),
