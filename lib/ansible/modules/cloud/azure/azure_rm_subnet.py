@@ -288,9 +288,9 @@ class AzureRMSubnet(AzureRMModuleBase):
                         for item in results['service_endpoints']:
                             name = item['service']
                             newd[name] = {'service': name, 'locations': item['locations'].sort()}
-                        if newd != oldd:
-                            changed = True
-                            results['service_endpoints'] = self.service_endpoints
+                    if newd != oldd:
+                        changed = True
+                        results['service_endpoints'] = self.service_endpoints
 
             elif self.state == 'absent':
                 changed = True
