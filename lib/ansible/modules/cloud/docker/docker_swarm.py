@@ -151,7 +151,6 @@ EXAMPLES = '''
 - name: Init a new swarm with default parameters
   docker_swarm:
     state: present
-    advertise_addr: 192.168.1.1
 
 - name: Update swarm configuration
   docker_swarm:
