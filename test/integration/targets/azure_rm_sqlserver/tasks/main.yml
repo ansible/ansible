@@ -3,6 +3,30 @@
     random_postfix: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
   run_once: yes
 
+# Prerequisites
+- name: Create a virtual network
+  azure_rm_virtualnetwork:
+    name: zimsvnet
+    resource_group: "{{ resource_group }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    dns_servers:
+      - 127.0.0.1
+      - 127.0.0.2
+- name: Create a subnet
+  azure_rm_subnet:
+    name: zimssubnet
+    virtual_network_name: zimsvnet
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: 10.1.0.0/24
+    service_endpoints:
+      - service: Microsoft.Sql
+        locations:
+          - eastus
+  register: subnet_output  
+
+# SQL Server tests
 - name: Create instance of SQL Server -- check mode
   azure_rm_sqlserver:
     resource_group: "{{ resource_group }}"
@@ -295,28 +319,6 @@
 
 
 # SQL Virtual Network Rule tests
-
-- name: Create a virtual network
-  azure_rm_virtualnetwork:
-    name: zimsvnet
-    resource_group: "{{ resource_group }}"
-    address_prefixes_cidr:
-      - 10.1.0.0/16
-      - 172.100.0.0/16
-    dns_servers:
-      - 127.0.0.1
-      - 127.0.0.2
-- name: Create a subnet
-  azure_rm_subnet:
-    name: zimssubnet
-    virtual_network_name: zimsvnet
-    resource_group: "{{ resource_group }}"
-    address_prefix_cidr: 10.1.0.0/24
-    service_endpoints:
-      - service: Microsoft.Sql
-        locations:
-          - eastus
-  register: subnet_output  
 
 - name: Create instance of Virtual Network Rule -- check mode
   azure_rm_sqlvirtualnetworkrule:
