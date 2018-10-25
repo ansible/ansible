@@ -1200,6 +1200,16 @@ class Debugger(cmd.Cmd):
 
     do_r = do_redo
 
+    def do_update_task(self, args):
+        """Recreate the task from ``task._ds``, and template with updated ``task_vars``"""
+        templar = Templar(None, shared_loader_obj=None, variables=self.scope['task_vars'])
+        task = self.scope['task']
+        task = task.load_data(task._ds)
+        task.post_validate(templar)
+        self.scope['task'] = task
+
+    do_u = do_update_task
+
     def evaluate(self, args):
         try:
             return eval(args, globals(), self.scope)
