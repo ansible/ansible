@@ -312,6 +312,10 @@
     virtual_network_name: zimsvnet
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: 10.1.0.0/24
+    service_endpoints:
+      - service: Microsoft.Sql
+        locations:
+          - eastus
   register: subnet_output  
 
 - name: Create instance of Virtual Network Rule -- check mode
@@ -320,7 +324,6 @@
     server_name: "sqlsrv{{ random_postfix }}"
     name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
-    ignore_missing_vnet_service_endpoint: yes
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -334,7 +337,6 @@
     server_name: "sqlsrv{{ random_postfix }}"
     name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
-    ignore_missing_vnet_service_endpoint: yes
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -347,7 +349,6 @@
     server_name: "sqlsrv{{ random_postfix }}"
     name: rule1
     virtual_network_subnet_id: "{{ subnet_output.state.id }}" 
-    ignore_missing_vnet_service_endpoint: yes
   register: output
 - name: Assert the state has not changed
   assert:
