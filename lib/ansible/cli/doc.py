@@ -136,9 +136,9 @@ class DocCLI(CLI):
             plugin_data = {}
             for plugin_type in C.DOCUMENTABLE_PLUGINS:
                 plugin_data[plugin_type] = dict()
-                plugin_names = self.get_all_plugins_of_type(plugin_type, loader)
+                plugin_names = self.get_all_plugins_of_type(plugin_type)
                 for plugin_name in plugin_names:
-                    plugin_info = self.get_plugin_metadata(plugin_type, plugin_name, loader)
+                    plugin_info = self.get_plugin_metadata(plugin_type, plugin_name)
                     if plugin_info is not None:
                         plugin_data[plugin_type][plugin_name] = plugin_info
 
@@ -162,7 +162,8 @@ class DocCLI(CLI):
 
         return 0
 
-    def get_all_plugins_of_type(self, plugin_type, loader):
+    def get_all_plugins_of_type(self, plugin_type):
+        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         plugin_list = set()
         paths = loader._get_paths()
         for path in paths:
@@ -170,8 +171,9 @@ class DocCLI(CLI):
             plugin_list.update(plugins_to_add)
         return sorted(set(plugin_list))
 
-    def get_plugin_metadata(self, plugin_type, plugin_name, loader):
+    def get_plugin_metadata(self, plugin_type, plugin_name):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if filename is None:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
