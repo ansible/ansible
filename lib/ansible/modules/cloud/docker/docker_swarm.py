@@ -330,9 +330,6 @@ class SwarmManager(DockerBaseClass):
             return
 
         try:
-            if self.parameters.advertise_addr is None:
-                self.client.fail(msg="advertise_addr is required to initialize a swarm cluster.")
-
             self.client.init_swarm(
                 advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
                 force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
