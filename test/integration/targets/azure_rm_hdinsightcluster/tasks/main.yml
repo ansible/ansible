@@ -8,6 +8,17 @@
       resource_group: "{{ resource_group }}"
       name: "storage{{ rpfx }}"
       account_type: Standard_LRS
+
+- name: Sample for Azure REST API - StorageAccounts_ListKeys
+  azure_rm_resource:
+    api_version: '2018-07-01'
+    method: POST
+    resource_group: "{{ resource_group }}"
+    provider: storage
+    resource_type: storageaccounts
+    resource_name: "storage{{ rpfx }}"
+    subresource:
+      - type: listkeys
   register: storage_output
 
 - name: Create instance of Cluster -- check mode
