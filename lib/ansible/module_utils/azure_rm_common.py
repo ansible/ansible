@@ -61,7 +61,7 @@ AZURE_API_PROFILES = {
             snapshots='2017-03-30',
             virtual_machine_run_commands='2017-03-30'
         ),
-        'NetworkManagementClient': '2017-11-01',
+        'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
         'WebsiteManagementClient': '2016-08-01',
@@ -212,7 +212,7 @@ AZURE_PKG_VERSIONS = {
     },
     'NetworkManagementClient': {
         'package_name': 'network',
-        'expected_version': '1.7.1'
+        'expected_version': '2.2.1'
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
