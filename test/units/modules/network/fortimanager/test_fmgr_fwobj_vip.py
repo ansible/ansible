@@ -113,7 +113,7 @@ def test_fmgr_firewall_vip_addsetdelete(fixture_data, mocker):
     # name: Basic DNS Translation
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: dns-translation
+    # type: "dns-translation"
     # ssl-http-match-host: None
     # ssl-pfs: None
     # ssl-server-max-version: None
