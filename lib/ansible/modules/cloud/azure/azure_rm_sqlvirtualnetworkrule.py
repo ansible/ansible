@@ -37,7 +37,6 @@ options:
     virtual_network_subnet_id:
         description:
             - The ARM resource id of the virtual network subnet.
-        required: True
     ignore_missing_vnet_service_endpoint:
         description:
             - Create firewall rule before the virtual network has vnet service endpoint enabled.
@@ -120,8 +119,7 @@ class AzureRMVirtualNetworkRules(AzureRMModuleBase):
                 required=True
             ),
             virtual_network_subnet_id=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             ignore_missing_vnet_service_endpoint=dict(
                 type='bool'
