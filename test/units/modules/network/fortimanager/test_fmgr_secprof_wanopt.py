@@ -23,7 +23,7 @@ from pyFMG.fortimgr import FortiManager
 import pytest
 
 try:
-    from ansible.modules.network.fortimanager import fmgr_secprof_voip
+    from ansible.modules.network.fortimanager import fmgr_secprof_wanopt
 except ImportError:
     pytest.skip("Could not load required modules for testing", allow_module_level=True)
 
@@ -50,412 +50,272 @@ def fixture_data(request):
     return request.param.get(func_name, None)
 
 
-def test_fmgr_voip_profile_addsetdelete(fixture_data, mocker):
+def test_fmgr_wanopt_profile_addsetdelete(fixture_data, mocker):
     mocker.patch("pyFMG.fortimgr.FortiManager._post_request", side_effect=fixture_data)
     #  Fixture sets used:###########################
 
     ##################################################
-    # comment: None
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    # 'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'info-rate': None,
-    #  'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None,
-    #  'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None, 'ssl-pfs': None,
-    #  'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None, 'refer-rate': None,
-    #  'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None, 'block-unknown': None,
-    #  'ssl-server-certificate': None, 'block-invite': None, 'malformed-request-line': None, 'max-dialogs': None,
-    #  'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None, 'block-notify': None,
-    #  'max-idle-dialogs': None, 'strict-register': None, 'block-long-lines': None, 'log-violations': None,
-    #  'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'rfc2543-branch': None, 'block-ack': None,
-    #  'malformed-header-max-forwards': None, 'block-message': None, 'malformed-header-call-id': None,
-    #  'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None, 'block-refer': None,
-    #  'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None, 'ssl-algorithm': None,
-    #  'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None, 'message-rate': None,
-    #  'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-prack': None, 'malformed-header-sdp-r': None, 'open-contact-pinhole': None,
-    #  'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None,
-    #  'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
+    # ftp: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
+    # http: {'status': None, 'ssl': None, 'tunnel-non-http': None, 'log-traffic': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'tunnel-sharing': None, 'port': None, 'ssl-port': None,
+    #  'secure-tunnel': None}
+    # cifs: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
     # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: None
     # mode: delete
+    # tcp: {'status': None, 'byte-caching-opt': None, 'ssl': None, 'log-traffic': None, 'byte-caching': None,
+    # 'secure-tunnel': None, 'port': None, 'ssl-port': None, 'tunnel-sharing': None}
+    # transparent: None
+    # name: Ansible_WanOpt_Profile
     ##################################################
     ##################################################
-    # comment: Created by Ansible
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'open-contact-pinhole': None, 'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None,
-    #  'rfc2543-branch': None, 'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None,
-    #  'block-info': None, 'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None,
-    #  'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None,
-    #  'refer-rate': None, 'info-rate': None, 'open-record-route-pinhole': None, 'register-rate': None,
-    #  'unknown-header': None, 'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None,
-    #  'strict-register': None, 'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None,
-    #  'open-register-pinhole': None, 'block-notify': None, 'max-idle-dialogs': None, 'malformed-request-line': None,
-    #  'block-long-lines': None, 'log-violations': None, 'ssl-min-version': None,
-    #  'provisional-invite-expiry-time': None, 'block-prack': None, 'malformed-header-max-forwards': None,
-    #  'block-message': None, 'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None,
-    #  'register-contact-trace': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None,
-    #  'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None,
-    #  'message-rate': None, 'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-ack': None, 'malformed-header-sdp-r': None, 'block-refer': None, 'ips-rtp': None,
-    #  'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None, 'max-line-length': None,
-    #  'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: adom
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
+    # ftp: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'tunnel-sharing': None,
+    #  'port': None, 'secure-tunnel': None}
+    # http: {'status': None, 'log-traffic': None, 'tunnel-non-http': None, 'ssl': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'secure-tunnel': None, 'port': None, 'ssl-port': None,
+    #  'tunnel-sharing': None}
+    # cifs: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'tunnel-sharing': None,
+    #  'port': None, 'secure-tunnel': None}
+    # adom: root
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: Created by Ansible
+    # mode: set
+    # tcp: {'status': None, 'byte-caching-opt': None, 'log-traffic': None, 'ssl': None, 'byte-caching': None,
+    #  'tunnel-sharing': None, 'port': None, 'ssl-port': None, 'secure-tunnel': None}
+    # transparent: enable
+    # name: Ansible_WanOpt_Profile
+    ##################################################
+    ##################################################
+    # ftp: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
+    # http: {'status': None, 'ssl': None, 'tunnel-non-http': None, 'log-traffic': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'tunnel-sharing': None, 'port': None, 'ssl-port': None,
+    #  'secure-tunnel': None}
+    # cifs: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
+    # adom: root
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: None
+    # mode: delete
+    # tcp: {'status': None, 'byte-caching-opt': None, 'ssl': None, 'log-traffic': None, 'byte-caching': None,
+    #  'secure-tunnel': None, 'port': None, 'ssl-port': None, 'tunnel-sharing': None}
+    # transparent: None
+    # name: Ansible_WanOpt_Profile
+    ##################################################
+    ##################################################
+    # ftp: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'tunnel-sharing': None,
+    #  'port': None, 'secure-tunnel': None}
+    # http: {'status': None, 'log-traffic': None, 'tunnel-non-http': None, 'ssl': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'secure-tunnel': None, 'port': None, 'ssl-port': None,
+    #  'tunnel-sharing': None}
+    # cifs: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'tunnel-sharing': None,
+    #  'port': None, 'secure-tunnel': None}
+    # adom: root
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: Created by Ansible
+    # mode: set
+    # tcp: {'status': None, 'byte-caching-opt': None, 'log-traffic': None, 'ssl': None, 'byte-caching': None,
+    #  'tunnel-sharing': None, 'port': None, 'ssl-port': None, 'secure-tunnel': None}
+    # transparent: enable
+    # name: Ansible_WanOpt_Profile
+    ##################################################
+    ##################################################
+    # ftp: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
+    # http: {'status': None, 'ssl': None, 'tunnel-non-http': None, 'log-traffic': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'tunnel-sharing': None, 'port': None, 'ssl-port': None,
+    #  'secure-tunnel': None}
+    # cifs: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
+    # adom: root
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: None
+    # mode: delete
+    # tcp: {'status': None, 'byte-caching-opt': None, 'ssl': None, 'log-traffic': None, 'byte-caching': None,
+    #  'secure-tunnel': None, 'port': None, 'ssl-port': None, 'tunnel-sharing': None}
+    # transparent: None
+    # name: Ansible_WanOpt_Profile
+    ##################################################
+    ##################################################
+    # ftp: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'tunnel-sharing': None,
+    #  'port': None, 'secure-tunnel': None}
+    # http: {'status': None, 'log-traffic': None, 'tunnel-non-http': None, 'ssl': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'secure-tunnel': None, 'port': None, 'ssl-port': None,
+    #  'tunnel-sharing': None}
+    # cifs: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'tunnel-sharing': None,
+    #  'port': None, 'secure-tunnel': None}
+    # adom: root
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: None
+    # mode: delete
+    # tcp: {'status': None, 'byte-caching-opt': None, 'log-traffic': None, 'ssl': None, 'byte-caching': None,
+    #  'tunnel-sharing': None, 'port': None, 'ssl-port': None, 'secure-tunnel': None}
+    # transparent: None
+    # name: Ansible_WanOpt_Profile
+    ##################################################
+    ##################################################
+    # ftp: [{'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'tunnel-sharing': 'private', 'port': 80, 'secure-tunnel': 'enable'}]
+    # http: {'status': None, 'ssl': None, 'tunnel-non-http': None, 'log-traffic': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'tunnel-sharing': None, 'port': None, 'ssl-port': None,
+    #  'secure-tunnel': None}
+    # cifs: [{'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'tunnel-sharing': 'private', 'port': 80, 'secure-tunnel': 'enable'}]
+    # adom: root
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: Created by Ansible
+    # mode: set
+    # tcp: {'status': None, 'byte-caching-opt': None, 'ssl': None, 'log-traffic': None, 'byte-caching': None,
+    #  'secure-tunnel': None, 'port': None, 'ssl-port': None, 'tunnel-sharing': None}
+    # transparent: enable
+    # name: Ansible_WanOpt_Profile
+    ##################################################
+    ##################################################
+    # ftp: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'tunnel-sharing': 'private', 'port': 80, 'secure-tunnel': 'enable'}
+    # http: {'status': None, 'log-traffic': None, 'tunnel-non-http': None, 'ssl': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'secure-tunnel': None, 'port': None, 'ssl-port': None,
+    #  'tunnel-sharing': None}
+    # cifs: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'tunnel-sharing': 'private', 'port': 80, 'secure-tunnel': 'enable'}
+    # adom: root
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: Created by Ansible
+    # name: Ansible_WanOpt_Profile
+    # tcp: {'status': None, 'byte-caching-opt': None, 'log-traffic': None, 'ssl': None, 'byte-caching': None,
+    #  'tunnel-sharing': None, 'port': None, 'ssl-port': None, 'secure-tunnel': None}
+    # transparent: enable
     # mode: set
     ##################################################
     ##################################################
-    # comment: Created by Ansible
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'info-rate': None,
-    #  'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None,
-    #  'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None,
-    #  'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None,
-    #  'refer-rate': None, 'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None,
-    #  'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None, 'malformed-request-line': None,
-    #  'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None,
-    #  'block-notify': None, 'max-idle-dialogs': None, 'strict-register': None, 'block-long-lines': None,
-    #  'log-violations': None, 'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'rfc2543-branch': None,
-    #  'block-ack': None, 'malformed-header-max-forwards': None, 'block-message': None,
-    #  'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None,
-    #  'block-refer': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None,
-    #  'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None,
-    #  'message-rate': None, 'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-prack': None, 'malformed-header-sdp-r': None, 'open-contact-pinhole': None,
-    #  'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None,
-    #  'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
+    # ftp: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'secure-tunnel': 'disable', 'port': 80, 'tunnel-sharing': 'private'}
+    # http: {'status': None, 'ssl': None, 'tunnel-non-http': None, 'log-traffic': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'tunnel-sharing': None, 'port': None, 'ssl-port': None,
+    #  'secure-tunnel': None}
+    # cifs: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'secure-tunnel': 'enable', 'port': 80, 'tunnel-sharing': 'private'}
+    # comments: Created by Ansible
     # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # tcp: {'status': None, 'byte-caching-opt': None, 'ssl': None, 'log-traffic': None, 'byte-caching': None,
+    #  'secure-tunnel': None, 'port': None, 'ssl-port': None, 'tunnel-sharing': None}
     # mode: set
+    # transparent: enable
+    # name: Ansible_WanOpt_Profile
     ##################################################
     ##################################################
-    # comment: None
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'open-contact-pinhole': None, 'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None,
-    #  'rfc2543-branch': None, 'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None,
-    #  'block-info': None, 'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None,
-    #  'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None,
-    #  'refer-rate': None, 'info-rate': None, 'open-record-route-pinhole': None, 'register-rate': None,
-    #  'unknown-header': None, 'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None,
-    #  'strict-register': None, 'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None,
-    #  'open-register-pinhole': None, 'block-notify': None, 'max-idle-dialogs': None, 'malformed-request-line': None,
-    #  'block-long-lines': None, 'log-violations': None, 'ssl-min-version': None,
-    #  'provisional-invite-expiry-time': None, 'block-prack': None, 'malformed-header-max-forwards': None,
-    #  'block-message': None, 'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None,
-    #  'register-contact-trace': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None,
-    #  'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None,
-    #  'message-rate': None, 'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-ack': None, 'malformed-header-sdp-r': None, 'block-refer': None, 'ips-rtp': None,
-    #  'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None, 'max-line-length': None,
-    #  'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
+    # ftp: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'tunnel-sharing': 'private', 'port': 80, 'secure-tunnel': 'disable'}
+    # http: {'status': None, 'log-traffic': None, 'tunnel-non-http': None, 'ssl': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'secure-tunnel': None, 'port': None, 'ssl-port': None,
+    #  'tunnel-sharing': None}
+    # cifs: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'port': 80, 'tunnel-sharing': 'private'}
     # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
-    # mode: delete
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'info-rate': None,
-    #  'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None,
-    #  'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None, 'ssl-pfs': None,
-    #  'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None, 'refer-rate': None,
-    #  'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None, 'block-unknown': None,
-    #  'ssl-server-certificate': None, 'block-invite': None, 'malformed-request-line': None, 'max-dialogs': None,
-    #  'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None, 'block-notify': None,
-    #  'max-idle-dialogs': None, 'strict-register': None, 'block-long-lines': None, 'log-violations': None,
-    #  'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'rfc2543-branch': None, 'block-ack': None,
-    #  'malformed-header-max-forwards': None, 'block-message': None, 'malformed-header-call-id': None,
-    #  'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None, 'block-refer': None,
-    #  'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None, 'ssl-algorithm': None,
-    #  'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None, 'message-rate': None,
-    #  'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-prack': None, 'malformed-header-sdp-r': None, 'open-contact-pinhole': None,
-    #  'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None,
-    #  'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # tcp: {'status': None, 'byte-caching-opt': None, 'log-traffic': None, 'ssl': None, 'byte-caching': None,
+    #  'tunnel-sharing': None, 'port': None, 'ssl-port': None, 'secure-tunnel': None}
+    # name: Ansible_WanOpt_Profile
     # mode: set
+    # transparent: enable
+    # comments: Created by Ansible
     ##################################################
     ##################################################
-    # comment: None
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'open-contact-pinhole': None, 'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None,
-    #  'rfc2543-branch': None, 'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None,
-    #  'block-info': None, 'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None,
-    #  'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None,
-    #  'refer-rate': None, 'info-rate': None, 'open-record-route-pinhole': None, 'register-rate': None,
-    #  'unknown-header': None, 'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None,
-    #  'strict-register': None, 'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None,
-    #  'open-register-pinhole': None, 'block-notify': None, 'max-idle-dialogs': None, 'malformed-request-line': None,
-    #  'block-long-lines': None, 'log-violations': None, 'ssl-min-version': None,
-    #  'provisional-invite-expiry-time': None, 'block-prack': None, 'malformed-header-max-forwards': None,
-    #  'block-message': None, 'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None,
-    #  'register-contact-trace': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None,
-    #  'block-bye': None, 'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None,
-    #  'call-keepalive': None, 'message-rate': None, 'malformed-header-expires': None, 'block-options': None,
-    #  'log-call-summary': None, 'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None,
-    #  'ack-rate': None, 'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-ack': None, 'malformed-header-sdp-r': None, 'block-refer': None, 'ips-rtp': None,
-    #  'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None, 'max-line-length': None,
-    #  'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
+    # ftp: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
+    # http: {'status': None, 'ssl': None, 'tunnel-non-http': None, 'log-traffic': None, 'byte-caching': None,
+    #  'unknown-http-version': None, 'prefer-chunking': None, 'tunnel-sharing': None, 'port': None, 'ssl-port': None,
+    #  'secure-tunnel': None}
+    # cifs: {'status': None, 'log-traffic': None, 'byte-caching': None, 'prefer-chunking': None, 'secure-tunnel': None,
+    #  'port': None, 'tunnel-sharing': None}
     # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
+    # auth-group: None
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # tcp: {'status': None, 'byte-caching-opt': None, 'ssl': None, 'log-traffic': None, 'byte-caching': None,
+    #  'secure-tunnel': None, 'port': None, 'ssl-port': None, 'tunnel-sharing': None}
     # mode: delete
+    # comments: None
+    # transparent: None
+    # name: Ansible_WanOpt_Profile
     ##################################################
     ##################################################
-    # comment: None
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'info-rate': None,
-    #  'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None,
-    #  'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None, 'ssl-pfs': None,
-    #  'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None, 'refer-rate': None,
-    #  'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None, 'block-unknown': None,
-    #  'ssl-server-certificate': None, 'block-invite': None, 'malformed-request-line': None, 'max-dialogs': None,
-    #  'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None, 'block-notify': None,
-    #  'max-idle-dialogs': None, 'strict-register': None, 'block-long-lines': None, 'log-violations': None,
-    #  'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'rfc2543-branch': None, 'block-ack': None,
-    #  'malformed-header-max-forwards': None, 'block-message': None, 'malformed-header-call-id': None,
-    #  'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None, 'block-refer': None,
-    #  'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None, 'ssl-algorithm': None,
-    #  'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None, 'message-rate': None,
-    #  'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-prack': None, 'malformed-header-sdp-r': None, 'open-contact-pinhole': None,
-    #  'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None,
-    #  'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
+    # http: {'status': None, 'log-traffic': None, 'prefer-chunking': None, 'port': None, 'ssl': None,
+    #  'tunnel-non-http': None, 'byte-caching': None, 'unknown-http-version': None, 'secure-tunnel': None,
+    #  'ssl-port': None, 'tunnel-sharing': None}
+    # cifs: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'port': 80, 'tunnel-sharing': 'private'}
     # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
-    # mode: delete
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'open-contact-pinhole': None, 'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None,
-    #  'rfc2543-branch': None, 'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None,
-    #  'block-info': None, 'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None,
-    #  'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None,
-    #  'refer-rate': None, 'info-rate': None, 'open-record-route-pinhole': None, 'register-rate': None,
-    #  'unknown-header': None, 'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None,
-    #  'strict-register': None, 'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None,
-    #  'open-register-pinhole': None, 'block-notify': None, 'max-idle-dialogs': None, 'malformed-request-line': None,
-    #  'block-long-lines': None, 'log-violations': None, 'ssl-min-version': None,
-    #  'provisional-invite-expiry-time': None, 'block-prack': None, 'malformed-header-max-forwards': None,
-    #  'block-message': None, 'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None,
-    #  'register-contact-trace': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None,
-    #  'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None,
-    #  'message-rate': None, 'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-ack': None, 'malformed-header-sdp-r': None, 'block-refer': None, 'ips-rtp': None,
-    #  'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None, 'max-line-length': None,
-    #  'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: root
-    # sccp: [{'status': 'enable', 'log-call-summary': 'enable', 'log-violations': 'enable', 'block-mcast': 'enable'}]
-    # mode: set
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'info-rate': None,
-    #  'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None,
-    #  'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None, 'ssl-pfs': None,
-    #  'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None, 'refer-rate': None,
-    #  'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None, 'block-unknown': None,
-    #  'ssl-server-certificate': None, 'block-invite': None, 'malformed-request-line': None, 'max-dialogs': None,
-    #  'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None, 'block-notify': None,
-    # 'max-idle-dialogs': None, 'strict-register': None, 'block-long-lines': None, 'log-violations': None,
-    #  'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'rfc2543-branch': None, 'block-ack': None,
-    #  'malformed-header-max-forwards': None, 'block-message': None, 'malformed-header-call-id': None,
-    #  'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None, 'block-refer': None,
-    #  'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None, 'ssl-algorithm': None,
-    #  'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None, 'message-rate': None,
-    #  'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-prack': None, 'malformed-header-sdp-r': None, 'open-contact-pinhole': None,
-    #  'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None,
-    #  'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: root
-    # sccp: {'status': 'enable', 'log-call-summary': 'enable', 'log-violations': 'enable', 'block-mcast': 'enable'}
-    # mode: set
-    ##################################################
-    ##################################################
-    # comment: None
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'open-contact-pinhole': None, 'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None,
-    #  'rfc2543-branch': None, 'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None,
-    #  'block-info': None, 'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None,
-    #  'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None,
-    #  'refer-rate': None, 'info-rate': None, 'open-record-route-pinhole': None, 'register-rate': None,
-    #  'unknown-header': None, 'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None,
-    #  'strict-register': None, 'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None,
-    #  'open-register-pinhole': None, 'block-notify': None, 'max-idle-dialogs': None, 'malformed-request-line': None,
-    #  'block-long-lines': None, 'log-violations': None, 'ssl-min-version': None,
-    #  'provisional-invite-expiry-time': None, 'block-prack': None, 'malformed-header-max-forwards': None,
-    #  'block-message': None, 'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None,
-    #  'register-contact-trace': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None,
-    #  'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None,
-    #  'message-rate': None, 'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None,
-    #  'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None,
-    #  'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None,
-    #  'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None,
-    #  'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None,
-    #  'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-ack': None, 'malformed-header-sdp-r': None, 'block-refer': None, 'ips-rtp': None,
-    #  'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None, 'max-line-length': None,
-    #  'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None,
-    #  'log-violations': None}
-    # mode: delete
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None,
-    #  'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None,
-    #  'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'info-rate': None,
-    #  'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None,
-    #  'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None, 'ssl-pfs': None,
-    #  'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None, 'refer-rate': None,
-    #  'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None, 'block-unknown': None,
-    #  'ssl-server-certificate': None, 'block-invite': None, 'malformed-request-line': None, 'max-dialogs': None,
-    #  'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None, 'block-options': None,
-    #  'max-idle-dialogs': None, 'strict-register': None, 'block-long-lines': None, 'log-violations': None,
-    #  'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'rfc2543-branch': None, 'block-ack': None,
-    #  'malformed-header-max-forwards': None, 'block-message': None, 'malformed-header-call-id': None,
-    #  'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None, 'block-refer': None,
-    #  'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None, 'ssl-algorithm': None,
-    #  'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None, 'message-rate': None,
-    #  'malformed-header-expires': None, 'log-call-summary': None, 'hnt-restrict-source-ip': None,
-    #  'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None, 'malformed-header-allow': None,
-    #  'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None, 'malformed-header-contact': None,
-    #  'malformed-header-sdp-s': None, 'hosted-nat-traversal': None, 'subscribe-rate': None,
-    #  'malformed-header-content-length': None, 'malformed-header-sdp-z': None, 'malformed-header-route': None,
-    #  'block-notify': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None,
-    #  'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None,
-    #  'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None,
-    #  'bye-rate': None, 'block-prack': None, 'malformed-header-sdp-r': None, 'open-contact-pinhole': None,
-    #  'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None,
-    #  'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: root
-    # sccp: {'status': 'enable', 'log-call-summary': 'enable', 'log-violations': 'enable', 'block-mcast': 'enable'}
+    # auth-group: None
+    # tcp: {'status': None, 'log-traffic': None, 'byte-caching-opt': None, 'byte-caching': None, 'ssl': None,
+    #  'tunnel-sharing': None, 'port': None, 'ssl-port': None, 'secure-tunnel': None}
+    # transparent: enable
+    # ftp: {'status': 'enable', 'log-traffic': 'enable', 'byte-caching': 'enable', 'prefer-chunking': 'dynamic',
+    #  'tunnel-sharing': 'private', 'port': 80, 'secure-tunnel': 'disable'}
+    # name: Ansible_WanOpt_Profile
+    # mapi: {'status': None, 'log-traffic': None, 'byte-caching': None, 'secure-tunnel': None, 'port': None,
+    #  'tunnel-sharing': None}
+    # comments: Created by Ansible
     # mode: set
     ##################################################
 
     # Test using fixture 1 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -3
     # Test using fixture 2 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
-    assert output['raw_response']['status']['code'] == -6
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
     # Test using fixture 3 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[2]['paramgram_used'])
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[2]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 4 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[3]['paramgram_used'])
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[3]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 5 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[4]['paramgram_used'])
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[4]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 6 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[5]['paramgram_used'])
-    assert output['raw_response']['status']['code'] == 0
-    # Test using fixture 7 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[6]['paramgram_used'])
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[5]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -3
-    # Test using fixture 8 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[7]['paramgram_used'])
+    # Test using fixture 7 #
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[6]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -10
+    # Test using fixture 8 #
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[7]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == -9998
     # Test using fixture 9 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[8]['paramgram_used'])
-    assert output['raw_response']['status']['code'] == 0
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[8]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == -9998
     # Test using fixture 10 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[9]['paramgram_used'])
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[9]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 11 #
-    output = fmgr_secprof_voip.fmgr_voip_profile_addsetdelete(fmg_instance, fixture_data[10]['paramgram_used'])
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[10]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 12 #
+    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[11]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
