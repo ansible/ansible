@@ -77,7 +77,7 @@ options:
   ipam_options:
     description:
       - Dictionary of IPAM options.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter ``ipam_config`` instead. In Docker 1.10.0, IPAM 
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter ``ipam_config`` instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options.
 
