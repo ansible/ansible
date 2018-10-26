@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2018, Hiroyuki Matsuo <hiroyuki3569825@gmail.com>
+# Copyright: (c) 2018, Hiroyuki Matsuo <h.matsuo.engineer@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_vhost_limits
 author: '"Hiroyuki Matsuo (@h-matsuo)"'
-version_added: "2.6"
+version_added: "2.8"
 
 short_description: Manage the state of virtual host limits in RabbitMQ
 description:
