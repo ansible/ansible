@@ -255,16 +255,16 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         d = {
             'resource_group': self.resource_group,
             'server_name': self.server_name,
-            'id': d['id'],
-            'name': d['name'],
-            'location': d['location'],
-            'tags': d['tags'],
-            'sku': {'name': d['sku']['name'],
-                    'tier': d['sku']['tier'],
-                    'capacity': d['sku']['capacity']},
-            'kind': d['kind'],
-            'status': d['status'],
-            'zone_redundant': d['zone_redundant']
+            'id': d.get('id', None),
+            'name': d.get('name', None),
+            'location': d.get('location', None),
+            'tags': d.get('tags', None),
+            'sku': {'name': d.get('sku', {}).get('name', None),
+                    'tier': d.get('sku', {}).get('tier', None),
+                    'capacity': d.get('sku', {}).get('capacity', None)},
+            'kind': d.get('kind', None),
+            'status': d.get('status', None),
+            'zone_redundant': d.get('zone_redundant', None)
         }
         return d
 
