@@ -126,6 +126,8 @@ class TestConnectionClass(unittest.TestCase):
 
         mock__shell = MagicMock()
         conn._ssh_shell = mock__shell
+        conn._ssh_shell.recv_ready.return_value = True
+        conn._ssh_shell.gettimeout.return_value = 10
 
         response = b"""device#command
         command response
