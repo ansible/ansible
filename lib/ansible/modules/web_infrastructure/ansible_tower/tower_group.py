@@ -46,6 +46,13 @@ options:
       default: 'no'
       type: bool
       version_added: 2.8
+    parent_groups:
+      description:
+        - List of groups to nest this group under.
+      required: False
+      default: []
+      type: list
+      version_added: 2.8
     state:
       description:
         - Desired state of the resource.
@@ -96,6 +103,7 @@ def main():
         inventory=dict(required=True),
         variables=dict(),
         merge_variables=dict(required=False, default=False, type='bool'),
+        parent_groups=dict(required=False, default=[], type='list'),
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
@@ -110,6 +118,7 @@ def main():
     inventory = module.params.get('inventory')
     state = module.params.pop('state')
     merge_variables = module.params.pop('merge_variables')
+    parent_groups = module.params.pop('parent_groups')
 
     variables = module.params.get('variables')
     if variables:
@@ -138,6 +147,13 @@ def main():
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
 
+        try:
+            for p_group in parent_groups:
+                group.get(name=p_group, inventory=params['inventory'])
+        except exc.NotFound as excinfo:
+            module.fail_json(msg='Failed to associate parent {0}: {1}'.format(p_group, excinfo),
+                             changed=False)
+
         if merge_variables:
             try:
                 existing_group = group.get(name=name, inventory=inv['id'])
@@ -155,10 +171,12 @@ def main():
             if state == 'present':
                 result = group.modify(**params)
                 json_output['id'] = result['id']
+                for p_group in parent_groups:
+                    res = group.associate(group=result['id'], parent=p_group, inventory=params['inventory'])
+                    if res:
+                        result = res
             elif state == 'absent':
                 result = group.delete(**params)
-        except (exc.NotFound) as excinfo:
-            module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
         except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
 
