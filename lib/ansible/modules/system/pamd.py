@@ -628,72 +628,60 @@ class PamdService(object):
         for current_rule in rules_to_find:
             rule_changed = False
 
-            if not args_to_add:
-                args_to_add = []
-
             # create some structures to evaluate the situation
-            new_args_d = dict()
-            no_eq_new_args = set()
-            for new_arg in args_to_add:
-                if new_arg.count("=") is 0:
-                    no_eq_new_args.add(new_arg)
+            simple_new_args = set()
+            key_value_new_args = dict()
+
+            for arg in args_to_add:
+                if arg.startswith("["):
+                    continue
+                elif "=" in arg:
+                    key, value = arg.split("=")
+                    key_value_new_args[key] = value
                 else:
-                    pair = new_arg.split("=")
-                    new_args_d[pair[0]] = pair[1]
-            new_args_k = set(new_args_d.keys())
+                    simple_new_args.add(arg)
 
-            rule_args_d = dict()
-            no_eq_rule_args = set()
-            for rule_arg in current_rule.rule_args:
-                if rule_arg.count("=") is 0:
-                    no_eq_rule_args.add(rule_arg)
+            key_value_new_args_set = set(key_value_new_args)
+
+            simple_current_args = set()
+            key_value_current_args = dict()
+
+            for arg in current_rule.rule_args:
+                if arg.startswith("["):
+                    continue
+                elif "=" in arg:
+                    key, value = arg.split("=")
+                    key_value_current_args[key] = value
                 else:
-                    pair = rule_arg.split("=")
-                    rule_args_d[pair[0]] = pair[1]
-            rule_args_k = set(rule_args_d.keys())
+                    simple_current_args.add(arg)
 
-            # if there is nothing in common and neither set is empty
-            if no_eq_new_args.isdisjoint(no_eq_rule_args):
-                if((len(no_eq_new_args) != 0) and (len(no_eq_rule_args) != 0)):
-                    rule_changed = True
-                    for new_arg in no_eq_new_args:
-                        no_eq_rule_args.add(new_arg)
-            # else there's an intersection and possibly new args
-            else:
-                real_new_no_eq_args = no_eq_new_args.difference(no_eq_rule_args)
-                for new_arg in real_new_no_eq_args:
-                    no_eq_rule_args.add(new_arg)
+            key_value_current_args_set = set(key_value_current_args)
 
-            # if there are only new args that are not the same as
-            # any current rule args and neither set is empty
-            if new_args_k.isdisjoint(rule_args_k):
-                if((len(new_args_k) != 0) and (len(rule_args_k) != 0)):
-                    rule_changed = True
-                    for key in new_args_k:
-                        rule_args_d[key] = new_args_d[key]
-            # else there's an intersection and possibly new args
-            else:
-                # what args are in both new_args_d and rule_args_d
-                args_in_both = new_args_k.intersection(rule_args_k)
-                # what args are in new_args_d that aren't in rule_args_d
-                real_new_args = new_args_k.difference(rule_args_k)
+            new_args_to_add = list()
 
-                for key in args_in_both:
-                    if new_args_d[key] is not rule_args_d[key]:
+            # Handle new simple arguments
+            if simple_new_args.difference(simple_current_args):
+                for arg in simple_new_args.difference(simple_current_args):
+                    new_args_to_add.append(arg)
+
+            # Handle new key value arguments
+            if key_value_new_args_set.difference(key_value_current_args_set):
+                for key in key_value_new_args_set.difference(key_value_current_args_set):
+                    new_args_to_add.append(key + '=' + key_value_new_args[key])
+
+            if new_args_to_add:
+                current_rule.rule_args += new_args_to_add
+                rule_changed = True
+
+            # Handle existing key value arguments when value is not equal
+            if key_value_new_args_set.intersection(key_value_current_args_set):
+                for key in key_value_new_args_set.intersection(key_value_current_args_set):
+                    if key_value_current_args[key] != key_value_new_args[key]:
+                        arg_index = current_rule.rule_args.index(key + '=' + key_value_current_args[key])
+                        current_rule.rule_args[arg_index] = str(key + '=' + key_value_new_args[key])
                         rule_changed = True
-                        rule_args_d[key] = new_args_d[key]
-
-                for key in real_new_args:
-                    rule_changed = True
-                    rule_args_d[key] = new_args_d[key]
 
             if rule_changed:
-                new_rule_args = list()
-                for rule_arg in rule_args_d:
-                    new_rule_args.append(rule_arg + "=" + rule_args_d[rule_arg])
-                for rule_arg in no_eq_rule_args:
-                    new_rule_args.append(rule_arg)
-                current_rule.rule_args = new_rule_args
                 changes += 1
 
         return changes
@@ -839,6 +827,9 @@ def main():
         changes = service.remove_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
                                                   module_arguments)
     elif action == 'args_present':
+        if [arg for arg in module_arguments if arg.startswith("[")]:
+            module.fail_json(msg="Unable to process bracketed '[' complex arguments with 'args_present'. Please use 'updated'.")
+
         changes = service.add_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
                                                module_arguments)
     elif action == 'absent':
