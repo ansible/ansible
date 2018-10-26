@@ -254,17 +254,18 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'server_name': self.server_name,
             'id': d.get('id', None),
             'name': d.get('name', None),
             'location': d.get('location', None),
             'tags': d.get('tags', None),
-            'sku': {'name': d.get('sku', {}).get('name', None),
-                    'tier': d.get('sku', {}).get('tier', None),
-                    'capacity': d.get('sku', {}).get('capacity', None)},
+            'sku': {
+              'name': d.get('sku', {}).get('name', None),
+              'tier': d.get('sku', {}).get('tier', None),
+              'capacity': d.get('sku', {}).get('capacity', None)
+            },
             'kind': d.get('kind', None),
-            'status': d.get('status', None),
-            'zone_redundant': d.get('zone_redundant', None)
+            'collation': d.get('collation', None),
+            'status': d.get('status', None)
         }
         return d
 
