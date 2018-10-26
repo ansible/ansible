@@ -53,9 +53,10 @@ class ActionModule(ActionBase):
                 )
             )
 
-            result.update(self._execute_module('uri', module_args=new_module_args, task_vars=task_vars))
+            result.update(self._execute_module('uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tmpdir)
+            if not self._task.async_val:
+                self._remove_tmp_path(self._connection._shell.tmpdir)
         return result
