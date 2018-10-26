@@ -127,18 +127,23 @@ class DocCLI(CLI):
 
         # process all plugins of type
         if self.options.all_plugins:
-            self.args = self.get_all_plugins_of_type(plugin_type, loader)
+            self.args = self.get_all_plugins_of_type(plugin_type)
 
-        # dump plugin metadata as JSON
+        # dump plugin desc/metadata as JSON
         if self.options.json_dump:
             plugin_data = {}
-            for plugin_type in C.DOCUMENTABLE_PLUGINS:
+            if not plugin_type:
+                plugins = C.DOCUMENTABLE_PLUGINS
+            else:
+                plugins = [plugin_type]
+
+            for p_type in plugins:
                 plugin_data[plugin_type] = dict()
-                plugin_names = self.get_all_plugins_of_type(plugin_type)
+                plugin_names = self.get_all_plugins_of_type(p_type)
                 for plugin_name in plugin_names:
-                    plugin_info = self.get_plugin_metadata(plugin_type, plugin_name)
+                    plugin_info = self.get_plugin_metadata(p_type, plugin_name)
                     if plugin_info is not None:
-                        plugin_data[plugin_type][plugin_name] = plugin_info
+                        plugin_data[p_type][plugin_name] = plugin_info
 
             self.pager(json.dumps(plugin_data, sort_keys=True, indent=4))
 
@@ -185,7 +190,7 @@ class DocCLI(CLI):
                 (plugin_type, plugin_name, filename))
 
         if doc is None:
-            if 'removed' not in metadata.get('status', []):
+            if plugin_type == 'module' and 'removed' not in metadata.get('status', []):
                 raise AnsibleError(
                     "%s %s at %s has a documentation error formatting or is missing documentation." %
                     (plugin_type, plugin_name, filename))

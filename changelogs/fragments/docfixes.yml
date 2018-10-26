@@ -1,0 +1,2 @@
+bugfix:
+    - fixes ansible-doc, --json now is 'type intelligent' and reinstated httpapi, cliconf and --all options
