@@ -1117,7 +1117,7 @@ macros:
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
   team_onyx: samerd
-  team_openstack: emonty omgjlk juliakreger rcarrillocruz shrews thingee dagnello mnaser
+  team_openstack: emonty juliakreger rcarrillocruz shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
