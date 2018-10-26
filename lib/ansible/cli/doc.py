@@ -128,6 +128,8 @@ class DocCLI(CLI):
         # process all plugins of type
         if self.options.all_plugins:
             self.args = self.get_all_plugins_of_type(plugin_type)
+            if self.options.module_path:
+                display.warning('Ignoring "--module-path/-M" option as "--all/-a" only displays builtins')
 
         # dump plugin desc/metadata as JSON
         if self.options.json_dump:
