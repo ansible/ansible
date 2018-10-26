@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -15,7 +15,7 @@ author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
   - Create/Delete cluster peer relations on ONTAP
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_cluster_peer
 options:
   state:
@@ -23,14 +23,14 @@ options:
     description:
       - Whether the specified cluster peer should exist or not.
     default: present
-  source_intercluster_lif:
+  source_intercluster_lifs:
     description:
-      - Intercluster address of the source cluster.
-      - Used as peer-address in destination cluster.
-  dest_intercluster_lif:
+      - Intercluster addresses of the source cluster.
+      - Used as peer-addresses in destination cluster.
+  dest_intercluster_lifs:
     description:
-      - Intercluster address of the destination cluster.
-      - Used as peer-address in source cluster.
+      - Intercluster addresses of the destination cluster.
+      - Used as peer-addresses in source cluster.
   passphrase:
     description:
       - The arbitrary passphrase that matches the one given to the peer cluster.
@@ -61,8 +61,8 @@ EXAMPLES = """
     - name: Create cluster peer
       na_ontap_cluster_peer:
         state: present
-        source_intercluster_lif: 1.2.3.4
-        dest_intercluster_lif: 5.6.7.8
+        source_intercluster_lifs: 1.2.3.4,1.2.3.5
+        dest_intercluster_lifs: 1.2.3.6,1.2.3.7
         passphrase: XXXX
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -99,11 +99,11 @@ class NetAppONTAPClusterPeer(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
-            source_intercluster_lif=dict(required=False, type='str'),
-            dest_intercluster_lif=dict(required=False, type='str'),
+            source_intercluster_lifs=dict(required=False, type='list'),
+            dest_intercluster_lifs=dict(required=False, type='list'),
             passphrase=dict(required=False, type='str', no_log=True),
             dest_hostname=dict(required=True, type='str'),
             dest_username=dict(required=False, type='str'),
@@ -114,7 +114,7 @@ class NetAppONTAPClusterPeer(object):
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            required_together=[['source_intercluster_lif', 'dest_intercluster_lif', 'passphrase']],
+            required_together=[['source_intercluster_lifs', 'dest_intercluster_lifs', 'passphrase']],
             required_if=[('state', 'absent', ['source_cluster_name', 'dest_cluster_name'])],
             supports_check_mode=True
         )
@@ -132,7 +132,7 @@ class NetAppONTAPClusterPeer(object):
                 self.module.params['username'] = self.parameters['dest_username']
             if self.parameters.get('dest_password'):
                 self.module.params['password'] = self.parameters['dest_password']
-            self.dest_server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.dest_server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def cluster_peer_get_iter(self, cluster):
         """
@@ -144,12 +144,13 @@ class NetAppONTAPClusterPeer(object):
         query = netapp_utils.zapi.NaElement('query')
         cluster_peer_info = netapp_utils.zapi.NaElement('cluster-peer-info')
         if cluster == 'source':
-            peer_lif, peer_cluster = 'dest_intercluster_lif', 'dest_cluster_name'
+            peer_lifs, peer_cluster = 'dest_intercluster_lifs', 'dest_cluster_name'
         else:
-            peer_lif, peer_cluster = 'source_intercluster_lif', 'source_cluster_name'
-        peer_addresses = netapp_utils.zapi.NaElement('peer-addresses')
-        if self.parameters.get(peer_lif):
-            peer_addresses.add_new_child('remote-inet-address', self.parameters[peer_lif])
+            peer_lifs, peer_cluster = 'source_intercluster_lifs', 'source_cluster_name'
+        if self.parameters.get(peer_lifs):
+            peer_addresses = netapp_utils.zapi.NaElement('peer-addresses')
+            for peer in self.parameters.get(peer_lifs):
+                peer_addresses.add_new_child('remote-inet-address', peer)
             cluster_peer_info.add_child_elem(peer_addresses)
         if self.parameters.get(peer_cluster):
             cluster_peer_info.add_new_child('cluster-name', self.parameters[peer_cluster])
@@ -208,7 +209,7 @@ class NetAppONTAPClusterPeer(object):
     def cluster_peer_create(self, cluster):
         """
         Create a cluster peer on source or destination
-        For source cluster, peer address = destination inter-cluster LIF and vice-versa
+        For source cluster, peer addresses = destination inter-cluster LIFs and vice-versa
         :param cluster: type of cluster (source or destination)
         :return: None
         """
@@ -216,10 +217,11 @@ class NetAppONTAPClusterPeer(object):
             'cluster-peer-create', **{'passphrase': self.parameters['passphrase']})
         peer_addresses = netapp_utils.zapi.NaElement('peer-addresses')
         if cluster == 'source':
-            server, peer_address = self.server, self.parameters['dest_intercluster_lif']
+            server, peer_address = self.server, self.parameters['dest_intercluster_lifs']
         else:
-            server, peer_address = self.dest_server, self.parameters['source_intercluster_lif']
-        peer_addresses.add_new_child('remote-inet-address', peer_address)
+            server, peer_address = self.dest_server, self.parameters['source_intercluster_lifs']
+        for each in peer_address:
+            peer_addresses.add_new_child('remote-inet-address', each)
         cluster_peer_create.add_child_elem(peer_addresses)
         try:
             server.invoke_successfully(cluster_peer_create, enable_tunneling=True)

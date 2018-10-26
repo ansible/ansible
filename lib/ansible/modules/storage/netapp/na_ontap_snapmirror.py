@@ -15,7 +15,7 @@ author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
   - Create/Delete/Initialize/Modify SnapMirror volume/vserver relationships
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_snapmirror
 options:
   state:
@@ -124,7 +124,7 @@ class NetAppONTAPSnapmirror(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             source_vserver=dict(required=False, type='str'),
@@ -159,7 +159,7 @@ class NetAppONTAPSnapmirror(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def snapmirror_get_iter(self):
         """
