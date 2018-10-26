@@ -116,4 +116,15 @@
     issuer:
       commonName: Example CA
 
+- name: Create ownca certificate with notBefore and notAfter
+  openssl_certificate:
+    provider: ownca
+    ownca_not_before: 20181023133742Z
+    ownca_not_after: 20191023133742Z
+    path: "{{ output_dir }}/ownca_cert3.pem"
+    csr_path: "{{ output_dir }}/csr.csr"
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+      
 - import_tasks: ../tests/validate_ownca.yml
