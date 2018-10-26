@@ -167,7 +167,7 @@ EXAMPLES = """
 - name: Add a user specifying password type
   ios_user:
     name: ansibletest4
-    configure_password: "{{ new_password }}"
+    configured_password: "{{ new_password }}"
     password_type: password
 
 - name: Delete users with aggregate
