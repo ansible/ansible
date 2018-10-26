@@ -56,7 +56,7 @@ options:
     version:
         description:
             - Server version.
-        choices: ['9.5', '9.6']
+        choices: ['9.5', '9.6', '10']
     enforce_ssl:
         description:
             - Enable SSL enforcement.
@@ -114,7 +114,7 @@ id:
     sample: /subscriptions/12345678-1234-1234-1234-123412341234/resourceGroups/samplerg/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
 version:
     description:
-        - 'Server version. Possible values include: C(9.5), C(9.6)'
+        - 'Server version. Possible values include: C(9.5), C(9.6), C(10)'
     returned: always
     type: str
     sample: 9.6
@@ -173,7 +173,7 @@ class AzureRMServers(AzureRMModuleBase):
             ),
             version=dict(
                 type='str',
-                choices=['9.5', '9.6']
+                choices=['9.5', '9.6', '10']
             ),
             enforce_ssl=dict(
                 type='bool',
