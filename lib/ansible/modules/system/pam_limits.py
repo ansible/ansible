@@ -140,15 +140,17 @@ from ansible.module_utils._text import to_native
 
 
 def _assert_is_valid_value(module, item, value, prefix=''):
-    if item in [ 'nice', 'priority' ]:
+    if item in ['nice', 'priority']:
         try:
             valid = -20 <= int(value) <= 19
         except ValueError:
             valid = False
         if not valid:
-            module.fail_json(msg="%sValue of %r for item %r is invalid. Value must be a number in the range -20 to 19 inclusive. Refer to the limits.conf(5) manual pages for more details." % (prefix, value, item))
+            module.fail_json(msg="%sValue of %r for item %r is invalid. Value must be a number in the range -20 to 19 inclusive. "
+                                 "Refer to the limits.conf(5) manual pages for more details." % (prefix, value, item))
     elif not (value in ['unlimited', 'infinity', '-1'] or value.isdigit()):
-        module.fail_json(msg="%sValue of %r for item %r is invalid. Value must be 'unlimited', 'infinity', '-1' or a positive number. Refer to the limits.conf(5) manual pages for more details." % (prefix, value))
+        module.fail_json(msg="%sValue of %r for item %r is invalid. Value must be 'unlimited', 'infinity', '-1' or a positive number. "
+                             "Refer to the limits.conf(5) manual pages for more details." % (prefix, value))
 
 
 def main():
@@ -260,7 +262,7 @@ def main():
                 nf.write(line)
                 continue
 
-            if line_type not in [ 'nice', 'priority' ]:
+            if line_type not in ['nice', 'priority']:
                 actual_value_unlimited = actual_value in ['unlimited', 'infinity', '-1']
                 value_unlimited = value in ['unlimited', 'infinity', '-1']
             else:
