@@ -133,7 +133,7 @@ EXAMPLES = r'''
   wait_for:
     path: /tmp/foo
     search_regex: completed
-    
+
 - name: Wait until regex pattern matches in the file /tmp/foo and print the matched group
   wait_for:
     path: /tmp/foo
@@ -190,8 +190,10 @@ match_groups:
   type: list
   sample: ['match 1', 'match 2']
 match_groupdict:
-  description: Dictionary containing all the named subgroups of the match, keyed by the subgroup name, as returned by U(https://docs.python.org/2/library/re.html#re.MatchObject.groupdict)
+  description: Dictionary containing all the named subgroups of the match, keyed by the subgroup name,
+    as returned by U(https://docs.python.org/2/library/re.html#re.MatchObject.groupdict)
   returned: always
+  type: dict
   sample:
     {
       'group': 'match'
