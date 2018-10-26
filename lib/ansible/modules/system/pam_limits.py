@@ -150,7 +150,7 @@ def _assert_is_valid_value(module, item, value, prefix=''):
                                  "Refer to the limits.conf(5) manual pages for more details." % (prefix, value, item))
     elif not (value in ['unlimited', 'infinity', '-1'] or value.isdigit()):
         module.fail_json(msg="%sValue of %r for item %r is invalid. Value must be 'unlimited', 'infinity', '-1' or a positive number. "
-                             "Refer to the limits.conf(5) manual pages for more details." % (prefix, value))
+                             "Refer to the limits.conf(5) manual pages for more details." % (prefix, value, item))
 
 
 def main():
