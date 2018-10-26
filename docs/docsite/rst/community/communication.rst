@@ -74,8 +74,8 @@ If when you try to connect you receive an error asking your to "register" see `F
 
 Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?
 
-Language-specific channels
---------------------------
+Regional and Language-specific channels
+---------------------------------------
 
 - ``#ansible-es`` - Channel for Spanish speaking Ansible community.
 - ``#ansibleu`` - Channel for the European Ansible Community.
