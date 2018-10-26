@@ -1,0 +1,2 @@
+bugfixes:
+- Avoid misleading PyVmomi error if requests import fails in vmware module utils.
