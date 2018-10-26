@@ -352,13 +352,11 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for dummy, v in iteritems(net_dict):
-        for ipaddress in v:
-            if ipaddress:
-                if '::' in ipaddress:
-                    facts['ipv6'] = ipaddress
-                else:
-                    facts['ipv4'] = ipaddress
+    if vm.guest.ipAddress:
+        if ':' in vm.guest.ipAddress:
+            facts['ipv6'] = vm.guest.ipAddress
+        else:
+            facts['ipv4'] = vm.guest.ipAddress
 
     ethernet_idx = 0
     for entry in vm.config.hardware.device:
