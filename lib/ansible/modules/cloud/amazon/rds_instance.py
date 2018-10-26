@@ -1076,9 +1076,9 @@ def main():
     arg_spec.update(parameter_options)
 
     required_if = [
-        ('engine', 'aurora', ('cluster_id',)),
-        ('engine', 'aurora-mysql', ('cluster_id',)),
-        ('engine', 'aurora-postresql', ('cluster_id',)),
+        ('engine', 'aurora', ('db_cluster_identifier',)),
+        ('engine', 'aurora-mysql', ('db_cluster_identifier',)),
+        ('engine', 'aurora-postresql', ('db_cluster_identifier',)),
         ('creation_source', 'snapshot', ('snapshot_identifier', 'engine')),
         ('creation_source', 's3', (
             's3_bucket_name', 'engine', 'master_username', 'master_user_password',
