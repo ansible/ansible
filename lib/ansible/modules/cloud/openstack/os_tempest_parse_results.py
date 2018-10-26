@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -27,7 +27,7 @@ short_description: parse subunit file
 description:
     - Parses subunit file to the format the user chose, using subunit's and ostestr's filters
 
-version_added: "2.4"
+version_added: "2.8"
 
 author: "Tal Shafir , @TalShafir"
 requirements: ["os-testr","python-subunit", "junitxml"]
@@ -44,14 +44,15 @@ options:
   output_format:
     description:
        format of the parsed results file this module will generated
+    type: bool
     required: False
-    default: xml
+    default: html
     choices: [xml, html]
   force:
     description:
       override output file if already exists
     required: False
-    default: 'False'
+    default: False
 notes:
   - For more information about os-testr, U(https://docs.openstack.org/developer/os-testr)
   - For more information about python-subunit, U(https://pypi.python.org/pypi/python-subunit)
@@ -86,6 +87,11 @@ exception:
 from ansible.module_utils.basic import AnsibleModule
 import os
 
+# python 3 compability
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
+
 try:
     from os_testr.subunit2html import HtmlOutput
     from os_testr.subunit2html import FileAccumulator
@@ -108,13 +114,12 @@ except ImportError as e:
 from errno import EEXIST
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils._text import to_native
-from ansible.module_utils._text import to_text
 
 
 def main():
     ansible_module = AnsibleModule(argument_spec=dict(
         src=dict(type="path", required=True),
-        dest=dict(type="path", required=False),
+        dest=dict(type="path", required=False, default="~/test_results"),
         output_format=dict(type="str",
                            required=False,
                            default="html",
@@ -122,7 +127,7 @@ def main():
         force=dict(type="bool", required=False, default=False),
     ))
 
-    src_path = unfrackpath(ansible_module.params['src'])
+    src_path = ansible_module.params['src']
 
     # test if the src file is valid and that all the required packages are available
     if not os.path.isfile(src_path):
@@ -133,11 +138,11 @@ def main():
         ansible_module.fail_json(msg="Couldn't import subunit or junitxml")
 
     if ansible_module.params['dest']:
-        dest_path = unfrackpath(ansible_module.params['dest'])
+        dest_path = ansible_module.params['dest']
         if os.path.isdir(dest_path):
             dest_path = os.path.join(dest_path, 'test-results.' + ansible_module.params['output_format'])
     else:
-        dest_path = unfrackpath('~/test-results.' + ansible_module.params['output_format'])
+        dest_path = '~/test-results.' + ansible_module.params['output_format']
 
     if os.path.isfile(dest_path) and not ansible_module.params['force']:
         ansible_module.exit_json(msg="the output file already exists", changed=False, dest=dest_path)
@@ -211,33 +216,6 @@ def prepare_path(file_path):
 
 
 # copied from ansible.utils.path
-def unfrackpath(path, follow=True):
-    """
-    Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
-
-    :arg path: A byte or text string representing a path to be canonicalized
-    :arg follow: A boolean to indicate of symlinks should be resolved or not
-    :raises UnicodeDecodeError: If the canonicalized version of the path
-        contains non-utf8 byte sequences.
-    :rtype: A text string (unicode on pyyhon2, str on python3).
-    :returns: An absolute path with symlinks, environment variables, and tilde
-        expanded.  Note that this does not check whether a path exists.
-
-    example::
-        '$HOME/../../var/mail' becomes '/var/spool/mail'
-    """
-
-    if follow:
-        final_path = os.path.normpath(
-            os.path.realpath(os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))))
-    else:
-        final_path = os.path.normpath(
-            os.path.abspath(os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))))
-
-    return to_text(final_path, errors='surrogate_or_strict')
-
-
-# copied from ansible.utils.path
 def makedirs_safe(path, mode=None):
     """Safe way to create dirs in muliprocess/thread environments.
 
@@ -247,7 +225,7 @@ def makedirs_safe(path, mode=None):
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
     """
 
-    rpath = unfrackpath(path)
+    rpath = path
     b_rpath = to_bytes(rpath)
     if not os.path.exists(b_rpath):
         try:
