@@ -259,9 +259,9 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             'location': d.get('location', None),
             'tags': d.get('tags', None),
             'sku': {
-              'name': d.get('sku', {}).get('name', None),
-              'tier': d.get('sku', {}).get('tier', None),
-              'capacity': d.get('sku', {}).get('capacity', None)
+                'name': d.get('sku', {}).get('name', None),
+                'tier': d.get('sku', {}).get('tier', None),
+                'capacity': d.get('sku', {}).get('capacity', None)
             },
             'kind': d.get('kind', None),
             'collation': d.get('collation', None),
