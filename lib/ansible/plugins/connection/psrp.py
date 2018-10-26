@@ -156,8 +156,10 @@ options:
 
 import base64
 import json
+import logging
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -203,6 +205,11 @@ class Connection(ConnectionBase):
 
         self._shell_type = 'powershell'
         super(Connection, self).__init__(*args, **kwargs)
+
+        if not C.DEFAULT_DEBUG:
+            logging.getLogger('pypsrp').setLevel(logging.INFO)
+            logging.getLogger('requests_credssp').setLevel(logging.INFO)
+            logging.getLogger('urllib3').setLevel(logging.INFO)
 
     def _connect(self):
         if not HAS_PYPSRP:
