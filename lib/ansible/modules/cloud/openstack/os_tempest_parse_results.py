@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# python 3 compability
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -77,7 +81,7 @@ RETURN = '''
 dest:
   description: destination file path
   returned: success
-  type: path
+  type: string
   sample: "/path/to/file"
 exception:
   description: python exception message
@@ -86,11 +90,6 @@ exception:
 '''
 from ansible.module_utils.basic import AnsibleModule
 import os
-
-# python 3 compability
-from __future__ import (absolute_import, division, print_function)
-
-__metaclass__ = type
 
 try:
     from os_testr.subunit2html import HtmlOutput
