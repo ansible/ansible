@@ -50,3 +50,21 @@
   assert:
     that:
       - cert2_modulus.stdout == privatekey2_modulus.stdout
+
+- name: Validate certificate3 (test - notBefore)
+  shell: 'openssl x509 -noout -in {{ output_dir }}/cert3.pem -text | grep "Not Before" | sed "s/.*: \(.*\) .*/\1/g"'
+  register: cert3_notBefore
+
+- name: Validate certificate3 (test - notAfter)
+  shell: 'openssl x509 -noout -in {{ output_dir }}/cert3.pem -text | grep "Not After" | sed "s/.*: \(.*\) .*/\1/g"'
+  register: cert3_notAfter
+
+- name: Validate certificate3 (assert - notBefore)
+  assert:
+    that:
+      - cert3_notBefore.stdout == 'Oct 23 13:37:42 2018'
+
+- name: Validate certificate3 (assert - notAfter)
+  assert:
+    that:
+      - cert3_notAfter.stdout == 'Oct 23 13:37:42 2019'
