@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_host_pm - Bug fixes for power management (https://github.com/ansible/ansible/pull/47659).
