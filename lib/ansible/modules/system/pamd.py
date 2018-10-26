@@ -279,8 +279,10 @@ from datetime import datetime
 
 RULE_REGEX = re.compile(r"""(?P<rule_type>-?(?:auth|account|session|password))\s+
                         (?P<control>\[.*\]|\S*)\s+
-                        (?P<path>\S*)\s?
-                        (?P<args>.*)""", re.X)
+                        (?P<path>\S*)\s*
+                        (?P<args>.*)\s*""", re.X)
+
+RULE_ARG_REGEX = re.compile(r"""(\[.*\]|\S*)""")
 
 VALID_TYPES = ['account', '-account', 'auth', '-auth', 'password', '-password', 'session', '-session']
 
