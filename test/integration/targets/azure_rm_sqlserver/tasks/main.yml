@@ -141,15 +141,15 @@
 - name: Create second SQL Database
   azure_rm_sqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: database{{ rpfx }}second
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}second
     location: eastus
 
 - name: Gather facts SQL Database
   azure_rm_sqldatabase_facts:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    database_name: database{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    database_name: database{{ random_postfix }}
   register: output
 - name: Assert that facts are returned
   assert:
@@ -167,7 +167,7 @@
 - name: Gather facts SQL Database
   azure_rm_sqldatabase_facts:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
   register: output
 - name: Assert that facts are returned
   assert:
@@ -193,8 +193,8 @@
 - name: Delete instance of secondary database
   azure_rm_sqldatabase:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    name: database{{ rpfx }}second
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}second
     state: absent
 
 # clean up databases
@@ -239,8 +239,8 @@
 - name: Gather facts SQL Database
   azure_rm_sqldatabase_facts:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
-    database_name: database{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
+    database_name: database{{ random_postfix }}
   register: output
 - name: Assert that empty dictionary was returned
   assert:
@@ -251,7 +251,7 @@
 - name: Gather facts SQL Database
   azure_rm_sqldatabase_facts:
     resource_group: "{{ resource_group }}"
-    server_name: sqlsrv{{ rpfx }}
+    server_name: sqlsrv{{ random_postfix }}
   register: output
 - name: Assert that empty dictionary was returned
   assert:
