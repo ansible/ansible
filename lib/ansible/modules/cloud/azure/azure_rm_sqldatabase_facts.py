@@ -130,6 +130,12 @@ databases:
             returned: always
             type: str
             sample: v12.0,user
+        collation:
+            description:
+                - The collation of the database.
+            returned: always
+            type: str
+            sample: SQL_Latin1_General_CP1_CI_AS
         status:
             description:
                 - "The status of the database. Possible values include: 'Online', 'Restoring', 'RecoveryPending', 'Recovering', 'Suspect', 'Offline',
@@ -138,6 +144,12 @@ databases:
             returned: always
             type: str
             sample: Online
+        zone_redundant:
+            description:
+                - Whether or not this database is zone redundant, which means the replicas of this database will be spread across multiple availability zones.
+            returned: always
+            type: str
+            sample: zone_redundant
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -265,7 +277,8 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             },
             'kind': d.get('kind', None),
             'collation': d.get('collation', None),
-            'status': d.get('status', None)
+            'status': d.get('status', None),
+            'zone_redundant': d.get('zone_redundant', None)
         }
         return d
 
