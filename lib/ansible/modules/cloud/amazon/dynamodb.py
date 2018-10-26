@@ -94,7 +94,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-def get(connection, table, primary_key):
+def get(connection, table, primary_key, result):
 
     response = connection.get_item(
         TableName=table,
@@ -102,12 +102,12 @@ def get(connection, table, primary_key):
         # ProjectionExpression=projection_expression
     )
 
-    result = dict(changed=False, message=response)
+    result['item'] = response['Item']
 
     return result
 
 
-def put(connection, table, item):
+def put(connection, table, item, result):
 
     result = connection.put_item(
         TableName=table,
@@ -119,7 +119,7 @@ def put(connection, table, item):
     return result
 
 
-def delete(connection, table, primary_key, condition_expression, expression_attribute_values):
+def delete(connection, table, primary_key, condition_expression, expression_attribute_values, result):
 
     result = connection.delete_item(
         TableName=table,
@@ -185,27 +185,30 @@ def main():
         # expression_attribute_names = module.params.get(
         #     'expression_attribute_names')
 
-        result = {}
+        result = dict(
+            changed=False,
+            item=''
+        )
 
         if action == 'get':
-            get(connection, table, primary_key)
+            result = get(connection, table, primary_key, result)
 
         elif action == 'put':
-            put(connection, table, item)
+            result = put(connection, table, item, result)
 
         elif action == 'update':
-            result = connection.update_item(
+            connection.update_item(
                 TableName=table,
                 Key={primary_key_type: primary_key},
                 UpdateExpression=update_expression,
                 ExpressionAttributeValues=expression_attribute_values,
             )
 
-            return result
+            return response
 
         elif action == 'delete':
-            delete(connection, table, primary_key,
-                   condition_expression, expression_attribute_values)
+            result = delete(connection, table, primary_key,
+                   condition_expression, expression_attribute_values, result)
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {} not found'.format(table)
