@@ -42,10 +42,6 @@ General channels
 - ``#ansible-devel`` - For discussions on developer topics and code related to features or bugs.
 - ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
-
-
-- ``#ansible-notices`` - Mostly bot output from things like GitHub, etc.
-
 Working groups
 --------------
 
