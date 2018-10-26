@@ -23,9 +23,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: os_tempest_parse_results
-short_description: parse Tempest's results
+short_description: parse subunit file
 description:
-    - Parses Tempest's results to the format the user chose, using subunit's and ostestr's filters
+    - Parses subunit file to the format the user chose, using subunit's and ostestr's filters
 
 version_added: "2.4"
 
@@ -34,13 +34,13 @@ requirements: ["os-testr","python-subunit", "junitxml"]
 options:
   src:
     description:
-      path to the subunit results file Tempest generated
+      path to the subunit file
     required: True
   dest:
     description:
       path to the parsed results file this module will generated
     required: False
-    default: ~/tempest-results
+    default: ~/test-results
   output_format:
     description:
        format of the parsed results file this module will generated
@@ -53,24 +53,23 @@ options:
     required: False
     default: 'False'
 notes:
-  - Installing Tempest will install both os-testr and python-subunit
   - For more information about os-testr, U(https://docs.openstack.org/developer/os-testr)
   - For more information about python-subunit, U(https://pypi.python.org/pypi/python-subunit)
   - For more information about junitxml, U(https://pypi.python.org/pypi/junitxml)
 '''
 EXAMPLES = '''
-# Parse Tempest's results to the default path in the default format
+# Parse subunit file to the default path in the default format
 - os_tempest_parse_results:
-  src: /path/to/tempest_output
+  src: /path/to/subunit_file
 
-# Parse Tempest's results to custom path in the default format
+# Parse subunit file to custom path in the default format
 - os_tempest_parse_results:
-  src: /path/to/tempest_output
+  src: /path/to/subunit_file
   dest: /path/to/parsed_output
 
-# Parse Tempest's results to the default path in another supported format(mentioned in the description of I(output_format))
+# Parse subunit file to the default path in another supported format(mentioned in the description of I(output_format))
 - os_tempest_parse_results:
-  src: /path/to/tempest_output
+  src: /path/to/subunit_file
   output_format: FORMAT
 '''
 RETURN = '''
@@ -136,9 +135,9 @@ def main():
     if ansible_module.params['dest']:
         dest_path = unfrackpath(ansible_module.params['dest'])
         if os.path.isdir(dest_path):
-            dest_path = os.path.join(dest_path, 'tempest-results.' + ansible_module.params['output_format'])
+            dest_path = os.path.join(dest_path, 'test-results.' + ansible_module.params['output_format'])
     else:
-        dest_path = unfrackpath('~/tempest-results.' + ansible_module.params['output_format'])
+        dest_path = unfrackpath('~/test-results.' + ansible_module.params['output_format'])
 
     if os.path.isfile(dest_path) and not ansible_module.params['force']:
         ansible_module.exit_json(msg="the output file already exists", changed=False, dest=dest_path)
