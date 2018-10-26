@@ -145,10 +145,10 @@ To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-get update
-    $ sudo apt-get install software-properties-common
+    $ sudo apt update
+    $ sudo apt install software-properties-common
     $ sudo apt-add-repository --yes --update ppa:ansible/ansible
-    $ sudo apt-get install ansible
+    $ sudo apt install ansible
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
 
@@ -176,8 +176,8 @@ Then run these commands:
 .. code-block:: bash
 
     $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
-    $ sudo apt-get update
-    $ sudo apt-get install ansible
+    $ sudo apt update
+    $ sudo apt install ansible
 
 .. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions.
 
