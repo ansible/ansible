@@ -367,8 +367,9 @@ class PamdRule(PamdLine):
 
     @classmethod
     def rule_from_string(cls, line):
-        match = RULE_REGEX.search(line)
-        return cls(match.group('rule_type'), match.group('control'), match.group('path'), match.group('args'))
+        rule_match = RULE_REGEX.match(line)
+        rule_args = parse_module_arguments(rule_match.group('args'))
+        return cls(rule_match.group('rule_type'), rule_match.group('control'), rule_match.group('path'), rule_args)
 
     def __str__(self):
         if self.rule_args:
@@ -397,11 +398,7 @@ class PamdRule(PamdLine):
 
     @rule_args.setter
     def rule_args(self, args):
-        if isinstance(args, str):
-            args = args.replace(" = ", "=")
-            self._args = args.split(" ")
-        else:
-            self._args = args
+        self._args = parse_module_arguments(args)
 
     @property
     def line(self):
@@ -526,12 +523,10 @@ class PamdService(object):
                     rule_changed = True
                     current_rule.rule_path = new_path
             if new_args:
-                if isinstance(new_args, str):
-                    new_args = new_args.replace(" = ", "=")
-                    new_args = new_args.split(' ')
                 if(current_rule.rule_args != new_args):
                     rule_changed = True
                     current_rule.rule_args = new_args
+
             if rule_changed:
                 changes += 1
 
@@ -637,9 +632,7 @@ class PamdService(object):
 
         for current_rule in rules_to_find:
             rule_changed = False
-            if isinstance(args_to_add, str):
-                args_to_add = args_to_add.replace(" = ", "=")
-                args_to_add = args_to_add.split(' ')
+
             if not args_to_add:
                 args_to_add = []
 
@@ -717,9 +710,6 @@ class PamdService(object):
         changes = 0
 
         for current_rule in rules_to_find:
-            if isinstance(args_to_remove, str):
-                args_to_remove = args_to_remove.replace(" = ", "=")
-                args_to_remove = args_to_remove.split(' ')
             if not args_to_remove:
                 args_to_remove = []
 
@@ -760,6 +750,26 @@ class PamdService(object):
 
         return '\n'.join(lines) + '\n'
 
+
+def parse_module_arguments(module_arguments):
+    # Return empty list if we have no args to parse
+    if not module_arguments:
+        return []
+    elif not module_arguments[0]:
+        return []
+
+    if not isinstance(module_arguments, list):
+        module_arguments = [module_arguments]
+
+    parsed_args = list()
+
+    for arg in module_arguments:
+        for item in filter(None, RULE_ARG_REGEX.findall(arg)):
+            if not item.startswith("["):
+                re.sub("\\s*=\\s*", "=", item)
+            parsed_args.extend(item)
+
+    return parsed_args
 
 def main():
 
@@ -812,27 +822,30 @@ def main():
     # Set the action
     action = module.params['state']
 
+    # Parse the module arguments before use
+    module_arguments = parse_module_arguments(module.params['module_arguments'])
+
     changes = 0
 
     # Take action
     if action == 'updated':
         changes = service.update_rule(module.params['type'], module.params['control'], module.params['module_path'],
                                       module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                      module.params['module_arguments'])
+                                      module_arguments)
     elif action == 'before':
         changes = service.insert_before(module.params['type'], module.params['control'], module.params['module_path'],
                                         module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                        module.params['module_arguments'])
+                                        module_arguments)
     elif action == 'after':
         changes = service.insert_after(module.params['type'], module.params['control'], module.params['module_path'],
                                        module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                       module.params['module_arguments'])
+                                       module_arguments)
     elif action == 'args_absent':
         changes = service.remove_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
-                                                  module.params['module_arguments'])
+                                                  module_arguments)
     elif action == 'args_present':
         changes = service.add_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
-                                               module.params['module_arguments'])
+                                               module_arguments)
     elif action == 'absent':
         changes = service.remove(module.params['type'], module.params['control'], module.params['module_path'])
 
