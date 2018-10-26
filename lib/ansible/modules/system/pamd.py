@@ -367,7 +367,7 @@ class PamdRule(PamdLine):
 
     @classmethod
     def rule_from_string(cls, line):
-        rule_match = RULE_REGEX.match(line)
+        rule_match = RULE_REGEX.search(line)
         rule_args = parse_module_arguments(rule_match.group('args'))
         return cls(rule_match.group('rule_type'), rule_match.group('control'), rule_match.group('path'), rule_args)
 
@@ -497,10 +497,17 @@ class PamdService(object):
 
         return lines
 
+    def has_rule(self, rule_type, rule_control, rule_path):
+        if self.get(rule_type, rule_control, rule_path):
+            return True
+        return False
+
     def update_rule(self, rule_type, rule_control, rule_path,
                     new_type=None, new_control=None, new_path=None, new_args=None):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
+
+        new_args = parse_module_arguments(new_args)
 
         changes = 0
         for current_rule in rules_to_find:
@@ -623,6 +630,8 @@ class PamdService(object):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
 
+        args_to_add = parse_module_arguments(args_to_add)
+
         changes = 0
 
         for current_rule in rules_to_find:
@@ -690,6 +699,8 @@ class PamdService(object):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
 
+        args_to_remove = parse_module_arguments(args_to_remove)
+
         changes = 0
 
         for current_rule in rules_to_find:
@@ -754,6 +765,7 @@ def parse_module_arguments(module_arguments):
 
     return parsed_args
 
+
 def main():
 
     module = AnsibleModule(
@@ -805,33 +817,30 @@ def main():
     # Set the action
     action = module.params['state']
 
-    # Parse the module arguments before use
-    module_arguments = parse_module_arguments(module.params['module_arguments'])
-
     changes = 0
 
     # Take action
     if action == 'updated':
         changes = service.update_rule(module.params['type'], module.params['control'], module.params['module_path'],
                                       module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                      module_arguments)
+                                      module.params['module_arguments'])
     elif action == 'before':
         changes = service.insert_before(module.params['type'], module.params['control'], module.params['module_path'],
                                         module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                        module_arguments)
+                                        module.params['module_arguments'])
     elif action == 'after':
         changes = service.insert_after(module.params['type'], module.params['control'], module.params['module_path'],
                                        module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                       module_arguments)
+                                       module.params['module_arguments'])
     elif action == 'args_absent':
         changes = service.remove_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
-                                                  module_arguments)
+                                                  module.params['module_arguments'])
     elif action == 'args_present':
-        if [arg for arg in module_arguments if arg.startswith("[")]:
+        if [arg for arg in parse_module_arguments(module.params['module_arguments']) if arg.startswith("[")]:
             module.fail_json(msg="Unable to process bracketed '[' complex arguments with 'args_present'. Please use 'updated'.")
 
         changes = service.add_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
-                                               module_arguments)
+                                               module.params['module_arguments'])
     elif action == 'absent':
         changes = service.remove(module.params['type'], module.params['control'], module.params['module_path'])
 
@@ -842,9 +851,9 @@ def main():
         module.fail_json(msg=msg)
 
     result = dict(
-        changed = (changes > 0),
-        change_count = changes,
-        backupdest = '',
+        changed=(changes > 0),
+        change_count=changes,
+        backupdest='',
     )
 
     # If not check mode and something changed, backup the original if necessary then write out the file or fail
