@@ -24,7 +24,7 @@ try:
 except ImportError:
     argcomplete = None
 
-from ansilbe.constants import C
+from ansible.constants import C
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 CHANGELOG_DIR = os.path.join(BASE_DIR, 'changelogs')
