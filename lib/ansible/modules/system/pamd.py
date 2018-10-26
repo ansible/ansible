@@ -509,6 +509,27 @@ class PamdService(object):
 
         changes = 0
         for current_rule in rules_to_find:
+            if new_type:
+                if(current_rule.rule_type != new_type):
+                    changes = 1
+                    current_rule.rule_type = new_type
+            if new_control:
+                if(current_rule.rule_control != new_control):
+                    changes = 1
+                    current_rule.rule_control = new_control
+            if new_path:
+                if(current_rule.rule_path != new_path):
+                    changes = 1
+                    current_rule.rule_path = new_path
+            if new_args:
+                for i, new_arg in enumerate(new_args):
+                    new_args[i] = new_arg.replace(" = ", "=")
+                if(current_rule.rule_args != new_args):
+                    changes = 1
+                    current_rule.rule_args = new_args
+
+        return changes
+        for current_rule in rules_to_find:
             rule_changed = False
             if new_type:
                 if(current_rule.rule_type is not new_type):
