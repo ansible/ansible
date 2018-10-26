@@ -762,7 +762,7 @@ def parse_module_arguments(module_arguments):
         for item in filter(None, RULE_ARG_REGEX.findall(arg)):
             if not item.startswith("["):
                 re.sub("\\s*=\\s*", "=", item)
-            parsed_args.extend(item)
+            parsed_args.append(item)
 
     return parsed_args
 
