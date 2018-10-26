@@ -164,6 +164,12 @@ EXAMPLES = """
       - name: ansibletest3
     view: network-admin
 
+- name: Add a user specifying password type
+  ios_user:
+    name: ansibletest4
+    configure_password: "{{ new_password }}"
+    password_type: password
+
 - name: Delete users with aggregate
   ios_user:
     aggregate:
