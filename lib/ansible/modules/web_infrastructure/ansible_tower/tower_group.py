@@ -7,6 +7,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+# import pydevd
+# pydevd.settrace('localhost', port=40015, stdoutToServer=True, stderrToServer=True)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -37,6 +39,13 @@ options:
     variables:
       description:
         - Variables to use for the group, use C(@) for a file.
+    merge_variables:
+      description:
+        - If set to true will attempt to merge the variables from an existing Group of the same name and inventory.
+      required: False
+      default: 'no'
+      type: bool
+      version_added: 2.8
     state:
       description:
         - Desired state of the resource.
@@ -57,16 +66,27 @@ EXAMPLES = '''
 '''
 
 import os
+import json
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
+from ansible.module_utils.common.dict_transformations import dict_merge
 
 try:
     import tower_cli
     import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
+
+    FAILED_TOWER_IMPORT = False
 except ImportError:
-    pass
+    FAILED_TOWER_IMPORT = True
+
+try:
+    import yaml
+
+    FAILED_YAML_IMPORT = False
+except ImportError:
+    FAILED_YAML_IMPORT = True
 
 
 def main():
@@ -75,14 +95,21 @@ def main():
         description=dict(),
         inventory=dict(required=True),
         variables=dict(),
+        merge_variables=dict(required=False, default=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
     module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
+    if FAILED_TOWER_IMPORT:
+        module.fail_json(msg="Failed to import tower_cli. Try installing via Pip using 'pip install ansible-tower-cli'")
+    if FAILED_YAML_IMPORT:
+        module.fail_json(msg="Failed to import yaml. Try installing via Pip using 'pip install PyYAML'")
+
     name = module.params.get('name')
     inventory = module.params.get('inventory')
     state = module.params.pop('state')
+    merge_variables = module.params.pop('merge_variables')
 
     variables = module.params.get('variables')
     if variables:
@@ -90,6 +117,10 @@ def main():
             filename = os.path.expanduser(variables[1:])
             with open(filename, 'r') as f:
                 variables = f.read()
+    else:
+        variables = '{}'
+
+    variables = yaml.safe_load(variables)  # parse in variables so we can later use json.dumps to export RFC compatible json
 
     json_output = {'group': name, 'state': state}
 
@@ -97,15 +128,30 @@ def main():
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
         group = tower_cli.get_resource('group')
-        try:
-            params = module.params.copy()
-            params['create_on_missing'] = True
-            params['variables'] = variables
+        params = module.params.copy()
+        params['create_on_missing'] = True
 
+        try:
             inv_res = tower_cli.get_resource('inventory')
             inv = inv_res.get(name=inventory)
             params['inventory'] = inv['id']
+        except (exc.NotFound) as excinfo:
+            module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
 
+        if merge_variables:
+            try:
+                existing_group = group.get(name=name, inventory=inv['id'])
+                existing_vars = yaml.safe_load(existing_group['variables'])
+                if not existing_vars:
+                    existing_vars = {}
+                variables = dict_merge(existing_vars, variables)
+            except exc.NotFound:
+                json_output['created'] = True
+                module.log("Existing group not found, will create")
+
+        params['variables'] = json.dumps(variables)  # export RFC compatible json
+
+        try:
             if state == 'present':
                 result = group.modify(**params)
                 json_output['id'] = result['id']

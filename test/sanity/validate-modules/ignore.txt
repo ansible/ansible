@@ -1136,7 +1136,6 @@ lib/ansible/modules/system/user.py E327
 lib/ansible/modules/system/vdo.py E324
 lib/ansible/modules/system/vdo.py E326
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py E326
-lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py E324
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_cancel.py E325
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_launch.py E323
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_template.py E322
