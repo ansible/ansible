@@ -10,7 +10,22 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+#if CORECLR
+using Newtonsoft.Json;
+#else
 using System.Web.Script.Serialization;
+#endif
+
+// System.Diagnostics.EventLog.dll reference different versioned dlls that are
+// loaded in PSCore, ignore CS1702 so the code will ignore this warning
+//NoWarn -Name CS1702 -CLR Core
+
+//AssemblyReference -Name Newtonsoft.Json.dll -CLR Core
+//AssemblyReference -Name System.ComponentModel.Primitives.dll -CLR Core
+//AssemblyReference -Name System.Diagnostics.EventLog.dll -CLR Core
+//AssemblyReference -Name System.IO.FileSystem.AccessControl.dll -CLR Core
+//AssemblyReference -Name System.Security.Principal.Windows.dll -CLR Core
+//AssemblyReference -Name System.Security.AccessControl.dll -CLR Core
 
 //AssemblyReference -Name System.Web.Extensions.dll -CLR Framework
 
@@ -54,6 +69,7 @@ namespace Ansible.Basic
             { "version", "AnsibleVersion" },
         };
         private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "no_log" };
+        private List<string> passInts = new List<string>() { "verbosity" };
         private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
         {
             // key - (default, type) - null is freeform
@@ -121,7 +137,12 @@ namespace Ansible.Basic
                         string failedMsg = null;
                         try
                         {
+#if CORECLR
+                            DirectoryInfo createdDir = Directory.CreateDirectory(baseDir);
+                            FileSystemAclExtensions.SetAccessControl(createdDir, dirSecurity);
+#else
                             Directory.CreateDirectory(baseDir, dirSecurity);
+#endif
                         }
                         catch (Exception e)
                         {
@@ -146,7 +167,12 @@ namespace Ansible.Basic
                     string dateTime = DateTime.Now.ToFileTime().ToString();
                     string dirName = String.Format("ansible-moduletmp-{0}-{1}", dateTime, new Random().Next(0, int.MaxValue));
                     string newTmpdir = Path.Combine(baseDir, dirName);
+#if CORECLR
+                    DirectoryInfo tmpdirInfo = Directory.CreateDirectory(newTmpdir);
+                    FileSystemAclExtensions.SetAccessControl(tmpdirInfo, dirSecurity);
+#else
                     Directory.CreateDirectory(newTmpdir, dirSecurity);
+#endif
                     tmpdir = newTmpdir;
 
                     if (!KeepRemoteFiles)
@@ -300,18 +326,26 @@ namespace Ansible.Basic
         public static Dictionary<string, object> FromJson(string json) { return FromJson<Dictionary<string, object>>(json); }
         public static T FromJson<T>(string json)
         {
+#if CORECLR
+            return JsonConvert.DeserializeObject<T>(json);
+#else
             JavaScriptSerializer jss = new JavaScriptSerializer();
             jss.MaxJsonLength = int.MaxValue;
             jss.RecursionLimit = int.MaxValue;
             return jss.Deserialize<T>(json);
+#endif
         }
 
         public static string ToJson(object obj)
         {
+#if CORECLR
+            return JsonConvert.SerializeObject(obj);
+#else
             JavaScriptSerializer jss = new JavaScriptSerializer();
             jss.MaxJsonLength = int.MaxValue;
             jss.RecursionLimit = int.MaxValue;
             return jss.Serialize(obj);
+#endif
         }
 
         public static IDictionary GetParams(string[] args)
@@ -423,10 +457,8 @@ namespace Ansible.Basic
             Type valueType = value.GetType();
             if (valueType == typeof(int))
                 return (int)value;
-            else if (valueType == typeof(string))
-                return Int32.Parse((string)value);
             else
-                throw new ArgumentException(String.Format("{0} cannot be converted to an int", valueType.FullName));
+                return Int32.Parse(ParseStr(value));
         }
 
         public static string ParseJson(object value)
@@ -783,6 +815,8 @@ namespace Ansible.Basic
                     object value = entry.Value;
                     if (passBools.Contains(key))
                         value = ParseBool(value);
+                    else if (passInts.Contains(key))
+                        value = ParseInt(value);
 
                     string propertyName = passVars[key];
                     PropertyInfo property = typeof(AnsibleModule).GetProperty(propertyName);
@@ -1196,10 +1230,11 @@ namespace Ansible.Basic
         {
             // When running over psrp there may not be a console to write the
             // line to, we check if there is a Console Window and fallback on
-            // setting a variable that the Ansible leaf_exec will check and
-            // output to the PowerShell Output stream on close
-            Console.WriteLine(line);
-            if (GetConsoleWindow() == IntPtr.Zero && Runspace.DefaultRunspace != null)
+            // setting a variable that the Ansible module_wrapper will check
+            // and output to the PowerShell Output stream on close.
+            if (GetConsoleWindow() != IntPtr.Zero)
+                Console.WriteLine(line);
+            else
                 ScriptBlock.Create("Set-Variable -Name _ansible_output -Value $args[0] -Scope Global").Invoke(line);
         }
     }
