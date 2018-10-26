@@ -20,6 +20,8 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def run(self, tmp=None, task_vars=None):
+        self._supports_async = True
+
         if task_vars is None:
             task_vars = dict()
 
