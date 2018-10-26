@@ -263,7 +263,8 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
                     'tier': d['sku']['tier'],
                     'capacity': d['sku']['capacity']},
             'kind': d['kind'],
-            'status': d['status']
+            'status': d['status'],
+            'zone_redundant': d['zone_redundant']
         }
         return d
 
