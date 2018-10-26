@@ -497,11 +497,6 @@ class PamdService(object):
 
         return lines
 
-    def has_rule(self, rule_type, rule_control, rule_path):
-        if self.get(rule_type, rule_control, rule_path):
-            return True
-        return False
-
     def update_rule(self, rule_type, rule_control, rule_path,
                     new_type=None, new_control=None, new_path=None, new_args=None):
         # Get a list of rules we want to change
