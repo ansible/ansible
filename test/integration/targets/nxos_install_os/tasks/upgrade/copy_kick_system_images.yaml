@@ -10,25 +10,30 @@
   when: connection is defined
 
 - name: "Copy {{ si }} to bootflash"
-  expect:
-    command: "scp {{image_dir}}{{ si }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }}:"
-    responses:
-      (?i)password: "{{ ansible_ssh_pass }}"
-    timeout: 1000
+  nxos_file_copy:
+    local_file: "{{image_dir}}{{ si }}"
+    file_system: "bootflash:"
   register: result
+  ignore_errors: "{{ ignore_errors_httpapi }}"
+
+- name: "Copy {{ si }} to bootflash"
+  nxos_file_copy:
+    local_file: "{{image_dir}}{{ si }}"
+    file_system: "bootflash:"
+  register: result
+  ignore_errors: "{{ ignore_errors_httpapi }}"
 
 - debug:
     msg: "{{ item.key }} {{ item.value }}"
   with_dict: "{{ result }}"
 
 - name: "Copy {{ ki }} to bootflash"
-  expect:
-    command: "scp {{image_dir}}{{ ki }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }}:"
-    responses:
-      (?i)password: "{{ ansible_ssh_pass }}"
-    timeout: 1000
-  when: ki is defined
+  nxos_file_copy:
+    local_file: "{{image_dir}}/{{ ki }}"
+    file_system: "bootflash:"
   register: result
+  when: ki is defined
+  ignore_errors: "{{ ignore_errors_httpapi }}"
 
 - debug:
     msg: "{{ item.key }} {{ item.value }}"
