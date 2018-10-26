@@ -480,7 +480,56 @@
 ## detach ##########################################################
 ####################################################################
 
-# TODO: - detach
+- name: detach without cleanup
+  docker_container:
+    name: "{{ cname }}"
+    image: hello-world
+    detach: no
+  register: detach_no_cleanup
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: detach_no_cleanup_cleanup
+
+- name: detach with cleanup
+  docker_container:
+    name: "{{ cname }}"
+    image: hello-world
+    detach: no
+    cleanup: yes
+  register: detach_cleanup
+
+- name: cleanup (unnecessary)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: detach_cleanup_cleanup
+
+- name: detach with auto_remove and cleanup
+  docker_container:
+    name: "{{ cname }}"
+    image: hello-world
+    detach: no
+    auto_remove: yes
+    cleanup: yes
+  register: detach_auto_remove
+
+- name: cleanup (unnecessary)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: detach_auto_remove_cleanup
+
+- assert:
+    that:
+    - "'Hello from Docker!' in detach_no_cleanup.ansible_facts.docker_container.Output"
+    - detach_no_cleanup_cleanup is changed
+    - "'Hello from Docker!' in detach_cleanup.ansible_facts.docker_container.Output"
+    - detach_cleanup_cleanup is not changed
+    - "'Cannot retrieve result as auto_remove is enabled' == detach_auto_remove.ansible_facts.docker_container.Output"
+    - detach_auto_remove_cleanup is not changed
 
 ####################################################################
 ## devices #########################################################
@@ -1132,6 +1181,133 @@
     - groups_2 is not changed
     - groups_3 is not changed
     - groups_4 is changed
+
+####################################################################
+## healthcheck #####################################################
+####################################################################
+
+- name: healthcheck
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test:
+      - CMD
+      - sleep
+      - 1
+      timeout: 2s
+      interval: 0h0m2s3ms4us
+      retries: 2
+    stop_timeout: 1
+  register: healthcheck_1
+
+- name: healthcheck (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test:
+      - CMD
+      - sleep
+      - 1
+      timeout: 2s
+      interval: 0h0m2s3ms4us
+      retries: 2
+    stop_timeout: 1
+  register: healthcheck_2
+
+- name: healthcheck (changed)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test:
+      - CMD
+      - sleep
+      - 1
+      timeout: 3s
+      interval: 0h1m2s3ms4us
+      retries: 3
+    stop_timeout: 1
+  register: healthcheck_3
+
+- name: healthcheck (no change)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    stop_timeout: 1
+  register: healthcheck_4
+
+- name: healthcheck (disabled)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test:
+      - NONE
+    stop_timeout: 1
+  register: healthcheck_5
+
+- name: healthcheck (disabled, idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test:
+      - NONE
+    stop_timeout: 1
+  register: healthcheck_6
+
+- name: healthcheck (string in healthcheck test, changed)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test: "sleep 1"
+    stop_timeout: 1
+  register: healthcheck_7
+
+- name: healthcheck (string in healthcheck test, idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    healthcheck:
+      test: "sleep 1"
+    stop_timeout: 1
+  register: healthcheck_8
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - healthcheck_1 is changed
+    - healthcheck_2 is not changed
+    - healthcheck_3 is changed
+    - healthcheck_4 is not changed
+    - healthcheck_5 is changed
+    - healthcheck_6 is not changed
+    - healthcheck_7 is changed
+    - healthcheck_8 is not changed
 
 ####################################################################
 ## hostname ########################################################
@@ -2456,6 +2632,39 @@
     - restart_retries_1 is changed
     - restart_retries_2 is not changed
     - restart_retries_3 is changed
+
+####################################################################
+## runtime #########################################################
+####################################################################
+
+- name: runtime
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    name: "{{ cname }}"
+    runtime: runc
+    state: started
+  register: runtime_1
+
+- name: runtime (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    name: "{{ cname }}"
+    runtime: runc
+    state: started
+  register: runtime_2
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - runtime_1 is changed
+    - runtime_2 is not changed
 
 ####################################################################
 ## security_opts ###################################################

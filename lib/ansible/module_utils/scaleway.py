@@ -1,8 +1,10 @@
 import json
+import re
 import sys
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 
 def scaleway_argument_spec():
@@ -11,6 +13,7 @@ def scaleway_argument_spec():
                        no_log=True, aliases=['oauth_token']),
         api_url=dict(fallback=(env_fallback, ['SCW_API_URL']), default='https://api.scaleway.com', aliases=['base_url']),
         api_timeout=dict(type='int', default=30, aliases=['timeout']),
+        query_parameters=dict(type='dict', default={}),
         validate_certs=dict(default=True, type='bool'),
     )
 
@@ -27,6 +30,29 @@ class ScalewayException(Exception):
 
     def __init__(self, message):
         self.message = message
+
+
+# Specify a complete Link header, for validation purposes
+R_LINK_HEADER = r'''<[^>]+>;\srel="(first|previous|next|last)"
+    (,<[^>]+>;\srel="(first|previous|next|last)")*'''
+# Specify a single relation, for iteration and string extraction purposes
+R_RELATION = r'<(?P<target_IRI>[^>]+)>; rel="(?P<relation>first|previous|next|last)"'
+
+
+def parse_pagination_link(header):
+    if not re.match(R_LINK_HEADER, header, re.VERBOSE):
+        raise ScalewayException('Scaleway API answered with an invalid Link pagination header')
+    else:
+        relations = header.split(',')
+        parsed_relations = {}
+        rc_relation = re.compile(R_RELATION)
+        for relation in relations:
+            match = rc_relation.match(relation)
+            if not match:
+                raise ScalewayException('Scaleway API answered with an invalid relation in the Link pagination header')
+            data = match.groupdict()
+            parsed_relations[data['relation']] = data['target_IRI']
+        return parsed_relations
 
 
 class Response(object):
@@ -79,13 +105,19 @@ class Scaleway(object):
 
         return results.json.get(self.name)
 
-    def _url_builder(self, path):
+    def _url_builder(self, path, params):
+        d = self.module.params.get('query_parameters')
+        if params is not None:
+            d.update(params)
+        query_string = urlencode(d, doseq=True)
+
         if path[0] == '/':
             path = path[1:]
-        return '%s/%s' % (self.module.params.get('api_url'), path)
+        return '%s/%s?%s' % (self.module.params.get('api_url'), path, query_string)
 
-    def send(self, method, path, data=None, headers=None):
-        url = self._url_builder(path)
+    def send(self, method, path, data=None, headers=None, params=None):
+        url = self._url_builder(path=path, params=params)
+        self.warn(url)
         data = self.module.jsonify(data)
 
         if headers is not None:
@@ -106,23 +138,23 @@ class Scaleway(object):
     def get_user_agent_string(module):
         return "ansible %s Python %s" % (module.ansible_version, sys.version.split(' ')[0])
 
-    def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
+    def get(self, path, data=None, headers=None, params=None):
+        return self.send(method='GET', path=path, data=data, headers=headers, params=params)
 
-    def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
+    def put(self, path, data=None, headers=None, params=None):
+        return self.send(method='PUT', path=path, data=data, headers=headers, params=params)
 
-    def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
+    def post(self, path, data=None, headers=None, params=None):
+        return self.send(method='POST', path=path, data=data, headers=headers, params=params)
 
-    def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
+    def delete(self, path, data=None, headers=None, params=None):
+        return self.send(method='DELETE', path=path, data=data, headers=headers, params=params)
 
-    def patch(self, path, data=None, headers=None):
-        return self.send("PATCH", path, data, headers)
+    def patch(self, path, data=None, headers=None, params=None):
+        return self.send(method="PATCH", path=path, data=data, headers=headers, params=params)
 
-    def update(self, path, data=None, headers=None):
-        return self.send("UPDATE", path, data, headers)
+    def update(self, path, data=None, headers=None, params=None):
+        return self.send(method="UPDATE", path=path, data=data, headers=headers, params=params)
 
     def warn(self, x):
         self.module.warn(str(x))

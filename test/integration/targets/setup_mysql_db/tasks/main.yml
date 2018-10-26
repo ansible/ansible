@@ -73,3 +73,12 @@
 
 - name: start mysql_db service if not running
   service: name={{ mysql_service }} state=started
+
+- name: Detect socket path
+  shell: >
+          echo "show variables like 'socket'\G" | mysql | grep 'Value: ' | sed 's/[ ]\+Value: //'
+  register: _socket_path
+
+- name: Set socket path
+  set_fact:
+    mysql_socket: '{{ _socket_path["stdout"] }}'

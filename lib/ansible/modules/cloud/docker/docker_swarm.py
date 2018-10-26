@@ -136,7 +136,7 @@ extends_documentation_fragment:
     - docker
 requirements:
     - python >= 2.7
-    - "docker-py >= 2.6.0"
+    - "docker >= 2.6.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
@@ -508,7 +508,9 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_version='2.6.0',
+        min_docker_api_version='1.35',
     )
 
     results = dict(

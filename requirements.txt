@@ -7,4 +7,3 @@ jinja2
 PyYAML
 paramiko
 cryptography
-setuptools

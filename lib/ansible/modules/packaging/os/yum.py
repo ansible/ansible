@@ -39,7 +39,7 @@ options:
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
       - When using state=latest, this can be C('*') which means run C(yum -y update).
       - You can also pass a url or a local path to a rpm file (using state=present).
-        To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
+        To operate on several packages this can accept a comma separated string of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
   exclude:
     description:
@@ -175,7 +175,6 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
-    choices: [ all, main, repoid ]
     version_added: "2.7"
   download_only:
     description:
@@ -183,20 +182,11 @@ options:
     default: "no"
     type: bool
     version_added: "2.7"
-  lock_poll:
-    description:
-      - Poll interval to wait for the yum lockfile to be freed.
-      - "By default this is set to -1, if you set it to a positive integer it will enable to polling"
-    required: false
-    default: -1
-    type: int
-    version_added: "2.8"
   lock_timeout:
     description:
-      - Amount of time to wait for the yum lockfile to be freed
-      - This should be set along with C(lock_poll) to enable the lockfile polling.
+      - Amount of time to wait for the yum lockfile to be freed.
     required: false
-    default: 10
+    default: 0
     type: int
     version_added: "2.8"
 notes:

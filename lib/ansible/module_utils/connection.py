@@ -164,11 +164,18 @@ class Connection(object):
 
         try:
             out = self.send(data)
-            response = json.loads(out)
-
         except socket.error as e:
             raise ConnectionError('unable to connect to socket. See the socket_path issue catergory in Network Debug and Troubleshooting Guide',
                                   err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+
+        try:
+            response = json.loads(out)
+        except ValueError:
+            params = list(args) + ['{0}={1}'.format(k, v) for k, v in iteritems(kwargs)]
+            params = ', '.join(params)
+            raise ConnectionError(
+                "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, out)
+            )
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')

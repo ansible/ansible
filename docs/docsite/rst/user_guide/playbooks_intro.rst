@@ -6,7 +6,7 @@ Intro to Playbooks
 About Playbooks
 ```````````````
 
-Playbooks are a completely different way to use ansible than in adhoc task execution mode, and are
+Playbooks are a completely different way to use ansible than in ad-hoc task execution mode, and are
 particularly powerful.
 
 Simply put, playbooks are the basis for a really simple configuration management and multi-machine deployment system,

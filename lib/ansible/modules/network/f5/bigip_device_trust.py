@@ -84,7 +84,7 @@ EXAMPLES = r'''
     peer_hostname: "{{ item.inventory_hostname }}"
     peer_user: "{{ item.bigip_username }}"
     peer_password: "{{ item.bigip_password }}"
-  with_items: hostvars
+  loop: hostvars
   when: inventory_hostname in groups['master']
   delegate_to: localhost
 '''

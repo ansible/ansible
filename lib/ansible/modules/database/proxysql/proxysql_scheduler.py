@@ -370,7 +370,7 @@ def main():
 
     if proxysql_schedule.state == "present":
         try:
-            if not proxysql_schedule.check_schedule_config(cursor) > 0:
+            if proxysql_schedule.check_schedule_config(cursor) <= 0:
                 proxysql_schedule.create_schedule(module.check_mode,
                                                   result,
                                                   cursor)

@@ -1,7 +1,9 @@
 coverage >= 4.2, != 4.3.2 # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
+urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
 pywinrm >= 0.3.0 # message encryption support
 sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 or later
+sphinx < 1.8 ; python_version >= '2.7' # sphinx 1.8 and later are currently incompatible with rstcheck 3.3
 wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 2.7 or later
 yamllint != 1.8.0 ; python_version < '2.7' # yamllint 1.8.0 requires python 2.7+ while earlier/later versions do not
 pycrypto >= 2.6 # Need features found in 2.6 and greater
@@ -10,6 +12,7 @@ idna < 2.6 # requests requires idna < 2.6, but cryptography will cause the lates
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
 pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
 ntlm-auth >= 1.0.6 # message encryption support
+requests < 2.20.0 ; python_version < '2.7' # requests 2.20.0 drops support for python 2.6
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
 voluptuous >= 0.11.0 # Schema recursion via Self

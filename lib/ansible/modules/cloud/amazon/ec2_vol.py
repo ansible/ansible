@@ -124,7 +124,7 @@ EXAMPLES = '''
 - ec2_vol:
     instance: "{{ item.id }}"
     volume_size: 5
-  with_items: "{{ ec2.instances }}"
+  loop: "{{ ec2.instances }}"
   register: ec2_vol
 
 # Example: Launch an instance and then add a volume if not already attached
@@ -145,7 +145,7 @@ EXAMPLES = '''
     instance: "{{ item.id }}"
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
-  with_items: "{{ ec2.instances }}"
+  loop: "{{ ec2.instances }}"
   register: ec2_vol
 
 # Remove a volume

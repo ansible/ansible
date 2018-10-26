@@ -952,9 +952,12 @@ class StrategyBase:
                         iterator._play.handlers.append(block)
                         iterator.cache_block_tasks(block)
                         for task in block.block:
+                            task_name = task.get_name()
+                            display.debug("adding task '%s' included in handler '%s'" % (task_name, handler_name))
+                            self._notified_handlers[task._uuid] = included_file._hosts[:]
                             result = self._do_handler_run(
                                 handler=task,
-                                handler_name=task.get_name(),
+                                handler_name=task_name,
                                 iterator=iterator,
                                 play_context=play_context,
                                 notified_hosts=included_file._hosts[:],
@@ -1196,6 +1199,16 @@ class Debugger(cmd.Cmd):
         return True
 
     do_r = do_redo
+
+    def do_update_task(self, args):
+        """Recreate the task from ``task._ds``, and template with updated ``task_vars``"""
+        templar = Templar(None, shared_loader_obj=None, variables=self.scope['task_vars'])
+        task = self.scope['task']
+        task = task.load_data(task._ds)
+        task.post_validate(templar)
+        self.scope['task'] = task
+
+    do_u = do_update_task
 
     def evaluate(self, args):
         try:

@@ -355,13 +355,15 @@ import grp
 import os
 import re
 import platform
+import pty
 import pwd
+import select
 import shutil
 import socket
+import subprocess
 import time
-import re
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
 
 try:
@@ -860,13 +862,58 @@ class User(object):
         cmd.append(self.ssh_comment)
         cmd.append('-f')
         cmd.append(ssh_key_file)
-        cmd.append('-N')
         if self.ssh_passphrase is not None:
-            cmd.append(self.ssh_passphrase)
+            if self.module.check_mode:
+                self.module.debug('In check mode, would have run: "%s"' % cmd)
+                return (0, '', '')
+
+            master_in_fd, slave_in_fd = pty.openpty()
+            master_out_fd, slave_out_fd = pty.openpty()
+            master_err_fd, slave_err_fd = pty.openpty()
+            env = os.environ.copy()
+            env['LC_ALL'] = 'C'
+            try:
+                p = subprocess.Popen([to_bytes(c) for c in cmd],
+                                     stdin=slave_in_fd,
+                                     stdout=slave_out_fd,
+                                     stderr=slave_err_fd,
+                                     preexec_fn=os.setsid,
+                                     env=env)
+                out_buffer = b''
+                err_buffer = b''
+                while p.poll() is None:
+                    r, w, e = select.select([master_out_fd, master_err_fd], [], [], 1)
+                    first_prompt = b'Enter passphrase (empty for no passphrase):'
+                    second_prompt = b'Enter same passphrase again'
+                    prompt = first_prompt
+                    for fd in r:
+                        if fd == master_out_fd:
+                            chunk = os.read(master_out_fd, 10240)
+                            out_buffer += chunk
+                            if prompt in out_buffer:
+                                os.write(master_in_fd, to_bytes(self.ssh_passphrase, errors='strict') + b'\r')
+                                prompt = second_prompt
+                        else:
+                            chunk = os.read(master_err_fd, 10240)
+                            err_buffer += chunk
+                            if prompt in err_buffer:
+                                os.write(master_in_fd, to_bytes(self.ssh_passphrase, errors='strict') + b'\r')
+                                prompt = second_prompt
+                        if b'Overwrite (y/n)?' in out_buffer or b'Overwrite (y/n)?' in err_buffer:
+                            # The key was created between us checking for existence and now
+                            return (None, 'Key already exists', '')
+
+                rc = p.returncode
+                out = to_native(out_buffer)
+                err = to_native(err_buffer)
+            except OSError as e:
+                return (1, '', to_native(e))
         else:
+            cmd.append('-N')
             cmd.append('')
 
-        (rc, out, err) = self.execute_command(cmd)
+            (rc, out, err) = self.execute_command(cmd)
+
         if rc == 0 and not self.module.check_mode:
             # If the keys were successfully created, we should be able
             # to tweak ownership.

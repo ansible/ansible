@@ -90,7 +90,6 @@ stdout_xml:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
 
 try:
     import pan.xapi
@@ -133,9 +132,7 @@ def main():
     try:
         xml_output = device.op(cmd, xml=True)
         changed = True
-    except PanXapiError:
-        exc = get_exception()
-
+    except PanXapiError as exc:
         if 'non NULL value' in exc.message:
             # rewrap and call again
             cmd_array = cmd.split()
@@ -145,8 +142,7 @@ def main():
             try:
                 xml_output = device.op(cmd2, xml=True)
                 changed = True
-            except PanXapiError:
-                exc = get_exception()
+            except PanXapiError as exc:
                 module.fail_json(msg=exc.message)
 
     obj_dict = xmltodict.parse(xml_output)

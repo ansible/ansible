@@ -135,6 +135,13 @@ EXAMPLES = '''
       - django>1.11.0,<1.12.0
       - bottle>0.10,<0.20,!=0.11
 
+# Install python package using a proxy - it doesn't use the standard environment variables, please use the CAPITALIZED ones below
+- pip:
+    name: six
+  environment:
+    HTTP_PROXY: '127.0.0.1:8080'
+    HTTPS_PROXY: '127.0.0.1:8080'
+
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
@@ -292,11 +299,16 @@ def _recover_package_name(names):
     # reconstruct the names
     name_parts = []
     package_names = []
+    in_brackets = False
     for name in names:
-        if _is_package_name(name):
+        if _is_package_name(name) and not in_brackets:
             if name_parts:
                 package_names.append(",".join(name_parts))
             name_parts = []
+        if "[" in name:
+            in_brackets = True
+        if in_brackets and "]" in name:
+            in_brackets = False
         name_parts.append(name)
     package_names.append(",".join(name_parts))
     return package_names
@@ -498,6 +510,7 @@ class Package:
             # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
             if self._requirement.project_name == "distribute":
                 self.package_name = "setuptools"
+                self._requirement.project_name = "setuptools"
             else:
                 self.package_name = self._requirement.project_name
             self._plain_package = True
@@ -639,7 +652,7 @@ def main():
                             "Please keep the version specifier, but remove the 'version' argument."
                     )
                 # if the version specifier is provided by version, append that into the package
-                packages[0] = Package(packages[0].package_name, version)
+                packages[0] = Package(to_native(packages[0]), version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
