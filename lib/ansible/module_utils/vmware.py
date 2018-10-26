@@ -355,7 +355,7 @@ def gather_vm_facts(content, vm):
             net_dict[device.macAddress] = list(device.ipAddress)
 
     if vm.guest.ipAddress:
-        if '::' in vm.guest.ipAddress:
+        if ':' in vm.guest.ipAddress:
             facts['ipv6'] = vm.guest.ipAddress
         else:
             facts['ipv4'] = vm.guest.ipAddress
