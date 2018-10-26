@@ -1,5 +1,5 @@
 ***************
-Developer Guide
+Developers Guide
 ***************
 
 Welcome to the Ansible Developer Guide!
