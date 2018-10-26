@@ -149,7 +149,7 @@
   azure_rm_sqldatabase_facts:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
-    database_name: database{{ random_postfix }}
+    name: database{{ random_postfix }}
   register: output
 - name: Assert that facts are returned
   assert:
@@ -240,7 +240,7 @@
   azure_rm_sqldatabase_facts:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
-    database_name: database{{ random_postfix }}
+    name: database{{ random_postfix }}
   register: output
 - name: Assert that empty dictionary was returned
   assert:
