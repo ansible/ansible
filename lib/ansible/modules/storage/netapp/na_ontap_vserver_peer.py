@@ -15,7 +15,7 @@ author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
   - Create/Delete vserver peer
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_vserver_peer
 options:
   state:
@@ -94,7 +94,7 @@ class NetAppONTAPVserverPeer(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str'),
@@ -120,14 +120,14 @@ class NetAppONTAPVserverPeer(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
             if self.parameters.get('dest_hostname'):
                 self.module.params['hostname'] = self.parameters['dest_hostname']
                 if self.parameters.get('dest_username'):
                     self.module.params['username'] = self.parameters['dest_username']
                 if self.parameters.get('dest_password'):
                     self.module.params['password'] = self.parameters['dest_password']
-                self.dest_server = netapp_utils.setup_ontap_zapi(module=self.module)
+                self.dest_server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def vserver_peer_get_iter(self):
         """
