@@ -1,4 +1,4 @@
-|PyPI version| |Docs badge| |Build Status|
+|PyPI version| |Docs badge| |Chat badge| |Build Status|
 
 *******
 Ansible
@@ -47,12 +47,9 @@ Get Involved
    kinds of ways to contribute to and interact with the project,
    including mailing list information and how to submit bug reports and
    code to Ansible.
-*  All code submissions are done through pull requests. Take care to
-   make sure no merge commits are in the submission, and use
-   ``git rebase`` vs ``git merge`` for this reason. If submitting a
-   large code change (other than modules), it's probably a good idea to
-   join ansible-devel and talk about what you would like to do or add
-   first to avoid duplicate efforts. This not only helps everyone
+*  All code submissions are done through pull requests to the ``devel`` branch.
+*  Feel free to talk to us before making larger changes
+   to avoid duplicate efforts. This not only helps everyone
    know what's going on, it also helps save time and effort if we decide
    some changes are needed.
 *  Users list:
@@ -109,6 +106,8 @@ See `COPYING <COPYING>`_ to see the full text.
 .. |PyPI version| image:: https://img.shields.io/pypi/v/ansible.svg
    :target: https://pypi.org/project/ansible
 .. |Docs badge| image:: https://img.shields.io/badge/docs-latest-brightgreen.svg
-   :target: https://docs.ansible.com/ansible
+   :target: https://docs.ansible.com/ansible/latest/
 .. |Build Status| image:: https://api.shippable.com/projects/573f79d02a8192902e20e34b/badge?branch=devel
    :target: https://app.shippable.com/projects/573f79d02a8192902e20e34b
+.. |Chat badge| image:: https://img.shields.io/badge/chat-IRC-brightgreen.svg
+   :target: https://docs.ansible.com/ansible/latest/community/communication.html
