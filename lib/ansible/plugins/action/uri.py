@@ -20,6 +20,8 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def run(self, tmp=None, task_vars=None):
+        self._supports_async = True
+
         if task_vars is None:
             task_vars = dict()
 
@@ -33,7 +35,7 @@ class ActionModule(ActionBase):
             if (src and remote_src) or not src:
                 # everything is remote, so we just execute the module
                 # without changing any of the module arguments
-                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars))
+                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars, wrap_async=self._task.async_val))
 
             try:
                 src = self._find_needle('files', src)
@@ -51,9 +53,10 @@ class ActionModule(ActionBase):
                 )
             )
 
-            result.update(self._execute_module('uri', module_args=new_module_args, task_vars=task_vars))
+            result.update(self._execute_module('uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tmpdir)
+            if not self._task.async_val:
+                self._remove_tmp_path(self._connection._shell.tmpdir)
         return result
