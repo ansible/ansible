@@ -57,6 +57,14 @@ options:
 """
 
 EXAMPLES = '''
+# Returns a set of attributes for the item with the given primary key.
+- name: Gets a single item
+  dynamodb:
+    profile: pre
+    table: narcos
+    action: get
+    primary_key: {"bank": {"S": "hsbc"}}
+
 # Creates a single item in 'narcos' DynamoDB table where column 'bank' equals 'hsbc' string,
 # column 'quantity' equals '1000' numeric and column 'person' equals 'ochoa' string
 - name: Creates a new record
@@ -77,6 +85,26 @@ EXAMPLES = '''
     primary_key: {"project": {"S": "potatoes"}}
     condition_expression: version = :number
     expression_attribute_values: {":number": {"N": "123456"}}
+'''
+
+RETURN = '''
+---
+item:
+    description: Item when you peform a 'get' action.
+    returned: success
+    type: dict
+    sample:
+        {
+            "bank": {
+                "S": "hsbc"
+            },
+            "quantity": {
+                "N": "1000"
+            },
+            "person": {
+                "S": "ochoa"
+            }
+        }
 '''
 
 import boto3
@@ -102,14 +130,17 @@ def get(connection, table, primary_key, result):
         # ProjectionExpression=projection_expression
     )
 
-    result['item'] = response['Item']
+    if 'Item' in response:
+        result['item'] = response['Item']
+    else:
+        result = dict(failed=True, message='No item found')
 
     return result
 
 
 def put(connection, table, item, result):
 
-    result = connection.put_item(
+    response = connection.put_item(
         TableName=table,
         Item=item,
     )
@@ -119,9 +150,21 @@ def put(connection, table, item, result):
     return result
 
 
+def update(table, primary_key, ):
+
+    response = connection.update_item(
+        TableName=table,
+        Key=primary_key,
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_attribute_values,
+    )
+
+    return result
+
+
 def delete(connection, table, primary_key, condition_expression, expression_attribute_values, result):
 
-    result = connection.delete_item(
+    response = connection.delete_item(
         TableName=table,
         Key=primary_key,
         ConditionExpression=condition_expression,
@@ -197,14 +240,7 @@ def main():
             result = put(connection, table, item, result)
 
         elif action == 'update':
-            connection.update_item(
-                TableName=table,
-                Key={primary_key_type: primary_key},
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_attribute_values,
-            )
-
-            return response
+            result = update()
 
         elif action == 'delete':
             result = delete(connection, table, primary_key,
