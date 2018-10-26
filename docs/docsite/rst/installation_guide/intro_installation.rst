@@ -259,6 +259,22 @@ The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <htt
 
 Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
 
+.. _from_sbopkg:
+
+Latest Releases via sbopkg (Slackware Linux)
+++++++++++++++++++++++++++++++++++++++++++++
+
+Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/repository/14.2/system/ansible/>`_ repository.
+Can be built and installed using `sbopkg <https://sbopkg.org/>`_.
+
+Create queue with Ansible and all dependencies::
+
+    # sqg -p ansible
+
+Build and install packages from created queuefile (answer Q for question if sbopkg should use queue or package)::
+
+    # sbopkg -k -i ansible
+
 .. _from_pip:
 
 Latest Releases via Pip
