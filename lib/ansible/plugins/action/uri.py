@@ -35,7 +35,7 @@ class ActionModule(ActionBase):
             if (src and remote_src) or not src:
                 # everything is remote, so we just execute the module
                 # without changing any of the module arguments
-                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars))
+                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars, wrap_async=self._task.async_val))
 
             try:
                 src = self._find_needle('files', src)
