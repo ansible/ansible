@@ -398,6 +398,7 @@ def map_params_to_obj(module):
 
     return objects
 
+
 def update_objects(want, have):
     updates = list()
     for entry in want:
