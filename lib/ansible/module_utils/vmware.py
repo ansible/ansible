@@ -32,8 +32,8 @@ from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
-    def __init__(self, error_msg, host_thumbprint=None):
-        super(TaskError).__init__()
+    def __init__(self, *args, **kwargs):
+        super(TaskError, self).__init__(*args, **kwargs)
 
 
 def wait_for_task(task, max_backoff=64, timeout=3600):
