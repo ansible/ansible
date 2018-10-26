@@ -39,6 +39,17 @@ General guidelines & tips
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 * If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 
+
+Functions and Methods
+=====================
+
+* In general, functions should not be 'too long' and should describe a meaningful amount of work
+* When code gets too nested, that's usually the sign the loop body could benefit from being a function
+* Parts of our existing code are not the best examples of this at times.
+* Functions should have names that describe what they do, along with docstrings
+* Functions should be named with_underscores
+* "Don't repeat yourself" is generally a good philosophy
+
 Python tips
 ===========
 
@@ -148,3 +159,13 @@ Ansible conventions offer a predictable user interface across all modules, playb
 * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
 * Provide consistent return values within the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
 * Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow `the Amazon guidelines <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
+
+Module Security
+===============
+
+* Modules must take steps to avoid passing user input from the shell and always check return codes
+* Always use ``module.run_command``, not ``subprocess`` or ``Popen`` or ``os.system`` -- this is mandatory
+* If you need to use the shell you must pass ``use_unsafe_shell=True`` to ``module.run_command``
+* If you do not need the shell, avoid using the shell
+* Any variables that can come from the user input with ``use_unsafe_shell=True`` must be wrapped by ``pipes.quote(x)``
+* Downloads of https:// resource urls must import ``module_utils.urls`` and use the ``fetch_url method``
