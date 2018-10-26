@@ -260,11 +260,9 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
             'name': d['name'],
             'location': d['location'],
             'tags': d['tags'],
-            'sku': {
-              'name': d['sku']['name'],
-              'tier': d['sku']['tier'],
-              'capacity': d['sku']['capacity']
-            },
+            'sku': {'name': d['sku']['name'],
+                    'tier': d['sku']['tier'],
+                    'capacity': d['sku']['capacity']},
             'kind': d['kind'],
             'status': d['status']
         }
