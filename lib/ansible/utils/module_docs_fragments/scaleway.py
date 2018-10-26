@@ -22,6 +22,11 @@ options:
       - HTTP timeout to Scaleway API in seconds.
     default: 30
     aliases: ['timeout']
+  query_parameters:
+    description:
+    - List of parameters passed to the query string
+    type: dict
+    default: {}
   validate_certs:
     description:
       - Validate SSL certs of the Scaleway API.

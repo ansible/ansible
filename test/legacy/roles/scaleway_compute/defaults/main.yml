@@ -5,3 +5,5 @@ scaleway_organization: '{{ scw_org }}'
 scaleway_region: ams1
 scaleway_commerial_type: START1-S
 scaleway_name: scaleway_compute_test
+first_server_name: scaleway_compute_test_first
+second_server_name: scaleway_compute_test_second
