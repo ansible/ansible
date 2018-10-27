@@ -51,16 +51,16 @@ options:
 EXAMPLES = '''
 # Limits both of the max number of connections and the max number of queues on / vhost.
 - rabbitmq_vhost_limits:
+    vhost: /
     max_connections: 64
     max_queues: 256
-    vhost: /
     state: present
 
 # Limits the max number of connections on / vhost.
 # This task implicitly clears the max number of queues limit using default value: -1.
 - rabbitmq_vhost_limits:
-    max_connections: 64
     vhost: /
+    max_connections: 64
     state: present
 
 # Clears the limits on / vhost.
@@ -72,12 +72,12 @@ EXAMPLES = '''
 RETURN = '''
 max_connections:
     description:
-        - Current max number of concurrent connections; C(null) if there are no limits.
+        - Current max number of concurrent connections; negative value if there are no limits.
     returned: always
     type: int
     sample: 64
 max_queues:
-    description: Current max number of queues; C(null) if there are no limits.
+    description: Current max number of queues; negative value if there are no limits.
     returned: always
     type: int
     sample: 256
