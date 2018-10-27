@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# Copyright: (c) 2018, David C Martin @blastikman
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -72,6 +76,7 @@ options:
     description:
       - One or more values that can be substituted in an expressionself.
       Use the : (colon) character in an expression to dereference an attribute value.
+      
 """
 
 EXAMPLES = '''
@@ -121,6 +126,7 @@ EXAMPLES = '''
     primary_key: {"project": {"S": "potatoes"}}
     condition_expression: version = :number
     expression_attribute_values: {":number": {"N": "123456"}}
+
 '''
 
 RETURN = '''
@@ -141,6 +147,7 @@ item:
                 "S": "ochoa"
             }
         }
+
 '''
 
 import boto3
@@ -245,7 +252,7 @@ def main():
         expression_attribute_values=dict(required=False, type='dict'),
         update_expression=dict(required=False, type='str'),
         projection_expression=dict(required=False, type='str')
-        )
+    )
     )
 
     module = AnsibleModule(
@@ -301,7 +308,7 @@ def main():
                             condition_expression, expression_attribute_values, result)
 
     except connection.exceptions.ResourceNotFoundException as error:
-        error_msg = 'Table {} not found'.format(table)
+        error_msg = 'Table {0} not found'.format(table)
         module.fail_json(msg=error_msg)
     except connection.exceptions.ConditionalCheckFailedException as error:
         error_msg = 'No item matches the condition'
