@@ -84,7 +84,7 @@ options:
   ipam_config:
     version_added: 2.8
     description:
-      - List of IPAM config blocks. Consult 
+      - List of IPAM config blocks. Consult
         L(Docker docs, https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
     type: list
     default: null
@@ -177,6 +177,7 @@ EXAMPLES = '''
         aux_addresses:
           host1: 172.3.27.3
           host2: 172.3.27.4
+
 - name: Create a network with IPv6 IPAM config
   docker_network:
     name: network_ipv6_one
