@@ -70,6 +70,7 @@ class MerakiModule(object):
         self.original = None
         self.proposed = dict()
         self.merged = None
+        self.ignored_keys = ('id', 'organizationId')
 
         # debug output
         self.filter_string = ''
@@ -84,7 +85,7 @@ class MerakiModule(object):
                          'network': '/organizations/{org_id}/networks',
                          'admins': '/organizations/{org_id}/admins',
                          'configTemplates': '/organizations/{org_id}/configTemplates',
-                         'samlRoles': '/organizations/{org_id}/samlRoles',
+                         'samlymbols': '/organizations/{org_id}/samlRoles',
                          'ssids': '/networks/{net_id}/ssids',
                          'groupPolicies': '/networks/{net_id}/groupPolicies',
                          'staticRoutes': '/networks/{net_id}/staticRoutes',
@@ -128,30 +129,40 @@ class MerakiModule(object):
         else:
             self.params['protocol'] = 'http'
 
-    def is_update_required(self, original, proposed, optional_ignore=None):
-        """Compare original and proposed data to see if an update is needed."""
-        is_changed = False
-        ignored_keys = ('id', 'organizationId')
-        if not optional_ignore:
-            optional_ignore = ('')
 
-        # for k, v in original.items():
-        #     try:
-        #         if k not in ignored_keys and k not in optional_ignore:
-        #             if v != proposed[k]:
-        #                 is_changed = True
-        #     except KeyError:
-        #         if v != '':
-        #             is_changed = True
-        for k, v in proposed.items():
-            try:
-                if k not in ignored_keys and k not in optional_ignore:
-                    if v != original[k]:
-                        is_changed = True
-            except KeyError:
-                if v != '':
-                    is_changed = True
-        return is_changed
+    def filter_items(self, d):
+        ''' Filter out keys when returning items() '''
+        l = []
+        # Ensure we return sorted tuples
+        for k, v in sorted(d.items()):
+            if k not in self.ignored_keys:
+                l.append((k, v))
+        return l
+
+    def is_update_required(self, original, proposed, optional_ignore=None):
+        ''' Compare two data-structures '''
+        if optional_ignore:
+            self.ignored_keys = self.ignored_keys + optional_ignore
+
+        if type(original) != type(proposed):
+            # print("Datatypes don't match: {0} vs {1}".format(type(original), type(proposed)))
+            return True
+        if isinstance(original, list) or isinstance(original, tuple):
+            if len(original) != len(proposed):
+                # print("Lengths don't match: {0} vs {1}".format(len(original), len(proposed)))
+                return True
+            for a, b in zip(original, proposed):
+                if self.is_update_required(a, b):
+                    return True
+        elif isinstance(original, dict):
+            # Turn dictionaries into list of tuples, and re-evaluate
+            if self.is_update_required(self.filter_items(original), self.filter_items(proposed)):
+                return True
+        else:  # Works for sets, integers, strings, ...
+            if original != proposed:
+                # print("Values don't match: {0} vs {1}".format(original, proposed))
+                return True
+        return False
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
