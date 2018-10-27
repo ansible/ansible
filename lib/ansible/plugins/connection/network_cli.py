@@ -182,6 +182,7 @@ import os
 import signal
 import socket
 import traceback
+import time
 from io import BytesIO
 
 from ansible.errors import AnsibleConnectionFailure
@@ -359,6 +360,15 @@ class Connection(NetworkConnectionBase):
                 display.debug("ssh connection has been closed successfully")
         super(Connection, self).close()
 
+    def receive_ssh_data(self, count, timeout):
+        if timeout:
+            start = time.time()
+            while not self._ssh_shell.recv_ready():
+                if time.time() - start >= timeout:
+                    raise AnsibleConnectionFailure("timeout waiting ssh data")
+                time.sleep(0.001)
+        return self._ssh_shell.recv(count)
+
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
         '''
         Handles receiving of output from command
@@ -370,32 +380,25 @@ class Connection(NetworkConnectionBase):
         command_prompt_matched = False
         matched_prompt_window = window_count = 0
 
-        command_timeout = self.get_option('persistent_command_timeout')
-        self._validate_timeout_value(command_timeout, "persistent_command_timeout")
-
         buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
+
+        receive_data_timeout = self._ssh_shell.gettimeout()
 
         while True:
             if command_prompt_matched:
                 try:
-                    signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
-                    signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
-                    data = self._ssh_shell.recv(256)
-                    signal.alarm(0)
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
                     # remaining response.
+                    data = self.receive_ssh_data(256, buffer_read_timeout)
                     command_prompt_matched = False
-
-                    # restart command_timeout timer
-                    signal.signal(signal.SIGALRM, self._handle_command_timeout)
-                    signal.alarm(command_timeout)
-
-                except AnsibleCmdRespRecv:
+                except AnsibleConnectionFailure:
+                    display.vvvv("Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds"
+                                 % self.get_option('persistent_buffer_read_timeout'), host=self._play_context.remote_addr)
                     return self._command_response
             else:
-                data = self._ssh_shell.recv(256)
+                data = self.receive_ssh_data(256, receive_data_timeout)
 
             # when a channel stream is closed, received data will be empty
             if not data:
@@ -446,17 +449,6 @@ class Connection(NetworkConnectionBase):
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
-
-    def _handle_buffer_read_timeout(self, signum, frame):
-        display.vvvv("Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds"
-                     % self.get_option('persistent_buffer_read_timeout'), host=self._play_context.remote_addr)
-        raise AnsibleCmdRespRecv()
-
-    def _handle_command_timeout(self, signum, frame):
-        msg = 'command timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and Troubleshooting Guide.'\
-              % self.get_option('persistent_command_timeout')
-        display.display(msg, log_only=True)
-        raise AnsibleConnectionFailure(msg)
 
     def _strip(self, data):
         '''
