@@ -72,30 +72,6 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
-max_connections:
-    description:
-        - Current max number of concurrent connections; negative value if there are no limits.
-    returned: always
-    type: int
-    sample: 64
-max_queues:
-    description: Current max number of queues; negative value if there are no limits.
-    returned: always
-    type: int
-    sample: 256
-node:
-    description: Erlag node name to be configured in this task; C(null) if not specified.
-    returned: always
-    type: string
-    sample: rabbit
-vhost:
-    description: RabbitMQ virtual host to be configured in this task.
-    returned: always
-    type: string
-    sample: /
-'''
-
 
 import json
 from ansible.module_utils.basic import AnsibleModule
@@ -121,8 +97,8 @@ class RabbitMqVhostLimits(object):
     def list(self):
         exec_result = self._exec(['list_vhost_limits'])
         vhost_limits = exec_result['out'][0]
-        max_connections = -1
-        max_queues = -1
+        max_connections = None
+        max_queues = None
         if vhost_limits:
             vhost_limits = json.loads(vhost_limits)
             if 'max-connections' in vhost_limits:
@@ -177,8 +153,8 @@ def main():
         )
     else: # state == 'absent'
         wanted_status = dict(
-            max_connections=-1,
-            max_queues=-1
+            max_connections=None,
+            max_queues=None
         )
 
     if current_status != wanted_status:
@@ -187,16 +163,6 @@ def main():
             rabbitmq_vhost_limits.set()
         else: # state == 'absent'
             rabbitmq_vhost_limits.clear()
-
-    if module.check_mode:
-        module_result['max_connections'] = wanted_status['max_connections']
-        module_result['max_queues'] = wanted_status['max_queues']
-    else: # not module.check_mode
-        current_status = rabbitmq_vhost_limits.list()
-        module_result['max_connections'] = current_status['max_connections']
-        module_result['max_queues'] = current_status['max_queues']
-    module_result['node'] = node
-    module_result['vhost'] = vhost
 
     module.exit_json(**module_result)
 

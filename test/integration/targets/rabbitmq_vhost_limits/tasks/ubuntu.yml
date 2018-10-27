@@ -16,9 +16,6 @@
         that:
           - module_result is changed
           - module_result is success
-          - "module_result.vhost == '/'"
-          - "module_result.max_connections == 64"
-          - "module_result.max_queues == 256"
 
     - name: Get a list of configured virtual host limits
       shell: "rabbitmqctl list_vhost_limits"
@@ -46,9 +43,6 @@
         that:
           - module_result is changed
           - module_result is success
-          - "module_result.vhost == '/'"
-          - "module_result.max_connections == 64"
-          - "module_result.max_queues == 256"
 
     - name: Get a list of configured virtual host limits
       shell: "rabbitmqctl list_vhost_limits"
@@ -91,9 +85,6 @@
         that:
           - module_result is changed
           - module_result is success
-          - "module_result.vhost == '/'"
-          - "module_result.max_connections == 32"
-          - "module_result.max_queues == -1"
 
     - name: Get a list of configured virtual host limits
       shell: "rabbitmqctl list_vhost_limits"
@@ -120,9 +111,6 @@
         that:
           - module_result is changed
           - module_result is success
-          - "module_result.vhost == '/'"
-          - "module_result.max_connections == -1"
-          - "module_result.max_queues == -1"
 
     - name: Get a list of configured virtual host limits
       shell: "rabbitmqctl list_vhost_limits"
@@ -148,9 +136,6 @@
         that:
           - module_result is changed
           - module_result is success
-          - "module_result.vhost == '/'"
-          - "module_result.max_connections == -1"
-          - "module_result.max_queues == -1"
 
     - name: Get a list of configured virtual host limits
       shell: "rabbitmqctl list_vhost_limits"
