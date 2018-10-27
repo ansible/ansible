@@ -20,7 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
@@ -47,7 +48,6 @@ options:
   output_format:
     description:
        format of the parsed results file this module will generated
-    type: bool
     required: False
     default: html
     choices: [xml, html]
@@ -56,6 +56,7 @@ options:
       override output file if already exists
     required: False
     default: False
+    type: bool
 notes:
   - For more information about os-testr, U(https://docs.openstack.org/developer/os-testr)
   - For more information about python-subunit, U(https://pypi.python.org/pypi/python-subunit)
