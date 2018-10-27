@@ -346,7 +346,7 @@ class DockerNetworkManager(object):
                             different = True
                             differences.append('ipam_config[%s].%s' % (idx, key))
 
-        if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net['EnableIPv6']:
+        if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net.get('EnableIPv6', False):
             different = True
             differences.append('enable_ipv6')
 
