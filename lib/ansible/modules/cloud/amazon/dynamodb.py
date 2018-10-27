@@ -8,33 +8,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: dynamodb
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ready to review
 short_description: Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
 version_added: "2.8"
 description:
   - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
   More infomation can be found here:
   https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
-<<<<<<< HEAD
-=======
-short_description: Reads, creates, updates or deletes items in AWS Dynamo DB tables.
-version_added: "2.7"
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
->>>>>>> ready to review
 author:
   - David C. Martin @blastikman
 requirements:
   - boto3
 options:
   table:
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ready to review
     type: string
     required: true
     description:
@@ -42,29 +27,16 @@ options:
   action:
     type: string
     required: true
-<<<<<<< HEAD
-=======
-    description:
-      - Name of the DynamoDB table
-  action:
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
->>>>>>> ready to review
     description:
       - "get": Returns a set of attributes for the item with
       the given primary key.
       - "put": Creates a new item, or replaces an old item with a new item.
       If an item that has the same primary key as the new item already exists
       in the specified table, the new item completely replaces the existing item.
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ready to review
       - "update": Edits an existing item's attributes, or adds a new item to the
       table if it does not already exist. You can also perform a conditional update on an
       existing item (insert a new attribute name-value pair if it doesn't exist,
       or replace an existing name-value pair if it has certain expected attribute values).
-<<<<<<< HEAD
       - "delete": Deletes a single item in a table by primary key. You can
       perform a conditional delete operation that deletes the item if it exists,
       or if it has an expected attribute value.
@@ -111,48 +83,6 @@ EXAMPLES = '''
     action: get
     primary_key: {"bank": {"S": "hsbc"}}
 
-=======
-=======
->>>>>>> ready to review
-      - "delete": Deletes a single item in a table by primary key. You can
-      perform a conditional delete operation that deletes the item if it exists,
-      or if it has an expected attribute value.
-    choices: [ 'get', 'put', 'update', 'delete' ]
-  primary_key:
-    type: dict
-    description:
-      - The primary key of the DynamoDB table. Each element consists of an
-      attribute name and a value for that attribute. For a composite primary key,
-      you must provide values for both the partition key and the sort key.
-  projection_expression:
-    type: string
-    description:
-      - A string that identifies one or more attributes (separated by commas)
-      to retrieve from the table. Only to be used with action -get-.
-  item:
-    type: dict
-    description:
-      - A map of attribute name/value pairs, one for each attribute. Only the
-      primary key attributes are required; you can optionally provide other
-      attribute name-value pairs for the item. Only to be used with action -put-.
-  update_expression:
-    type: string
-    description:
-      - An expression that defines one or more attributes to be updated,
-      the action to be performed on them, and new value(s) for them.
-  condition_expression:
-    type: string
-    description:
-      - A condition that must be satisfied in order for a conditional update to succeed.
-  expression_attribute_values:
-    type: dict
-    description:
-      - One or more values that can be substituted in an expressionself.
-      Use the : (colon) character in an expression to dereference an attribute value.
-"""
-
-EXAMPLES = '''
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
 # Creates a single item in 'narcos' DynamoDB table where column 'bank' equals 'hsbc' string,
 # column 'quantity' equals '1000' numeric and column 'person' equals 'ochoa' string
 - name: Creates a new record
@@ -161,10 +91,6 @@ EXAMPLES = '''
     action: put
     item: {"bank": {"S": "hsbc"},"quantity": {"N": "1000"},"person": {"S": "ochoa"}}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ready to review
 # Updates the 'quantity' attibute value from a single item.
 - name: Updates arribute 'person'
   dynamodb:
@@ -183,11 +109,6 @@ EXAMPLES = '''
     primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
     update_expression: 'REMOVE person'
 
-<<<<<<< HEAD
-=======
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
->>>>>>> ready to review
 # Connects with awscli profile 'development' and
 # deletes a single item from 'releases' DynamoDB table
 # where the column 'project' equals string 'potatoes' (also primary key)
@@ -202,7 +123,6 @@ EXAMPLES = '''
     expression_attribute_values: {":number": {"N": "123456"}}
 '''
 
-<<<<<<< HEAD
 RETURN = '''
 ---
 item:
@@ -223,8 +143,6 @@ item:
         }
 '''
 
-=======
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
 import boto3
 
 import ansible.module_utils.ec2
@@ -240,11 +158,6 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 def get(connection, table, primary_key, projection_expression, result):
 
     if projection_expression:
@@ -263,53 +176,13 @@ def get(connection, table, primary_key, projection_expression, result):
         result['item'] = response['Item']
     else:
         result = dict(failed=True, message='No item found')
-=======
-=======
->>>>>>> refactor main() to call small functions
-def get(connection, table, primary_key):
-=======
-def get(connection, table, primary_key, projection_expression, result):
->>>>>>> ready to review
-
-    if projection_expression:
-        response = connection.get_item(
-            TableName=table,
-            Key=primary_key,
-            ProjectionExpression=projection_expression
-        )
-    else:
-        response = connection.get_item(
-            TableName=table,
-            Key=primary_key
-        )
-
-    result = dict(changed=False, message=response)
-<<<<<<< HEAD
->>>>>>> refactor main() to call small functions
-=======
->>>>>>> refactor main() to call small functions
 
     return result
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 def put(connection, table, item, result):
 
     connection.put_item(
-<<<<<<< HEAD
-=======
-def put(connection, table, item):
-
-    result = connection.put_item(
->>>>>>> refactor main() to call small functions
-=======
-def put(connection, table, item):
-
-    result = connection.put_item(
->>>>>>> refactor main() to call small functions
-=======
->>>>>>> ready to review
         TableName=table,
         Item=item,
     )
@@ -319,11 +192,6 @@ def put(connection, table, item):
     return result
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ready to review
 def update(connection, table, primary_key, update_expression, condition_expression, expression_attribute_values, result):
 
     if condition_expression and expression_attribute_values:
@@ -355,19 +223,6 @@ def update(connection, table, primary_key, update_expression, condition_expressi
 def delete(connection, table, primary_key, condition_expression, expression_attribute_values, result):
 
     connection.delete_item(
-<<<<<<< HEAD
-=======
-def delete(connection, table, primary_key, condition_expression, expression_attribute_values):
-
-    result = connection.delete_item(
->>>>>>> refactor main() to call small functions
-=======
-def delete(connection, table, primary_key, condition_expression, expression_attribute_values):
-
-    result = connection.delete_item(
->>>>>>> refactor main() to call small functions
-=======
->>>>>>> ready to review
         TableName=table,
         Key=primary_key,
         ConditionExpression=condition_expression,
@@ -379,16 +234,6 @@ def delete(connection, table, primary_key, condition_expression, expression_attr
     return result
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
->>>>>>> refactor main() to call small functions
-=======
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
->>>>>>> refactor main() to call small functions
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
@@ -398,24 +243,9 @@ def main():
         item=dict(required=False, type='dict'),
         condition_expression=dict(required=False, type='str'),
         expression_attribute_values=dict(required=False, type='dict'),
-<<<<<<< HEAD
-<<<<<<< HEAD
         update_expression=dict(required=False, type='str'),
         projection_expression=dict(required=False, type='str')
         )
-=======
-        # projection_expression=dict(required=True)
-        # primary_key_type=dict(required=True),
-        # update_expression=dict(default='present', type='str', choices=[
-        #     "SET", "REMOVE", "ADD", "DELETE"]),
-        # expression_attribute_names=dict(required=False),
-    )
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
-        update_expression=dict(required=False, type='str'),
-        projection_expression=dict(required=False, type='str')
-        )
->>>>>>> ready to review
     )
 
     module = AnsibleModule(
@@ -446,10 +276,6 @@ def main():
         primary_key = module.params.get('primary_key')
         condition_expression = module.params.get('condition_expression')
         item = module.params.get('item')
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> ready to review
         update_expression = module.params.get('update_expression')
         expression_attribute_values = module.params.get(
             'expression_attribute_values')
@@ -473,62 +299,6 @@ def main():
         elif action == 'delete':
             result = delete(connection, table, primary_key,
                             condition_expression, expression_attribute_values, result)
-<<<<<<< HEAD
-=======
-        expression_attribute_values = module.params.get(
-            'expression_attribute_values')
-        # projection_expression = module.params.get('projection_expression')
-        # update_expression = module.params.get('update_expression')
-        # expression_attribute_names = module.params.get(
-        #     'expression_attribute_names')
-
-        result = {}
-
-        if action == 'get':
-            get(connection, table, primary_key)
-
-        elif action == 'put':
-            put(connection, table, item)
-
-        elif action == 'update':
-            result = connection.update_item(
-                TableName=table,
-                Key={primary_key_type: primary_key},
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_attribute_values,
-            )
-
-            return result
-
-        elif action == 'delete':
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-            result = connection.delete_item(
-                TableName=table,
-                Key=primary_key,
-                ConditionExpression=condition_expression,
-                ExpressionAttributeValues=expression_attribute_values,
-                ReturnValues='ALL_OLD'
-            )
-
-            return result
-<<<<<<< HEAD
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
-            delete(connection, table, primary_key,
-                   condition_expression, expression_attribute_values)
->>>>>>> refactor main() to call small functions
-=======
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
-            delete(connection, table, primary_key,
-                   condition_expression, expression_attribute_values)
->>>>>>> refactor main() to call small functions
-=======
->>>>>>> ready to review
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {} not found'.format(table)
@@ -540,22 +310,6 @@ def main():
         error_msg = boto_exception(error)
         module.fail_json(msg=error_msg)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    result = dict(changed=False, message=response)
-
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
->>>>>>> refactor main() to call small functions
-=======
-    result = dict(changed=False, message=response)
-
->>>>>>> Merge branch 'dynamodb' into add_dynamodb
-=======
->>>>>>> refactor main() to call small functions
     module.exit_json(**result)
 
 
