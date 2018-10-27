@@ -9,16 +9,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 module: dynamodb
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ready to review
 short_description: Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
 version_added: "2.8"
 description:
   - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
   More infomation can be found here:
   https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
+<<<<<<< HEAD
 =======
 short_description: Reads, creates, updates or deletes items in AWS Dynamo DB tables.
 version_added: "2.7"
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
+=======
+>>>>>>> ready to review
 author:
   - David C. Martin @blastikman
 requirements:
@@ -26,6 +32,9 @@ requirements:
 options:
   table:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ready to review
     type: string
     required: true
     description:
@@ -33,11 +42,14 @@ options:
   action:
     type: string
     required: true
+<<<<<<< HEAD
 =======
     description:
       - Name of the DynamoDB table
   action:
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
+=======
+>>>>>>> ready to review
     description:
       - "get": Returns a set of attributes for the item with
       the given primary key.
@@ -45,10 +57,14 @@ options:
       If an item that has the same primary key as the new item already exists
       in the specified table, the new item completely replaces the existing item.
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ready to review
       - "update": Edits an existing item's attributes, or adds a new item to the
       table if it does not already exist. You can also perform a conditional update on an
       existing item (insert a new attribute name-value pair if it doesn't exist,
       or replace an existing name-value pair if it has certain expected attribute values).
+<<<<<<< HEAD
       - "delete": Deletes a single item in a table by primary key. You can
       perform a conditional delete operation that deletes the item if it exists,
       or if it has an expected attribute value.
@@ -96,35 +112,43 @@ EXAMPLES = '''
     primary_key: {"bank": {"S": "hsbc"}}
 
 =======
+=======
+>>>>>>> ready to review
       - "delete": Deletes a single item in a table by primary key. You can
       perform a conditional delete operation that deletes the item if it exists,
-       or if it has an expected attribute value.
+      or if it has an expected attribute value.
+    choices: [ 'get', 'put', 'update', 'delete' ]
   primary_key:
+    type: dict
     description:
-      -
+      - The primary key of the DynamoDB table. Each element consists of an
+      attribute name and a value for that attribute. For a composite primary key,
+      you must provide values for both the partition key and the sort key.
+  projection_expression:
+    type: string
+    description:
+      - A string that identifies one or more attributes (separated by commas)
+      to retrieve from the table. Only to be used with action -get-.
   item:
+    type: dict
     description:
-      -
+      - A map of attribute name/value pairs, one for each attribute. Only the
+      primary key attributes are required; you can optionally provide other
+      attribute name-value pairs for the item. Only to be used with action -put-.
   update_expression:
+    type: string
     description:
-      -
-  update_expression:
+      - An expression that defines one or more attributes to be updated,
+      the action to be performed on them, and new value(s) for them.
+  condition_expression:
+    type: string
     description:
-      -
-  update_expression:
+      - A condition that must be satisfied in order for a conditional update to succeed.
+  expression_attribute_values:
+    type: dict
     description:
-      -
-  update_expression:
-    description:
-      -
-  update_expression:
-    description:
-      -
-  update_expression:
-    description:
-      -
-
-
+      - One or more values that can be substituted in an expressionself.
+      Use the : (colon) character in an expression to dereference an attribute value.
 """
 
 EXAMPLES = '''
@@ -138,6 +162,9 @@ EXAMPLES = '''
     item: {"bank": {"S": "hsbc"},"quantity": {"N": "1000"},"person": {"S": "ochoa"}}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ready to review
 # Updates the 'quantity' attibute value from a single item.
 - name: Updates arribute 'person'
   dynamodb:
@@ -156,8 +183,11 @@ EXAMPLES = '''
     primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
     update_expression: 'REMOVE person'
 
+<<<<<<< HEAD
 =======
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
+=======
+>>>>>>> ready to review
 # Connects with awscli profile 'development' and
 # deletes a single item from 'releases' DynamoDB table
 # where the column 'project' equals string 'potatoes' (also primary key)
@@ -214,6 +244,7 @@ except ImportError:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 def get(connection, table, primary_key, projection_expression, result):
 
     if projection_expression:
@@ -236,12 +267,21 @@ def get(connection, table, primary_key, projection_expression, result):
 =======
 >>>>>>> refactor main() to call small functions
 def get(connection, table, primary_key):
+=======
+def get(connection, table, primary_key, projection_expression, result):
+>>>>>>> ready to review
 
-    response = connection.get_item(
-        TableName=table,
-        Key=primary_key,
-        # ProjectionExpression=projection_expression
-    )
+    if projection_expression:
+        response = connection.get_item(
+            TableName=table,
+            Key=primary_key,
+            ProjectionExpression=projection_expression
+        )
+    else:
+        response = connection.get_item(
+            TableName=table,
+            Key=primary_key
+        )
 
     result = dict(changed=False, message=response)
 <<<<<<< HEAD
@@ -257,6 +297,7 @@ def get(connection, table, primary_key):
 def put(connection, table, item, result):
 
     connection.put_item(
+<<<<<<< HEAD
 =======
 def put(connection, table, item):
 
@@ -267,6 +308,8 @@ def put(connection, table, item):
 
     result = connection.put_item(
 >>>>>>> refactor main() to call small functions
+=======
+>>>>>>> ready to review
         TableName=table,
         Item=item,
     )
@@ -278,6 +321,9 @@ def put(connection, table, item):
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ready to review
 def update(connection, table, primary_key, update_expression, condition_expression, expression_attribute_values, result):
 
     if condition_expression and expression_attribute_values:
@@ -309,6 +355,7 @@ def update(connection, table, primary_key, update_expression, condition_expressi
 def delete(connection, table, primary_key, condition_expression, expression_attribute_values, result):
 
     connection.delete_item(
+<<<<<<< HEAD
 =======
 def delete(connection, table, primary_key, condition_expression, expression_attribute_values):
 
@@ -319,6 +366,8 @@ def delete(connection, table, primary_key, condition_expression, expression_attr
 
     result = connection.delete_item(
 >>>>>>> refactor main() to call small functions
+=======
+>>>>>>> ready to review
         TableName=table,
         Key=primary_key,
         ConditionExpression=condition_expression,
@@ -350,6 +399,7 @@ def main():
         condition_expression=dict(required=False, type='str'),
         expression_attribute_values=dict(required=False, type='dict'),
 <<<<<<< HEAD
+<<<<<<< HEAD
         update_expression=dict(required=False, type='str'),
         projection_expression=dict(required=False, type='str')
         )
@@ -361,6 +411,11 @@ def main():
         # expression_attribute_names=dict(required=False),
     )
 >>>>>>> Merge branch 'dynamodb' into add_dynamodb
+=======
+        update_expression=dict(required=False, type='str'),
+        projection_expression=dict(required=False, type='str')
+        )
+>>>>>>> ready to review
     )
 
     module = AnsibleModule(
@@ -392,6 +447,9 @@ def main():
         condition_expression = module.params.get('condition_expression')
         item = module.params.get('item')
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ready to review
         update_expression = module.params.get('update_expression')
         expression_attribute_values = module.params.get(
             'expression_attribute_values')
@@ -415,6 +473,7 @@ def main():
         elif action == 'delete':
             result = delete(connection, table, primary_key,
                             condition_expression, expression_attribute_values, result)
+<<<<<<< HEAD
 =======
         expression_attribute_values = module.params.get(
             'expression_attribute_values')
@@ -468,6 +527,8 @@ def main():
             delete(connection, table, primary_key,
                    condition_expression, expression_attribute_values)
 >>>>>>> refactor main() to call small functions
+=======
+>>>>>>> ready to review
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {} not found'.format(table)
