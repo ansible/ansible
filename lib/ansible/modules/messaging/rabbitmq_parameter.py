@@ -82,7 +82,7 @@ class RabbitMqParameter(object):
         return list()
 
     def get(self):
-        parameters = self._exec(['list_parameters', '-p', self.vhost], True)
+        parameters = [param for param in self._exec(['list_parameters', '-p', self.vhost], True) if param.strip()]
 
         for param_item in parameters:
             component, name, value = param_item.split('\t')
