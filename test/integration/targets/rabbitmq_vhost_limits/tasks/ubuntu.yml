@@ -117,8 +117,8 @@
           - module_result is changed
           - module_result is success
           - "module_result.vhost == '/'"
-          - "module_result.max_connections is none"
-          - "module_result.max_queues is none"
+          - "module_result.max_connections == -1"
+          - "module_result.max_queues == -1"
 
     - name: Get a list of configured virtual host limits
       shell: "rabbitmqctl list_vhost_limits"
