@@ -191,7 +191,7 @@ EXAMPLES = '''
 
 - name: Delete a network, disconnecting all containers
   docker_network:
-    name: network_four
+    name: network_one
     state: absent
     force: yes
 '''
