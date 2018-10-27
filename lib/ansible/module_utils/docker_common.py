@@ -591,6 +591,10 @@ def compare_generic(a, b, method, type):
         # if the other is empty for set/list/dict
         if type == 'value':
             return False
+        # For allow_more_present, allow a to be None
+        if method == 'allow_more_present' and a is None:
+            return True
+        # Otherwise, the iterable object which is not None must have length 0
         return len(b if a is None else a) == 0
     # Do proper comparison (both objects not None)
     if type == 'value':
