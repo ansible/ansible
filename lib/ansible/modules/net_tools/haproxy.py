@@ -347,7 +347,6 @@ class HAProxy(object):
             state = self.get_state_for(pxname, svname)
 
             if self._drain and state[0]['scur'] == '0':
-                # We disable self.wait to avoid a recursive loop and waiting at each step
                 return self.disable_after_drain(pxname, svname)
             else:
                 if state[0]["status"] == status and not self._drain:
@@ -396,9 +395,12 @@ class HAProxy(object):
             self.execute_for_backends(cmd, backend, host, status)
 
     def disable_after_drain(self, pxname, svname):
+        # We disable self.wait to avoid a recursive loop and waiting at each step
+        old_wait = self.wait
         self.wait = False
         self.disabled(self.host, self.backend, self.shutdown_sessions)
         state = self.get_state_for(pxname, svname)
+        self.wait = old_wait
         if state[0]["status"] == "MAINT":
             return True
         else:
