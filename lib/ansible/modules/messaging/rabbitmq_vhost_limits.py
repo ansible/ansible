@@ -109,14 +109,14 @@ class RabbitMqVhostLimits(object):
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
     def _exec(self, args):
-        cmd = [self._rabbitmqctl, '-q']
+        cmd = [self._rabbitmqctl, '-q', '-p', self._vhost]
         if self._node is not None:
             cmd.extend(['-n', self._node])
         rc, out, err = self._module.run_command(cmd + args, check_rc=True)
         return dict(rc=rc, out=out.splitlines(), err=err.splitlines())
 
     def list(self):
-        exec_result = self._exec(['list_vhost_limits', '-p', self._vhost])
+        exec_result = self._exec(['list_vhost_limits'])
         vhost_limits = exec_result['out'][0]
         max_connections = -1
         max_queues = -1
@@ -132,11 +132,15 @@ class RabbitMqVhostLimits(object):
         )
 
     def set(self):
+        if self._module.check_mode:
+            return
         json_str = '{{"max-connections": {0}, "max-queues": {1}}}'.format(self._max_connections, self._max_queues)
-        self._exec(['set_vhost_limits', '-p', self._vhost, json_str])
+        self._exec(['set_vhost_limits', json_str])
 
     def clear(self):
-        self._exec(['clear_vhost_limits', '-p', self._vhost])
+        if self._module.check_mode:
+            return
+        self._exec(['clear_vhost_limits'])
 
 
 def main():
@@ -168,26 +172,23 @@ def main():
             max_connections=max_connections,
             max_queues=max_queues
         )
-    else:  # state == 'absent'
+    else: # state == 'absent'
         wanted_status = dict(
             max_connections=-1,
             max_queues=-1
         )
 
     if current_status != wanted_status:
+        module_result['changed'] = True
         if state == 'present':
-            if not module.check_mode:
-                rabbitmq_vhost_limits.set()
-            module_result['changed'] = True
-        else:  # state == 'absent'
-            if not module.check_mode:
-                rabbitmq_vhost_limits.clear()
-            module_result['changed'] = True
+            rabbitmq_vhost_limits.set()
+        else: # state == 'absent'
+            rabbitmq_vhost_limits.clear()
 
     if module.check_mode:
         module_result['max_connections'] = wanted_status['max_connections']
         module_result['max_queues'] = wanted_status['max_queues']
-    else:
+    else: # not module.check_mode
         current_status = rabbitmq_vhost_limits.list()
         module_result['max_connections'] = current_status['max_connections']
         module_result['max_queues'] = current_status['max_queues']
