@@ -48,6 +48,7 @@ files:
   $modules/cloud/amazon/cloudformation.py: ryansb tedder
   $modules/cloud/amazon/cloudfront_facts.py: willthames
   $modules/cloud/amazon/cloudtrail.py: $team_ansible
+  $modules/cloud/amazon/dynamodb.py: blastik
   $modules/cloud/amazon/ec2.py: $team_ansible
   $modules/cloud/amazon/ec2_ami.py: willthames
   $modules/cloud/amazon/ec2_asg.py: $team_ansible s-hertel ryansb
