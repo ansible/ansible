@@ -274,10 +274,8 @@ class DockerNetworkManager(object):
         if not self.parameters.connected and self.existing_network:
             self.parameters.connected = container_names_in_network(self.existing_network)
 
-        if self.parameters.ipam_options and self.parameters.ipam_config:
-            self.client.fail("Only one of `ipam_options` and `ipam_config` can be defined.")
-        elif self.parameters.ipam_options:
-            self.parameters.ipam_config.append(self.parameters.ipam_options)
+        if self.parameters.ipam_options:
+            self.parameters.ipam_config = [self.parameters.ipam_options]
 
         state = self.parameters.state
         if state == 'present':
@@ -477,8 +475,13 @@ def main():
         debug=dict(type='bool', default=False)
     )
 
+    mutually_exclusive = [
+        ('ipam_config', 'ipam_options')
+    ]
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
         supports_check_mode=True,
         min_docker_version='1.10.0'
         # "The docker server >= 1.10.0"
