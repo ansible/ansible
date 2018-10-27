@@ -72,6 +72,8 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = ''' # '''
+
 
 import json
 from ansible.module_utils.basic import AnsibleModule
