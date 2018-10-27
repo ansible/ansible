@@ -173,6 +173,9 @@ EXAMPLES = '''
       - subnet: 172.3.27.0/24
         gateway: 172.3.27.2
         iprange: 172.3.27.0/26
+        aux_addresses:
+          host1: 172.3.27.3
+          host2: 172.3.27.4
 - name: Create a network with IPv6 IPAM config
   docker_network:
     name: network_ipv6_one
