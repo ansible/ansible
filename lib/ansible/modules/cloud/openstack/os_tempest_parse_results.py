@@ -20,8 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
@@ -44,7 +43,7 @@ options:
     description:
       path to the parsed results file this module will generated
     required: False
-    default: ~/test-results
+    default: ~/test_results
   output_format:
     description:
        format of the parsed results file this module will generated
