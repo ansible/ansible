@@ -475,7 +475,7 @@ class ConsulCheck(object):
         if duration:
             duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
             if not any((duration.endswith(suffix) for suffix in duration_units)):
-                duration = "{}s".format(duration)
+                duration = "{0}s".format(duration)
         return duration
 
     def register(self, consul_api):
