@@ -244,6 +244,20 @@ def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
 
+def get_ip_version(cidr):
+    """Gets the IP version of a valid CIDR
+
+    :param cidr: Valid CIDR
+    :type cidr: str
+    :return: ``ipv4`` or ``ipv6``
+    :rtype: str
+    """
+    cidr_ipv4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$')
+    if cidr_ipv4.match(cidr):
+        return 'ipv4'
+    return 'ipv6'
+
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -312,18 +326,11 @@ class DockerNetworkManager(object):
                 differences.append('ipam_config')
             else:
                 for idx, ipam_config in enumerate(self.parameters.ipam_config):
-                    is_ipv4 = re.match(r'^([0-9]{1,3}\.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$',
-                                       ipam_config['subnet'])
-                    if is_ipv4:
-                        net_config = net['IPAM']['Config'][0]
-                    # assume ipv6 if not ipv4
-                    else:
-                        # ipv6 currently does not exist
-                        if len(net['IPAM']['Config']) < 2:
-                            net_config = dict()
-                        # ipv6 already exists
-                        else:
-                            net_config = net['IPAM']['Config'][1]
+                    net_config = dict()
+                    ip_version = get_ip_version(ipam_config['subnet'])
+                    for net_ipam_config in net['IPAM']['Config']:
+                        if ip_version == get_ip_version(net_ipam_config['Subnet']):
+                            net_config = net_ipam_config
 
                     for key, value in ipam_config.items():
                         camelkey = None
