@@ -100,7 +100,7 @@
 
 #################### network-ipam-2 ####################
 
-- name: Create network with ipv6 IPAM config
+- name: Create network with IPv6 IPAM config
   docker_network:
     name: "{{ nname_ipam_2 }}"
     enable_ipv6: yes
@@ -112,7 +112,7 @@
     that:
       - network is changed
 
-- name: Change subnet of network with ipv6 IPAM config
+- name: Change subnet of network with IPv6 IPAM config
   docker_network:
     name: "{{ nname_ipam_2 }}"
     enable_ipv6: yes
@@ -130,7 +130,7 @@
 
 #################### network-ipam-3 ####################
 
-- name: Create network with ipv6 and custom ipv4 IPAM config
+- name: Create network with IPv6 and custom IPv4 IPAM config
   docker_network:
     name: "{{ nname_ipam_3 }}"
     enable_ipv6: yes
@@ -143,7 +143,7 @@
     that:
       - network is changed
 
-- name: Change subnet order of network with ipv6 and custom ipv4 IPAM config
+- name: Change subnet order of network with IPv6 and custom IPv4 IPAM config
   docker_network:
     name: "{{ nname_ipam_3 }}"
     enable_ipv6: yes
@@ -156,7 +156,7 @@
     that:
       - network is not changed
 
-- name: Remove ipv6 from network with custom ipv4 and ipv6 IPAM config
+- name: Remove IPv6 from network with custom IPv4 and IPv6 IPAM config
   docker_network:
     name: "{{ nname_ipam_3 }}"
     enable_ipv6: no

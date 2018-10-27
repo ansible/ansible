@@ -173,15 +173,14 @@ EXAMPLES = '''
       - subnet: 172.3.27.0/24
         gateway: 172.3.27.1
         iprange: 192.168.1.0/24
-
-- name: Create a network with ipv6 IPAM config
+- name: Create a network with IPv6 IPAM config
   docker_network:
     name: network_ipv6_one
     enable_ipv6: yes
     ipam_config:
       - subnet: fdd1:ac8c:0557:7ce1::/64
 
-- name: Create a network with ipv6 and custom ipv4 IPAM config
+- name: Create a network with IPv6 and custom IPv4 IPAM config
   docker_network:
     name: network_ipv6_two
     enable_ipv6: true
