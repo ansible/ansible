@@ -41,7 +41,7 @@ EXAMPLES = """
     vars:
       cyquery:
         appid: "app_ansible"
-        query": "safe=CyberArk_Passwords;folder=root;object=AdminPass"
+        query: "safe=CyberArk_Passwords;folder=root;object=AdminPass"
         output: "Password,PassProps.UserName,PassProps.Address,PasswordChangeInProcess"
 
 
