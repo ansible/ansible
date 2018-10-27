@@ -87,7 +87,7 @@ options:
       - List of IPAM config blocks. Consult 
         L(Docker docs, https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
     type: list
-    default: []
+    default: null
     required: false
 
   state:
@@ -321,7 +321,7 @@ class DockerNetworkManager(object):
                 different = True
                 differences.append('ipam_driver')
 
-        if self.parameters.ipam_config:
+        if self.parameters.ipam_config is not None and self.parameters.ipam_config:
             if not net.get('IPAM') or not net['IPAM']['Config']:
                 different = True
                 differences.append('ipam_config')
@@ -473,7 +473,7 @@ def main():
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str', default=None),
         ipam_options=dict(type='dict', default={}, removed_in_version='2.12'),
-        ipam_config=dict(type='list', elements='dict', default=[]),
+        ipam_config=dict(type='list', elements='dict', default=None),
         enable_ipv6=dict(type='bool', default=None),
         internal=dict(type='bool', default=None),
         debug=dict(type='bool', default=False)
