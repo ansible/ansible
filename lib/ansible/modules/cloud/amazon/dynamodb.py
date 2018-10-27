@@ -3,81 +3,75 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = """
+DOCUMENTATION = '''
+---
 module: dynamodb
 short_description: Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
 version_added: "2.8"
 description:
-  - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
-  More infomation can be found here:
+  Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
+  More infomation can be found here
   https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
 author:
-  - David C. Martin @blastikman
+  David C. Martin @blastikman
 requirements:
-  - boto3
+  [ boto3, botocore ]
 options:
-  table:
-    type: string
-    required: true
-    description:
-      - Name of the DynamoDB table
-  action:
-    type: string
-    required: true
-    description:
-      - "get": Returns a set of attributes for the item with
-      the given primary key.
-      - "put": Creates a new item, or replaces an old item with a new item.
-      If an item that has the same primary key as the new item already exists
-      in the specified table, the new item completely replaces the existing item.
-      - "update": Edits an existing item's attributes, or adds a new item to the
-      table if it does not already exist. You can also perform a conditional update on an
-      existing item (insert a new attribute name-value pair if it doesn't exist,
-      or replace an existing name-value pair if it has certain expected attribute values).
-      - "delete": Deletes a single item in a table by primary key. You can
-      perform a conditional delete operation that deletes the item if it exists,
-      or if it has an expected attribute value.
-    choices: [ 'get', 'put', 'update', 'delete' ]
-  primary_key:
-    type: dict
-    description:
-      - The primary key of the DynamoDB table. Each element consists of an
-      attribute name and a value for that attribute. For a composite primary key,
-      you must provide values for both the partition key and the sort key.
-  projection_expression:
-    type: string
-    description:
-      - A string that identifies one or more attributes (separated by commas)
-      to retrieve from the table. Only to be used with action -get-.
-  item:
-    type: dict
-    description:
-      - A map of attribute name/value pairs, one for each attribute. Only the
-      primary key attributes are required; you can optionally provide other
-      attribute name-value pairs for the item. Only to be used with action -put-.
-  update_expression:
-    type: string
-    description:
-      - An expression that defines one or more attributes to be updated,
-      the action to be performed on them, and new value(s) for them.
-  condition_expression:
-    type: string
-    description:
-      - A condition that must be satisfied in order for a conditional update to succeed.
-  expression_attribute_values:
-    type: dict
-    description:
-      - One or more values that can be substituted in an expressionself.
-      Use the : (colon) character in an expression to dereference an attribute value.
-      
-"""
+    table:
+        type: str
+        required: true
+        description:
+          - Name of the DynamoDB table
+    action:
+        type: str
+        required: true
+        description:
+            - get:
+              description:
+                - Returns a set of attributes for the item with the given primary key.
+            - put:
+              description:
+                - Creates a new item, or replaces an old item with a new item. If an item that has the same primary key as the new item already exists in the specified table, the new item completely replaces the existing item.
+            - update:
+              description:
+                - Edits an existing item's attributes, or adds a new item to the table if it does not already exist. You can also perform a conditional update on an existing item (insert a new attribute name-value pair if it doesn't exist, or replace an existing name-value pair if it has certain expected attribute values).
+            - delete:
+              description:
+                - Deletes a single item in a table by primary key. You can perform a conditional delete operation that deletes the item if it exists, or if it has an expected attribute value.
+        choices: [ 'get', 'put', 'update', 'delete' ]
+    primary_key:
+        type: dict
+        description:
+          - The primary key of the DynamoDB table. Each element consists of an attribute name and a value for that attribute. For a composite primary key, you must provide values for both the partition key and the sort key.
+    projection_expression:
+        type: str
+        description:
+          - A string that identifies one or more attributes (separated by commas) to retrieve from the table. Only to be used with action 'get'.
+    item:
+        type: dict
+        description:
+          - A map of attribute name/value pairs, one for each attribute. Only the primary key attributes are required; you can optionally provide other attribute name-value pairs for the item. Only to be used with action 'put'.
+    update_expression:
+        type: str
+        description:
+          - An expression that defines one or more attributes to be updated, the action to be performed on them, and new value(s) for them.
+    condition_expression:
+        type: str
+        description:
+          - A condition that must be satisfied in order for a conditional update to succeed.
+    expression_attribute_values:
+        type: dict
+        description:
+          - One or more values that can be substituted in an expressionself. Use the ':' (colon) character in an expression to dereference an attribute value.
+
+'''
 
 EXAMPLES = '''
 # Returns a set of attributes for the item with the given primary key.
@@ -103,7 +97,7 @@ EXAMPLES = '''
     action: update
     primary_key: {"bank": {"S": "hsbc"}}
     update_expression: 'SET quantity=:number'
-    expression_attribute_values = {":number": {"N": "2000"}}
+    expression_attribute_values: {":number": {"N": "2000"}}
 
 # Deletes the 'person' attibute value from a single item. The table has a composite
 # primary key. 'bank' is the primary key and 'quantity' is the sort key.
@@ -149,8 +143,6 @@ item:
         }
 
 '''
-
-import boto3
 
 import ansible.module_utils.ec2
 from ansible.module_utils.basic import AnsibleModule
