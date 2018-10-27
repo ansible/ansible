@@ -65,8 +65,8 @@
     name: "{{ nname_ipam_1 }}"
     ipam_config:
       - subnet: 172.3.27.0/24
-        gateway: 172.3.27.1
-        iprange: 192.168.1.0/24
+        gateway: 172.3.27.2
+        iprange: 172.3.27.0/26
   register: network
 
 - assert:
@@ -78,8 +78,8 @@
     name: "{{ nname_ipam_1 }}"
     ipam_config:
       - subnet: 172.3.28.0/24
-        gateway: 172.3.28.1
-        iprange: 192.168.2.0/24
+        gateway: 172.3.28.2
+        iprange: 172.3.28.0/26
   register: network
   diff: yes
 
