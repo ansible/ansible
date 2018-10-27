@@ -151,7 +151,7 @@ def main():
             max_connections=max_connections,
             max_queues=max_queues
         )
-    else: # state == 'absent'
+    else:  # state == 'absent'
         wanted_status = dict(
             max_connections=None,
             max_queues=None
@@ -161,7 +161,7 @@ def main():
         module_result['changed'] = True
         if state == 'present':
             rabbitmq_vhost_limits.set()
-        else: # state == 'absent'
+        else:  # state == 'absent'
             rabbitmq_vhost_limits.clear()
 
     module.exit_json(**module_result)
