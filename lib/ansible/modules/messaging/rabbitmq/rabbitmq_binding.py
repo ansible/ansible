@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
+# Copyright: (c) 2018, Gerben Geijteman <gerben@hyperized.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -94,20 +96,25 @@ class RabbitMqBinding(object):
         :param module:
         """
         self.module = module
-        self.name = self.module.params['name']
+
+        # RabbitMQ argument spec
         self.login_user = self.module.params['login_user']
         self.login_password = self.module.params['login_password']
         self.login_host = self.module.params['login_host']
         self.login_port = self.module.params['login_port']
         self.login_protocol = self.module.params['login_protocol']
         self.vhost = self.module.params['vhost']
+
+        # Module requirements
+        self.name = self.module.params['name']
         self.destination = self.module.params['destination']
         self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
         self.routing_key = self.module.params['routing_key']
         self.arguments = self.module.params['arguments']
-        self.verify = self.module.params['cacert']
-        self.cert = self.module.params['cert']
+        self.ca_cert = self.module.params['cacert']
+        self.certificate = self.module.params['cert']
         self.key = self.module.params['key']
+
         self.base_url = '{0}://{1}:{2}/api/bindings'.format(self.login_protocol,
                                                             self.login_host,
                                                             self.login_port)
@@ -125,6 +132,10 @@ class RabbitMqBinding(object):
             self.login_user,
             self.login_password
         )
+        self.client_certificate = (
+            self.certificate,
+            self.key,
+        )
         self.request = requests
         self.http_check_states = {
             200: True,
@@ -134,7 +145,11 @@ class RabbitMqBinding(object):
             201: True,
             204: True,
         }
-        self.api_result = self.request.get(self.url, auth=self.authentication)
+        self.api_result = self.request.get(self.url,
+                                           auth=self.authentication,
+                                           verify=self.ca_cert,
+                                           cert=self.client_certificate,
+                                           )
 
     def run(self):
         """
@@ -243,8 +258,8 @@ class RabbitMqBinding(object):
                                                   urllib_parse.quote(self.destination, safe=''))
         self.api_result = self.request.post(self.url,
                                             auth=self.authentication,
-                                            verify=self.verify,
-                                            cert=(self.cert, self.key),
+                                            verify=self.ca_cert,
+                                            cert=self.client_certificate,
                                             headers={"content-type": "application/json"},
                                             data=json.dumps({
                                                 'routing_key': self.routing_key,
@@ -255,7 +270,11 @@ class RabbitMqBinding(object):
         """
         :return:
         """
-        self.api_result = self.request.delete(self.url, auth=self.authentication)
+        self.api_result = self.request.delete(self.url,
+                                              auth=self.authentication,
+                                              verify=self.ca_cert,
+                                              cert=self.client_certificate,
+                                              )
 
     def fail(self):
         """
@@ -269,7 +288,6 @@ class RabbitMqBinding(object):
 
 
 def main():
-
     argument_spec = rabbitmq_argument_spec()
     argument_spec.update(
         dict(
