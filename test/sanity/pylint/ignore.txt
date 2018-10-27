@@ -28,7 +28,6 @@ lib/ansible/modules/cloud/webfaction/webfaction_db.py ansible-format-automatic-s
 lib/ansible/modules/cloud/webfaction/webfaction_domain.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py ansible-format-automatic-specification
 lib/ansible/modules/cloud/webfaction/webfaction_site.py ansible-format-automatic-specification
-lib/ansible/modules/clustering/consul.py ansible-format-automatic-specification
 lib/ansible/modules/monitoring/grafana_plugin.py ansible-format-automatic-specification
 lib/ansible/modules/net_tools/dnsmadeeasy.py ansible-format-automatic-specification
 lib/ansible/modules/net_tools/ipinfoio_facts.py ansible-format-automatic-specification
