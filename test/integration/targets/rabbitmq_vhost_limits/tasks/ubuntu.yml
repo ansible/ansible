@@ -1,138 +1,146 @@
-- name: Test failure without pika installed
-  set_fact:
-    rabbit_missing_pika: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F', queue='hello', count=3) }}"
-  ignore_errors: yes
-  register: rabbitmq_missing_pika_error
+---
 
-- assert:
-    that:
-      - "'pika python package is required' in rabbitmq_missing_pika_error.msg"
+- name: Test setting virtual host limits in check mode
+  block:
+    - name: Set virtual host limits in check mode
+      rabbitmq_vhost_limits:
+        vhost: /
+        max_connections: 64
+        max_queues: 256
+        state: present
+      check_mode: true
+      register: module_result
 
-- name: Install pika and requests
-  pip:
-    name: pika,requests
-    state: latest
+    - name: Check that the module succeeds with a change
+      assert:
+        that:
+          - module_result is changed
+          - module_result is success
 
-- name: Test that giving an incorrect amqp protocol in URL will error
-  set_fact:
-    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='zzzamqp://guest:guest@192.168.250.1:5672/%2F', queue='hello', count=3) }}"
-  ignore_errors: yes
-  register: rabbitmq_protocol_error
+    - name: Get a list of configured virtual host limits
+      shell: "rabbitmqctl list_vhost_limits"
+      register: shell_result
 
-- assert:
-    that:
-      - "rabbitmq_protocol_error is failed"
-      - "'URL malformed' in rabbitmq_protocol_error.msg"
+    - name: Check that the check mode does not make any changes
+      assert:
+        that:
+          - shell_result is success
+          - "'\"max-connections\":64' not in shell_result.stdout"
+          - "'\"max-queues\":256' not in shell_result.stdout"
 
-- name: Test that giving an incorrect IP address in URL will error
-  set_fact:
-    rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@xxxxx192.112312368.250.1:5672/%2F', queue='hello', count=3) }}"
-  ignore_errors: yes
-  register: rabbitmq_ip_error
- 
-- assert:
-    that:
-      - "rabbitmq_ip_error is failed"
-      - "'Connection issue' in rabbitmq_ip_error.msg"
- 
-- name: Test missing parameters will error
-  set_fact:
-    rabbitmq_test_protocol: "{{ lookup('rabbitmq') }}"
-  ignore_errors: yes
-  register: rabbitmq_params_error
- 
-- assert:
-    that:
-      - "rabbitmq_params_error is failed"
-      - "'URL is required for rabbitmq lookup.' in rabbitmq_params_error.msg"
- 
-- name: Test missing queue will error
-  set_fact:
-    rabbitmq_queue_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F') }}"
-  ignore_errors: yes
-  register: rabbitmq_queue_error
- 
-- assert:
-    that:
-      - "rabbitmq_queue_error is failed"
-      - "'Queue is required for rabbitmq lookup' in rabbitmq_queue_error.msg"
+- name: Test setting virtual host limits
+  block:
+    - name: Set virtual host limits
+      rabbitmq_vhost_limits:
+        vhost: /
+        max_connections: 64
+        max_queues: 256
+        state: present
+      register: module_result
 
-- name: Enables the rabbitmq_management plugin
-  rabbitmq_plugin:
-    names: rabbitmq_management
-    state: enabled
+    - name: Check that the module's result is correct
+      assert:
+        that:
+          - module_result is changed
+          - module_result is success
+          - "module_result.vhost == '/'"
+          - "module_result.max_connections == 64"
+          - "module_result.max_queues == 256"
 
-- name: Setup test queue
-  rabbitmq_queue:
-      name: hello
+    - name: Get a list of configured virtual host limits
+      shell: "rabbitmqctl list_vhost_limits"
+      register: shell_result
 
-- name: Post test message to the exchange (string)
-  uri:
-    url: http://localhost:15672/api/exchanges/%2f/amq.default/publish
-    method: POST
-    body: '{"properties":{},"routing_key":"hello","payload":"ansible-test","payload_encoding":"string"}'
-    user: guest
-    password: guest
-    force_basic_auth: yes
-    return_content: yes
-    register: post_data
-    headers:
-      Content-Type: "application/json"
+    - name: Check that the virtual host limits are actually set
+      assert:
+        that:
+          - shell_result is success
+          - "'\"max-connections\":64' in shell_result.stdout"
+          - "'\"max-queues\":256' in shell_result.stdout"
 
+- name: Test setting virtual host limits (idempotence)
+  block:
+    - name: Set virtual host limits (idempotence)
+      rabbitmq_vhost_limits:
+        vhost: /
+        max_connections: 64
+        max_queues: 256
+        state: present
+      register: module_result
 
-- name: Post test message to the exchange (json)
-  uri:
-    url: http://localhost:15672/api/exchanges/%2f/amq.default/publish
-    method: POST
-    body: '{"properties":{"content_type": "application/json"},"routing_key":"hello","payload":"{\"key\": \"value\" }","payload_encoding":"string"}'
-    user: guest
-    password: guest
-    force_basic_auth: yes
-    return_content: yes
-    register: post_data_json
-    headers:
-      Content-Type: "application/json"
+    - name: Check the idempotence
+      assert:
+        that:
+          - module_result is not changed
+          - module_result is success
 
-- name: Test retrieve messages
-  set_fact:
-    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/%2f/hello', queue='hello') }}"
-  ignore_errors: yes
-  register: rabbitmq_msg_error
+- name: Test changing virtual host limits
+  block:
+    - name: Change virtual host limits
+      rabbitmq_vhost_limits:
+        vhost: /
+        max_connections: 32
+        state: present
+      register: module_result
 
-- name: Ensure two messages received
-  assert:
-    that:
-      - "rabbitmq_msg_error is not failed"
-      - rabbitmq_msg | length == 2
+    - name: Check that the module's result is correct
+      assert:
+        that:
+          - module_result is changed
+          - module_result is success
+          - "module_result.vhost == '/'"
+          - "module_result.max_connections == 32"
+          - "module_result.max_queues == -1"
 
-- name: Ensure first message is a string
-  assert:
-    that:
-      - rabbitmq_msg[0].msg == "ansible-test"
+    - name: Get a list of configured virtual host limits
+      shell: "rabbitmqctl list_vhost_limits"
+      register: shell_result
 
-- name: Ensure second message is json
-  assert:
-    that:
-      - rabbitmq_msg[1].json.key == "value"
+    - name: Check that the virtual host limits are actually set
+      assert:
+        that:
+          - shell_result is success
+          - "'\"max-connections\":32' in shell_result.stdout"
+          - "'\"max-queues\":-1' in shell_result.stdout"
 
-- name: Test missing vhost
-  set_fact:
-    rabbitmq_msg: "{{ lookup('rabbitmq', url='amqp://guest:guest@localhost:5672/missing/', queue='hello') }}"
-  ignore_errors: yes
-  register: rabbitmq_vhost_error
+- name: Test clearing virtual host limits
+  block:
+    - name: Clear virtual host limits
+      rabbitmq_vhost_limits:
+        vhost: /
+        state: absent
+      register: module_result
 
-- assert:
-    that:
-      - "rabbitmq_vhost_error is failed"
-      - "'NOT_ALLOWED' in rabbitmq_vhost_error.msg"
+    - name: Check that the module's result is correct
+      assert:
+        that:
+          - module_result is changed
+          - module_result is success
+          - "module_result.vhost == '/'"
+          - "module_result.max_connections is none"
+          - "module_result.max_queues is none"
 
-# Tidy up
-- name: Uninstall pika and requests
-  pip:
-    name: pika,requests
-    state: absent
+    - name: Get a list of configured virtual host limits
+      shell: "rabbitmqctl list_vhost_limits"
+      register: shell_result
 
-- name: Disable the rabbitmq_management plugin
-  rabbitmq_plugin:
-    names: rabbitmq_management
-    state: disabled
+    - name: Check that the virtual host limits are actually cleared
+      assert:
+        that:
+          - shell_result is success
+          - "'\"max-connections\":' not in shell_result.stdout"
+          - "'\"max-queues\":' not in shell_result.stdout"
+
+- name: Test clearing virtual host limits (idempotence)
+  block:
+    - name: Clear virtual host limits (idempotence)
+      rabbitmq_vhost_limits:
+        vhost: /
+        state: absent
+      register: module_result
+
+    - name: Check the idempotence
+      assert:
+        that:
+          - module_result is not changed
+          - module_result is success
