@@ -11,11 +11,14 @@
       check_mode: true
       register: module_result
 
-    - name: Check that the module succeeds with a change
+    - name: Check that the module's result is correct
       assert:
         that:
           - module_result is changed
           - module_result is success
+          - "module_result.vhost == '/'"
+          - "module_result.max_connections == 64"
+          - "module_result.max_queues == 256"
 
     - name: Get a list of configured virtual host limits
       shell: "rabbitmqctl list_vhost_limits"
@@ -97,6 +100,35 @@
       register: shell_result
 
     - name: Check that the virtual host limits are actually set
+      assert:
+        that:
+          - shell_result is success
+          - "'\"max-connections\":32' in shell_result.stdout"
+          - "'\"max-queues\":-1' in shell_result.stdout"
+
+- name: Test clearing virtual host limits in check mode
+  block:
+    - name: Clear virtual host limits in check mode
+      rabbitmq_vhost_limits:
+        vhost: /
+        state: absent
+      check_mode: true
+      register: module_result
+
+    - name: Check that the module's result is correct
+      assert:
+        that:
+          - module_result is changed
+          - module_result is success
+          - "module_result.vhost == '/'"
+          - "module_result.max_connections == -1"
+          - "module_result.max_queues == -1"
+
+    - name: Get a list of configured virtual host limits
+      shell: "rabbitmqctl list_vhost_limits"
+      register: shell_result
+
+    - name: Check that the check mode does not make any changes
       assert:
         that:
           - shell_result is success
