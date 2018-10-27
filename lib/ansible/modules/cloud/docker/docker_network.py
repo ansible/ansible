@@ -84,7 +84,8 @@ options:
   ipam_config:
     version_added: 2.8
     description:
-      - List of IPAM config blocks. Consult docker docs for valid options and values.
+      - List of IPAM config blocks. Consult 
+        L(Docker docs, https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
     type: list
     default: []
     required: false
