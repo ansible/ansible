@@ -348,7 +348,7 @@ class ImageManager(DockerBaseClass):
                 self.results['actions'].append('Pulled image %s:%s' % (self.name, self.tag))
                 self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['image'], _ = self.client.pull_image(self.name, tag=self.tag)
+                    self.results['image'], dummy = self.client.pull_image(self.name, tag=self.tag)
             if not self.check_mode and image and image['Id'] == self.results['image']['Id']:
                 self.results['changed'] = False
 
