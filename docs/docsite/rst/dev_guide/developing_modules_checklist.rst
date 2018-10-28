@@ -23,6 +23,7 @@ To contribute a module to Ansible, you must:
 * include comprehensive :ref:`tests <developing_testing>` for your module
 * minimize module dependencies
 * support :ref:`check_mode <check_mode_dry>` if possible
+* ensure your code is readable
 
 Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_.
 
