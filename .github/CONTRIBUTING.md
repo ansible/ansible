@@ -10,9 +10,9 @@ The GitHub issue tracker is not the best place for questions for various reasons
 
 ## CONTRIBUTING ?
 
-By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable copyright license to all users and developers of the project, present and future, pursuant to the license of the project.
+By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable copyright license to all users and developers of the project, present and future, pursuant to the license of the project. You can also read the same  [CLA](https://docs.ansible.com/ansible/latest/community/contributor_license_agreement.html) on the Ansible docsite.
 
-Please see the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html) for information regarding the contribution process. Important license agreement information is also included on that page.
+Please review the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html) for more information on contributing to Ansible.
 
 ## BUG TO REPORT ?
 
