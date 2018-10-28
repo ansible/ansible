@@ -63,7 +63,7 @@ class NetAppONTAPSvnOptions(object):
     def __init__(self):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            name=dict(requried=False, type="str", default=None),
+            name=dict(required=False, type="str", default=None),
             value=dict(required=False, type='str', default=None),
             vserver=dict(required=True, type='str')
 
