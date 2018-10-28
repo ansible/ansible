@@ -28,7 +28,7 @@
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
     name: "cluster{{ rpfx }}"
-    cluster_version: 3.5
+    cluster_version: 3.6
     os_type: linux
     tier: standard
     cluster_definition:
@@ -55,16 +55,7 @@
               username: sshuser
               password: MuABCPassword!!@123
         - name: workernode
-          min_instance_count: 1
           target_instance_count: 4
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
-        - name: zookeepernode
-          target_instance_count: 3
           hardware_profile:
             vm_size: Standard_D3
           os_profile:
@@ -82,7 +73,7 @@
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
     name: "cluster{{ rpfx }}"
-    cluster_version: 3.5
+    cluster_version: 3.6
     os_type: linux
     tier: standard
     cluster_definition:
@@ -109,16 +100,7 @@
               username: sshuser
               password: MuABCPassword!!@123
         - name: workernode
-          min_instance_count: 1
           target_instance_count: 4
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
-        - name: zookeepernode
-          target_instance_count: 3
           hardware_profile:
             vm_size: Standard_D3
           os_profile:
@@ -162,16 +144,7 @@
               username: sshuser
               password: MuABCPassword!!@123
         - name: workernode
-          min_instance_count: 1
           target_instance_count: 4
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
-        - name: zookeepernode
-          target_instance_count: 3
           hardware_profile:
             vm_size: Standard_D3
           os_profile:
