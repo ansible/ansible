@@ -40,7 +40,7 @@
             restAuthCredential.username: http-user
             restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
-      storage_accounts:
+      storageaccounts:
         - name: storage{{ rpfx }}.blob.core.windows.net 
           is_default: yes
           container: "cluster{{ rpfx }}"
@@ -95,7 +95,7 @@
             restAuthCredential.username: http-user
             restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
-      storage_accounts:
+      storageaccounts:
         - name: storage{{ rpfx }}.blob.core.windows.net 
           is_default: yes
           container: "cluster{{ rpfx }}"
@@ -150,7 +150,7 @@
             restAuthCredential.username: http-user
             restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
-      storage_accounts:
+      storageaccounts:
         - name: storage{{ rpfx }}.blob.core.windows.net 
           is_default: yes
           container: "cluster{{ rpfx }}"
