@@ -8,6 +8,7 @@
       resource_group: "{{ resource_group }}"
       name: "storage{{ rpfx }}"
       account_type: Standard_LRS
+      location: eastus2
 
 - name: Sample for Azure REST API - StorageAccounts_ListKeys
   azure_rm_resource:
@@ -28,6 +29,7 @@
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
     name: "cluster{{ rpfx }}"
+    location: eastus2
     cluster_version: 3.6
     os_type: linux
     tier: standard
@@ -73,6 +75,7 @@
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
     name: "cluster{{ rpfx }}"
+    location: eastus2
     cluster_version: 3.6
     os_type: linux
     tier: standard
@@ -118,6 +121,7 @@
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
     name: "cluster{{ rpfx }}"
+    location: eastus2
     cluster_version: 3.6
     os_type: linux
     tier: standard
