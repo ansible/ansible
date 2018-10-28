@@ -26,17 +26,17 @@ Ansible this way.
 Design Principles
 =================
 
-*  Have a dead simple setup process and a minimal learning curve
-*  Manage machines very quickly and in parallel
+*  Have a dead simple setup process and a minimal learning curve.
+*  Manage machines very quickly and in parallel.
 *  Avoid custom-agents and additional open ports, be agentless by
-   leveraging the existing SSH daemon
+   leveraging the existing SSH daemon.
 *  Describe infrastructure in a language that is both machine and human
-   friendly
-*  Focus on security and easy auditability/review/rewriting of content
+   friendly.
+*  Focus on security and easy auditability/review/rewriting of content.
 *  Manage new remote machines instantly, without bootstrapping any
-   software
-*  Allow module development in any dynamic language, not just Python
-*  Be usable as non-root
+   software.
+*  Allow module development in any dynamic language, not just Python.
+*  Be usable as non-root.
 *  Be the easiest IT automation system to use, ever.
 
 Get Involved
@@ -70,12 +70,12 @@ Branch Info
    were named after Van Halen songs.)
 *  The ``devel`` branch corresponds to the release actively under
    development.
-*  The ``stable-2.x`` branches exist for current branches
+*  The ``stable-2.x`` branches exist for current releases.
 *  Various release-X.Y branches exist for previous releases.
 *  For information about the active branches see the
    `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page.
-*  We'd love to have your contributions, read `Community
-   Information <https://docs.ansible.com/ansible/latest/community>`_ for notes on
+*  We'd love to have your contributions, read the `Community
+   Guide <https://docs.ansible.com/ansible/latest/community>`_ for notes on
    how to get started.
 
 Roadmap
