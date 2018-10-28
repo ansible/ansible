@@ -271,7 +271,7 @@ def map_params_to_obj(module, param_to_xpath_map, param=None):
         'value': Value of param.
         'tag_only': Value is indicated by tag only in xml hierarchy.
         'leaf_only': If operation is to be added at leaf node only.
-        'value_req': If value(text) is requried for leaf node.
+        'value_req': If value(text) is required for leaf node.
         'is_key': If the field is key or not.
     eg: Output
     {
