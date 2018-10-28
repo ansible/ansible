@@ -33,7 +33,6 @@ options:
     location:
         description:
             - The location of the resource group to which the resource belongs.
-        required: True
     kind:
         description:
             - Indicates the type of database account. This can only be set at database account creation.
@@ -66,7 +65,6 @@ options:
     locations:
         description:
             - An array that contains the georeplication locations enabled for the Cosmos DB account.
-        required: True
         type: list
         suboptions:
             location_name:
@@ -79,7 +77,6 @@ options:
     database_account_offer_type:
         description:
             - TBD
-        required: True
     ip_range_filter:
         description:
             - "Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list
@@ -154,8 +151,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 required=True
             ),
             location=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             kind=dict(
                 type='str',
@@ -167,12 +163,10 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 type='dict'
             ),
             locations=dict(
-                type='list',
-                required=True
+                type='list'
             ),
             database_account_offer_type=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             ip_range_filter=dict(
                 type='str'
