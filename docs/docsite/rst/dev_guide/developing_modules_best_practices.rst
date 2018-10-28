@@ -39,16 +39,15 @@ General guidelines & tips
 * Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 * If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 
-
 Functions and Methods
 =====================
 
-* In general, functions should not be 'too long' and should describe a meaningful amount of work
-* When code gets too nested, that's usually the sign the loop body could benefit from being a function
-* Parts of our existing code are not the best examples of this at times.
-* Functions should have names that describe what they do, along with docstrings
-* Functions should be named with_underscores
-* "Don't repeat yourself" is generally a good philosophy
+* Each function should be concise and should describe a meaningful amount of work.
+* "Don't repeat yourself" is generally a good philosophy.
+* Function names should use underscores: ``my_function_name``.
+* Each function's name should describes what it does.
+* Each function should have a docstring.
+* If your code is too nested, that's usually a sign the loop body could benefit from being a function. Parts of our existing code are not the best examples of this at times.
 
 Python tips
 ===========
