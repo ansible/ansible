@@ -120,7 +120,7 @@ id:
         - The unique resource identifier of the database account.
     returned: always
     type: str
-    sample: /subscriptions/subid/resourceGroups/rg1/yders/Microsoft.DocumentDB/databaseAccounts/ddb1
+    sample: /subscriptions/subid/resourceGroups/rg1/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
 '''
 
 import time
@@ -297,7 +297,8 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             self.results['changed'] = False
             response = old_response
 
-        self.results.update(self.format_item(response))
+        if self.state == 'present':
+            self.results.update(self.format_item(response))
         return self.results
 
     def create_update_databaseaccount(self):
@@ -357,10 +358,9 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
 
         return False
 
-    def format_item(self, item):
-        d = item.as_dict()
+    def format_item(self, d):
         d = {
-            'id': d['id']
+            'id': d.get('id', None)
         }
         return d
 
