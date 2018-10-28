@@ -35,10 +35,9 @@
       kind: spark
       configurations:
         gateway:
-          rest_auth_credential:
-            restAuthCredential.isEnabled: yes
-            restAuthCredential.username: http-user
-            restAuthCredential.password: MuABCPassword!!@123 
+          restAuthCredential.isEnabled: yes
+          restAuthCredential.username: http-user
+          restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
       storageaccounts:
         - name: storage{{ rpfx }}.blob.core.windows.net 
@@ -90,10 +89,9 @@
       kind: spark
       configurations:
         gateway:
-          rest_auth_credential:
-            restAuthCredential.isEnabled: yes
-            restAuthCredential.username: http-user
-            restAuthCredential.password: MuABCPassword!!@123 
+          restAuthCredential.isEnabled: yes
+          restAuthCredential.username: http-user
+          restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
       storageaccounts:
         - name: storage{{ rpfx }}.blob.core.windows.net 
@@ -138,17 +136,15 @@
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
     name: "cluster{{ rpfx }}"
-    cluster_version: 3.5
+    cluster_version: 3.6
     os_type: linux
     tier: standard
     cluster_definition:
       kind: spark
       configurations:
-        gateway:
-          rest_auth_credential:
-            restAuthCredential.isEnabled: yes
-            restAuthCredential.username: http-user
-            restAuthCredential.password: MuABCPassword!!@123 
+        restAuthCredential.isEnabled: yes
+        restAuthCredential.username: http-user
+        restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
       storageaccounts:
         - name: storage{{ rpfx }}.blob.core.windows.net 
