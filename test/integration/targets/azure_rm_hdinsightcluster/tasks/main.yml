@@ -35,7 +35,7 @@
       kind: spark
       configurations:
         gateway:
-          restAuthCredential.isEnabled: yes
+          #restAuthCredential.isEnabled: True
           restAuthCredential.username: http-user
           restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
@@ -55,7 +55,7 @@
               username: sshuser
               password: MuABCPassword!!@123
         - name: workernode
-          target_instance_count: 4
+          target_instance_count: 2
           hardware_profile:
             vm_size: Standard_D3
           os_profile:
@@ -80,7 +80,7 @@
       kind: spark
       configurations:
         gateway:
-          restAuthCredential.isEnabled: yes
+          #restAuthCredential.isEnabled: True
           restAuthCredential.username: http-user
           restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
@@ -100,7 +100,7 @@
               username: sshuser
               password: MuABCPassword!!@123
         - name: workernode
-          target_instance_count: 4
+          target_instance_count: 2
           hardware_profile:
             vm_size: Standard_D3
           os_profile:
@@ -124,9 +124,10 @@
     cluster_definition:
       kind: spark
       configurations:
-        restAuthCredential.isEnabled: yes
-        restAuthCredential.username: http-user
-        restAuthCredential.password: MuABCPassword!!@123 
+        gateway:
+          #restAuthCredential.isEnabled: True
+          restAuthCredential.username: http-user
+          restAuthCredential.password: MuABCPassword!!@123 
     storage_profile:
       storageaccounts:
         - name: storage{{ rpfx }}.blob.core.windows.net 
@@ -144,7 +145,7 @@
               username: sshuser
               password: MuABCPassword!!@123
         - name: workernode
-          target_instance_count: 4
+          target_instance_count: 2
           hardware_profile:
             vm_size: Standard_D3
           os_profile:
