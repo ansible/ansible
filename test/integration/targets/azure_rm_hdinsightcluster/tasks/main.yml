@@ -25,6 +25,65 @@
 - debug:
     var: storage_output
 
+
+
+- name: Sample for Azure REST API - Clusters_Create
+  azure_rm_resource:
+    # url: /subscriptions/{{ lookup('env','AZURE_SUBSCRIPTION_ID') }}/resourceGroups/{resourceGroupName}/providers/Microsoft.HDInsight/clusters/{clusterName}
+    api_version: '2015-03-01-preview'
+    resource_group: "{{ resource_group }}"
+    provider: hdinsight
+    resource_type: clusters
+    resource_name: "cluster{{ rpfx }}"
+    body:
+      location: eastus2
+      properties: 
+        clusterVersion: 3.6
+        osType: Linux
+        tier: Standard
+        clusterDefinition: 
+          kind: spark
+          configurations:
+            gateway: 
+              restAuthCredential.isEnabled: True  
+              restAuthCredential.username: http-user
+              restAuthCredential.password: MuABCPassword!!@123
+            #core-site:  
+            #  fs.defaultFS: wasb://zimscontainer@zimshdstorage.blob.core.windows.net
+            #  fs.azure.account.key.storageaccount.blob.core.windows.net: kCx3snczqrc1AbuH4TZZ1k5RrpFoUEcOTOIfMuXC6Xo9QsWuTDAZor90x2aV5fE9w/el5GlOIT4HlpHadeiePA==
+          #componentVersion:
+          #  spark: 2.3
+        storageProfile: 
+          storageaccounts: 
+            - name: "storage{{ resource_group }}.blob.core.windows.net"
+              isDefault: true
+              container: "cluster{{ rpfx }}"
+              key: "{{ storage_output['response']['keys'][0]['value'] }}"
+        computeProfile: 
+          roles: 
+            - name: headnode
+              #minInstanceCount: 1
+              targetInstanceCount: 2
+              hardwareProfile: 
+                vmSize: Standard_D3
+              osProfile: 
+                linuxOperatingSystemProfile: 
+                  username: sshuser
+                  password: MuABCPassword!!@123
+            - name: workernode
+              #minInstanceCount: 1
+              targetInstanceCount: 4
+              hardwareProfile: 
+                vmSize: Standard_D3
+              osProfile: 
+                linuxOperatingSystemProfile: 
+                  username: sshuser
+                  password: MuABCPassword!!@123
+  register: rest_output
+
+- debug:
+    var: rest_output
+
 - name: Create instance of Cluster -- check mode
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
