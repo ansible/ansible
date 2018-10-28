@@ -587,17 +587,30 @@ class ACMEAccount(object):
             return result, info
 
     def get_request(self, uri, parse_json_result=True, headers=None, get_only=False):
-        resp, info = fetch_url(self.module, uri, method='GET', headers=headers)
-
-        try:
-            content = resp.read()
-        except AttributeError:
-            content = info.get('body')
-
-        if info['status'] == 405 and not get_only:
-            # Do POST-as-GET request (draft-15 or newer)
+        '''
+        Perform a GET-like request. Will try POST-as-GET for ACMEv2, with fallback
+        to GET if server replies with a status code of 405.
+        '''
+        if not get_only and self.version != 1:
+            # Try POST-as-GET
             content, info = self.send_signed_request(uri, None, parse_json_result=False)
+            if info['status'] == 405:
+                # Instead, do unauthenticated GET
+                get_only = True
+        else:
+            # Do unauthenticated GET
+            get_only = True
 
+        if get_only:
+            # Perform unauthenticated GET
+            resp, info = fetch_url(self.module, uri, method='GET', headers=headers)
+
+            try:
+                content = resp.read()
+            except AttributeError:
+                content = info.get('body')
+
+        # Process result
         if parse_json_result:
             result = {}
             if content:
