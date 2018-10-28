@@ -76,15 +76,39 @@ options:
                        (total number of regions - 1). Failover priority values must be unique for each of the regions in which the database account exists."
     database_account_offer_type:
         description:
-            - TBD
     ip_range_filter:
         description:
             - "Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list
                of client IPs for a given database account. IP addresses/ranges must be comma separated and must not contain any spaces."
+    is_virtual_network_filter_enabled:
+        description:
+            - Flag to indicate whether to enable/disable Virtual Network ACL rules.
     enable_automatic_failover:
         description:
             - "Enables automatic failover of the write region in the rare event that the region is unavailable due to an outage. Automatic failover will
                result in a new write region for the account and is chosen based on the failover priorities configured for the account."
+    capabilities:
+        description:
+            - List of Cosmos DB capabilities for the account
+        type: list
+        suboptions:
+            name:
+                description:
+                    - "Name of the Cosmos DB capability. For example, 'name': 'EnableCassandra'. Current values also include 'EnableTable' and
+                       'EnableGremlin'."
+    virtual_network_rules:
+        description:
+            - List of Virtual Network ACL rules configured for the Cosmos DB account.
+        type: list
+        suboptions:
+            id:
+                description:
+                    - "Resource ID of a subnet, for example:
+                       /subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{
+                      subnetName}."
+    enable_multiple_write_locations:
+        description:
+            - Enables the account to write in multiple I(locations)
     state:
       description:
         - Assert the state of the Database Account.
@@ -126,6 +150,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrest.polling import LROPoller
+    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.cosmosdb import CosmosDB
     from msrest.serialization import Model
 except ImportError:
@@ -171,7 +196,19 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             ip_range_filter=dict(
                 type='str'
             ),
+            is_virtual_network_filter_enabled=dict(
+                type='str'
+            ),
             enable_automatic_failover=dict(
+                type='str'
+            ),
+            capabilities=dict(
+                type='list'
+            ),
+            virtual_network_rules=dict(
+                type='list'
+            ),
+            enable_multiple_write_locations=dict(
                 type='str'
             ),
             state=dict(
@@ -230,8 +267,16 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                     self.parameters["database_account_offer_type"] = kwargs[key]
                 elif key == "ip_range_filter":
                     self.parameters["ip_range_filter"] = kwargs[key]
+                elif key == "is_virtual_network_filter_enabled":
+                    self.parameters["is_virtual_network_filter_enabled"] = kwargs[key]
                 elif key == "enable_automatic_failover":
                     self.parameters["enable_automatic_failover"] = kwargs[key]
+                elif key == "capabilities":
+                    self.parameters["capabilities"] = kwargs[key]
+                elif key == "virtual_network_rules":
+                    self.parameters["virtual_network_rules"] = kwargs[key]
+                elif key == "enable_multiple_write_locations":
+                    self.parameters["enable_multiple_write_locations"] = kwargs[key]
 
         old_response = None
         response = None
@@ -307,7 +352,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             response = self.mgmt_client.database_accounts.create_or_update(resource_group_name=self.resource_group,
                                                                            account_name=self.account_name,
                                                                            create_update_parameters=self.parameters)
-            if isinstance(response, LROPoller):
+            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
