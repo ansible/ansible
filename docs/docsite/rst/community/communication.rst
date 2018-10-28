@@ -31,9 +31,9 @@ To subscribe to a group from a non-Google account, you can send an email to the 
 IRC channels
 ============
 
-Ansible has several IRC channels on Freenode (``irc.freenode.net``).
+Ansible has several IRC channels on `Freenode <https://freenode.net/>`_.
 
-If when you try to connect you receive an error asking your to "register" see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_.
+Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_ for instructions.
 
 General channels
 ----------------
@@ -45,32 +45,26 @@ General channels
 Working groups
 --------------
 
-We have various Working Groups in the Community which you can get involved with.
-
-Join us on Freenode (``irc.freenode.net``).
-
-If when you try to connect you receive an error asking your to "register" see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_.
+Many of our community Working Groups meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets.
 
 - `Amazon (AWS) Working Group <https://github.com/ansible/community/tree/master/group-aws>`_ - ``#ansible-aws``
-- `Ansible Lockdown Ansible playbook roles for security <https://ansiblelockdown.io>`_ `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``
+- `Ansible Lockdown Working Group <https://ansiblelockdown.io>`_ `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles
 - `AWX Working Group <https://github.com/ansible/community/tree/master/group-awx>`_ - ``#ansible-awx`` - Upstream Ansible Tower
 - `Azure Working Group <https://github.com/ansible/community/tree/master/group-azure>`_ - ``#ansible-azure``
 - `Community Working Group <https://github.com/ansible/community/tree/master/group-community>`_ - ``#ansible-community`` - Including Meetups
 - `Container Working Group <https://github.com/ansible/community/tree/master/group-container>`_ - ``#ansible-container``
-- `Contributor Experience Group <https://github.com/ansible/community/tree/master/group-contributor-experience>`_ - ``#ansible-community``
+- `Contributor Experience Working Group <https://github.com/ansible/community/tree/master/group-contributor-experience>`_ - ``#ansible-community``
 - `Docker Working Group <https://github.com/ansible/community/issues/379>`_ - ``#ansible-devel``
 - `Documentation Working Group <https://github.com/ansible/community/tree/master/group-docs>`_- ``#ansible-docs``
 - `Galaxy Working Group <https://github.com/ansible/community/tree/master/group-galaxy>`_ - ``#ansible-galaxy``
 - `JBoss Working Group <https://github.com/ansible/community/tree/master/group-jboss>`_ - ``#ansible-jboss``
 - `Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible training
 - `Linode Working Group <https://github.com/ansible/community/tree/master/group-linode>`_ - ``#ansible-linode``
-- `Molecule <https://molecule.readthedocs.io>`_ designed to aid in the development and testing of Ansible roles - ``#molecule-users``
+- `Molecule <https://molecule.readthedocs.io>`_ - ``#molecule-users`` - testing platform for Ansible playbooks and roles
 - `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_ - ``#ansible-network``
 - `Testing Working Group <https://github.com/ansible/community/tree/master/group-testing>`_  - ``#ansible-devel``
 - `VMware Working Group <https://github.com/ansible/community/tree/master/group-vmware>`_ - ``#ansible-vmware``
 - `Windows Working Group <https://github.com/ansible/community/tree/master/group-windows>`_ - ``#ansible-windows``
-
-
 
 Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?
 
@@ -87,7 +81,6 @@ IRC meetings
 
 The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to
 participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
-
 
 Tower support questions
 ========================
