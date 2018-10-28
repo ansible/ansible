@@ -1,0 +1,879 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2018, Luis Eduardo <leduardo@lsd.ufcg.edu.br>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
+
+DOCUMENTATION = '''
+---
+module: netplan
+author:
+    - Luis Eduardo (@lets00)
+short_description: Manage network configurations using netplan.
+version_added: "2.8"
+description:
+    - This module allows to you manage network configurations using netplan.
+      It creates/edits a netplan YAML file and saves on /etc/netplan/ directory
+      and apply on system.
+
+requirements: [ PyYAML, netplan ]
+notes:
+    - Online netplan page U(https://github.com/CanonicalLtd/netplan/blob/master/doc/netplan.md)
+options:
+  filename:
+    description:
+      - Name of file that will be create or open to add or remove network
+        interfaces.
+    required: true
+
+  renderer:
+    description:
+      - Use the given networking backend for this definition. Currently
+        supported are networkd and NetworkManager. Default is networkd.
+    choices: [ networkd, NetworkManager ]
+    required: false
+
+  version:
+    description:
+      - The YAML currently being used
+    required: false
+    type: int
+
+  interface-id:
+    description:
+      - Interface ID that must be unique. If type is C(wifis), this field is the
+        SSID name.
+    required: true
+
+  type:
+    description:
+      - Interface type. Depends on type, you can use specific params
+        (E.g bridges can use stp param).
+    choices: [ bridges, bonds, ethernets, vlans, wifis ]
+    required: true
+
+  state:
+    description:
+      - C(present) define a net interface on C(filename);
+        C(absent) undefine a net interface on C(filename).
+    choices: [ present, absent ]
+    required: true
+
+  dhcp4:
+    description:
+      - Enable/Disable DHCP for IPv4. Default is disabled.
+    required: false
+    type: bool
+
+  dhcp6:
+    description:
+      - Enable/Disable DHCP for IPv6. Default is disabled.
+    required: false
+    type: bool
+
+  link-local:
+    description:
+      - Configure the link-local addresses to bring up. Valid options are
+        ipv4 and 'ipv6', which respectively allow enabling IPv4 and IPv6
+        link local addressing.
+    choices: [ ipv4, ipv6 ]
+    required: false
+
+  critical:
+    description:
+      - Designate the connection as "critical to the system", meaning that
+        special care will be taken by systemd-networkd to not release the IP
+        from DHCP when it the daemon is restarted. Networkd backend only.
+    required: false
+    type: bool
+
+  dhcp-identifier:
+    description:
+      - When set to C(mac); pass that setting over to systemd-networkd to use
+        the device's MAC address as a unique identifier rather than a
+        RFC4361-compliant Client ID. This has no effect when NetworkManager
+        is used as a renderer.
+    required: false
+
+  accept-ra:
+    description:
+      - Accept Router Advertisement that would have the kernel configure IPv6
+        by itself. When enabled, accept Router Advertisements. When disabled,
+        do not respond to Router Advertisements. If unset use the host kernel
+        default setting.
+    required: false
+    type: bool
+
+  addresses:
+    description:
+      - Add static addresses to the interface in addition to the ones received
+        through DHCP or RA. Each sequence entry is in CIDR notation, i. e. of
+        the form C(addr)/C(prefixlen). C(addr) is an IPv4 or IPv6 address as
+        recognized by C(inet_pton) and C(prefixlen) the number of bits of the
+        subnet.
+    required: false
+    type: list
+
+  gateway4:
+    description:
+      - Set default gateway for IPv4, for manual address configuration.
+        This requires setting addresses too. Gateway IPs must be in a form
+        recognized by C(inet_pton).
+    required: false
+
+  gateway6:
+    description:
+      - Set default gateway for IPv6, for manual address configuration.
+        This requires setting addresses too. Gateway IPs must be in a form
+        recognized by C(inet_pton).
+    required: false
+
+  nameservers-search:
+    description:
+      -  Set a list of DNS servers search domains.
+    required: false
+    type: list
+
+  nameservers-addresses:
+    description:
+      -  Set a list of ipv4/ipv6 DNS servers.
+    required: false
+    type: list
+
+  macaddress:
+    description:
+      - Set the device's MAC address. The MAC address must be in the form
+        XX:XX:XX:XX:XX:XX.
+    required: false
+
+  mtu:
+    description:
+      - Set the Maximum Transmission Unit for the interface.
+        The default is 1500. Valid values depend on your network interface.
+    required: false
+    type: int
+
+  optional:
+    description:
+      - An optional device is not required for booting. Normally, networkd
+        will wait some time for device to become configured before proceeding
+        with booting. However, if a device is marked as optional, networkd will
+        not wait for it. This is only supported by networkd, and the
+        default is false.
+    required: false
+    type: bool
+
+  optional-addresses:
+    description:
+      - Specify types of addresses that are not required for a device to be
+        considered online. This changes the behavior of backends at boot time
+        to avoid waiting for addresses that are marked optional, and thus
+        consider the interface as "usable" sooner. This does not disable
+        these addresses, which will be brought up anyway.
+    required: false
+    type: list
+
+  match-name:
+    description:
+      - This selects the current interface name in physical devices
+        by various hardware properties.
+    required: false
+
+  match-macaddress:
+    description:
+      - This selects the physical device that matchs with MAC address
+        in the form "XX:XX:XX:XX:XX:XX".
+    required: false
+
+  match-driver:
+    description:
+      - This selects the physical device that matchs with Kernel driver name
+        corresponding to the C(DRIVER) udev property.
+    required: false
+
+  set-name:
+    description:
+      - This property can be used to give that device a more
+        specific/desirable/nicer name than the default from udev's ifnames.
+    required: false
+
+  wakeonlan:
+    description:
+      - Enable wake on LAN. Off by default.
+    required: false
+    type: bool
+
+  dhcp4-overrides-use-dns:
+    description:
+      - The DNS servers received from the DHCP server will be used and take
+        precedence over any statically. Only C(networkd) backend and C(dhcp4)
+        must be true.
+    required: false
+    type: bool
+
+  dhcp4-overrides-use-ntp:
+    description:
+      - The NTP servers received from the DHCP server will be used by
+        systemd-timesyncd and take precedence over any statically configured
+        ones. Only C(networkd) backend and C(dhcp4) must be true.
+    required: false
+    type: bool
+
+  dhcp4-overrides-use-hostname:
+    description:
+      - The hostname received from the DHCP server will be set as the transient
+        hostname of the system. Only C(networkd) backend and C(dhcp4)
+        must be true.
+    required: false
+    type: bool
+
+  dhcp4-overrides-send-hostname:
+    description:
+      - The machine's hostname will be sent to the DHCP serverself.
+        Only C(networkd) backend and C(dhcp4) must be true.
+    required: false
+    type: bool
+
+  dhcp4-overrides-hostname:
+    description:
+      - Use this value for the hostname which is sent to the DHCP server,
+        instead of machine's hostname. Only C(networkd) backend and C(dhcp4)
+        must be true.
+    required: false
+
+  dhcp6-overrides-use-dns:
+    description:
+      - The DNS servers received from the DHCP server will be used and take
+        precedence over any statically. Only C(networkd) backend and C(dhcp6)
+        must be true.
+    required: false
+    type: bool
+
+  dhcp6-overrides-use-ntp:
+    description:
+      - The NTP servers received from the DHCP server will be used by
+        systemd-timesyncd and take precedence over any statically configured
+        ones. Only C(networkd) backend and C(dhcp6) must be true.
+    required: false
+    type: bool
+
+  dhcp6-overrides-use-hostname:
+    description:
+      - The hostname received from the DHCP server will be set as the transient
+        hostname of the system. Only C(networkd) backend and C(dhcp6)
+        must be true.
+    required: false
+    type: bool
+
+  dhcp6-overrides-send-hostname:
+    description:
+      - The machine's hostname will be sent to the DHCP serverself.
+        Only C(networkd) backend and C(dhcp6) must be true.
+    required: false
+    type: bool
+
+  dhcp6-overrides-hostname:
+    description:
+      - Use this value for the hostname which is sent to the DHCP server,
+        instead of machine's hostname. Only C(networkd) backend and C(dhcp6)
+        must be true.
+    required: false
+
+  interfaces:
+    description:
+      - All devices matching this ID list will be added or associated to
+        bridges or bonds.
+    required: false
+    type: list
+
+  mode:
+    description:
+      - Set the bonding mode used for the interfaces.
+    choices: [ balance-rr, active-backup, balance-xor, broadcast,
+               802.3ad, balance-tlb, balance-alb ]
+    required: false
+
+  lacp-rate:
+    description:
+      - Set the rate at which LACPDUs are transmitted. This is only useful
+        in 802.3ad mode. Possible values are C(slow) (30 seconds, default),
+        and C(fast) (every second).
+    choices: [ slow, fast ]
+    required: false
+
+  mii-monitor-interval:
+    description:
+      - Specifies the interval for MII monitoring (verifying if an interface
+        of the bond has carrier). The default is 0; which disables MII
+        monitoring. This is equivalent to the MIIMonitorSec= field for the
+        networkd backend.
+    required: false
+    type: int
+
+  min-links:
+    description:
+      - The minimum number of links up in a bond to consider the bond
+        interface to be up.
+    required: false
+    type: int
+
+  transmit-hash-policy:
+    description:
+      - Specifies the transmit hash policy for the selection of slaves. This
+        is only useful in balance-xor, 802.3ad and balance-tlb modes. Possible
+        values are C(layer2), C(layer3+4), C(layer2+3), C(encap2+3), and
+        C(encap3+4).
+    choices: [ layer2, layer3+4, layer2+3, encap2+3, encap3+4 ]
+    required: false
+
+  ad-select:
+    description:
+      - Set the aggregation selection mode. Possible values are C(stable),
+        C(bandwidth), and C(count). This option is only used in C(802.3ad)
+        mode.
+    choices: [ stable, bandwidth, count ]
+    required: false
+
+  all-slaves-active:
+    description:
+      - If the bond should drop duplicate frames received on inactive ports,
+        set this option to C(false). If they should be delivered, set this
+        option to C(true). The default value is false, and is the desirable
+        behavior in most situations.
+    required: false
+    type: bool
+
+  arp-interval:
+    description:
+      - Set the interval value for how frequently ARP link monitoring should
+        happen. The default value is 0, which disables ARP monitoring.
+        For the networkd backend, this maps to the ARPIntervalSec= property.
+    required: false
+
+  arp-ip-targets:
+    description:
+      - IPs of other hosts on the link which should be sent ARP requests in
+        order to validate that a slave is up. This option is only used when
+        C(arp-interval) is set to a value other than 0. At least one IP
+        address must be given for ARP link monitoring to function. Only IPv4
+        addresses are supported. You can specify up to 16 IP addresses. The
+        default value is an empty list.
+    required: false
+    type: list
+
+  arp-validate:
+    description:
+      - Configure how ARP replies are to be validated when using ARP link
+        monitoring. Possible values are C(none), C(active), C(backup),
+        and C(all).
+    choices: [ none, active, backup, all ]
+    required: false
+
+  arp-all-targets:
+    description:
+      - Specify whether to use any ARP IP target being up as sufficient for
+        a slave to be considered up; or if all the targets must be up. This
+        is only used for C(active-backup) mode when C(arp-validate) is
+        enabled. Possible values are C(any) and C(all).
+    choices: [ any, all ]
+    required: false
+
+  up-delay:
+    description:
+      - Specify the delay before enabling a link once the link is physically
+        up. The default value is 0. This maps to the UpDelaySec= property for
+        the networkd renderer.
+    required: false
+    type: int
+
+  down-delay:
+    description:
+      - Specify the delay before disabling a link once the link has been
+        lost. The default value is 0. This maps to the DownDelaySec=
+        property for the networkd renderer.
+    required: false
+    type: int
+
+  fail-over-mac-policy:
+    description:
+      - Set whether to set all slaves to the same MAC address when adding
+        them to the bond, or how else the system should handle MAC addresses.
+        The possible values are C(none), C(active), and C(follow).
+    required: false
+    choices: [ none, active, follow ]
+
+  gratuitous-arp:
+    description:
+      - Specify how many ARP packets to send after failover. Once a link is
+        up on a new slave, a notification is sent and possibly repeated if
+        this value is set to a number greater than 1. The default value
+        is 1 and valid values are between 1 and 255. This only affects
+        active-backup mode.
+    required: false
+    type: int
+
+  packets-per-slave:
+    description:
+      - In C(balance-rr) mode, specifies the number of packets to transmit
+        on a slave before switching to the next. When this value is set to
+        0, slaves are chosen at random. Allowable values are between
+        0 and 65535. The default value is 1. This setting is
+        only used in C(balance-rr) mode.
+    required: false
+    type: int
+
+  learn-packet-interval:
+    description:
+      - Specify the interval (seconds) between sending learning packets to
+        each slave.  The value range is between 1 and 0x7fffffff.
+        The default value is 1. This option only affects C(balance-tlb)
+        and C(balance-alb) modes. Using the networkd renderer, this field
+        maps to the LearnPacketIntervalSec= property.
+    required: false
+    type: int
+
+  ageing-time:
+    description:
+      - Set the period of time (in seconds) to keep a MAC address in the
+        forwarding database after a packet is received. This maps to the
+        AgeingTimeSec= property when the networkd renderer is used.
+    required: false
+    type: int
+
+  priority:
+    description:
+      - Set the priority value for the bridge. This value should be a
+        number between 0 and 65535. Lower values mean higher priority.
+        The bridge with the higher priority will be elected as
+        the root bridge.
+    required: false
+    type: int
+
+  forward-delay:
+    description:
+      - Specify the period of time (in seconds) the bridge will remain in
+        Listening and Learning states before getting to the Forwarding state.
+        This field maps to the ForwardDelaySec= property for the networkd
+        renderer.
+    required: false
+    type: int
+
+  hello-time:
+    description:
+      - Specify the interval (in seconds) between two hello packets being sent
+        out from the root and designated bridges. Hello packets communicate
+        information about the network topology. When the networkd renderer
+        is used, this maps to the HelloTimeSec= property.
+    required: false
+    type: int
+
+  max-age:
+    description:
+      - Set the maximum age (in seconds) of a hello packet. If the last hello
+        packet is older than that value, the bridge will attempt to become the
+        root bridge. This maps to the MaxAgeSec= property when the networkd.
+    required: false
+    type: int
+
+  path-cost:
+    description:
+      - Set the maximum age (in seconds) of a hello packet. If the last hello
+        packet is older than that value, the bridge will attempt to become the
+        root bridge. This maps to the MaxAgeSec= property when the networkd.
+    required: false
+    type: int
+
+  stp:
+    description:
+      - Define whether the bridge should use Spanning Tree Protocol. The
+        default value is C(true), which means that Spanning Tree should be
+        used.
+    required: false
+    type: bool
+
+  id:
+    description:
+      - VLAN ID, a number between 0 and 4094.
+    required: false
+    type: int
+
+  link:
+    description:
+      - netplan ID of the underlying device definition on which this VLAN
+        gets created.
+    required: false
+
+  access-points-password:
+    description:
+      - Enable WPA2 authentication and set the passphrase for it. If defined
+        C(None), the network is assumed to be open. Other authentication modes
+        are not currently supported.
+    required: false
+
+  access-points-mode:
+    description:
+      - Possible access point modes are C(infrastructure) (the default),
+        C(ap) (create an access point to which other devices can connect),
+        and C(adhoc) (peer to peer networks without a central access point).
+        C(ap) is only supported with C(NetworkManager).
+    required: false
+    choices: [ infrastructure, ap, adhoc ]
+'''
+
+EXAMPLES = '''
+ - name: Up br0 interfaces
+   netplan:
+    filename: 11-test
+    interface-id: br0
+    type: ethernets
+    state: present
+    dhcp4: false
+    addresses:
+      - 192.168.1.1/24
+      - 192.168.1.2/24
+
+ - name: Up vlan interfaces
+   netplan:
+     filename: 11-test
+     interface-id: brvlan15
+     state: present
+     type: vlans
+     id: 15
+     link: br0
+
+ - name: Delete vlan interfaces
+   netplan:
+     filename: 11-test
+     interface-id: brvlan15
+     type: vlans
+     state: remove
+     id: 15
+     link: br0
+'''
+
+RETURN = '''
+'''
+
+from ansible.module_utils.basic import AnsibleModule
+import os.path
+try:
+    import yaml
+    HAS_YAML = True
+except:
+    HAS_YAML = False
+
+NETPLAN_PATH = '/etc/netplan'
+
+SPECIFC_ANSIBLE_NETPLAN = ['filename', 'renderer', 'version', 'type',
+                           'interface-id', 'state']
+
+MATCH = ['match-name', 'match-macaddress', 'match-driver']
+
+DHCP_OVERRIDES = ['dhcp4-overrides-use-dns',
+                  'dhcp4-overrides-use-ntp',
+                  'dhcp4-overrides-use-hostname',
+                  'dhcp4-overrides-send-hostname',
+                  'dhcp4-overrides-hostname',
+                  'dhcp6-overrides-use-dns',
+                  'dhcp6-overrides-use-ntp',
+                  'dhcp6-overrides-use-hostname',
+                  'dhcp6-overrides-send-hostname',
+                  'dhcp6-overrides-hostname']
+
+ROUTES = ['routes-from', 'routes-to', 'routes-via', 'routes-on-link',
+          'routes-metric', 'routes-type', 'routes-scope', 'routes-table']
+
+BONDS = ['mode', 'lacp-rate', 'mii-monitor-interval', 'min-links',
+         'transmit-hash-policy', 'ad-select', 'all-slaves-active',
+         'arp-interval', 'arp-ip-targets', 'arp-validate', 'arp-all-targets',
+         'up-delay', 'down-delay', 'fail-over-mac-policy', 'gratuitous-arp',
+         'packets-per-slave', 'learn-packet-interval']
+
+BRIDGES = ['ageing-time', 'priority', 'forward-delay', 'hello-time',
+           'max-age', 'path-cost', 'stp']
+
+VLANS = ['id', 'link']
+
+WIFIS = ['access-points-password', 'access-points-mode']
+
+
+def validate_args(module):
+    if module.params['type'] == 'bridges':
+        for key in module.params:
+            if module.params.get(key) is not None:
+                if key in BONDS:
+                    module.fail_json(msg='BONDs options can not be defined with bridge Type')
+                if key in VLANS:
+                    module.fail_json(msg='VLANs options can not be defined with bridge Type')
+                if key in WIFIS:
+                    module.fail_json(msg='WIFIs options can not be defined with bridge Type')
+    if module.params['type'] == 'bonds':
+        for key in module.params:
+            if module.params.get(key) is not None:
+                if key in BRIDGES:
+                    module.fail_json(msg='BRIDGES options can not be defined with bonds Type')
+                if key in VLANS:
+                    module.fail_json(msg='VLANS options can not be defined with bonds Type')
+                if key in WIFIS:
+                    module.fail_json(msg='WIFIs options can not be defined with bonds Type')
+                # Verify bonds params dependences:
+                # lacpt-rate depends on mode == 802.3ad
+                # transmit-hash-policy depends on mode == 802.3ad or balance-tlb or balance-xor
+                # ad-select depends on mode == 802.3ad
+                # arp-all-target depends on mode == active-backup and arp-validate == true
+                # gratuitous-arp depends on mode == active-backup
+                # packets-per-slave depends on mode == balance-rr
+                # learn-packet-interval depends on mode == balance-tlb or balance-alb
+                if key == 'lacpt-rate' or key == 'ad-select':
+                    if module.params['mode'] != '802.3ad':
+                        module.fail_json(msg='mode must be 802.3ad to define {0} param'.format(key))
+                if key == 'transmit-hash-policy':
+                    if module.params['mode'] != '802.3ad' or module.params['mode'] != 'balance-tlb' or module.params['mode'] != 'balance-xor':
+                        module.fail_json(msg='mode must be 802.3ad or balance-tlb or balance-xor to define {0} param'.format(key))
+                if key == 'arp-all-target':
+                    if module.params['mode'] != 'active-backup' and not module.params['arp-validate']:
+                        module.fail_json(msg='mode and arp-validade both must be active-backup and true to define {0} param'.format(key))
+                if key == 'gratuitous-arp':
+                    if module.params['mode'] != 'active-backup':
+                        module.fail_json(msg='mode must be active-backup to define {0} param'.format(key))
+                if key == 'packets-per-slave':
+                    if module.params['mode'] != 'balance-rr':
+                        module.fail_json(msg='mode must be balance-rr to define {0} param'.format(key))
+                if key == 'learn-packet-interval':
+                    if module.params['mode'] != 'balance-tlb' or module.params['mode'] != 'balance-alb':
+                        module.fail_json(msg='mode must be balance-tlb or balance-alb to define {0} param'.format(key))
+    if module.params['type'] == 'ethernets':
+        for key in module.params:
+            if module.params.get(key) is not None:
+                if key in BONDS:
+                    module.fail_json(msg='BONDS options can not be defined with ethernets Type')
+                if key in BRIDGES:
+                    module.fail_json(msg='BRIDGES options can not be defined with ethernets Type')
+                if key in VLANS:
+                    module.fail_json(msg='VLANS options can not be defined with ethernets Type')
+                if key in WIFIS:
+                    module.fail_json(msg='WIFIs options can not be defined with ethernets Type')
+    if module.params['type'] == 'vlans':
+        for key in module.params:
+            if module.params.get(key) is not None:
+                if key in BONDS:
+                    module.fail_json(msg='BONDS options can not be defined with vlans Type')
+                if key in BRIDGES:
+                    module.fail_json(msg='BRIDGES options can not be defined with vlans Type')
+                if key in WIFIS:
+                    module.fail_json(msg='WIFIs options can not be defined with vlans Type')
+    if module.params['type'] == 'wifis':
+        for key in module.params:
+            if module.params.get(key) is not None:
+                if key in BONDS:
+                    module.fail_json(msg='BONDS options can not be defined with vlans Type')
+                if key in BRIDGES:
+                    module.fail_json(msg='BRIDGES options can not be defined with vlans Type')
+                if key in VLANS:
+                    module.fail_json(msg='VLANS options can not be defined with ethernets Type')
+
+
+def get_netplan_dict(params):
+    netplan_dict = {'network': dict()}
+    # Define default netplan version and renderes both to 2 and networkd
+    if params.get('version'):
+        netplan_dict['network']['version'] = params.get('version')
+    else:
+        netplan_dict['network']['version'] = 2
+    if params.get('renderer'):
+        netplan_dict['network']['renderer'] = params.get('renderer')
+    else:
+        netplan_dict['network']['renderer'] = 'networkd'
+    netplan_dict['network'][params.get('type')] = dict()
+    netplan_dict['network'][params.get('type')][params.get('interface-id')] = dict()
+    for key in params:
+        if key not in SPECIFC_ANSIBLE_NETPLAN and params.get(key) is not None:
+            if key in MATCH:
+                match_option = '{0}'.format(key.split('match-')[1])
+                netplan_dict['network'][params.get('type')][params.get('interface-id')]['match'] = dict()
+                netplan_dict['network'][params.get('type')][params.get('interface-id')]['match'][match_option] = params.get(key)
+            # dhcp4-overrides
+            if key in DHCP_OVERRIDES:
+                override_option = '{0}'.format(key.split('dhcp4-overrides-')[1])
+                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('dhcp4-overrides'):
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'] = dict()
+                netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'][override_option] = params.get(key)
+            if key in ROUTES:
+                routes_option = '{0}'.format(key.split('routes-')[1])
+                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('routes'):
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['routes'] = dict()
+                netplan_dict['network'][params.get('type')][params.get('interface-id')]['routes'][routes_option] = params.get(key)
+            if key in WIFIS:
+                wifi_option = key.split('access-points-')[1]
+                if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
+                    netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'] = dict()
+                netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'][wifi_option] = params.get(key)
+            else:
+                netplan_dict['network'][params.get('type')][params.get('interface-id')][key] = params.get(key)
+    return netplan_dict
+
+
+def main():
+    argument_spec = {
+        'filename': {'required': True},
+        'renderer': {'choices': ['networkd', 'NetworkManager'],
+                     'required': False},
+        'version': {'required': False},
+        'type': {'choices': ['bridges', 'bonds', 'ethernets', 'vlans', 'wifis'],
+                 'required': True},
+        'interface-id': {'required': True},
+        'state': {'choices': ['present', 'absent'], 'required': True},
+        'dhcp4': {'required': False},
+        'dhcp6': {'required': False},
+        'link-local': {'choices': ['ipv4', 'ipv6'],
+                       'required': False,
+                       'type': 'list'},
+        'critical': {'required': False,
+                     'type': 'bool'},
+        'dhcp-identifier': {'required': False},
+        'accept-ra': {'required': False, 'type': 'bool'},
+        'addresses': {'required': False,
+                      'type': 'list'},
+        'gateway4': {'required': False},
+        'gateway6': {'required': False},
+        'nameservers-search': {'required': False,
+                               'type': 'list'},
+        'nameservers-addresses': {'required': False,
+                                  'type': 'list'},
+        'macaddress': {'required': False},
+        'mtu': {'required': False, 'type': 'int'},
+        'optional': {'required': False, 'type': 'bool'},
+        'optional-addresses': {'required': False, 'type': 'list'},
+        'match-name': {'required': False},
+        'match-macaddress': {'required': False},
+        'match-driver': {'required': False},
+        'set-name': {'required': False},
+        'wakeonlan': {'required': False, 'type': 'bool'},
+        'dhcp4-overrides-use-dns': {'required': False, 'type': 'bool'},
+        'dhcp4-overrides-use-ntp': {'required': False, 'type': 'bool'},
+        'dhcp4-overrides-use-hostname': {'required': False, 'type': 'bool'},
+        'dhcp4-overrides-send-hostname': {'required': False, 'type': 'bool'},
+        'dhcp4-overrides-hostname': {'required': False},
+        'dhcp6-overrides-use-dns': {'required': False, 'type': 'bool'},
+        'dhcp6-overrides-use-ntp': {'required': False, 'type': 'bool'},
+        'dhcp6-overrides-use-hostname': {'required': False, 'type': 'bool'},
+        'dhcp6-overrides-send-hostname': {'required': False, 'type': 'bool'},
+        'dhcp6-overrides-hostname': {'required': False},
+        'interfaces': {'required': False, 'type': 'list'},
+        'mode': {'choices': ['balance-rr', 'active-backup', 'balance-xor',
+                             'broadcast', '802.3ad', 'balance-tlb',
+                             'balance-alb'],
+                 'required': False},
+        'lacp-rate': {'choices': ['slow', 'fast'],
+                      'required': False},
+        'mii-monitor-interval': {'required': False, 'type': 'int'},
+        'min-links': {'required': False, 'type': 'int'},
+        'transmit-hash-policy': {'choices': ['layer2', 'layer3+4', 'layer2+3',
+                                             'encap2+3', 'encap3+4'],
+                                 'required': False},
+        'ad-select': {'choices': ['stable', 'bandwidth', 'count'],
+                      'required': False},
+        'all-slaves-active': {'required': False, 'type': 'bool'},
+        'arp-interval': {'required': False, 'type': 'int'},
+        'arp-ip-targets': {'required': False},
+        'arp-validate': {'choices': ['none', 'active', 'backup', 'all'],
+                         'required': False},
+        'arp-all-targets': {'choices': ['any', 'all'], 'required': False},
+        'up-delay': {'required': False, 'type': 'int'},
+        'down-delay': {'required': False, 'type': 'int'},
+        'fail-over-mac-policy': {'choices': ['none', 'active', 'follow'],
+                                 'required': False},
+        'gratuitous-arp': {'required': False, 'type': 'int'},
+        'packets-per-slave': {'required': False, 'type': 'int'},
+        'learn-packet-interval': {'required': False, 'type': 'int'},
+        'ageing-time': {'required': False, 'type': 'int'},
+        'priority': {'required': False, 'type': 'int'},
+        'forward-delay': {'required': False, 'type': 'int'},
+        'hello-time': {'required': False, 'type': 'int'},
+        'max-age': {'required': False, 'type': 'int'},
+        'path-cost': {'required': False, 'type': 'int'},
+        'stp': {'required': False, 'type': 'bool'},
+        'id': {'required': False, 'type': 'int'},
+        'link': {'required': False},
+        'access-points-password': {'required': False},
+        'access-points-mode': {'choices': ['infrastructure', 'ap', 'adhoc'],
+                               'required': False}
+    }
+
+    # This is not necessary if state is absent
+    required_if = [['type', 'bonds', ['interfaces', 'mode']],
+                   ['type', 'vlans', ['id', 'link']]]
+
+    module = AnsibleModule(argument_spec,
+                           required_if=required_if,
+                           supports_check_mode=True)
+
+    if not HAS_YAML:
+        module.fail_json(msg='The PyYAML Python module is required')
+
+    validate_args(module)
+
+    NETPLAN_FILENAME = '{0}/{1}.yaml'.format(NETPLAN_PATH, module.params.get('filename'))
+
+    if os.path.isfile(NETPLAN_FILENAME):
+        with open(NETPLAN_FILENAME, 'r') as yamlfile:
+            netplan_file_dict = yaml.load(yamlfile)
+        netplan_module_dict = get_netplan_dict(module.params)
+
+        # Add interface
+        if module.params.get('state') == 'present':
+            if netplan_file_dict == netplan_module_dict:
+                module.exit_json(changed=False)
+            else:
+                if not netplan_file_dict['network'].get(module.params.get('type'), False):
+                    netplan_file_dict['network'][module.params.get('type')] = dict()
+                # Verify if interface exist and if dicts are equal
+                if netplan_file_dict['network'][module.params.get('type')].get(module.params.get('interface-id'), False):
+                    if netplan_file_dict['network'][module.params.get('type')][module.params.get('interface-id')] == \
+                            netplan_module_dict['network'][module.params.get('type')][module.params.get('interface-id')]:
+                        module.exit_json(changed=False)
+                netplan_file_dict['network'][module.params.get('type')][module.params.get('interface-id')] = dict()
+                netplan_file_dict['network'][module.params.get('type')][module.params.get('interface-id')] = \
+                    netplan_module_dict['network'][module.params.get('type')][module.params.get('interface-id')]
+                with open(NETPLAN_FILENAME, 'w') as yamlfile:
+                    yaml.dump(netplan_file_dict, yamlfile, default_flow_style=False)
+                module.run_command('netplan apply', check_rc=True)
+                module.exit_json(changed=True)
+        # Remove interface
+        else:
+            if not netplan_file_dict['network'].get(module.params.get('type'), False):
+                module.fail_json(msg='Type {0} or Interface {1} does not defined on {2} file'.format(module.params.get('type'),
+                                                                                                     module.params.get('interface-id'),
+                                                                                                     NETPLAN_FILENAME))
+            if not netplan_file_dict['network'][module.params.get('type')].pop(module.params.get('interface-id'), False):
+                module.exit_json(changed=False)
+            else:
+                # Verify if type key is None to remove from dict
+                if not netplan_file_dict['network'].get(module.params.get('type')):
+                    netplan_file_dict['network'].pop(module.params.get('type'))
+                with open(NETPLAN_FILENAME, 'w') as yamlfile:
+                    yaml.dump(netplan_file_dict, yamlfile, default_flow_style=False)
+                module.run_command('netplan apply', check_rc=True)
+                module.exit_json(changed=True)
+    else:
+        if module.params.get('state') == 'present':
+            netplan_dict = get_netplan_dict(module.params)
+            with open(NETPLAN_FILENAME, 'w') as yamlfile:
+                yaml.dump(netplan_dict, yamlfile, default_flow_style=False)
+            module.exit_json(changed=True)
+        else:
+            module.fail_json(msg='Interface {0} can not removed because {1} file does not exist'.format(module.params.get('interface-id'), NETPLAN_FILENAME))
+
+
+if __name__ == '__main__':
+    main()
