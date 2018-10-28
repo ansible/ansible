@@ -52,6 +52,7 @@ Functions and Methods
 Python tips
 ===========
 
+
 * When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
 * Include a ``main`` function that wraps the normal execution.
 * Call your ``main`` function from a conditional so you can import it into unit tests - for example:
@@ -168,4 +169,4 @@ Module Security
 * Avoid using the shell unless absolutely necessary.
 * If you must use the shell, you must pass ``use_unsafe_shell=True`` to ``module.run_command``.
 * If any variables in your module can come from user input with ``use_unsafe_shell=True``, you must wrap them with ``pipes.quote(x)``.
-* You must download ``https://`` resource urls by importing ``module_utils.urls`` and using the ``fetch_url method``.
+* When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
