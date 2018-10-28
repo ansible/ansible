@@ -162,9 +162,10 @@ Ansible conventions offer a predictable user interface across all modules, playb
 Module Security
 ===============
 
-* Modules must take steps to avoid passing user input from the shell and always check return codes
-* Always use ``module.run_command``, not ``subprocess`` or ``Popen`` or ``os.system`` -- this is mandatory
-* If you need to use the shell you must pass ``use_unsafe_shell=True`` to ``module.run_command``
-* If you do not need the shell, avoid using the shell
-* Any variables that can come from the user input with ``use_unsafe_shell=True`` must be wrapped by ``pipes.quote(x)``
-* Downloads of https:// resource urls must import ``module_utils.urls`` and use the ``fetch_url method``
+* Avoid passing user input from the shell.
+* Always check return codes.
+* You must always use ``module.run_command``, not ``subprocess`` or ``Popen`` or ``os.system``.
+* Avoid using the shell unless absolutely necessary.
+* If you must use the shell, you must pass ``use_unsafe_shell=True`` to ``module.run_command``.
+* If any variables in your module can come from user input with ``use_unsafe_shell=True``, you must wrap them with ``pipes.quote(x)``.
+* You must download ``https://`` resource urls by importing ``module_utils.urls`` and using the ``fetch_url method``.
