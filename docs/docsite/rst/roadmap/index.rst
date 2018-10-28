@@ -3,25 +3,21 @@
 Ansible Roadmap
 ===============
 
-The Ansible team develops a roadmap for each major Ansible release. The latest roadmap shows current work; older roadmaps provide a history of the project.
+The Ansible team develops a roadmap for each major and minor Ansible release. The latest roadmap shows current work; older roadmaps provide a history of the project. We don't publish roadmaps for subminor versions. So 2.0 and 2.8 have roadmaps, but 2.7.1 does not.
 
-Based on team and community feedback, an initial roadmap will be published for a major or minor version (ex: 2.0, 2.1).
-Subminor versions will generally not have roadmaps published.
+We incorporate team and community feedback in each roadmap, and aim for further transparency and better inclusion of both community desires and submissions.
 
-The team is aiming for further transparency and better inclusion of both community desires and submissions.
+Each roadmap offers a *best guess*, based on the Ansible team's experience on requests and feedback from the community, of what will be included in a given release. However, some items on the roadmap may be dropped due to time constraints, lack of community maintainers, etc.
 
-These are the team's *best guess* roadmaps based on the Ansible team's experience and are also based on requests and feedback from the community.
-There are things that may not make it due to time constraints, lack of community maintainers, etc.
 Each roadmap is published both as an idea of what is upcoming in Ansible, and as a medium for seeking further feedback from the community.
 
-There are multiple places for you to submit feedback:
+You can submit feedback on the current roadmap in multiple ways:
 
-- Add to the agenda of an IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ (preferred)
-- Ansible's google-group: ansible-devel
-- AnsibleFest conferences
-- IRC Freenode channel: #ansible-devel (this one may have things lost in lots of conversation)
+- Edit the agenda of an IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ (preferred)
+- Post on the ``#ansible-devel`` Freenode IRC channel
+- Email the ansible-devel list
 
-See :ref:`Ansible communication channels <communication>` for details on how to speak to us.
+See :ref:`Ansible communication channels <communication>` for details on how to join and use the email lists and IRC channels.
 
 .. toctree::
    :maxdepth: 1
@@ -29,4 +25,3 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
    :caption: Ansible Release Roadmaps
 
    ROADMAP*
-
