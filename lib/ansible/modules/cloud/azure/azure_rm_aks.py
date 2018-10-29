@@ -93,6 +93,8 @@ options:
         description:
             - Enable RBAC.
         type: bool
+        default: no
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
@@ -368,7 +370,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             ),
             enable_rbac=dict(
                 type='bool',
-                options=service_principal_spec
+                default=False
             )
         )
 
@@ -382,7 +384,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         self.linux_profile = None
         self.agent_pool_profiles = None
         self.service_principal = None
-        self.enable_rbac = None
+        self.enable_rbac = False
 
         required_if = [
             ('state', 'present', [
