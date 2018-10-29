@@ -9,7 +9,7 @@ While automation exists to make it easier to make things repeatable, all systems
 
 Ansible uses *variables* to help deal with differences between systems.
 
-To understand variables you'll also want to read :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
+To understand variables you'll also want to read :ref:`playbooks_conditionals` and :ref:`playbooks_loops`.
 Useful things like the **group_by** module
 and the ``when`` conditional can also be used with variables, and to help manage differences between systems.
 
@@ -62,7 +62,7 @@ a bit of a refresher.
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
 want to use 'boston.ntp.example.com' as an NTP server.
 
-See the :doc:`intro_inventory` document for multiple ways on how to define variables in inventory.
+See the :ref:`intro_inventory` document for multiple ways on how to define variables in inventory.
 
 .. _playbook_variables:
 
@@ -84,7 +84,7 @@ Variables defined from included files and roles
 
 It turns out we've already talked about variables in another place too.
 
-As described in :doc:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
+As described in :ref:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
@@ -118,7 +118,7 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 
 .. seealso::
 
-    :doc:`playbooks_templating`
+    :ref:`playbooks_templating`
         More information about Jinja2 templating
 
 .. _jinja2_filters:
@@ -131,7 +131,7 @@ Jinja2 Filters
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to those, Ansible supplies many more. See the :doc:`playbooks_filters` document
+In addition to those, Ansible supplies many more. See the :ref:`playbooks_filters` document
 for a list of available filters and example usage guide.
 
 .. _yaml_gotchas:
@@ -647,7 +647,7 @@ Similarly, the hostname as the system reports it is::
 
 Facts are frequently used in conditionals (see :ref:`playbooks_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on **group_by** for details, as well as in generalized conditional statements as discussed in the :ref:`playbooks_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :ref:`modules` documentation on **group_by** for details, as well as in generalized conditional statements as discussed in the :ref:`playbooks_conditionals` chapter.
 
 .. _disabling_facts:
 
@@ -812,7 +812,7 @@ Registered Variables
 Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of ``-v`` when executing playbooks will show possible values for the results.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
-:doc:`playbooks_conditionals` chapter.
+:ref:`playbooks_conditionals` chapter.
 
 While it's mentioned elsewhere in that document too, here's a quick syntax example::
 
@@ -830,7 +830,7 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registered variables are just like facts.
 
-When using ``register`` with a loop, the data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbooks_loops` section on using register with a loop.
+When using ``register`` with a loop, the data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :ref:`playbooks_loops` section on using register with a loop.
 
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
@@ -1152,7 +1152,7 @@ Variable Examples
 First off, group variables are powerful.
 
 Site wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
-your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
+your inventory file.  They can also be returned by a dynamic inventory script (see :ref:`intro_dynamic_inventory`) or defined
 in things like :ref:`ansible_tower` from the UI or API::
 
     ---
@@ -1183,7 +1183,7 @@ roles aren't you?  Hint hint.
 
 If you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.
-See :doc:`playbooks_reuse_roles` for more info about this::
+See :ref:`playbooks_reuse_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
@@ -1263,21 +1263,21 @@ how all of these things can work together.
 Advanced Syntax
 ```````````````
 
-For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :doc:`playbooks_advanced_syntax`.
+For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :ref:`playbooks_advanced_syntax`.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_filters`
+   :ref:`playbooks_filters`
        Jinja2 filters and their uses
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    :ref:`special_variables`
        List of special variables
