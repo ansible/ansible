@@ -66,6 +66,7 @@ class Connection(ConnectionBase):
     become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
     default_user = 'root'
+    chroot_program = 'chroot'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -88,8 +89,8 @@ class Connection(ConnectionBase):
         if not (is_executable(chrootsh) or (os.path.lexists(chrootsh) and os.path.islink(chrootsh))):
             raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
-        self.chroot_cmd = distutils.spawn.find_executable('chroot')
-        if not self.chroot_cmd:
+        self._transport_cmd = distutils.spawn.find_executable(self.transport_cmd)
+        if not self._transport_cmd:
             raise AnsibleError("chroot command not found in PATH")
 
     def _connect(self):
@@ -99,6 +100,10 @@ class Connection(ConnectionBase):
             display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
             self._connected = True
 
+    def _local_command(self, cmd):
+        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        return [self._transport_cmd, self.chroot, executable, '-c', cmd]
+
     def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
         ''' run a command on the chroot.  This is only needed for implementing
         put_file() get_file() so that we don't have to read the whole file
@@ -107,8 +112,7 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
+        local_cmd = self._local_command(cmd)
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
