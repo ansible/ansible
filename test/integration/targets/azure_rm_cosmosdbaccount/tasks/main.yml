@@ -59,6 +59,8 @@
     name: "cosmos{{ rpfx }}"
     location: eastus
     locations:
+      - location_name: eastus2
+        failover_priority: 2
       - location_name: eastus
         failover_priority: 0
       - location_name: westus
