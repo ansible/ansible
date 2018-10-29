@@ -179,8 +179,6 @@ This will return a large amount of variable data, which may look like this, as t
 
 .. code-block:: json
 
-NEW:
-
 {
     "ansible_all_ipv4_addresses": [
         "REDACTED IP ADDRESS"
@@ -1267,7 +1265,7 @@ For information about advanced YAML syntax used to declare variables and have mo
 
 .. seealso::
 
-   :ref:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_conditionals`
        Conditional statements in playbooks
