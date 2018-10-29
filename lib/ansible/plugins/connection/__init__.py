@@ -134,7 +134,8 @@ class ConnectionBase(AnsiblePlugin):
         namespace_match = re.match(r'{(.*)}', clixml.tag)
         namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
 
-        lines = [e.text.replace('_x000D__x000A_', '') for e in clixml.findall("./%sS[@S='%s']" % (namespace, stream))]
+        strings = clixml.findall("./%sS" % namespace)
+        lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream]
         return to_bytes('\r\n'.join(lines))
 
     @abstractproperty
