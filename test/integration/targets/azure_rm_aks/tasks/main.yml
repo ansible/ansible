@@ -106,7 +106,6 @@
          - name: default
            count: 1
            vm_size: Standard_DS1_v2
-     enable_rbac: no
    register: output
 
  - name: Assert the AKS instance is upgraded

@@ -92,6 +92,7 @@ options:
     enable_rbac:
         description:
             - Enable RBAC.
+            - Existing non-RBAC enabled AKS clusters cannot currently be updated for RBAC use.
         type: bool
         default: no
         version_added: 2.8
