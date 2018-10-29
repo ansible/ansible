@@ -128,7 +128,6 @@ except ImportError:
 UUID_REQUIRED = 'UUID of device is required for nodes_by_uuid command.'
 CHASSIS_UUID_REQUIRED = 'UUID of chassis is required for nodes_by_chassis_uuid command.'
 SUCCESS_MSG = "Success %s result"
-PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client pylxca is required for this module.'
 
 
 class connection_object:

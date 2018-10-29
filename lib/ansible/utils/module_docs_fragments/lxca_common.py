@@ -53,11 +53,6 @@ options:
       lxca https full web address
     required: true
 
-  noverify:
-    description:
-      no verification of certificate required
-    default: "True"
-
 requirement:
   - pylxca
 
