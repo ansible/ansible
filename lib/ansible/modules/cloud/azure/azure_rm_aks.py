@@ -89,6 +89,13 @@ options:
                 description:
                     - The secret password associated with the service principal.
                 required: true
+    enable_rbac:
+        description:
+            - Enable RBAC.
+            - Existing non-RBAC enabled AKS clusters cannot currently be updated for RBAC use.
+        type: bool
+        default: no
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
@@ -248,7 +255,8 @@ def create_aks_dict(aks):
         agent_pool_profiles=create_agent_pool_profiles_dict(
             aks.agent_pool_profiles),
         type=aks.type,
-        kube_config=aks.kube_config
+        kube_config=aks.kube_config,
+        enable_rbac=aks.enable_rbac
     )
 
 
@@ -361,6 +369,10 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                 type='dict',
                 options=service_principal_spec
             ),
+            enable_rbac=dict(
+                type='bool',
+                default=False
+            )
         )
 
         self.resource_group = None
@@ -373,6 +385,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         self.linux_profile = None
         self.agent_pool_profiles = None
         self.service_principal = None
+        self.enable_rbac = False
 
         required_if = [
             ('state', 'present', [
@@ -455,6 +468,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     if response['kubernetes_version'] != self.kubernetes_version:
                         to_be_updated = True
 
+                    if response['enable_rbac'] != self.enable_rbac:
+                        to_be_updated = True
+
                     for profile_result in response['agent_pool_profiles']:
                         matched = False
                         for profile_self in self.agent_pool_profiles:
@@ -520,7 +536,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             tags=self.tags,
             service_principal_profile=service_principal_profile,
             agent_pool_profiles=agentpools,
-            linux_profile=create_linux_profile_instance(self.linux_profile)
+            linux_profile=create_linux_profile_instance(self.linux_profile),
+            enable_rbac=self.enable_rbac
         )
 
         # self.log("service_principal_profile : {0}".format(parameters.service_principal_profile))
