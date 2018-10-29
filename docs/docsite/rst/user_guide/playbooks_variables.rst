@@ -112,10 +112,10 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 
 .. _jinja2_filters:
 
-Transforming data: Jinja2 filters
-=================================
+Transforming variables: Jinja2 filters
+======================================
 
-Jinja2 filters transform template expressions from one kind of data into another. For example, the ``capitalize(s)`` filter capitalizes any value passed to it. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
+Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize(s)`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
 
 .. _yaml_gotchas:
 
@@ -139,14 +139,14 @@ Do it like this and you'll be fine::
 
 .. _vars_and_facts:
 
-Information discovered from systems: Facts
-==========================================
+Variables discovered from systems: Facts
+========================================
 
 There are other places where variables can come from, but these are a type of variable that are discovered, not set by the user.
 
 Facts are information derived from speaking with your remote systems. You can find a complete set under the ``ansible_facts`` variable,
 most facts are also 'injected' as top level variables preserving the ``ansible_`` prefix, but some are dropped due to conflicts.
-This can be disabled via the :ref:INJECT_FACTS_AS_VARS setting.
+This can be disabled via the :ref:`INJECT_FACTS_AS_VARS` setting.
 
 An example of this might be the IP address of the remote host, or what the operating system is.
 
