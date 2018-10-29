@@ -23,7 +23,7 @@ from pyFMG.fortimgr import FortiManager
 import pytest
 
 try:
-    from ansible.modules.network.fortimanager import fmgr_secprof_wanopt
+    from ansible.modules.network.fortimanager import fmgr_wanopt
 except ImportError:
     pytest.skip("Could not load required modules for testing", allow_module_level=True)
 
@@ -284,38 +284,38 @@ def test_fmgr_wanopt_profile_addsetdelete(fixture_data, mocker):
     ##################################################
 
     # Test using fixture 1 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -3
     # Test using fixture 2 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 3 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[2]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[2]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 4 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[3]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[3]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 5 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[4]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[4]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 6 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[5]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[5]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -3
     # Test using fixture 7 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[6]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[6]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -10
     # Test using fixture 8 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[7]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[7]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -9998
     # Test using fixture 9 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[8]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[8]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -9998
     # Test using fixture 10 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[9]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[9]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 11 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[10]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[10]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 12 #
-    output = fmgr_secprof_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[11]['paramgram_used'])
+    output = fmgr_wanopt.fmgr_wanopt_profile_addsetdelete(fmg_instance, fixture_data[11]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0

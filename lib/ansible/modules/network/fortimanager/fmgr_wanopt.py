@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: fmgr_secprof_wanopt
+module: fmgr_wanopt
 version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
@@ -470,7 +470,7 @@ options:
 
 EXAMPLES = '''
   - name: DELETE Profile
-    fmgr_secprof_wanopt:
+    fmgr_wanopt:
       host: "{{inventory_hostname}}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -478,7 +478,7 @@ EXAMPLES = '''
       mode: "delete"
 
   - name: Create FMGR_WANOPT_PROFILE
-    fmgr_secprof_wanopt:
+    fmgr_wanopt:
       host: "{{ inventory_hostname }}"
       username: "{{ username }}"
       password: "{{ password }}"
