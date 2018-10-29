@@ -175,7 +175,7 @@ To see the 'raw' information as gathered::
 
     ansible hostname -m setup
 
-This will return a large amount of variable data, which may look like this, as taken from Ansible 1.4 running on a Ubuntu 12.04 system
+This will return a large amount of variable data, which may look like this on Ansible 2.7:
 
 .. code-block:: json
 
