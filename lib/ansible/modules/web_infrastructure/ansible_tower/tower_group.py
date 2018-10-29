@@ -151,7 +151,7 @@ def main():
             for p_group in parent_groups:
                 group.get(name=p_group, inventory=params['inventory'])
         except exc.NotFound as excinfo:
-            module.fail_json(msg='Failed to associate parent {0}: {1}'.format(p_group, excinfo),
+            module.fail_json(msg='Parent group {0} does not exist: {1}'.format(p_group, excinfo),
                              changed=False)
 
         if merge_variables:
