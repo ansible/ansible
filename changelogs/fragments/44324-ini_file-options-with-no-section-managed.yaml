@@ -1,0 +1,4 @@
+---
+bugfixes:
+- "ini_file: Options within no sections aren't included, deleted or modified. These are just unmanged. This pull request solves this.
+   (see https://github.com/ansible/ansible/pull/44324)"
