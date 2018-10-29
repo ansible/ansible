@@ -933,6 +933,7 @@ def main():
             module.fail_json(msg="%s must be installed to use check mode. "
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
+            module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
             module.run_command(['apt-get', 'update'], check_rc=True)
             module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg

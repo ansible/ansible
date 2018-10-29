@@ -1,0 +1,3 @@
+---
+bugfixes:
+- apt - Show a warning hint in case apt auto-installs its dependecies.
