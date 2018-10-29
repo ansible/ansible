@@ -435,7 +435,7 @@ def compare(a, b, t):
         else:
             return a is None and b is None
     else:
-        return a == b
+        return a is None or a == b
 
 
 def _snake_to_camel(snake, capitalize_first=False):
