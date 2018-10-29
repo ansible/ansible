@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -28,12 +28,16 @@ options:
       - Specifies a list of tagged interfaces and trunks that you want to
         configure for the VLAN. Use tagged interfaces or trunks when
         you want to assign a single interface or trunk to multiple VLANs.
+      - This parameter is mutually exclusive with the C(untagged_interfaces)
+        and C(interfaces) parameters.
     aliases:
       - tagged_interface
   untagged_interfaces:
     description:
       - Specifies a list of untagged interfaces and trunks that you want to
         configure for the VLAN.
+      - This parameter is mutually exclusive with the C(tagged_interfaces)
+        and C(interfaces) parameters.
     aliases:
       - untagged_interface
   name:
@@ -111,6 +115,57 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
+  source_check:
+    description:
+      - When C(yes), specifies that the system verifies that the return route to an initial
+        packet is the same VLAN from which the packet originated.
+      - The system performs this verification only if the C(auto_last_hop) option is C(no).
+    type: bool
+    version_added: 2.8
+  fail_safe:
+    description:
+      - When C(yes), specifies that the VLAN takes the specified C(fail_safe_action) if the
+        system detects a loss of traffic on this VLAN's interfaces.
+    type: bool
+    version_added: 2.8
+  fail_safe_timeout:
+    description:
+      - Specifies the number of seconds that a system can run without detecting network
+        traffic on this VLAN before it takes the C(fail_safe_action).
+    version_added: 2.8
+  fail_safe_action:
+    description:
+      - Specifies the action that the system takes when it does not detect any traffic on
+        this VLAN, and the C(fail_safe_timeout) has expired.
+    choices:
+      - reboot
+      - restart-all
+    version_added: 2.8
+  sflow_poll_interval:
+    description:
+      - Specifies the maximum interval in seconds between two pollings.
+    version_added: 2.8
+  sflow_sampling_rate:
+    description:
+      - Specifies the ratio of packets observed to the samples generated.
+    version_added: 2.8
+  interfaces:
+    description:
+      - Interfaces that you want added to the VLAN. This can include both tagged
+        and untagged interfaces as the C(tagging) parameter specifies.
+      - This parameter is mutually exclusive with the C(untagged_interfaces) and
+        C(tagged_interfaces) parameters.
+    suboptions:
+      interface:
+        description:
+          - The name of the interface
+      tagging:
+        description:
+          - Whether the interface is C(tagged) or C(untagged).
+        choices:
+          - tagged
+          - untagged
+    version_added: 2.8
 notes:
   - Requires BIG-IP versions >= 12.0.0
 extends_documentation_fragment: f5
@@ -122,45 +177,45 @@ author:
 EXAMPLES = r'''
 - name: Create VLAN
   bigip_vlan:
-      name: "net1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      validate_certs: "no"
+    name: net1
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set VLAN tag
   bigip_vlan:
-      name: "net1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      tag: "2345"
-      user: "admin"
-      validate_certs: "no"
+    name: net1
+    tag: 2345
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add VLAN 2345 as tagged to interface 1.1
   bigip_vlan:
-      tagged_interface: 1.1
-      name: "net1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      tag: "2345"
-      user: "admin"
-      validate_certs: "no"
+    tagged_interface: 1.1
+    name: net1
+    tag: 2345
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Add VLAN 1234 as tagged to interfaces 1.1 and 1.2
   bigip_vlan:
-      tagged_interfaces:
-          - 1.1
-          - 1.2
-      name: "net1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      tag: "1234"
-      user: "admin"
-      validate_certs: "no"
+    tagged_interfaces:
+      - 1.1
+      - 1.2
+    name: net1
+    tag: 1234
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -195,86 +250,217 @@ dag_tunnel:
   returned: changed
   type: string
   sample: outer
+source_check:
+  description: The new Source Check setting.
+  returned: changed
+  type: bool
+  sample: yes
+fail_safe:
+  description: The new Fail Safe setting.
+  returned: changed
+  type: bool
+  sample: no
+fail_safe_timeout:
+  description: The new Fail Safe Timeout setting.
+  returned: changed
+  type: int
+  sample: 90
+fail_safe_action:
+  description: The new Fail Safe Action setting.
+  returned: changed
+  type: string
+  sample: reboot
+sflow_poll_interval:
+  description: The new sFlow Polling Interval setting.
+  returned: changed
+  type: int
+  sample: 10
+sflow_sampling_rate:
+  description: The new sFlow Sampling Rate setting.
+  returned: changed
+  type: int
+  sample: 20
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.common import compare_complex_list
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.common import compare_complex_list
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'cmpHash': 'cmp_hash',
         'dagTunnel': 'dag_tunnel',
-        'dagRoundRobin': 'dag_round_robin'
+        'dagRoundRobin': 'dag_round_robin',
+        'interfacesReference': 'interfaces',
+        'sourceChecking': 'source_check',
+        'failsafe': 'fail_safe',
+        'failsafeAction': 'fail_safe_action',
+        'failsafeTimeout': 'fail_safe_timeout',
     }
 
+    api_attributes = [
+        'description',
+        'interfaces',
+        'tag',
+        'mtu',
+        'cmpHash',
+        'dagTunnel',
+        'dagRoundRobin',
+        'sourceChecking',
+        'failsafe',
+        'failsafeAction',
+        'failsafeTimeout',
+        'sflow',
+    ]
+
     updatables = [
-        'tagged_interfaces', 'untagged_interfaces', 'tag',
-        'description', 'mtu', 'cmp_hash', 'dag_tunnel',
-        'dag_round_robin'
+        'interfaces',
+        'tagged_interfaces',
+        'untagged_interfaces',
+        'tag',
+        'description',
+        'mtu',
+        'cmp_hash',
+        'dag_tunnel',
+        'dag_round_robin',
+        'source_check',
+        'fail_safe',
+        'fail_safe_action',
+        'fail_safe_timeout',
+        'sflow_poll_interval',
+        'sflow_sampling_rate',
+        'sflow',
     ]
 
     returnables = [
-        'description', 'partition', 'tag', 'interfaces',
-        'tagged_interfaces', 'untagged_interfaces', 'mtu',
-        'cmp_hash', 'dag_tunnel', 'dag_round_robin'
+        'description',
+        'partition',
+        'tag',
+        'interfaces',
+        'tagged_interfaces',
+        'untagged_interfaces',
+        'mtu',
+        'cmp_hash',
+        'dag_tunnel',
+        'dag_round_robin',
+        'source_check',
+        'fail_safe',
+        'fail_safe_action',
+        'fail_safe_timeout',
+        'sflow_poll_interval',
+        'sflow_sampling_rate',
+        'sflow',
     ]
 
-    api_attributes = [
-        'description', 'interfaces', 'tag', 'mtu', 'cmpHash',
-        'dagTunnel', 'dagRoundRobin'
-    ]
+    @property
+    def source_check(self):
+        return flatten_boolean(self._values['source_check'])
 
-    def to_return(self):
-        result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
+    @property
+    def fail_safe(self):
+        return flatten_boolean(self._values['fail_safe'])
 
 
 class ApiParameters(Parameters):
     @property
-    def tagged_interfaces(self):
+    def interfaces(self):
         if self._values['interfaces'] is None:
             return None
-        result = [str(x.name) for x in self._values['interfaces'] if x.tagged is True]
+        if 'items' not in self._values['interfaces']:
+            return None
+        result = []
+        for item in self._values['interfaces']['items']:
+            name = item['name']
+            if 'tagged' in item:
+                tagged = item['tagged']
+                result.append(dict(name=name, tagged=tagged))
+            if 'untagged' in item:
+                untagged = item['untagged']
+                result.append(dict(name=name, untagged=untagged))
+        return result
+
+    @property
+    def tagged_interfaces(self):
+        if self.interfaces is None:
+            return None
+        result = [str(x['name']) for x in self.interfaces if 'tagged' in x and x['tagged'] is True]
         result = sorted(result)
         return result
 
     @property
     def untagged_interfaces(self):
-        if self._values['interfaces'] is None:
+        if self.interfaces is None:
             return None
-        result = [str(x.name) for x in self._values['interfaces'] if x.untagged is True]
+        result = [str(x['name']) for x in self.interfaces if 'untagged' in x and x['untagged'] is True]
         result = sorted(result)
         return result
 
+    @property
+    def sflow_poll_interval(self):
+        try:
+            return self._values['sflow']['pollInterval']
+        except (KeyError, TypeError):
+            return None
+
+    @property
+    def sflow_sampling_rate(self):
+        try:
+            return self._values['sflow']['samplingRate']
+        except (KeyError, TypeError):
+            return None
+
 
 class ModuleParameters(Parameters):
+    @property
+    def interfaces(self):
+        if self._values['interfaces'] is None:
+            return None
+        elif len(self._values['interfaces']) == 1 and self._values['interfaces'][0] in ['', 'none']:
+            return ''
+        result = []
+        for item in self._values['interfaces']:
+            if 'interface' not in item:
+                raise F5ModuleError(
+                    "An 'interface' key must be provided when specifying a list of interfaces."
+                )
+            if 'tagging' not in item:
+                raise F5ModuleError(
+                    "A 'tagging' key must be provided when specifying a list of interfaces."
+                )
+            name = str(item['interface'])
+            tagging = item['tagging']
+
+            if tagging == 'tagged':
+                result.append(dict(name=name, tagged=True))
+            else:
+                result.append(dict(name=name, untagged=True))
+        return result
+
     @property
     def untagged_interfaces(self):
         if self._values['untagged_interfaces'] is None:
@@ -341,25 +527,65 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    pass
+    @property
+    def source_check(self):
+        if self._values['source_check'] is None:
+            return None
+        if self._values['source_check'] == 'yes':
+            return 'enabled'
+        return 'disabled'
+
+    @property
+    def fail_safe(self):
+        if self._values['fail_safe'] is None:
+            return None
+        if self._values['fail_safe'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
 
 class ReportableChanges(Changes):
     @property
     def tagged_interfaces(self):
-        if self._values['interfaces'] is None:
+        if self.interfaces is None:
             return None
-        result = [str(x['name']) for x in self._values['interfaces'] if 'tagged' in x and x['tagged'] is True]
+        result = [str(x['name']) for x in self.interfaces if 'tagged' in x and x['tagged'] is True]
         result = sorted(result)
         return result
 
     @property
     def untagged_interfaces(self):
-        if self._values['interfaces'] is None:
+        if self.interfaces is None:
             return None
-        result = [str(x['name']) for x in self._values['interfaces'] if 'untagged' in x and x['untagged'] is True]
+        result = [str(x['name']) for x in self.interfaces if 'untagged' in x and x['untagged'] is True]
         result = sorted(result)
         return result
+
+    @property
+    def source_check(self):
+        return flatten_boolean(self._values['source_check'])
+
+    @property
+    def fail_safe(self):
+        return flatten_boolean(self._values['fail_safe'])
+
+    @property
+    def sflow(self):
+        return None
+
+    @property
+    def sflow_poll_interval(self):
+        try:
+            return self._values['sflow']['pollInterval']
+        except (KeyError, TypeError):
+            return None
+
+    @property
+    def sflow_sampling_rate(self):
+        try:
+            return self._values['sflow']['samplingRate']
+        except (KeyError, TypeError):
+            return None
 
 
 class Difference(object):
@@ -382,6 +608,20 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def interfaces(self):
+        if self.want.interfaces is None:
+            return None
+        if self.have.interfaces is None and self.want.interfaces in ['', 'none']:
+            return None
+        if self.have.interfaces is not None and self.want.interfaces in ['', 'none']:
+            return []
+        if self.have.interfaces is None:
+            return dict(
+                interfaces=self.want.interfaces
+            )
+        return compare_complex_list(self.want.interfaces, self.have.interfaces)
 
     @property
     def untagged_interfaces(self):
@@ -417,6 +657,38 @@ class Difference(object):
             return None
         return result
 
+    @property
+    def sflow(self):
+        result = {}
+        s = self.sflow_poll_interval
+        if s:
+            result.update(s)
+        s = self.sflow_sampling_rate
+        if s:
+            result.update(s)
+        if result:
+            return dict(
+                sflow=result
+            )
+
+    @property
+    def sflow_poll_interval(self):
+        if self.want.sflow_poll_interval is None:
+            return None
+        if self.want.sflow_poll_interval != self.have.sflow_poll_interval:
+            return dict(
+                pollInterval=self.want.sflow_poll_interval
+            )
+
+    @property
+    def sflow_sampling_rate(self):
+        if self.want.sflow_sampling_rate is None:
+            return None
+        if self.want.sflow_sampling_rate != self.have.sflow_sampling_rate:
+            return dict(
+                samplingRate=self.want.sflow_sampling_rate
+            )
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
@@ -449,14 +721,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
@@ -518,42 +786,88 @@ class ModuleManager(object):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.net.vlans.vlan.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/vlan".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.net.vlans.vlan.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/vlan/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def exists(self):
-        return self.client.api.tm.net.vlans.vlan.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/vlan/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def remove_from_device(self):
-        resource = self.client.api.tm.net.vlans.vlan.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/vlan/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.net.vlans.vlan.load(
-            name=self.want.name, partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/vlan/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        interfaces = resource.interfaces_s.get_collection()
-        result = resource.attrs
-        result['interfaces'] = interfaces
-        return ApiParameters(params=result)
+        query = '?expandSubcollections=true'
+        resp = self.client.api.get(uri + query)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -571,6 +885,15 @@ class ArgumentSpec(object):
                 type='list',
                 aliases=['untagged_interface']
             ),
+            interfaces=dict(
+                type='list',
+                options=dict(
+                    interface=dict(),
+                    tagging=dict(
+                        choice=['tagged', 'untagged']
+                    )
+                )
+            ),
             description=dict(),
             tag=dict(
                 type='int'
@@ -587,6 +910,14 @@ class ArgumentSpec(object):
                 choices=['inner', 'outer']
             ),
             dag_round_robin=dict(type='bool'),
+            source_check=dict(type='bool'),
+            fail_safe=dict(type='bool'),
+            fail_safe_timeout=dict(type='int'),
+            fail_safe_action=dict(
+                choices=['reboot', 'restart-all']
+            ),
+            sflow_poll_interval=dict(type='int'),
+            sflow_sampling_rate=dict(type='int'),
             state=dict(
                 default='present',
                 choices=['present', 'absent']
@@ -594,13 +925,13 @@ class ArgumentSpec(object):
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
-            )
+            ),
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
         self.argument_spec.update(argument_spec)
         self.mutually_exclusive = [
-            ['tagged_interfaces', 'untagged_interfaces']
+            ['tagged_interfaces', 'untagged_interfaces', 'interfaces'],
         ]
 
 
@@ -612,18 +943,16 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         mutually_exclusive=spec.mutually_exclusive
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
-    except F5ModuleError as e:
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(e))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
