@@ -32,7 +32,7 @@
 
 
 try:
-    import  pylxca 
+    import pylxca
     HAS_PYLXCA = True
 except ImportError:
     HAS_PYLXCA = False

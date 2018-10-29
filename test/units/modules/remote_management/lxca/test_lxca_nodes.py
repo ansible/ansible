@@ -1,14 +1,12 @@
 import json
 
 import pytest
-from ansible.compat.tests.mock import patch, Mock
+from units.compat import mock
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 from ansible.modules.remote_management.lxca import lxca_nodes
 from ansible.modules.remote_management.lxca.lxca_nodes import setup_conn
 from ansible.modules.remote_management.lxca.lxca_nodes import close_conn
-
-import mock
 
 
 @pytest.fixture(scope='module')
