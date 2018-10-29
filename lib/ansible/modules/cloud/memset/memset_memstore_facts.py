@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: memset_memstore_facts
 author: "Simon Weald (@analbeard)"
-version_added: "2.7"
+version_added: "2.8"
 short_description: Retrieve Memstore product usage information.
 notes:
     - An API key generated via the Memset customer control panel is needed with the
