@@ -226,6 +226,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.parameters = dict()
+        self.old_response = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -283,7 +284,6 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 elif key == "enable_multiple_write_locations":
                     self.parameters["enable_multiple_write_locations"] = kwargs[key]
 
-        old_response = None
         response = None
 
         self.mgmt_client = self.get_mgmt_svc_client(CosmosDB,
@@ -294,9 +294,9 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         if "location" not in self.parameters:
             self.parameters["location"] = resource_group.location
 
-        old_response = self.get_databaseaccount()
+        self.old_response = self.get_databaseaccount()
 
-        if not old_response:
+        if not self.old_response:
             self.log("Database Account instance doesn't exist")
             if self.state == 'absent':
                 self.log("Old instance didn't exist")
@@ -308,25 +308,14 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if Database Account instance has to be deleted or may be updated")
-                if ('location' in self.parameters) and (self.parameters['location'] != old_response['location']):
-                    self.to_do = Actions.Update
-                if ('kind' in self.parameters) and (self.parameters['kind'] != old_response['kind']):
-                    self.to_do = Actions.Update
-                if (self.parameters.get('consistency_policy', {}).get('default_consistency_level', None) !=
-                        old_response.get('consistency_policy', {}).get('default_consistency_level', None)):
-                    self.to_do = Actions.Update
-                if (self.parameters.get('consistency_policy', {}).get('max_staleness_prefix', None) !=
-                        old_response.get('consistency_policy', {}).get('max_staleness_prefix', None)):
-                    self.to_do = Actions.Update
-                if (self.parameters.get('consistency_policy', {}).get('max_interval_in_seconds', None) !=
-                        old_response.get('consistency_policy', {}).get('max_interval_in_seconds', None)):
-                    self.to_do = Actions.Update
-                if (('locations' in self.parameters) and
-                        (self.parameters['locations'] != old_response['locations'])):
-                    self.to_do = Actions.Update
-                if self.parameters.get('ip_range_filter', None) != old_response.get('ip_range_filter', None):
-                    self.to_do = Actions.Update
-                if self.parameters.get('enable_automatic_failover', None) != old_response.get('enable_automatic_failover', None):
+                if (not (self.compare(['location']) and
+                        self.compare(['kind']) and
+                        self.compare(['consistency_policy', 'default_consistency_level']) and
+                        self.compare(['consistency_policy', 'max_staleness_prefix']) and
+                        self.compare(['consistency_policy', 'max_interval_in_seconds']) and
+                        self.compare(['locations']) and
+                        self.compare(['ip_range_filter']) and
+                        self.compare(['enable_automatic_failover']))):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -338,10 +327,10 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
 
             response = self.create_update_databaseaccount()
 
-            if not old_response:
+            if not self.old_response:
                 self.results['changed'] = True
             else:
-                self.results['changed'] = old_response.__ne__(response)
+                self.results['changed'] = self.old_response.__ne__(response)
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("Database Account instance deleted")
@@ -358,7 +347,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         else:
             self.log("Database Account instance unchanged")
             self.results['changed'] = False
-            response = old_response
+            response = self.old_response
 
         if self.state == 'present':
             self.results.update(self.format_item(response))
@@ -426,6 +415,18 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             'id': d.get('id', None)
         }
         return d
+
+    def compare(self, path):
+        n = self.parameters
+        o = self.old_response
+        l = len(path)
+        for i in range(l):
+            if isinstance(n, dict) and isinstance(o, dict):
+                n = n.get(path[i], None if i == l - 1 else {})
+                o = o.get(path[i], None if i == l - 1 else {})
+            else:
+                break
+        return n == o
 
 
 def _snake_to_camel(snake, capitalize_first=False):
