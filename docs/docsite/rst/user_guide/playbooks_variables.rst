@@ -637,17 +637,13 @@ NEW:
     "module_setup": true
 }
 
-In the above the model of the first harddrive may be referenced in a template or playbook as::
+In the above the model of the first disk may be referenced in a template or playbook as::
 
-    {{ ansible_facts['devices']['sda']['model'] }}
+    {{ ansible_facts['devices']['xvda']['model'] }}
 
 Similarly, the hostname as the system reports it is::
 
     {{ ansible_facts['nodename'] }}
-
-and the unqualified hostname shows the string before the first period(.)::
-
-    {{ ansible_facts['hostname'] }}
 
 Facts are frequently used in conditionals (see :ref:`playbooks_conditionals`) and also in templates.
 
