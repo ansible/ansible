@@ -54,10 +54,7 @@ are any of the known public attributes:
 .. _variables_in_inventory:
 
 Variables Defined in Inventory
-``````````````````````````````
-
-We've actually already covered a lot about variables in another section, so far this shouldn't be terribly new, but
-a bit of a refresher.
+==============================
 
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
 want to use 'boston.ntp.example.com' as an NTP server.
