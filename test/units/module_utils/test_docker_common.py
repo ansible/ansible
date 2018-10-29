@@ -453,9 +453,11 @@ COMPARE_GENERIC = [
     'result': entry['result']
 } for entry in DICT_ALLOW_MORE_PRESENT]
 
+
 @pytest.mark.parametrize("entry", DICT_ALLOW_MORE_PRESENT)
 def test_dict_allow_more_present(entry):
     assert compare_dict_allow_more_present(entry['av'], entry['bv']) == entry['result']
+
 
 @pytest.mark.parametrize("entry", COMPARE_GENERIC)
 def test_compare_generic(entry):
