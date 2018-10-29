@@ -53,6 +53,24 @@
     that:
       - output.changed == false
 
+- name: Create again instance of Database Account -- change something
+  azure_rm_cosmosdbaccount:
+    resource_group: "{{ resource_group }}"
+    name: "cosmos{{ rpfx }}"
+    location: eastus
+    locations:
+      - location_name: eastus
+        failover_priority: 0
+      - location_name: westus
+        failover_priority: 1
+    database_account_offer_type: Standard
+    enable_multiple_write_locations: yes
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+
 - name: Delete instance of Database Account -- check mode
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
