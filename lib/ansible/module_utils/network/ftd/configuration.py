@@ -21,7 +21,7 @@ from functools import partial
 from ansible.module_utils.network.ftd.common import HTTPMethod, equal_objects, FtdConfigurationError, \
     FtdServerError, ResponseParams, copy_identity_properties, FtdUnexpectedResponse
 from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField, ValidationError
-from ansible.module_utils.six import iteritems, viewitems
+from ansible.module_utils.six import iteritems
 
 DEFAULT_PAGE_SIZE = 10
 DEFAULT_OFFSET = 0
@@ -266,7 +266,10 @@ class BaseConfigurationResource(object):
             return ';'.join(['%s:%s' % (key, val) for key, val in sorted(iteritems(filter_params))])
 
         def match_filters(filter_params, obj):
-            return viewitems(filter_params) <= viewitems(obj)
+            for k, v in iteritems(filter_params):
+                if k not in obj or obj[k] != v:
+                    return False
+            return True
 
         dummy, query_params, path_params = _get_user_params(params)
         # copy required params to avoid mutation of passed `params` dict
