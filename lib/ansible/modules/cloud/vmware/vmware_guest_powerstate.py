@@ -209,7 +209,7 @@ def main():
                                      "given are invalid: %s" % (module.params.get('state'),
                                                                 to_native(e.msg)))
         else:
-            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
+            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
     else:
         module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % (module.params.get('uuid') or module.params.get('name')))
 
