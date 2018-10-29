@@ -225,7 +225,7 @@ class PlayContext(Base):
             self.remote_user = play.remote_user
 
         if play.port:
-            self.port = int(play.port)
+            self.port = play.port
 
         if play.become is not None:
             self.become = play.become
