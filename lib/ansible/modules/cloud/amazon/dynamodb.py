@@ -66,6 +66,10 @@ options:
         type: str
         description:
           - A condition that must be satisfied in order for a conditional update to succeed.
+    expression_attribute_names:
+        type: dict
+        description:
+          - One or more substitution tokens for attribute names in an expression to access an attribute whose name conflicts with a DynamoDB reserved word. Reserved keywords list: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html
     expression_attribute_values:
         type: dict
         description:
@@ -96,8 +100,18 @@ EXAMPLES = '''
     table: narcos
     action: update
     primary_key: {"bank": {"S": "hsbc"}}
-    update_expression: 'SET quantity=:number'
+    update_expression: 'SET quantity = :number'
     expression_attribute_values: {":number": {"N": "2000"}}
+
+# Updates the 'status' (dynamodb protected keyword) attibute value from a single item.
+- name: Updates arribute 'status'
+  dynamodb:
+    table: narcos
+    action: update
+    primary_key: {"bank": {"S": "hsbc"}}
+    update_expression: 'SET #s = :number'
+    expression_attribute_values: {":number": {"N": "2000"}}
+    expression_attribute_names: {"#s" : "status"}
 
 # Deletes the 'person' attibute value from a single item. The table has a composite
 # primary key. 'bank' is the primary key and 'quantity' is the sort key.
@@ -191,9 +205,11 @@ def put(connection, table, item, result):
     return result
 
 
-def update(connection, table, primary_key, update_expression, condition_expression, expression_attribute_values, result):
+def update(connection, table, primary_key, update_expression,
+           condition_expression, expression_attribute_names,
+           expression_attribute_values, result):
 
-    if condition_expression and expression_attribute_values:
+    if condition_expression:
         connection.update_item(
             TableName=table,
             Key=primary_key,
@@ -201,13 +217,21 @@ def update(connection, table, primary_key, update_expression, condition_expressi
             ConditionExpression=condition_expression,
             ExpressionAttributeValues=expression_attribute_values
         )
-    elif update_expression and expression_attribute_values:
+    elif expression_attribute_names:
         connection.update_item(
             TableName=table,
             Key=primary_key,
             UpdateExpression=update_expression,
-            ExpressionAttributeValues=expression_attribute_values
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names
         )
+    elif update_expression and expression_attribute_values:
+        connection.update_item(
+                TableName=table,
+                Key=primary_key,
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_attribute_values
+            )
     else:
         connection.update_item(
             TableName=table,
@@ -219,7 +243,8 @@ def update(connection, table, primary_key, update_expression, condition_expressi
     return result
 
 
-def delete(connection, table, primary_key, condition_expression, expression_attribute_values, result):
+def delete(connection, table, primary_key, condition_expression,
+           expression_attribute_values, result):
 
     connection.delete_item(
         TableName=table,
@@ -241,6 +266,7 @@ def main():
         primary_key=dict(required=False, type='dict'),
         item=dict(required=False, type='dict'),
         condition_expression=dict(required=False, type='str'),
+        expression_attribute_names=dict(required=False, type='dict'),
         expression_attribute_values=dict(required=False, type='dict'),
         update_expression=dict(required=False, type='str'),
         projection_expression=dict(required=False, type='str')
@@ -276,6 +302,8 @@ def main():
         condition_expression = module.params.get('condition_expression')
         item = module.params.get('item')
         update_expression = module.params.get('update_expression')
+        expression_attribute_names = module.params.get(
+            'expression_attribute_names')
         expression_attribute_values = module.params.get(
             'expression_attribute_values')
         projection_expression = module.params.get('projection_expression')
@@ -286,18 +314,21 @@ def main():
         )
 
         if action == 'get':
-            result = get(connection, table, primary_key, projection_expression, result)
+            result = get(connection, table, primary_key, projection_expression,
+                         result)
 
         elif action == 'put':
             result = put(connection, table, item, result)
 
         elif action == 'update':
             result = update(connection, table, primary_key, update_expression,
-                            condition_expression, expression_attribute_values, result)
+                            condition_expression, expression_attribute_names,
+                            expression_attribute_values, result)
 
         elif action == 'delete':
             result = delete(connection, table, primary_key,
-                            condition_expression, expression_attribute_values, result)
+                            condition_expression, expression_attribute_values,
+                            result)
 
     except connection.exceptions.ResourceNotFoundException as error:
         error_msg = 'Table {0} not found'.format(table)
