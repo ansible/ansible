@@ -308,14 +308,14 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if Database Account instance has to be deleted or may be updated")
-                if (not (self.compare(['location']) and
+                if (not self.compare(['location']) and
                         self.compare(['kind']) and
                         self.compare(['consistency_policy', 'default_consistency_level']) and
                         self.compare(['consistency_policy', 'max_staleness_prefix']) and
                         self.compare(['consistency_policy', 'max_interval_in_seconds']) and
                         self.compare(['locations']) and
                         self.compare(['ip_range_filter']) and
-                        self.compare(['enable_automatic_failover']))):
+                        self.compare(['enable_automatic_failover'])):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):

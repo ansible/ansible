@@ -27,6 +27,8 @@
     locations:
       - location_name: eastus
         failover_priority: 0
+      - location_name: westus
+        failover_priority: 1
     database_account_offer_type: Standard
   register: output
 - name: Assert the resource instance is well created
@@ -40,6 +42,8 @@
     name: "cosmos{{ rpfx }}"
     location: eastus
     locations:
+      - location_name: westus
+        failover_priority: 1
       - location_name: eastus
         failover_priority: 0
     database_account_offer_type: Standard
