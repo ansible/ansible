@@ -35,7 +35,7 @@ HAS_DOCKER_ERROR = None
 try:
     from requests.exceptions import SSLError
     from docker import __version__ as docker_version
-    from docker.errors import APIError, TLSParameterError, NotFound
+    from docker.errors import APIError, NotFound, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
@@ -117,6 +117,9 @@ if not HAS_DOCKER_PY:
             pass
 
     class APIError(Exception):
+        pass
+
+    class NotFound(Exception):  # noqa: F811
         pass
 
 
@@ -442,6 +445,8 @@ class AnsibleDockerClient(Client):
                 self.log("Inspecting container Id %s" % result['Id'])
                 result = self.inspect_container(container=result['Id'])
                 self.log("Completed container inspection")
+            except NotFound as exc:
+                return None
             except Exception as exc:
                 self.fail("Error inspecting container: %s" % exc)
 
