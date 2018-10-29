@@ -306,6 +306,8 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
+                self.results['old'] = old_response
+                self.results['new'] = self.parameters
                 if (not compare(self.parameters, old_response,
                                 {'location': None,
                                  'kind': None,
