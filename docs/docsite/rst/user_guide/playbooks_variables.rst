@@ -19,8 +19,8 @@ The `ansible-examples github repository <https://github.com/ansible/ansible-exam
 
 .. _valid_variable_names:
 
-What Makes A Valid Variable Name
-================================
+Creating valid variable names
+=============================
 
 Before you start using variables, it's important to know what are valid variable names.
 
@@ -53,20 +53,18 @@ are any of the known public attributes:
 
 .. _variables_in_inventory:
 
-Variables Defined in Inventory
-==============================
+Defining variables in inventory
+===============================
 
-Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
-want to use 'boston.ntp.example.com' as an NTP server.
-
-See the :ref:`intro_inventory` document for multiple ways on how to define variables in inventory.
+Often you'll want to set variables for an individual host, or for a group of hosts in your inventory. For instance, machines in Boston
+may all use 'boston.ntp.example.com' as an NTP server. The :ref:`intro_inventory` page has details on setting :ref:`host_variables` and :ref:`group_variables` in inventory.
 
 .. _playbook_variables:
 
-Variables Defined in a Playbook
-```````````````````````````````
+Defining variables in a playbook
+================================
 
-In a playbook, it's possible to define variables directly inline like so::
+You can define variables directly in a playbook::
 
    - hosts: webservers
      vars:
@@ -76,36 +74,30 @@ This can be nice as it's right there when you are reading the playbook.
 
 .. _included_variables:
 
-Variables defined from included files and roles
-```````````````````````````````````````````````
-
-It turns out we've already talked about variables in another place too.
+Defining variables in included files and roles
+==============================================
 
 As described in :ref:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
-not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
+not be part of an Ansible Role.  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
 
-Using Variables: About Jinja2
-`````````````````````````````
+Using variables: About Jinja2
+=============================
 
-It's nice enough to know about how to define variables, but how do you use them?
-
-Ansible allows you to reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex things in Jinja, only the basics are things you really need to learn at first.
-
-For example, in a simple template, you can do something like::
+Once you've defined variables, you can use them in your playbooks using the Jinja2 templating system.  Here's a simple Jinja2 template::
 
     My amp goes to {{ max_amp_value }}
 
-And that will provide the most basic form of variable substitution.
+This expression provides the most basic form of variable substitution.
 
-This is also valid directly in playbooks, and you'll occasionally want to do things like::
+You can use the same syntax in playbooks. For example::
 
     template: src=foo.cfg.j2 dest={{ remote_install_path }}/foo.cfg
 
-In the above example, we used a variable to help decide where to place a file.
+Here the variable defines the location of a file, which can vary from one system to another.
 
-Inside a template you automatically have access to all of the variables that are in scope for a host.  Actually
+Inside a template you automatically have access to all variables that are in scope for a host.  Actually
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
 .. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
@@ -120,21 +112,15 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 
 .. _jinja2_filters:
 
-Jinja2 Filters
-``````````````
+Transforming data: Jinja2 filters
+=================================
 
-.. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
-
-Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
-
-In addition to those, Ansible supplies many more. See the :ref:`playbooks_filters` document
-for a list of available filters and example usage guide.
+Jinja2 filters transform template expressions from one kind of data into another. For example, the ``capitalize(s)`` filter capitalizes any value passed to it. Jinja2 includes many `builtin filters`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
 
 .. _yaml_gotchas:
 
-Hey Wait, A YAML Gotcha
-```````````````````````
+Hey wait, a YAML gotcha
+=======================
 
 YAML syntax requires that if you start a value with ``{{ foo }}`` you quote the whole line, since it wants to be
 sure you aren't trying to start a YAML dictionary.  This is covered on the :ref:`yaml_syntax` documentation.
@@ -154,7 +140,7 @@ Do it like this and you'll be fine::
 .. _vars_and_facts:
 
 Information discovered from systems: Facts
-``````````````````````````````````````````
+==========================================
 
 There are other places where variables can come from, but these are a type of variable that are discovered, not set by the user.
 
@@ -646,8 +632,8 @@ Facts can be also used to create dynamic groups of hosts that match particular c
 
 .. _disabling_facts:
 
-Turning Off Facts
-`````````````````
+Disabling facts
+---------------
 
 If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
 can turn off fact gathering.  This has advantages in scaling Ansible in push mode with very large numbers of
@@ -658,8 +644,8 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
 
 .. _local_facts:
 
-Local Facts (Facts.d)
-`````````````````````
+Local facts (Facts.d)
+---------------------
 
 .. versionadded:: 1.3
 
@@ -726,7 +712,7 @@ In this pattern however, you could also write a fact module as well, and may wis
 .. _ansible_version:
 
 Ansible version
-```````````````
+---------------
 
 .. versionadded:: 1.8
 
@@ -743,8 +729,8 @@ structure::
 
 .. _fact_caching:
 
-Fact Caching
-````````````
+Caching Facts
+-------------
 
 .. versionadded:: 1.8
 
@@ -801,10 +787,10 @@ directory (ansible will attempt to create the directory if one does not exist).
 
 .. _registered_variables:
 
-Registered Variables
-````````````````````
+Registering variables
+=====================
 
-Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of ``-v`` when executing playbooks will show possible values for the results.
+Another major use of variables is running a command and registering the result of that command as a variable. Results will vary from module to module. Use of ``-v`` when executing playbooks will show possible values for the results.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
 :ref:`playbooks_conditionals` chapter.
@@ -831,8 +817,8 @@ When using ``register`` with a loop, the data structure placed in the variable d
 
 .. _accessing_complex_variable_data:
 
-Accessing Complex Variable Data
-````````````````````````````````
+Accessing complex variable data
+===============================
 
 We already described facts a little higher up in the documentation.
 
@@ -851,8 +837,8 @@ Similarly, this is how we access the first element of an array::
 
 .. _magic_variables_and_hostvars:
 
-Magic Variables, and How To Access Information About Other Hosts
-````````````````````````````````````````````````````````````````
+Magic variables: Accessing information about other hosts
+========================================================
 
 Even if you didn't define them yourself, Ansible provides a few variables for you automatically.
 The most important of these are ``hostvars``, ``group_names``, and ``groups``.  Users should not use
@@ -929,8 +915,8 @@ And finally, ``ansible_check_mode`` (added in version 2.1), a boolean magic vari
 
 .. _variable_file_separation_details:
 
-Variable File Separation
-````````````````````````
+Defining variables in files
+===========================
 
 It's a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
@@ -970,8 +956,8 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. _passing_variables_on_the_command_line:
 
-Passing Variables On The Command Line
-`````````````````````````````````````
+Passing variables on the command line
+=====================================
 
 In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variables at the
 command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
@@ -1033,8 +1019,8 @@ definitions.
 
 .. _ansible_variable_precedence:
 
-Variable Precedence: Where Should I Put A Variable?
-````````````````````````````````````````````````````
+Variable precedence: Where should I put a variable?
+===================================================
 
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
 you know where to put a variable, and then you have to think about it a lot less.
@@ -1093,7 +1079,6 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
           This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
 
-
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example, if your inventory specifies ``ansible_ssh_user: ramon`` and you run::
 
     ansible -u lola myhost
@@ -1128,8 +1113,8 @@ You can also override as a normal variable in a play::
 
 .. _variable_scopes:
 
-Variable Scopes
-````````````````
+Scoping variables
+=================
 
 Ansible has three main scopes:
 
@@ -1139,8 +1124,8 @@ Ansible has three main scopes:
 
 .. _variable_examples:
 
-Variable Examples
-`````````````````
+Variable examples
+=================
 
  Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
 
@@ -1255,8 +1240,8 @@ how all of these things can work together.
 .. _ansible-examples: https://github.com/ansible/ansible-examples
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
-Advanced Syntax
-```````````````
+Using advanced variable syntax
+==============================
 
 For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :ref:`playbooks_advanced_syntax`.
 
