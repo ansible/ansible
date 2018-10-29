@@ -205,8 +205,8 @@ class FdmSwaggerParser:
             operation[OperationField.DESCRIPTION] = operation_docs.get(PropName.DESCRIPTION, '')
 
             if OperationField.PARAMETERS in operation:
-                param_descriptions = {p[PropName.NAME]: p[PropName.DESCRIPTION]
-                                      for p in operation_docs.get(OperationField.PARAMETERS, {})}
+                param_descriptions = dict((p[PropName.NAME], p[PropName.DESCRIPTION])
+                                          for p in operation_docs.get(OperationField.PARAMETERS, {}))
 
                 for param_name, params_spec in operation[OperationField.PARAMETERS][OperationParams.PATH].items():
                     params_spec[OperationField.DESCRIPTION] = param_descriptions.get(param_name, '')

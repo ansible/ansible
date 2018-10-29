@@ -348,18 +348,18 @@ class TestFdmSwaggerParser(unittest.TestCase):
         assert sorted(['Model1', 'Model2', 'Model3']) == sorted(fdm_data['models'].keys())
         assert expected_operations == fdm_data['operations']
         assert {
-                   'Model1': {
-                       'getSomeModelList': expected_operations['getSomeModelList'],
-                       'editSomeModel': expected_operations['editSomeModel'],
-                   },
-                   'Model2': {
-                       'addSomeModel': expected_operations['addSomeModel']
-                   },
-                   'Model3': {
-                       'getSomeModel': expected_operations['getSomeModel'],
-                       'deleteModel3': expected_operations['deleteModel3']
-                   },
-                   None: {
-                       'deleteNoneModel': expected_operations['deleteNoneModel']
-                   }
-               } == fdm_data['model_operations']
+            'Model1': {
+                'getSomeModelList': expected_operations['getSomeModelList'],
+                'editSomeModel': expected_operations['editSomeModel']
+            },
+            'Model2': {
+                'addSomeModel': expected_operations['addSomeModel']
+            },
+            'Model3': {
+                'getSomeModel': expected_operations['getSomeModel'],
+                'deleteModel3': expected_operations['deleteModel3']
+            },
+            None: {
+                'deleteNoneModel': expected_operations['deleteNoneModel']
+            }
+        } == fdm_data['model_operations']

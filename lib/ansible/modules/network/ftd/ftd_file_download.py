@@ -41,11 +41,11 @@ options:
       - The name of the operation to execute.
       - Only operations that return a file can be used in this module.
     required: true
-    type: string
+    type: str
   path_params:
     description:
       - Key-value pairs that should be sent as path parameters in a REST API call.
-    type: dict  
+    type: dict
   destination:
     description:
       - Absolute path of where to download the file to.

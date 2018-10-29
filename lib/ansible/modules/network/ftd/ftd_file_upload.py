@@ -40,16 +40,17 @@ options:
       - The name of the operation to execute.
       - Only operations that upload file can be used in this module.
     required: true
-    type: string
+    type: str
   file_to_upload:
     description:
       - Absolute path to the file that should be uploaded.
     required: true
     type: path
+    version_added: "2.8"
   register_as:
     description:
       - Specifies Ansible fact name that is used to register received response from the FTD device.
-    type: string
+    type: str
 """
 
 EXAMPLES = """
