@@ -14,7 +14,6 @@
     name: Some Group
     inventory: Demo Inventory
     state: present
-    source: ec2
     variables: "@{{ tempdir.stdout }}/vars"
   register: result
 
