@@ -30,9 +30,28 @@
 # Contains LXCA common class
 # Lenovo xClarity Administrator (LXCA)
 
+
+try:
+    import  pylxca 
+    HAS_PYLXCA = True
+except ImportError:
+    HAS_PYLXCA = False
+
+
+PYLXCA_REQUIRED = "Lenovo xClarity Administrator Python Client (Python package 'pylxca') is required for this module."
+
+
+def has_pylxca(module):
+    """
+    Check pylxca is installed
+    :param module:
+    """
+    if not HAS_PYLXCA:
+        module.fail_json(msg=PYLXCA_REQUIRED)
+
+
 LXCA_COMMON_ARGS = dict(
     login_user=dict(required=True),
     login_password=dict(required=True, no_log=True),
     auth_url=dict(required=True),
-    noverify=dict(default=True)
 )

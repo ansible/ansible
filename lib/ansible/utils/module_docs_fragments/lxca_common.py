@@ -53,18 +53,12 @@ options:
       lxca https full web address
     required: true
 
-  noverify:
-    description:
-      no verification of certificate required
-    default: "True"
-
 requirement:
   - pylxca
 
 notes:
-  -  Additional detail about pylxca can be found at
-  -  U(https://github.com/lenovo/pylxca)
-  -  Playbooks using these modules can be found at
-  -  U(https://github.com/lenovo/ansible.lenovo-lxca)
+  -  Additional detail about pylxca can be found at U(https://github.com/lenovo/pylxca)
+  -  Playbooks using these modules can be found at U(https://github.com/lenovo/ansible.lenovo-lxca)
+  -  Check mode is not supported.
 
 '''

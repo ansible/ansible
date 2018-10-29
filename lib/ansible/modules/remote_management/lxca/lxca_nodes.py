@@ -97,24 +97,36 @@ result:
     description: nodes detail from lxca
     returned: always
     type: dict
+    sample:
+      nodeList:
+        - machineType: '6241'
+          model: 'AC1'
+          type: 'Rack-TowerServer'
+          uuid: '118D2C88C8FD11E4947B6EAE8B4BDCDF'
+          # bunch of properties
+        - machineType: '8871'
+          model: 'AC1'
+          type: 'Rack-TowerServer'
+          uuid: '223D2C88C8FD11E4947B6EAE8B4BDCDF'
+          # bunch of properties
+        # Multiple nodes details
 '''
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.remote_management.lxca_common import LXCA_COMMON_ARGS
+from ansible.module_utils.remote_management.lxca.common import LXCA_COMMON_ARGS, has_pylxca
 try:
     from pylxca import connect
     from pylxca import disconnect
     from pylxca import nodes
     HAS_PYLXCA = True
-except Exception:
+except ImportError:
     HAS_PYLXCA = False
 
 
 UUID_REQUIRED = 'UUID of device is required for nodes_by_uuid command.'
 CHASSIS_UUID_REQUIRED = 'UUID of chassis is required for nodes_by_chassis_uuid command.'
 SUCCESS_MSG = "Success %s result"
-PYLXCA_REQUIRED = 'Lenovo xClarity Administrator Python Client pylxca is required for this module.'
 
 
 class connection_object:
@@ -125,16 +137,7 @@ class connection_object:
         return setup_conn(self.module)
 
     def __exit__(self, type, value, traceback):
-        disconnect()
-
-
-def has_pylxca(module):
-    """
-    Check pylxca is installed
-    :param module:
-    """
-    if not HAS_PYLXCA:
-        module.fail_json(msg=PYLXCA_REQUIRED)
+        close_conn()
 
 
 def _nodes(module, lxca_con):
@@ -184,19 +187,20 @@ def setup_conn(module):
         lxca_con = connect(module.params['auth_url'],
                            module.params['login_user'],
                            module.params['login_password'],
-                           module.params['noverify'], )
+                           "True")
     except Exception as exception:
-        error_msg = '; '.join((e) for e in exception.args)
+        error_msg = '; '.join(exception.args)
         module.fail_json(msg=error_msg, exception=traceback.format_exc())
     return lxca_con
 
 
-def validate_parameters(module):
+def close_conn():
     """
-    validate parameters mostly it will be place holder
+    this function close connection to LXCA
     :param module:
+    :return:  None
     """
-    pass
+    disconnect()
 
 
 FUNC_DICT = {
@@ -229,7 +233,7 @@ def execute_module(module):
                              msg=SUCCESS_MSG % module.params['command_options'],
                              result=result)
     except Exception as exception:
-        error_msg = '; '.join((e) for e in exception.args)
+        error_msg = '; '.join(exception.args)
         module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
 
@@ -245,7 +249,6 @@ def run_tasks(module):
 def main():
     module = setup_module_object()
     has_pylxca(module)
-    validate_parameters(module)
     run_tasks(module)
 
 
