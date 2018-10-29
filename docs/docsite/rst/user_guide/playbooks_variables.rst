@@ -115,7 +115,7 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 Transforming data: Jinja2 filters
 =================================
 
-Jinja2 filters transform template expressions from one kind of data into another. For example, the ``capitalize(s)`` filter capitalizes any value passed to it. Jinja2 includes many `builtin filters`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
+Jinja2 filters transform template expressions from one kind of data into another. For example, the ``capitalize(s)`` filter capitalizes any value passed to it. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
 
 .. _yaml_gotchas:
 
@@ -1234,11 +1234,7 @@ So, that's precedence, explained in a more direct way.  Don't worry about preced
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
 if you want to forcibly override something, use ``-e``.
 
-If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
-how all of these things can work together.
-
-.. _ansible-examples: https://github.com/ansible/ansible-examples
-.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+If you found that a little hard to understand, take a look at the `ansible-examples <https://github.com/ansible/ansible-examples>`_ repo on GitHub for a bit more about how all of these things can work together.
 
 Using advanced variable syntax
 ==============================
