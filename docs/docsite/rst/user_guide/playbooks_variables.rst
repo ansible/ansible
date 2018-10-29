@@ -1107,9 +1107,9 @@ You can also override as a normal variable in a play::
 .. _variable_scopes:
 
 Scoping variables
-=================
+-----------------
 
-Ansible has three main scopes:
+You can decide where to set a variable based on the scope you want that value to have. Ansible has three main scopes:
 
  * Global: this is set by config, environment variables and the command line
  * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
@@ -1117,14 +1117,14 @@ Ansible has three main scopes:
 
 .. _variable_examples:
 
-Variable examples
-=================
+Examples of where to set a variable
+-----------------------------------
 
  Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
 
 First off, group variables are powerful.
 
-Site wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
+Site-wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :ref:`intro_dynamic_inventory`) or defined
 in things like :ref:`ansible_tower` from the UI or API::
 
