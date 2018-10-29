@@ -226,7 +226,6 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.parameters = dict()
-        self.old_response = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -294,9 +293,9 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         if "location" not in self.parameters:
             self.parameters["location"] = resource_group.location
 
-        self.old_response = self.get_databaseaccount()
+        old_response = self.get_databaseaccount()
 
-        if not self.old_response:
+        if not old_response:
             self.log("Database Account instance doesn't exist")
             if self.state == 'absent':
                 self.log("Old instance didn't exist")
@@ -307,15 +306,16 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                if (not self.compare({'location': None,
-                                      'kind': None,
-                                      'consistency_policy': {
-                                          'default_consistency_level': None,
-                                          'max_staleness_prefix': None,
-                                          'max_interval_in_seconds': None
-                                      },
-                                      'ip_range_filter': None,
-                                      'enable_automatic_failover': None})):
+                if (not compare(self.parameters, old_response,
+                                {'location': None,
+                                 'kind': None,
+                                 'consistency_policy': {
+                                     'default_consistency_level': None,
+                                     'max_staleness_prefix': None,
+                                     'max_interval_in_seconds': None
+                                 },
+                                 'ip_range_filter': None,
+                                 'enable_automatic_failover': None})):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -326,11 +326,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 return self.results
 
             response = self.create_update_databaseaccount()
-
-            if not self.old_response:
-                self.results['changed'] = True
-            else:
-                self.results['changed'] = self.old_response.__ne__(response)
+            self.results['changed'] = True
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("Database Account instance deleted")
@@ -347,7 +343,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         else:
             self.log("Database Account instance unchanged")
             self.results['changed'] = False
-            response = self.old_response
+            response = old_response
 
         if self.state == 'present':
             self.results.update(self.format_item(response))
@@ -416,20 +412,14 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         }
         return d
 
-    def compare(self, t):
-        return compare(self.parameters, self.old_response, t)
-
 
 def compare(a, b, t):
     if isinstance(t, dict):
         if isinstance(a, list) and isinstance(b, list):
             s = t.get('__sort__', None)
             if s is not None:
-                print("FOUND SORT ORDER")
                 a = sorted(a, key=lambda x: x[s])
                 b = sorted(b, key=lambda x: x[s])
-                print(a)
-                print(b)
             if len(a) != len(b):
                 return False
             for i in range(len(a)):
@@ -443,7 +433,7 @@ def compare(a, b, t):
                         return False
             return True
         else:
-            return a == None and b == None
+            return a is None and b is None
     else:
         return a == b
 
