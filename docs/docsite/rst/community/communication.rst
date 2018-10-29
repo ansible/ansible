@@ -49,7 +49,7 @@ Many of our community Working Groups meet on Freenode IRC channels. If you want 
 
 - `Amazon (AWS) Working Group <https://github.com/ansible/community/tree/master/group-aws>`_ - ``#ansible-aws``
 - `Ansible Lockdown Working Group <https://ansiblelockdown.io>`_ `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles
-- `AWX Working Group <https://github.com/ansible/community/tree/master/group-awx>`_ - ``#ansible-awx`` - Upstream Ansible Tower
+- `AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx`` - Upstream Ansible Tower
 - `Azure Working Group <https://github.com/ansible/community/tree/master/group-azure>`_ - ``#ansible-azure``
 - `Community Working Group <https://github.com/ansible/community/tree/master/group-community>`_ - ``#ansible-community`` - Including Meetups
 - `Container Working Group <https://github.com/ansible/community/tree/master/group-container>`_ - ``#ansible-container``
