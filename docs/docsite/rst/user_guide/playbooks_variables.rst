@@ -1,9 +1,11 @@
 .. _playbooks_variables:
 
-Variables
-=========
+***************
+Using Variables
+***************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 While automation exists to make it easier to make things repeatable, all systems are not exactly alike; some may require configuration that is slightly different from others. In some instances, the observed behavior or state of one system might influence how you configure other systems. For example, you might need to find out the IP address of a system and use it as a configuration value on another system.
 
@@ -13,16 +15,16 @@ To understand variables you'll also want to read :ref:`playbooks_conditionals` a
 Useful things like the **group_by** module
 and the ``when`` conditional can also be used with variables, and to help manage differences between systems.
 
-The ansible-examples github repository contains many examples of how variables are used in Ansible.
+The `ansible-examples github repository <https://github.com/ansible/ansible-examples>`_ contains many examples of how variables are used in Ansible.
 
 For advice on best practices, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
 
 .. _valid_variable_names:
 
 What Makes A Valid Variable Name
-````````````````````````````````
+================================
 
-Before we start using variables, it's important to know what are valid variable names.
+Before you start using variables, it's important to know what are valid variable names.
 
 Variable names should be letters, numbers, and underscores.  Variables should always start with a letter.
 
