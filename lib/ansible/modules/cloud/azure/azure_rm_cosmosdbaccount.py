@@ -312,17 +312,21 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                     self.to_do = Actions.Update
                 if ('kind' in self.parameters) and (self.parameters['kind'] != old_response['kind']):
                     self.to_do = Actions.Update
-                if ('default_consistency_level' in self.parameters['consistency_policy']) and (self.parameters['consistency_policy']['default_consistency_level'] != old_response['consistency_policy']['default_consistency_level']):
+                if (self.parameters.get('consistency_policy', {}).get('default_consistency_level', None) !=
+                        old_response.get('consistency_policy', {}).get('default_consistency_level', None)):
                     self.to_do = Actions.Update
-                if ('max_staleness_prefix' in self.parameters['consistency_policy']) and (self.parameters['consistency_policy']['max_staleness_prefix'] != old_response['consistency_policy']['max_staleness_prefix']):
+                if (self.parameters.get('consistency_policy', {}).get('max_staleness_prefix', None) !=
+                        old_response.get('consistency_policy', {}).get('max_staleness_prefix', None)):
                     self.to_do = Actions.Update
-                if ('max_interval_in_seconds' in self.parameters['consistency_policy']) and (self.parameters['consistency_policy']['max_interval_in_seconds'] != old_response['consistency_policy']['max_interval_in_seconds']):
+                if (self.parameters.get('consistency_policy', {}).get('max_interval_in_seconds', None) !=
+                        old_response.get('consistency_policy', {}).get('max_interval_in_seconds', None)):
                     self.to_do = Actions.Update
-                if ('locations' in self.parameters) and (self.parameters['locations'] != old_response['locations']):
+                if (('locations' in self.parameters) and
+                        (self.parameters['locations'] != old_response['locations'])):
                     self.to_do = Actions.Update
-                if ('ip_range_filter' in self.parameters) and (self.parameters['ip_range_filter'] != old_response['ip_range_filter']):
+                if self.parameters.get('ip_range_filter', None) != old_response.get('ip_range_filter', None):
                     self.to_do = Actions.Update
-                if ('enable_automatic_failover' in self.parameters) and (self.parameters['enable_automatic_failover'] != old_response['enable_automatic_failover']):
+                if self.parameters.get('enable_automatic_failover', None) != old_response.get('enable_automatic_failover', None):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
