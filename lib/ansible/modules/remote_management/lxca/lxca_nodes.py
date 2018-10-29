@@ -55,6 +55,7 @@ EXAMPLES = '''
     login_user: USERID
     login_password: Password
     auth_url: "https://10.243.15.168"
+    command_options: nodes
 
 # get specific nodes info by uuid
 - name: get nodes data from LXCA
