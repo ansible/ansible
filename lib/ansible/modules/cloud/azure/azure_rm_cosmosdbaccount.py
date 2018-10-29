@@ -307,7 +307,6 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                self.log("Need to check if Database Account instance has to be deleted or may be updated")
                 if (not self.compare({'location': None,
                                       'kind': None,
                                       'consistency_policy': {
@@ -316,7 +315,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                                           'max_interval_in_seconds': None
                                       },
                                       'ip_range_filter': None,
-                                      'enable_automatic_failover': None })):
+                                      'enable_automatic_failover': None})):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -423,11 +422,25 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
 
 def compare(a, b, t):
     if isinstance(t, dict):
-        # handle list here
-        if isinstance(a, dict) and isinstance(b, dict):
-            for k in t.keys():
-                if not compare(a.get(k, None), b.get(k, None), t[k]):
+        if isinstance(a, list) and isinstance(b, list):
+            s = t.get('__sort__', None)
+            if s is not None:
+                print("FOUND SORT ORDER")
+                a = sorted(a, key=lambda x: x[s])
+                b = sorted(b, key=lambda x: x[s])
+                print(a)
+                print(b)
+            if len(a) != len(b):
+                return False
+            for i in range(len(a)):
+                if not compare(a[i], b[i], t):
                     return False
+            return True
+        elif isinstance(a, dict) and isinstance(b, dict):
+            for k in t.keys():
+                if not k == '__sort__':
+                    if not compare(a.get(k, None), b.get(k, None), t[k]):
+                        return False
             return True
         else:
             return a == None and b == None
