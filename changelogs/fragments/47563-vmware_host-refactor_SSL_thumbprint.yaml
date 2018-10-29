@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_host - fixes the retry mechanism of AddHost task.
