@@ -82,8 +82,8 @@ not be part of an Ansible Role.  Usage of roles is preferred as it provides a ni
 
 .. _about_jinja2:
 
-Using variables: About Jinja2
-=============================
+Using variables with Jinja2
+===========================
 
 Once you've defined variables, you can use them in your playbooks using the Jinja2 templating system.  Here's a simple Jinja2 template::
 
@@ -112,10 +112,10 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 
 .. _jinja2_filters:
 
-Transforming variables: Jinja2 filters
-======================================
+Transforming variables with Jinja2 filters
+==========================================
 
-Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize(s)`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
+Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
 
 .. _yaml_gotchas:
 
@@ -167,7 +167,7 @@ This will return a large amount of variable data, which may look like this on An
             "REDACTED IP ADDRESS"
         ],
         "ansible_all_ipv6_addresses": [
-            "REDACTED IP ADDRESS"
+            "REDACTED IPV6 ADDRESS"
         ],
         "ansible_apparmor": {
             "status": "disabled"
@@ -644,7 +644,7 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
 
 .. _local_facts:
 
-Local facts (Facts.d)
+Local facts (facts.d)
 ---------------------
 
 .. versionadded:: 1.3
@@ -837,33 +837,21 @@ Similarly, this is how we access the first element of an array::
 
 .. _magic_variables_and_hostvars:
 
-Magic variables: Accessing information about other hosts
-========================================================
+Accessing information about other hosts with magic variables
+============================================================
 
-Even if you didn't define them yourself, Ansible provides a few variables for you automatically.
-The most important of these are ``hostvars``, ``group_names``, and ``groups``.  Users should not use
-these names themselves as they are reserved.  ``environment`` is also reserved.
+Whether or not you define any variables, you can access information about your hosts with the :ref:`special_variables` Ansible provides, including "magic" variables, facts, and connection variables. Magic variable names are reserved - do not set variables with these names. The variable ``environment`` is also reserved.
 
-``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
-about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
-or set of playbooks, you can still get the variables, but you will not be able to see the facts.
+The most commonly used magic variables are ``hostvars``, ``groups``, ``group_names``, and ``inventory_hostname``.
+
+``hostvars`` lets you access variables for another host, including facts that have been gathered about that host. You can access host variables at any point in a playbook. Even if you haven't connected to that host yet in any play in the playbook or set of playbooks, you can still get the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
 
     {{ hostvars['test.example.com']['ansible_facts']['distribution'] }}
 
-Additionally, ``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host
-
-.. code-block:: jinja
-
-   {% if 'webserver' in group_names %}
-      # some part of a configuration file that only applies to webservers
-   {% endif %}
-
-
-``groups`` is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group.
-For example:
+``groups`` is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group. For example:
 
 .. code-block:: jinja
 
@@ -871,7 +859,7 @@ For example:
       # something that applies to all app servers.
    {% endfor %}
 
-A frequently used idiom is walking a group to find all IP addresses in that group
+A frequently used idiom is walking a group to find all IP addresses in that group.
 
 .. code-block:: jinja
 
@@ -879,15 +867,22 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
       {{ hostvars[host]['ansible_facts']['eth0']['ipv4']['address'] }}
    {% endfor %}
 
-An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+You can use this idiom to point a frontend proxy server to all of the app servers, to set up the correct firewall rules between servers, etc.
 You need to make sure that the facts of those hosts have been populated before though, for example by running a play against them if the facts have not been cached recently (fact caching was added in Ansible 1.8).
 
-Additionally, ``inventory_hostname`` is the name of the hostname as configured in Ansible's inventory host file.  This can
-be useful for when you don't want to rely on the discovered hostname ``ansible_hostname`` or for other mysterious
-reasons.  If you have a long FQDN, ``inventory_hostname_short`` also contains the part up to the first
+``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host:
+
+.. code-block:: jinja
+
+   {% if 'webserver' in group_names %}
+      # some part of a configuration file that only applies to webservers
+   {% endif %}
+
+``inventory_hostname`` is the name of the hostname as configured in Ansible's inventory host file.  This can
+be useful when you've disabled fact-gathering, or you don't want to rely on the discovered hostname ``ansible_hostname``.  If you have a long FQDN, you can use ``inventory_hostname_short``, which contains the part up to the first
 period, without the rest of the domain.
 
-``play_hosts`` has been deprecated in 2.2, it was the same as the new ``ansible_play_batch`` variable.
+Other useful magic variables refer to the current play or playbook, including:
 
 .. versionadded:: 2.2
 
@@ -902,8 +897,6 @@ period, without the rest of the domain.
 ``ansible_playbook_python`` is the path to the python executable used to invoke the Ansible command line tool.
 
 These vars may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
-
-Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
 
