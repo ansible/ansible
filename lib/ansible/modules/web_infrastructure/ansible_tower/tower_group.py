@@ -7,8 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-# import pydevd
-# pydevd.settrace('localhost', port=40015, stdoutToServer=True, stderrToServer=True)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -147,8 +145,6 @@ def main():
                 params['variables'] = sanitise_and_merge_variables(variables)
         except TypeError as excinfo:
             module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
-
-
 
         try:
             if state == 'present':

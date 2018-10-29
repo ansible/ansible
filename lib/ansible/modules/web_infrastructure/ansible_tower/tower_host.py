@@ -44,7 +44,7 @@ options:
         - Variables to use for the host. Use C(@) for a file.
     merge_variables:
       description:
-        - If set to true will attempt to merge the variables from an existing Group of the same name and inventory.
+        - If set to true will attempt to merge the variables from an existing Host of the same name and inventory.
       required: False
       default: 'no'
       type: bool
