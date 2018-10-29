@@ -603,9 +603,14 @@ def compare_generic(a, b, method, type):
         if method == 'strict':
             return a == b
         else:
-            set_a = set(a)
-            set_b = set(b)
-            return set_b >= set_a
+            i = 0
+            for v in a:
+                while i < len(b) and b[i] != v:
+                    i += 1
+                if i == len(b):
+                    return False
+                i += 1
+            return True
     elif type == 'dict':
         if method == 'strict':
             return a == b

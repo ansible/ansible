@@ -165,7 +165,7 @@ COMPARE_GENERIC = [
         ],
         'method': 'allow_more_present',
         'type': 'list',
-        'result': True
+        'result': False
     },
     {
         'a': [
