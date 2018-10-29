@@ -308,7 +308,22 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if Database Account instance has to be deleted or may be updated")
-                self.to_do = Actions.Update
+                if ('location' in self.parameters) and (self.parameters['location'] != old_response['location']):
+                    self.to_do = Actions.Update
+                if ('kind' in self.parameters) and (self.parameters['kind'] != old_response['kind']):
+                    self.to_do = Actions.Update
+                if ('default_consistency_level' in self.parameters['consistency_policy']) and (self.parameters['consistency_policy']['default_consistency_level'] != old_response['consistency_policy']['default_consistency_level']):
+                    self.to_do = Actions.Update
+                if ('max_staleness_prefix' in self.parameters['consistency_policy']) and (self.parameters['consistency_policy']['max_staleness_prefix'] != old_response['consistency_policy']['max_staleness_prefix']):
+                    self.to_do = Actions.Update
+                if ('max_interval_in_seconds' in self.parameters['consistency_policy']) and (self.parameters['consistency_policy']['max_interval_in_seconds'] != old_response['consistency_policy']['max_interval_in_seconds']):
+                    self.to_do = Actions.Update
+                if ('locations' in self.parameters) and (self.parameters['locations'] != old_response['locations']):
+                    self.to_do = Actions.Update
+                if ('ip_range_filter' in self.parameters) and (self.parameters['ip_range_filter'] != old_response['ip_range_filter']):
+                    self.to_do = Actions.Update
+                if ('enable_automatic_failover' in self.parameters) and (self.parameters['enable_automatic_failover'] != old_response['enable_automatic_failover']):
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Database Account instance")
