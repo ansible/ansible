@@ -171,16 +171,16 @@ def main():
             if state == 'present':
                 result = group.modify(**params)
                 json_output['id'] = result['id']
+                json_output['changed'] = result['changed']
                 for p_group in parent_groups:
                     res = group.associate(group=result['id'], parent=p_group, inventory=params['inventory'])
-                    if res:
-                        result = res
+                    if res['changed']:
+                        json_output['changed'] = True
             elif state == 'absent':
                 result = group.delete(**params)
         except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
 
-    json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
