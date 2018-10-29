@@ -72,11 +72,8 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
-import os
-import json
 
-from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
-from ansible.module_utils.common.dict_transformations import dict_merge
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode, sanitise_and_merge_variables
 
 try:
     import tower_cli
@@ -87,13 +84,6 @@ try:
     FAILED_TOWER_IMPORT = False
 except ImportError:
     FAILED_TOWER_IMPORT = True
-
-try:
-    import yaml
-
-    FAILED_YAML_IMPORT = False
-except ImportError:
-    FAILED_YAML_IMPORT = True
 
 
 def main():
@@ -111,8 +101,6 @@ def main():
 
     if FAILED_TOWER_IMPORT:
         module.fail_json(msg="Failed to import tower_cli. Try installing via Pip using 'pip install ansible-tower-cli'")
-    if FAILED_YAML_IMPORT:
-        module.fail_json(msg="Failed to import yaml. Try installing via Pip using 'pip install PyYAML'")
 
     name = module.params.get('name')
     inventory = module.params.get('inventory')
@@ -121,15 +109,6 @@ def main():
     parent_groups = module.params.pop('parent_groups')
 
     variables = module.params.get('variables')
-    if variables:
-        if variables.startswith('@'):
-            filename = os.path.expanduser(variables[1:])
-            with open(filename, 'r') as f:
-                variables = f.read()
-    else:
-        variables = '{}'
-
-    variables = yaml.safe_load(variables)  # parse in variables so we can later use json.dumps to export RFC compatible json
 
     json_output = {'group': name, 'state': state}
 
@@ -154,18 +133,22 @@ def main():
             module.fail_json(msg='Parent group {0} does not exist: {1}'.format(p_group, excinfo),
                              changed=False)
 
-        if merge_variables:
-            try:
-                existing_group = group.get(name=name, inventory=inv['id'])
-                existing_vars = yaml.safe_load(existing_group['variables'])
-                if not existing_vars:
-                    existing_vars = {}
-                variables = dict_merge(existing_vars, variables)
-            except exc.NotFound:
-                json_output['created'] = True
-                module.log("Existing group not found, will create")
+        try:
+            existing_group = group.get(name=name, inventory=inv['id'])
+        except exc.NotFound:
+            existing_group = None
+            json_output['created'] = True
+            module.log("Existing group not found, will create")
 
-        params['variables'] = json.dumps(variables)  # export RFC compatible json
+        try:
+            if merge_variables and existing_group:
+                params['variables'] = sanitise_and_merge_variables(existing_group['variables'], variables)
+            else:
+                params['variables'] = sanitise_and_merge_variables(variables)
+        except TypeError as excinfo:
+            module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
+
+
 
         try:
             if state == 'present':

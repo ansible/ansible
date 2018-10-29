@@ -27,6 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import json
 
 try:
     import tower_cli.utils.exceptions as exc
@@ -37,7 +38,16 @@ try:
 except ImportError:
     HAS_TOWER_CLI = False
 
+try:
+    import yaml
+
+    FAILED_YAML_IMPORT = False
+except ImportError:
+    FAILED_YAML_IMPORT = True
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.dict_transformations import dict_merge
+
 
 
 def tower_auth_config(module):
@@ -83,6 +93,30 @@ def tower_check_mode(module):
             module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
 
 
+def sanitise_and_merge_variables(*args):
+    '''tower_auth_config attempts  to parse variables in json/yaml format including from a file.
+    If multiple arguments are provided they are merged left to right with the right having priority.
+    Returns a json encoded string
+    '''
+    result = {}
+    for var in args:
+        if type(var) == str or type(var) == unicode:
+            if var.startswith('@'):
+                filename = os.path.expanduser(var[1:])
+                with open(filename, 'r') as f:
+                    var = f.read()
+            var = yaml.safe_load(var)
+        elif type(var) == dict:
+            pass
+        elif var is None:
+            var = {}
+        else:
+            raise TypeError("Unexpected variable type")
+
+        result = dict_merge(result, var)
+    return json.dumps(result)
+
+
 class TowerModule(AnsibleModule):
     def __init__(self, argument_spec, **kwargs):
         args = dict(
@@ -106,3 +140,6 @@ class TowerModule(AnsibleModule):
 
         if not HAS_TOWER_CLI:
             self.fail_json(msg='ansible-tower-cli required for this module')
+
+        if FAILED_YAML_IMPORT:
+            self.fail_json(msg="Failed to import yaml. Try installing via Pip using 'pip install PyYAML'")
