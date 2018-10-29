@@ -179,25 +179,7 @@ Function New-ChocolateySource {
     if ($res.rc -ne 0) {
         Fail-Json -obj $result -message "Failed to add Chocolatey source '$name': $($res.stderr)"
     }
-<#
-    if($null -ne $source_api){
-        $arguments = [System.Collections.ArrayList]@($choco_app.Path,"setapikey","--source", $source, "--api-key", $source_api)
-        if($check_mode){
-            $arguments.Add("--what-if") > $null
-        }
-        if ($admin_only -eq $true) {
-            $arguments.Add("--admin-only") > $null
-        } 
-        else {
-            $admin_only = $false
-        }
-        $command = Argv-ToString -arguments $arguments
-        $res = Run-Command -command $command
-        if ($res.rc -ne 0) {
-            Fail-Json -obj $result -message "Failed to set API key for Chocolatey source '$name': $($res.stderr)"
-        }
-    }
-#>
+
     $source_info = @{
         name = $name
         source = $source
@@ -287,16 +269,6 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
             $result.changed = $true
         }
     }
-<#
-    if ($change) {
-        $actual_source = New-ChocolateySource -choco_app $choco_app -name $name -source $source `
-            -source_username $source_username -source_password $source_password -source_api $source_api  `
-            -certificate $certificate -certificate_password $certificate_password `
-            -priority $priority -bypass_proxy $bypass_proxy -allow_self_service $allow_self_service `
-            -admin_only $admin_only
-        $result.changed = $true
-    }
-#>
     # enable/disable the source if necessary
     if ($state -ne "disabled" -and $actual_source.disabled) {
         $arguments = [System.Collections.ArrayList]@($choco_app.Path, "source", "enable", "--name", $name)
