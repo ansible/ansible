@@ -1,0 +1,2 @@
+bugfixes:
+- Restore timeout in set_vm_power_state operation in vmware_guest_powerstate module.
