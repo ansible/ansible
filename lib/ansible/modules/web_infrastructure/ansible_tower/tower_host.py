@@ -42,6 +42,20 @@ options:
     variables:
       description:
         - Variables to use for the host. Use C(@) for a file.
+    merge_variables:
+      description:
+        - If set to true will attempt to merge the variables from an existing Group of the same name and inventory.
+      required: False
+      default: 'no'
+      type: bool
+      version_added: 2.8
+    groups:
+      description:
+        - List of groups to put this host in.
+      required: False
+      default: []
+      type: list
+      version_added: 2.8
     state:
       description:
         - Desired state of the resource.
@@ -64,11 +78,11 @@ EXAMPLES = '''
 
 import os
 
-from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode, sanitise_and_merge_variables
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -82,22 +96,19 @@ def main():
         inventory=dict(required=True),
         enabled=dict(type='bool', default=True),
         variables=dict(),
+        merge_variables=dict(required=False, default=False, type='bool'),
+        groups=dict(required=False, default=[], type='list'),
         state=dict(choices=['present', 'absent'], default='present'),
     )
     module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
-    description = module.params.get('description')
     inventory = module.params.get('inventory')
-    enabled = module.params.get('enabled')
-    state = module.params.get('state')
+    state = module.params.pop('state')
+    merge_variables = module.params.pop('merge_variables')
+    groups = module.params.pop('groups')
 
     variables = module.params.get('variables')
-    if variables:
-        if variables.startswith('@'):
-            filename = os.path.expanduser(variables[1:])
-            with open(filename, 'r') as f:
-                variables = f.read()
 
     json_output = {'host': name, 'state': state}
 
@@ -105,23 +116,53 @@ def main():
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
         host = tower_cli.get_resource('host')
+        group_res = tower_cli.get_resource('group')
+        params = module.params.copy()
+        params['create_on_missing'] = True
 
         try:
             inv_res = tower_cli.get_resource('inventory')
             inv = inv_res.get(name=inventory)
+            params['inventory'] = inv['id']
+        except exc.notFound as excinfo:
+            module.fail_json(msg='Failed to update the host, inventory not found: {0}'.format(excinfo), changed=False)
 
+        group_ids = []
+        try:
+            for group in groups:
+                group_ids.append(group_res.get(name=group, inventory=params['inventory'])['id'])
+        except exc.NotFound as excinfo:
+            module.fail_json(msg='Group {0} does not exist: {1}'.format(group, excinfo), changed=False)
+
+        try:
+            existing_host = host.get(name=name, inventory=params['inventory'])
+        except exc.NotFound:
+            existing_host = None
+            json_output['created'] = True
+            module.log("Existing host not found, will create")
+
+        try:
+            if merge_variables and existing_host:
+                params['variables'] = sanitise_and_merge_variables(existing_host['variables'], variables)
+            else:
+                params['variables'] = sanitise_and_merge_variables(variables)
+        except TypeError as excinfo:
+            module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
+
+        try:
             if state == 'present':
-                result = host.modify(name=name, inventory=inv['id'], enabled=enabled,
-                                     variables=variables, description=description, create_on_missing=True)
+                result = host.modify(**params)
                 json_output['id'] = result['id']
+                json_output['changed'] = result['changed']
+                for group in group_ids:
+                    res = host.associate(host=result['id'], group=group)
+                    if res['changed']:
+                        json_output['changed'] = True
             elif state == 'absent':
                 result = host.delete(name=name, inventory=inv['id'])
-        except (exc.NotFound) as excinfo:
-            module.fail_json(msg='Failed to update host, inventory not found: {0}'.format(excinfo), changed=False)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update host: {0}'.format(excinfo), changed=False)
 
-    json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
