@@ -261,3 +261,48 @@ debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzm
         self.assertTrue(c.check_password_prompt(dns_issue))
         self.assertFalse(c.check_password_prompt(nothing))
         self.assertFalse(c.check_password_prompt(in_front))
+
+    def test_parse_clixml(self):
+        empty = b'#< CLIXML\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"></Objs>'
+        expected = b''
+        actual = ConnectionBase._parse_clixml(empty)
+        self.assertEquals(actual, expected)
+
+        progress = b'#< CLIXML\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">' \
+                   b'<Obj S="progress" RefId="0"><TN RefId="0"><T>System.Management.Automation.PSCustomObject</T><T>System.Object</T></TN><MS>' \
+                   b'<I64 N="SourceId">1</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil />' \
+                   b'<PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj></Objs>'
+        expected = b''
+        actual = ConnectionBase._parse_clixml(progress)
+        self.assertEquals(actual, expected)
+
+        single_stream = b'#< CLIXML\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">' \
+                        b'<S S="Error">fake : The term \'fake\' is not recognized as the name of a cmdlet, function, script file, or operable program. Check _x000D__x000A_</S>' \
+                        b'<S S="Error">the spelling of the name, or if a path was included, verify that the path is correct and try again._x000D__x000A_</S>' \
+                        b'<S S="Error">At line:1 char:1_x000D__x000A_</S>' \
+                        b'<S S="Error">+ fake cmdlet_x000D__x000A_</S><S S="Error">+ ~~~~_x000D__x000A_</S>' \
+                        b'<S S="Error">    + CategoryInfo          : ObjectNotFound: (fake:String) [], CommandNotFoundException_x000D__x000A_</S>' \
+                        b'<S S="Error">    + FullyQualifiedErrorId : CommandNotFoundException_x000D__x000A_</S><S S="Error"> _x000D__x000A_</S>' \
+                        b'</Objs>'
+        expected = b"fake : The term 'fake' is not recognized as the name of a cmdlet, function, script file, or operable program. Check \r\n" \
+                   b"the spelling of the name, or if a path was included, verify that the path is correct and try again.\r\n" \
+                   b"At line:1 char:1\r\n" \
+                   b"+ fake cmdlet\r\n" \
+                   b"+ ~~~~\r\n" \
+                   b"    + CategoryInfo          : ObjectNotFound: (fake:String) [], CommandNotFoundException\r\n" \
+                   b"    + FullyQualifiedErrorId : CommandNotFoundException\r\n "
+        actual = ConnectionBase._parse_clixml(single_stream)
+        self.assertEquals(actual, expected)
+
+        multiple_stream = b'#< CLIXML\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">' \
+                          b'<S S="Error">fake : The term \'fake\' is not recognized as the name of a cmdlet, function, script file, or operable program. Check _x000D__x000A_</S>' \
+                          b'<S S="Error">the spelling of the name, or if a path was included, verify that the path is correct and try again._x000D__x000A_</S>' \
+                          b'<S S="Error">At line:1 char:1_x000D__x000A_</S>' \
+                          b'<S S="Error">+ fake cmdlet_x000D__x000A_</S><S S="Error">+ ~~~~_x000D__x000A_</S>' \
+                          b'<S S="Error">    + CategoryInfo          : ObjectNotFound: (fake:String) [], CommandNotFoundException_x000D__x000A_</S>' \
+                          b'<S S="Error">    + FullyQualifiedErrorId : CommandNotFoundException_x000D__x000A_</S><S S="Error"> _x000D__x000A_</S>' \
+                          b'<S S="Info">hi info</S>' \
+                          b'</Objs>'
+        expected = b"hi info"
+        actual = ConnectionBase._parse_clixml(multiple_stream, stream="Info")
+        self.assertEquals(actual, expected)

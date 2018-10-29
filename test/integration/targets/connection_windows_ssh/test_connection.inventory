@@ -1,0 +1,5 @@
+[windows:vars]
+ansible_password=
+ansible_connection=ssh
+ansible_port=22
+ansible_shell_type=powershell

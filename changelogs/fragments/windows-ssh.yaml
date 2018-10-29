@@ -1,0 +1,2 @@
+minor_changes:
+- Added experimental support for connecting to Windows hosts over SSH, set ``ansible_shell_type=powershell`` to get this working

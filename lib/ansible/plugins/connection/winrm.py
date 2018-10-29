@@ -527,27 +527,14 @@ class Connection(ConnectionBase):
         result.std_err = to_bytes(result.std_err)
 
         # parse just stderr from CLIXML output
-        if self.is_clixml(result.std_err):
+        if result.std_err.startswith(b"#< CLIXML"):
             try:
-                result.std_err = self.parse_clixml_stream(result.std_err)
+                result.std_err = self._parse_clixml(result.std_err)
             except Exception:
                 # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass
 
         return (result.status_code, result.std_out, result.std_err)
-
-    def is_clixml(self, value):
-        return value.startswith(b"#< CLIXML\r\n")
-
-    # hacky way to get just stdout- not always sure of doc framing here, so use with care
-    def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
-        clixml = ET.fromstring(clixml_doc.split(b"\r\n", 1)[-1])
-        namespace_match = re.match(r'{(.*)}', clixml.tag)
-        namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
-
-        strings = clixml.findall("./%sS" % namespace)
-        lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream_name]
-        return to_bytes('\r\n'.join(lines))
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
