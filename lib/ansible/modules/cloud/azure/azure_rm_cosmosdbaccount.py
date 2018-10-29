@@ -26,7 +26,7 @@ options:
         description:
             - Name of an Azure resource group.
         required: True
-    account_name:
+    name:
         description:
             - Cosmos DB database account name.
         required: True
@@ -76,6 +76,7 @@ options:
                        (total number of regions - 1). Failover priority values must be unique for each of the regions in which the database account exists."
     database_account_offer_type:
         description:
+            - TBD
     ip_range_filter:
         description:
             - "Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list
@@ -131,8 +132,12 @@ EXAMPLES = '''
   - name: Create (or update) Database Account
     azure_rm_cosmosdbaccount:
       resource_group: rg1
-      account_name: ddb1
+      name: ddb1
       location: westus
+      locations:
+        - location_name: eastus
+          failover_priority: 0
+      database_account_offer_type: Standard
 '''
 
 RETURN = '''
@@ -171,7 +176,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            account_name=dict(
+            name=dict(
                 type='str',
                 required=True
             ),
@@ -219,7 +224,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
         )
 
         self.resource_group = None
-        self.account_name = None
+        self.name = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
@@ -346,11 +351,11 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
 
         :return: deserialized Database Account instance state dictionary
         '''
-        self.log("Creating / Updating the Database Account instance {0}".format(self.account_name))
+        self.log("Creating / Updating the Database Account instance {0}".format(self.name))
 
         try:
             response = self.mgmt_client.database_accounts.create_or_update(resource_group_name=self.resource_group,
-                                                                           account_name=self.account_name,
+                                                                           account_name=self.name,
                                                                            create_update_parameters=self.parameters)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
@@ -366,10 +371,10 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
 
         :return: True
         '''
-        self.log("Deleting the Database Account instance {0}".format(self.account_name))
+        self.log("Deleting the Database Account instance {0}".format(self.name))
         try:
             response = self.mgmt_client.database_accounts.delete(resource_group_name=self.resource_group,
-                                                                 account_name=self.account_name)
+                                                                 account_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Database Account instance.')
             self.fail("Error deleting the Database Account instance: {0}".format(str(e)))
@@ -382,11 +387,11 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
 
         :return: deserialized Database Account instance state dictionary
         '''
-        self.log("Checking if the Database Account instance {0} is present".format(self.account_name))
+        self.log("Checking if the Database Account instance {0} is present".format(self.name))
         found = False
         try:
             response = self.mgmt_client.database_accounts.get(resource_group_name=self.resource_group,
-                                                              account_name=self.account_name)
+                                                              account_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Database Account instance : {0} found".format(response.name))
