@@ -226,6 +226,10 @@ def grafana_create_dashboard(module, data):
     except Exception as e:
         raise GrafanaAPIException("Can't load json file %s" % to_native(e))
 
+    # Check that the dashboard JSON is nested under the 'dashboard' key
+    if 'dashboard' not in payload:
+        payload = {'dashboard': payload}
+
     # define http header
     headers = grafana_headers(module, data)
 
@@ -247,10 +251,6 @@ def grafana_create_dashboard(module, data):
 
     # test if dashboard already exists
     dashboard_exists, dashboard = grafana_dashboard_exists(module, data['grafana_url'], uid, headers=headers)
-
-    # Check that the dashboard JSON is nested under the 'dashboard' key
-    if 'dashboard' not in payload:
-        payload = {'dashboard': payload}
 
     result = {}
     if dashboard_exists is True:
