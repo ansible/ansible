@@ -16,7 +16,6 @@ DOCUMENTATION = '''
         - TOML based inventory format
         - File MUST have a valid '.toml' file extension
     notes:
-        - To function it requires the 'toml' plugin being whitelisted in configuration.
         - Requires the 'toml' python library
 '''
 
