@@ -710,7 +710,7 @@ class YumModule(YumDnf):
                     for item in scheme:
                         os.environ[item + "_proxy"] = re.sub(
                             r"(http://)",
-                            r"\1" + namepass, proxy_url
+                            r"\g<1>" + namepass, proxy_url
                         )
             yield
         except yum.Errors.YumBaseError:
