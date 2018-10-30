@@ -228,17 +228,16 @@ class CallbackModule(CallbackBase):
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        self._cpu_poll_interval = self.get_option('cpu_poll_interval')
-
+        cpu_poll_interval = self.get_option('cpu_poll_interval')
         self._display_recap = self.get_option('display_recap')
 
         self.control_group = to_bytes(self.get_option('control_group'), errors='surrogate_or_strict')
         self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
-        self.mem_current_file = b'/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
-        self.cpu_usage_file = b'/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
-        self.pid_current_file = b'/sys/fs/cgroup/pids/%s/pids.current' % self.control_group
+        mem_current_file = b'/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
+        cpu_usage_file = b'/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
+        pid_current_file = b'/sys/fs/cgroup/pids/%s/pids.current' % self.control_group
 
-        for path in (self.mem_max_file, self.mem_current_file, self.cpu_usage_file, self.pid_current_file):
+        for path in (self.mem_max_file, mem_current_file, cpu_usage_file, pid_current_file):
             try:
                 with open(path) as f:
                     pass
@@ -260,7 +259,7 @@ class CallbackModule(CallbackBase):
             return
 
         try:
-            with open(self.cpu_usage_file, 'w+') as f:
+            with open(cpu_usage_file, 'w+') as f:
                 f.write('0')
         except Exception as e:
             self._display.warning(
@@ -268,6 +267,12 @@ class CallbackModule(CallbackBase):
             )
             self.disabled = True
             return
+
+        self._profiler_map = {
+            'memory': partial(MemoryProf, mem_current_file),
+            'cpu': partial(CpuProf, cpu_usage_file, poll_interval=cpu_poll_interval),
+            'pids': partial(PidsProf, pid_current_file),
+        }
 
         write_files = self.get_option('write_files')
         output_format = to_bytes(self.get_option('output_format'))
@@ -308,12 +313,9 @@ class CallbackModule(CallbackBase):
                     pass
 
         if obj is not None:
-            self._profilers['memory'] = MemoryProf(self.mem_current_file, obj=obj, writer=self._writers['memory'])
-            self._profilers['cpu'] = CpuProf(self.cpu_usage_file, poll_interval=self._cpu_poll_interval, obj=obj,
-                                             writer=self._writers['cpu'])
-            self._profilers['pids'] = PidsProf(self.pid_current_file, obj=obj, writer=self._writers['pids'])
-            for name, prof in self._profilers.items():
-                prof.start()
+            for feature in self._features:
+                self._profilers[feature] = self._profiler_map[feature](obj=obj, writer=self._writers[feature])
+                self._profilers[feature].start()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._profile(task)
