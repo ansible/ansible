@@ -147,7 +147,7 @@ class MemoryProf(BaseProf):
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
-        time.sleep(0.001)
+        time.sleep(0.01)
 
 
 class CpuProf(BaseProf):
@@ -186,7 +186,7 @@ class PidsProf(BaseProf):
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
-        time.sleep(0.001)
+        time.sleep(0.01)
 
 
 def csv_writer(writer, timestamp, task_name, task_uuid, value):
