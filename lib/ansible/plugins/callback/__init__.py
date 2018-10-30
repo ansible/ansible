@@ -414,7 +414,7 @@ class CallbackBase(AnsiblePlugin):
         pass
 
     def v2_runner_on_start(self, host, task):
-        """Event used when host begins execution
+        """Event used when host begins execution of a task
 
         .. versionadded:: 2.8
         """
