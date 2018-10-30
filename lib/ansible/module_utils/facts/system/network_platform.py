@@ -17,8 +17,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import socket
-import platform
 
 from ansible.module_utils.facts.utils import get_file_content
 
@@ -27,13 +25,9 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 from ansible.module_utils.connection import Connection
 
 
-# i86pc is a Solaris and derivatives-ism
-SOLARIS_I86_RE_PATTERN = r'i([3456]86|86pc)'
-solaris_i86_re = re.compile(SOLARIS_I86_RE_PATTERN)
-
-
 class PlatformFactCollector(BaseFactCollector):
-    name = 'platform'
+    name = 'network_platform'
+
     _fact_ids = set(['system',
                      'kernel',
                      'machine',
@@ -45,24 +39,20 @@ class PlatformFactCollector(BaseFactCollector):
 
         platform_facts = {}
 
-        if module and module._socket_path:
-            self.connection = Connection(module._socket_path)
+        self.connection = Connection(module._socket_path)
+        capabilities = module.from_json(self.connection.get_capabilities())
 
-            resp = module.from_json(self.connection.get_capabilities())
-            device_info = resp['device_info']
+        #platform_facts['network_capabilities'] = capabilities
 
-            platform_facts['system'] = device_info['network_os']
-            platform_facts['hostname'] = device_info.get('network_os_hostname')
+        capabilities.pop('network_os')
+        platform_facts.update(capabilities['device_info'])
 
-            for item in ('model', 'image', 'version', 'platform'):
-                val = device_info.get('network_os_%s' % item)
-                if val:
-                    platform_facts[item] = val
+        platform_facts['system'] = capabilities['device_info']['network_os']
+        platform_facts['python_version'] = platform.python_version()
 
-            platform_facts['network_api'] = resp['network_api']
-            platform_facts['python_version'] = platform.python_version()
 
-            return platform_facts
+
+        return platform_facts
 
 
         # platform.system() can be Linux, Darwin, Java, or Windows

@@ -17,6 +17,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils.connection import Connection
 
 
 class Network:
@@ -34,6 +35,10 @@ class Network:
     # FIXME: remove load_on_init when we can
     def __init__(self, module, load_on_init=False):
         self.module = module
+        self.connection = None
+
+        if self.module and self.module._socket_path:
+            self.connection = Connection(module._socket_path)
 
     # TODO: more or less abstract/NotImplemented
     def populate(self, collected_facts=None):

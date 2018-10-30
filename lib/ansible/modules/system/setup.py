@@ -130,11 +130,15 @@ EXAMPLES = """
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
 
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 from ansible.module_utils.facts import ansible_collector
 
 from ansible.module_utils.facts import default_collectors
+from ansible.module_utils.facts import network_collectors
+
+from ansible.module_utils._text import to_text
 
 
 def main():
@@ -152,16 +156,31 @@ def main():
     gather_timeout = module.params['gather_timeout']
     filter_spec = module.params['filter']
 
-    # TODO: this mimics existing behavior where gather_subset=["!all"] actually means
-    #       to collect nothing except for the below list
-    # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
-    #       some tweaking on how gather_subset operations are performed
-    minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
-                                       'distribution', 'dns', 'env', 'fips', 'local',
-                                       'lsb', 'pkg_mgr', 'platform', 'python', 'selinux',
-                                       'service_mgr', 'ssh_pub_keys', 'user'])
+    if module._socket_path:
+        minimal_gather_subset = frozenset()
+        all_collector_classes = []
+        connection = Connection(module._socket_path)
 
-    all_collector_classes = default_collectors.collectors
+        if hasattr(connection, 'get_capabilities'):
+            capabilities = module.from_json(connection.get_capabilities())
+
+            # Return facts when connection plugin is network_cli
+            if capabilities and to_text(capabilities['network_api']) == 'cliconf':
+                minimal_gather_subset = frozenset(['platform'])
+                all_collector_classes = network_collectors.collectors
+
+    else:
+        # TODO: this mimics existing behavior where gather_subset=["!all"] actually means
+        #       to collect nothing except for the below list
+        # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
+        #       some tweaking on how gather_subset operations are performed
+        minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
+                                        'distribution', 'dns', 'env', 'fips', 'local',
+                                        'lsb', 'pkg_mgr', 'platform', 'python', 'selinux',
+                                        'service_mgr', 'ssh_pub_keys', 'user'])
+
+        all_collector_classes = default_collectors.collectors
+        connection = None
 
     # rename namespace_name to root_key?
     namespace = PrefixFactNamespace(namespace_name='ansible',
@@ -173,7 +192,8 @@ def main():
                                                 filter_spec=filter_spec,
                                                 gather_subset=gather_subset,
                                                 gather_timeout=gather_timeout,
-                                                minimal_gather_subset=minimal_gather_subset)
+                                                minimal_gather_subset=minimal_gather_subset,
+                                                connection=connection)
 
     facts_dict = fact_collector.collect(module=module)
 

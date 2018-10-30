@@ -109,7 +109,8 @@ def get_ansible_collector(all_collector_classes,
                           filter_spec=None,
                           gather_subset=None,
                           gather_timeout=None,
-                          minimal_gather_subset=None):
+                          minimal_gather_subset=None,
+                          connection=None):
 
     filter_spec = filter_spec or '*'
     gather_subset = gather_subset or ['all']
@@ -121,7 +122,8 @@ def get_ansible_collector(all_collector_classes,
             all_collector_classes=all_collector_classes,
             minimal_gather_subset=minimal_gather_subset,
             gather_subset=gather_subset,
-            gather_timeout=gather_timeout)
+            gather_timeout=gather_timeout,
+            connection=connection)
 
     collectors = []
     for collector_class in collector_classes:

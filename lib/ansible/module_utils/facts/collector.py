@@ -32,8 +32,10 @@ __metaclass__ = type
 from collections import defaultdict
 
 import platform
+import json
 
 from ansible.module_utils.facts import timeout
+from ansible.module_utils._text import to_text
 
 
 class CycleFoundInFactDeps(Exception):
@@ -347,7 +349,8 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
                                          minimal_gather_subset=None,
                                          gather_subset=None,
                                          gather_timeout=None,
-                                         platform_info=None):
+                                         platform_info=None,
+                                         connection=None):
     '''return a list of collector classes that match the args'''
 
     # use gather_name etc to get the list of collectors
@@ -356,7 +359,12 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
 
     minimal_gather_subset = minimal_gather_subset or frozenset()
 
-    platform_info = platform_info or {'system': platform.system()}
+    if connection:
+        capabilities = json.loads(connection.get_capabilities())
+        platform_info = {'system': to_text(capabilities['device_info']['network_os'])}
+    else:
+        platform_info = platform_info or {'system': platform.system()}
+
 
     gather_timeout = gather_timeout or timeout.DEFAULT_GATHER_TIMEOUT
 
