@@ -1087,11 +1087,11 @@ class Connection(ConnectionBase):
             elif method == 'scp':
                 scp = self.get_option('scp_executable')
 
-                # TODO: not using shlex.quote as single quotes break scp on Win
+                # FIXME: shlex_quote breaks compat with Windows as single quote are not argv quotes on Windows
                 if sftp_action == 'get':
-                    cmd = self._build_command(scp, u'{0}:"{1}"'.format(host, in_path), out_path)
+                    cmd = self._build_command(scp, u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command(scp, in_path, u'{0}:"{1}"'.format(host, out_path))
+                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':

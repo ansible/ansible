@@ -692,6 +692,10 @@ def windows_inventory(remotes):
             ansible_port=remote.connection.port,
         )
 
+        # used for the connection_windows_ssh test target
+        if remote.ssh_key:
+            options["ansible_ssh_private_key_file"] = os.path.abspath(remote.ssh_key.key)
+
         hosts.append(
             '%s %s' % (
                 remote.name.replace('/', '_'),

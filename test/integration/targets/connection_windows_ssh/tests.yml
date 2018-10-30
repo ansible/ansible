@@ -1,6 +1,6 @@
 ---
 - name: test out Windows SSH specific tests
-  hosts: winrm  # Used to group existing Windows CI targets, connection is still SSH
+  hosts: windows-ssh
   serial: 1
   gather_facts: no
 
