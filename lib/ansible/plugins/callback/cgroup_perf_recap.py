@@ -36,15 +36,47 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cgroup_perf_recap
             key: control_group
-      csv_output_dir:
-        description: Output path for CSV file containing recorded memory readings. If the value contains a single %s,
-                     the start time of the playbook run will be inserted in that space
-        type: path
+      display_recap:
+        description: Controls whether the recap is printed at the end, useful if you will automatically
+                     process the output files
         env:
-          - name: CGROUP_CSV_OUTPUT_DIR
+          - name: CGROUP_DISPLAY_RECAP
         ini:
           - section: callback_cgroup_perf_recap
-            key: csv_output_dir
+            key: display_recap
+        type: bool
+        default: true
+      write_files:
+        description: Dictates whether files will be written containing performance readings
+        env:
+          - name: CGROUP_WRITE_FILES
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: write_csv
+        type: bool
+        default: false
+      output_format:
+        description: Output format, either CSV or JSON-seq
+        env:
+          - name: CGROUP_OUTPUT_FORMAT
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: output_format
+        type: str
+        default: csv
+        choices:
+          - csv
+          - json
+      output_dir:
+        description: Output director for files containing recorded performance readings. If the value contains a
+                     single %s, the start time of the playbook run will be inserted in that space
+        type: path
+        default: /tmp/ansible-perf-%s
+        env:
+          - name: CGROUP_OUTPUT_DIR
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: output_dir
       cpu_poll_interval:
         description: Interval between CPU polling for determining CPU usage. A lower value may produce inaccurate
                      results, a higher value may not be short enough to collect results for short tasks.
@@ -65,9 +97,16 @@ import threading
 
 from abc import ABCMeta, abstractmethod
 
+from functools import partial
+
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
+from ansible.parsing.ajson import AnsibleJSONEncoder, json
 from ansible.plugins.callback import CallbackBase
+
+
+RS = '\x1e'  # RECORD SEPARATOR
+LF = '\x0a'  # LINE FEED
 
 
 def dict_fromkeys(keys, default=None):
@@ -78,13 +117,13 @@ def dict_fromkeys(keys, default=None):
 
 
 class BaseProf(with_metaclass(ABCMeta, threading.Thread)):
-    def __init__(self, path, obj=None, csvwriter=None):
+    def __init__(self, path, obj=None, writer=None):
         threading.Thread.__init__(self)  # pylint: disable=non-parent-init-called
         self.obj = obj
         self.path = path
         self.max = 0
         self.running = True
-        self.csvwriter = csvwriter
+        self.writer = writer
 
     def run(self):
         while self.running:
@@ -102,9 +141,9 @@ class MemoryProf(BaseProf):
             val = int(f.read().strip()) / 1024**2
         if val > self.max:
             self.max = val
-        if self.csvwriter:
+        if self.writer:
             try:
-                self.csvwriter.writerow([time.time(), self.obj.get_name(), self.obj._uuid, val])
+                self.writer(time.time(), self.obj.get_name(), self.obj._uuid, val)
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
@@ -112,8 +151,8 @@ class MemoryProf(BaseProf):
 
 
 class CpuProf(BaseProf):
-    def __init__(self, path, poll_interval=0.25, obj=None, csvwriter=None):
-        super(CpuProf, self).__init__(path, obj=obj, csvwriter=csvwriter)
+    def __init__(self, path, poll_interval=0.25, obj=None, writer=None):
+        super(CpuProf, self).__init__(path, obj=obj, writer=writer)
         self._poll_interval = poll_interval
 
     def poll(self):
@@ -127,9 +166,9 @@ class CpuProf(BaseProf):
         val = (end_usage - start_usage) / (end_time - start_time) * 100
         if val > self.max:
             self.max = val
-        if self.csvwriter:
+        if self.writer:
             try:
-                self.csvwriter.writerow([time.time(), self.obj.get_name(), self.obj._uuid, val])
+                self.writer(time.time(), self.obj.get_name(), self.obj._uuid, val)
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
@@ -141,13 +180,27 @@ class PidsProf(BaseProf):
             val = int(f.read().strip())
         if val > self.max:
             self.max = val
-        if self.csvwriter:
+        if self.writer:
             try:
-                self.csvwriter.writerow([time.time(), self.obj.get_name(), self.obj._uuid, val])
+                self.writer(time.time(), self.obj.get_name(), self.obj._uuid, val)
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
         time.sleep(0.001)
+
+
+def csv_writer(writer, timestamp, task_name, uuid, value):
+    writer.writerow([timestamp, task_name, uuid, value])
+
+
+def json_writer(writer, timestamp, task_name, uuid, value):
+    data = {
+        'timestamp': timestamp,
+        'task_name': task_name,
+        'uuid': uuid,
+        'value': value,
+    }
+    writer.write('%s%s%s' % (RS, json.dumps(data, cls=AnsibleJSONEncoder), LF))
 
 
 class CallbackModule(CallbackBase):
@@ -169,13 +222,15 @@ class CallbackModule(CallbackBase):
 
         self.task_results = dict_fromkeys(self._features, default=list)
         self._profilers = dict.fromkeys(self._features)
-        self._csv_files = dict.fromkeys(self._features)
-        self._csv_writers = dict.fromkeys(self._features)
+        self._files = dict.fromkeys(self._features)
+        self._writers = dict.fromkeys(self._features)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self._cpu_poll_interval = self.get_option('cpu_poll_interval')
+
+        self._display_recap = self.get_option('display_recap')
 
         self.control_group = to_bytes(self.get_option('control_group'), errors='surrogate_or_strict')
         self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
@@ -214,18 +269,23 @@ class CallbackModule(CallbackBase):
             self.disabled = True
             return
 
-        csv_output_dir = self.get_option('csv_output_dir')
+        write_files = self.get_option('write_files')
+        output_format = self.get_option('output_format')
+        output_dir = self.get_option('output_dir')
         try:
-            csv_output_dir %= datetime.datetime.now().isoformat()
+            output_dir %= datetime.datetime.now().isoformat()
         except TypeError:
             pass
 
-        if csv_output_dir:
-            if not os.path.exists(csv_output_dir):
-                os.mkdir(csv_output_dir)
+        if write_files:
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
             for feature in self._features:
-                self._csv_files[feature] = open(os.path.join(csv_output_dir, '%s.csv' % feature), 'w+')
-                self._csv_writers[feature] = csv.writer(self._csv_files[feature])
+                self._files[feature] = open(os.path.join(output_dir, '%s.csv' % feature), 'w+')
+                if output_format == 'csv':
+                    self._writers[feature] = partial(csv_writer, csv.writer(self._files[feature]))
+                elif output_format == 'json':
+                    self._writers[feature] = partial(json_writer, self._files[feature])
 
     def _profile(self, obj=None):
         prev_task = None
@@ -248,10 +308,10 @@ class CallbackModule(CallbackBase):
                     pass
 
         if obj is not None:
-            self._profilers['memory'] = MemoryProf(self.mem_current_file, obj=obj, csvwriter=self._csv_writers['memory'])
+            self._profilers['memory'] = MemoryProf(self.mem_current_file, obj=obj, writer=self._writers['memory'])
             self._profilers['cpu'] = CpuProf(self.cpu_usage_file, poll_interval=self._cpu_poll_interval, obj=obj,
-                                             csvwriter=self._csv_writers['cpu'])
-            self._profilers['pids'] = PidsProf(self.pid_current_file, obj=obj, csvwriter=self._csv_writers['pids'])
+                                             writer=self._writers['cpu'])
+            self._profilers['pids'] = PidsProf(self.pid_current_file, obj=obj, writer=self._writers['pids'])
             for name, prof in self._profilers.items():
                 prof.start()
 
@@ -260,6 +320,15 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_stats(self, stats):
         self._profile()
+
+        for dummy, f in self._files.items():
+            try:
+                f.close()
+            except Exception:
+                pass
+
+        if not self._display_recap:
+            return
 
         with open(self.mem_max_file) as f:
             max_results = int(f.read().strip()) / 1024 / 1024
@@ -282,9 +351,3 @@ class CallbackModule(CallbackBase):
             for task, value in data:
                 self._display.display('%s (%s): %0.2f%s' % (task.get_name(), task._uuid, value, self._units[name]))
             self._display.display('\n')
-
-        for dummy, f in self._csv_files.items():
-            try:
-                f.close()
-            except Exception:
-                pass
