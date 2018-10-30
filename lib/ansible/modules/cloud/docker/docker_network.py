@@ -256,7 +256,7 @@ def get_ip_version(cidr):
     :return: ``ipv4`` or ``ipv6``
     :rtype: str
     """
-    cidr_ipv4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$')
+    cidr_ipv4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$')
     if cidr_ipv4.match(cidr):
         return 'ipv4'
     return 'ipv6'
