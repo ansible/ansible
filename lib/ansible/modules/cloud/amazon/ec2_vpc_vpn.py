@@ -699,7 +699,7 @@ def main():
         vpn_gateway_id=dict(type='str'),
         tags=dict(default={}, type='dict'),
         connection_type=dict(default='ipsec.1', type='str'),
-        tunnel_options=dict(type='list', default=[]),
+        tunnel_options=dict(no_log=True, type='list', default=[]),
         static_only=dict(default=False, type='bool'),
         customer_gateway_id=dict(type='str'),
         vpn_connection_id=dict(type='str'),
