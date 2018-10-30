@@ -1,3 +1,5 @@
+.. _playbooks_advanced_syntax:
+
 Advanced Syntax
 ===============
 
@@ -47,7 +49,7 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
     my_unsafe_hash:
         unsafe_key: !unsafe 'unsafe value'
 
- 
+
 
 .. seealso::
 
@@ -57,5 +59,3 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
