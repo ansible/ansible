@@ -19,6 +19,8 @@ The Ansible Core team provides a road map for each upcoming release. These road 
 .. How the actual release schedule, slipping, etc relates to (release_and_maintenance.rst) probably
    also belongs here somewhere
 
+.. _community_pull_requests:
+
 Pull Requests
 =============
 
