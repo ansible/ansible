@@ -317,6 +317,7 @@ class StrategyBase:
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker] = worker_prc
+                    self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True

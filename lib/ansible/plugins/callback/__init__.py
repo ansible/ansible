@@ -412,3 +412,10 @@ class CallbackBase(AnsiblePlugin):
 
     def v2_runner_retry(self, result):
         pass
+
+    def v2_runner_on_start(self, host, task):
+        """Event used when host begins execution of a task
+
+        .. versionadded:: 2.8
+        """
+        pass
