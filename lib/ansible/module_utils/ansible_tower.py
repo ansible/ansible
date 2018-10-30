@@ -47,6 +47,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.dict_transformations import dict_merge
+from ansible.module_utils.six import string_types
 
 
 def tower_auth_config(module):
@@ -99,7 +100,7 @@ def sanitise_and_merge_variables(*args):
     '''
     result = {}
     for var in args:
-        if type(var) == str or type(var) == unicode:
+        if isinstance(var, string_types):
             if var.startswith('@'):
                 filename = os.path.expanduser(var[1:])
                 with open(filename, 'r') as f:
