@@ -248,7 +248,7 @@ action:
     description:
     - "That action that was taken and is one of: update_rule,
       insert_before_rule, insert_after_rule, args_present, args_absent,
-      absent. This was available in Ansible version 2.4 and removed in 2.7"
+      absent. This was available in Ansible version 2.4 and removed in 2.8"
     returned: always
     type: string
     sample: "update_rule"
