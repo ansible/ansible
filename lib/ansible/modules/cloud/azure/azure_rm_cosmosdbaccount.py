@@ -309,7 +309,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             elif self.state == 'present':
                 old_response['locations'] = old_response['failover_policies']
                 if (not compare(self.parameters, old_response,
-                                {'location': None,
+                                {'location': 'location',
                                  'kind': None,
                                  'consistency_policy': {
                                      'default_consistency_level': None,
