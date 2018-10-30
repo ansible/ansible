@@ -64,7 +64,7 @@
       - location_name: eastus
         failover_priority: 0
     database_account_offer_type: Standard
-    enable_multiple_write_locations: yes
+    enable_automatic_failover: yes
   register: output
 - name: Assert the state has not changed
   assert:
