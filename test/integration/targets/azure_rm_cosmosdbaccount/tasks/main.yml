@@ -59,12 +59,10 @@
     name: "cosmos{{ rpfx }}"
     location: eastus
     locations:
-      - location_name: eastus2
-        failover_priority: 2
-      - location_name: eastus
-        failover_priority: 0
       - location_name: westus
         failover_priority: 1
+      - location_name: eastus
+        failover_priority: 0
     database_account_offer_type: Standard
     enable_multiple_write_locations: yes
   register: output
