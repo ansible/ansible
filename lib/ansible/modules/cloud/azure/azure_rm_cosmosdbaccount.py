@@ -88,6 +88,7 @@ options:
         description:
             - "Enables automatic failover of the write region in the rare event that the region is unavailable due to an outage. Automatic failover will
                result in a new write region for the account and is chosen based on the failover priorities configured for the account."
+        type: bool
     capabilities:
         description:
             - List of Cosmos DB capabilities for the account
@@ -162,7 +163,6 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-comparison_failure = {}
 
 class Actions:
     NoAction, Create, Update, Delete = range(4)
@@ -206,7 +206,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 type='str'
             ),
             enable_automatic_failover=dict(
-                type='str'
+                type='bool'
             ),
             capabilities=dict(
                 type='list'
@@ -325,7 +325,6 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                                  }
                                 })):
                     self.to_do = Actions.Update
-                self.results['comparison_failure'] = comparison_failure
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Database Account instance")
@@ -430,7 +429,6 @@ def compare(a, b, t):
                 a = sorted(a, key=lambda x: x[s])
                 b = sorted(b, key=lambda x: x[s])
             if len(a) != len(b):
-                comparison_failure['error'] = "DDD " + str(a) + "--" + str(b) 
                 return False
             for i in range(len(a)):
                 if not compare(a[i], b[i], t):
@@ -443,7 +441,6 @@ def compare(a, b, t):
                         return False
             return True
         else:
-            comparison_failure['error'] = "AAA " + str(a) + "--" + str(b) 
             return a is None
     else:
         if a is None:
@@ -453,12 +450,14 @@ def compare(a, b, t):
             a = a.replace(' ', '').lower()
             b = b.replace(' ', '').lower()
             if a != b:
-                comparison_failure['error'] = "BBB " + str(a) + "--" + str(b) 
             return a == b
         else:
             # default comparison
+            if type(a) == 'bool':
+                a = str(a)
+            if (type(b) == 'bool'):
+                b = str(b)
             if a != b:
-                comparison_failure['error'] = "CCC " + str(a) + "--" + str(b) 
             return a == b
 
 
