@@ -3,8 +3,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -14,67 +14,74 @@ DOCUMENTATION = '''
 ---
 module: dynamodb
 short_description: Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
-version_added: "2.8"
 description:
-  Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
-  More infomation can be found here
-  https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
-author:
-  David C. Martin @blastikman
-requirements:
-  [ boto3, botocore ]
+    - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
+    - More infomation can be found here U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client).
+version_added: "2.8"
+author: "David C. Martin (@blastik)"
 options:
     table:
-        type: str
-        required: true
         description:
-          - Name of the DynamoDB table
+            - Name of the DynamoDB table.
+        required: true
+        default: null
+        type: str
     action:
-        type: str
+        description:
+            - Name of the DynamoDB table.
         required: true
-        description:
-            - get:
-              description:
-                - Returns a set of attributes for the item with the given primary key.
-            - put:
-              description:
-                - Creates a new item, or replaces an old item with a new item. If an item that has the same primary key as the new item already exists in the specified table, the new item completely replaces the existing item.
-            - update:
-              description:
-                - Edits an existing item's attributes, or adds a new item to the table if it does not already exist. You can also perform a conditional update on an existing item (insert a new attribute name-value pair if it doesn't exist, or replace an existing name-value pair if it has certain expected attribute values).
-            - delete:
-              description:
-                - Deletes a single item in a table by primary key. You can perform a conditional delete operation that deletes the item if it exists, or if it has an expected attribute value.
-        choices: [ 'get', 'put', 'update', 'delete' ]
+        default: null
+        type: str
+        choices:
+          - get : Returns a set of attributes for the item with the given primary key.
+          - put : Creates a new item, or replaces an old item with a new item. If an item that has the same primary key as the new item already exists in the specified table, the new item completely replaces the existing item.
+          - update : Edits an existing item's attributes, or adds a new item to the table if it does not already exist. You can also perform a conditional update on an existing item (insert a new attribute name-value pair if it doesn't exist, or replace an existing name-value pair if it has certain expected attribute values).
+          - delete : Deletes a single item in a table by primary key. You can perform a conditional delete operation that deletes the item if it exists, or if it has an expected attribute value.
     primary_key:
-        type: dict
         description:
-          - The primary key of the DynamoDB table. Each element consists of an attribute name and a value for that attribute. For a composite primary key, you must provide values for both the partition key and the sort key.
+            - The primary key of the DynamoDB table. Each element consists of an attribute name and a value for that attribute. For a composite primary key, you must provide values for both the partition key and the sort key. Required when I(action=get) I(action=update) I(action=delete)
+        required: false
+        default: null
+        type: dict
     projection_expression:
-        type: str
         description:
-          - A string that identifies one or more attributes (separated by commas) to retrieve from the table. Only to be used with action 'get'.
+            - A string that identifies one or more attributes (separated by commas) to retrieve from the table. Required when I(action=get).
+        required: false
+        default: null
+        type: str
     item:
-        type: dict
         description:
-          - A map of attribute name/value pairs, one for each attribute. Only the primary key attributes are required; you can optionally provide other attribute name-value pairs for the item. Only to be used with action 'put'.
+            - A map of attribute name/value pairs, one for each attribute. Only the primary key attributes are required; you can optionally provide other attribute name-value pairs for the item. Required when I(action=put).
+        required: false
+        default: null
+        type: dict
     update_expression:
-        type: str
         description:
-          - An expression that defines one or more attributes to be updated, the action to be performed on them, and new value(s) for them.
+            - An expression that defines one or more attributes to be updated, the action to be performed on them, and new value(s) for them.
+        required: false
+        default: null
+        type: str
     condition_expression:
+        description:
+            - A condition that must be satisfied in order for a conditional update to succeed.
+        required: false
+        default: null
         type: str
-        description:
-          - A condition that must be satisfied in order for a conditional update to succeed.
     expression_attribute_names:
-        type: dict
         description:
-          - One or more substitution tokens for attribute names in an expression to access an attribute whose name conflicts with a DynamoDB reserved word. Reserved keywords list: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html
+            - One or more substitution tokens for attribute names in an expression to access an attribute whose name conflicts with a DynamoDB reserved word. Reserved keywords list U(https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+        required: false
+        default: null
+        type: dict
     expression_attribute_values:
-        type: dict
         description:
-          - One or more values that can be substituted in an expressionself. Use the ':' (colon) character in an expression to dereference an attribute value.
-
+            - One or more values that can be substituted in an expressionself. Use the ':' (colon) character in an expression to dereference an attribute value.
+        required: false
+        default: null
+        type: dict
+requirements:
+    - boto3
+    - botocore
 '''
 
 EXAMPLES = '''
@@ -134,11 +141,9 @@ EXAMPLES = '''
     primary_key: {"project": {"S": "potatoes"}}
     condition_expression: version = :number
     expression_attribute_values: {":number": {"N": "123456"}}
-
 '''
 
 RETURN = '''
----
 item:
     description: Item when you peform a 'get' action.
     returned: success
@@ -155,7 +160,6 @@ item:
                 "S": "ochoa"
             }
         }
-
 '''
 
 import ansible.module_utils.ec2
