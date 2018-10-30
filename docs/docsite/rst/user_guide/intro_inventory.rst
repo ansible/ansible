@@ -16,8 +16,6 @@ Not only is this inventory configurable, but you can also use multiple inventory
 pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
 
-The TOML inventory format was introduced in version 2.8.
-
 .. _inventoryformat:
 
 Hosts and Groups
@@ -60,22 +58,6 @@ A YAML version would look like:
           two.example.com:
           three.example.com:
 
-A TOML version would look like:
-
-.. code-block:: guess
-
-    [ungrouped.hosts]
-    mail.example.com = {}
-
-    [webservers.hosts]
-    foo.example.com = {}
-    bar.example.com = {}
-
-    [dbservers.hosts]
-    one.example.com = {}
-    two.example.com = {}
-    three.example.com = {}
-
 
 It is ok to put systems in more than one group, for instance a server could be both a webserver and a dbserver.
 If you do, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in a later chapter.
@@ -107,23 +89,6 @@ In YAML:
         jumper:
           ansible_port: 5555
           ansible_host: 192.0.2.50
-
-In TOML:
-
-.. code-block:: guess
-
-    ...
-    [ungrouped.hosts.jumper]
-    ansible_port = 5555
-    ansible_host = "192.0.2.50"
-
-or in inline TOML format:
-
-.. code-block:: guess
-
-    ...
-    [ungrouped.hosts]
-    jumper = { ansible_port = 5555, ansible_host = "192.0.2.50" }
 
 In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.0.2.50 on port 5555.
 Note that this is using a feature of the inventory file to define some special variables.
@@ -203,18 +168,6 @@ The YAML version:
         ntp_server: ntp.atlanta.example.com
         proxy: proxy.atlanta.example.com
 
-The TOML version:
-
-.. code-block:: guess
-
-   [atlanta.hosts]
-   host1 = {}
-   host2 = {}
-
-   [atlanta.vars]
-   ntp_server = "ntp.atlanta.example.com"
-   proxy = "proxy.atlanta.example.com"
-
 Be aware that this is only a convenient way to apply variables to multiple hosts at once; even though you can target hosts by group, **variables are always flattened to the host level** before a play is executed.
 
 .. _subgroups:
@@ -225,7 +178,6 @@ Groups of Groups, and Group Variables
 It is also possible to make groups of groups using the ``:children`` suffix in INI or the ``children:`` entry in YAML.
 You can apply variables using ``:vars`` or ``vars:``:
 
-In INI:
 
 .. code-block:: guess
 
@@ -253,8 +205,6 @@ In INI:
    southwest
    northwest
 
-In YAML:
-
 .. code-block:: yaml
 
   all:
@@ -279,38 +229,6 @@ In YAML:
           northeast:
           northwest:
           southwest:
-
-In TOML:
-
-.. code-block:: guess
-
-   [atlanta.hosts]
-   host1 = {}
-   host2 = {}
-
-   [raleigh.hosts]
-   host2 = {}
-   host3 = {}
-
-   [southeast]
-   children = [
-       "atlanta",
-       "raleigh"
-   ]
-
-   [southeast.vars]
-   some_server = "foo.southeast.example.com"
-   halon_system_timeout = 30
-   self_destruct_countdown = 60
-   escape_pods = 2
-
-   [usa]
-   children = [
-       "southeast",
-       "northeast",
-       "southwest",
-       "northwest"
-   ]
 
 If you need to store lists or hash data, or prefer to keep host and group specific variables separate from the inventory file, see the next section.
 Child groups have a couple of properties to note:
