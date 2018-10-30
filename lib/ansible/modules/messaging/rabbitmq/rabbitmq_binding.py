@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
-#
+# Copyright: (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -17,10 +16,10 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: rabbitmq_binding
-author: "Manuel Sousa (@manuel-sousa)"
+author: Manuel Sousa (@manuel-sousa)
 version_added: "2.0"
 
-short_description: This module manages rabbitMQ bindings
+short_description: Manage rabbitMQ bindings
 description:
   - This module uses rabbitMQ REST APIs to create / delete bindings.
 requirements: [ "requests >= 1.0.0" ]
