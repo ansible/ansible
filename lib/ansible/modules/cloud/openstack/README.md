@@ -50,16 +50,14 @@ Libraries
 * All complex cloud interaction or interoperability code should be housed in
   the [openstacksdk](http://git.openstack.org/cgit/openstack/openstacksdk)
   library.
-* All OpenStack API interactions should happen via shade and not via
+* All OpenStack API interactions should happen via the openstacksdk and not via
   OpenStack Client libraries. The OpenStack Client libraries do no have end
-  users as a primary audience, they are for intra-server communication. The
-  python-openstacksdk is the future there, and shade will migrate to it when
-  its ready in a manner that is not noticeable to ansible users.
+  users as a primary audience, they are for intra-server communication.
 
 Testing
 -------
 
 * Integration testing is currently done in OpenStack's CI system in
-  http://git.openstack.org/cgit/openstack-infra/shade/tree/shade/tests/ansible
-* Testing in shade produces an obvious chicken-and-egg scenario. Work is under
+  https://git.openstack.org/cgit/openstack/openstacksdk/tree/openstack/tests/ansible
+* Testing in openstacksdk produces an obvious chicken-and-egg scenario. Work is under
   way to trigger from and report on PRs directly.
