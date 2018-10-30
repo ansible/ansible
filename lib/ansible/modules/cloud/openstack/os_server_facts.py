@@ -37,6 +37,11 @@ options:
           of additional API calls.
      type: bool
      default: 'no'
+   filters:
+     description:
+        - restrict results to servers matching a dictionary of
+          filters
+     version_added: "2.8"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -44,10 +49,12 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all servers named <web*>:
+# Gather facts about all servers named <web*> that are in an active state:
 - os_server_facts:
     cloud: rax-dfw
     server: web*
+    filters:
+      vm_state: active
 - debug:
     var: openstack_servers
 '''
@@ -63,6 +70,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=False),
         detailed=dict(required=False, type='bool'),
+        filters=dict(required=False, type='dict', default=None)
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
@@ -71,6 +79,8 @@ def main():
     try:
         openstack_servers = cloud.list_servers(
             detailed=module.params['detailed'])
+        openstack_servers = cloud.search_servers(
+            detailed=module.params['detailed'], filters=module.params['filters'])
 
         if module.params['server']:
             # filter servers by name
