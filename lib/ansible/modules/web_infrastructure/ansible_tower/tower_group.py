@@ -157,6 +157,7 @@ def main():
                         json_output['changed'] = True
             elif state == 'absent':
                 result = group.delete(**params)
+                json_output['changed'] = result['changed']
         except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
 

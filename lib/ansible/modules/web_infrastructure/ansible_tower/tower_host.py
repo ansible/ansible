@@ -160,6 +160,7 @@ def main():
                         json_output['changed'] = True
             elif state == 'absent':
                 result = host.delete(name=name, inventory=inv['id'])
+                json_output['changed'] = result['changed']
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update host: {0}'.format(excinfo), changed=False)
 
