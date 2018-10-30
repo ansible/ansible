@@ -501,3 +501,108 @@ class AnsibleDockerClient(Client):
         new_tag = self.find_image(name, tag)
 
         return new_tag, old_tag == new_tag
+
+
+def compare_dict_allow_more_present(av, bv):
+    '''
+    Compare two dictionaries for whether every entry of the first is in the second.
+    '''
+    for key, value in av.items():
+        if key not in bv:
+            return False
+        if bv[key] != value:
+            return False
+    return True
+
+
+def compare_generic(a, b, method, type):
+    '''
+    Compare values a and b as described by method and type.
+
+    Returns ``True`` if the values compare equal, and ``False`` if not.
+
+    ``a`` is usually the module's parameter, while ``b`` is a property
+    of the current object. ``a`` must not be ``None`` (except for
+    ``type == 'value'``).
+
+    Valid values for ``method`` are:
+    - ``ignore`` (always compare as equal);
+    - ``strict`` (only compare if really equal)
+    - ``allow_more_present`` (allow b to have elements which a does not have).
+
+    Valid values for ``type`` are:
+    - ``value``: for simple values (strings, numbers, ...);
+    - ``list``: for ``list``s or ``tuple``s where order matters;
+    - ``set``: for ``list``s, ``tuple``s or ``set``s where order does not
+      matter;
+    - ``set(dict)``: for ``list``s, ``tuple``s or ``sets`` where order does
+      not matter and which contain ``dict``s; ``allow_more_present`` is used
+      for the ``dict``s, and these are assumed to be dictionaries of values;
+    - ``dict``: for dictionaries of values.
+    '''
+    if method == 'ignore':
+        return True
+    # If a or b is None:
+    if a is None or b is None:
+        # If both are None: equality
+        if a == b:
+            return True
+        # Otherwise, not equal for values, and equal
+        # if the other is empty for set/list/dict
+        if type == 'value':
+            return False
+        # For allow_more_present, allow a to be None
+        if method == 'allow_more_present' and a is None:
+            return True
+        # Otherwise, the iterable object which is not None must have length 0
+        return len(b if a is None else a) == 0
+    # Do proper comparison (both objects not None)
+    if type == 'value':
+        return a == b
+    elif type == 'list':
+        if method == 'strict':
+            return a == b
+        else:
+            i = 0
+            for v in a:
+                while i < len(b) and b[i] != v:
+                    i += 1
+                if i == len(b):
+                    return False
+                i += 1
+            return True
+    elif type == 'dict':
+        if method == 'strict':
+            return a == b
+        else:
+            return compare_dict_allow_more_present(a, b)
+    elif type == 'set':
+        set_a = set(a)
+        set_b = set(b)
+        if method == 'strict':
+            return set_a == set_b
+        else:
+            return set_b >= set_a
+    elif type == 'set(dict)':
+        for av in a:
+            found = False
+            for bv in b:
+                if compare_dict_allow_more_present(av, bv):
+                    found = True
+                    break
+            if not found:
+                return False
+        if method == 'strict':
+            # If we would know that both a and b do not contain duplicates,
+            # we could simply compare len(a) to len(b) to finish this test.
+            # We can assume that b has no duplicates (as it is returned by
+            # docker), but we don't know for a.
+            for bv in b:
+                found = False
+                for av in a:
+                    if compare_dict_allow_more_present(av, bv):
+                        found = True
+                        break
+                if not found:
+                    return False
+        return True
