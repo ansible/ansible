@@ -449,7 +449,6 @@ def compare(a, b, t):
             # location needs to be normalized, remove spaces, lowercase
             a = a.replace(' ', '').lower()
             b = b.replace(' ', '').lower()
-            if a != b:
             return a == b
         else:
             # default comparison
@@ -457,7 +456,6 @@ def compare(a, b, t):
                 a = str(a)
             if (type(b) == 'bool'):
                 b = str(b)
-            if a != b:
             return a == b
 
 
