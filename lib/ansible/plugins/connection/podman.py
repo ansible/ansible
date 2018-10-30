@@ -41,9 +41,9 @@ DOCUMENTATION = """
           - name: ansible_host
       remote_user:
         description:
-            - User specified via name or ID which is used to execute commands inside the container. If you
-              specify the user via user ID please make sure to also set ANSIBLE_REMOTE_USER to e.g. /tmp so
-              that Ansible is able to put the temporary data into a well-known, writable directory.
+            - User specified via name or UID which is used to execute commands inside the container. If you
+              specify the user via UID, you must set C(ANSIBLE_REMOTE_TMP) to a path that exits
+               inside the container and is writable by Ansible.
         ini:
           - section: defaults
             key: remote_user
@@ -57,7 +57,7 @@ DOCUMENTATION = """
 # this _has to be_ named Connection
 class Connection(ConnectionBase):
     """
-    This is a connection plugin for podman: it uses podman binary to interact with the containers
+    This is a connection plugin for podman. It uses podman binary to interact with the containers
     """
 
     # String used to identify this Connection class from other classes
