@@ -286,7 +286,10 @@ class CallbackModule(CallbackBase):
             if not os.path.exists(output_dir):
                 os.mkdir(output_dir)
             for feature in self._features:
-                self._files[feature] = open(os.path.join(output_dir, b'%s.%s' % (to_bytes(feature), output_format)), 'w+')
+                self._files[feature] = open(
+                    os.path.join(output_dir, b'%s.%s' % (to_bytes(feature), output_format)),
+                    'w+'
+                )
                 if output_format == b'csv':
                     self._writers[feature] = partial(csv_writer, csv.writer(self._files[feature]))
                 elif output_format == b'json':
@@ -341,7 +344,9 @@ class CallbackModule(CallbackBase):
             if name == 'memory':
                 continue
             try:
-                self._display.display('%s Execution Maximum: %0.2f%s\n' % (name, max((t[1] for t in data)), self._units[name]))
+                self._display.display(
+                    '%s Execution Maximum: %0.2f%s\n' % (name, max((t[1] for t in data)), self._units[name])
+                )
             except Exception as e:
                 self._display.display('%s profiling error: no results collected: %s\n' % (name, e))
 
