@@ -173,9 +173,10 @@ def main():
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
 
+        parent_group_ids = []
         try:
             for p_group in parent_groups:
-                group.get(name=p_group, inventory=params['inventory'])
+                parent_group_ids.append(group.get(name=p_group, inventory=params['inventory'])['id'])
         except exc.NotFound as excinfo:
             module.fail_json(msg='Parent group {0} does not exist: {1}'.format(p_group, excinfo),
                              changed=False)
@@ -205,8 +206,8 @@ def main():
                 result = group.modify(**params)
                 json_output['id'] = result['id']
                 json_output['changed'] = result['changed']
-                for p_group in parent_groups:
-                    res = group.associate(group=result['id'], parent=p_group, inventory=params['inventory'])
+                for p_group_id in parent_group_ids:
+                    res = group.associate(group=result['id'], parent=p_group_id, inventory=params['inventory'])
                     if res['changed']:
                         json_output['changed'] = True
             elif state == 'absent':
