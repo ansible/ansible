@@ -43,3 +43,40 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Create a future grouped host
+  tower_host:
+    name: "grouped-host"
+    inventory: "Demo Inventory"
+    state: present
+
+- name: Create a group for the host
+  tower_group:
+    name: "a-group"
+    inventory: "Demo Inventory"
+    state: present
+
+- name: associate host to group
+  tower_host:
+    name: "grouped-host"
+    inventory: "Demo Inventory"
+    groups:
+      - "a-group"
+    state: present
+  register: result
+
+- assert:
+    that:
+      "result is changed"
+
+- name: Delete host
+  tower_host:
+    name: "grouped-host"
+    inventory: "Demo Inventory"
+    state: absent
+
+- name: Delete a group
+  tower_group:
+    name: "a-group"
+    inventory: "Demo Inventory"
+    state: absent

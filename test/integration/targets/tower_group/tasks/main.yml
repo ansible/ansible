@@ -45,3 +45,35 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Create a future child Group
+  tower_group:
+    name: child
+    inventory: Demo Inventory
+    state: present
+
+- name: Create a future parent Group
+  tower_group:
+    name: parent
+    inventory: Demo Inventory
+    state: present
+
+- name: associate child with parent
+  tower_group:
+    name: child
+    inventory: Demo Inventory
+    parent_groups:
+      - parent
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete groups
+  tower_group:
+    name: "{{ item }}"
+    inventory: Demo Inventory
+    state: absent
+  loop: ['child', 'parent']
