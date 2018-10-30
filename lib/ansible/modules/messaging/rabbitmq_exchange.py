@@ -31,7 +31,6 @@ options:
     state:
         description:
             - Whether the exchange should be present or absent
-            - Only present implemented atm
         choices: [ "present", "absent" ]
         required: false
         default: present

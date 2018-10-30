@@ -31,7 +31,6 @@ options:
     state:
         description:
             - Whether the queue should be present or absent
-            - Only present implemented atm
         choices: [ "present", "absent" ]
         default: present
     durable:
