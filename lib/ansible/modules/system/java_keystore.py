@@ -37,6 +37,7 @@ options:
         description:
           - Pass phrase for reading the private key, if required.
         required: false
+        version_added: "2.8"
     password:
         description:
           - Password that should be used to secure the key store.
