@@ -66,7 +66,7 @@
       - location_name: westus
         failover_priority: 1
     database_account_offer_type: Standard
-    #enable_multiple_write_locations: yes
+    enable_multiple_write_locations: yes
   register: output
 - name: Assert the state has not changed
   assert:

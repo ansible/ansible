@@ -306,8 +306,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                self.results['old'] = old_response
-                self.results['new'] = self.parameters
+                old_response['locations'] = old_response['failover_policies']
                 if (not compare(self.parameters, old_response,
                                 {'location': None,
                                  'kind': None,
@@ -317,7 +316,12 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                                      'max_interval_in_seconds': None
                                  },
                                  'ip_range_filter': None,
-                                 'enable_automatic_failover': None})):
+                                 'enable_automatic_failover': None,
+                                 'locations': {
+                                     'location_name': 'location',
+                                     '__sort__': 'failover_priority'
+                                 }
+                                })):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -435,11 +439,18 @@ def compare(a, b, t):
                         return False
             return True
         else:
-            return a == None
+            return a is None
     else:
         if a is None:
             return True
-        return a == b
+        if t == "location":
+            # location needs to be normalized, remove spaces, lowercase
+            a = a.replace(' ', '').lower()
+            b = b.replace(' ', '').lower()
+            return a == b
+        else:
+            # default comparison
+            return a == b
 
 
 def _snake_to_camel(snake, capitalize_first=False):
