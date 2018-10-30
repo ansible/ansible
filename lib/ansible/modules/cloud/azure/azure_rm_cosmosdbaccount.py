@@ -318,6 +318,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                                  },
                                  'ip_range_filter': None,
                                  'enable_automatic_failover': None,
+                                 'enable_multiple_write_locations': None,
                                  'locations': {
                                      'location_name': 'location',
                                      '__sort__': 'failover_priority'
