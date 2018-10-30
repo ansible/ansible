@@ -172,7 +172,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
-            # TODO(mordred) Integrate shade's logging with ansible's logging
+            # TODO(mordred) Integrate openstack's logging with ansible's logging
             sdk.enable_logging()
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
