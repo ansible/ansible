@@ -452,9 +452,9 @@ def compare(a, b, t):
             return a == b
         else:
             # default comparison
-            if type(a) == 'bool':
+            if not isinstance(a, dict) and not isinstance(a, list):
                 a = str(a)
-            if (type(b) == 'bool'):
+            if not isinstance(b, dict) and not isinstance(b, list):
                 b = str(b)
             return a == b
 
