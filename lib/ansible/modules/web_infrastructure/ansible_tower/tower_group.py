@@ -44,7 +44,6 @@ options:
       description:
         - The source to use for this group.
       choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
-      default: 'manual'
     source_regions:
       description:
         - Regions for cloud provider.
@@ -64,7 +63,6 @@ options:
       description:
         - Delete child groups and hosts not found in source.
       type: bool
-      default: 'no'
     overwrite_vars:
       description:
         - Override vars in child groups and hosts with those from external source.
@@ -72,7 +70,6 @@ options:
       description:
         - Refresh inventory data from its source each time a job is run.
       type: bool
-      default: 'no'
     merge_variables:
       description:
         - If set to true will attempt to merge the variables from an existing Group of the same name and inventory.
