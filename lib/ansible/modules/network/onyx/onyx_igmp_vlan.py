@@ -39,10 +39,10 @@ options:
           - Enable IGMP snooping mrouter on vlan interface.
         choices: ['enabled', 'disabled']
         default: enabled
-  name:
-    description:
-      - Configure mrouter interface
-    required: true
+      name:
+        description:
+          - Configure mrouter interface
+        required: true
   querier:
     description:
       - Configure the IGMP querier parameters
