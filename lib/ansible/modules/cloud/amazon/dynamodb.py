@@ -33,49 +33,83 @@ options:
         default: null
         type: str
         choices:
-          - get : Returns a set of attributes for the item with the given primary key.
-          - put : Creates a new item, or replaces an old item with a new item. If an item that has the same primary key as the new item already exists in the specified table, the new item completely replaces the existing item.
-          - update : Edits an existing item's attributes, or adds a new item to the table if it does not already exist. You can also perform a conditional update on an existing item (insert a new attribute name-value pair if it doesn't exist, or replace an existing name-value pair if it has certain expected attribute values).
-          - delete : Deletes a single item in a table by primary key. You can perform a conditional delete operation that deletes the item if it exists, or if it has an expected attribute value.
+          - get:
+              description:
+              - Returns a set of attributes for the item
+                with the given primary key.
+          - put:
+              description:
+              - Creates a new item, or replaces an old item with a new item.
+                If an item that has the same primary key as the new item
+                already exists in the specified table, the new item completely
+                replaces the existing item.
+          - update:
+              description:
+              - Edits an existing item's attributes, or adds a new item to the
+                table if it does not already exist. You can also perform a
+                conditional update on an existing item (insert a new attribute
+                name-value pair if it doesn't exist, or replace an existing
+                name-value pair if it has certain expected attribute values).
+          - delete:
+              description:
+              - Deletes a single item in a table by primary key. You can
+                perform a conditional delete operation that deletes the item
+                if it exists, or if it has an expected attribute value.
     primary_key:
         description:
-            - The primary key of the DynamoDB table. Each element consists of an attribute name and a value for that attribute. For a composite primary key, you must provide values for both the partition key and the sort key. Required when I(action=get) I(action=update) I(action=delete)
+            - The primary key of the DynamoDB table. Each element consists of
+              an attribute name and a value for that attribute. For a composite
+              primary key, you must provide values for both the partition key
+              and the sort key.
+              Required when I(action=get) I(action=update) I(action=delete)
         required: false
         default: null
         type: dict
     projection_expression:
         description:
-            - A string that identifies one or more attributes (separated by commas) to retrieve from the table. Required when I(action=get).
+            - A string that identifies one or more attributes
+              (separated by commas) to retrieve from the table.
+              Required when I(action=get).
         required: false
         default: null
         type: str
     item:
         description:
-            - A map of attribute name/value pairs, one for each attribute. Only the primary key attributes are required; you can optionally provide other attribute name-value pairs for the item. Required when I(action=put).
+            - A map of attribute name/value pairs, one for each attribute.
+              Only the primary key attributes are required; you can optionally
+              provide other attribute name-value pairs for the item.
+              Required when I(action=put).
         required: false
         default: null
         type: dict
     update_expression:
         description:
-            - An expression that defines one or more attributes to be updated, the action to be performed on them, and new value(s) for them.
+            - An expression that defines one or more attributes to be updated,
+              the action to be performed on them, and new value(s) for them.
         required: false
         default: null
         type: str
     condition_expression:
         description:
-            - A condition that must be satisfied in order for a conditional update to succeed.
+            - A condition that must be satisfied in order for a conditional
+              update to succeed.
         required: false
         default: null
         type: str
     expression_attribute_names:
         description:
-            - One or more substitution tokens for attribute names in an expression to access an attribute whose name conflicts with a DynamoDB reserved word. Reserved keywords list U(https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+            - One or more substitution tokens for attribute names in an
+              expression to access an attribute whose name conflicts with a
+              DynamoDB reserved word.
+              Reserved keywords list U(https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
         required: false
         default: null
         type: dict
     expression_attribute_values:
         description:
-            - One or more values that can be substituted in an expressionself. Use the ':' (colon) character in an expression to dereference an attribute value.
+            - One or more values that can be substituted in an expressionself.
+              Use the ':' (colon) character in an expression to dereference
+              an attribute value.
         required: false
         default: null
         type: dict
@@ -214,34 +248,17 @@ def update(connection, table, primary_key, update_expression,
            expression_attribute_values, result):
 
     if condition_expression:
-        connection.update_item(
-            TableName=table,
-            Key=primary_key,
-            UpdateExpression=update_expression,
-            ConditionExpression=condition_expression,
-            ExpressionAttributeValues=expression_attribute_values
-        )
+        connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                               ConditionExpression=condition_expression, ExpressionAttributeValues=expression_attribute_values)
     elif expression_attribute_names:
-        connection.update_item(
-            TableName=table,
-            Key=primary_key,
-            UpdateExpression=update_expression,
-            ExpressionAttributeValues=expression_attribute_values,
-            ExpressionAttributeNames=expression_attribute_names
-        )
+        connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                               ExpressionAttributeValues=expression_attribute_values, ExpressionAttributeNames=expression_attribute_names)
     elif update_expression and expression_attribute_values:
-        connection.update_item(
-                TableName=table,
-                Key=primary_key,
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_attribute_values
-            )
+        connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                               ExpressionAttributeValues=expression_attribute_values)
     else:
         connection.update_item(
-            TableName=table,
-            Key=primary_key,
-            UpdateExpression=update_expression
-        )
+            TableName=table, Key=primary_key, UpdateExpression=update_expression)
 
     result = dict(changed=True, message='Item updated')
     return result
@@ -250,12 +267,8 @@ def update(connection, table, primary_key, update_expression,
 def delete(connection, table, primary_key, condition_expression,
            expression_attribute_values, result):
 
-    connection.delete_item(
-        TableName=table,
-        Key=primary_key,
-        ConditionExpression=condition_expression,
-        ExpressionAttributeValues=expression_attribute_values
-    )
+    connection.delete_item(TableName=table, Key=primary_key, ConditionExpression=condition_expression,
+                           ExpressionAttributeValues=expression_attribute_values)
 
     result = dict(changed=True, message='Item deleted')
 
