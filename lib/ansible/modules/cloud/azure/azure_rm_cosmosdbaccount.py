@@ -162,6 +162,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+comparison_failure = {}
 
 class Actions:
     NoAction, Create, Update, Delete = range(4)
@@ -323,6 +324,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                                  }
                                 })):
                     self.to_do = Actions.Update
+                self.results['comparison_failure'] = comparison_failure
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Database Account instance")
@@ -427,6 +429,7 @@ def compare(a, b, t):
                 a = sorted(a, key=lambda x: x[s])
                 b = sorted(b, key=lambda x: x[s])
             if len(a) != len(b):
+                comparison_failure['error'] = "DDD " + str(a) + "--" + str(b) 
                 return False
             for i in range(len(a)):
                 if not compare(a[i], b[i], t):
@@ -439,6 +442,7 @@ def compare(a, b, t):
                         return False
             return True
         else:
+            comparison_failure['error'] = "AAA " + str(a) + "--" + str(b) 
             return a is None
     else:
         if a is None:
@@ -447,9 +451,13 @@ def compare(a, b, t):
             # location needs to be normalized, remove spaces, lowercase
             a = a.replace(' ', '').lower()
             b = b.replace(' ', '').lower()
+            if a != b:
+                comparison_failure['error'] = "BBB " + str(a) + "--" + str(b) 
             return a == b
         else:
             # default comparison
+            if a != b:
+                comparison_failure['error'] = "CCC " + str(a) + "--" + str(b) 
             return a == b
 
 
