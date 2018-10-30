@@ -28,6 +28,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
+from ansible.executor.process.callback import CallbackProcess, CallbackSentinel
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
@@ -106,6 +107,8 @@ class TaskQueueManager:
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
+        self._callback_queue = multiprocessing.Queue()
+
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
@@ -157,6 +160,15 @@ class TaskQueueManager:
                         self._listening_handlers[listener] = []
                     display.debug("Adding handler %s to listening list" % handler.name)
                     self._listening_handlers[listener].append(handler._uuid)
+
+    def _start_callback_process(self):
+        callback_process = CallbackProcess(
+            self._callback_queue,
+            [self._stdout_callback] + self._callback_plugins,
+            display
+        )
+        display.debug('Starting callback process')
+        callback_process.start()
 
     def load_callbacks(self):
         '''
@@ -214,6 +226,8 @@ class TaskQueueManager:
                                        " but this will be required in the future and should be updated, "
                                        " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
             self._callback_plugins.append(callback_obj)
+
+        self._start_callback_process()
 
         self._callbacks_loaded = True
 
@@ -301,6 +315,7 @@ class TaskQueueManager:
     def cleanup(self):
         display.debug("RUNNING CLEANUP")
         self.terminate()
+        self._callback_queue.put((CallbackSentinel(), None, None))
         self._final_q.close()
         self._cleanup_processes()
 
@@ -344,38 +359,4 @@ class TaskQueueManager:
         return defunct
 
     def send_callback(self, method_name, *args, **kwargs):
-        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
-            # a plugin that set self.disabled to True will not be called
-            # see osx_say.py example for such a plugin
-            if getattr(callback_plugin, 'disabled', False):
-                continue
-
-            # try to find v2 method, fallback to v1 method, ignore callback if no method found
-            methods = []
-            for possible in [method_name, 'v2_on_any']:
-                gotit = getattr(callback_plugin, possible, None)
-                if gotit is None:
-                    gotit = getattr(callback_plugin, possible.replace('v2_', ''), None)
-                if gotit is not None:
-                    methods.append(gotit)
-
-            # send clean copies
-            new_args = []
-            for arg in args:
-                # FIXME: add play/task cleaners
-                if isinstance(arg, TaskResult):
-                    new_args.append(arg.clean_copy())
-                # elif isinstance(arg, Play):
-                # elif isinstance(arg, Task):
-                else:
-                    new_args.append(arg)
-
-            for method in methods:
-                try:
-                    method(*new_args, **kwargs)
-                except Exception as e:
-                    # TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
-                    from traceback import format_tb
-                    from sys import exc_info
-                    display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+        self._callback_queue.put_nowait((method_name, args, kwargs))
