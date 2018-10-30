@@ -35,7 +35,7 @@ module: tfc_app_smn_topic
 description:
     - Represents a SMN notification topic resource.
 short_description: Creates a resource of SMNTopic in Telefonica Cloud
-version_added: 2.7
+version_added: 2.8
 author: Huawei Inc. (@huaweicloud)
 requirements:
     - python >= 2.6
@@ -189,7 +189,7 @@ def create(session):
     link = collection(session)
     module = session.module
     try:
-        r = session.post(link, resource_to_create(module))
+        r = session.post(link, create_resource_opts(module))
     except HwcClientException as ex:
         module.fail_json(msg=str(ex))
     module.params['id'] = r.get('topic_urn', None)
@@ -204,7 +204,7 @@ def update(session):
     link = self_link(session)
     module = session.module
     try:
-        session.put(link, resource_to_update(module))
+        session.put(link, update_resource_opts(module))
     except HwcClientException as ex:
         module.fail_json(msg=str(ex))
 
@@ -320,8 +320,6 @@ def collection(session):
     return url.format(**combined)
 
 
-
-
 def is_different(expect, actual):
     # Remove all output-only from actual.
     actual_vals = {}
@@ -337,7 +335,7 @@ def is_different(expect, actual):
     return DictComparison(expect_vals) != DictComparison(actual_vals)
 
 
-def resource_to_create(module):
+def create_resource_opts(module):
     request = remove_empty_from_dict({
         u'display_name': module.params.get('display_name'),
         u'name': module.params.get('name')
@@ -345,7 +343,7 @@ def resource_to_create(module):
     return request
 
 
-def resource_to_update(module):
+def update_resource_opts(module):
     request = remove_nones_from_dict({
         u'display_name': module.params.get('display_name')
     })

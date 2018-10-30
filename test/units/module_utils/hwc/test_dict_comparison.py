@@ -31,7 +31,7 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             'test': 'original'
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        self.assertEqual(d, d)
 
     def test_simple_different(self):
         value1 = {
@@ -48,9 +48,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
         dict1 = DictComparison(value1)
         dict2 = DictComparison(value2)
         dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+        self.assertNotEqual(dict1, dict2)
+        self.assertNotEqual(dict1, dict3)
+        self.assertNotEqual(dict2, dict3)
 
     def test_nested_dictionaries_no_difference(self):
         value1 = {
@@ -63,7 +63,7 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             'test': 'original'
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        self.assertEqual(d, d)
 
     def test_nested_dictionaries_with_difference(self):
         value1 = {
@@ -96,9 +96,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
         dict1 = DictComparison(value1)
         dict2 = DictComparison(value2)
         dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+        self.assertNotEqual(dict1, dict2)
+        self.assertNotEqual(dict1, dict3)
+        self.assertNotEqual(dict2, dict3)
 
     def test_arrays_strings_no_difference(self):
         value1 = {
@@ -108,7 +108,7 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             ]
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        self.assertEqual(d, d)
 
     def test_arrays_strings_with_difference(self):
         value1 = {
@@ -133,9 +133,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
         dict1 = DictComparison(value1)
         dict2 = DictComparison(value2)
         dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+        self.assertNotEqual(dict1, dict2)
+        self.assertNotEqual(dict1, dict3)
+        self.assertNotEqual(dict2, dict3)
 
     def test_arrays_dicts_with_no_difference(self):
         value1 = {
@@ -150,7 +150,7 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             ]
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        self.assertEqual(d, d)
 
     def test_arrays_dicts_with_difference(self):
         value1 = {
@@ -183,6 +183,6 @@ class HwcDictComparisonTestCase(unittest.TestCase):
         dict1 = DictComparison(value1)
         dict2 = DictComparison(value2)
         dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+        self.assertNotEqual(dict1, dict2)
+        self.assertNotEqual(dict1, dict3)
+        self.assertNotEqual(dict2, dict3)
