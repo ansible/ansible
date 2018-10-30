@@ -270,10 +270,10 @@ class CallbackModule(CallbackBase):
             return
 
         write_files = self.get_option('write_files')
-        output_format = self.get_option('output_format')
-        output_dir = self.get_option('output_dir')
+        output_format = to_bytes(self.get_option('output_format'))
+        output_dir = to_bytes(self.get_option('output_dir'), errors='surrogate_or_strict')
         try:
-            output_dir %= datetime.datetime.now().isoformat()
+            output_dir %= to_bytes(datetime.datetime.now().isoformat())
         except TypeError:
             pass
 
@@ -281,10 +281,10 @@ class CallbackModule(CallbackBase):
             if not os.path.exists(output_dir):
                 os.mkdir(output_dir)
             for feature in self._features:
-                self._files[feature] = open(os.path.join(output_dir, '%s.csv' % feature), 'w+')
-                if output_format == 'csv':
+                self._files[feature] = open(os.path.join(output_dir, b'%s.%s' % (to_bytes(feature), output_format)), 'w+')
+                if output_format == b'csv':
                     self._writers[feature] = partial(csv_writer, csv.writer(self._files[feature]))
-                elif output_format == 'json':
+                elif output_format == b'json':
                     self._writers[feature] = partial(json_writer, self._files[feature])
 
     def _profile(self, obj=None):
