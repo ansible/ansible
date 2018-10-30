@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, John Dewey <john@dewey.ws>
+# Copyright: (c) 2013, John Dewey <john@dewey.ws>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,11 +16,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_policy
-short_description: Manage the state of policies in RabbitMQ.
+short_description: Manage the state of policies in RabbitMQ
 description:
   - Manage the state of a policy in RabbitMQ.
 version_added: "1.5"
-author: "John Dewey (@retr0h)"
+author: John Dewey (@retr0h)
 options:
   name:
     description:
