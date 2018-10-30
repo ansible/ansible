@@ -152,7 +152,7 @@ except ImportError:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, compare_generic
 from ansible.module_utils._text import to_native, to_bytes
 
 
@@ -224,22 +224,8 @@ class ConfigManager(DockerBaseClass):
             if attrs.get('Labels', {}).get('ansible_key'):
                 if attrs['Labels']['ansible_key'] != self.data_key:
                     data_changed = True
-            labels_changed = False
-            if self.labels and attrs.get('Labels'):
-                # check if user requested a label change
-                for label in attrs['Labels']:
-                    if self.labels.get(label) and self.labels[label] != attrs['Labels'][label]:
-                        labels_changed = True
-            # check if user added a label
-            labels_added = False
-            if self.labels:
-                if attrs.get('Labels'):
-                    for label in self.labels:
-                        if label not in attrs['Labels']:
-                            labels_added = True
-                else:
-                    labels_added = True
-            if data_changed or labels_added or labels_changed or self.force:
+            labels_changed = not compare_generic(self.labels, attrs.get('Labels'), 'allow_more_present', 'dict')
+            if data_changed or labels_changed or self.force:
                 # if something changed or force, delete and re-create the config
                 self.absent()
                 config_id = self.create_config()
