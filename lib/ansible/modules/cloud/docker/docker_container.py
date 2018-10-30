@@ -753,6 +753,7 @@ from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.docker_common import (
     HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient,
     DockerBaseClass, sanitize_result, is_image_name_id,
+    compare_generic,
 )
 from ansible.module_utils.six import string_types
 
@@ -1537,79 +1538,11 @@ class Container(DockerBaseClass):
                 return True
         return False
 
-    def _compare_dict_allow_more_present(self, av, bv):
-        '''
-        Compare two dictionaries for whether every entry of the first is in the second.
-        '''
-        for key, value in av.items():
-            if key not in bv:
-                return False
-            if bv[key] != value:
-                return False
-        return True
-
     def _compare(self, a, b, compare):
         '''
         Compare values a and b as described in compare.
         '''
-        method = compare['comparison']
-        if method == 'ignore':
-            return True
-        # If a or b is None:
-        if a is None or b is None:
-            # If both are None: equality
-            if a == b:
-                return True
-            # Otherwise, not equal for values, and equal
-            # if the other is empty for set/list/dict
-            if compare['type'] == 'value':
-                return False
-            return len(b if a is None else a) == 0
-        # Do proper comparison (both objects not None)
-        if compare['type'] == 'value':
-            return a == b
-        elif compare['type'] == 'list':
-            if method == 'strict':
-                return a == b
-            else:
-                set_a = set(a)
-                set_b = set(b)
-                return set_b >= set_a
-        elif compare['type'] == 'dict':
-            if method == 'strict':
-                return a == b
-            else:
-                return self._compare_dict_allow_more_present(a, b)
-        elif compare['type'] == 'set':
-            set_a = set(a)
-            set_b = set(b)
-            if method == 'strict':
-                return set_a == set_b
-            else:
-                return set_b >= set_a
-        elif compare['type'] == 'set(dict)':
-            for av in a:
-                found = False
-                for bv in b:
-                    if self._compare_dict_allow_more_present(av, bv):
-                        found = True
-                        break
-                if not found:
-                    return False
-            if method == 'strict':
-                # If we would know that both a and b do not contain duplicates,
-                # we could simply compare len(a) to len(b) to finish this test.
-                # We can assume that b has no duplicates (as it is returned by
-                # docker), but we don't know for a.
-                for bv in b:
-                    found = False
-                    for av in a:
-                        if self._compare_dict_allow_more_present(av, bv):
-                            found = True
-                            break
-                    if not found:
-                        return False
-            return True
+        return compare_generic(a, b, compare['comparison'], compare['type'])
 
     def has_different_configuration(self, image):
         '''
