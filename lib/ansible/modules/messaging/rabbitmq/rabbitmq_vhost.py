@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Chatham Financial <oss@chathamfinancial.com>
+# Copyright: (c) 2013, Chatham Financial <oss@chathamfinancial.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -20,7 +20,7 @@ short_description: Manage the state of a virtual host in RabbitMQ
 description:
   - Manage the state of a virtual host in RabbitMQ
 version_added: "1.1"
-author: '"Chris Hoffman (@choffman)"'
+author: Chris Hoffman (@chrishoffman)
 options:
   name:
     description:

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Chatham Financial <oss@chathamfinancial.com>
+# Copyright: (c) 2013, Chatham Financial <oss@chathamfinancial.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,11 +16,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_user
-short_description: Adds or removes users to RabbitMQ
+short_description: Manage RabbitMQ users
 description:
   - Add or remove users to RabbitMQ and assign permissions
 version_added: "1.1"
-author: '"Chris Hoffman (@chrishoffman)"'
+author: Chris Hoffman (@chrishoffman)
 options:
   user:
     description:

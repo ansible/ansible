@@ -179,16 +179,7 @@ files:
   $modules/identity/keycloak/: eikef
   $modules/inventory/add_host.py: $team_ansible
   $modules/inventory/group_by.py: $team_ansible
-  $modules/messaging/rabbitmq_binding.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_exchange.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_parameter.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_plugin.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_policy.py: retr0h
-  $modules/messaging/rabbitmq_queue.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_user.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_vhost.py:
-    ignored: choffman
-    maintainers: $team_rabbitmq
+  $modules/messaging/rabbitmq/: $team_rabbitmq
   $modules/monitoring/datadog_event.py:
     ignored: arturaz
   $modules/monitoring/logentries.py:
