@@ -65,7 +65,7 @@ class TestCreateJavaKeystore(ModuleTestCase):
 
         with patch('os.remove', return_value=True):
             self.run_commands.side_effect = lambda args, kwargs: (0, '', '')
-            create_jks(module, "test", "openssl", "keytool", "/path/to/keystore.jks", "changeit")
+            create_jks(module, "test", "openssl", "keytool", "/path/to/keystore.jks", "changeit", "")
             module.exit_json.assert_called_once_with(
                 changed=True,
                 cmd="keytool -importkeystore "
@@ -95,12 +95,13 @@ class TestCreateJavaKeystore(ModuleTestCase):
 
         with patch('os.remove', return_value=True):
             self.run_commands.side_effect = [(1, '', ''), (0, '', '')]
-            create_jks(module, "test", "openssl", "keytool", "/path/to/keystore.jks", "changeit")
+            create_jks(module, "test", "openssl", "keytool", "/path/to/keystore.jks", "changeit", "")
             module.fail_json.assert_called_once_with(
                 cmd="openssl pkcs12 -export -name 'test' "
                     "-in '/tmp/foo.crt' -inkey '/tmp/foo.key' "
                     "-out '/tmp/keystore.p12' "
-                    "-passout 'pass:changeit'",
+                    "-passout 'pass:changeit' "
+                    "-passin 'pass:'",
                 msg='',
                 rc=1
             )
@@ -123,7 +124,7 @@ class TestCreateJavaKeystore(ModuleTestCase):
 
         with patch('os.remove', return_value=True):
             self.run_commands.side_effect = [(0, '', ''), (1, '', '')]
-            create_jks(module, "test", "openssl", "keytool", "/path/to/keystore.jks", "changeit")
+            create_jks(module, "test", "openssl", "keytool", "/path/to/keystore.jks", "changeit", "")
             module.fail_json.assert_called_once_with(
                 cmd="keytool -importkeystore "
                     "-destkeystore '/path/to/keystore.jks' "
