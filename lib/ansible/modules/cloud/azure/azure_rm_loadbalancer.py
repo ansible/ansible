@@ -754,11 +754,51 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 new_dict = self.new_load_balancer.as_dict()
                 if (self.location != load_balancer['location'] or
                         self.sku != load_balancer['sku']['name'] or
-                        not compare_arrays(load_balancer['frontend_ip_configurations'], new_dict['frontend_ip_configurations']) or
-                        not compare_arrays(load_balancer['inbound_nat_pools'], new_dict['inbound_nat_pools']) or
-                        not compare_arrays(load_balancer['load_balancing_rules'], new_dict['load_balancing_rules']) or
-                        not compare_arrays(load_balancer['backend_address_pools'], new_dict['backend_address_pools']) or
-                        not compare_arrays(load_balancer['probes'], new_dict['probes'])):
+                        not compare(new_dict, load_balancer, {
+                            'frontend_ip_configurations': {
+                                '__sort__': 'name',
+                                'name': None,
+                                'public_ip_address': None,
+                                'private_ip_address': None,
+                                'private_ip_allocation_method': None,
+                                'subnet': None
+                            },
+                            'inbound_nat_pools': {
+                                '__sort__': 'name',
+                                'name': None,
+                                'frontend_ip_configuration_name': None,
+                                'protocol': None,
+                                'frontend_port_range_start': None,
+                                'frontend_port_range_end': None,
+                                'backend_port': None
+                            },
+                            'load_balancing_rules': {
+                                '__sort__': 'name',
+                                'name': None,
+                                'frontend_ip_configuration': None,
+                                'backend_address_pool': None,
+                                'probe': None,
+                                'protocol': None,
+                                'load_distribution': None,
+                                'frontend_port': None,
+                                'backend_port': None,
+                                'idle_timeout': None,
+                                'enable_floating_ip': None
+                            },
+                            'backend_address_pools': {
+                                '__sort__': 'name',
+                                'name': None
+                            },
+                            'probes': {
+                                '__sort__': 'name',
+                                'name': None,
+                                'port': None,
+                                'protocol': None,
+                                'interval': None,
+                                'fail_count': None,
+                                'request_path': None
+                            }
+                        })):
                     changed = True
                 else:
                     changed = False
@@ -817,18 +857,42 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             self.fail("Error creating or updating load balancer {0} - {1}".format(self.name, str(exc)))
 
 
-def compare_arrays(old, new):
-    oldd = array_to_dict(old or [])
-    newd = array_to_dict(new or [])
-    newd = dict_merge(oldd, newd)
-    return newd == oldd
-
-
-def array_to_dict(a):
-    d = {}
-    for item in a:
-        d[item['name']] = item
-    return d
+def compare(a, b, t):
+    if isinstance(t, dict):
+        if isinstance(a, list) and isinstance(b, list):
+            s = t.get('__sort__', None)
+            if s is not None:
+                a = sorted(a, key=lambda x: x[s])
+                b = sorted(b, key=lambda x: x[s])
+            if len(a) != len(b):
+                return False
+            for i in range(len(a)):
+                if not compare(a[i], b[i], t):
+                    return False
+            return True
+        elif isinstance(a, dict) and isinstance(b, dict):
+            for k in t.keys():
+                if not k == '__sort__':
+                    if not compare(a.get(k, None), b.get(k, None), t[k]):
+                        return False
+            return True
+        else:
+            return a is None
+    else:
+        if a is None:
+            return True
+        if t == "location":
+            # location needs to be normalized, remove spaces, lowercase
+            a = a.replace(' ', '').lower()
+            b = b.replace(' ', '').lower()
+            return a == b
+        else:
+            # default comparison
+            if not isinstance(a, dict) and not isinstance(a, list):
+                a = str(a)
+            if not isinstance(b, dict) and not isinstance(b, list):
+                b = str(b)
+            return a == b
 
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
