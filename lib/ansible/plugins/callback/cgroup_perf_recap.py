@@ -189,15 +189,15 @@ class PidsProf(BaseProf):
         time.sleep(0.001)
 
 
-def csv_writer(writer, timestamp, task_name, uuid, value):
-    writer.writerow([timestamp, task_name, uuid, value])
+def csv_writer(writer, timestamp, task_name, task_uuid, value):
+    writer.writerow([timestamp, task_name, task_uuid, value])
 
 
-def json_writer(writer, timestamp, task_name, uuid, value):
+def json_writer(writer, timestamp, task_name, task_uuid, value):
     data = {
         'timestamp': timestamp,
         'task_name': task_name,
-        'uuid': uuid,
+        'task_uuid': task_uuid,
         'value': value,
     }
     writer.write('%s%s%s' % (RS, json.dumps(data, cls=AnsibleJSONEncoder), LF))
