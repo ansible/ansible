@@ -21,6 +21,18 @@
     that:
       - "result is changed"
 
+- name: Check changed status is accurate
+  tower_host:
+    name: "some-host"
+    inventory: "Demo Inventory"
+    state: present
+    variables: "@{{ tempdir.stdout }}/vars"
+  register: result
+
+- assert:
+    that:
+      - "result is not changed"
+
 - name: Delete a Host
   tower_host:
     name: "some-host"
