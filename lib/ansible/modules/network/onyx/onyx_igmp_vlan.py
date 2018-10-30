@@ -75,7 +75,7 @@ options:
   version:
     description:
       - IGMP snooping operation version on this vlan
-    choices: ['V2','V3'] 
+    choices: ['V2','V3']
 """
 
 EXAMPLES = """
