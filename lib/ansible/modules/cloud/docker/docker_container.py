@@ -100,6 +100,38 @@ options:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
+  device_read_bps:
+    description:
+      - "List of device path and read rate (bytes per second) from device."
+      - "I(path) - device path in the container."
+      - "I(rate) - device read limit (format: <number>[<unit>])"
+      - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)"
+      - "Omitting the unit defaults to bytes."
+    version_added: "2.8"
+  device_write_bps:
+    description:
+      - "List of device and write rate (bytes per second) to device."
+      - "I(path) - device path in the container."
+      - "I(rate) - device write limit (format: <number>[<unit>])"
+      - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)"
+      - "Omitting the unit defaults to bytes."
+    version_added: "2.8"
+  device_read_iops:
+    description:
+      - "List of device and read rate (IO per second) from device."
+      - "I(path) - device path in the container."
+      - "I(rate) - device read limit (format: <number>)"
+      - "Number is a positive integer."
+    version_added: "2.8"
+  device_write_iops:
+    description:
+      - "List of device and write rate (IO per second) to device."
+      - "I(path) - device path in the container."
+      - "I(rate) - device write limit (format: <number>)"
+      - "Number is a positive integer."
+    version_added: "2.8"
   dns_opts:
     description:
       - list of DNS options
@@ -697,6 +729,20 @@ EXAMPLES = '''
     healthcheck:
       # The "NONE" check needs to be specified
       test: ["NONE"]
+
+- name: start container with block device read limit
+  docker_container:
+    name: test
+    image: ubuntu:18.04
+    state: started
+    device_read_bps:
+      # Limit read rate for /dev/sda to 20 mebibytes per second
+      - path: /dev/sda
+        rate: 20M
+    device_read_iops:
+      # Limit read rate for /dev/sdb to 300 IO per second
+      - path: /dev/sdb
+        rate: 300
 '''
 
 RETURN = '''
@@ -853,6 +899,10 @@ class TaskParameters(DockerBaseClass):
         self.detach = None
         self.debug = None
         self.devices = None
+        self.device_read_bps = None
+        self.device_write_bps = None
+        self.device_read_iops = None
+        self.device_write_iops = None
         self.dns_servers = None
         self.dns_opts = None
         self.dns_search_domains = None
@@ -989,6 +1039,14 @@ class TaskParameters(DockerBaseClass):
             # convert from list to str
             if isinstance(self.command, list):
                 self.command = ' '.join([str(x) for x in self.command])
+
+        for param_name in ["device_read_bps", "device_write_bps"]:
+            if client.module.params.get(param_name):
+                self._process_rate_bps(option=param_name)
+
+        for param_name in ["device_read_iops", "device_write_iops"]:
+            if client.module.params.get(param_name):
+                self._process_rate_iops(option=param_name)
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -1170,6 +1228,13 @@ class TaskParameters(DockerBaseClass):
 
         if self.client.HAS_RUNTIME_OPT:
             host_config_params['runtime'] = 'runtime'
+
+        if self.client.HAS_DEVICE_RW_LIMIT_OPT:
+            # device_read/write_bps/iops are only supported in docker>=1.9 and docker-api>=1.22
+            host_config_params['device_read_bps'] = 'device_read_bps'
+            host_config_params['device_write_bps'] = 'device_write_bps'
+            host_config_params['device_read_iops'] = 'device_read_iops'
+            host_config_params['device_write_iops'] = 'device_write_iops'
 
         params = dict()
         for key, value in host_config_params.items():
@@ -1488,6 +1553,33 @@ class TaskParameters(DockerBaseClass):
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
 
+    def _process_rate_bps(self, option):
+        """
+        Format device_read_bps and device_write_bps option
+        """
+        devices_list = []
+        for v in getattr(self, option):
+            device_dict = dict((x.title(), y) for x, y in v.items())
+            device_dict['Rate'] = human_to_bytes(device_dict.get('Rate', 0))
+            devices_list.append(device_dict)
+
+        setattr(self, option, devices_list)
+
+    def _process_rate_iops(self, option):
+        """
+        Format device_read_iops and device_write_iops option
+        """
+        devices_list = []
+        for v in getattr(self, option):
+            try:
+                device_dict = dict((x.title(), y) for x, y in v.items())
+                device_dict['Rate'] = int(device_dict.get('Rate', 0))
+                devices_list.append(device_dict)
+            except ValueError:
+                self.fail("Invalid device iops value: '{0}'. Must be a positive integer.".format(device_dict.get('Rate')))
+
+        setattr(self, option, devices_list)
+
 
 class Container(DockerBaseClass):
 
@@ -1523,6 +1615,10 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_cmd'] = 'command'
         self.parameters_map['expected_devices'] = 'devices'
         self.parameters_map['expected_healthcheck'] = 'healthcheck'
+        self.parameters_map['device_read_bps'] = 'device_read_bps'
+        self.parameters_map['device_write_bps'] = 'device_write_bps'
+        self.parameters_map['device_read_iops'] = 'device_read_iops'
+        self.parameters_map['device_write_iops'] = 'device_write_iops'
 
     def fail(self, msg):
         self.parameters.client.module.fail_json(msg=msg)
@@ -1636,6 +1732,10 @@ class Container(DockerBaseClass):
             publish_all_ports=host_config.get('PublishAllPorts'),
             expected_healthcheck=config.get('Healthcheck'),
             disable_healthcheck=(not config.get('Healthcheck') or config.get('Healthcheck').get('Test') == ['NONE']),
+            device_read_bps=host_config.get('BlkioDeviceReadBps'),
+            device_write_bps=host_config.get('BlkioDeviceWriteBps'),
+            device_read_iops=host_config.get('BlkioDeviceReadIOps'),
+            device_write_iops=host_config.get('BlkioDeviceWriteIOps'),
         )
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
@@ -2374,6 +2474,10 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             entrypoint='list',
             etc_hosts='set',
             ulimits='set(dict)',
+            device_read_bps='set(dict)',
+            device_write_bps='set(dict)',
+            device_read_iops='set(dict)',
+            device_write_iops='set(dict)',
         )
         all_options = set()  # this is for improving user feedback when a wrong option was specified for comparison
         default_values = dict(
@@ -2519,12 +2623,28 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         if self.module.params.get("healthcheck") and not healthcheck_supported:
             self.fail("docker or docker-py version is %s. Minimum version required is 2.0 to set healthcheck option." % (docker_version,))
 
+        found_device_limit_param = False
+        for x in ["device_read_bps", "device_write_bps", "device_read_iops", "device_write_iops"]:
+            if self.module.params.get(x):
+                found_device_limit_param = True
+                break
+
+        device_rw_limit_supported = LooseVersion(docker_api_version) >= LooseVersion('1.22')
+        if found_device_limit_param and not device_rw_limit_supported:
+            self.fail('docker API version is %s. Minimum version required is 1.22 to set device IO limit options.' % (docker_api_version,))
+
+        device_rw_limit_supported = device_rw_limit_supported and LooseVersion(docker_version) >= LooseVersion('1.9.0')
+        if found_device_limit_param and not device_rw_limit_supported:
+            self.fail("docker or docker-py version is %s. Minimum version required is 1.9 to set device IO limit optons. "
+                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+
         self.HAS_INIT_OPT = init_supported
         self.HAS_UTS_MODE_OPT = uts_mode_supported
         self.HAS_BLKIO_WEIGHT_OPT = blkio_weight_supported
         self.HAS_CPUSET_MEMS_OPT = cpuset_mems_supported
         self.HAS_STOP_TIMEOUT_OPT = stop_timeout_supported
         self.HAS_HEALTHCHECK_OPT = healthcheck_supported
+        self.HAS_DEVICE_RW_LIMIT_OPT = device_rw_limit_supported
 
         self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
         self.HAS_RUNTIME_OPT = runtime_supported
@@ -2551,6 +2671,10 @@ def main():
         cpu_shares=dict(type='int'),
         detach=dict(type='bool', default=True),
         devices=dict(type='list'),
+        device_read_bps=dict(type='list'),
+        device_write_bps=dict(type='list'),
+        device_read_iops=dict(type='list'),
+        device_write_iops=dict(type='list'),
         dns_servers=dict(type='list'),
         dns_opts=dict(type='list'),
         dns_search_domains=dict(type='list'),

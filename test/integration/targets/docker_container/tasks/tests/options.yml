@@ -593,6 +593,74 @@
     - devices_4 is changed
 
 ####################################################################
+## device_read_bps #################################################
+####################################################################
+
+- name: device_read_bps
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    device_read_bps:
+      - path: /dev/random
+        rate: 20M
+      - path: /dev/urandom
+        rate: 10K
+  register: device_read_bps_1
+
+- name: device_read_bps (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    device_read_bps:
+      - path: /dev/urandom
+        rate: 10K
+      - path: /dev/random
+        rate: 20M
+  register: device_read_bps_2
+
+- name: device_read_bps (lesser entries)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    device_read_bps:
+      - path: /dev/random
+        rate: 20M
+  register: device_read_bps_3
+
+- name: device_read_bps (changed)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    device_read_bps:
+      - path: /dev/random
+        rate: 10M
+      - path: /dev/urandom
+        rate: 5K
+    stop_timeout: 1
+  register: device_read_bps_4
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - device_read_bps_1 is changed
+    - device_read_bps_2 is not changed
+    - device_read_bps_3 is not changed
+    - device_read_bps_4 is changed
+
+####################################################################
 ## dns_opts ########################################################
 ####################################################################
 
