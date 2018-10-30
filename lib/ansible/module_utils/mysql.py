@@ -28,6 +28,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import sys
 
 try:
     import pymysql as mysql_driver
@@ -75,6 +76,9 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
 
     db_connection = mysql_driver.connect(**config)
     if cursor_class is not None:
-        return db_connection.cursor(cursorclass=mysql_driver.cursors.DictCursor)
+        if mysql_driver is sys.modules['pymysql']:
+            return db_connection.cursor(cursor=mysql_driver.cursors.DictCursor)
+        else:
+            return db_connection.cursor(cursorclass=mysql_driver.cursors.DictCursor)
     else:
         return db_connection.cursor()
