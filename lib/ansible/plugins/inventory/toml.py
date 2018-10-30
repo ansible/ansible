@@ -244,6 +244,6 @@ class InventoryModule(BaseFileInventoryPlugin):
     def verify_file(self, path):
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
-            if not ext or ext == '.toml':
+            if ext == '.toml':
                 return True
         return False
