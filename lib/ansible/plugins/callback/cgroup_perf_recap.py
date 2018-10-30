@@ -231,11 +231,11 @@ class CallbackModule(CallbackBase):
         cpu_poll_interval = self.get_option('cpu_poll_interval')
         self._display_recap = self.get_option('display_recap')
 
-        self.control_group = to_bytes(self.get_option('control_group'), errors='surrogate_or_strict')
-        self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % self.control_group
-        mem_current_file = b'/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % self.control_group
-        cpu_usage_file = b'/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % self.control_group
-        pid_current_file = b'/sys/fs/cgroup/pids/%s/pids.current' % self.control_group
+        control_group = to_bytes(self.get_option('control_group'), errors='surrogate_or_strict')
+        self.mem_max_file = b'/sys/fs/cgroup/memory/%s/memory.max_usage_in_bytes' % control_group
+        mem_current_file = b'/sys/fs/cgroup/memory/%s/memory.usage_in_bytes' % control_group
+        cpu_usage_file = b'/sys/fs/cgroup/cpuacct/%s/cpuacct.usage' % control_group
+        pid_current_file = b'/sys/fs/cgroup/pids/%s/pids.current' % control_group
 
         for path in (self.mem_max_file, mem_current_file, cpu_usage_file, pid_current_file):
             try:
@@ -263,7 +263,7 @@ class CallbackModule(CallbackBase):
                 f.write('0')
         except Exception as e:
             self._display.warning(
-                u'Unable to reset CPU usage value in %s: %s' % (to_text(self.cpu_usage_file), to_text(e))
+                u'Unable to reset CPU usage value in %s: %s' % (to_text(cpu_usage_file), to_text(e))
             )
             self.disabled = True
             return
