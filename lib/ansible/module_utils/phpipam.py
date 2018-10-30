@@ -2,7 +2,7 @@
 # Copyright: (c) 2018, Carson Anderson <rcanderson23@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import ansible.module_utils.urls as urls
+from ansible.module_utils import urls
 import json
 import urllib
 

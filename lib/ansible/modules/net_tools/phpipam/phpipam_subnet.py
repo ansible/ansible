@@ -121,7 +121,7 @@ output:
             sample: "206"
 '''
 from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.phpipam as phpipam
+from ansible.module_utils import phpipam
 
 
 def main():
