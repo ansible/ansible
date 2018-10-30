@@ -227,8 +227,10 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
     if router['admin_state_up'] != module.params['admin_state_up']:
         return True
     if router['external_gateway_info']:
-        if router['external_gateway_info'].get('enable_snat', True) != module.params['enable_snat']:
-            return True
+        # check if enable_snat is set in module params
+        if module.params['enable_snat'] is not None:
+            if router['external_gateway_info'].get('enable_snat', True) != module.params['enable_snat']:
+                return True
     if network:
         if not router['external_gateway_info']:
             return True
