@@ -749,7 +749,7 @@ def parse_module_arguments(module_arguments):
     # Return empty list if we have no args to parse
     if not module_arguments:
         return []
-    elif not module_arguments[0]:
+    elif isinstance(module_arguments, list) and len(module_arguments) == 1 and not module_arguments[0]:
         return []
 
     if not isinstance(module_arguments, list):
