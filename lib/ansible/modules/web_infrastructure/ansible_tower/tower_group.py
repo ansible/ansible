@@ -44,6 +44,7 @@ options:
       description:
         - The source to use for this group.
       choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
+      default: 'manual'
     source_regions:
       description:
         - Regions for cloud provider.
