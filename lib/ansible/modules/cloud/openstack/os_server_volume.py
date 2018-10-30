@@ -139,7 +139,7 @@ def main():
                 result='Detached volume from server'
             )
 
-    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.OpenStackCloudTimeout) as e:
+    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.ResourceTimeout) as e:
         module.fail_json(msg=str(e))
 
 
