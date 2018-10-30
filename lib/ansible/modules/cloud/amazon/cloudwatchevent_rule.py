@@ -65,7 +65,8 @@ options:
     description:
       - "A dictionary array of targets to add to or update for the rule, in the
         form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
-        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int]}}).
+        input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int],
+        launch_type: FARGATE|EC2, platform_version: "1.1.0", network_configuration: [dict] }}).
         I(id) [required] is the unique target assignment ID. I(arn) (required)
         is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
         of the IAM role to be used for this target when the rule is triggered. I(input)
@@ -275,6 +276,22 @@ class CloudWatchEventRule(object):
                     target_request['EcsParameters']['TaskDefinitionArn'] = ecs_parameters['task_definition_arn']
                 if 'task_count' in target['ecs_parameters']:
                     target_request['EcsParameters']['TaskCount'] = ecs_parameters['task_count']
+                if 'launch_type' in target['ecs_parameters']:
+                    target_request['EcsParameters']['LaunchType'] = ecs_parameters['launch_type']
+                if 'platform_version' in target['ecs_parameters']:
+                    target_request['EcsParameters']['PlatformVersion'] = ecs_parameters['platform_version']
+                if 'network_configuration' in target['ecs_parameters']:
+                    target_request['EcsParameters']['NetworkConfiguration'] = {}
+                    target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration'] = {} 
+                    network_configuration = ecs_parameters['network_configuration']['awsvpc_configuration']
+                    if 'subnets' in network_configuration:
+                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['Subnets'] = network_configuration['subnets']
+                    if 'security_groups' in network_configuration:
+                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['SecurityGroups'] = network_configuration['security_groups']
+                    if 'assign_public_ip' in network_configuration:
+                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['AssignPublicIp'] = network_configuration['assign_public_ip']
+
+
             targets_request.append(target_request)
         return targets_request
 
