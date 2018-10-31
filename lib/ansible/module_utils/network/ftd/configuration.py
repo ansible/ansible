@@ -371,12 +371,9 @@ class BaseConfigurationResource(object):
         return self.send_general_request(operation_name, params)
 
     def send_general_request(self, operation_name, params):
-        def stop_if_check_mode():
-            if self._check_mode:
-                raise CheckModeException()
-
         self.validate_params(operation_name, params)
-        stop_if_check_mode()
+        if self._check_mode:
+            raise CheckModeException()
 
         data, query_params, path_params = _get_user_params(params)
         op_spec = self.get_operation_spec(operation_name)

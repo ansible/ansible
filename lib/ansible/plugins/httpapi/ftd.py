@@ -111,9 +111,10 @@ class HttpApi(HttpApiBase):
         url = self._get_api_token_path()
         self._display(HTTPMethod.POST, 'login', url)
 
-        dummy, response_data = self._send_auth_request(
+        response, response_data = self._send_auth_request(
             url, json.dumps(payload), method=HTTPMethod.POST, headers=BASE_HEADERS
         )
+        self._display(HTTPMethod.POST, 'login:status_code', response.getcode())
 
         response = self._response_to_json(self._get_response_value(response_data))
 
@@ -135,8 +136,10 @@ class HttpApi(HttpApiBase):
         url = self._get_api_token_path()
 
         self._display(HTTPMethod.POST, 'logout', url)
+        response, dummy = self._send_auth_request(url, json.dumps(auth_payload), method=HTTPMethod.POST,
+                                                  headers=BASE_HEADERS)
+        self._display(HTTPMethod.POST, 'logout:status_code', response.getcode())
 
-        self._send_auth_request(url, json.dumps(auth_payload), method=HTTPMethod.POST, headers=BASE_HEADERS)
         self.refresh_token = None
         self.access_token = None
 
