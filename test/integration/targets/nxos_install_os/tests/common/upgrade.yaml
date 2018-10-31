@@ -5,6 +5,7 @@
 
 - set_fact: checkmode='no'
 - set_fact: issu='desired'
+- set_fact: copy_images='yes'
 
 - set_fact: image_dir='/Users/mwiebe/Projects/nxos_ansible/images/'
 

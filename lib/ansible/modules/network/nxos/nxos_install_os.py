@@ -345,12 +345,32 @@ def massage_install_data(data):
 
 def build_install_cmd_set(issu, image, kick, type):
     commands = ['terminal dont-ask']
+
+    # Different NX-OS plaforms behave differently for
+    # disruptive and non-disruptive upgrade paths.
+    #
+    # 1) Combined kickstart/system image:
+    #    * Use option 'non-disruptive' for issu.
+    #    * Omit option non-disruptive' for distruptive upgrades.
+    # 2) Separate kickstart + system images.
+    #    * Omit hidden 'force' option for issu.
+    #    * Use hidden 'force' option for disruptive upgrades.
     if re.search(r'required|desired|yes', issu):
-        issu_cmd = 'non-disruptive'
+        if kick is None:
+            issu_cmd = 'non-disruptive'
+        else:
+            issu_cmd = ''
     else:
-        issu_cmd = ''
+        if kick is None:
+            issu_cmd = ''
+        else:
+            issu_cmd = 'force'
+
     if type == 'impact':
         rootcmd = 'show install all impact'
+        # The force option is not available for the impact command.
+        if kick:
+            issu_cmd = ''
     else:
         rootcmd = 'install all'
     if kick is None:
@@ -358,7 +378,7 @@ def build_install_cmd_set(issu, image, kick, type):
             '%s nxos %s %s' % (rootcmd, image, issu_cmd))
     else:
         commands.append(
-            '%s system %s kickstart %s' % (rootcmd, image, kick))
+            '%s %s system %s kickstart %s' % (rootcmd, issu_cmd, image, kick))
 
     return commands
 
