@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - refactored minimal docker-py/API version handling, and fixing such handling of some options."
