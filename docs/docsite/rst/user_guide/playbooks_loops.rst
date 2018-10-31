@@ -7,7 +7,7 @@ Loops
 Sometimes you want to repeat a task multiple times. In computer programming, this is called a loop. Common Ansible loops include installing several packages with the :ref:`yum module <yum_module>`, creating multiple users with the :ref:`user module <user_module>`, and
 repeating a polling step until a certain result is reached. Ansible offers two keywords for creating loops: ``loop`` and ``with_<lookup>``.
 
-We added ``loop`` in Ansible 2.5, but it is not yet a full replacement for ``with_<lookup>``. We have not deprecated the use of ``with_<lookup>``. We are still discussing what UX changes can be made to enable ``loop`` to replace ``with_<lookup>`` in the future. If we eventually deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
+.. note:: We added ``loop`` in Ansible 2.5, but it is not yet a full replacement for ``with_<lookup>``. We have not deprecated the use of ``with_<lookup>``. We are still discussing what UX changes can be made to enable ``loop`` to replace ``with_<lookup>`` in the future. If we eventually deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
 
 .. contents::
    :local:
