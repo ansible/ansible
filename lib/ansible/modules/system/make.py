@@ -139,8 +139,9 @@ def main():
             #  do anything
             changed = False
         else:
-            # The target isn't upd to date, so we need to run it
-            rc, out, err = run_command(base_command, module)
+            # The target isn't up to date, so we need to run it
+            rc, out, err = run_command(base_command, module,
+                                       check_rc=True)
             changed = True
 
     # We don't report the return code, as if this module failed
