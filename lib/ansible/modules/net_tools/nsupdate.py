@@ -231,7 +231,7 @@ class RecordManager(object):
     def __do_update(self, update):
         response = None
         try:
-            if module.params["protocol"] == 'tcp':
+            if self.module.params["protocol"] == 'tcp':
                 response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
             else:
                 response = dns.query.udp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
