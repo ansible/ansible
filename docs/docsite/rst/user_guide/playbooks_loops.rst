@@ -21,6 +21,7 @@ Comparing ``loop`` and ``with_*``
 
 * The ``with_<lookup>`` keywords rely on :ref:`lookup_plugins` - even  ``items`` is a lookup.
 * The ``loop`` keyword is equivalent to ``with_list``, and is the best choice for simple loops.
+* The ``loop`` keyword will not accept a string as input, see :ref:`query_vs_lookup`.
 * Generally speaking, any use of ``with_*`` covered in :ref:`migrating_to_loop` can be updated to use ``loop``.
 * Be careful when changing ``with_items`` to ``loop``, as ``with_items`` performed implicit flattening. You may need to use ``flatten`` with ``loop`` to match the exact outcome.
 * Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword.
@@ -187,8 +188,7 @@ Complex loops
 Iterating over nested lists
 ---------------------------
 
-Sometimes you need more than what a simple list provides, you can use Jinja2 expressions to create complex lists:
-For example, using the 'nested' lookup, you can combine lists::
+You can use Jinja2 expressions to iterate over complex lists. For example, a loop can combine nested lists::
 
     - name: give users access to multiple databases
       mysql_user:
@@ -250,6 +250,8 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
       loop: "{{ query('inventory_hostnames', 'all:!www') }}"
 
 More information on the patterns can be found on :ref:`intro_patterns`
+
+.. _query_vs_lookup:
 
 Ensuring list input for ``loop``: ``query`` vs. ``lookup``
 ==========================================================
