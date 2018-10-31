@@ -2313,12 +2313,15 @@
 - name: paused
   docker_container:
     image: alpine:3.8
-    command: "yes"
+    command: "/bin/sh -c 'sleep 1s ; yes'"
     name: "{{ cname }}"
     state: started
     paused: yes
     stop_timeout: 1
   register: paused_1
+
+- pause:
+    seconds: 2
 
 - name: paused (logs)
   command: docker logs "{{ cname }}"
