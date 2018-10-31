@@ -28,33 +28,25 @@ options:
         type: str
     action:
         description:
-            - Name of the DynamoDB table.
+            - Action to perform with the DyamoDB item.
+            - If get, returns a set of attributes for the item
+              with the given primary key.
+            - If put, creates a new item, or replaces an old item with a new item.
+              If an item that has the same primary key as the new item
+              already exists in the specified table, the new item completely
+              replaces the existing item.
+            - If update, edits an existing item's attributes, or adds a new item to the
+              table if it does not already exist. You can also perform a
+              conditional update on an existing item (insert a new attribute
+              name-value pair if it doesn't exist, or replace an existing
+              name-value pair if it has certain expected attribute values).
+            - If delete, deletes a single item in a table by primary key. You can
+              perform a conditional delete operation that deletes the item
+              if it exists, or if it has an expected attribute value.
         required: true
         default: null
         type: str
-        choices:
-          - get:
-              description:
-              - Returns a set of attributes for the item
-                with the given primary key.
-          - put:
-              description:
-              - Creates a new item, or replaces an old item with a new item.
-                If an item that has the same primary key as the new item
-                already exists in the specified table, the new item completely
-                replaces the existing item.
-          - update:
-              description:
-              - Edits an existing item's attributes, or adds a new item to the
-                table if it does not already exist. You can also perform a
-                conditional update on an existing item (insert a new attribute
-                name-value pair if it doesn't exist, or replace an existing
-                name-value pair if it has certain expected attribute values).
-          - delete:
-              description:
-              - Deletes a single item in a table by primary key. You can
-                perform a conditional delete operation that deletes the item
-                if it exists, or if it has an expected attribute value.
+        choices: [get, put, update, delete]
     primary_key:
         description:
             - The primary key of the DynamoDB table. Each element consists of
@@ -116,6 +108,9 @@ options:
 requirements:
     - boto3
     - botocore
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
