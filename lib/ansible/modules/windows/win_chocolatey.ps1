@@ -40,6 +40,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
+$choco_cmd_options = Get-AnsibleParam -obj $params -name "choco_cmd_options" -type "str"
 
 $result = @{
     changed = $false
@@ -88,7 +89,8 @@ Function Get-InstallChocolateyArguments {
         [String]$source_usename,
         [String]$source_password,
         [int]$timeout,
-        [String]$version
+        [String]$version,
+        [String]$choco_cmd_options
     )
     # returns an ArrayList of common arguments for install/updated a Chocolatey
     # package
@@ -332,7 +334,8 @@ Function Update-ChocolateyPackage {
         [String]$source_username,
         [String]$source_password,
         [int]$timeout,
-        [String]$version
+        [String]$version,
+        [String]$choco_cmd_options
     )
 
     $arguments = [System.Collections.ArrayList]@($choco_path, "upgrade")
@@ -344,7 +347,7 @@ Function Update-ChocolateyPackage {
         -package_params $package_params -proxy_url $proxy_url -proxy_username $proxy_username `
         -proxy_password $proxy_password -skip_scripts $skip_scripts -source $source `
         -source_username $source_username -source_password $source_password -timeout $timeout `
-        -version $version
+        -version $version -choco_cmd_options $choco_cmd_options
     $arguments.AddRange($common_args)
 
     $command = Argv-ToString -arguments $arguments
@@ -391,7 +394,8 @@ Function Install-ChocolateyPackage {
         [String]$source_username,
         [String]$source_password,
         [int]$timeout,
-        [String]$version
+        [String]$version,
+        [String]$choco_cmd_options
     )
 
     $arguments = [System.Collections.ArrayList]@($choco_path, "install")
@@ -403,7 +407,7 @@ Function Install-ChocolateyPackage {
         -package_params $package_params -proxy_url $proxy_url -proxy_username $proxy_username `
         -proxy_password $proxy_password -skip_scripts $skip_scripts -source $source `
         -source_username $source_username -source_password $source_password -timeout $timeout `
-        -version $version
+        -version $version -choco_cmd_options $choco_cmd_options
     $arguments.AddRange($common_args)
 
     $command = Argv-ToString -arguments $arguments
@@ -553,6 +557,7 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         source_password = $source_password
         timeout = $timeout
         version = $version
+        choco_cmd_options = $choco_cmd_options
     }
 
     if ($null -ne $missing_packages) {
