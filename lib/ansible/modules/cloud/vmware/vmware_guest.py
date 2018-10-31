@@ -2038,7 +2038,7 @@ class PyVmomiHelper(PyVmomi):
                 # Convert disk present in template if is set
                 if self.params['convert']:
                     if self.params['convert'] not in ['thin', 'thick', 'eagerzeroedthick']:
-                         self.module.fail_json(msg="Parameter 'convert' accept only value flat or sparse ")
+                         self.module.fail_json(msg="Parameter 'convert' accept only value thin, thick or eagerzeroedthick ")
                     else:
                         for device in vm_obj.config.hardware.device:
                                 if hasattr(device.backing, 'fileName'):
