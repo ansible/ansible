@@ -2,6 +2,21 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.7
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-10-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Bugfixes
+--------
+
+- user module - do not pass ssh_key_passphrase on cmdline (CVE-2018-16837)
+
 v2.6.6
 ======
 

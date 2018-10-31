@@ -507,3 +507,9 @@ releases:
     - user-docs-underlying-tools.yaml
     - v2.6.6_summary.yaml
     release_date: '2018-10-19'
+  2.6.7:
+    codename: Heartbreaker
+    fragments:
+    - user-do-not-pass-ssh_key_passphrase-on-cmdline.yaml
+    - v2.6.7_summary.yaml
+    release_date: '2018-10-31'
