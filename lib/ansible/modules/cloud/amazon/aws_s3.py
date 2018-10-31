@@ -583,9 +583,10 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
     except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Could not find the key %s." % obj)
 
+    optional_kwargs = {'ExtraArgs': {'VersionId': version}} if version else {}
     for x in range(0, retries + 1):
         try:
-            s3.download_file(bucket, obj, dest)
+            s3.download_file(bucket, obj, dest, **optional_kwargs)
             module.exit_json(msg="GET operation complete", changed=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             # actually fail on last pass through the loop.
