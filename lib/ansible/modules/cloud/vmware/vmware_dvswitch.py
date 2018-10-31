@@ -44,6 +44,21 @@ options:
         description:
             - The switch maximum transmission unit
         required: True
+    primary_pvlan:
+        description:
+            - Primary PVLAN to be created to the switch
+            - If set also secondary_pvlan and pvlan_type needs to be set
+        required: False
+    secondary_pvlan:
+        description:
+            - Secondary PVLAN to be created to the switch
+            - If set also primary_pvlan and pvlan_type needs to be set
+        required: False
+    pvlan_type:
+        description:
+            - Private VLAN type determites the type of the secondary PVLAN, can be set to "isolated" or "community" 
+            - If set also primary_pvlan and secondary_pvlan needs to be set
+        required: False
     uplink_quantity:
         description:
             - Quantity of uplink per ESXi host added to the switch
@@ -88,6 +103,23 @@ EXAMPLES = '''
     discovery_operation: both
     state: present
   delegate_to: localhost
+- name: Create dvswitch with PVLAN
+  vmware_dvswitch:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: datacenter
+    switch_name: dvSwitch
+    switch_version: 6.0.0
+    mtu: 9000
+    primary_pvlan: 123
+    secondary_pvlan: 124
+    pvlan_type: isolated
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+    state: present
+  delegate_to: localhost  
 '''
 
 try:
@@ -105,20 +137,11 @@ from ansible.module_utils.vmware import (HAS_PYVMOMI,
                                          wait_for_task
                                          )
 
-
 class VMwareDVSwitch(object):
 
     def __init__(self, module):
         self.module = module
         self.dvs = None
-        self.switch_name = self.module.params['switch_name']
-        self.switch_version = self.module.params['switch_version']
-        self.datacenter_name = self.module.params['datacenter_name']
-        self.mtu = self.module.params['mtu']
-        self.uplink_quantity = self.module.params['uplink_quantity']
-        self.discovery_proto = self.module.params['discovery_proto']
-        self.discovery_operation = self.module.params['discovery_operation']
-        self.state = self.module.params['state']
         self.content = connect_to_api(module)
 
     def process_state(self):
@@ -132,9 +155,9 @@ class VMwareDVSwitch(object):
                     'update': self.state_update_dvs,
                     'present': self.state_exit_unchanged,
                     'absent': self.state_create_dvs,
-                }
+                },
             }
-            dvs_states[self.state][self.check_dvs_configuration()]()
+            dvs_states[self.module.params['state']][self.check_dvs_configuration()]()
         except vmodl.RuntimeFault as runtime_fault:
             self.module.fail_json(msg=runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
@@ -145,24 +168,33 @@ class VMwareDVSwitch(object):
     def create_dvswitch(self, network_folder):
         result = None
         changed = False
-
         spec = vim.DistributedVirtualSwitch.CreateSpec()
         spec.configSpec = vim.dvs.VmwareDistributedVirtualSwitch.ConfigSpec()
         spec.configSpec.uplinkPortPolicy = vim.DistributedVirtualSwitch.NameArrayUplinkPortPolicy()
         spec.configSpec.linkDiscoveryProtocolConfig = vim.host.LinkDiscoveryProtocolConfig()
-
-        spec.configSpec.name = self.switch_name
-        spec.configSpec.maxMtu = self.mtu
-        spec.configSpec.linkDiscoveryProtocolConfig.protocol = self.discovery_proto
-        spec.configSpec.linkDiscoveryProtocolConfig.operation = self.discovery_operation
+        spec.configSpec.name = self.module.params['switch_name']
+        spec.configSpec.maxMtu = self.module.params['mtu']
+        spec.configSpec.linkDiscoveryProtocolConfig.protocol = self.module.params['discovery_proto']
+        spec.configSpec.linkDiscoveryProtocolConfig.operation = self.module.params['discovery_operation']
         spec.productInfo = vim.dvs.ProductSpec()
         spec.productInfo.name = "DVS"
         spec.productInfo.vendor = "VMware"
-        spec.productInfo.version = self.switch_version
-
-        for count in range(1, self.uplink_quantity + 1):
+        spec.productInfo.version = self.module.params['switch_version']
+        for count in range(1,3):
+            pvlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanConfigSpec()
+            pvlan.pvlanEntry = vim.dvs.VmwareDistributedVirtualSwitch.PvlanMapEntry()
+            pvlan.pvlanEntry.primaryVlanId = self.module.params['primary_pvlan']
+            if count == 1:
+                pvlan.pvlanEntry.secondaryVlanId = self.module.params['primary_pvlan']
+                pvlan.pvlanEntry.pvlanType = "promiscuous"
+            else:
+                pvlan.pvlanEntry.secondaryVlanId = self.module.params['secondary_pvlan']
+                pvlan.pvlanEntry.pvlanType = self.module.params['pvlan_type'] 
+            pvlan.operation = "add"
+            spec.configSpec.pvlanConfigSpec.append(pvlan)
+        for count in range(1, self.module.params['uplink_quantity'] + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
-
+        
         task = network_folder.CreateDVS_Task(spec)
         changed, result = wait_for_task(task)
         return changed, result
@@ -183,13 +215,13 @@ class VMwareDVSwitch(object):
         result = None
 
         if not self.module.check_mode:
-            dc = find_datacenter_by_name(self.content, self.datacenter_name)
+            dc = find_datacenter_by_name(self.content, self.module.params['datacenter_name'])
             changed, result = self.create_dvswitch(dc.networkFolder)
 
         self.module.exit_json(changed=changed, result=str(result))
 
     def check_dvs_configuration(self):
-        self.dvs = find_dvs_by_name(self.content, self.switch_name)
+        self.dvs = find_dvs_by_name(self.content, self.module.params['switch_name'])
         if self.dvs is None:
             return 'absent'
         else:
@@ -201,11 +233,14 @@ def main():
     argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
                               switch_name=dict(required=True, type='str'),
                               mtu=dict(required=True, type='int'),
+                              primary_pvlan=dict(required=False, type='int'),
+                              secondary_pvlan=dict(required=False, type='int'),
+                              pvlan_type=dict(required=False, choices=['isolated', 'community'], type='str'),
                               switch_version=dict(type='str'),
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
                               discovery_operation=dict(required=True, choices=['both', 'none', 'advertise', 'listen'], type='str'),
-                              state=dict(default='present', choices=['present', 'absent'], type='str')))
+                              state=dict(default='present', choices=['present', 'absent', 'update'], type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 

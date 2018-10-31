@@ -42,7 +42,8 @@ options:
     vlan_id:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
-            - 'If C(vlan_trunk) is configured to be I(true), this can be a range, example: 1-4094.'
+            - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
+            - 'If C(private_vlan) is configured to be I(true), this needs to be VLAN ID which is confired as private vlan in the dVswitch'
         required: True
     num_ports:
         description:
@@ -72,6 +73,14 @@ options:
         default: False
         type: bool
         version_added: '2.5'
+    private_vlan:
+        description:
+            - Indicates whether this is a PVLAN or not.
+        required: False
+        default: False
+        type: bool
+        version_added: 
+
     network_policy:
         description:
             - Dictionary which configures the different security values for portgroup.
@@ -134,7 +143,6 @@ options:
             'vlan_override': False,
             'ipfix_override': False
         }
-
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -151,7 +159,6 @@ EXAMPLES = '''
     portgroup_type: earlyBinding
     state: present
   delegate_to: localhost
-
 - name: Create vlan trunk portgroup
   vmware_dvs_portgroup:
     hostname: '{{ vcenter_hostname }}'
@@ -159,13 +166,25 @@ EXAMPLES = '''
     password: '{{ vcenter_password }}'
     portgroup_name: vlan-trunk-portrgoup
     switch_name: dvSwitch
-    vlan_id: 1-1000
+    vlan_id: 1-1000, 1005, 1100-1200
     vlan_trunk: True
     num_ports: 120
     portgroup_type: earlyBinding
     state: present
   delegate_to: localhost
-
+- name: Create pvlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-123-portrgoup
+    switch_name: dvSwitch
+    vlan_id: 123
+    private_vlan: True
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
 - name: Create no-vlan portgroup
   vmware_dvs_portgroup:
     hostname: '{{ vcenter_hostname }}'
@@ -178,7 +197,6 @@ EXAMPLES = '''
     portgroup_type: earlyBinding
     state: present
   delegate_to: localhost
-
 - name: Create vlan portgroup with all security and port policies
   vmware_dvs_portgroup:
     hostname: '{{ vcenter_hostname }}'
@@ -257,8 +275,17 @@ class VMwareDvsPortgroup(PyVmomi):
         config.defaultPortConfig = vim.dvs.VmwareDistributedVirtualSwitch.VmwarePortConfigPolicy()
         if self.module.params['vlan_trunk']:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec()
-            vlan_id_start, vlan_id_end = self.module.params['vlan_id'].split('-')
-            config.defaultPortConfig.vlan.vlanId = [vim.NumericRange(start=int(vlan_id_start.strip()), end=int(vlan_id_end.strip()))]
+            vlan_id_list = []
+            for vlan_id_splitted in self.module.params['vlan_id'].split(','):
+                try:
+                    vlan_id_start, vlan_id_end = vlan_id_splitted.split('-')
+                    vlan_id_list.append(vim.NumericRange(start=int(vlan_id_start.strip()), end=int(vlan_id_end.strip())))
+                except ValueError:
+                    vlan_id_list.append(vim.NumericRange(start=int(vlan_id_splitted.strip()), end=int(vlan_id_splitted.strip())))
+            config.defaultPortConfig.vlan.vlanId = vlan_id_list
+        elif self.module.params['private_vlan']:
+            config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec()
+            config.defaultPortConfig.vlan.pvlanId = int(self.module.params['vlan_id'])
         else:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
             config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
@@ -344,6 +371,7 @@ def main():
             portgroup_type=dict(required=True, choices=['earlyBinding', 'lateBinding', 'ephemeral'], type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             vlan_trunk=dict(type='bool', default=False),
+            private_vlan=dict(type='bool', default=False),
             network_policy=dict(
                 type='dict',
                 options=dict(
