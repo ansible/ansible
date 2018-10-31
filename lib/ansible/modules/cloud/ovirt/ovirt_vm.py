@@ -360,7 +360,7 @@ options:
     cloud_init_persist:
         description:
             - "If I(true) the C(cloud_init) or C(sysprep) parameters will be saved for the virtual machine
-               and won't be virtual machine won't be started as run-once."
+               and virtual machine won't be started as run-once."
         type: bool
         version_added: "2.5"
         aliases: [ 'sysprep_persist' ]
@@ -2123,8 +2123,8 @@ def main():
                     ),
                     wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     # Start action kwargs:
-                    use_cloud_init=True if not module.params.get('cloud_init_persist') and module.params.get('cloud_init') is not None else None,
-                    use_sysprep=True if not module.params.get('cloud_init_persist') and module.params.get('sysprep') is not None else None,
+                    use_cloud_init=True if module.params.get('cloud_init_persist') and module.params.get('cloud_init') is not None else None,
+                    use_sysprep=True if module.params.get('cloud_init_persist') and module.params.get('sysprep') is not None else None,
                     vm=otypes.Vm(
                         placement_policy=otypes.VmPlacementPolicy(
                             hosts=[otypes.Host(name=module.params['host'])]
