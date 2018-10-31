@@ -335,6 +335,14 @@ options:
     - For example, when user has different datastore or datastore cluster for templates and virtual machines.
     - Please see example for more usage.
     version_added: '2.7'
+  convert:
+    description:
+    - Specify convert disk type while cloning template 
+    - 'Valid attributes are:'
+    - '  - C(thin) thin disk'
+    - '  - C(eagerzeroedthick) eagerzeroedthick disk'
+    - '  - C(thick) thick disk'
+    version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 
