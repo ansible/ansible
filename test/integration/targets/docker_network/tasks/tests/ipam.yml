@@ -143,6 +143,20 @@
       - network['diff'] | length == 1
       - network['diff'][0] == "ipam_config[0].subnet"
 
+- name: Change subnet of network with IPv6 IPAM config
+  docker_network:
+    name: "{{ nname_ipam_2 }}"
+    enable_ipv6: yes
+    ipam_config:
+      - subnet: "fdd1:ac8c:0557:7ce1::"
+  register: network
+  ignore_errors: yes
+
+- assert:
+    that:
+      - network is failed
+      - "network.msg == '\"fdd1:ac8c:0557:7ce1::\" is not a valid CIDR'"
+
 - name: Cleanup network with IPv6 IPAM config
   docker_network:
     name: "{{ nname_ipam_2 }}"
