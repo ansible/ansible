@@ -33,6 +33,8 @@ options:
         description:
             - The desired state of the domain
         required: true
+        default: "present"
+        choices: [ "present", "absent" ]
     ldap_id:
         description:
             - ldap id to add to the domain.
