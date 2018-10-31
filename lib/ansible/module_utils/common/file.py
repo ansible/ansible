@@ -114,7 +114,7 @@ class LockTimeout(Exception):
     pass
 
 
-class FileLock():
+class FileLock:
     '''
     Currently FileLock is implemented via fcntl.flock on a lock file, however this
     behaviour may change in the future. Avoid mixing lock types fcntl.flock,
