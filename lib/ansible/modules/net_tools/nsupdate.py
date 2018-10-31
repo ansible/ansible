@@ -81,6 +81,7 @@ options:
             - Sets the transport protocol
         default: 'tcp'
         choices: ['tcp', 'udp']
+        version_added: 2.8
 '''
 
 EXAMPLES = '''
