@@ -108,6 +108,7 @@ Noteworthy module changes
 * The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardised
   ``validate_certs`` option instead.
 
+* The ``vmware_local_role_facts`` module now returns a list of dicts instead of a dict of dicts for role information.
 
 Plugins
 =======
