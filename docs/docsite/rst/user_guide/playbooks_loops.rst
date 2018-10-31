@@ -269,12 +269,72 @@ These examples do the same thing::
 
 Adding controls to loops
 ========================
-
 .. versionadded:: 2.1
 
-In 2.0 you are again able to use loops and task includes (but not playbook includes). This adds the ability to loop over the set of tasks in one shot.
-Ansible by default sets the loop variable ``item`` for each loop, which causes these nested loops to overwrite the value of ``item`` from the "outer" loops.
-As of Ansible 2.1, the ``loop_control`` option can be used to specify the name of the variable to be used for the loop::
+The ``loop_control`` keyword lets you manage your loops in useful ways.
+
+Limiting loop output with ``label``
+-----------------------------------
+.. versionadded:: 2.2
+
+When looping over complex data structures, the console output of your task can be enormous. To limit the displayed output, use the ``label`` directive with ``loop_control``::
+
+    - name: create servers
+      digital_ocean:
+        name: "{{ item.name }}"
+        state: present
+      loop:
+        - name: server1
+          disks: 3gb
+          ram: 15Gb
+          network:
+            nic01: 100Gb
+            nic02: 10Gb
+            ...
+      loop_control:
+        label: "{{ item.name }}"
+
+The output of this task will display just the ``name`` field for each ``item`` instead of the entire contents of the multi-line ``{{ item }}`` variable.
+
+Pausing within a loop
+---------------------
+.. versionadded:: 2.2
+
+To control the time (in seconds) between the execution of each item in a task loop, use the ``pause`` directive with ``loop_control``::
+
+    # main.yml
+    - name: create servers, pause 3s before creating next
+      digital_ocean:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - server1
+        - server2
+      loop_control:
+        pause: 3
+
+Tracking progress through a loop with ``index_var``
+---------------------------------------------------
+.. versionadded:: 2.5
+
+To keep track of where you are in a loop, use the ``index_var`` directive with ``loop_control``. This directive specifies a variable name to contain the current loop index::
+
+  - name: count our fruit
+    debug:
+      msg: "{{ item }} with index {{ my_idx }}"
+    loop:
+      - apple
+      - banana
+      - pear
+    loop_control:
+      index_var: my_idx
+
+Defining inner and outer variable names with ``loop_var``
+---------------------------------------------------------
+.. versionadded:: 2.1
+
+You can nest two looping tasks using ``include_tasks``. However, by default Ansible sets the loop variable ``item`` for each loop. This means the inner, nested loop will overwrite the value of ``item`` from the outer loop.
+You can specify the name of the variable for each loop using ``loop_var`` with ``loop_control``::
 
     # main.yml
     - include_tasks: inner.yml
@@ -294,56 +354,6 @@ As of Ansible 2.1, the ``loop_control`` option can be used to specify the name o
         - c
 
 .. note:: If Ansible detects that the current loop is using a variable which has already been defined, it will raise an error to fail the task.
-
-.. versionadded:: 2.2
-
-When using complex data structures for looping the display might get a bit too "busy", this is where the ``label`` directive comes to help::
-
-    - name: create servers
-      digital_ocean:
-        name: "{{ item.name }}"
-        state: present
-      loop:
-        - name: server1
-          disks: 3gb
-          ram: 15Gb
-          network:
-            nic01: 100Gb
-            nic02: 10Gb
-            ...
-      loop_control:
-        label: "{{ item.name }}"
-
-This will now display just the ``label`` field instead of the whole structure per ``item``, it defaults to ``{{ item }}`` to display things as usual.
-
-.. versionadded:: 2.2
-
-Another option to loop control is ``pause``, which allows you to control the time (in seconds) between execution of items in a task loop.::
-
-    # main.yml
-    - name: create servers, pause 3s before creating next
-      digital_ocean:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - server1
-        - server2
-      loop_control:
-        pause: 3
-
-.. versionadded:: 2.5
-
-If you need to keep track of where you are in a loop, you can use the ``index_var`` option to loop control to specify a variable name to contain the current loop index.::
-
-    - name: count our fruit
-      debug:
-        msg: "{{ item }} with index {{ my_idx }}"
-      loop:
-        - apple
-        - banana
-        - pear
-      loop_control:
-        index_var: my_idx
 
 .. versionadded:: 2.8
 
