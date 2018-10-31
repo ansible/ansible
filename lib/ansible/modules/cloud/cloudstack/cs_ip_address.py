@@ -27,18 +27,18 @@ options:
   ip_address:
     description:
       - Public IP address.
-      - Required if C(state=absent) and C(tags) is not set
+      - Required if I(state=absent) and I(tags) is not set.
   domain:
     description:
       - Domain the IP address is related to.
   network:
     description:
       - Network the IP address is related to.
-      - Mutually exclusive with C(vpc).
+      - Mutually exclusive with I(vpc).
   vpc:
     description:
       - VPC the IP address is related to.
-      - Mutually exclusive with C(network).
+      - Mutually exclusive with I(network).
     version_added: "2.2"
   account:
     description:
@@ -57,7 +57,7 @@ options:
     choices: [ present, absent ]
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - Tags can be used as an unique identifier for the IP Addresses.
       - In this case, at least one of them must be unique to ensure idempontency.
     aliases: [ 'tag' ]
