@@ -78,7 +78,7 @@ options:
             - Sets the record value.
     protocol:
         description:
-            - Sets the transport protocol
+            - Sets the transport protocol (TCP or UDP). TCP is the recommended and a more robust option.
         default: 'tcp'
         choices: ['tcp', 'udp']
         version_added: 2.8
@@ -362,7 +362,10 @@ class RecordManager(object):
         query = dns.message.make_query(self.fqdn, self.module.params['type'])
 
         try:
-            lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            if self.module.params['protocol'] == 'tcp': 
+                lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            else:
+                lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (socket_error, dns.exception.Timeout) as e:
             self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
 
@@ -373,7 +376,6 @@ class RecordManager(object):
 def main():
     tsig_algs = ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224',
                  'hmac-sha256', 'hmac-sha384', 'hmac-sha512']
-    protocols = ['tcp', 'udp']
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -388,7 +390,7 @@ def main():
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
             value=dict(required=False, default=None, type='list'),
-            protocol=dict(required=False, default='tcp', choices=protocols, type='str')
+            protocol=dict(required=False, default='tcp', choices=['tcp', 'udp'], type='str')
         ),
         supports_check_mode=True
     )
