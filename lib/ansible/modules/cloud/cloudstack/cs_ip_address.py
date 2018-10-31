@@ -34,9 +34,11 @@ options:
   network:
     description:
       - Network the IP address is related to.
+      - Mutually exclusive with C(vpc).
   vpc:
     description:
       - VPC the IP address is related to.
+      - Mutually exclusive with C(network).
     version_added: "2.2"
   account:
     description:
@@ -195,7 +197,8 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'networkid': self.get_network(key='id'),
+            # For the VPC case networkid is irrelevant, special case and we have to ignore it here.
+            'networkid': self.get_network(key='id') if not self.module.params.get('vpc') else None,
             'zoneid': self.get_zone(key='id'),
             'vpcid': self.get_vpc(key='id'),
         }
@@ -249,6 +252,9 @@ def main():
         required_if=[
             ('state', 'absent', ['ip_address', 'tags'], True),
         ],
+        mutually_exclusive=(
+            ['vpc', 'network'],
+        ),
         supports_check_mode=True
     )
 
