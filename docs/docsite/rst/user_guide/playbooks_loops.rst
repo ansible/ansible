@@ -1,21 +1,28 @@
 .. _playbooks_loops:
 
+*****
 Loops
-=====
+*****
 
-Often you'll want to do many things in one task, such as create a lot of users, install a lot of packages, or
-repeat a polling step until a certain result is reached.
+When you want to repeat a task for multiple items, for example installing several packages with the ``yum`` module, creating multiple users with the ``user`` module, or
+repeating a polling step until a certain result is reached. Ansible offers two ways to iterate a task over multiple objects: ``loop`` and ``with_<lookup>``. We added ``loop`` in Ansible 2.5, but we have not deprecated the use of ``with_<lookup>``.
 
-This chapter is all about how to use loops in playbooks.
+Iterating using ``with_<lookup>`` relies on :ref:`lookup_plugins` - even  ``items`` is a lookup.
 
-.. contents:: Topics
+The ``loop`` keyword is analogous to ``with_list``, and is the best choice for simple iteration.
+
+.. contents::
+   :local:
 
 .. _standard_loops:
 
-Standard Loops
-``````````````
+Standard loops
+==============
 
-To save some typing, repeated tasks can be written in short-hand like so::
+Iterating over a simple list
+----------------------------
+
+Repeated tasks can be written as standard loops over a simple list of strings. You can define the list directly in the task::
 
     - name: add several users
       user:
@@ -26,27 +33,25 @@ To save some typing, repeated tasks can be written in short-hand like so::
          - testuser1
          - testuser2
 
-If you have defined a YAML list in a variables file, or the 'vars' section, you can also do::
+You can define the list in a variables file, or in the 'vars' section of your play, then refer to the title of the list in the task::
 
     loop: "{{ somelist }}"
 
-The above would be the equivalent of::
+Either of these examples would be the equivalent of::
 
     - name: add user testuser1
       user:
         name: "testuser1"
         state: present
         groups: "wheel"
+
     - name: add user testuser2
       user:
         name: "testuser2"
         state: present
         groups: "wheel"
 
-.. note:: Before 2.5 Ansible mainly used the ``with_<lookup>`` keywords to create loops, the `loop` keyword is basically analogous to ``with_list``.
-
-
-Some plugins like, the yum and apt modules can take lists directly to their options, this is more optimal than looping over the task.
+You can pass a list directly to an option for some plugins, like the yum and apt modules. When available, passing the list as an option is better than looping over the task.
 See each action's documentation for details, for now here is an example::
 
    - name: optimal yum
@@ -60,8 +65,10 @@ See each action's documentation for details, for now here is an example::
        state: present
      loop: "{{list_of_packages}}"
 
-Note that the types of items you iterate over do not have to be simple lists of strings.
-If you have a list of hashes, you can reference subkeys using things like::
+Iterating over a list of hashes
+-------------------------------
+
+If you have a list of hashes, you can reference subkeys in a loop. For example::
 
     - name: add several users
       user:
@@ -72,8 +79,11 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
-Also be aware that when combining :doc:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
+When combining :ref:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
 See :ref:`the_when_statement` for an example.
+
+Iterating over a dictionary
+---------------------------
 
 To loop over a dict, use the ``dict2items`` :ref:`dict_filter`::
 
@@ -94,7 +104,10 @@ Here, we don't want to set empty tags, so we create a dictionary containing only
 .. _complex_loops:
 
 Complex loops
-`````````````
+=============
+
+Iterating over nested lists
+---------------------------
 
 Sometimes you need more than what a simple list provides, you can use Jinja2 expressions to create complex lists:
 For example, using the 'nested' lookup, you can combine lists::
@@ -107,19 +120,15 @@ For example, using the 'nested' lookup, you can combine lists::
         password: "foo"
       loop: "{{ ['alice', 'bob'] |product(['clientdb', 'employeedb', 'providerdb'])|list }}"
 
-.. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.
 
+Ensuring list output for loops: ``query`` vs. ``lookup``
+--------------------------------------------------------
 
-Using lookup vs query with loop
-```````````````````````````````
+Ansible 2.5 introduced a new Jinja2 function named :ref:`query` that offers a simpler interface and more predictable output from lookup plugins when using the ``loop`` keyword.
 
-In Ansible 2.5 a new jinja2 function was introduced named :ref:`query`, that offers several benefits over ``lookup`` when using the new ``loop`` keyword.
+``query`` always returns a list, while ``lookup`` returns a string of comma-separated values by default. ``loop`` requires a list. You can force ``lookup`` to return a list to ``loop`` by using ``wantlist=True`` with ``lookup``. Or you can use ``query`` instead.
 
-This is better described in the lookup documentation. However, ``query`` provides a simpler interface and a more predictable output from lookup plugins, ensuring better compatibility with ``loop``.
-
-In certain situations the ``lookup`` function may not return a list which ``loop`` requires.
-
-The following invocations are equivalent, using ``wantlist=True`` with ``lookup`` to ensure a return type of a list::
+These examples do the same thing::
 
     loop: "{{ query('inventory_hostnames', 'all') }}"
 
@@ -128,12 +137,12 @@ The following invocations are equivalent, using ``wantlist=True`` with ``lookup`
 
 .. _do_until_loops:
 
-Do-Until Loops
-``````````````
+Retrying a task until a condition is met
+----------------------------------------
 
 .. versionadded:: 1.4
 
-Sometimes you would want to retry a task until a certain condition is met.  Here's an example::
+You can use the ``until`` keyword to retry a task until a certain condition is met.  Here's an example::
 
     - shell: /usr/bin/foo
       register: result
@@ -141,16 +150,15 @@ Sometimes you would want to retry a task until a certain condition is met.  Here
       retries: 5
       delay: 10
 
-The above example runs the shell module iteratively until the module's result has "all systems go" in its stdout or the task has
-been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
+This task runs up to 5 times with a delay of 10 seconds between each attempt. If the result of any attempt has "all systems go" in its stdout, the task succeeds. The default value for "retries" is 3 and "delay" is 5.
 
-The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
-The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
+You can look at the results of individual retries by running the play with ``-vv``.
+When you run a task with ``until`` and register the result as a variable, the registered variable will include a key called "attempts", which records the number of the retries for the task.
 
 .. note:: If the ``until`` parameter isn't defined, the value for the ``retries`` parameter is forced to 1.
 
-Using register with a loop
-``````````````````````````
+Registering variables with a loop
+---------------------------------
 
 After using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
 
@@ -218,12 +226,10 @@ During iteration, the result of the current item will be placed in the variable:
       register: echo
       changed_when: echo.stdout != "one"
 
+Looping over inventory
+----------------------
 
-
-Looping over the inventory
-``````````````````````````
-
-If you wish to loop over the inventory, or just a subset of it, there are multiple ways.
+If you wish to loop over your inventory, or just a subset of it, there are multiple ways.
 One can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables, like this::
 
     # show all the hosts in the inventory
@@ -252,8 +258,8 @@ More information on the patterns can be found on :doc:`intro_patterns`
 
 .. _loop_control:
 
-Loop Control
-````````````
+Adding controls to loops
+========================
 
 .. versionadded:: 2.1
 
@@ -355,22 +361,21 @@ Variable                    Description
         extended: yes
 
 Migrating from with_X to loop
-`````````````````````````````
+=============================
 
 .. include:: shared_snippets/with2loop.txt
 
-
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks`
        An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
