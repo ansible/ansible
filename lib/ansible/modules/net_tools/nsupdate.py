@@ -76,7 +76,11 @@ options:
     value:
         description:
             - Sets the record value.
-
+    protocol:
+        description:
+            - Sets the transport protocol
+        default: 'tcp'
+        choices: ['tcp', 'udp']
 '''
 
 EXAMPLES = '''
@@ -227,7 +231,10 @@ class RecordManager(object):
     def __do_update(self, update):
         response = None
         try:
-            response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            if module.params["protocol"] == 'tcp':
+                response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            else:
+                response = dns.query.udp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
             self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
         except (socket_error, dns.exception.Timeout) as e:
@@ -365,6 +372,7 @@ class RecordManager(object):
 def main():
     tsig_algs = ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224',
                  'hmac-sha256', 'hmac-sha384', 'hmac-sha512']
+    protocols = ['tcp', 'udp']
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -378,7 +386,8 @@ def main():
             record=dict(required=True, type='str'),
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False, default=None, type='list')
+            value=dict(required=False, default=None, type='list'),
+            protocol=dict(required=False, default='tcp', choices=protocols, type='str')
         ),
         supports_check_mode=True
     )
