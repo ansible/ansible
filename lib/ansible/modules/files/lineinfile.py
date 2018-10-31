@@ -122,18 +122,6 @@ options:
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
-  lock:
-    description:
-      - Lock file while editing to prevent access to file from other concurrent lineinfile processes
-    type: bool
-    default: 'no'
-    version_added: "2.8"
-  lock_timeout:
-    description:
-      - amount of time in seconds to wait for a lock before giving up
-    type: int
-    default: -1
-    version_added: "2.8"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 seealso:
@@ -494,10 +482,8 @@ def main():
             backrefs=dict(type='bool', default=False),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
-            firstmatch=dict(type='bool', default=False),
-            validate=dict(type='str'),
-            lock=dict(default=False, type='bool'),
-            lock_timeout=dict(default=-1, type='int')
+            firstmatch=dict(default=False, type='bool'),
+            validate=dict(type='str')
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -512,8 +498,6 @@ def main():
     firstmatch = params['firstmatch']
     regexp = params['regexp']
     line = params['line']
-    lock = params['lock']
-    lock_timeout = params['lock_timeout']
     flock = FileLock()
 
     if regexp == '':
@@ -539,22 +523,15 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        if lock:
-            flock.set_lock(path, module.tmpdir, lock_timeout)
-
-        present(module, path, regexp, line,
-                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
+        with flock.lock_file(path, module.tmpdir):
+            present(module, path, regexp, line,
+                    ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        if lock:
-            flock.set_lock(path, module.tmpdir, lock_timeout)
-
-        absent(module, path, regexp, line, backup)
-
-    if module.lock:
-        flock.unlock()
+        with flock.lock_file(path, module.tmpdir):
+            absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':

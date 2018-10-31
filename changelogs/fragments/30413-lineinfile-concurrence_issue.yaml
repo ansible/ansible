@@ -1,3 +1,3 @@
 bugfixes:
-- "Fixed lineinfile concurrence issue with multiple delegation on same delegated host and same file"
+- "lineinfile now uses FileLock to prevent concurrency issues, fixes #30413"
 - "common.file.FileLocking now properly handles lock_timeout = None and negative int"
