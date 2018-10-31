@@ -36,8 +36,8 @@
     port: 443
     state: started
 
-# Testcase 0001: Add Local user in ESXi server
-- name: add local user
+# Testcase 0000: Add Local user in ESXi server
+- name: Add local user in check mode
   vmware_local_user_manager:
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance.json.username }}"
@@ -45,6 +45,26 @@
     validate_certs: no
     local_user_name: testuser_0001
     local_user_password: "SamplePassword!"
+    local_user_role: ReadOnly
+    state: present
+  register: user_add
+  check_mode: yes
+
+- name: ensure user is created
+  assert:
+    that:
+        - user_add.changed == true
+
+# Testcase 0001: Add Local user in ESXi server
+- name: Add local user
+  vmware_local_user_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    local_user_name: testuser_0001
+    local_user_password: "SamplePassword!"
+    local_user_role: ReadOnly
     state: present
   register: user_add_0001
 
@@ -53,7 +73,42 @@
     that:
         - user_add_0001.changed == true
 
-# Testcase 0002: Delete Local user in ESXi server
+# Testcase 0002: Update Local user in ESXi server
+- name: Update local user
+  vmware_local_user_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    local_user_name: testuser_0001
+    local_user_description: "Test user"
+    state: present
+  register: user_update_0001
+
+- name: ensure user was updated
+  assert:
+    that:
+        - user_update_0001.changed == true
+
+# Testcase 0003: Update Local user in ESXi server
+- name: Update local user
+  vmware_local_user_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    local_user_name: testuser_0001
+    local_user_password: "SamplePassword!123"
+    update_password: True
+    state: present
+  register: user_update_0002
+
+- name: ensure user was updated
+  assert:
+    that:
+        - user_update_0002.changed == true
+
+# Testcase 0004: Delete Local user in ESXi server
 - name: Delete local user
   vmware_local_user_manager:
     hostname: "{{ vcsim }}"
@@ -62,12 +117,12 @@
     validate_certs: no
     local_user_name: testuser_0001
     state: absent
-  register: user_delete_0002
+  register: user_delete
 
 - name: ensure user is deleted
   assert:
     that:
-        - user_delete_0002.changed == true
+        - user_delete.changed == true
 
 - name: kill vcsim
   uri:
