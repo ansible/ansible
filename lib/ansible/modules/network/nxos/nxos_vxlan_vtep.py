@@ -270,6 +270,8 @@ def fix_commands(commands, module):
     if no_source_interface_command:
         commands.pop(commands.index(no_source_interface_command))
         commands.append(no_source_interface_command)
+
+    commands.insert(0, 'terminal dont-ask')
     return commands
 
 

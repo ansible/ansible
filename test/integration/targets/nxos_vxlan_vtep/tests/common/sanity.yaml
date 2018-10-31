@@ -51,7 +51,6 @@
         global_ingress_replication_bgp: "{{global_ingress_replication_bgp|default(omit)}}"
         global_suppress_arp: "{{global_suppress_arp|default(omit)}}"
         global_mcast_group_L3: "{{global_mcast_group_L3|default(omit)}}"
-        #global_mcast_group_L2: "{{global_mcast_group_L2|default(omit)}}"
         shutdown: false
         provider: "{{ connection }}"
       register: result
@@ -78,7 +77,6 @@
         global_ingress_replication_bgp: "{{def_global_ingress_replication_bgp|default(omit)}}"
         global_suppress_arp: "{{def_global_suppress_arp|default(omit)}}"
         global_mcast_group_L3: "{{def_global_mcast_group_L3|default(omit)}}"
-        #global_mcast_group_L2: "{{def_global_mcast_group_L2|default(omit)}}"
         shutdown: true
         provider: "{{ connection }}"
       register: result
@@ -87,6 +85,38 @@
   
     - name: "reset Idempotence"
       nxos_vxlan_vtep: *def9
+      register: result
+
+    - assert: *false
+
+    - name: configure global mcast L2
+      nxos_vxlan_vtep: &gml2
+        interface: nve1
+        host_reachability: true
+        global_mcast_group_L2: "{{global_mcast_group_L2|default(omit)}}"
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+  
+    - name: "Conf Idempotence"
+      nxos_vxlan_vtep: *gml2
+      register: result
+
+    - assert: *false
+
+    - name: reset global mcast L2
+      nxos_vxlan_vtep: &rgml2
+        interface: nve1
+        host_reachability: false
+        global_mcast_group_L2: "{{def_global_mcast_group_L2|default(omit)}}"
+        provider: "{{ connection }}"
+      register: result
+  
+    - assert: *true
+  
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *rgml2
       register: result
 
     - assert: *false
@@ -168,7 +198,7 @@
     when: platform is match('N7K')
 
   - name: "Disable nv overlay evpn"
-    nxos_config:
+    nxos_config: 
       commands:
         - no nv overlay evpn
       match: none
