@@ -143,7 +143,6 @@ CE_NC_GET_NVE_INFO = """
     </nvo3Nves>
   </nvo3>
 </filter>
-</filter>
 """
 
 CE_NC_MERGE_VNI_BD_ID = """
