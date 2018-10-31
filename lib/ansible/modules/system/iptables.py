@@ -335,6 +335,11 @@ options:
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
+  wait:
+    description:
+      - Wait N seconds for the xtables lock to prevent multiple instances of
+        the program from running concurrently.
+    version_added: "2.8"
 '''
 
 EXAMPLES = r'''
@@ -514,6 +519,7 @@ def append_jump(rule, param, jump):
 
 def construct_rule(params):
     rule = []
+    append_param(rule, params['wait'], '-w', False)
     append_param(rule, params['protocol'], '-p', False)
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
@@ -641,6 +647,7 @@ def main():
             chain=dict(type='str'),
             rule_num=dict(type='str'),
             protocol=dict(type='str'),
+            wait=dict(type='str'),
             source=dict(type='str'),
             to_source=dict(type='str'),
             destination=dict(type='str'),
