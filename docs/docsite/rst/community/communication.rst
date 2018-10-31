@@ -60,7 +60,7 @@ Many of our community Working Groups meet on Freenode IRC channels. If you want 
 - `JBoss Working Group <https://github.com/ansible/community/tree/master/group-jboss>`_ - ``#ansible-jboss``
 - `Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible training
 - `Linode Working Group <https://github.com/ansible/community/tree/master/group-linode>`_ - ``#ansible-linode``
-- `Molecule <https://molecule.readthedocs.io>`_ - ``#molecule-users`` - testing platform for Ansible playbooks and roles
+- `Molecule <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - testing platform for Ansible playbooks and roles
 - `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_ - ``#ansible-network``
 - `Testing Working Group <https://github.com/ansible/community/tree/master/group-testing>`_  - ``#ansible-devel``
 - `VMware Working Group <https://github.com/ansible/community/tree/master/group-vmware>`_ - ``#ansible-vmware``
