@@ -66,7 +66,7 @@ options:
       - "A dictionary array of targets to add to or update for the rule, in the
         form C({ id: [string], arn: [string], role_arn: [string], input: [valid JSON string],
         input_path: [valid JSONPath string], ecs_parameters: {task_definition_arn: [string], task_count: [int],
-        launch_type: choices ['FARGATE','EC2'], platform_version: [string ]"1.1.0", network_configuration: [dict] }}).
+        launch_type: choices [FARGATE,EC2], platform_version: choices[1.1.0,1.2.0], network_configuration: [dict] }}).
         I(id) [required] is the unique target assignment ID. I(arn) (required)
         is the Amazon Resource Name associated with the target. I(role_arn) (optional) is The Amazon Resource Name
         of the IAM role to be used for this target when the rule is triggered. I(input)
@@ -289,14 +289,13 @@ class CloudWatchEventRule(object):
                     network_configuration = ecs_parameters['network_configuration']['awsvpc_configuration']
                     if 'subnets' in network_configuration:
                         target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['Subnets'] = \
-                        network_configuration['subnets']
+                            network_configuration['subnets']
                     if 'security_groups' in network_configuration:
                         target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['SecurityGroups'] = \
-                        network_configuration['security_groups']
+                            network_configuration['security_groups']
                     if 'assign_public_ip' in network_configuration:
                         target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['AssignPublicIp'] = \
-                        network_configuration['assign_public_ip']
-
+                            network_configuration['assign_public_ip']
 
             targets_request.append(target_request)
         return targets_request
