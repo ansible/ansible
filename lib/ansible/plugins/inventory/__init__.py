@@ -331,16 +331,26 @@ class Constructable(object):
                     if key:
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
+                        expand_csv = keyed.get('expand_csv_tags', False)
 
                         if isinstance(key, string_types):
-                            groups.append('%s%s%s' % (prefix, sep, key))
+                            if expand_csv:
+                                for group in key.split(","):
+                                    groups.append('%s%s%s' % (prefix, sep, group))
+                            else:
+                                groups.append('%s%s%s' % (prefix, sep, key))
                         elif isinstance(key, list):
                             for name in key:
                                 groups.append('%s%s%s' % (prefix, sep, name))
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
-                                name = '%s%s%s' % (gname, sep, gval)
-                                groups.append('%s%s%s' % (prefix, sep, name))
+                                if expand_csv:
+                                    for group in gval.split(","):
+                                        name = '%s%s%s' % (gname, sep, group)
+                                        groups.append('%s%s%s' % (prefix, sep, name))
+                                else:
+                                    name = '%s%s%s' % (gname, sep, gval)
+                                    groups.append('%s%s%s' % (prefix, sep, name))
                         else:
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
                     else:

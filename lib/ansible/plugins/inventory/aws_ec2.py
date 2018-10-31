@@ -108,6 +108,10 @@ keyed_groups:
   # add hosts to tag_Name_Value groups for each Name/Value tag pair
   - prefix: tag
     key: tags
+  # create separate group tag_Name_Value for expanded CSV in tag value
+  - key: tags
+    prefix: 'tag'
+    expand_csv_tags: True
   # add hosts to e.g. instance_type_z3_tiny
   - prefix: instance_type
     key: instance_type
