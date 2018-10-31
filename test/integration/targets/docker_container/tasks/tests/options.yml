@@ -2324,11 +2324,41 @@
     seconds: 2
 
 - name: paused (logs)
-  command: docker logs "{{ cname }}"
+  command: docker logs --tail=20 "{{ cname }}"
   register: paused_2
 
-- debug:
-    msg: "{{ paused_2.stdout_lines[:10] }}"
+- name: paused (idempotent)
+  docker_container:
+    image: alpine:3.8
+    command: "/bin/sh -c 'sleep 1s ; yes'"
+    name: "{{ cname }}"
+    state: started
+    paused: yes
+    stop_timeout: 1
+  register: paused_3
+
+- name: paused (continue)
+  docker_container:
+    image: alpine:3.8
+    command: "/bin/sh -c 'sleep 1s ; yes'"
+    name: "{{ cname }}"
+    state: started
+    paused: no
+    stop_timeout: 1
+  register: paused_4
+
+- pause:
+    seconds: 2
+
+- name: paused (stop)
+  docker_container:
+    name: "{{ cname }}"
+    state: stopped
+    stop_timeout: 1
+
+- name: paused (logs)
+  command: docker logs --tail=20 "{{ cname }}"
+  register: paused_5
 
 - name: cleanup
   docker_container:
@@ -2340,6 +2370,9 @@
     that:
     - paused_1 is changed
     - paused_2.stdout_lines | length == 0
+    - paused_3 is not changed
+    - paused_4 is changed
+    - paused_5.stdout_lines | length > 0
 
 ####################################################################
 ## pid_mode ########################################################
