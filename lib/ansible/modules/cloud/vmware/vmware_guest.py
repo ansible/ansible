@@ -337,7 +337,7 @@ options:
     version_added: '2.7'
   convert:
     description:
-    - Specify convert disk type while cloning template 
+    - Specify convert disk type while cloning template
     - 'Valid attributes are:'
     - ' - C(thin) thin disk'
     - ' - C(eagerzeroedthick) eagerzeroedthick disk'
@@ -2061,7 +2061,7 @@ class PyVmomiHelper(PyVmomi):
                                 disk_locator.diskId = device.key
                                 disk_locator.datastore = datastore
                                 relospec.disk.append(disk_locator)
-                
+
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
                 relospec.pool = resource_pool
