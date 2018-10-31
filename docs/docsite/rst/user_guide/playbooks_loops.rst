@@ -4,17 +4,22 @@
 Loops
 *****
 
-When you want to repeat a task multiple times, for example installing several packages with the :ref:`yum_module`, creating multiple users with the :ref:`user_module`, or
-repeating a polling step until a certain result is reached. Ansible offers two ways to accomplish this: ``loop`` and ``with_<lookup>``. Iterating using ``with_<lookup>`` relies on :ref:`lookup_plugins` - even  ``items`` is a lookup.
+Sometimes you want to repeat a task multiple times. In computer programming, this is called a loop. Common Ansible loops include installing several packages with the :ref:`yum module <yum_module>`, creating multiple users with the :ref:`user module <user_module>`, and
+repeating a polling step until a certain result is reached. Ansible offers two keywords for creating loops: ``loop`` and ``with_<lookup>``.
 
-The ``loop`` keyword is analogous to ``with_list``, and is the best choice for simple iteration.
-
-Any ``with_`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword.
-
-We added ``loop`` in Ansible 2.5, but we have not deprecated the use of ``with_<lookup>``. We are still discussing what UX changes can be made to enable ``loop`` to replace ``with_<lookup>`` in the future. If we eventually deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
+We added ``loop`` in Ansible 2.5, but it is not yet a full replacement for ``with_<lookup>``. We have not deprecated the use of ``with_<lookup>``. We are still discussing what UX changes can be made to enable ``loop`` to replace ``with_<lookup>`` in the future. If we eventually deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
 
 .. contents::
    :local:
+
+Comparing ``loop`` and ``with_*``
+=================================
+
+* The ``with_<lookup>`` keywords rely on :ref:`lookup_plugins` - even  ``items`` is a lookup.
+* The ``loop`` keyword is equivalent to ``with_list``, and is the best choice for simple loops.
+* Generally speaking, any use of ``with_*`` covered in :ref:`migrating_to_loop` can be updated to use ``loop``.
+* Be careful when changing ``with_items`` to ``loop``, as ``with_items`` performed implicit flattening. You may need to use ``flatten`` with ``loop`` to match the exact outcome.
+* Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword.
 
 .. _standard_loops:
 
@@ -53,19 +58,20 @@ Either of these examples would be the equivalent of::
         state: present
         groups: "wheel"
 
-You can pass a list directly to an option for some plugins, like the yum and apt modules. When available, passing the list as an option is better than looping over the task.
-See each action's documentation for details, for now here is an example::
+You can pass a list directly to a parameter for some plugins, like the yum and apt modules. When available, passing the list to a parameter is better than looping over the task. For example::
 
    - name: optimal yum
      yum:
-       name: "{{list_of_packages}}"
+       name: "{{  list_of_packages  }}"
        state: present
 
-   - name: non optimal yum, not only slower but might cause issues with interdependencies
+   - name: non-optimal yum, slower and may cause issues with interdependencies
      yum:
-       name: "{{item}}"
+       name: "{{  item  }}"
        state: present
-     loop: "{{list_of_packages}}"
+     loop: "{{  list_of_packages  }}"
+
+Review the module or plugin's documentation for details.
 
 Iterating over a list of hashes
 -------------------------------
@@ -102,77 +108,18 @@ To loop over a dict, use the ``dict2items`` :ref:`dict_filter`::
 
 Here, we don't want to set empty tags, so we create a dictionary containing only non-empty tags.
 
-
-.. _complex_loops:
-
-Complex loops
-=============
-
-Iterating over nested lists
----------------------------
-
-Sometimes you need more than what a simple list provides, you can use Jinja2 expressions to create complex lists:
-For example, using the 'nested' lookup, you can combine lists::
-
-    - name: give users access to multiple databases
-      mysql_user:
-        name: "{{ item[0] }}"
-        priv: "{{ item[1] }}.*:ALL"
-        append_privs: yes
-        password: "foo"
-      loop: "{{ ['alice', 'bob'] |product(['clientdb', 'employeedb', 'providerdb'])|list }}"
-
-
-Ensuring list output for loops: ``query`` vs. ``lookup``
---------------------------------------------------------
-
-The ``loop`` keyword requires a list as input, but the ``lookup`` keyword returns a string of comma-separated values by default. Ansible 2.5 introduced a new Jinja2 function named :ref:`query` that always returns a list, offering a simpler interface and more predictable output from lookup plugins when using the ``loop`` keyword.
-
-You can force ``lookup`` to return a list to ``loop`` by using ``wantlist=True``, or you can use ``query`` instead.
-
-These examples do the same thing::
-
-    loop: "{{ query('inventory_hostnames', 'all') }}"
-
-    loop: "{{ lookup('inventory_hostnames', 'all', wantlist=True) }}"
-
-
-.. _do_until_loops:
-
-Retrying a task until a condition is met
-----------------------------------------
-
-.. versionadded:: 1.4
-
-You can use the ``until`` keyword to retry a task until a certain condition is met.  Here's an example::
-
-    - shell: /usr/bin/foo
-      register: result
-      until: result.stdout.find("all systems go") != -1
-      retries: 5
-      delay: 10
-
-This task runs up to 5 times with a delay of 10 seconds between each attempt. If the result of any attempt has "all systems go" in its stdout, the task succeeds. The default value for "retries" is 3 and "delay" is 5.
-
-You can look at the results of individual retries by running the play with ``-vv``.
-When you run a task with ``until`` and register the result as a variable, the registered variable will include a key called "attempts", which records the number of the retries for the task.
-
-.. note:: If the ``until`` parameter isn't defined, the value for the ``retries`` parameter is forced to 1.
-
 Registering variables with a loop
----------------------------------
+=================================
 
-After using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
+You can register the output of a loop as a variable. For example::
 
-Here is an example of using ``register`` with ``loop``::
+   - shell: "echo {{ item }}"
+     loop:
+       - "one"
+       - "two"
+     register: echo
 
-    - shell: "echo {{ item }}"
-      loop:
-        - "one"
-        - "two"
-      register: echo
-
-This differs from the data structure returned when using ``register`` without a loop::
+When you use ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module. This differs from the data structure returned when using ``register`` without a loop::
 
     {
         "changed": true,
@@ -228,6 +175,49 @@ During iteration, the result of the current item will be placed in the variable:
       register: echo
       changed_when: echo.stdout != "one"
 
+.. _complex_loops:
+
+Complex loops
+=============
+
+Iterating over nested lists
+---------------------------
+
+Sometimes you need more than what a simple list provides, you can use Jinja2 expressions to create complex lists:
+For example, using the 'nested' lookup, you can combine lists::
+
+    - name: give users access to multiple databases
+      mysql_user:
+        name: "{{ item[0] }}"
+        priv: "{{ item[1] }}.*:ALL"
+        append_privs: yes
+        password: "foo"
+      loop: "{{ ['alice', 'bob'] |product(['clientdb', 'employeedb', 'providerdb'])|list }}"
+
+
+.. _do_until_loops:
+
+Retrying a task until a condition is met
+----------------------------------------
+
+.. versionadded:: 1.4
+
+You can use the ``until`` keyword to retry a task until a certain condition is met.  Here's an example::
+
+    - shell: /usr/bin/foo
+      register: result
+      until: result.stdout.find("all systems go") != -1
+      retries: 5
+      delay: 10
+
+This task runs up to 5 times with a delay of 10 seconds between each attempt. If the result of any attempt has "all systems go" in its stdout, the task succeeds. The default value for "retries" is 3 and "delay" is 5.
+
+To see the results of individual retries, run the play with ``-vv``.
+
+When you run a task with ``until`` and register the result as a variable, the registered variable will include a key called "attempts", which records the number of the retries for the task.
+
+.. note:: You must set the ``until`` parameter if you want a task to retry. If ``until`` is not defined, the value for the ``retries`` parameter is forced to 1.
+
 Looping over inventory
 ----------------------
 
@@ -256,6 +246,20 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
       loop: "{{ query('inventory_hostnames', 'all:!www') }}"
 
 More information on the patterns can be found on :ref:`intro_patterns`
+
+Ensuring list input for ``loop``: ``query`` vs. ``lookup``
+==========================================================
+
+The ``loop`` keyword requires a list as input, but the ``lookup`` keyword returns a string of comma-separated values by default. Ansible 2.5 introduced a new Jinja2 function named :ref:`query` that always returns a list, offering a simpler interface and more predictable output from lookup plugins when using the ``loop`` keyword.
+
+You can force ``lookup`` to return a list to ``loop`` by using ``wantlist=True``, or you can use ``query`` instead.
+
+These examples do the same thing::
+
+    loop: "{{ query('inventory_hostnames', 'all') }}"
+
+    loop: "{{ lookup('inventory_hostnames', 'all', wantlist=True) }}"
+
 
 .. _loop_control:
 
@@ -360,6 +364,9 @@ Variable                    Description
 
       loop_control:
         extended: yes
+=======
+
+.. _migrating_to_loop:
 
 Migrating from with_X to loop
 =============================
@@ -368,7 +375,7 @@ Migrating from with_X to loop
 
 .. seealso::
 
-   :ref:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
