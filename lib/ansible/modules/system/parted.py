@@ -96,6 +96,11 @@ options:
     type: str
     choices: [ absent, present, info ]
     default: info
+  fs_type:
+    description:
+     - If specified, will set filesystem type to given partition
+    default: 'ext4'
+    version_added: '2.8'
 notes:
   - When fetching information about a new disk and when the version of parted
     installed on the system is before version 3.1, the module queries the kernel
@@ -549,6 +554,7 @@ def main():
             part_type=dict(type='str', default='primary', choices=['extended', 'logical', 'primary']),
             part_start=dict(type='str', default='0%'),
             part_end=dict(type='str', default='100%'),
+            'fs_type': {'default': 'ext4', 'type': 'str'},
 
             # name <partition> <name> command
             name=dict(type='str'),
@@ -579,6 +585,7 @@ def main():
     name = module.params['name']
     state = module.params['state']
     flags = module.params['flags']
+    fs_type = module.params['fs_type']
 
     # Parted executable
     parted_exec = module.get_bin_path('parted', True)
@@ -611,8 +618,9 @@ def main():
 
         # Create partition if required
         if part_type and not part_exists(current_parts, 'num', number):
-            script += "mkpart %s %s %s " % (
+            script += "mkpart %s %s %s %s " % (
                 part_type,
+                fs_type,
                 part_start,
                 part_end
             )
