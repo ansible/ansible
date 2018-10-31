@@ -79,8 +79,7 @@ class CallbackProcess(multiprocessing.Process):
                 method_name, args, kwargs = self._queue.get()
                 if isinstance(method_name, CallbackSentinel):
                     break
-                else:
-                    self._send(method_name, *args, **kwargs)
+                self._send(method_name, *args, **kwargs)
             except (IOError, EOFError, KeyboardInterrupt):
                 break
             except Queue.Empty:
