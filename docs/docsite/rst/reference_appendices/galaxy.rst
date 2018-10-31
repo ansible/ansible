@@ -245,7 +245,7 @@ use the *--force* option. Force will create the above subdirectories and files, 
 Container Enabled
 =================
 
-If you are creating a Container Enabled role, use the *--container-enabled* option. This will create the same directory structure as above, but populate it
+If you are creating a Container Enabled role, pass ``--type container`` to ``ansible-galaxy init``. This will create the same directory structure as above, but populate it
 with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
 the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
 
