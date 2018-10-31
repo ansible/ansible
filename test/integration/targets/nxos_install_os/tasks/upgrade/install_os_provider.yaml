@@ -3,6 +3,7 @@
   when: delete_image_list is defined
 
 - include: targets/nxos_install_os/tasks/upgrade/copy_kick_system_images.yaml
+  when: copy_images is defined
 
 - include: targets/nxos_install_os/tasks/upgrade/install_with_kick_provider.yaml
   when: ki is defined and combined is undefined
