@@ -44,7 +44,7 @@ try:
     try:
         curses.setupterm()
         HAS_CURSES = True
-    except curses.error:
+    except (curses.error, TypeError):
         HAS_CURSES = False
 except ImportError:
     HAS_CURSES = False
