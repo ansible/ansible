@@ -2,6 +2,28 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.11:
+
+v2.5.11
+=======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.11_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-10-31
+| Security release for CVE-2018-16837 (https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2018-16837)
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.11_Bugfixes:
+
+Bugfixes
+--------
+
+- user module - do not pass ssh_key_passphrase on cmdline (CVE-2018-16837)
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.10:
 
 v2.5.10
