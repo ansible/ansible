@@ -35,7 +35,7 @@
     return_content: true
   register: result
   until: result.json.status == "successful"
-  retries: 15
+  retries: 60
   delay: 1
 
 - name: Create a Job Template
