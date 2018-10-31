@@ -339,9 +339,9 @@ options:
     description:
     - Specify convert disk type while cloning template 
     - 'Valid attributes are:'
-    - '  - C(thin) thin disk'
-    - '  - C(eagerzeroedthick) eagerzeroedthick disk'
-    - '  - C(thick) thick disk'
+    - ' - C(thin) thin disk'
+    - ' - C(eagerzeroedthick) eagerzeroedthick disk'
+    - ' - C(thick) thick disk'
     version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
