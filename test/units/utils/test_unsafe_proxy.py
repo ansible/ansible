@@ -8,8 +8,6 @@ __metaclass__ = type
 from ansible.module_utils.six import PY3
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeText, UnsafeProxy, wrap_var
 
-import pytest
-
 
 def test_UnsafeProxy():
     assert isinstance(UnsafeProxy({}), dict)
