@@ -540,7 +540,7 @@ def main():
             ins_aft = 'EOF'
 
         if lock:
-            flock.set_lock(path, tempfile.gettempdir(), lock_timeout)
+            flock.set_lock(path, module.tmpdir, lock_timeout)
 
         present(module, path, regexp, line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
@@ -549,7 +549,7 @@ def main():
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
         if lock:
-            flock.set_lock(path, tempfile.gettempdir(), lock_timeout)
+            flock.set_lock(path, module.tmpdir, lock_timeout)
 
         absent(module, path, regexp, line, backup)
 
