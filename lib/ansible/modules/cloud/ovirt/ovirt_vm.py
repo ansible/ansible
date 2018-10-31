@@ -576,6 +576,11 @@ options:
             - C(directory) - The name of the directory where the OVA has to be exported.
             - C(filename) - The name of the exported OVA file.
         version_added: "2.8"
+    force_migrate:
+        description:
+            - "If I(true), the VM will migrate even if it is defined as non-migratable."
+        version_added: "2.8"
+        type: bool
 
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -1374,7 +1379,7 @@ class VmsModule(BaseModule):
                 current_vm_host = hosts_service.host_service(entity.host.id).get().name
                 if vm_host != current_vm_host:
                     if not self._module.check_mode:
-                        vm_service.migrate(host=otypes.Host(name=vm_host))
+                        vm_service.migrate(host=otypes.Host(name=vm_host), force=self.param('force_migrate'))
                         self._wait_for_UP(vm_service)
                     self.changed = True
 
@@ -2043,6 +2048,7 @@ def main():
         exclusive=dict(type='bool'),
         export_domain=dict(default=None),
         export_ova=dict(type='dict'),
+        force_migrate=dict(type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
