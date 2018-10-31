@@ -148,7 +148,8 @@ options:
           version then no action is taken. version_added: 2.6'
     - ' - C(boot_firmware) (string): Choose which firmware should be used to boot the virtual machine.
           Allowed values are "bios" and "efi". version_added: 2.7'
-
+    - ' - C(sata) (string): Set disk controller is SATA. If not set, still use C(scsi) specified disk controller.
+          Allowed value is "present".'
   guest_id:
     description:
     - Set the guest ID.
@@ -594,6 +595,15 @@ class PyVmomiDeviceHelper(object):
     def is_scsi_controller(self, device):
         return isinstance(device, tuple(self.scsi_device_type.values()))
 
+    def create_sata_controller(self):
+        sata_ctl = vim.vm.device.VirtualDeviceSpec()
+        sata_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        sata_ctl.device = vim.vm.device.VirtualAHCIController()
+        sata_ctl.device.busNumber = 0
+        sata_ctl.device.key = -randint(15000, 15999)
+
+        return sata_ctl
+
     @staticmethod
     def create_ide_controller():
         ide_ctl = vim.vm.device.VirtualDeviceSpec()
@@ -667,6 +677,26 @@ class PyVmomiDeviceHelper(object):
 
         # unit number 7 is reserved to SCSI controller, increase next index
         if self.next_disk_unit_number == 7:
+            self.next_disk_unit_number += 1
+
+        return diskspec
+
+    def create_sata_disk(self, sata_ctl, disk_index=None):
+        diskspec = vim.vm.device.VirtualDeviceSpec()
+        diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+        diskspec.device = vim.vm.device.VirtualDisk()
+        diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+        diskspec.device.controllerKey = sata_ctl.device.key
+
+        if self.next_disk_unit_number == 30 or disk_index == 30:
+            raise AssertionError()
+
+        if disk_index is not None:
+            diskspec.device.unitNumber = disk_index
+            self.next_disk_unit_number = disk_index + 1
+        else:
+            diskspec.device.unitNumber = self.next_disk_unit_number
             self.next_disk_unit_number += 1
 
         return diskspec
@@ -1575,6 +1605,18 @@ class PyVmomiHelper(PyVmomi):
 
         return None
 
+    def get_vm_sata_controller(self, vm_obj):
+        if vm_obj is None:
+            return None
+
+        for device in vm_obj.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualAHCIController):
+                sata_ctl = vim.vm.device.VirtualDeviceSpec()
+                sata_ctl.device = device
+                return sata_ctl
+
+        return None
+
     def get_configured_disk_size(self, expected_disk_spec):
         # what size is it?
         if [x for x in expected_disk_spec.keys() if x.startswith('size_') or x == 'size']:
@@ -1626,14 +1668,23 @@ class PyVmomiHelper(PyVmomi):
         # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
         if len(self.params['disk']) == 0:
             return
-
+        is_scsi = True
         scsi_ctl = self.get_vm_scsi_controller(vm_obj)
+        sata_ctl = self.get_vm_sata_controller(vm_obj)
+        if sata_ctl is not None:
+            is_scsi = False
 
-        # Create scsi controller only if we are deploying a new VM, not a template or reconfiguring
-        if vm_obj is None or scsi_ctl is None:
-            scsi_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type())
-            self.change_detected = True
-            self.configspec.deviceChange.append(scsi_ctl)
+        # Create scsi or sata controller only if we are deploying a new VM, not a template or reconfiguring
+        if vm_obj is None:
+            if 'sata' in self.params['hardware'] and self.params['hardware']['sata'].lower() == 'present':
+                sata_ctl = self.device_helper.create_sata_controller()
+                self.change_detected = True
+                self.configspec.deviceChange.append(sata_ctl)
+                is_scsi = False
+            else:
+                scsi_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type())
+                self.change_detected = True
+                self.configspec.deviceChange.append(scsi_ctl)
 
         disks = [x for x in vm_obj.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)] \
             if vm_obj is not None else None
@@ -1652,7 +1703,10 @@ class PyVmomiHelper(PyVmomi):
                 diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                 diskspec.device = disks[disk_index]
             else:
-                diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
+                if 'sata' in self.params['hardware'] and self.params['hardware']['sata'].lower() == 'present':
+                    diskspec = self.device_helper.create_sata_disk(sata_ctl, disk_index)
+                else:
+                    diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
 
             if 'disk_mode' in expected_disk_spec:
@@ -1686,7 +1740,7 @@ class PyVmomiHelper(PyVmomi):
             # increment index for next disk search
             disk_index += 1
             # index 7 is reserved to SCSI controller
-            if disk_index == 7:
+            if disk_index == 7 and is_scsi:
                 disk_index += 1
 
             kb = self.get_configured_disk_size(expected_disk_spec)

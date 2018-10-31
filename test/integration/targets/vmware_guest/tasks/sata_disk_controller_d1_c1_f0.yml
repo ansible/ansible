@@ -1,0 +1,147 @@
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim with no folders
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Clusters from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
+  register: clusterlist
+
+- debug: var=vcsim_instance
+- debug: var=clusterlist
+
+- name: Create VM with SATA disk controller
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: SATA-Test
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      sata: present
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    cdrom:
+      type: client
+  register: sata_vm
+
+- debug: var=sata_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "sata_vm.failed == false"
+      - "sata_vm.changed == true"
+
+- name: Update hard disk size of the VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: SATA-Test
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    disk:
+    - size_mb: 256
+      type: thin
+      datastore: LocalDS_0
+    state: present
+  register: sata_vm
+
+- debug: var=sata_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
+      - "sata_vm.failed == false"
+      - "sata_vm.changed == true"
+
+- name: Create VM with scsi disk controller
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: SATA-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    cdrom:
+      type: client
+  register: sata_vm
+
+- debug: var=sata_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "sata_vm.failed == false"
+      - "sata_vm.changed == true"
+
+- name: Create VM with sata disk controller
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: SATA-Test3
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+      sata: present
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    cdrom:
+      type: client
+  register: sata_vm
+
+- debug: var=sata_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "sata_vm.failed == false"
+      - "sata_vm.changed == true"
