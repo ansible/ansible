@@ -66,6 +66,13 @@ options:
         the username is created.
     default: always
     choices: ['on_create', 'always']
+  password_type:
+    description:
+      - This argument determines whether a 'password' or 'secret' will be
+        configured.
+    default: secret
+    choices: ['secret', 'password']
+    version_added: "2.8"
   privilege:
     description:
       - The C(privilege) argument configures the privilege level of the
@@ -157,6 +164,12 @@ EXAMPLES = """
       - name: ansibletest3
     view: network-admin
 
+- name: Add a user specifying password type
+  ios_user:
+    name: ansibletest4
+    configured_password: "{{ new_password }}"
+    password_type: password
+
 - name: Delete users with aggregate
   ios_user:
     aggregate:
@@ -224,6 +237,7 @@ def map_obj_to_commands(updates, module):
     commands = list()
     state = module.params['state']
     update_password = module.params['update_password']
+    password_type = module.params['password_type']
 
     def needs_update(want, have, x):
         return want.get(x) and (want.get(x) != have.get(x))
@@ -261,7 +275,10 @@ def map_obj_to_commands(updates, module):
 
         if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'secret %s' % want['configured_password'])
+                if have and password_type != have['password_type']:
+                    module.fail_json(msg='Can not have both a user password and a user secret.' +
+                                         ' Please choose one or the other.')
+                add(commands, want, '%s %s' % (password_type, want['configured_password']))
 
         if needs_update(want, have, 'nopassword'):
             if want['nopassword']:
@@ -290,6 +307,13 @@ def parse_privilege(data):
         return int(match.group(1))
 
 
+def parse_password_type(data):
+    type = None
+    if data and data.split()[-3] in ['password', 'secret']:
+        type = data.split()[-3]
+    return type
+
+
 def map_config_to_obj(module):
     data = get_config(module, flags=['| section username'])
 
@@ -311,6 +335,7 @@ def map_config_to_obj(module):
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
             'configured_password': None,
+            'password_type': parse_password_type(cfg),
             'sshkey': parse_sshkey(sshcfg),
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
@@ -396,6 +421,7 @@ def main():
         configured_password=dict(no_log=True),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
+        password_type=dict(default='secret', choices=['secret', 'password']),
 
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
