@@ -1122,7 +1122,9 @@ class Connection(ConnectionBase):
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()
-            if status_code != 0:
+            if status_code == 255 and ('No such file or directory' in stderr):
+                display.debug("ControlPath is already closed:%s" % stderr)
+            elif status_code != 0:
                 display.warning("Failed to reset connection:%s" % stderr)
 
         self.close()
