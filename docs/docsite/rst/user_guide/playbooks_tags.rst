@@ -17,7 +17,7 @@ that tags two tasks with different tags::
     tasks:
         - yum:
             name: "{{ item }}"
-            state: installed
+            state: present
           loop:
              - httpd
              - memcached
@@ -55,7 +55,7 @@ This example tags several tasks with one tag, "ntp"::
     - name: be sure ntp is installed
       yum:
         name: ntp
-        state: installed
+        state: present
       tags: ntp
 
     - name: be sure ntp is configured
@@ -133,7 +133,7 @@ There is no way to 'import only these tags'; you probably want to split into sma
 The above information does not apply to `include_tasks` or other dynamic includes,
 as the attributes applied to an include, only affect the include itself.
 
-You can see which tags are applied to tasks, roles, and static imports 
+You can see which tags are applied to tasks, roles, and static imports
 by running ``ansible-playbook`` with the ``--list-tasks`` option. You can
 display all tags applied to the tasks with the ``--list-tags`` option.
 
@@ -156,7 +156,7 @@ Playbook file::
       tasks:
       - include_role:
           name: myrole
-        tags: mytag  
+        tags: mytag
 
 Role tasks file::
 

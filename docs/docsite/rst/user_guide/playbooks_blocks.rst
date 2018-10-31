@@ -14,7 +14,7 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
       - name: install httpd and memcached
         yum:
           name: "{{ item }}"
-          state: installed
+          state: present
         loop:
           - httpd
           - memcached
