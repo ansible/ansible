@@ -35,8 +35,9 @@ options:
     required: true
   cacheable:
     description:
-      - This boolean indicates if the facts set will also be added to the
-        fact cache, if fact caching is enabled.
+      - This boolean converts the variable into and actual 'fact' which will also be added to the fact cache, if fact caching is enabled.
+      - Normally this module creates 'host level variables' and has much higher precedence, this option changes the nature and precedence
+        of the variable created.
     type: bool
     default: 'no'
     version_added: "2.4"
