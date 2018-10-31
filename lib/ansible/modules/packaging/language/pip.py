@@ -241,16 +241,19 @@ import sys
 import tempfile
 import operator
 import shlex
+import traceback
 from distutils.version import LooseVersion
 
+SETUPTOOLS_IMP_ERR = None
 try:
     from pkg_resources import Requirement
 
     HAS_SETUPTOOLS = True
 except ImportError:
     HAS_SETUPTOOLS = False
+    SETUPTOOLS_IMP_ERR = traceback.format_exc()
 
-from ansible.module_utils.basic import AnsibleModule, is_executable
+from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 
@@ -573,7 +576,8 @@ def main():
     )
 
     if not HAS_SETUPTOOLS:
-        module.fail_json(msg="No setuptools found in remote host, please install it first.")
+        module.fail_json(msg=missing_required_lib("setuptools"),
+                         exception=SETUPTOOLS_IMP_ERR)
 
     state = module.params['state']
     name = module.params['name']
