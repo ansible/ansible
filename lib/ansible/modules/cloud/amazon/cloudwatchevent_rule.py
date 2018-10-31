@@ -285,11 +285,14 @@ class CloudWatchEventRule(object):
                     target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration'] = {} 
                     network_configuration = ecs_parameters['network_configuration']['awsvpc_configuration']
                     if 'subnets' in network_configuration:
-                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['Subnets'] = network_configuration['subnets']
+                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['Subnets'] = \
+                        network_configuration['subnets']
                     if 'security_groups' in network_configuration:
-                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['SecurityGroups'] = network_configuration['security_groups']
+                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['SecurityGroups'] = \
+                        network_configuration['security_groups']
                     if 'assign_public_ip' in network_configuration:
-                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['AssignPublicIp'] = network_configuration['assign_public_ip']
+                        target_request['EcsParameters']['NetworkConfiguration']['awsvpcConfiguration']['AssignPublicIp'] = \
+                        network_configuration['assign_public_ip']
 
 
             targets_request.append(target_request)
