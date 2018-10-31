@@ -251,7 +251,7 @@ class Cacheable(object):
     _cache = {}
 
     def get_cache_key(self, path):
-        return "{0}_{1}_{2}".format(self.NAME, self._get_cache_prefix(path), self._get_config_identifier(path))
+        return "{0}_{1}".format(self.NAME, self._get_cache_prefix(path))
 
     def _get_cache_prefix(self, path):
         ''' create predictable unique prefix for plugin/inventory '''
@@ -265,11 +265,6 @@ class Cacheable(object):
         d2 = n.hexdigest()
 
         return 's_'.join([d1[:5], d2[:5]])
-
-    def _get_config_identifier(self, path):
-        ''' create predictable config-specific prefix for plugin/inventory '''
-
-        return hashlib.md5(path.encode()).hexdigest()
 
     def clear_cache(self):
         self._cache = {}
