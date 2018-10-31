@@ -2310,7 +2310,33 @@
 ## paused ##########################################################
 ####################################################################
 
-# TODO: - paused
+- name: paused
+  docker_container:
+    image: alpine:3.8
+    command: "yes"
+    name: "{{ cname }}"
+    state: started
+    paused: yes
+    stop_timeout: 1
+  register: paused_1
+
+- name: paused (logs)
+  command: docker logs "{{ cname }}"
+  register: paused_2
+
+- debug:
+    msg: "{{ paused_2.stdout_lines[:10] }}"
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    stop_timeout: 1
+
+- assert:
+    that:
+    - paused_1 is changed
+    - paused_2.stdout_lines | length == 0
 
 ####################################################################
 ## pid_mode ########################################################
