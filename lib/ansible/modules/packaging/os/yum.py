@@ -55,8 +55,10 @@ options:
       - C(present) and C(installed) will simply ensure that a desired package is installed.
       - C(latest) will update the specified package if it's not of the latest available version.
       - C(absent) and C(removed) will remove the specified package.
+      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is¬
+        enabled for this module, then C(absent) is inferred.
     choices: [ absent, installed, latest, present, removed ]
-    default: present
+    default: None
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
