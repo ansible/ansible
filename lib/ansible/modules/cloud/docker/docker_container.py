@@ -76,11 +76,9 @@ options:
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
-    default: 0
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota
-    default: 0
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
@@ -243,7 +241,6 @@ options:
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
       - Omitting the unit defaults to bytes.
-    default: 0
   labels:
      description:
        - Dictionary of key value pairs.
@@ -278,14 +275,12 @@ options:
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
-    default: 0
   memory_swap:
     description:
       - "Total memory limit (memory + swap, format: C(<number>[<unit>])).
         Number is a positive integer. Unit can be C(B) (byte), C(K) (kibibyte, 1024B),
         C(M) (mebibyte), C(G) (gibibyte), C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
-    default: 0
   memory_swappiness:
     description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
@@ -318,11 +313,9 @@ options:
     description:
       - Whether or not to disable OOM Killer for the container.
     type: bool
-    default: 'no'
   oom_score_adj:
     description:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
-    default: 0
     version_added: "2.2"
   output_logs:
     description:
@@ -405,7 +398,6 @@ options:
   restart_retries:
     description:
        - Use with restart policy to control maximum number of restart attempts.
-    default: 0
   runtime:
     description:
       - Runtime to use for the container.
@@ -2143,7 +2135,7 @@ class ContainerManager(DockerBaseClass):
             client.module.warn('log_options is ignored when log_driver is not specified')
         if client.module.params.get('healthcheck') and not client.module.params.get('healthcheck').get('test'):
             client.module.warn('healthcheck is ignored when test is not specified')
-        if client.module.params.get('restart_retries') and not client.module.params.get('restart_policy'):
+        if client.module.params.get('restart_retries') is not None and not client.module.params.get('restart_policy'):
             client.module.warn('restart_retries is ignored when restart_policy is not specified')
 
         self.client = client
