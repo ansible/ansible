@@ -4,12 +4,14 @@
 Loops
 *****
 
-When you want to repeat a task for multiple items, for example installing several packages with the ``yum`` module, creating multiple users with the ``user`` module, or
-repeating a polling step until a certain result is reached. Ansible offers two ways to iterate a task over multiple objects: ``loop`` and ``with_<lookup>``. We added ``loop`` in Ansible 2.5, but we have not deprecated the use of ``with_<lookup>``.
-
-Iterating using ``with_<lookup>`` relies on :ref:`lookup_plugins` - even  ``items`` is a lookup.
+When you want to repeat a task multiple times, for example installing several packages with the :ref:`yum_module`, creating multiple users with the :ref:`user_module`, or
+repeating a polling step until a certain result is reached. Ansible offers two ways to accomplish this: ``loop`` and ``with_<lookup>``. Iterating using ``with_<lookup>`` relies on :ref:`lookup_plugins` - even  ``items`` is a lookup.
 
 The ``loop`` keyword is analogous to ``with_list``, and is the best choice for simple iteration.
+
+Any ``with_`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword.
+
+We added ``loop`` in Ansible 2.5, but we have not deprecated the use of ``with_<lookup>``. We are still discussing what UX changes can be made to enable ``loop`` to replace ``with_<lookup>`` in the future. If we eventually deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
 
 .. contents::
    :local:
@@ -33,7 +35,7 @@ Repeated tasks can be written as standard loops over a simple list of strings. Y
          - testuser1
          - testuser2
 
-You can define the list in a variables file, or in the 'vars' section of your play, then refer to the title of the list in the task::
+You can define the list in a variables file, or in the 'vars' section of your play, then refer to the name of the list in the task::
 
     loop: "{{ somelist }}"
 
@@ -80,7 +82,7 @@ If you have a list of hashes, you can reference subkeys in a loop. For example::
         - { name: 'testuser2', groups: 'root' }
 
 When combining :ref:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
-See :ref:`the_when_statement` for an example.
+See :ref:`the_when_statement` for examples.
 
 Iterating over a dictionary
 ---------------------------
@@ -124,9 +126,9 @@ For example, using the 'nested' lookup, you can combine lists::
 Ensuring list output for loops: ``query`` vs. ``lookup``
 --------------------------------------------------------
 
-Ansible 2.5 introduced a new Jinja2 function named :ref:`query` that offers a simpler interface and more predictable output from lookup plugins when using the ``loop`` keyword.
+The ``loop`` keyword requires a list as input, but the ``lookup`` keyword returns a string of comma-separated values by default. Ansible 2.5 introduced a new Jinja2 function named :ref:`query` that always returns a list, offering a simpler interface and more predictable output from lookup plugins when using the ``loop`` keyword.
 
-``query`` always returns a list, while ``lookup`` returns a string of comma-separated values by default. ``loop`` requires a list. You can force ``lookup`` to return a list to ``loop`` by using ``wantlist=True`` with ``lookup``. Or you can use ``query`` instead.
+You can force ``lookup`` to return a list to ``loop`` by using ``wantlist=True``, or you can use ``query`` instead.
 
 These examples do the same thing::
 
@@ -229,8 +231,7 @@ During iteration, the result of the current item will be placed in the variable:
 Looping over inventory
 ----------------------
 
-If you wish to loop over your inventory, or just a subset of it, there are multiple ways.
-One can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables, like this::
+To loop over your inventory, or just a subset of it, you can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables::
 
     # show all the hosts in the inventory
     - debug:
@@ -254,7 +255,7 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
         msg: "{{ item }}"
       loop: "{{ query('inventory_hostnames', 'all:!www') }}"
 
-More information on the patterns can be found on :doc:`intro_patterns`
+More information on the patterns can be found on :ref:`intro_patterns`
 
 .. _loop_control:
 
