@@ -1,0 +1,2 @@
+bugfixes:
+- "Fix idempotency issues when setting BIOS attributes via redfish_config module (https://github.com/ansible/ansible/pull/47462)"

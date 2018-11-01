@@ -249,7 +249,6 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        result['changed'] = True
         module.exit_json(changed=True, msg='Action was successful')
     else:
         module.fail_json(msg=to_native(result['msg']))
