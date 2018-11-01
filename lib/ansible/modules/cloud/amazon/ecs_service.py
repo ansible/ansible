@@ -425,8 +425,7 @@ class EcsServiceManager:
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration,
-            forceNewDeployment=force_new_deployment)
+            deploymentConfiguration=deployment_configuration)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
         if self.health_check_setable(params):
