@@ -1118,6 +1118,24 @@ class PyVmomiHelper(PyVmomi):
 
         return device_list
 
+    def find_network_by_vlan(self, vlan):
+      if not 'cluster' in self.params:
+         return self.module.fail_json(msg="Must specify a cluster")
+
+      cluster = self.find_cluster_by_name(self.params['cluster'])
+      for net in cluster.network:
+         if not hasattr(net, 'config'):
+             continue
+
+         if not net.config.key.startswith('dvportgroup-'):
+             continue
+         cfg = net.config.defaultPortConfig
+
+         if hasattr(cfg, 'vlan') and \
+             hasattr(cfg.vlan, 'vlanId') and \
+             cfg.vlan.vlanId == int(vlan):
+             return net.name
+
     def sanitize_network_params(self):
         """
         Sanitize user provided network provided params
@@ -1135,22 +1153,10 @@ class PyVmomiHelper(PyVmomi):
             if 'name' in network and self.cache.get_network(network['name']) is None:
                 self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
             elif 'vlan' in network:
-                dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
-                for dvp in dvps:
-                    if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
-                            isinstance(dvp.config.defaultPortConfig.vlan.vlanId, int) and \
-                            str(dvp.config.defaultPortConfig.vlan.vlanId) == str(network['vlan']):
-                        network['name'] = dvp.config.name
-                        break
-                    if 'dvswitch_name' in network and \
-                            dvp.config.distributedVirtualSwitch.name == network['dvswitch_name'] and \
-                            dvp.config.name == network['vlan']:
-                        network['name'] = dvp.config.name
-                        break
-
-                    if dvp.config.name == network['vlan']:
-                        network['name'] = dvp.config.name
-                        break
+                name = self.find_network_by_vlan(network['vlan'])
+                if name is not None:
+                     logger.debug("Found network %s for VLAN %s" % (name, network['vlan']))
+                     network['name'] = name
                 else:
                     self.module.fail_json(msg="VLAN '%(vlan)s' does not exist." % network)
 
@@ -1192,6 +1198,25 @@ class PyVmomiHelper(PyVmomi):
             network_devices.append(network)
 
         return network_devices
+
+
+    def find_network_by_vlan(self, vlan):
+      if not 'cluster' in self.params:
+         return self.module.fail_json(msg="Must specify a cluster")
+
+      cluster = self.find_cluster_by_name(self.params['cluster'])
+      for net in cluster.network:
+         if not hasattr(net, 'config'):
+             continue
+
+         if not net.config.key.startswith('dvportgroup-'):
+             continue
+         cfg = net.config.defaultPortConfig
+
+         if hasattr(cfg, 'vlan') and \
+             hasattr(cfg.vlan, 'vlanId') and \
+             cfg.vlan.vlanId == int(vlan):
+             return net.name
 
     def configure_network(self, vm_obj):
         # Ignore empty networks, this permits to keep networks when deploying a template/cloning a VM
