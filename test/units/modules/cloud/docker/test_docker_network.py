@@ -1,4 +1,9 @@
-import unittest
+import sys
+
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 from ansible.modules.cloud.docker.docker_network import get_ip_version
 
