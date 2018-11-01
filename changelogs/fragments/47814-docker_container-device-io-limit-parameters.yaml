@@ -1,0 +1,2 @@
+minor_changes:
+- "docker_container - Add support for device I/O rate limit parameters. This includes ``device_read_bps``, ``device_write_bps``, ``device_read_iops`` and ``device_write_iops``"
