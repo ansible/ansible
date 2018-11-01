@@ -129,7 +129,6 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.network.voss.voss import run_commands
-from ansible.module_utils.network.voss.voss import check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -502,7 +501,6 @@ def main():
         ansible_facts[key] = value
 
     warnings = list()
-    check_args(module, warnings)
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
