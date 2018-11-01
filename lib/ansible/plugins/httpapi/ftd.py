@@ -228,7 +228,7 @@ class HttpApi(HttpApiBase):
         return None
 
     def _display(self, http_method, title, msg=''):
-        display.vvvv('REST:{0}:{1}:{2}\n{3}'.format(http_method, self.connection._url, title, msg))
+        display.vvvv('REST:%s:%s:%s\n%s' % (http_method, self.connection._url, title, msg))
 
     @staticmethod
     def _get_response_value(response_data):
