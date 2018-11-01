@@ -1,2 +1,2 @@
-minor_changes:
-- "docker_swarm_service - fail if ``publish``.``mode`` parameter is given with a too old docker-py version."
+bugfixes:
+- "docker_swarm_service - The ``publish``.``mode`` parameter was beign ignored if docker-py version was <3.0.0. Added a parameter validation test.
