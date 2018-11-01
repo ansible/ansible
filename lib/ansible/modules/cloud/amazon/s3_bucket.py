@@ -43,7 +43,9 @@ options:
       - The JSON policy as a string.
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
+      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc.
+      - Assumes AWS if not specified.
+      - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
   ceph:
     description:
@@ -508,17 +510,6 @@ def is_fakes3(s3_url):
         return False
 
 
-def is_walrus(s3_url):
-    """ Return True if it's Walrus endpoint, not S3
-
-    We assume anything other than *.amazonaws.com is Walrus"""
-    if s3_url is not None:
-        o = urlparse(s3_url)
-        return not o.hostname.endswith('amazonaws.com')
-    else:
-        return False
-
-
 def get_s3_client(module, aws_connect_kwargs, location, ceph, s3_url):
     if s3_url and ceph:  # TODO - test this
         ceph = urlparse(s3_url)
@@ -537,9 +528,6 @@ def get_s3_client(module, aws_connect_kwargs, location, ceph, s3_url):
         params = dict(module=module, conn_type='client', resource='s3', region=location,
                       endpoint="%s://%s:%s" % (protocol, fakes3.hostname, to_text(port)),
                       use_ssl=fakes3.scheme == 'fakes3s', **aws_connect_kwargs)
-    elif is_walrus(s3_url):
-        walrus = urlparse(s3_url).hostname
-        params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
     else:
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=s3_url, **aws_connect_kwargs)
     return boto3_conn(**params)
