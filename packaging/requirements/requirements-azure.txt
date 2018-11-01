@@ -15,8 +15,9 @@ azure-mgmt-marketplaceordering==0.1.0
 azure-mgmt-monitor==0.5.2
 azure-mgmt-network==1.7.1
 azure-mgmt-nspkg==2.0.0
-azure-mgmt-rdbms==1.4.1
+azure-mgmt-redis==5.0.0
 azure-mgmt-resource==1.2.2
+azure-mgmt-rdbms==1.4.1
 azure-mgmt-sql==0.10.0
 azure-mgmt-storage==1.5.0
 azure-mgmt-trafficmanager==0.50.0
