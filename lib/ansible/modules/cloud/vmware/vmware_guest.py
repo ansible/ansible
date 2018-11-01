@@ -338,10 +338,7 @@ options:
   convert:
     description:
     - Specify convert disk type while cloning template
-    - 'Valid attributes are:'
-    - ' - C(thin) thin disk'
-    - ' - C(eagerzeroedthick) eagerzeroedthick disk'
-    - ' - C(thick) thick disk'
+    choices: [ thin, thick, eagerzeroedthick ]
     version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
@@ -2045,9 +2042,6 @@ class PyVmomiHelper(PyVmomi):
 
                 # Convert disk present in template if is set
                 if self.params['convert']:
-                    if self.params['convert'] not in ['thin', 'thick', 'eagerzeroedthick']:
-                        self.module.fail_json(msg="Parameter 'convert' accept only value thin, thick or eagerzeroedthick ")
-                    else:
                         for device in vm_obj.config.hardware.device:
                             if hasattr(device.backing, 'fileName'):
                                 disk_locator = vim.vm.RelocateSpec.DiskLocator()
