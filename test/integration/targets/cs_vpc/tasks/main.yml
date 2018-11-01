@@ -380,7 +380,6 @@
 
 - name: test get ip address in vpc
   cs_ip_address:
-    network: "{{ cs_resource_prefix }}_net_vpc"
     vpc: "{{ cs_resource_prefix }}_vpc"
     zone: "{{ cs_common_zone_adv }}"
   register: ip_address
@@ -578,7 +577,6 @@
 
 - name: test remove ip address from vpc
   cs_ip_address:
-    network: "{{ cs_resource_prefix }}_net_vpc"
     vpc: "{{ cs_resource_prefix }}_vpc"
     zone: "{{ cs_common_zone_adv }}"
     ip_address: "{{ ip_address.ip_address }}"
