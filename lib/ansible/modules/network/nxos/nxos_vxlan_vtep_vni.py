@@ -302,9 +302,14 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
+    mutually_exclusive = [('suppress_arp', 'suppress_arp_disable'),
+                          ('assoc_vrf', 'multicast_group'),
+                          ('assoc_vrf', 'suppress_arp'),
+                          ('assoc_vrf', 'suppress_arp_disable'),
+                          ('assoc_vrf', 'ingress_replication')]
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[('suppress_arp', 'suppress_arp_disable')],
+        mutually_exclusive=mutually_exclusive,
         supports_check_mode=True,
     )
 
@@ -312,15 +317,6 @@ def main():
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
 
-    if module.params['assoc_vrf']:
-        mutually_exclusive_params = ['multicast_group',
-                                     'suppress_arp',
-                                     'suppress_arp_disable',
-                                     'ingress_replication']
-        for param in mutually_exclusive_params:
-            if module.params[param]:
-                module.fail_json(msg='assoc_vrf cannot be used with '
-                                     '{0} param'.format(param))
     if module.params['peer_list']:
         if module.params['peer_list'][0] != 'default' and module.params['ingress_replication'] != 'static':
             module.fail_json(msg='ingress_replication=static is required '
