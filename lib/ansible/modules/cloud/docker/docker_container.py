@@ -798,7 +798,7 @@ from ansible.module_utils.six import string_types
 try:
     from docker import utils
     from ansible.module_utils.docker_common import docker_version
-    if LooseVersion(docker_version) >= LooseVersion('2.0'):
+    if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
