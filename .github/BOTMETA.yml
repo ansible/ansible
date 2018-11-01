@@ -306,6 +306,7 @@ files:
     maintainers: $team_purestorage
     labels: pure_storage
   $modules/storage/glusterfs/: devyanikota
+  $modules/storage/ibm/: tzurE
   $modules/system/at.py: $team_ansible
   $modules/system/authorized_key.py: $team_ansible
   $modules/system/facter.py: $team_ansible
