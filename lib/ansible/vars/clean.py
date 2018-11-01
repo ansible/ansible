@@ -74,14 +74,15 @@ def strip_internal_keys(dirty, exceptions=None):
     '''
 
     if exceptions is None:
-        exceptions = ()
-    clean = dirty.copy()
-    for k in dirty.keys():
+        exceptions = tuple()
+    clean = module_response_deepcopy(dirty)
+    for k in clean:
+        v = clean[k]
         if isinstance(k, six.string_types) and k.startswith('_ansible_'):
             if k not in exceptions:
                 del clean[k]
-        elif isinstance(dirty[k], dict):
-            clean[k] = strip_internal_keys(dirty[k])
+        elif isinstance(v, dict):
+            clean[k] = strip_internal_keys(v)
     return clean
 
 
