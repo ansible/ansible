@@ -292,13 +292,6 @@ def grafana_create_dashboard(module, data):
         # create
         if 'id' in payload["dashboard"]:
             payload["dashboard"].pop("id")
-<<<<<<< 8004a78b9e2fbca3f80301983dd57a634cb5b1ee
-
-        #raise GrafanaAPIException("{}".format(payload))
-=======
-        if 'uid' in payload["dashboard"]:
-            payload["dashboard"].pop("uid")
->>>>>>> Fix grafana dashboard remove comment in the code (PR #46525)
         r, info = fetch_url(module, '%s/api/dashboards/db' %
                             data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
