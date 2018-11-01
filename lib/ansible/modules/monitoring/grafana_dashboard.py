@@ -136,7 +136,6 @@ uid:
 '''
 
 import json
-import string
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
