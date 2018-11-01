@@ -198,6 +198,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "device_roles": self.extract_device_role,
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
+            "config_context": self.extract_config_context,
+            "services": self.extract_services,
             "manufacturers": self.extract_manufacturer
         }
 
@@ -243,6 +245,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_device_role(self, host):
         try:
             return [self.device_roles_lookup[host["device_role"]["id"]]]
+        except Exception:
+            return
+
+    def extract_config_context(self, host):
+        try:
+            url = urljoin(self.api_endpoint, "/api/dcim/devices/" + str(host["id"]))
+            device_lookup = self._fetch_information(url)
+            return [device_lookup["config_context"]]
+        except Exception:
+            return
+
+    def extract_services(self, host):
+        try:
+            url = urljoin(self.api_endpoint, "/api/ipam/services/?device=" + str(host["name"]))
+            device_lookup = self._fetch_information(url)
+            return [device_lookup["results"]]
         except Exception:
             return
 
@@ -352,13 +370,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def refresh_url(self):
         query_parameters = [("limit", 0)]
-        if self.query_filters:
-            query_parameters.extend(filter(lambda x: x,
-                                           map(self.validate_query_parameters, self.query_filters)))
-        self.device_url = urljoin(self.api_endpoint,
-                                  "/api/dcim/devices/?" + urlencode(query_parameters))
-        self.virtual_machines_url = urljoin(self.api_endpoint,
-                                            "/api/virtualization/virtual-machines/?" + urlencode(query_parameters))
+        query_parameters.extend(filter(lambda x: x,
+                                       map(self.validate_query_parameters, self.query_filters)))
+        self.device_url = self.api_endpoint + "/api/dcim/devices/" + "?" + urlencode(query_parameters)
+        self.virtual_machines_url = "".join([self.api_endpoint,
+                                             "/api/virtualization/virtual-machines/",
+                                             "?",
+                                             urlencode(query_parameters)])
 
     def fetch_hosts(self):
         return chain(
