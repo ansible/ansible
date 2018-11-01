@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "yum now properly supports update_only option"
+

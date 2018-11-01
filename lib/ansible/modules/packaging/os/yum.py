@@ -1170,7 +1170,9 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
-                    if not self.is_installed(repoq, envra):
+                    if self.is_installed(repoq, envra):
+                        pkgs['update'].append(spec)
+                    else:
                         pkgs['install'].append(spec)
                     continue
 
@@ -1185,13 +1187,15 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
-                    if not self.is_installed(repoq, envra):
-                        pkgs['install'].append(package)
+                    if self.is_installed(repoq, envra):
+                        pkgs['update'].append(spec)
+                    else:
+                        pkgs['install'].append(spec)
                     continue
 
                 # dep/pkgname  - find it
                 else:
-                    if self.is_installed(repoq, spec) or self.update_only:
+                    if self.is_installed(repoq, spec):
                         pkgs['update'].append(spec)
                     else:
                         pkgs['install'].append(spec)
@@ -1261,7 +1265,10 @@ class YumModule(YumDnf):
                 else:
                     to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
-            res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+            if self.update_only:
+                res['changes'] = dict(installed=[], updated=to_update)
+            else:
+                res['changes'] = dict(installed=pkgs['install'], updated=to_update)
 
             if will_update or pkgs['install']:
                 res['changed'] = True
@@ -1272,6 +1279,14 @@ class YumModule(YumDnf):
         if cmd:     # update all
             rc, out, err = self.module.run_command(cmd)
             res['changed'] = True
+        elif self.update_only:
+            cmd = self.yum_basecmd + ['update'] + pkgs['update']
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
+            out_lower = out.strip().lower()
+            if not out_lower.endswith("no packages marked for update") and \
+                    not out_lower.endswith("nothing to do"):
+                res['changed'] = True
         elif pkgs['install'] or will_update:
             cmd = self.yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
             lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
