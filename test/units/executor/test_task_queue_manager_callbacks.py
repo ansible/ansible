@@ -43,6 +43,7 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
 
     def tearDown(self):
         self._tqm.cleanup()
+        self._tqm._callback_process.terminate()
 
     def test_task_queue_manager_callbacks_v2_playbook_on_start(self):
         """
