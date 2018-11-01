@@ -1691,6 +1691,18 @@ RETRY_FILES_SAVE_PATH:
   ini:
   - {key: retry_files_save_path, section: defaults}
   type: path
+RUN_VARS_PLUGINS:
+  name: When should vars plugins run relative to inventory
+  default: demand
+  description:
+    - This setting can be used to optimize vars_plugin usage depending on user's inventory size and play selection.
+    - Setting to 'demand' will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
+    - Setting to 'start' will run vars_plugins relative to inventory sources after importing that inventory source.
+  env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
+  ini:
+  - {key: run_vars_plugins, section: defaults}
+  type: path
+  choices: ['demand', 'start']
 SHOW_CUSTOM_STATS:
   name: Display custom stats
   default: False

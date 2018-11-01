@@ -39,6 +39,7 @@ from ansible.plugins.loader import inventory_loader
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars, get_plugin_vars
 
 display = Display()
 
@@ -229,6 +230,14 @@ class InventoryManager(object):
                 raise AnsibleError("No inventory was parsed, please check your configuration and options.")
             else:
                 display.warning("No inventory was parsed, only implicit localhost is available")
+
+        if C.RUN_VARS_PLUGINS == 'start':
+            for group in self.groups:
+                group.vars = combine_vars(group.vars, get_plugin_vars(group.name, self._sources, 'inventory')
+            for host in self.hosts:
+                host.vars = combine_vars(host.vars, get_plugin_vars(host.name, self._sources, 'inventory')
+
+        self._inventory_plugins = []
 
     def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''

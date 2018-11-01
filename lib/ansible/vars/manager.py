@@ -281,7 +281,8 @@ class VariableManager:
                 '''
                 data = {}
                 for group in host_groups:
-                    data[group] = combine_vars(data[group], _plugins_inventory(group))
+                    if C.RUN_VARS_PLUGINS == 'demand':
+                        data[group] = combine_vars(data[group], _plugins_inventory(group))
                     data[group] = combine_vars(data[group], _plugins_play(group))
                 return data
 
@@ -296,7 +297,8 @@ class VariableManager:
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
             all_vars = combine_vars(all_vars, host.get_vars())
-            all_vars = combine_vars(all_vars, _plugins_inventory([host]))
+            if C.RUN_VARS_PLUGINS == 'demand':
+                all_vars = combine_vars(all_vars, _plugins_inventory([host]))
             all_vars = combine_vars(all_vars, _plugins_play([host]))
 
             # finally, the facts caches for this host, if it exists
