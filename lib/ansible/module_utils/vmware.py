@@ -32,7 +32,8 @@ from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(TaskError, self).__init__(*args, **kwargs)
 
 
 def wait_for_task(task, max_backoff=64, timeout=3600):
@@ -56,12 +57,15 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
             error_msg = task.info.error
+            host_thumbprint = None
             try:
                 error_msg = error_msg.msg
+                if hasattr(task.info.error, 'thumbprint'):
+                    host_thumbprint = task.info.error.thumbprint
             except AttributeError:
                 pass
             finally:
-                raise_from(TaskError(error_msg), task.info.error)
+                raise_from(TaskError(error_msg, host_thumbprint), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
             sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
@@ -352,13 +356,11 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for dummy, v in iteritems(net_dict):
-        for ipaddress in v:
-            if ipaddress:
-                if '::' in ipaddress:
-                    facts['ipv6'] = ipaddress
-                else:
-                    facts['ipv4'] = ipaddress
+    if vm.guest.ipAddress:
+        if ':' in vm.guest.ipAddress:
+            facts['ipv6'] = vm.guest.ipAddress
+        else:
+            facts['ipv4'] = vm.guest.ipAddress
 
     ethernet_idx = 0
     for entry in vm.config.hardware.device:

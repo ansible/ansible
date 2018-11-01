@@ -19,3 +19,12 @@ def cmp_simple_list(want, have):
     if set(want) != set(have):
         return want
     return None
+
+
+def cmp_str_with_none(want, have):
+    if want is None:
+        return None
+    if have is None and want == '':
+        return None
+    if want != have:
+        return want

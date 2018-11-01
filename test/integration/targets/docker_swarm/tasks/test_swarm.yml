@@ -3,18 +3,6 @@
     state: absent
     force: true
 
-- name: Test parameters with state=present
-  docker_swarm:
-    state: present
-  ignore_errors: yes
-  register: output
-
-- name: assert failure when called with state=init and no advertise_addr
-  assert:
-    that:
-       - 'output.failed'
-       - 'output.msg == "advertise_addr is required to initialize a swarm cluster."'
-
 - name: Test parameters with state=join
   docker_swarm:
     state: join
@@ -42,7 +30,6 @@
 - name: Create a Swarm cluster
   docker_swarm:
     state: present
-    advertise_addr: "{{ansible_default_ipv4.address}}"
   register: output
 
 - name: assert changed when create a new swarm cluster

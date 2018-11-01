@@ -221,6 +221,10 @@ Noteworthy module changes
 
     #> ansible -m include_role -a 'name=myrole' all
 
+* The ``pip`` module has added a dependency on ``setuptools`` to support version requirements, this requirement is for
+  the Python interpreter that executes the module and not the Python interpreter that the module is managing.
+
+
 Plugins
 =======
 

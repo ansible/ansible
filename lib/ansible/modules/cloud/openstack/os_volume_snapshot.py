@@ -170,7 +170,7 @@ def main():
             module.fail_json(
                 msg="No volume with name or id '{0}' was found.".format(
                     module.params['volume']))
-    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.OpenStackCloudTimeout) as e:
+    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.ResourceTimeout) as e:
         module.fail_json(msg=e.message)
 
 

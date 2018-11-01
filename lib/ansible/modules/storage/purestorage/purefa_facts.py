@@ -30,7 +30,7 @@ options:
       - When supplied, this argument will define the facts to be collected.
         Possible values for this include all, minimum, config, performance,
         capacity, network, subnet, interfaces, hgroups, pgroups, hosts,
-        volumes and snapshots.
+        volumes, snapshots, pods, vgroups and offload.
     required: false
     default: minimum
 extends_documentation_fragment:
@@ -250,6 +250,15 @@ ansible_facts:
                 "speed": 1000000000
             }
         }
+        "offload": {
+            "nfstarget": {
+                "address": "10.0.2.53",
+                "mount_options": null,
+                "mount_point": "/offload",
+                "protocol": "nfs",
+                "status": "scanning"
+            }
+        }
         "performance": {
             "input_per_sec": 8191,
             "output_per_sec": 0,
@@ -271,6 +280,25 @@ ansible_facts:
                 ]
             }
         }
+        "pods": {
+            "srm-pod": {
+                "arrays": [
+                    {
+                        "array_id": "52595f7e-b460-4b46-8851-a5defd2ac192",
+                        "mediator_status": "online",
+                        "name": "sn1-405-c09-37",
+                        "status": "online"
+                    },
+                    {
+                        "array_id": "a2c32301-f8a0-4382-949b-e69b552ce8ca",
+                        "mediator_status": "online",
+                        "name": "sn1-420-c11-31",
+                        "status": "online"
+                    }
+                ],
+                "source": null
+            }
+        }
         "snapshots": {
             "consisgroup.cgsnapshot": {
                 "created": "2018-03-28T09:34:02Z",
@@ -279,6 +307,13 @@ ansible_facts:
             }
         }
         "subnet": {}
+        "vgroups": {
+            "vvol--vSphere-HA-0ffc7dd1-vg": {
+                "volumes": [
+                    "vvol--vSphere-HA-0ffc7dd1-vg/Config-aad5d7c6"
+                ]
+            }
+        }
         "volumes": {
             "ansible_data": {
                 "bandwidth": null,
@@ -469,8 +504,8 @@ def generate_vol_dict(array):
         for vvol in range(0, len(vvols)):
             volume = vvols[vvol]['name']
             volume_facts[volume] = {
-                'source': vols[vol]['source'],
-                'serial': vols[vol]['serial'],
+                'source': vvols[vvol]['source'],
+                'serial': vvols[vvol]['serial'],
                 'hosts': []
             }
     cvols = array.list_volumes(connect=True)
@@ -507,6 +542,51 @@ def generate_pgroups_dict(array):
             'volumes': pgroups[pgroup]['volumes'],
         }
     return pgroups_facts
+
+
+def generate_pods_dict(array):
+    pods_facts = {}
+    api_version = array._list_available_rest_versions()
+    if AC_REQUIRED_API_VERSION in api_version:
+        pods = array.list_pods()
+        for pod in range(0, len(pods)):
+            acpod = pods[pod]['name']
+            pods_facts[acpod] = {
+                'source': pods[pod]['source'],
+                'arrays': pods[pod]['arrays'],
+            }
+
+    return pods_facts
+
+
+def generate_vgroups_dict(array):
+    vgroups_facts = {}
+    api_version = array._list_available_rest_versions()
+    if AC_REQUIRED_API_VERSION in api_version:
+        vgroups = array.list_vgroups()
+        for vgroup in range(0, len(vgroups)):
+            virtgroup = vgroups[vgroup]['name']
+            vgroups_facts[virtgroup] = {
+                'volumes': vgroups[vgroup]['volumes'],
+            }
+    return vgroups_facts
+
+
+def generate_offload_dict(array):
+    offload_facts = {}
+    api_version = array._list_available_rest_versions()
+    if AC_REQUIRED_API_VERSION in api_version:
+        offload = array.list_nfs_offload()
+        for target in range(0, len(offload)):
+            offloadt = offload[target]['name']
+            offload_facts[offloadt] = {
+                'status': offload[target]['status'],
+                'mount_point': offload[target]['mount_point'],
+                'protocol': offload[target]['protocol'],
+                'mount_options': offload[target]['mount_options'],
+                'address': offload[target]['address'],
+            }
+    return offload_facts
 
 
 def generate_hgroups_dict(array):
@@ -556,7 +636,7 @@ def main():
     subset = [test.lower() for test in module.params['gather_subset']]
     valid_subsets = ('all', 'minimum', 'config', 'performance', 'capacity',
                      'network', 'subnet', 'interfaces', 'hgroups', 'pgroups',
-                     'hosts', 'volumes', 'snapshots')
+                     'hosts', 'volumes', 'snapshots', 'pods', 'vgroups', 'offload')
     subset_test = (test in valid_subsets for test in subset)
     if not all(subset_test):
         module.fail_json(msg="value must gather_subset must be one or more of: %s, got: %s"
@@ -588,6 +668,12 @@ def main():
         facts['hgroups'] = generate_hgroups_dict(array)
     if 'pgroups' in subset or 'all' in subset:
         facts['pgroups'] = generate_pgroups_dict(array)
+    if 'pods' in subset or 'all' in subset:
+        facts['pods'] = generate_pods_dict(array)
+    if 'vgroups' in subset or 'all' in subset:
+        facts['vgroups'] = generate_vgroups_dict(array)
+    if 'offload' in subset or 'all' in subset:
+        facts['offload'] = generate_offload_dict(array)
 
     result = dict(ansible_purefa_facts=facts,)
 

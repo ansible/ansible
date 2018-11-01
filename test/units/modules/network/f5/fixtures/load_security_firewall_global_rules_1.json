@@ -1,0 +1,16 @@
+{
+    "kind": "tm:security:firewall:global-rules:global-rulesstate",
+    "selfLink": "https://localhost/mgmt/tm/security/firewall/global-rules?ver=13.1.0.7",
+    "enforcedPolicy": "/Common/foo",
+    "enforcedPolicyReference": {
+        "link": "https://localhost/mgmt/tm/security/firewall/policy/~Common~foo?ver=13.1.0.7"
+    },
+    "servicePolicy": "/Common/bar",
+    "servicePolicyReference": {
+        "link": "https://localhost/mgmt/tm/net/service-policy/~Common~bar?ver=13.1.0.7"
+    },
+    "stagedPolicy": "/Common/baz",
+    "stagedPolicyReference": {
+        "link": "https://localhost/mgmt/tm/security/firewall/policy/~Common~baz?ver=13.1.0.7"
+    }
+}

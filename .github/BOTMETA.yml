@@ -179,16 +179,7 @@ files:
   $modules/identity/keycloak/: eikef
   $modules/inventory/add_host.py: $team_ansible
   $modules/inventory/group_by.py: $team_ansible
-  $modules/messaging/rabbitmq_binding.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_exchange.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_parameter.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_plugin.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_policy.py: retr0h
-  $modules/messaging/rabbitmq_queue.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_user.py: $team_rabbitmq
-  $modules/messaging/rabbitmq_vhost.py:
-    ignored: choffman
-    maintainers: $team_rabbitmq
+  $modules/messaging/rabbitmq/: $team_rabbitmq
   $modules/monitoring/datadog_event.py:
     ignored: arturaz
   $modules/monitoring/logentries.py:
@@ -315,6 +306,7 @@ files:
     maintainers: $team_purestorage
     labels: pure_storage
   $modules/storage/glusterfs/: devyanikota
+  $modules/storage/ibm/: tzurE
   $modules/system/at.py: $team_ansible
   $modules/system/authorized_key.py: $team_ansible
   $modules/system/facter.py: $team_ansible
@@ -353,6 +345,11 @@ files:
   $modules/utilities/logic/pause.py: samdoran
   $modules/utilities/logic/wait_for.py: gregswift
   $modules/web_infrastructure/ansible_tower/: $team_tower
+  $modules/web_infrastructure/sophos_utm/:
+    maintainers: $team_e_spirit
+    keywords:
+      - utm
+      - sophos
   $modules/web_infrastructure/django_manage.py: scottanderson42
   $modules/web_infrastructure/htpasswd.py: $team_ansible
   $modules/web_infrastructure/jboss: $team_jboss
@@ -604,6 +601,8 @@ files:
     maintainers: $team_vultr
     labels:
       - cloud
+  $module_utils/utm_utils.py:
+    maintainers: $team_e_spirit
   $module_utils/vmware:
     support: core
     maintainers: $team_vmware
@@ -707,6 +706,12 @@ files:
     labels: networking
   lib/ansible/plugins/action/aruba:
     maintainers: jmighion
+    labels: networking
+  lib/ansible/plugins/action/bigip:
+    maintainers: caphrim007
+    labels: networking
+  lib/ansible/plugins/action/bigiq:
+    maintainers: caphrim007
     labels: networking
   lib/ansible/plugins/action/dellos:
     maintainers: skg-net
@@ -1116,7 +1121,7 @@ macros:
   team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
-  team_onyx: samerd
+  team_onyx: samerd anasb
   team_openstack: emonty juliakreger rcarrillocruz shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
@@ -1126,6 +1131,7 @@ macros:
   team_scaleway: sieben hekonsek Spredzy abarbare anthony25 pilou-
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
+  team_e_spirit: MatrixCrawler getjack
   team_vmware: Akasurde dav1x warthog9
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone

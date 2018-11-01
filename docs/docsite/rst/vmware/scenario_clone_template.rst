@@ -24,8 +24,6 @@ Scenario Requirements
 
 * Hardware
 
-    * At least one standalone ESXi server or
-
     * vCenter Server with at least one ESXi server
 
 * Access / Credentials
