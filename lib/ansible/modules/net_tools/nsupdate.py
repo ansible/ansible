@@ -362,7 +362,7 @@ class RecordManager(object):
         query = dns.message.make_query(self.fqdn, self.module.params['type'])
 
         try:
-            if self.module.params['protocol'] == 'tcp': 
+            if self.module.params['protocol'] == 'tcp':
                 lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
             else:
                 lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
