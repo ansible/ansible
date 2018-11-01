@@ -48,7 +48,7 @@ options:
     description:
       - End port for this rule.
       - Considered if I(protocol=tcp) or I(protocol=udp).
-      - If not specified, equal C(start_port).
+      - If not specified, equal I(start_port).
   icmp_type:
     description:
       - Type of the icmp message being sent.
@@ -75,7 +75,7 @@ options:
     aliases: [ action ]
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
     aliases: [ tag ]
   domain:
