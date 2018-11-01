@@ -48,6 +48,8 @@ options:
       - If the regular expression is not matched, the line will be
         added to the file in keeping with`insertbefore` or `insertafter`
         settings.
+      - When modifying a line the regexp should typically match both the initial state of
+        the line as well as its state after replacement by C(line) to ensure idempotence.
       - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
