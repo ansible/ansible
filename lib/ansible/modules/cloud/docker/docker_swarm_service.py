@@ -455,9 +455,9 @@ EXAMPLES = '''
 '''
 
 import time
-from ansible.module_utils.docker_common import (
-    DockerBaseClass, AnsibleDockerClient, docker_version,
-)
+from ansible.module_utils.docker_common import DockerBaseClass
+from ansible.module_utils.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker_common import docker_version
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
 
