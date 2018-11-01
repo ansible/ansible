@@ -425,12 +425,13 @@ class EcsServiceManager:
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration,
-            forceNewDeployment=force_new_deployment)
+            deploymentConfiguration=deployment_configuration)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
         if self.health_check_setable(params):
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
+        if force_new_deployment:
+            params['forceNewDeployment'] = force_new_deployment
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
 
@@ -521,6 +522,9 @@ def main():
     if module.params['launch_type']:
         if not module.botocore_at_least('1.8.4'):
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+    if module.params['force_new_deployment']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use force_new_deployment')
 
     if module.params['state'] == 'present':
 
