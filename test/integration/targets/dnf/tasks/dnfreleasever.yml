@@ -19,7 +19,7 @@
   dnf:
     name: filesystem
     installroot: '/{{dnfroot.stdout}}'
-    releasever: 22
+    releasever: '{{ansible_distribution_version|int - 1}}'
   register: dnf_result
 
 - name: check filesystem version
@@ -40,7 +40,7 @@
 - name: verify the version
   assert:
     that:
-      - "rpm_result.stdout.find('fc22') != -1"
+      - "rpm_result.stdout.find('fc' ~ (ansible_distribution_version|int - 1)) != -1"
 
 - name: cleanup installroot
   file:
