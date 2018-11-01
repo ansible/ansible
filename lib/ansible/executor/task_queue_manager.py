@@ -262,8 +262,6 @@ class TaskQueueManager:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
 
-        self.send_callback('v2_playbook_on_play_start', new_play)
-
         # initialize the shared dictionary containing the notified handlers
         self._initialize_notified_handlers(new_play)
 
@@ -276,6 +274,8 @@ class TaskQueueManager:
             all_vars=all_vars,
             start_at_done=self._start_at_done,
         )
+
+        self.send_callback('v2_playbook_on_play_start', new_play)
 
         # adjust to # of workers to configured forks or size of batch, whatever is lower
         self._initialize_processes(min(self._options.forks, iterator.batch_size))
