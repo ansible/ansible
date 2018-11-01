@@ -12,21 +12,21 @@ in a push-script.
 
 Here is a most basic example::
 
-      ---
-      - hosts: all
-        vars_prompt:
+    ---
+    - hosts: all
+      vars_prompt:
 
-          - name: username
-            prompt: "What is your username?"
-            private: no
+        - name: username
+          prompt: "What is your username?"
+          private: no
 
-          - name: password
-            prompt: "What is your password?"
+        - name: password
+          prompt: "What is your password?"
 
-        tasks: 
+      tasks: 
 
-          - debug: 
-              msg: 'Logging in as {{ username }}'
+        - debug: 
+            msg: 'Logging in as {{ username }}'
 
 The user input is hidden by default but it can be made visible by setting ``private: no``.
 
