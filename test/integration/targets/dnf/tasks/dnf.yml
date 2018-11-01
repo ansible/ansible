@@ -393,11 +393,27 @@
 
 # ENVIRONMENT UPGRADE
 # see commit de299ef77c03a64a8f515033a79ac6b7db1bc710
-- name: install Web Server environment
-  dnf:
-    name: "@Web Server"
-    state: latest
-  register: dnf_result
+
+# Newer Fedora Docker images come with coreutils-single which is incompatible
+# with coreutils (required by @Web Server). We force the install of coreutils
+# before running the environment group install.
+# https://github.com/fedora-cloud/docker-brew-fedora/issues/58
+- name: ensure coreutils is installed over coreutils-single
+  command: dnf install --allowerasing -y coreutils
+  changed_when: '"Nothing to do" not in coreutils_install.stdout'
+  register: coreutils_install
+
+- block:
+  - name: install Web Server environment
+    dnf:
+      name: "@Web Server"
+      state: latest
+    register: dnf_result
+
+  always:
+  - name: reinstall coreutils-single if coreutils was installed
+    command: dnf install --allowerasing -y coreutils-single
+    when: coreutils_install is changed
 
 - name: verify installation of the environment
   assert:
