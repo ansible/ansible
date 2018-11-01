@@ -328,11 +328,6 @@ class TaskQueueManager:
                     except AttributeError:
                         pass
 
-        try:
-            self._callback_process.terminate()
-        except AttributeError:
-            pass
-
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
 

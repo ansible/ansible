@@ -86,5 +86,6 @@ class CallbackProcess(multiprocessing.Process):
                 pass
         try:
             self._queue.close()
+            self.terminate()
         except AttributeError:
             pass
