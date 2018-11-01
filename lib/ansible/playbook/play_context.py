@@ -542,11 +542,15 @@ class PlayContext(Base):
                 becomecmd = '%s %s %s -c %s' % (exe, flags, executable, success_cmd)
 
             elif self.become_method == 'dzdo':
+                # If we have a password, we run dzdo with a randomly-generated
+                # prompt set using -p. Otherwise we run it with -n, if
+                # requested, which makes it fail if it would have prompted for a
+                # password.
 
                 exe = self.become_exe or 'dzdo'
                 if self.become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p %s -u %s %s' % (exe, flags, shlex_quote(prompt), self.become_user, command)
+                    becomecmd = '%s %s -p %s -u %s %s' % (exe, flags.replace('-n', ''), shlex_quote(prompt), self.become_user, command)
                 else:
                     becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
 
