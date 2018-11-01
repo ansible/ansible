@@ -457,7 +457,7 @@ EXAMPLES = '''
 import time
 from ansible.module_utils.docker_common import DockerBaseClass
 from ansible.module_utils.docker_common import AnsibleDockerClient
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_3
+from ansible.module_utils.docker_common import docker_version
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
 
@@ -1045,7 +1045,7 @@ class DockerServiceManager():
             if 'mode' in publish_def.keys():
                 if LooseVersion(self.client.version()['ApiVersion']) < LooseVersion('1.25'):
                     self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
-                if not HAS_DOCKER_PY_3:
+                if LooseVersion(docker_version) < LooseVersion('3.0.0'):
                     self.client.module.fail_json(msg='publish.mode parameter requires docker python library>=3.0.0')
 
     def run(self):
