@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - "docker_network - Add support for IPv6 networks."
+deprecated_features:
+  - "docker_network - Deprecate ``ipam_options`` in favour of ``ipam_config``."
