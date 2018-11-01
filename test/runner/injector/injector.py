@@ -175,14 +175,22 @@ def injector():
     :rtype: list[str], dict[str, str]
     """
     command = os.path.basename(__file__)
-    executable = find_executable(command)
+
+    run_as_python_module = (
+        'pytest',
+    )
+
+    if command in run_as_python_module:
+        executable_args = ['-m', command]
+    else:
+        executable_args = [find_executable(command)]
 
     if config.coverage_file:
         args, env = coverage_command()
     else:
         args, env = [config.python_interpreter], os.environ.copy()
 
-    args += [executable]
+    args += executable_args
 
     if command in ('ansible', 'ansible-playbook', 'ansible-pull'):
         if config.remote_interpreter is None:
