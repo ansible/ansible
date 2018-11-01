@@ -18,6 +18,10 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
+import time
+
+from multiprocessing import Value
+
 from units.compat import unittest
 from units.compat.mock import MagicMock
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -36,24 +40,17 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
         passwords = []
 
         self._tqm = TaskQueueManager(inventory, variable_manager, loader, options, passwords)
-        self._playbook = Playbook(loader)
-
-        # we use a MagicMock to register the result of the call we
-        # expect to `v2_playbook_on_call`. We don't mock out the
-        # method since we're testing code that uses `inspect` to
-        # look at that method's argspec and we want to ensure this
-        # test is easy to reason about.
-        self._register = MagicMock()
 
     def tearDown(self):
-        pass
+        self._tqm.cleanup()
 
     def test_task_queue_manager_callbacks_v2_playbook_on_start(self):
         """
         Assert that no exceptions are raised when sending a Playbook
         start callback to a current callback module plugin.
         """
-        register = self._register
+        register = Value('i')
+        register.value = 0
 
         class CallbackModule(CallbackBase):
             """
@@ -65,19 +62,23 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
             CALLBACK_NAME = 'current_module'
 
             def v2_playbook_on_start(self, playbook):
-                register(self, playbook)
+                register.value = playbook
 
         callback_module = CallbackModule()
         self._tqm._callback_plugins.append(callback_module)
-        self._tqm.send_callback('v2_playbook_on_start', self._playbook)
-        register.assert_called_once_with(callback_module, self._playbook)
+        self._tqm._start_callback_process()
+        self._tqm.send_callback('v2_playbook_on_start', 1)
+        # Sleep for a short duration as send_callback operates in another process and is not synchronous with this process
+        time.sleep(0.1)
+        self.assertEqual(register.value, 1)
 
     def test_task_queue_manager_callbacks_v2_playbook_on_start_wrapped(self):
         """
         Assert that no exceptions are raised when sending a Playbook
         start callback to a wrapped current callback module plugin.
         """
-        register = self._register
+        register = Value('i')
+        register.value = 0
 
         def wrap_callback(func):
             """
@@ -109,9 +110,12 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
 
             @wrap_callback
             def v2_playbook_on_start(self, playbook):
-                register(self, playbook)
+                register.value = playbook
 
         callback_module = WrappedCallbackModule()
         self._tqm._callback_plugins.append(callback_module)
-        self._tqm.send_callback('v2_playbook_on_start', self._playbook)
-        register.assert_called_once_with(callback_module, self._playbook)
+        self._tqm._start_callback_process()
+        self._tqm.send_callback('v2_playbook_on_start', 1)
+        # Sleep for a short duration as send_callback operates in another process and is not synchronous with this process
+        time.sleep(0.1)
+        self.assertEqual(register.value, 1)

@@ -162,13 +162,13 @@ class TaskQueueManager:
                     self._listening_handlers[listener].append(handler._uuid)
 
     def _start_callback_process(self):
-        callback_process = CallbackProcess(
+        self._callback_process = CallbackProcess(
             self._callback_queue,
             [self._stdout_callback] + self._callback_plugins,
             display
         )
         display.debug('Starting callback process')
-        callback_process.start()
+        self._callback_process.start()
 
     def load_callbacks(self):
         '''
@@ -327,6 +327,11 @@ class TaskQueueManager:
                         worker_prc.terminate()
                     except AttributeError:
                         pass
+
+        try:
+            self._callback_process.terminate()
+        except AttributeError:
+            pass
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
