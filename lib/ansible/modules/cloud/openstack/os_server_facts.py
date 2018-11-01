@@ -77,8 +77,6 @@ def main():
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        openstack_servers = cloud.list_servers(
-            detailed=module.params['detailed'])
         openstack_servers = cloud.search_servers(
             detailed=module.params['detailed'], filters=module.params['filters'])
 
