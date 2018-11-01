@@ -26,11 +26,20 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
-from ansible.module_utils._text import to_text
+import re
+
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.network.common.config import NetworkConfig, ConfigLine
 
 _DEVICE_CONFIGS = {}
+
+DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
+
+DEFAULT_IGNORE_LINES_RE = set([
+    re.compile(r"Preparing to Display Configuration\.\.\.")
+])
 
 
 def get_connection(module):
@@ -58,10 +67,6 @@ def get_capabilities(module):
     return module._voss_capabilities
 
 
-def check_args(module, warnings):
-    pass
-
-
 def get_defaults_flag(module):
     connection = get_connection(module)
     try:
@@ -71,7 +76,7 @@ def get_defaults_flag(module):
     return to_text(out, errors='surrogate_then_replace').strip()
 
 
-def get_config(module, flags=None):
+def get_config(module, source='running', flags=None):
     flag_str = ' '.join(to_list(flags))
 
     try:
@@ -79,7 +84,7 @@ def get_config(module, flags=None):
     except KeyError:
         connection = get_connection(module)
         try:
-            out = connection.get_config(flags=flags)
+            out = connection.get_config(source=source, flags=flags)
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
@@ -114,3 +119,101 @@ def load_config(module, commands):
         return resp.get('response')
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
+
+
+def get_sublevel_config(running_config, module):
+    contents = list()
+    current_config_contents = list()
+    sublevel_config = VossNetworkConfig(indent=0)
+    obj = running_config.get_object(module.params['parents'])
+    if obj:
+        contents = obj._children
+    for c in contents:
+        if isinstance(c, ConfigLine):
+            current_config_contents.append(c.raw)
+    sublevel_config.add(current_config_contents, module.params['parents'])
+    return sublevel_config
+
+
+def ignore_line(text, tokens=None):
+    for item in (tokens or DEFAULT_COMMENT_TOKENS):
+        if text.startswith(item):
+            return True
+    for regex in DEFAULT_IGNORE_LINES_RE:
+        if regex.match(text):
+            return True
+
+
+def voss_parse(lines, indent=None, comment_tokens=None):
+    toplevel = re.compile(r'(^interface.*$)|(^router \w+$)|(^router vrf \w+$)')
+    exitline = re.compile(r'^exit$')
+    entry_reg = re.compile(r'([{};])')
+
+    ancestors = list()
+    config = list()
+    dup_parent_index = None
+
+    for line in to_native(lines, errors='surrogate_or_strict').split('\n'):
+        text = entry_reg.sub('', line).strip()
+
+        cfg = ConfigLine(text)
+
+        if not text or ignore_line(text, comment_tokens):
+            continue
+
+        # Handle top level commands
+        if toplevel.match(text):
+            # Looking to see if we have existing parent
+            for index, item in enumerate(config):
+                if item.text == text:
+                    # This means we have an existing parent with same label
+                    dup_parent_index = index
+                    break
+            ancestors = [cfg]
+            config.append(cfg)
+
+        # Handle 'exit' line
+        elif exitline.match(text):
+            ancestors = list()
+
+            if dup_parent_index is not None:
+                # We're working with a duplicate parent
+                # Don't need to store exit, just go to next line in config
+                dup_parent_index = None
+            else:
+                cfg._parents = ancestors[:1]
+                config.append(cfg)
+
+        # Handle sub-level commands. Only have single sub-level
+        elif ancestors:
+            cfg._parents = ancestors[:1]
+            if dup_parent_index is not None:
+                # Update existing entry, since this already exists in config
+                config[int(dup_parent_index)].add_child(cfg)
+                new_index = dup_parent_index + 1
+                config.insert(new_index, cfg)
+            else:
+                ancestors[0].add_child(cfg)
+                config.append(cfg)
+
+        else:
+            # Global command, no further special handling needed
+            config.append(cfg)
+    return config
+
+
+class VossNetworkConfig(NetworkConfig):
+
+    def load(self, s):
+        self._config_text = s
+        self._items = voss_parse(s, self._indent)
+
+    def _diff_line(self, other):
+        updates = list()
+        for item in self.items:
+            if str(item) == "exit":
+                if updates and updates[-1]._parents:
+                    updates.append(item)
+            elif item not in other:
+                updates.append(item)
+        return updates
