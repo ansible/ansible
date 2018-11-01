@@ -60,6 +60,7 @@ EXAMPLES = """
 - name: remove the temporary file
   file:
     path: "{{ tempfile_1.path }}"
+    status: absent
   when: tempfile_1.path is defined
 """
 
