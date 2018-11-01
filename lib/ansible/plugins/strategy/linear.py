@@ -291,7 +291,8 @@ class StrategyModule(StrategyBase):
 
                         if not callback_sent:
                             display.debug("sending task start callback, copying the task so we can template it temporarily")
-                            task_copy = task.copy()
+                            task_copy = task.copy(exclude_parent=True)
+                            task_copy._parent = task._parent
                             display.debug("done copying, going to template now")
                             try:
                                 task_copy.name = to_text(templar.template(task_copy.name, fail_on_undefined=False), nonstring='empty')
