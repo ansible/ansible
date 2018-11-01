@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - Fixed an issue where ``os_router`` would attempt to recreate router,
+    because lack of ``enabled_snat`` parameter was treated as difference,
+    if default Neutron policy for snat is set. (https://github.com/ansible/ansible/issues/29903)
