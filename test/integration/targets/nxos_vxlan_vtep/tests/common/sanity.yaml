@@ -48,9 +48,9 @@
         host_reachability: true
         source_interface: Loopback0
         source_interface_hold_down_time: 30
-        global_ingress_replication_bgp: "{{global_ingress_replication_bgp|default(omit)}}"
-        global_suppress_arp: "{{global_suppress_arp|default(omit)}}"
-        global_mcast_group_L3: "{{global_mcast_group_L3|default(omit)}}"
+        global_ingress_replication_bgp: "{{ global_ingress_replication_bgp|default(omit) }}"
+        global_suppress_arp: "{{ global_suppress_arp|default(omit) }}"
+        global_mcast_group_L3: "{{ global_mcast_group_L3|default(omit) }}"
         shutdown: false
         provider: "{{ connection }}"
       register: result
@@ -74,9 +74,9 @@
         host_reachability: false
         source_interface_hold_down_time: default
         source_interface: default
-        global_ingress_replication_bgp: "{{def_global_ingress_replication_bgp|default(omit)}}"
-        global_suppress_arp: "{{def_global_suppress_arp|default(omit)}}"
-        global_mcast_group_L3: "{{def_global_mcast_group_L3|default(omit)}}"
+        global_ingress_replication_bgp: "{{ def_global_ingress_replication_bgp|default(omit) }}"
+        global_suppress_arp: "{{ def_global_suppress_arp|default(omit) }}"
+        global_mcast_group_L3: "{{ def_global_mcast_group_L3|default(omit) }}"
         shutdown: true
         provider: "{{ connection }}"
       register: result
@@ -93,7 +93,7 @@
       nxos_vxlan_vtep: &gml2
         interface: nve1
         host_reachability: true
-        global_mcast_group_L2: "{{global_mcast_group_L2|default(omit)}}"
+        global_mcast_group_L2: "{{ global_mcast_group_L2|default(omit) }}"
         provider: "{{ connection }}"
       register: result
   
@@ -109,7 +109,7 @@
       nxos_vxlan_vtep: &rgml2
         interface: nve1
         host_reachability: false
-        global_mcast_group_L2: "{{def_global_mcast_group_L2|default(omit)}}"
+        global_mcast_group_L2: "{{ def_global_mcast_group_L2|default(omit) }}"
         provider: "{{ connection }}"
       register: result
   
