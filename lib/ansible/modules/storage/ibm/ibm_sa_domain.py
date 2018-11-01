@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 IBM CORPORATION
+# Copyright: (c) 2018, IBM CORPORATION
 # Author(s): Tzur Eliyahu <tzure@il.ibm.com>
 #
 # GNU General Public License v3.0+ (see COPYING or
@@ -17,21 +17,20 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ibm_sa_domain
-short_description: Adds domains to or removes them from IBM Spectrum Accelerate storage systems.
+short_description: Manages domains in IBM Spectrum Accelerate storage systems.
 version_added: "2.8"
 
 description:
-    - "This module adds domains to or removes them
-        from IBM Spectrum Accelerate storage systems"
+    - "This module can be used to adds domains to or removes them from IBM Spectrum Accelerate storage systems"
 
 options:
     domain:
         description:
-            - domain name
+            - Name of the domain to be managed.
         required: true
     state:
         description:
-            - The desired state of the domain
+            - The desired state of the domain.
         required: true
         default: "present"
         choices: [ "present", "absent" ]
@@ -41,7 +40,7 @@ options:
         required: false
     size:
         description:
-            - domain size
+            - Size of the domain.
         required: false
     hard_capacity:
         description:
@@ -57,19 +56,19 @@ options:
         required: false
     max_dms:
         description:
-            - number of max dms.
+            - Number of max dms.
         required: false
     max_mirrors:
         description:
-            - number of max_mirrors.
+            - Number of max_mirrors.
         required: false
     max_pools:
         description:
-            - number of max_pools.
+            - Number of max_pools.
         required: false
     max_volumes:
         description:
-            - number of max_volumes.
+            - Number of max_volumes.
         required: false
     perf_class:
         description:
@@ -80,7 +79,7 @@ extends_documentation_fragment:
     - ibm_storage
 
 author:
-    - Tzur Eliyahu (tzure@il.ibm.com)
+    - Tzur Eliyahu (@tzure)
 '''
 
 EXAMPLES = '''
@@ -102,6 +101,11 @@ EXAMPLES = '''
     endpoints: hostdev-system
 '''
 RETURN = '''
+msg:
+    description: module return status.
+    returned: as needed
+    type: string
+    sample: "domain 'domain_name' created successfully."
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -138,14 +142,19 @@ def main():
     state = module.params['state']
 
     state_changed = False
+    msg = 'Domain \'{0}\''.format(module.params['domain'])
     if state == 'present' and not domain:
         state_changed = execute_pyxcli_command(
             module, 'domain_create', xcli_client)
+        msg += " created successfully."
     elif state == 'absent' and domain:
         state_changed = execute_pyxcli_command(
             module, 'domain_delete', xcli_client)
+        msg += " deleted successfully."
+    else:
+        msg += " state unchanged."
 
-    module.exit_json(changed=state_changed)
+    module.exit_json(changed=state_changed, msg=msg)
 
 
 if __name__ == '__main__':
