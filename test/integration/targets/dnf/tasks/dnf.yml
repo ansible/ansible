@@ -437,12 +437,20 @@
 # https://github.com/fedora-cloud/docker-brew-fedora/issues/58
 - name: ensure coreutils is installed over coreutils-single
   command: dnf install --allowerasing -y coreutils
+  changed_when: '"Nothing to do" not in coreutils_install.stdout'
+  register: coreutils_install
 
-- name: install Web Server environment
-  dnf:
-    name: "@Web Server"
-    state: latest
-  register: dnf_result
+- block:
+  - name: install Web Server environment
+    dnf:
+      name: "@Web Server"
+      state: latest
+    register: dnf_result
+
+  always:
+  - name: reinstall coreutils-single if coreutils was installed
+    command: dnf install --allowerasing -y coreutils-single
+    when: coreutils_install is changed
 
 - name: verify installation of the environment
   assert:
