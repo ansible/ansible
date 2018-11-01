@@ -77,7 +77,7 @@ class OnyxIgmpInterfaceModule(BaseOnyxModule):
         self._required_config = dict(module_params)
         match = self.IF_NAME_REGEX.match(self._required_config["name"])
         if not match:
-            AttributeError("Please Insert Valide Interface Name")
+            raise AttributeError("Please Insert Valid Interface Name")
 
         self.validate_param_values(self._required_config)
 
