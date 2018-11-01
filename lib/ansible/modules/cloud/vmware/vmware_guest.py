@@ -2011,16 +2011,14 @@ class PyVmomiHelper(PyVmomi):
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
 
-        # Find if we need network customizations (find keys in dictionary that requires customizations)
-        network_changes = False
-        for nw in self.params['networks']:
-            for key in nw:
-                # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
-                    network_changes = True
-                    break
+        # Find if we need network customizations
+        customize_network = False
+        for network in self.params['networks']:
+            if 'ip' in network or 'netmask' in network or 'domain' in network:
+                customize_network = True
 
-        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec'):
+
+        if len(self.params['customization']) > 0 or customize_network or self.params.get('customization_spec'):
             self.customize_vm(vm_obj=vm_obj)
 
         clonespec = None
