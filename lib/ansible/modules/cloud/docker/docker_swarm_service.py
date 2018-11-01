@@ -191,7 +191,7 @@ options:
     - List of dictionaries describing the service published ports.
     - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp')
     - Only used with api_version >= 1.25
-    - If api_version >= 1.32 and docker python library >= 3.0.0 the dictionaries can contain the attribute 'mode' set to 'ingress' or 'host' (default 'ingress').
+    - If api_version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
   replicas:
     required: false
     default: -1
