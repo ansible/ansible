@@ -73,5 +73,9 @@ def test_wrap_var_None():
     assert not isinstance(wrap_var(None), AnsibleUnsafe)
 
 
-def test_Wrap_var_unsafe():
+def test_wrap_var_unsafe():
     assert isinstance(wrap_var(AnsibleUnsafeText(u'foo')), AnsibleUnsafeText)
+
+
+def test_AnsibleUnsafeText():
+    assert isinstance(AnsibleUnsafeText(u'foo'), AnsibleUnsafe)
