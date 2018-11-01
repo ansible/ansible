@@ -35,9 +35,9 @@ options:
     required: true
   cacheable:
     description:
-      - This boolean converts the variable into and actual 'fact' which will also be added to the fact cache, if fact caching is enabled.
+      - This boolean converts the variable into an actual 'fact' which will also be added to the fact cache, if fact caching is enabled.
       - Normally this module creates 'host level variables' and has much higher precedence, this option changes the nature and precedence
-        of the variable created.
+        (by 7 steps) of the variable created. https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable
     type: bool
     default: 'no'
     version_added: "2.4"
