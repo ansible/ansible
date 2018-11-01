@@ -1253,6 +1253,12 @@ class Container(DockerBaseClass):
                 return True
         return False
 
+    @property
+    def paused(self):
+        if self.container and self.container.get('State'):
+            return self.container['State'].get('Paused', False)
+        return False
+
     def _compare(self, a, b, compare):
         '''
         Compare values a and b as described in compare.
@@ -1806,6 +1812,20 @@ class ContainerManager(DockerBaseClass):
             elif state == 'stopped' and container.running:
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
+
+            if state == 'started' and container.paused != self.parameters.paused:
+                if not self.check_mode:
+                    try:
+                        if self.parameters.paused:
+                            self.client.pause(container=container.Id)
+                        else:
+                            self.client.unpause(container=container.Id)
+                    except Exception as exc:
+                        self.fail("Error %s container %s: %s" % (
+                            "pausing" if self.parameters.paused else "unpausing", container.Id, str(exc)
+                        ))
+                self.results['changed'] = True
+                self.results['actions'].append(dict(set_paused=self.parameters.paused))
 
         self.facts = container.raw
 
