@@ -156,7 +156,14 @@ from ansible.module_utils.common._collections_compat import (
     Set, MutableSet,
 )
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common.file import is_executable
+from ansible.module_utils.common.file import (
+    PERM_BITS,
+    EXEC_PERM_BITS,
+    DEFAULT_PERM,
+    is_executable,
+    format_attributes,
+    get_flags_from_attributes
+)
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -248,11 +255,6 @@ PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 MODE_OPERATOR_RE = re.compile(r'[+=-]')
 USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
-
-
-PERM_BITS = 0o7777       # file mode permission bits
-EXEC_PERM_BITS = 0o0111  # execute permission bits
-DEFAULT_PERM = 0o0666    # default file permission bits
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
@@ -743,22 +745,6 @@ def _lenient_lowercase(lst):
         except AttributeError:
             lowered.append(value)
     return lowered
-
-
-def format_attributes(attributes):
-    attribute_list = []
-    for attr in attributes:
-        if attr in FILE_ATTRIBUTES:
-            attribute_list.append(FILE_ATTRIBUTES[attr])
-    return attribute_list
-
-
-def get_flags_from_attributes(attributes):
-    flags = []
-    for key, attr in FILE_ATTRIBUTES.items():
-        if attr in attributes:
-            flags.append(key)
-    return ''.join(flags)
 
 
 def _json_encode_fallback(obj):
