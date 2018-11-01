@@ -2332,7 +2332,7 @@ def main():
         customization_spec=dict(type='str', default=None),
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
-        convert=dict(type='str'),
+        convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
