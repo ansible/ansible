@@ -58,7 +58,6 @@ options:
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is¬
         enabled for this module, then C(absent) is inferred.
     choices: [ absent, installed, latest, present, removed ]
-    default: None
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.

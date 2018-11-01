@@ -44,7 +44,6 @@ options:
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
     choices: ['absent', 'present', 'installed', 'removed', 'latest']
-    default: None
 
   enablerepo:
     description:
