@@ -47,6 +47,10 @@ options:
         - Desired state of the resource.
       choices: ["present", "absent"]
       default: "present"
+    groups:
+      description:
+        - Groups to be associated to Host
+      version_added: "2.8"
 extends_documentation_fragment: tower
 '''
 
@@ -57,6 +61,14 @@ EXAMPLES = '''
     name: localhost
     description: "Local Host Group"
     inventory: "Local Inventory"
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+- name: Associate tower host to groups
+  tower_host:
+    name: localhost
+    description: "Local Host Group"
+    inventory: "Local Inventory"
+    groups: group_name1, group_name2
     state: present
     tower_config_file: "~/tower_cli.cfg"
 '''
@@ -75,6 +87,17 @@ except ImportError:
     pass
 
 
+def associate_host_to_group(name, groups, host, inv, json_output):
+    group_obj = tower_cli.get_resource('group')
+    host_res = host.get(inventory=inv['id'], name=name)
+    for group in groups:
+        group_res = group_obj.get(inventory=inv['id'], name=group.strip())
+        changed = host.associate(host=host_res['id'], group=group_res['id'])
+        if changed['changed'] is True:
+            json_output['group_added'] = group.strip()
+            return True
+    return False
+
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -82,6 +105,7 @@ def main():
         inventory=dict(required=True),
         enabled=dict(type='bool', default=True),
         variables=dict(),
+        groups=dict(type='list'),
         state=dict(choices=['present', 'absent'], default='present'),
     )
     module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -92,6 +116,7 @@ def main():
     enabled = module.params.get('enabled')
     state = module.params.get('state')
 
+    groups = module.params.get('groups')
     variables = module.params.get('variables')
     if variables:
         if variables.startswith('@'):
@@ -114,6 +139,9 @@ def main():
                 result = host.modify(name=name, inventory=inv['id'], enabled=enabled,
                                      variables=variables, description=description, create_on_missing=True)
                 json_output['id'] = result['id']
+                if groups:
+                    result['changed'] = associate_host_to_group(name, groups, host, inv, json_output)
+
             elif state == 'absent':
                 result = host.delete(name=name, inventory=inv['id'])
         except (exc.NotFound) as excinfo:
