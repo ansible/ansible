@@ -104,7 +104,7 @@ import tempfile
 from ansible.module_utils.basic import get_platform, AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native
 
 
 class SysctlModule(object):
@@ -282,7 +282,7 @@ class SysctlModule(object):
             rc, out, err = self.module.run_command(sysctl_args)
 
         if rc != 0:
-            self.module.fail_json(msg=u"Failed to reload sysctl: %s" % to_text(out) + to_text(err))
+            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
@@ -297,7 +297,7 @@ class SysctlModule(object):
                 with open(self.sysctl_file, "r") as read_file:
                     lines = read_file.readlines()
             except IOError as e:
-                self.module.fail_json(msg=u"Failed to open %s: %s" % (self.sysctl_file, to_text(e)))
+                self.module.fail_json(msg="Failed to open %s: %s" % (to_native(self.sysctl_file), to_native(e)))
 
         for line in lines:
             line = line.strip()
@@ -347,7 +347,7 @@ class SysctlModule(object):
             for l in self.fixed_lines:
                 f.write(l.strip() + "\n")
         except IOError as e:
-            self.module.fail_json(msg=u"Failed to write to file %s: %s" % (tmp_path, to_text(e)))
+            self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(e)))
         f.flush()
         f.close()
 

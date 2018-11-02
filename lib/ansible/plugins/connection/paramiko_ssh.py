@@ -380,10 +380,11 @@ class Connection(ConnectionBase):
             self.ssh.get_transport().set_keepalive(5)
             chan = self.ssh.get_transport().open_session()
         except Exception as e:
+            text_e = to_text(e)
             msg = u"Failed to open session"
-            if len(to_text(e)) > 0:
-                msg += u": %s" % to_text(e)
-            raise AnsibleConnectionFailure(msg)
+            if len(text_e) > 0:
+                msg += u": %s" % text_e
+            raise AnsibleConnectionFailure(to_native(msg))
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansible.cfg), and we try
