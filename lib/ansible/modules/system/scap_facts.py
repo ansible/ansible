@@ -8,20 +8,6 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-try:
-    from elementtree.ElementTree import parse
-except ImportError:
-    from xml.etree.ElementTree import parse
-
-from os.path import dirname
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
-
 DOCUMENTATION = '''
 ---
 module: scap_facts
@@ -204,6 +190,20 @@ scap_scan:
                                                   source: http://iase.disa.mil/stigs/os/general/Pages/index.aspx
                                             type: list
 '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+try:
+    from elementtree.ElementTree import parse
+except ImportError:
+    from xml.etree.ElementTree import parse
+
+from os.path import dirname
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 class ScapEvalXccdfResultReader:
