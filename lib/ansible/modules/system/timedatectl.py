@@ -99,7 +99,7 @@ def main():
             ntp=dict(required=False, type=bool),
             local_rtc=dict(required=False, type=bool),
         ),
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     time = module.params['time']
