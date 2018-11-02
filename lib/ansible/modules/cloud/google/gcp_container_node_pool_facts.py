@@ -276,7 +276,7 @@ def main():
         )
     )
 
-    if 'scopes' not in module.params:
+    if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
 
     items = fetch_list(module, collection(module))
