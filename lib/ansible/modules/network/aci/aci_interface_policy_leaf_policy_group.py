@@ -370,7 +370,7 @@ def main():
             lagT=lag_type,
         )
 
-    child_configs=[
+    child_configs = [
         dict(
             infraRsCdpIfPol=dict(
                 attributes=dict(
