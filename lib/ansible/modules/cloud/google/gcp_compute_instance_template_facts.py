@@ -263,6 +263,12 @@ items:
           - Reference to a gcompute_machine_type resource.
           returned: success
           type: str
+        minCpuPlatform:
+          description:
+          - Specifies a minimum CPU platform for the VM instance. Applicable values
+            are the friendly names of CPU platforms .
+          returned: success
+          type: str
         metadata:
           description:
           - The metadata key/value pairs to assign to instances that are created from

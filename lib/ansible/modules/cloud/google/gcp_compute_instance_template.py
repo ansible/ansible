@@ -229,6 +229,11 @@ options:
         description:
         - Reference to a gcompute_machine_type resource.
         required: true
+      min_cpu_platform:
+        description:
+        - Specifies a minimum CPU platform for the VM instance. Applicable values
+          are the friendly names of CPU platforms .
+        required: false
       metadata:
         description:
         - The metadata key/value pairs to assign to instances that are created from
@@ -651,6 +656,12 @@ properties:
       - Reference to a gcompute_machine_type resource.
       returned: success
       type: str
+    minCpuPlatform:
+      description:
+      - Specifies a minimum CPU platform for the VM instance. Applicable values are
+        the friendly names of CPU platforms .
+      returned: success
+      type: str
     metadata:
       description:
       - The metadata key/value pairs to assign to instances that are created from
@@ -887,6 +898,7 @@ def main():
                     type=dict(type='str', choices=['SCRATCH', 'PERSISTENT'])
                 )),
                 machine_type=dict(required=True, type='str'),
+                min_cpu_platform=dict(type='str'),
                 metadata=dict(type='dict'),
                 guest_accelerators=dict(type='list', elements='dict', options=dict(
                     accelerator_count=dict(type='int'),
@@ -1163,6 +1175,7 @@ class InstanceTemplateProperties(object):
             u'description': self.request.get('description'),
             u'disks': InstanceTemplateDisksArray(self.request.get('disks', []), self.module).to_request(),
             u'machineType': self.request.get('machine_type'),
+            u'minCpuPlatform': self.request.get('min_cpu_platform'),
             u'metadata': self.request.get('metadata'),
             u'guestAccelerators': InstanceTemplateGuestacceleratorsArray(self.request.get('guest_accelerators', []), self.module).to_request(),
             u'networkInterfaces': InstanceTemplateNetworkinterfacesArray(self.request.get('network_interfaces', []), self.module).to_request(),
@@ -1177,6 +1190,7 @@ class InstanceTemplateProperties(object):
             u'description': self.request.get(u'description'),
             u'disks': InstanceTemplateDisksArray(self.request.get(u'disks', []), self.module).from_response(),
             u'machineType': self.request.get(u'machineType'),
+            u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
             u'metadata': self.request.get(u'metadata'),
             u'guestAccelerators': InstanceTemplateGuestacceleratorsArray(self.request.get(u'guestAccelerators', []), self.module).from_response(),
             u'networkInterfaces': InstanceTemplateNetworkinterfacesArray(self.request.get(u'networkInterfaces', []), self.module).from_response(),
