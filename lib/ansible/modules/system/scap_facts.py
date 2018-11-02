@@ -246,7 +246,7 @@ class ScapEvalXccdfResultReader:
         raw = dict((k, v) for k, v in data.items() if v['severity'] == severity)
         wanted = dict((k, v) for k, v in raw.items() if v['result'] in self.include_results)
         fail = dict((k, v) for k, v in raw.items() if v['result'] == 'fail')
-        passing = dict((k, v) for k,v in raw.items() if v['result'] == 'pass')
+        passing = dict((k, v) for k, v in raw.items() if v['result'] == 'pass')
         ns = dict((k, v) for k, v in raw.items() if v['result'] == 'notselected')
         na = dict((k, v) for k, v in raw.items() if v['result'] == 'notapplicable')
         nc = dict((k, v) for k, v in raw.items() if v['result'] == 'notchecked')
