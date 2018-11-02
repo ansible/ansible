@@ -39,36 +39,56 @@ options:
         - Variables to use for the group, use C(@) for a file.
     credential:
       description:
-        - Credential to use for the group.
+        - (deprecated) Credential to use for the group.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
     source:
       description:
-        - The source to use for this group.
+        - (deprecated) The source to use for this group.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
       choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
     source_regions:
       description:
-        - Regions for cloud provider.
+        - (deprecated) Regions for cloud provider.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
     source_vars:
       description:
-        - Override variables from source with variables from this field.
+        - (deprecated) Override variables from source with variables from this field.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
     instance_filters:
       description:
-        - Comma-separated list of filter expressions for matching hosts.
+        - (deprecated) Comma-separated list of filter expressions for matching hosts.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
     group_by:
       description:
-        - Limit groups automatically created from inventory source.
+        - (deprecated) Limit groups automatically created from inventory source.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
     source_script:
       description:
-        - Inventory script to be used when group type is C(custom).
+        - (deprecated) Inventory script to be used when group type is C(custom).
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
     overwrite:
       description:
-        - Delete child groups and hosts not found in source.
+        - (deprecated) Delete child groups and hosts not found in source.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
       type: bool
     overwrite_vars:
       description:
-        - Override vars in child groups and hosts with those from external source.
+        - (deprecated) Override vars in child groups and hosts with those from external source.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
     update_on_launch:
       description:
-        - Refresh inventory data from its source each time a job is run.
+        - (deprecated) Refresh inventory data from its source each time a job is run.
+        - This option has moved to tower_inventory_source with tower_inventory_source as of tower version 3.2. It will
+        - be ignored if tower_cli is on version 3.2 or higher.
       type: bool
     merge_variables:
       description:
@@ -105,6 +125,7 @@ EXAMPLES = '''
 
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode, sanitise_and_merge_variables
+from distutils.version import LooseVersion
 
 try:
     import tower_cli
@@ -154,6 +175,67 @@ def main():
 
     variables = module.params.get('variables')
 
+    api_v2 = LooseVersion(tower_cli.__version__) >= LooseVersion("3.2")
+    if module.params['credential'] is not None:
+        module.deprecate("The credential parameter is only valid here if you're tower version is < 3.2. It is now "
+                         "part of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('credential')
+
+    if module.params['source'] is not None:
+        module.deprecate("The source parameter is only valid here if you're tower version is < 3.2. It is now part of "
+                         "the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('source')
+
+    if module.params['source_regions'] is not None:
+        module.deprecate("The source_regions parameter is only valid here if you're tower version is < 3.2. It is now "
+                         "part of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('source_regions')
+
+    if module.params['source_vars']:
+        module.deprecate("The source_vars parameter is only valid here if you're tower version is < 3.2. It is now "
+                         "part of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('source_vars')
+
+    if module.params['instance_filters']:
+        module.deprecate("The instance_filters parameter is only valid here if you're tower version is < 3.2. It is "
+                         "now part of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('instance_filters')
+
+    if module.params['group_by']:
+        module.deprecate("The group_by parameter is only valid here if you're tower version is < 3.2. It is now part "
+                         "of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('group_by')
+
+    if module.params['source_script']:
+        module.deprecate("The source_script parameter is only valid here if you're tower version is < 3.2. It is now "
+                         "part of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('source_script')
+
+    if module.params['overwrite']:
+        module.deprecate("The overwrite parameter is only valid here if you're tower version is < 3.2. It is now part "
+                         "of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('overwrite')
+
+    if module.params['overwrite_vars']:
+        module.deprecate("The overwrite_vars parameter is only valid here if you're tower version is < 3.2. It is now "
+                         "part of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('overwrite_vars')
+
+    if module.params['update_on_launch']:
+        module.deprecate("The update_on_launch parameter is only valid here if you're tower version is < 3.2. It is "
+                         "now part of the tower_inventory_source module. This parameter is now deprecated", version="2.12")
+        if api_v2:
+            module.params.pop('update_on_launch')
+
     json_output = {'group': name, 'state': state}
 
     tower_auth = tower_auth_config(module)
@@ -194,7 +276,7 @@ def main():
             module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
 
         try:
-            if credential:
+            if credential and not api_v2:
                 cred_res = tower_cli.get_resource('credential')
                 cred = cred_res.get(name=credential)
                 params['credential'] = cred['id']
