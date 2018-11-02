@@ -198,7 +198,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "device_roles": self.extract_device_role,
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
-			"services": self.extract_services,
+            "services": self.extract_services,
             "manufacturers": self.extract_manufacturer
         }
 
@@ -448,3 +448,4 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.group_by = self.get_option("group_by")
         self.query_filters = self.get_option("query_filters")
         self.main()
+
