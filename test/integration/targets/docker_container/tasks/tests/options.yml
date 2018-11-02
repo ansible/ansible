@@ -21,7 +21,7 @@
   - "{{ nname_2 }}"
   loop_control:
     loop_var: network_name
-  when: docker_py_version is version('1.9.0', '>=')
+  when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
 ## auto_remove #####################################################
@@ -2483,7 +2483,7 @@
       - networks_4 is changed
       - networks_5 is changed
 
-  when: docker_py_version is version('1.9.0', '>=')
+  when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
 ## oom_killer ######################################################
@@ -3979,4 +3979,4 @@
   - "{{ nname_2 }}"
   loop_control:
     loop_var: network_name
-  when: docker_py_version is version('1.9.0', '>=')
+  when: docker_py_version is version('1.10.0', '>=')
