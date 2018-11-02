@@ -8,6 +8,18 @@
     msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
   when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
 
+- name: Ensuring bindings do not already exist
+  aci_access_port_to_interface_policy_leaf_profile:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    leaf_interface_profile: leafintprftest
+    access_port_selector: anstest_accessportselector
+    state: absent
+
 - name: Ensuring Interface Policy Leaf profile exists for kick off
   aci_interface_policy_leaf_profile: &aci_interface_policy_leaf_profile_present
     host: "{{ aci_hostname }}"
@@ -53,7 +65,7 @@
     - accessport_to_intf_check_mode_present is changed
     - accessport_to_intf_present is changed
     - accessport_to_intf_present.previous == []
-    - 'accessport_to_intf_present.sent == {"infraHPortS": {"attributes": {"name": "anstest_accessportselector"}, "children": [{"infraRsAccBaseGrp": {"attributes": {"tDn": "uni/infra/funcprof/accportgrp-None"}}}]}}'
+    - 'accessport_to_intf_present.sent == {"infraHPortS": {"attributes": {"name": "anstest_accessportselector"}}}'
     - accessport_to_intf_idempotent is not changed
     - accessport_to_intf_idempotent.sent == {}
     - accessport_to_intf_update is changed
