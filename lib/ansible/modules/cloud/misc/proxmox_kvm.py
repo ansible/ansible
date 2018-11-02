@@ -303,7 +303,7 @@ options:
     description:
       - Indicates desired state of the instance.
       - If C(current), the current state of the VM will be fecthed. You can access it with C(results.status)
-    choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
+    choices: ['present', 'started', 'absent', 'stopped', 'restarted','current','running']
     default: present
   storage:
     description:
