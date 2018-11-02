@@ -120,9 +120,8 @@ try:
     from pylxca import connect
     from pylxca import disconnect
     from pylxca import nodes
-    HAS_PYLXCA = True
 except ImportError:
-    HAS_PYLXCA = False
+    pass
 
 
 UUID_REQUIRED = 'UUID of device is required for nodes_by_uuid command.'

@@ -36,12 +36,17 @@ class TestMyModule():
     @pytest.mark.usefixtures('patch_ansible_module')
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.execute_module", autospec=True)
-    def test_without_required_parameters(self, _setup_conn, _execute_module, mocker, setup_module):
+    def test_without_required_parameters(self, _setup_conn, _execute_module,
+                                         mocker, capfd, setup_module):
         """Failure must occurs when all parameters are missing"""
         with pytest.raises(SystemExit):
             _setup_conn.return_value = "Fake connection"
             _execute_module.return_value = "Fake execution"
             lxca_nodes.main()
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+        assert results['failed']
+        assert 'missing required arguments' in results['msg']
 
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.execute_module", autospec=True)
