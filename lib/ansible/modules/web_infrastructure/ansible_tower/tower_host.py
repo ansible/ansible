@@ -127,43 +127,43 @@ def main():
         except exc.notFound as excinfo:
             module.fail_json(msg='Failed to update the host, inventory not found: {0}'.format(excinfo), changed=False)
 
-        group_ids = []
-        try:
-            for group in groups:
-                group_ids.append(group_res.get(name=group, inventory=params['inventory'])['id'])
-        except exc.NotFound as excinfo:
-            module.fail_json(msg='Group {0} does not exist: {1}'.format(group, excinfo), changed=False)
+        if state == 'present':
+            group_ids = []
+            try:
+                for group in groups:
+                    group_ids.append(group_res.get(name=group, inventory=params['inventory'])['id'])
+            except exc.NotFound as excinfo:
+                module.fail_json(msg='Group {0} does not exist: {1}'.format(group, excinfo), changed=False)
 
-        try:
-            existing_host = host.get(name=name, inventory=params['inventory'])
-        except exc.NotFound:
-            existing_host = None
-            json_output['created'] = True
-            module.log("Existing host not found, will create")
+            try:
+                existing_host = host.get(name=name, inventory=params['inventory'])
+            except exc.NotFound:
+                existing_host = None
+                json_output['created'] = True
+                module.log("Existing host not found, will create")
 
-        try:
-            if merge_variables and existing_host:
-                params['variables'] = sanitise_and_merge_variables(existing_host['variables'], variables)
-            else:
-                params['variables'] = sanitise_and_merge_variables(variables)
-        except TypeError as excinfo:
-            module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
+            try:
+                if merge_variables and existing_host:
+                    params['variables'] = sanitise_and_merge_variables(existing_host['variables'], variables)
+                else:
+                    params['variables'] = sanitise_and_merge_variables(variables)
+            except TypeError as excinfo:
+                module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
 
-        try:
-            if state == 'present':
-                result = host.modify(**params)
-                json_output['id'] = result['id']
-                json_output['changed'] = result['changed']
-                for group in group_ids:
-                    res = host.associate(host=result['id'], group=group)
-                    if res['changed']:
-                        json_output['changed'] = True
-            elif state == 'absent':
-                result = host.delete(name=name, inventory=inv['id'])
-                json_output['changed'] = result['changed']
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
-            module.fail_json(msg='Failed to update host: {0}'.format(excinfo), changed=False)
+            try:
+                    result = host.modify(**params)
+                    json_output['id'] = result['id']
+                    json_output['changed'] = result['changed']
+                    for group in group_ids:
+                        res = host.associate(host=result['id'], group=group)
+                        if res['changed']:
+                            json_output['changed'] = True
+            except (exc.ConnectionError, exc.BadRequest) as excinfo:
+                module.fail_json(msg='Failed to update host: {0}'.format(excinfo), changed=False)
 
+        elif state == 'absent':
+            result = host.delete(name=name, inventory=inv['id'])
+            json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
