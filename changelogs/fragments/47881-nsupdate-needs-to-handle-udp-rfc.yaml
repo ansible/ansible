@@ -1,0 +1,2 @@
+bugfixes:
+  - "Nsupdate nees to follow RFC for DNS - UDP needs to be available https://github.com/ansible/ansible/issues/47881"
