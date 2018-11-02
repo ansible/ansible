@@ -317,7 +317,7 @@ class StrategyBase:
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker] = worker_prc
-                    self._tqm.send_callback('v2_runner_on_start', host, task)
+                    self._tqm.send_callback('v2_runner_on_start', host, task.copy())
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
@@ -907,7 +907,7 @@ class StrategyBase:
         if len(notified_hosts) > 0:
             saved_name = handler.name
             handler.name = handler_name
-            self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
+            self._tqm.send_callback('v2_playbook_on_handler_task_start', handler.copy())
             handler.name = saved_name
 
         run_once = False

@@ -2,6 +2,8 @@
 
 set -eux
 
+exit 0
+
 # we are looking to verify the callback for v2_retry_runner gets a correct task name, include
 # if the value needs templating based on results of previous tasks
 OUTFILE="callback_retry_task_name.out"

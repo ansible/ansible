@@ -8,7 +8,6 @@ __metaclass__ = type
 import itertools
 import operator
 
-from copy import copy as shallowcopy
 from functools import partial
 
 from jinja2.exceptions import UndefinedError
@@ -21,6 +20,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
+from ansible.vars.clean import module_response_deepcopy
 
 try:
     from __main__ import display
@@ -314,7 +314,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for name in self._valid_attrs.keys():
             if name in self._alias_attrs:
                 continue
-            new_me._attributes[name] = shallowcopy(self._attributes[name])
+            new_me._attributes[name] = module_response_deepcopy(self._attributes[name])
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager

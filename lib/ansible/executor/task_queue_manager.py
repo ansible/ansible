@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
+import pickle
+
 import multiprocessing
 import os
 import tempfile
@@ -275,8 +278,6 @@ class TaskQueueManager:
             start_at_done=self._start_at_done,
         )
 
-        self.send_callback('v2_playbook_on_play_start', new_play)
-
         # adjust to # of workers to configured forks or size of batch, whatever is lower
         self._initialize_processes(min(self._options.forks, iterator.batch_size))
 
@@ -300,6 +301,10 @@ class TaskQueueManager:
         # and remember it so we don't try to skip tasks on future plays
         if getattr(self._options, 'start_at_task', None) is not None and play_context.start_at_task is None:
             self._start_at_done = True
+
+        sys.stderr.write('tqm ')
+        sys.stderr.flush()
+        self.send_callback('v2_playbook_on_play_start', new_play)
 
         # and run the play using the strategy and cleanup on way out
         play_return = strategy.run(iterator, play_context)
@@ -359,4 +364,14 @@ class TaskQueueManager:
         return defunct
 
     def send_callback(self, method_name, *args, **kwargs):
-        self._callback_queue.put_nowait((method_name, args, kwargs))
+        sys.stderr.write("%s " % method_name)
+        sys.stderr.flush()
+        new_args = []
+        for arg in args:
+            if isinstance(arg, TaskResult):
+                tr_copy = TaskResult(arg._host, arg._task, arg._result, arg._task_fields)
+                tr_copy._task = arg._task.copy()
+                new_args.append(tr_copy)
+            else:
+                new_args.append(arg)
+        self._callback_queue.put_nowait((method_name, new_args, kwargs))
