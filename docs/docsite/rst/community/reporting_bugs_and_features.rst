@@ -9,7 +9,7 @@ Reporting Bugs And Requesting Features
 Reporting a bug
 ===============
 
-Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
+Ansible practices responsible disclosure - if this is a security-related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to any public groups, and you will receive a prompt response.
 
 Ansible bugs should be reported to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_ after
 signing up for a free GitHub account.  Before reporting a bug, please use the bug/issue search
