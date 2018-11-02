@@ -184,10 +184,12 @@ def create_lb_service(args=None, service=None):
             retvals['msg'] = _msg
             return(retvals)
 
-    for arg in ['enabled', 'load_balancer', 'port', 'protocol', 'service_name', 'virtual_ip']:
+    for arg in ['enabled', 'port', 'protocol', 'service_name', 'virtual_ip']:
         payload[arg] = args[arg]
 
     if service is None:
+        # add load_balancer to the payload late
+        payload['load_balancer'] = args['load_balancer']
         # create the service
         if args['check_mode']:
             has_changed = True
@@ -202,10 +204,21 @@ def create_lb_service(args=None, service=None):
                 # empty msg as we don't want to return a boatlad of json to the user.
                 msg = None
     else:
-        # check if the service is the same, then update or do nothing
-        if service == payload:
+        # perform various horrible contortions in order to compare the existing service
+        # to the payload we intend to POST.
+        _service = service.copy()
+        _service['service_name'] = service['name']
+        del _service['name']
+        try:
+            del _service['servers']
+        except Exception:
+            pass
+
+        if _service == payload:
             memset_api == payload
         else:
+            # add load_balancer to the payload late so we can compare dicts beforehand
+            payload['load_balancer'] = args['load_balancer']
             # update service
             if args['check_mode']:
                 has_changed = True
