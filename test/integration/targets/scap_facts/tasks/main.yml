@@ -4,6 +4,11 @@
     dest: "{{ output_dir }}/results.xml"
   register: result
 
+- name: Install jmespath
+  pip:
+    name: jmespath
+    state: present
+
 - name: First Results Parse
   scap_facts:
     path: "{{ output_dir }}/results.xml"
