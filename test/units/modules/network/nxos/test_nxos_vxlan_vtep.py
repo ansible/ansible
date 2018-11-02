@@ -48,7 +48,7 @@ class TestNxosVxlanVtepVniModule(TestNxosModule):
 
     def test_nxos_vxlan_vtep(self):
         set_module_args(dict(interface='nve1', description='simple description'))
-        self.execute_module(changed=True, commands=['interface nve1', 'description simple description'])
+        self.execute_module(changed=True, commands=['interface nve1', 'terminal dont-ask', 'description simple description'])
 
     def test_nxos_vxlan_vtep_present_no_change(self):
         set_module_args(dict(interface='nve1'))
