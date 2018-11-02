@@ -1,0 +1,17 @@
+---
+# https://www.rabbitmq.com/ssl.html#automated-certificate-generation-transcript
+- name: obtain tls-gen
+  git:
+    repo: https://github.com/michaelklishin/tls-gen.git
+    dest: /tls-gen
+
+- name: generate certificates
+  command: make PASSWORD=bunnies
+  args:
+    chdir: /tls-gen/basic/
+    creates: /tls-gen/basic/result/client_certificate.pem
+
+- name: verify certificates
+  command: make verify
+  args:
+    chdir: /tls-gen/basic/

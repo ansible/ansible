@@ -1,5 +1,4 @@
 ---
-
 # https://www.rabbitmq.com/install-debian.html#apt-pinning
 - name: Pin erlang version that rabbitmq supports
   copy:
