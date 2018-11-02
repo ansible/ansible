@@ -32,3 +32,5 @@
 - include: disk_mode_d1_c1_f0.yml
 - include: linked_clone_d1_c1_f0.yml
 - include: boot_firmware_d1_c1_f0.yml
+# Comment this testcase out since VCSIM does not support template operations
+# - include: template_cdrom_d1_c1_f0.yml

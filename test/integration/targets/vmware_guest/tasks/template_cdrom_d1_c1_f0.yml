@@ -1,0 +1,113 @@
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim with no folders
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Clusters from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
+  register: clusterlist
+
+- debug: var=vcsim_instance
+- debug: var=clusterlist
+
+- name: Create a new VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Test-vm
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    cdrom:
+      type: client
+    networks:
+    - device_type: e1000
+      name: VM Network
+      type: dhcp
+  register: test_vm
+
+- debug: var=test_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "test_vm.failed == false"
+      - "test_vm.changed == true"
+
+- name: Convert the VM to template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Test-vm
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    state: present
+    is_template: True
+  register: test_vm
+
+- debug: var=test_vm
+
+- name: assert the VM was converted
+  assert:
+    that:
+      - "test_vm.failed == false"
+      - "test_vm.changed == true"
+
+- name: Deploy a new VM from template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Test-vm2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    template: Test-vm
+    hardware:
+      memory_mb: 1024
+      num_cpus: 2
+    cdrom:
+      type: iso
+      iso_path: "[LocalDS_0] base.iso"
+  register: test_vm
+
+- debug: var=test_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "test_vm.failed == false"
+      - "test_vm.changed == true"

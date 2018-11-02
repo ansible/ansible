@@ -1005,9 +1005,9 @@ class PyVmomiHelper(PyVmomi):
             if self.params["cdrom"]["type"] == "iso" and ("iso_path" not in self.params["cdrom"] or not self.params["cdrom"]["iso_path"]):
                 self.module.fail_json(msg="cdrom.iso_path is mandatory in case cdrom.type is iso")
 
-            if vm_obj and vm_obj.config.template:
-                # Changing CD-ROM settings on a template is not supported
-                return
+            # if vm_obj and vm_obj.config.template:
+            # Changing CD-ROM settings on a template is not supported
+                # return
 
             cdrom_spec = None
             cdrom_device = self.get_vm_cdrom_device(vm=vm_obj)
