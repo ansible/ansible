@@ -21,7 +21,7 @@ try:
     from library.modules.bigip_user import Parameters
     from library.modules.bigip_user import ModuleManager
     from library.modules.bigip_user import ArgumentSpec
-    from library.modules.bigip_user import UnparitionedManager
+    from library.modules.bigip_user import UnpartitionedManager
     from library.modules.bigip_user import PartitionedManager
 
     from library.module_utils.network.f5.common import F5ModuleError
@@ -37,7 +37,7 @@ except ImportError:
         from ansible.modules.network.f5.bigip_user import Parameters
         from ansible.modules.network.f5.bigip_user import ModuleManager
         from ansible.modules.network.f5.bigip_user import ArgumentSpec
-        from ansible.modules.network.f5.bigip_user import UnparitionedManager
+        from ansible.modules.network.f5.bigip_user import UnpartitionedManager
         from ansible.modules.network.f5.bigip_user import PartitionedManager
 
         from ansible.module_utils.network.f5.common import F5ModuleError
@@ -294,7 +294,7 @@ class TestManager(unittest.TestCase):
         mm.get_manager = Mock(return_value=pm)
 
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
@@ -467,7 +467,7 @@ class TestManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
@@ -510,7 +510,7 @@ class TestManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
@@ -520,7 +520,7 @@ class TestManager(unittest.TestCase):
         mm.get_manager = Mock(return_value=upm)
 
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
@@ -550,7 +550,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
@@ -579,7 +579,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
@@ -609,7 +609,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
@@ -639,7 +639,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
@@ -673,7 +673,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
@@ -705,7 +705,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
@@ -714,7 +714,7 @@ class TestLegacyManager(unittest.TestCase):
         mm.get_manager = Mock(return_value=upm)
 
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
@@ -745,7 +745,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
@@ -782,7 +782,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
@@ -821,7 +821,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
@@ -861,7 +861,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
@@ -904,7 +904,7 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        upm = UnparitionedManager(module=module, params=module.params)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
@@ -914,7 +914,7 @@ class TestLegacyManager(unittest.TestCase):
         mm.get_manager = Mock(return_value=upm)
 
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
             mm.exec_module()
