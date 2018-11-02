@@ -260,7 +260,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         try:
             url = urljoin(self.api_endpoint, "/api/ipam/services/?device=" + str(host["name"]))
             device_lookup = self._fetch_information(url)
-            return [device_lookup["results"]]
+            return device_lookup["results"]
         except Exception:
             return
 
@@ -370,13 +370,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def refresh_url(self):
         query_parameters = [("limit", 0)]
-        query_parameters.extend(filter(lambda x: x,
-                                       map(self.validate_query_parameters, self.query_filters)))
-        self.device_url = self.api_endpoint + "/api/dcim/devices/" + "?" + urlencode(query_parameters)
-        self.virtual_machines_url = "".join([self.api_endpoint,
-                                             "/api/virtualization/virtual-machines/",
-                                             "?",
-                                             urlencode(query_parameters)])
+        if self.query_filters:
+            query_parameters.extend(filter(lambda x: x,
+                                           map(self.validate_query_parameters, self.query_filters)))
+        self.device_url = urljoin(self.api_endpoint,
+                                  "/api/dcim/devices/?" + urlencode(query_parameters))
+        self.virtual_machines_url = urljoin(self.api_endpoint,
+                                            "/api/virtualization/virtual-machines/?" + urlencode(query_parameters))
 
     def fetch_hosts(self):
         return chain(
