@@ -1,6 +1,6 @@
 - name: deploy the test file for scap_facts
-  copy:
-    src: oscap-results.xml 
+  get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/scap_facts/oscap-results.xml
     dest: "{{ output_dir }}/results.xml"
   register: result
 
