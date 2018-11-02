@@ -107,102 +107,102 @@ scap_scan:
     returned: always
     type: complex
     contains:
-    benchmark_id:
-        description: The ID of the benchmark used in the scan
-        returned: always
-        type: string
-        sample: xccdf_org.open-scap_testresult_stig-rhel7-disa
-    start_time:
-        description: time when the scan started
-        returned: always
-        type: string
-        sample: '2018-10-20T09:57:26'
-    end_time:
-        description: time when the scan completed
-        returned: always
-        type: string
-        sample: '2018-10-20T09:58:18'
-    score:
-        description: overall score across all rules
-        returned: always
-        type: float
-        sample: 76.732140
-    results:
-        description: Results of the scan organized by severity
-        returned: always
-        type: complex
-        contains:
-        $SEVERITY_IDENTIFIER:
-            description: Data for a particular severity
+        benchmark_id:
+            description: The ID of the benchmark used in the scan
+            returned: always
+            type: string
+            sample: xccdf_org.open-scap_testresult_stig-rhel7-disa
+        start_time:
+            description: time when the scan started
+            returned: always
+            type: string
+            sample: '2018-10-20T09:57:26'
+        end_time:
+            description: time when the scan completed
+            returned: always
+            type: string
+            sample: '2018-10-20T09:58:18'
+        score:
+            description: overall score across all rules
+            returned: always
+            type: float
+            sample: 76.732140
+        results:
+            description: Results of the scan organized by severity
             returned: always
             type: complex
             contains:
-            score:
-                description: severity level score
-                returned: always
-                type: float
-                sample: 34.09090909090909
-            total_graded:
-                description: total number of rules checked in this severity
-                returned: always
-                type: int
-                sample: 44
-            total_failing:
-                description: total number of rules that failed the scan
-                returned: always
-                type: int
-                sample: 29
-            total_notselected:
-                description: total number of rules not scanned because they were not enabled by the selected profile during the scan
-                returned: always
-                type: int
-                sample: 0
-            total_notchecked:
-                description: total number of rules not checked because SCAP doesnt have check content for the rule
-                returned: always
-                type: int
-                sample: 33
-            total_notapplicable:
-                description: total number of rules not checked because they do not apply to the given system
-                returned: always
-                type: int
-                sample: 22
-            total_passing:
-                description: total number of rules that passed
-                returned: always
-                type: int
-                sample: 15
-            data:
-                description: the scan results specific to the severity level
-                returned: always
-                type: complex
-                contains:
-                $RULE_IDENTIFIER:
-                    description: the identifier of the rule scanned
+                $SEVERITY_IDENTIFIER:
+                    description: Data for a particular severity
                     returned: always
                     type: complex
                     contains:
-                        title:
-                            description: human readable description of the rule
+                        score:
+                            description: severity level score
                             returned: always
-                            type: string
-                            sample: Set Account Expiration Following Inactivity
-                        severity:
-                            description: the severity of the rule
+                            type: float
+                            sample: 34.09090909090909
+                        total_graded:
+                            description: total number of rules checked in this severity
                             returned: always
-                            type: string
-                            sample: medium
-                        result:
-                            type: string
+                            type: int
+                            sample: 44
+                        total_failing:
+                            description: total number of rules that failed the scan
                             returned: always
-                            sample: fail
-                        references:
-                            description: dict of reference urls and corresponding reference ids
+                            type: int
+                            sample: 29
+                        total_notselected:
+                            description: total number of rules not scanned because they were not enabled by the selected profile during the scan
                             returned: always
-                            sample:
-                                - id: SRG-OS-000480-GPOS-00227
-                                    source: http://iase.disa.mil/stigs/os/general/Pages/index.aspx
-                            type: list
+                            type: int
+                            sample: 0
+                        total_notchecked:
+                            description: total number of rules not checked because SCAP doesnt have check content for the rule
+                            returned: always
+                            type: int
+                            sample: 33
+                        total_notapplicable:
+                            description: total number of rules not checked because they do not apply to the given system
+                            returned: always
+                            type: int
+                            sample: 22
+                        total_passing:
+                            description: total number of rules that passed
+                            returned: always
+                            type: int
+                            sample: 15
+                        data:
+                            description: the scan results specific to the severity level
+                            returned: always
+                            type: complex
+                            contains:
+                                $RULE_IDENTIFIER:
+                                    description: the identifier of the rule scanned
+                                    returned: always
+                                    type: complex
+                                    contains:
+                                        title:
+                                            description: human readable description of the rule
+                                            returned: always
+                                            type: string
+                                            sample: Set Account Expiration Following Inactivity
+                                        severity:
+                                            description: the severity of the rule
+                                            returned: always
+                                            type: string
+                                            sample: medium
+                                        result:
+                                            type: string
+                                            returned: always
+                                            sample: fail
+                                        references:
+                                            description: dict of reference urls and corresponding reference ids
+                                            returned: always
+                                            sample:
+                                                - id: SRG-OS-000480-GPOS-00227
+                                                  source: http://iase.disa.mil/stigs/os/general/Pages/index.aspx
+                                            type: list
 '''
 
 
