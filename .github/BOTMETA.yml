@@ -42,7 +42,7 @@ files:
   changelogs/fragments/:
     support: community
   $modules/cloud/amazon/:
-    ignored: erydo seiffert simplesteph
+    ignored: erydo seiffert simplesteph nadirollo
   $modules/cloud/amazon/aws_api_gateway.py: willthames
   $modules/cloud/amazon/aws_kms.py: willthames
   $modules/cloud/amazon/cloudformation.py: ryansb tedder
