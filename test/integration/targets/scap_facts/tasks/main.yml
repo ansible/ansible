@@ -1,0 +1,251 @@
+- name: deploy the test file for scap_facts
+  copy:
+    src: oscap-results.xml 
+    dest: "{{ output_dir }}/results.xml"
+  register: result
+
+- name: First Results Parse
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+  register: facts1
+
+- name: Assert no changes 
+  assert:
+    that:
+      - facts1 is not changed
+
+- name: Assert data points exist
+  assert:
+    that:
+      - scap_scan.get('benchmark_id') == 'xccdf_org.open-scap_testresult_stig-rhel7-disa'
+      - scap_scan.get('score') == 76.73214
+      - scap_scan.get('results')
+      - scap_scan['results'].get('high')
+      - scap_scan['results'].get('medium')
+      - scap_scan['results'].get('low')
+      - scap_scan['results'].get('high').get('data')
+      - scap_scan['results'].get('medium').get('data')
+      - scap_scan['results'].get('low').get('data')
+      - scap_scan['results'].get('high').get('data').get('accounts_no_uid_except_zero')
+      - scap_scan['results'].get('medium').get('data').get('account_disable_post_pw_expiration')
+      - scap_scan['results'].get('low').get('data').get('accounts_logon_fail_delay')
+
+- name: High Sev Criteria check 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    min_high_score: 100
+  ignore_errors: yes
+  register: facts2
+
+- name: Proper error
+  assert:
+    that: facts2 is failed
+
+- name: Medium Sev Criteria check 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    min_medium_score: 100
+  ignore_errors: yes
+  register: facts3
+
+- name: Proper error
+  assert:
+    that: facts3 is failed
+
+- name: Low Sev Criteria check 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    min_low_score: 100
+  ignore_errors: yes
+  register: facts4
+
+- name: Proper error
+  assert:
+    that: facts4 is failed
+
+- name: Total Score Criteria check 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    min_score: 80 
+  ignore_errors: yes
+  register: facts5
+
+- name: Proper error
+  assert:
+    that: facts5 is failed
+
+- name: Only Get Failures 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    include_results:
+      - fail
+
+- name: Assert only failures 
+  assert:
+    that:
+      - scap_scan['results']['high'] | json_query(present_query) | length > 0
+      - scap_scan['results']['medium'] | json_query(present_query) | length > 0
+      - scap_scan['results']['low'] | json_query(present_query) | length > 0
+
+      - scap_scan['results']['high'] | json_query(query) | length == 0
+      - scap_scan['results']['medium'] | json_query(query) | length == 0
+      - scap_scan['results']['low'] | json_query(query) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query1) | length == 0
+      - scap_scan['results']['medium'] | json_query(query1) | length == 0
+      - scap_scan['results']['low'] | json_query(query1) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query2) | length == 0
+      - scap_scan['results']['medium'] | json_query(query2) | length == 0
+      - scap_scan['results']['low'] | json_query(query2) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query3) | length == 0
+      - scap_scan['results']['medium'] | json_query(query3) | length == 0
+      - scap_scan['results']['low'] | json_query(query3) | length == 0
+  vars:
+    present_query: "data.*.{result: result}[?result=='fail']"
+    query: "data.*.{result: result}[?result=='pass']"
+    query1: "data.*.{result: result}[?result=='notselected']"
+    query2: "data.*.{result: result}[?result=='notapplicable']"
+    query3: "data.*.{result: result}[?result=='notchecked']"
+
+- name: Only Get Pass
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    include_results:
+      - pass 
+
+- name: Assert only pass 
+  assert:
+    that:
+      - scap_scan['results']['high'] | json_query(present_query) | length > 0
+      - scap_scan['results']['medium'] | json_query(present_query) | length > 0
+      - scap_scan['results']['low'] | json_query(present_query) | length > 0
+
+      - scap_scan['results']['high'] | json_query(query) | length == 0
+      - scap_scan['results']['medium'] | json_query(query) | length == 0
+      - scap_scan['results']['low'] | json_query(query) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query1) | length == 0
+      - scap_scan['results']['medium'] | json_query(query1) | length == 0
+      - scap_scan['results']['low'] | json_query(query1) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query2) | length == 0
+      - scap_scan['results']['medium'] | json_query(query2) | length == 0
+      - scap_scan['results']['low'] | json_query(query2) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query3) | length == 0
+      - scap_scan['results']['medium'] | json_query(query3) | length == 0
+      - scap_scan['results']['low'] | json_query(query3) | length == 0
+  vars:
+    present_query: "data.*.{result: result}[?result=='pass']"
+    query: "data.*.{result: result}[?result=='fail']"
+    query1: "data.*.{result: result}[?result=='notselected']"
+    query2: "data.*.{result: result}[?result=='notapplicable']"
+    query3: "data.*.{result: result}[?result=='notchecked']"
+
+- name: Only Get Notselected 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    include_results:
+      - notselected
+
+- name: Assert only notselected
+  assert:
+    that:
+      - scap_scan['results']['high'] | json_query(present_query) | length > 0
+      - scap_scan['results']['medium'] | json_query(present_query) | length > 0
+      - scap_scan['results']['low'] | json_query(present_query) | length > 0
+
+      - scap_scan['results']['high'] | json_query(query) | length == 0
+      - scap_scan['results']['medium'] | json_query(query) | length == 0
+      - scap_scan['results']['low'] | json_query(query) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query1) | length == 0
+      - scap_scan['results']['medium'] | json_query(query1) | length == 0
+      - scap_scan['results']['low'] | json_query(query1) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query2) | length == 0
+      - scap_scan['results']['medium'] | json_query(query2) | length == 0
+      - scap_scan['results']['low'] | json_query(query2) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query3) | length == 0
+      - scap_scan['results']['medium'] | json_query(query3) | length == 0
+      - scap_scan['results']['low'] | json_query(query3) | length == 0
+  vars:
+    present_query: "data.*.{result: result}[?result=='notselected']"
+    query: "data.*.{result: result}[?result=='fail']"
+    query1: "data.*.{result: result}[?result=='pass']"
+    query2: "data.*.{result: result}[?result=='notapplicable']"
+    query3: "data.*.{result: result}[?result=='notchecked']"
+
+- name: Only Get notapplicable 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    include_results:
+      - notapplicable 
+
+- name: Assert only notapplicable
+  assert:
+    that:
+      - scap_scan['results']['high'] | json_query(present_query) | length > 0
+      - scap_scan['results']['medium'] | json_query(present_query) | length > 0
+      - scap_scan['results']['low'] | json_query(present_query) | length > 0
+
+      - scap_scan['results']['high'] | json_query(query) | length == 0
+      - scap_scan['results']['medium'] | json_query(query) | length == 0
+      - scap_scan['results']['low'] | json_query(query) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query1) | length == 0
+      - scap_scan['results']['medium'] | json_query(query1) | length == 0
+      - scap_scan['results']['low'] | json_query(query1) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query2) | length == 0
+      - scap_scan['results']['medium'] | json_query(query2) | length == 0
+      - scap_scan['results']['low'] | json_query(query2) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query3) | length == 0
+      - scap_scan['results']['medium'] | json_query(query3) | length == 0
+      - scap_scan['results']['low'] | json_query(query3) | length == 0
+  vars:
+    present_query: "data.*.{result: result}[?result=='notapplicable']"
+    query: "data.*.{result: result}[?result=='fail']"
+    query1: "data.*.{result: result}[?result=='pass']"
+    query2: "data.*.{result: result}[?result=='notselected']"
+    query3: "data.*.{result: result}[?result=='notchecked']"
+
+- name: Only Get notchecked 
+  scap_facts:
+    path: "{{ output_dir }}/results.xml"
+    include_results:
+      - notchecked
+
+- name: Assert only notchecked
+  assert:
+    that:
+      - scap_scan['results']['high'] | json_query(present_query) | length > 0
+      - scap_scan['results']['medium'] | json_query(present_query) | length > 0
+      # no low notchecked in the res xml in this test
+      #      - scap_scan['results']['low'] | json_query(present_query) | length > 0
+
+      - scap_scan['results']['high'] | json_query(query) | length == 0
+      - scap_scan['results']['medium'] | json_query(query) | length == 0
+      - scap_scan['results']['low'] | json_query(query) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query1) | length == 0
+      - scap_scan['results']['medium'] | json_query(query1) | length == 0
+      - scap_scan['results']['low'] | json_query(query1) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query2) | length == 0
+      - scap_scan['results']['medium'] | json_query(query2) | length == 0
+      - scap_scan['results']['low'] | json_query(query2) | length == 0
+
+      - scap_scan['results']['high'] | json_query(query3) | length == 0
+      - scap_scan['results']['medium'] | json_query(query3) | length == 0
+      - scap_scan['results']['low'] | json_query(query3) | length == 0
+  vars:
+    present_query: "data.*.{result: result}[?result=='notchecked']"
+    query: "data.*.{result: result}[?result=='fail']"
+    query1: "data.*.{result: result}[?result=='pass']"
+    query2: "data.*.{result: result}[?result=='notselected']"
+    query3: "data.*.{result: result}[?result=='notapplicable']"
