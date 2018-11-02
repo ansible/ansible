@@ -68,7 +68,9 @@ EXAMPLES = '''
     name: localhost
     description: "Local Host Group"
     inventory: "Local Inventory"
-    groups: group_name1, group_name2
+    groups:
+    - group_name1
+    - group_name2
     state: present
     tower_config_file: "~/tower_cli.cfg"
 '''
@@ -86,17 +88,6 @@ try:
 except ImportError:
     pass
 
-
-def associate_host_to_group(name, groups, host, inv, json_output):
-    group_obj = tower_cli.get_resource('group')
-    host_res = host.get(inventory=inv['id'], name=name)
-    for group in groups:
-        group_res = group_obj.get(inventory=inv['id'], name=group.strip())
-        changed = host.associate(host=host_res['id'], group=group_res['id'])
-        if changed['changed'] is True:
-            json_output['group_added'] = group.strip()
-            return True
-    return False
 
 def main():
     argument_spec = dict(
@@ -140,7 +131,16 @@ def main():
                                      variables=variables, description=description, create_on_missing=True)
                 json_output['id'] = result['id']
                 if groups:
-                    result['changed'] = associate_host_to_group(name, groups, host, inv, json_output)
+                    # to associate groups to particular host
+                    json_output['group_added'] = []
+                    group_obj = tower_cli.get_resource('group')
+                    host_res = host.get(inventory=inv['id'], name=name)
+                    for group in groups:
+                        group_res = group_obj.get(inventory=inv['id'], name=group)
+                        changed = host.associate(host=host_res['id'], group=group_res['id'])
+                        if changed['changed'] is True:
+                            json_output['group_added'].append(group)
+                            result['changed'] = True
 
             elif state == 'absent':
                 result = host.delete(name=name, inventory=inv['id'])
