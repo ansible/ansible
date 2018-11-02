@@ -34,14 +34,14 @@ Scenario Requirements
 
     * Administrator user with following privileges
 
-        - Virtual machine.Provisioning.Clone virtual machine on the virtual machine you are cloning
-        - Virtual machine.Inventory.Create from existing on the datacenter or virtual machine folder
-        - Virtual machine.Configuration.Add new disk on the datacenter or virtual machine folder.
-        - Resource.Assign virtual machine to resource pool on the destination host, cluster, or resource pool.
-        - Datastore.Allocate space on the destination datastore or datastore folder.
-        - Network.Assign network on the network to which the virtual machine will be assigned.
-        - Virtual machine.Provisioning.Customize on the virtual machine or virtual machine folder if you are customizing the guest operating system.
-        - Virtual machine.Provisioning.Read customization specifications on the root vCenter Server if you are customizing the guest operating system.
+        - ``VirtualMachine.Provisioning.Clone`` on the virtual machine you are cloning
+        - ``VirtualMachine.Inventory.CreateFromExisting`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.AddNewDisk`` on the datacenter or virtual machine folder
+        - ``Resource.Assign`` virtual machine to resource pool on the destination host, cluster, or resource pool
+        - ``Datastore.AllocateSpace`` on the destination datastore or datastore folder
+        - ``Network.AssignNetwork`` on the network to which the virtual machine will be assigned
+        - ``VirtualMachine.Provisioning.Customize`` on the virtual machine or virtual machine folder if you are customizing the guest operating system
+        - ``VirtualMachine.Provisioning.ReadCustSpecs`` on the root vCenter Server if you are customizing the guest operating system
 
 Assumptions
 ===========
