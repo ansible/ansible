@@ -66,20 +66,20 @@ EXAMPLES = r'''
 - name: List all networks associated to the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: query
+    state: query
     org_name: YourOrg
   delegate_to: localhost
 - name: Query network named MyNet in the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: query
+    state: query
     org_name: YourOrg
     net_name: MyNet
   delegate_to: localhost
 - name: Create network named MyNet in the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: present
+    state: present
     org_name: YourOrg
     net_name: MyNet
     type: switch
