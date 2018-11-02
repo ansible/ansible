@@ -252,36 +252,36 @@ def main():
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
 
-        parent_group_ids = []
-        try:
-            for p_group in parent_groups:
-                parent_group_ids.append(group.get(name=p_group, inventory=params['inventory'])['id'])
-        except exc.NotFound as excinfo:
-            module.fail_json(msg='Parent group {0} does not exist: {1}'.format(p_group, excinfo),
-                             changed=False)
+        if state == 'present':
+            parent_group_ids = []
+            try:
+                for p_group in parent_groups:
+                    parent_group_ids.append(group.get(name=p_group, inventory=params['inventory'])['id'])
+            except exc.NotFound as excinfo:
+                module.fail_json(msg='Parent group {0} does not exist: {1}'.format(p_group, excinfo),
+                                 changed=False)
 
-        try:
-            existing_group = group.get(name=name, inventory=inv['id'])
-        except exc.NotFound:
-            existing_group = None
-            json_output['created'] = True
-            module.log("Existing group not found, will create")
+            try:
+                existing_group = group.get(name=name, inventory=inv['id'])
+            except exc.NotFound:
+                existing_group = None
+                json_output['created'] = True
+                module.log("Existing group not found, will create")
 
-        try:
-            if merge_variables and existing_group:
-                params['variables'] = sanitise_and_merge_variables(existing_group['variables'], variables)
-            else:
-                params['variables'] = sanitise_and_merge_variables(variables)
-        except TypeError as excinfo:
-            module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
+            try:
+                if merge_variables and existing_group:
+                    params['variables'] = sanitise_and_merge_variables(existing_group['variables'], variables)
+                else:
+                    params['variables'] = sanitise_and_merge_variables(variables)
+            except TypeError as excinfo:
+                module.fail_json(msg='Invalid variable data {0}'.format(excinfo))
 
-        try:
-            if credential and not api_v2:
-                cred_res = tower_cli.get_resource('credential')
-                cred = cred_res.get(name=credential)
-                params['credential'] = cred['id']
+            try:
+                if credential and not api_v2:
+                    cred_res = tower_cli.get_resource('credential')
+                    cred = cred_res.get(name=credential)
+                    params['credential'] = cred['id']
 
-            if state == 'present':
                 result = group.modify(**params)
                 json_output['id'] = result['id']
                 json_output['changed'] = result['changed']
@@ -289,12 +289,12 @@ def main():
                     res = group.associate(group=result['id'], parent=p_group_id, inventory=params['inventory'])
                     if res['changed']:
                         json_output['changed'] = True
-            elif state == 'absent':
-                result = group.delete(**params)
-                json_output['changed'] = result['changed']
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
-            module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
+            except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+                module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
 
+        elif state == 'absent':
+            result = group.delete(**params)
+            json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
