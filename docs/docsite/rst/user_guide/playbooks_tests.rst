@@ -37,7 +37,7 @@ Such as::
 Testing strings
 ```````````````
 
-To match strings against a substring or a regex, use the "match" or "search" filter::
+To match strings against a substring or a regular expression, use the "match", "search" or "regex" filters::
 
     vars:
       url: "http://example.com/users/foo/resources/bar"
@@ -54,6 +54,10 @@ To match strings against a substring or a regex, use the "match" or "search" fil
         - debug:
             msg: "matched pattern 3"
           when: url is search("/users/")
+
+        - debug:
+            msg: "matched pattern 4"
+          when: url is regex("example.com/\w+/foo")
 
 'match' requires a complete match in the string, while 'search' only requires matching a subset of the string.
 
