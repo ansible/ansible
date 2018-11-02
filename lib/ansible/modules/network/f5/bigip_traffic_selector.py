@@ -44,6 +44,9 @@ options:
       - Traffic is matched to the traffic selector with the highest priority (lowest order number).
       - When creating a new traffic selector, if this parameter is not specified, the default
         is C(last).
+  description:
+    description:
+      - Description of the traffic selector.
   partition:
     description:
       - Device partition to manage resources on.
@@ -59,6 +62,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -115,6 +119,7 @@ try:
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.compat.ipaddress import ip_interface
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -126,6 +131,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.compat.ipaddress import ip_interface
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -140,6 +146,7 @@ class Parameters(AnsibleF5Parameters):
         'sourceAddress',
         'ipsecPolicy',
         'order',
+        'description',
     ]
 
     returnables = [
@@ -147,6 +154,7 @@ class Parameters(AnsibleF5Parameters):
         'source_address',
         'ipsec_policy',
         'order',
+        'description',
     ]
 
     updatables = [
@@ -154,11 +162,16 @@ class Parameters(AnsibleF5Parameters):
         'source_address',
         'ipsec_policy',
         'order',
+        'description',
     ]
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
@@ -185,6 +198,14 @@ class ModuleParameters(Parameters):
                 "No IP address found in 'source_address'."
             )
         return result
+
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
     def _format_address(self, type):
         if self._values[type] is None:
@@ -252,6 +273,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -447,6 +472,7 @@ class ArgumentSpec(object):
             source_address=dict(),
             ipsec_policy=dict(),
             order=dict(type='int'),
+            description=dict(),
             state=dict(
                 default='present',
                 choices=['present', 'absent']
@@ -469,8 +495,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
