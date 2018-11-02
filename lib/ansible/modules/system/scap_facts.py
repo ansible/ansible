@@ -215,24 +215,28 @@ class ScapEvalXccdfResultReader:
         self.results = dict()
         self.include_results = include_results
         self.ns = namespace
-        self.res_node = self.root.find(self.ns +'TestResult')
+        self.res_node = self.root.find(self.ns + 'TestResult')
 
     def _get_results(self):
         for rule in self.root.findall('.//' + self.ns + 'Rule'):
             rule_id = rule.get('id')  # This is the id as as represented in the XML, example: 'sshd_required'
             self.results[rule_id] = dict(
                 severity=rule.get('severity'),
-                title=rule.find(self.ns + 'title').text, # Human-friendly title
+                title=rule.find(self.ns + 'title').text,  # Human-friendly title
                 references=[]
             )
             for ref in rule.findall(self.ns + 'reference'):
                 self.results[rule_id]['references'].append(dict(
-                    source=ref.get('href'),  # References are where the rules are derived from, unfortunately it's only URLs so the output is a bit more verbose but
-                    id=ref.text  # this is the ID where the rule lives within the associated reference, example '5.2.1.3' for CIS
+                    source=ref.get('href'),
+                    # References are where the rules are derived from,
+                    # unfortunately it's only URLs so the output is a bit more
+                    # verbose but this is the ID where the rule lives within
+                    # the associated reference, example '5.2.1.3' for CIS
+                    id=ref.text
                 ))
 
         for res in self.res_node.findall('.//' + self.ns + 'rule-result'):
-            id = res.get('idref') # this is how we map the result to the data gathered above
+            id = res.get('idref')  # this is how we map the result to the data gathered above
             result = res.find(self.ns + 'result').text
             self.results[id]['result'] = result
 
@@ -255,15 +259,15 @@ class ScapEvalXccdfResultReader:
         graded_count = total_count - ns_count - na_count - nc_count
 
         return dict(
-                total_graded=graded_count,
-                total_passing=pass_count,
-                total_failing=fail_count,
-                total_notselected=ns_count,
-                total_notapplicable=na_count,
-                total_notchecked=nc_count,
-                score=percentage(pass_count, graded_count),
-                data=wanted
-            )
+            total_graded=graded_count,
+            total_passing=pass_count,
+            total_failing=fail_count,
+            total_notselected=ns_count,
+            total_notapplicable=na_count,
+            total_notchecked=nc_count,
+            score=percentage(pass_count, graded_count),
+            data=wanted
+        )
 
     def get_stats(self):
         self._get_results()
