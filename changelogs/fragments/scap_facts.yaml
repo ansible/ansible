@@ -1,0 +1,2 @@
+minor_changes:
+  - New module - scap_facts - read a results xml file from a openscap scan and expose data as facts, optionally fail at user-defined score requirements
