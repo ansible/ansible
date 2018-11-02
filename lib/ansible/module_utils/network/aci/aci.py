@@ -35,6 +35,8 @@ import base64
 import json
 import os
 from copy import deepcopy
+import pickle
+import time
 
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.urls import fetch_url
@@ -184,6 +186,48 @@ class ACIModule(object):
     def login(self):
         ''' Log in to APIC '''
 
+        cookie_file = self.module._remote_tmp + '/aci.p'
+        if os.path.exists(cookie_file):
+            cookie = pickle.load(open(cookie_file, 'rb'))
+            time_skew = int(time.time()) - int(cookie['time'])
+            if time_skew > 200 and time_skew < 300:
+                self.module.warn("ACI Cookie gets old. Refreshing...")
+                if 'port' in self.params and self.params['port'] is not None:
+                    url = '%(protocol)s://%(host)s:%(port)s/api/aaaRefresh.json' % self.params
+                else:
+                    url = '%(protocol)s://%(host)s/api/aaaRefresh.json' % self.params
+                self.headers['Cookie'] = cookie['cookie']
+                resp, auth = fetch_url(self.module, url,
+                                       headers=self.headers,
+                                       method='GET',
+                                       timeout=self.params['timeout'],
+                                       use_proxy=self.params['use_proxy'])
+                if auth['status'] != 200:
+                    self.response = auth['msg']
+                    self.status = auth['status']
+                    try:
+                        # APIC error
+                        self.response_json(auth['body'])
+                        self.fail_json(msg='Authentication failed: %(code)s %(text)s' % self.error)
+                    except KeyError:
+                        # Connection error
+                        self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % auth)
+
+                if resp.headers['Set-Cookie'] != cookie['cookie']:
+                    self.module.warn("ACI Cookie refreshed.")
+                    self.headers['Cookie'] = resp.headers['Set-Cookie']
+                    cookie = {
+                        "time": time.time(),
+                        "cookie": self.headers['Cookie']
+                    }
+                    pickle.dump(cookie, open(cookie_file, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+                return
+
+            elif time_skew > 0 and time_skew <= 200:
+                self.headers['Cookie'] = cookie['cookie']
+                return
+            else:
+                self.module.warn("ACI Cookie expired. Re-login this time to get new one.")
         # Perform login request
         if 'port' in self.params and self.params['port'] is not None:
             url = '%(protocol)s://%(host)s:%(port)s/api/aaaLogin.json' % self.params
@@ -210,6 +254,13 @@ class ACIModule(object):
 
         # Retain cookie for later use
         self.headers['Cookie'] = resp.headers['Set-Cookie']
+
+        cookie = {
+            "time": time.time(),
+            "cookie": self.headers['Cookie']
+        }
+
+        pickle.dump(cookie, open(cookie_file, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
 
     def cert_auth(self, path=None, payload='', method=None):
         ''' Perform APIC signature-based authentication, not the expected SSL client certificate authentication. '''
