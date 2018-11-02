@@ -79,6 +79,29 @@ EXAMPLES = '''
     host: localhost
     state: absent
     name: my-memcached
+
+- name: Install helm chart from a git repo
+  helm:
+    host: localhost
+    chart:
+      source:
+        type: git
+        location: https://github.com/user/helm-chart.git
+    state: present
+    name: my-example
+    namespace: default
+
+- name: Install helm chart from a git repo specifying path
+  helm:
+    host: localhost
+    chart:
+      source:
+        type: git
+        location: https://github.com/helm/charts.git
+        path: stable/memcached
+    state: present
+    name: my-memcached
+    namespace: default
 '''
 
 try:
