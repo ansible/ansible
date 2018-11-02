@@ -86,7 +86,7 @@ options:
         description:
           - Force deployment of service even if there are no changes
         required: false
-        version_added: 2.7
+        version_added: 2.8
         type: bool
     deployment_configuration:
         description:
