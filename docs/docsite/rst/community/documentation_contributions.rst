@@ -65,7 +65,7 @@ To work with documentation on your local machine, you need the following package
 .. code-block:: none
 
    - libyaml
-   - pyyaml
+   - PyYAML
    - nose
    - six
    - tornado
