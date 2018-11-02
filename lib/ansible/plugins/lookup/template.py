@@ -17,6 +17,9 @@ DOCUMENTATION = """
     options:
       _terms:
         description: list of files to template
+      convert_data:
+        type: bool
+        description: whether to convert YAML into data. If False, strings that are YAML will be left untouched.
 """
 
 EXAMPLES = """
