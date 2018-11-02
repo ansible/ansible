@@ -61,6 +61,28 @@ options:
     description:
       - Suppresses advertisement of the NVE loopback address until
         the overlay has converged.
+  global_mcast_group_L3:
+    description:
+      - Global multicast ip prefix for L3 VNIs or the keyword 'default'
+        This is available on NX-OS 9K series running 9.2.x or higher.
+    version_added: "2.8"
+  global_mcast_group_L2:
+    description:
+      - Global multicast ip prefix for L2 VNIs or the keyword 'default'
+        This is available on NX-OS 9K series running 9.2.x or higher.
+    version_added: "2.8"
+  global_suppress_arp:
+    description:
+      - Enables ARP suppression for all VNIs
+        This is available on NX-OS 9K series running 9.2.x or higher.
+    type: bool
+    version_added: "2.8"
+  global_ingress_replication_bgp:
+    description:
+      - Configures ingress replication protocol as bgp for all VNIs
+        This is available on NX-OS 9K series running 9.2.x or higher.
+    type: bool
+    version_added: "2.8"
   state:
     description:
       - Determines whether the config should be present or not
@@ -97,10 +119,16 @@ from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 BOOL_PARAMS = [
     'shutdown',
-    'host_reachability'
+    'host_reachability',
+    'global_ingress_replication_bgp',
+    'global_suppress_arp',
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'description': 'description',
+    'global_suppress_arp': 'global suppress-arp',
+    'global_ingress_replication_bgp': 'global ingress-replication protocol bgp',
+    'global_mcast_group_L3': 'global mcast-group L3',
+    'global_mcast_group_L2': 'global mcast-group L2',
     'host_reachability': 'host-reachability protocol bgp',
     'interface': 'interface',
     'shutdown': 'shutdown',
@@ -151,6 +179,22 @@ def get_value(arg, config, module):
                         break
                 except AttributeError:
                     value = ''
+        elif arg == 'global_mcast_group_L2':
+            for line in config.splitlines():
+                try:
+                    if 'global mcast-group' in line and 'L2' in line:
+                        value = line.split()[2].strip()
+                        break
+                except AttributeError:
+                    value = ''
+        elif arg == 'global_mcast_group_L3':
+            for line in config.splitlines():
+                try:
+                    if 'global mcast-group' in line and 'L3' in line:
+                        value = line.split()[2].strip()
+                        break
+                except AttributeError:
+                    value = ''
         else:
             if PARAM_TO_COMMAND_KEYMAP[arg] in config:
                 value = REGEX.search(config).group('value').strip()
@@ -194,6 +238,8 @@ def apply_key_map(key_map, table):
 def fix_commands(commands, module):
     source_interface_command = ''
     no_source_interface_command = ''
+    no_host_reachability_command = ''
+    host_reachability_command = ''
 
     for command in commands:
         if 'no source-interface hold-down-time' in command:
@@ -204,14 +250,28 @@ def fix_commands(commands, module):
             no_source_interface_command = command
         elif 'source-interface' in command:
             source_interface_command = command
+        elif 'no host-reachability' in command:
+            no_host_reachability_command = command
+        elif 'host-reachability' in command:
+            host_reachability_command = command
+
+    if host_reachability_command:
+        commands.pop(commands.index(host_reachability_command))
+        commands.insert(0, host_reachability_command)
 
     if source_interface_command:
         commands.pop(commands.index(source_interface_command))
         commands.insert(0, source_interface_command)
 
+    if no_host_reachability_command:
+        commands.pop(commands.index(no_host_reachability_command))
+        commands.append(no_host_reachability_command)
+
     if no_source_interface_command:
         commands.pop(commands.index(no_source_interface_command))
         commands.append(no_source_interface_command)
+
+    commands.insert(0, 'terminal dont-ask')
     return commands
 
 
@@ -229,14 +289,22 @@ def state_present(module, existing, proposed, candidate):
         elif value == 'default':
             if existing_commands.get(key):
                 existing_value = existing_commands.get(key)
-                commands.append('no {0} {1}'.format(key, existing_value))
+                if 'global mcast-group' in key:
+                    commands.append('no {0}'.format(key))
+                else:
+                    commands.append('no {0} {1}'.format(key, existing_value))
             else:
                 if key.replace(' ', '_').replace('-', '_') in BOOL_PARAMS:
                     commands.append('no {0}'.format(key.lower()))
                     module.exit_json(commands=commands)
         else:
-            command = '{0} {1}'.format(key, value.lower())
-            commands.append(command)
+            if 'L2' in key:
+                commands.append('global mcast-group ' + value + ' L2')
+            elif 'L3' in key:
+                commands.append('global mcast-group ' + value + ' L3')
+            else:
+                command = '{0} {1}'.format(key, value.lower())
+                commands.append(command)
 
     if commands:
         commands = fix_commands(commands, module)
@@ -258,6 +326,10 @@ def main():
         interface=dict(required=True, type='str'),
         description=dict(required=False, type='str'),
         host_reachability=dict(required=False, type='bool'),
+        global_ingress_replication_bgp=dict(required=False, type='bool'),
+        global_suppress_arp=dict(required=False, type='bool'),
+        global_mcast_group_L2=dict(required=False, type='str'),
+        global_mcast_group_L3=dict(required=False, type='str'),
         shutdown=dict(required=False, type='bool'),
         source_interface=dict(required=False, type='str'),
         source_interface_hold_down_time=dict(required=False, type='str'),
@@ -266,7 +338,13 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    mutually_exclusive = [('global_ingress_replication_bgp', 'global_mcast_group_L2')]
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True,
+    )
 
     warnings = list()
     result = {'changed': False, 'commands': [], 'warnings': warnings}
@@ -279,7 +357,6 @@ def main():
     existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
-
     proposed = {}
     for key, value in proposed_args.items():
         if key != 'interface':
