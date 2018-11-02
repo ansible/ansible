@@ -311,7 +311,7 @@ def main():
             min_medium_score=dict(required=False, type='int', default=0),
             min_low_score=dict(required=False, type='int', default=0)
         ),
-        supports_check_mode=True # We can let this module run in check mode because it doesnt ever 'change' anything
+        supports_check_mode=True  # We can let this module run in check mode because it doesnt ever 'change' anything
     )
     path = module.params['path']
     namespace = module.params['namespace']
@@ -340,11 +340,11 @@ def main():
     module.exit_json(
         ansible_facts=dict(
             scap_scan=dict(
-                    benchmark_id=scap.id,
-                    start_time=scap.start_time,
-                    end_time=scap.end_time,
-                    score=scap.score,
-                    results=data
+                benchmark_id=scap.id,
+                start_time=scap.start_time,
+                end_time=scap.end_time,
+                score=scap.score,
+                results=data
             )
         )
     )
