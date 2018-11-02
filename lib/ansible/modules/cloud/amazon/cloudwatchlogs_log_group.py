@@ -182,7 +182,16 @@ def input_retention_policy(client, log_group_name, retention, module):
         module.fail_json(msg="Unable to put retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
                          exception=traceback.format_exc())
 
-
+def delete_retention_policy(client, log_group_name):
+    try:
+         client.delete_retention_policy(logGroupName=log_group_name)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Unable to delete retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to delete retention policy for log group {0}: {1}".format(log_group_name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    
 def delete_log_group(client, log_group_name, module):
     desc_log_group = describe_log_group(client=client,
                                         log_group_name=log_group_name,
@@ -264,12 +273,17 @@ def main():
                                                retention=module.params['retention'],
                                                module=module)
         elif found_log_group:
-            if module.params['retention'] != found_log_group['retentionInDays']:
+            if module.params['retention'] != found_log_group.get('retentionInDays'):
                 changed = True
-                input_retention_policy(client=logs,
-                                       log_group_name=module.params['log_group_name'],
-                                       retention=module.params['retention'],
-                                       module=module)
+                if module.params['retention'] == None:
+                    changed = True
+                    delete_retention_policy(client=logs,
+                                           log_group_name=module.params['log_group_name'])
+                else:
+                    input_retention_policy(client=logs,
+                                           log_group_name=module.params['log_group_name'],
+                                           retention=module.params['retention'],
+                                           module=module)
                 found_log_group['retentionInDays'] = module.params['retention']
 
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(found_log_group))
