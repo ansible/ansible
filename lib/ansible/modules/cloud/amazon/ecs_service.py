@@ -394,8 +394,8 @@ class EcsServiceManager:
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy, network_configuration,
-                       launch_type, health_check_grace_period_seconds):
+                       placement_constraints, placement_strategy, health_check_grace_period_seconds,
+                       network_configuration, service_registries, launch_type, scheduling_strategy):
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
@@ -414,6 +414,9 @@ class EcsServiceManager:
             params['launchType'] = launch_type
         if self.health_check_setable(params) and health_check_grace_period_seconds is not None:
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
+
+        if scheduling_strategy:
+            params['schedulingStrategy'] = scheduling_strategy
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
@@ -484,20 +487,26 @@ def main():
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
+        health_check_grace_period_seconds=dict(required=False, type='int')
         network_configuration=dict(required=False, type='dict', options=dict(
             subnets=dict(type='list'),
             security_groups=dict(type='list'),
             assign_public_ip=dict(type='bool'),
         )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
-        health_check_grace_period_seconds=dict(required=False, type='int')
+        service_registries=dict(required=False, type='list', default=[]),
+        scheduling_strategy=dict(required=False, choices=['DAEMON', 'REPLICA'])
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
-                              required_if=[('state', 'present', ['task_definition', 'desired_count']),
+                              required_if=[('state', 'present', ['task_definition']),
                                            ('launch_type', 'FARGATE', ['network_configuration'])],
                               required_together=[['load_balancers', 'role']])
+
+    if module.params['state'] == 'present' and module.params['scheduling_strategy']== 'REPLICA':
+        if not module.params['desired_count']:
+            module.fail_json(msg='state is present, scheduling_strategy is REPLICA; missing desired_count')
 
     service_mgr = EcsServiceManager(module)
     if module.params['network_configuration']:
@@ -511,6 +520,7 @@ def main():
                                                 DEPLOYMENT_CONFIGURATION_TYPE_MAP)
 
     deploymentConfiguration = snake_dict_to_camel_dict(deployment_configuration)
+    serviceRegistries = list(map(lambda registry: snake_dict_to_camel_dict(registry), module.params['service_registries']))
 
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
@@ -525,6 +535,9 @@ def main():
     if module.params['force_new_deployment']:
         if not module.botocore_at_least('1.8.4'):
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use force_new_deployment')
+    if module.params['healthcheck_grace_period']:
+        if not module.botocore_at_least('1.8.20'):
+            module.fail_json(msg='botocore needs to be version 1.8.20 or higher to use healthcheck_grace_period')
 
     if module.params['state'] == 'present':
 
@@ -557,8 +570,24 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
+                    # If boto is not up to snuff, getting params will fail;
+                    # Move checks to where they matter vs generall at module level
+
+                    if module.params['scheduling_strategy']:
+                        if not module.botocore_at_least('1.10.37'):
+                            module.fail_json(msg='botocore needs to be version 1.10.37 or higher to use scheduling_strategy')
+                        elif (existing['schedulingStrategy']) != module.params['scheduling_strategy']:
+                            module.fail_json(msg="It is not possible to update the scheduling strategy of an existing service")
+
+                    if module.params['service_registries']:
+                        if not module.botocore_at_least('1.9.15'):
+                            module.fail_json(msg='botocore needs to be version 1.9.15 or higher to use service_registries')
+                        elif (existing['serviceRegistries'] or []) != serviceRegistries:
+                            module.fail_json(msg="It is not possible to update the service registries of an existing service")
+
                     if (existing['loadBalancers'] or []) != loadBalancers:
                         module.fail_json(msg="It is not possible to update the load balancers of an existing service")
+
                     # update required
                     response = service_mgr.update_service(module.params['name'],
                                                           module.params['cluster'],
@@ -580,9 +609,12 @@ def main():
                                                               deploymentConfiguration,
                                                               module.params['placement_constraints'],
                                                               module.params['placement_strategy'],
+                                                              module.params['health_check_grace_period_seconds']
                                                               network_configuration,
                                                               module.params['launch_type'],
-                                                              module.params['health_check_grace_period_seconds']
+                                                              serviceRegistries,
+                                                              module.params['launch_type'],
+                                                              module.params['scheduling_strategy']
                                                               )
                     except botocore.exceptions.ClientError as e:
                         module.fail_json_aws(e, msg="Couldn't create service")

@@ -12,6 +12,14 @@ trap 'rm -rf "${MYTMPDIR}"' EXIT
 # but for the python3 tests we need virtualenv to use python3
 PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 
+# Test healthcheck_grace_period
+# applies for botocore < 1.8.4
+# healthcheck_grace_period is only valid if there's a load balancer associated
+virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-1.8.20"
+source "${MYTMPDIR}/botocore-1.8.20/bin/activate"
+$PYTHON -m pip install 'botocore==1.8.20' boto3
+ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/network_healthcheck_grace_period.yml "$@"
+
 # Test graceful failure for older versions of botocore
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-1.7.40"
 source "${MYTMPDIR}/botocore-1.7.40/bin/activate"
@@ -38,6 +46,8 @@ virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-1.8
 source "${MYTMPDIR}/botocore-1.8.5/bin/activate"
 $PYTHON -m pip install 'botocore>1.8.4' boto3
 ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/network_force_new_deployment.yml "$@"
+
+
 
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-recent"
