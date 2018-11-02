@@ -80,3 +80,16 @@
     name: "a-group"
     inventory: "Demo Inventory"
     state: absent
+
+- name: delete host again to test what happens if you specify a missing group
+  tower_host:
+    name: "grouped-host"
+    inventory: "Demo Inventory"
+    groups:
+      - "a-group"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      "result is not changed"
