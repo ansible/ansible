@@ -48,7 +48,7 @@ from ansible.playbook.role_include import IncludeRole
 from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.vars import combine_vars
-from ansible.vars.clean import strip_internal_keys
+from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
 
 
 try:
@@ -463,7 +463,7 @@ class StrategyBase:
             if original_task.register:
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                clean_copy = strip_internal_keys(task_result._result)
+                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
                 if 'invocation' in clean_copy:
                     del clean_copy['invocation']
 
