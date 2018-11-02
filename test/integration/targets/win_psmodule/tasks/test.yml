@@ -339,4 +339,3 @@
   assert:
     that:
       - "install_module_specific_version_10 is not changed"
-
