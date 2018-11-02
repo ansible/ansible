@@ -46,20 +46,20 @@ options:
         required: True
     primary_pvlan:
         description:
-            - Primary PVLAN to be created to the switch
-            - Distributed virtual switch is created without PVLAN if some of these are missing: primary_vlan, secondary_pvlan or pvlan_type
+            - The VLAN ID that should be configured as Primary PVLAN in the switch
+            - 'If C(primary_vlan) is not configured, Distributed virtual switch is created without PVLAN'
         required: False
         version_added: 2.8
     secondary_pvlan:
         description:
-            - Secondary PVLAN to be created to the switch
-            - Distributed virtual switch is created without PVLAN if some of these are missing: primary_vlan, secondary_pvlan or pvlan_type
+            - The VLAN ID that should be configured as Secondary PVLAN in the switch
+            - 'If C(secondary_pvlan) is not configured, Distributed virtual switch is created without PVLAN'
         required: False
         version_added: 2.8
     pvlan_type:
         description:
-            - Private VLAN type determites the type of the secondary PVLAN, can be set to "isolated" or "community" 
-            - Distributed virtual switch is created without PVLAN if some of these are missing: primary_vlan, secondary_pvlan or pvlan_type
+            - Private VLAN type determites the type of the secondary PVLAN
+            - 'If C(pvlan_type) is not configured, Distributed virtual switch is created without PVLAN'
         choices:
             - 'isolated'
             - 'community'
@@ -125,7 +125,7 @@ EXAMPLES = '''
     discovery_proto: lldp
     discovery_operation: both
     state: present
-  delegate_to: localhost  
+  delegate_to: localhost
 '''
 
 try:
@@ -199,13 +199,13 @@ class VMwareDVSwitch(object):
                     pvlan.pvlanEntry.pvlanType = "promiscuous"
                 else:
                     pvlan.pvlanEntry.secondaryVlanId = self.module.params['secondary_pvlan']
-                    pvlan.pvlanEntry.pvlanType = self.module.params['pvlan_type'] 
+                    pvlan.pvlanEntry.pvlanType = self.module.params['pvlan_type']
                 pvlan.operation = "add"
                 spec.configSpec.pvlanConfigSpec.append(pvlan)
 
         for count in range(1, self.module.params['uplink_quantity'] + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
-        
+
         task = network_folder.CreateDVS_Task(spec)
         changed, result = wait_for_task(task)
         return changed, result
