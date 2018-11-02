@@ -56,7 +56,7 @@ EXAMPLES = """
     state: file
     suffix: temp
   register: tempfile_1
-  
+
 - name: remove the temporary file
   file:
     path: "{{ tempfile_1.path }}"
