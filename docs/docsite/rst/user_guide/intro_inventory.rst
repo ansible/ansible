@@ -137,6 +137,18 @@ As described above, it is easy to assign variables to hosts that will be used la
    host1 http_port=80 maxRequestsPerChild=808
    host2 http_port=303 maxRequestsPerChild=909
 
+The YAML version:
+
+.. code-block:: yaml
+    
+    atlanta:
+      host1:
+        http_port: 80
+        maxRequestsPerChild: 808
+      host2:
+        http_port: 303
+        maxRequestsPerChild: 909
+
 .. _group_variables:
 
 Group Variables
