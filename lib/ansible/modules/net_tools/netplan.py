@@ -51,8 +51,7 @@ options:
 
   interface-id:
     description:
-      - Interface ID that must be unique. If type is C(wifis), this field is the
-        SSID name.
+      - Interface ID that must be unique.
     required: true
 
   type:
@@ -513,6 +512,11 @@ options:
         gets created.
     required: false
 
+  access-points-ssid:
+    description:
+      - Network SSID.
+    required: false
+
   access-points-password:
     description:
       - Enable WPA2 authentication and set the passphrase for it. If defined
@@ -531,18 +535,18 @@ options:
 '''
 
 EXAMPLES = '''
- - name: Up br0 interfaces
+ - name: Add br0 config interfaces
    netplan:
     filename: 11-test
     interface-id: br0
-    type: ethernets
+    type: bridges
     state: present
     dhcp4: false
     addresses:
       - 192.168.1.1/24
       - 192.168.1.2/24
 
- - name: Up vlan interfaces
+ - name: Add vlan config interfaces
    netplan:
      filename: 11-test
      interface-id: brvlan15
@@ -551,14 +555,32 @@ EXAMPLES = '''
      id: 15
      link: br0
 
- - name: Delete vlan interfaces
+ - name: Delete vlan config interfaces
    netplan:
      filename: 11-test
      interface-id: brvlan15
      type: vlans
-     state: remove
+     state: absent
      id: 15
      link: br0
+
+ - name: Add ethernet config interfaces
+   netplan:
+     filename: 11-test
+     interface-id: eth0
+     type: ethernets
+     state: present
+     addresses:
+       - 192.168.0.1/24
+       - 192.168.1.1/24
+
+ - name: Add bridge config interface
+   netplan:
+     filename: 11-test
+     interface-id: br0
+     type: bridge
+     interfaces: eth1
+     state: present
 '''
 
 RETURN = '''
@@ -604,7 +626,7 @@ BRIDGES = ['ageing-time', 'priority', 'forward-delay', 'hello-time',
 
 VLANS = ['id', 'link']
 
-WIFIS = ['access-points-password', 'access-points-mode']
+WIFIS = ['access-points-ssid', 'access-points-password', 'access-points-mode']
 
 
 def validate_args(module):
@@ -805,6 +827,7 @@ def main():
         'stp': {'required': False, 'type': 'bool'},
         'id': {'required': False, 'type': 'int'},
         'link': {'required': False},
+        'access-points-ssid': {'required': False},
         'access-points-password': {'required': False},
         'access-points-mode': {'choices': ['infrastructure', 'ap', 'adhoc'],
                                'required': False}
@@ -870,6 +893,7 @@ def main():
             netplan_dict = get_netplan_dict(module.params)
             with open(NETPLAN_FILENAME, 'w') as yamlfile:
                 yaml.dump(netplan_dict, yamlfile, default_flow_style=False)
+            module.run_command('netplan apply', check_rc=True)
             module.exit_json(changed=True)
         else:
             module.fail_json(msg='Interface {0} can not removed because {1} file does not exist'.format(module.params.get('interface-id'), NETPLAN_FILENAME))
