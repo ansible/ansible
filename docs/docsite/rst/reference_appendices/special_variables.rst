@@ -19,6 +19,9 @@ ansible_forks
 ansible_inventory_sources
     List of sources used as inventory
 
+ansible_limit
+    Contents of the ``--limit`` CLI option for the current execution of Ansible
+
 ansible_play_batch
     List of active hosts in the current play run limited by the serial, aka 'batch'. Failed/Unreachable hosts are not considered 'active'.
 
@@ -31,8 +34,14 @@ ansible_play_hosts_all
 ansible_playbook_python
     The path to the python interpreter being used by Ansible on the controller
 
+ansible_run_tags
+    Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run.
+
 ansible_search_path
     Current search path for action plugins and lookups, i.e where we search for relative paths when you do ``template: src=myfile``
+
+ansible_skip_tags
+    Contents of the ``--skip_tags`` CLI option, which specifies which tags will be skipped for the current run.
 
 ansible_verbosity
     Current verbosity setting for Ansible
