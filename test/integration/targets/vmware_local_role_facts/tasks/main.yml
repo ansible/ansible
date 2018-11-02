@@ -2,6 +2,15 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- name: Set list of Roles in fact
+  set_fact:
+    role_list:
+      - Admin
+      - NoCryptoAdmin
+      - NoAccess
+      - Anonymous
+      - ReadOnly
+
 - name: store the vcenter container ip
   set_fact:
     vcsim: "{{ lookup('env', 'vcenter_host') }}"
@@ -30,40 +39,33 @@
 
 - debug: var=vcsim_instance
 
-- name: Gather facts about local role on ESXi
+- name: Gather Role facts
   vmware_local_role_facts:
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: no
-  register: fact_details
+  register: role_details
 
-- name: verify if role is defined
+- name: Test if role id is present for role
   assert:
-    that:
-      - "{{ fact_details.changed == false }}"
-      - "{{ fact_details.local_role_facts['Admin']['privileges'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_id'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_info_label'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_info_summary'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_system'] is defined }}"
+    that: "{{ role_details.local_role_facts | json_query(s_query) != [] }}"
+  vars:
+    s_query: "[?role_name == '{{ item }}'].role_id"
+  with_items: "{{ role_list }}"
 
-
-- name: Gather facts about local role on ESXi in check mode
+- name: Gather Role facts in check mode
   vmware_local_role_facts:
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: no
-  register: fact_details
+  register: role_details
   check_mode: yes
 
-- name: verify if role is defined in check mode
+- name: Test if role id is present for role
   assert:
-    that:
-      - "{{ fact_details.changed == false }}"
-      - "{{ fact_details.local_role_facts['Admin']['privileges'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_id'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_info_label'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_info_summary'] is defined }}"
-      - "{{ fact_details.local_role_facts['Admin']['role_system'] is defined }}"
+    that: "{{ role_details.local_role_facts | json_query(s_query) != [] }}"
+  vars:
+    s_query: "[?role_name == '{{ item }}'].role_id"
+  with_items: "{{ role_list }}"
