@@ -79,8 +79,7 @@ options:
         required: False
         default: False
         type: bool
-        version_added: 
-
+        version_added: '2.8'
     network_policy:
         description:
             - Dictionary which configures the different security values for portgroup.

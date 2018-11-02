@@ -47,18 +47,24 @@ options:
     primary_pvlan:
         description:
             - Primary PVLAN to be created to the switch
-            - If set also secondary_pvlan and pvlan_type needs to be set
+            - Distributed virtual switch is created without PVLAN if some of these are missing: primary_vlan, secondary_pvlan or pvlan_type
         required: False
+        version_added: 2.8
     secondary_pvlan:
         description:
             - Secondary PVLAN to be created to the switch
-            - If set also primary_pvlan and pvlan_type needs to be set
+            - Distributed virtual switch is created without PVLAN if some of these are missing: primary_vlan, secondary_pvlan or pvlan_type
         required: False
+        version_added: 2.8
     pvlan_type:
         description:
             - Private VLAN type determites the type of the secondary PVLAN, can be set to "isolated" or "community" 
-            - If set also primary_pvlan and secondary_pvlan needs to be set
+            - Distributed virtual switch is created without PVLAN if some of these are missing: primary_vlan, secondary_pvlan or pvlan_type
+        choices:
+            - 'isolated'
+            - 'community'
         required: False
+        version_added: 2.8
     uplink_quantity:
         description:
             - Quantity of uplink per ESXi host added to the switch
@@ -137,6 +143,7 @@ from ansible.module_utils.vmware import (HAS_PYVMOMI,
                                          wait_for_task
                                          )
 
+
 class VMwareDVSwitch(object):
 
     def __init__(self, module):
@@ -168,10 +175,12 @@ class VMwareDVSwitch(object):
     def create_dvswitch(self, network_folder):
         result = None
         changed = False
+
         spec = vim.DistributedVirtualSwitch.CreateSpec()
         spec.configSpec = vim.dvs.VmwareDistributedVirtualSwitch.ConfigSpec()
         spec.configSpec.uplinkPortPolicy = vim.DistributedVirtualSwitch.NameArrayUplinkPortPolicy()
         spec.configSpec.linkDiscoveryProtocolConfig = vim.host.LinkDiscoveryProtocolConfig()
+
         spec.configSpec.name = self.module.params['switch_name']
         spec.configSpec.maxMtu = self.module.params['mtu']
         spec.configSpec.linkDiscoveryProtocolConfig.protocol = self.module.params['discovery_proto']
@@ -180,18 +189,20 @@ class VMwareDVSwitch(object):
         spec.productInfo.name = "DVS"
         spec.productInfo.vendor = "VMware"
         spec.productInfo.version = self.module.params['switch_version']
-        for count in range(1,3):
-            pvlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanConfigSpec()
-            pvlan.pvlanEntry = vim.dvs.VmwareDistributedVirtualSwitch.PvlanMapEntry()
-            pvlan.pvlanEntry.primaryVlanId = self.module.params['primary_pvlan']
-            if count == 1:
-                pvlan.pvlanEntry.secondaryVlanId = self.module.params['primary_pvlan']
-                pvlan.pvlanEntry.pvlanType = "promiscuous"
-            else:
-                pvlan.pvlanEntry.secondaryVlanId = self.module.params['secondary_pvlan']
-                pvlan.pvlanEntry.pvlanType = self.module.params['pvlan_type'] 
-            pvlan.operation = "add"
-            spec.configSpec.pvlanConfigSpec.append(pvlan)
+        if (self.module.params['primary_pvlan'] and self.module.params['secondary_pvlan'] and self.module.params['pvlan_type']):
+            for count in range(1, 3):
+                pvlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanConfigSpec()
+                pvlan.pvlanEntry = vim.dvs.VmwareDistributedVirtualSwitch.PvlanMapEntry()
+                pvlan.pvlanEntry.primaryVlanId = self.module.params['primary_pvlan']
+                if count == 1:
+                    pvlan.pvlanEntry.secondaryVlanId = self.module.params['primary_pvlan']
+                    pvlan.pvlanEntry.pvlanType = "promiscuous"
+                else:
+                    pvlan.pvlanEntry.secondaryVlanId = self.module.params['secondary_pvlan']
+                    pvlan.pvlanEntry.pvlanType = self.module.params['pvlan_type'] 
+                pvlan.operation = "add"
+                spec.configSpec.pvlanConfigSpec.append(pvlan)
+
         for count in range(1, self.module.params['uplink_quantity'] + 1):
             spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
         
@@ -240,7 +251,7 @@ def main():
                               uplink_quantity=dict(required=True, type='int'),
                               discovery_proto=dict(required=True, choices=['cdp', 'lldp'], type='str'),
                               discovery_operation=dict(required=True, choices=['both', 'none', 'advertise', 'listen'], type='str'),
-                              state=dict(default='present', choices=['present', 'absent', 'update'], type='str')))
+                              state=dict(default='present', choices=['present', 'absent'], type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
