@@ -311,6 +311,7 @@ from ansible.module_utils.ovirt import (
     equal,
     get_entity,
     get_id_by_name,
+    OvirtRetry,
     ovirt_full_argument_spec,
     search_by_name,
     search_by_attributes,
@@ -676,7 +677,10 @@ def main():
         elif state == 'maintenance':
             sd_id = storage_domains_module.create()['id']
             storage_domains_module.post_create_check(sd_id)
-            ret = storage_domains_module.action(
+
+            ret = OvirtRetry.backoff(tries=5, delay=1, backoff=2)(
+                storage_domains_module.action
+            )(
                 action='deactivate',
                 action_condition=lambda s: s.status == sdstate.ACTIVE,
                 wait_condition=lambda s: s.status == sdstate.MAINTENANCE,
