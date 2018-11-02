@@ -26,6 +26,7 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
 
+from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.common._collections_compat import Mapping
 
 try:
@@ -802,3 +803,32 @@ class BaseModule(object):
         if isinstance(full_version, otypes.Version):
             return int(full_version.minor)
         return int(full_version.split('.')[1])
+
+
+def _sdk4_error_maybe():
+    """
+    Allow for ovirtsdk4 not being installed.
+    """
+    if HAS_SDK:
+        return sdk.Error
+    return type(None)
+
+
+class OvirtRetry(CloudRetry):
+    base_class = _sdk4_error_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.code
+
+    @staticmethod
+    def found(response_code, catch_extra_error_codes=None):
+        # This is a list of error codes to retry.
+        retry_on = [
+            # HTTP status: Conflict
+            409,
+        ]
+        if catch_extra_error_codes:
+            retry_on.extend(catch_extra_error_codes)
+
+        return response_code in retry_on
