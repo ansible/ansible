@@ -14,7 +14,7 @@ DOCUMENTATION = """
 ---
 module: onyx_igmp_vlan
 version_added: '2.8'
-author: 'Anas Badaha(@anasb)'
+author: Anas Badaha (@anasbadaha)
 short_description: Configures IGMP Vlan parameters
 description:
   - This module provides declarative management of IGMP vlan configuration on Mellanox ONYX network devices.
