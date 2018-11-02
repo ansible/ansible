@@ -28,10 +28,6 @@ If (($state -eq 'latest') -and ($version -ne $null)) {
     Fail-Json $result "latest and version are mutually exclusive but have both been set"
 }
 
-if ((($state -eq 'latest') -or ($version)) -and $state -eq 'absent'){
-    Fail-Json $result "latest and version can be user only when state = present"
-} 
-
 If (($force_version -eq $true) -and ($version -eq $null)) {
     Fail-Json $result "force_version can be used only when version is set"
 }
@@ -263,14 +259,28 @@ Function Remove-PsModule {
       [string]$Name,
       [bool]$CheckMode
     )
+    $installed = Get-Module -Listavailable|?{$_.name -eq $Name}
     # If module is present, unistalls it.
-    if (Get-Module -Listavailable|?{$_.name -eq $Name}){
-      try{
-        #remove all versions, because now it is possible to have multiple versions installed
-        Uninstall-Module -Name $Name -Confirm:$false -Force -ErrorAction Stop -AllVersions -WhatIf:$CheckMode | out-null
-        $result.output = "Module $($Name) removed"
-        $result.changed = $true
-      }
+    if ($installed){
+        try{
+          if ($version){
+              if ($version -in $installed.Version){
+                  #remove particular version, if it is set.
+                  Uninstall-Module -Name $name -RequiredVersion $version -Confirm:$false -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
+                  $result.output = "Module $($Name):$($version) removed"
+                  $result.changed = $true
+              }
+              else {
+                  $result.output = "Module $($Name):$($version) is not present"
+              }
+          }
+          else {
+              #remove all versions, because now it is possible to have multiple versions installed
+              Uninstall-Module -Name $Name -Confirm:$false -Force -ErrorAction Stop -AllVersions -WhatIf:$CheckMode | out-null
+              $result.output = "Module $($Name) removed"
+              $result.changed = $true
+          }
+        }
       catch{
         $ErrorMessage = "Problems removing $($Name) module: $($_.Exception.Message)"
         Fail-Json $result $ErrorMessage

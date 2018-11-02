@@ -218,7 +218,9 @@
       - "uninstall_module_from_custom_repo is changed"
 
 - name: Get three previous versions of module
-  win_shell: Find-Module "{{ powershell_module }}" -AllVersions | select -First 3 -ExpandProperty version
+  win_shell: |
+    $a = Find-Module powershell-yaml -AllVersions | select version -First 3
+    foreach ($b in $a.version) {$b.tostring()}
   register: module_version_list
 
 - name: Install specific module version
@@ -303,8 +305,38 @@
   ignore_errors: yes
   register: install_module_specific_version_7
 
-- name: Validate idempotency reinstalling latest version
+- name: Validate error installing wrong version
   assert:
     that:
       - "install_module_specific_version_7 is not changed"
       - "install_module_specific_version_7 is failed"
+
+- name: Remove specific version of module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+    version: "{{module_version_list.stdout_lines[2]}}"
+  register: install_module_specific_version_8
+
+- name: Check specific version is removed
+  win_shell: Get-Module -ListAvailable |? {$_.name -eq "{{ powershell_module }}" -and $_.Version -eq "{{module_version_list.stdout_lines[2]}}"}
+  register: install_module_specific_version_9
+
+- name: Validate specific version is removed
+  assert:
+    that:
+      - "not install_module_specific_version_9.stdout"
+      - "install_module_specific_version_8 is changed"
+
+- name: Check idempotency removing specific version of module
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+    version: "{{module_version_list.stdout_lines[2]}}"
+  register: install_module_specific_version_10
+
+- name: Validate idempotency removing specific version of module
+  assert:
+    that:
+      - "install_module_specific_version_10 is not changed"
+

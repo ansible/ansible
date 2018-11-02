@@ -38,7 +38,7 @@ options:
   state:
     description:
       - If C(present) a new module is installed.
-      - If C(absent) all versions of a module are removed.
+      - If C(absent) all versions of a module are removed. If I(version) is set - removes only this specific version.
       - >
         If C(latest) searches for new versions in repository. If module present - updates module, else installs latest version. This is mutually
         exclusive with I(version).
@@ -46,7 +46,7 @@ options:
     default: present
   version:
     description:
-      - Allows to select version of powershell module to install. Requires I(state=present).
+      - Allows to select version of powershell module to install or remove.
       - If there is no version present on target host a selected version will be installed.
       - If lower versions of module are present a selected version will be installed.
       - >
@@ -113,6 +113,12 @@ EXAMPLES = '''
   win_psmodule:
     name: PowershellModule
     state: absent
+
+- name: Remove a specific version of powershell module
+  win_psmodule:
+    name: PowershellModule
+    state: absent
+    version: 1.0.0
 
 - name: Remove a powershell module and a repository
   win_psmodule:
