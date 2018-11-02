@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -89,56 +89,61 @@ author:
 EXAMPLES = r'''
 - name: Add the user 'johnd' as an admin
   bigip_user:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     username_credential: johnd
     password_credential: password
     full_name: John Doe
     partition_access: all:admin
     update_password: on_create
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Change the user "johnd's" role and shell
   bigip_user:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     username_credential: johnd
     partition_access: NewPartition:manager
     shell: tmsh
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Make the user 'johnd' an admin and set to advanced shell
   bigip_user:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: johnd
     partition_access: all:admin
     shell: bash
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove the user 'johnd'
   bigip_user:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: johnd
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Update password
   bigip_user:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     username_credential: johnd
     password_credential: newsupersecretpassword
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 # Note that the second time this task runs, it would fail because
@@ -150,22 +155,24 @@ EXAMPLES = r'''
 #   * Include `ignore_errors` on this task
 - name: Change the Admin password
   bigip_user:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     username_credential: admin
     password_credential: NewSecretPassword
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Change the root user's password
   bigip_user:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     username_credential: root
     password_credential: secret
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -193,30 +200,27 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.six import string_types
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
 class Parameters(AnsibleF5Parameters):
@@ -226,24 +230,33 @@ class Parameters(AnsibleF5Parameters):
     }
 
     updatables = [
-        'partition_access', 'full_name', 'shell', 'password_credential'
+        'partition_access',
+        'full_name',
+        'shell',
+        'password_credential',
     ]
 
     returnables = [
-        'shell', 'partition_access', 'full_name', 'username_credential'
+        'shell',
+        'partition_access',
+        'full_name',
+        'username_credential',
+        'password_credential',
     ]
 
     api_attributes = [
-        'shell', 'partitionAccess', 'description', 'name', 'password'
+        'shell',
+        'partitionAccess',
+        'description',
+        'name',
+        'password',
     ]
 
     @property
     def partition_access(self):
         """Partition access values will require some transformation.
 
-
         This operates on both user and device returned values.
-
         Check if the element is a string from user input in the format of
         name:role, if it is split  it and create dictionary out of it.
 
@@ -251,11 +264,14 @@ class Parameters(AnsibleF5Parameters):
         or already processed) and contains nameReference
         key, delete it and append the remaining dictionary element into
         a list.
+
         If the nameReference key is removed just append the dictionary
         into the list.
 
-        :returns list of dictionaries
-
+        Returns:
+            List of dictionaries. Each item in the list is a dictionary
+            which contains the ``name`` of the partition and the ``role`` to
+            allow on that partition.
         """
         if self._values['partition_access'] is None:
             return
@@ -269,7 +285,7 @@ class Parameters(AnsibleF5Parameters):
                     result.append(access)
                 else:
                     result.append(access)
-            if isinstance(access, str):
+            if isinstance(access, string_types):
                 acl = access.split(':')
                 if acl[0].lower() == 'all':
                     acl[0] = 'all-partitions'
@@ -281,25 +297,116 @@ class Parameters(AnsibleF5Parameters):
                 result.append(value)
         return result
 
+
+class ApiParameters(Parameters):
+    @property
+    def shell(self):
+        if self._values['shell'] in [None, 'none']:
+            return None
+        return self._values['shell']
+
+
+class ModuleParameters(Parameters):
+    @property
+    def shell(self):
+        if self._values['shell'] in [None, 'none']:
+            return None
+        return self._values['shell']
+
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
         for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
+            try:
+                result[returnable] = getattr(self, returnable)
+            except Exception:
+                pass
+            result = self._filter_params(result)
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if api_attribute in self.api_map:
-                result[api_attribute] = getattr(
-                    self, self.api_map[api_attribute])
-            elif api_attribute == 'password':
-                result[api_attribute] = self._values['password_credential']
+
+class UsableChanges(Changes):
+    @property
+    def password(self):
+        if self._values['password_credential'] is None:
+            return None
+        return self._values['password_credential']
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def password_credential(self):
+        if self.want.password_credential is None:
+            return None
+        if self.want.update_password in ['always']:
+            return self.want.password_credential
+        return None
+
+    @property
+    def shell(self):
+        if self.want.shell is None:
+            if self.have.shell is not None:
+                return 'none'
             else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+                return None
+        if self.want.shell == 'bash':
+            self._validate_shell_parameter()
+            if self.want.shell == self.have.shell:
+                return None
+            else:
+                return self.want.shell
+        if self.want.shell != self.have.shell:
+            return self.want.shell
+
+    def _validate_shell_parameter(self):
+        """Method to validate shell parameters.
+
+        Raise when shell attribute is set to 'bash' with roles set to
+        either 'admin' or 'resource-admin'.
+
+        NOTE: Admin and Resource-Admin roles automatically enable access to
+        all partitions, removing any other roles that the user might have
+        had. There are few other roles which do that but those roles,
+        do not allow bash.
+        """
+
+        err = "Shell access is only available to " \
+              "'admin' or 'resource-admin' roles."
+        permit = ['admin', 'resource-admin']
+
+        have = self.have.partition_access
+        if not any(r['role'] for r in have if r['role'] in permit):
+            raise F5ModuleError(err)
+
+        if self.want.partition_access is not None:
+            want = self.want.partition_access
+            if not any(r['role'] for r in want if r['role'] in permit):
+                raise F5ModuleError(err)
 
 
 class ModuleManager(object):
@@ -321,7 +428,7 @@ class ModuleManager(object):
         if type == 'root':
             return RootUserManager(**self.kwargs)
         elif type == 'v1':
-            return UnparitionedManager(**self.kwargs)
+            return UnpartitionedManager(**self.kwargs)
         elif type == 'v2':
             return PartitionedManager(**self.kwargs)
 
@@ -333,7 +440,7 @@ class ModuleManager(object):
 
         :return: Bool
         """
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('13.0.0'):
             return True
         else:
@@ -350,27 +457,17 @@ class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
 
-    def exec_module(self):
-        changed = False
-        result = dict()
-        state = self.want.state
-
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
-        changes = self.changes.to_return()
-        result.update(**changes)
-        result.update(dict(changed=changed))
-        return result
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def _set_changed_options(self):
         changed = {}
@@ -378,61 +475,42 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                if key == 'password_credential':
-                    new_pass = getattr(self.want, key)
-                    if self.want.update_password == 'always':
-                        changed[key] = new_pass
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
                 else:
-                    # We set the shell parameter to 'none' when bigip does
-                    # not return it.
-                    if self.want.shell == 'bash':
-                        self.validate_shell_parameter()
-                    if self.want.shell == 'none' and self.have.shell is None:
-                        self.have.shell = 'none'
-                    attr1 = getattr(self.want, key)
-                    attr2 = getattr(self.have, key)
-                    if attr1 != attr2:
-                        changed[key] = attr1
-
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
-    def validate_shell_parameter(self):
-        """Method to validate shell parameters.
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
 
-        Raise when shell attribute is set to 'bash' with roles set to
-        either 'admin' or 'resource-admin'.
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
-        NOTE: Admin and Resource-Admin roles automatically enable access to
-        all partitions, removing any other roles that the user might have
-        had. There are few other roles which do that but those roles,
-        do not allow bash.
-        """
-
-        err = "Shell access is only available to " \
-              "'admin' or 'resource-admin' roles"
-        permit = ['admin', 'resource-admin']
-
-        if self.have is not None:
-            have = self.have.partition_access
-            if not any(r['role'] for r in have if r['role'] in permit):
-                raise F5ModuleError(err)
-
-        # This check is needed if we want to modify shell AND
-        # partition_access attribute.
-        # This check will also trigger on create.
-        if self.want.partition_access is not None:
-            want = self.want.partition_access
-            if not any(r['role'] for r in want if r['role'] in permit):
-                raise F5ModuleError(err)
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
 
     def present(self):
         if self.exists():
@@ -451,6 +529,54 @@ class BaseManager(object):
             return True
         return False
 
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the user.")
+        return True
+
+    def create(self):
+        self.validate_create_parameters()
+        if self.want.shell == 'bash':
+            self.validate_shell_parameter()
+        self._set_changed_options()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
+    def validate_shell_parameter(self):
+        """Method to validate shell parameters.
+
+        Raise when shell attribute is set to 'bash' with roles set to
+        either 'admin' or 'resource-admin'.
+
+        NOTE: Admin and Resource-Admin roles automatically enable access to
+        all partitions, removing any other roles that the user might have
+        had. There are few other roles which do that but those roles,
+        do not allow bash.
+        """
+
+        err = "Shell access is only available to " \
+              "'admin' or 'resource-admin' roles."
+        permit = ['admin', 'resource-admin']
+
+        if self.want.partition_access is not None:
+            want = self.want.partition_access
+            if not any(r['role'] for r in want if r['role'] in permit):
+                raise F5ModuleError(err)
+
     def validate_create_parameters(self):
         """Password credentials and partition access are mandatory,
 
@@ -467,78 +593,138 @@ class BaseManager(object):
                   "is required when creating a resource."
             raise F5ModuleError(err)
 
-    def update(self):
-        self.have = self.read_current_from_device()
-        if not self.should_update():
+
+class UnpartitionedManager(BaseManager):
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
             return False
-        if self.module.check_mode:
-            return True
-        self.update_on_device()
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
         return True
 
-    def remove(self):
-        if self.module.check_mode:
-            return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the user")
-        return True
-
-    def create(self):
-        self.validate_create_parameters()
-        if self.want.shell == 'bash':
-            self.validate_shell_parameter()
-        self._set_changed_options()
-        if self.module.check_mode:
-            return True
-        self.create_on_device()
-        return True
-
-
-class UnparitionedManager(BaseManager):
     def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.auth.users.user.create(**params)
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
-        params = self.want.api_params()
-        result = self.client.api.tm.auth.users.user.load(name=self.want.name)
-        result.modify(**params)
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def read_current_from_device(self):
-        tmp_res = self.client.api.tm.auth.users.user.load(name=self.want.name)
-        result = tmp_res.attrs
-        return Parameters(params=result)
-
-    def exists(self):
-        return self.client.api.tm.auth.users.user.exists(name=self.want.name)
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        result = self.client.api.tm.auth.users.user.load(name=self.want.name)
-        if result:
-            result.delete()
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class PartitionedManager(BaseManager):
-    def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.auth.users.user.create(
-            partition=self.want.partition, **params
-        )
+    def exists(self):
+        response = self.list_users_on_device()
+        if 'items' in response:
+            collection = [x for x in response['items'] if x['name'] == self.want.name]
+            if len(collection) == 1:
+                return True
+            elif len(collection) == 0:
+                return False
+            else:
+                raise F5ModuleError(
+                    "Multiple users with the provided name were found!"
+                )
+        return False
 
-    def _read_one_resource_from_collection(self):
-        collection = self.client.api.tm.auth.users.get_collection(
-            requests_params=dict(
-                params="$filter=partition+eq+'{0}'".format(self.want.partition)
-            )
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
-        collection = [x for x in collection if x.name == self.want.name]
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 404, 409]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
+
+    def read_current_from_device(self):
+        response = self.list_users_on_device()
+        collection = [x for x in response['items'] if x['name'] == self.want.name]
         if len(collection) == 1:
-            resource = collection.pop()
-            return resource
+            user = collection.pop()
+            return ApiParameters(params=user)
         elif len(collection) == 0:
             raise F5ModuleError(
-                "No accounts with the provided name were found"
+                "No accounts with the provided name were found."
             )
         else:
             raise F5ModuleError(
@@ -546,43 +732,54 @@ class PartitionedManager(BaseManager):
             )
 
     def update_on_device(self):
-        params = self.want.api_params()
-        try:
-            resource = self._read_one_resource_from_collection()
-            resource.modify(**params)
-        except iControlUnexpectedHTTPError as ex:
-            # TODO: Patch this in the F5 SDK so that I dont need this check
-            if 'updated successfully' not in str(ex):
-                raise F5ModuleError(
-                    "Failed to update the specified user"
-                )
-
-    def read_current_from_device(self):
-        resource = self._read_one_resource_from_collection()
-        result = resource.attrs
-        return Parameters(params=result)
-
-    def exists(self):
-        collection = self.client.api.tm.auth.users.get_collection(
-            requests_params=dict(
-                params="$filter=partition+eq+'{0}'".format(self.want.partition)
-            )
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
         )
-        collection = [x for x in collection if x.name == self.want.name]
-        if len(collection) == 1:
-            result = True
-        elif len(collection) == 0:
-            result = False
-        else:
-            raise F5ModuleError(
-                "Multiple users with the provided name were found!"
-            )
-        return result
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 404, 409]:
+            if 'message' in response:
+                if 'updated successfully' not in response['message']:
+                    raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self._read_one_resource_from_collection()
-        if resource:
-            resource.delete()
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
+
+    def list_users_on_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/auth/user/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        query = "?$filter=partition+eq+'{0}'".format(self.want.partition)
+        resp = self.client.api.get(uri + query)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
 
 
 class RootUserManager(BaseManager):
@@ -591,19 +788,18 @@ class RootUserManager(BaseManager):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                raise F5ModuleError(
-                    "You may not remove the root user."
-                )
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            raise F5ModuleError(
+                "You may not remove the root user."
+            )
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
     def exists(self):
@@ -619,18 +815,29 @@ class RootUserManager(BaseManager):
         content = "{0}\n{0}\n".format(self.want.password_credential)
         command = re.sub(escape_patterns, r'\\\1', content)
         cmd = '-c "printf \\\"{0}\\\" | tmsh modify auth password root"'.format(command)
+
+        params = dict(
+            command='run',
+            utilCmdArgs=cmd
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
         try:
-            output = self.client.api.tm.util.bash.exec_cmd(
-                'run',
-                utilCmdArgs=cmd
-            )
-            if hasattr(output, 'commandResult'):
-                result = str(output.commandResult)
-                if any(x for x in errors if x in result):
-                    raise F5ModuleError(result)
-            return True
-        except iControlUnexpectedHTTPError:
-            return False
+            response = resp.json()
+            if 'commandResult' in response:
+                if any(x for x in errors if x in response['commandResult']):
+                    raise F5ModuleError(response['commandResult'])
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
 
 
 class ArgumentSpec(object):
@@ -673,18 +880,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
