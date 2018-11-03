@@ -505,12 +505,12 @@ Here is an example of how to instantly deploy to created containers::
 .. note:: If you're reading the docs from the beginning, this may be the first example you've seen of an Ansible playbook. This is not an inventory file.
           Playbooks will be covered in great detail later in the docs.
 
-.. _using_multiple_inventory_sources:
+.. _using_multiple_inventory_directories:
 
-Using multiple inventory sources
-++++++++++++++++++++++++++++++++
+Using multiple inventory directories
+++++++++++++++++++++++++++++++++++++
 
-You can use multiple inventory sources if you want to target multiple environments or reuse common
+You can use multiple inventory directories if you want to target multiple environments or reuse common
 groups and variables across multiple environments. The targeted inventories are merged and run just like
 only one inventory was given. One inventory can depend on groups or group variables of another inventory.
 Variable defined in the last inventory wins in precedence in accordance with :ref:`ansible_variable_precedence`.
@@ -577,8 +577,6 @@ You can target these inventories like this (note the order of the inventory para
     ansible-playbook example.yml -i inventories/common -i inventories/production
 
 It is also possible to configure :envvar:`ANSIBLE_INVENTORY` to use multiple inventories.
-
-Multiple inventory sources can be useful with dynamic inventories :ref:`using_multiple_sources_with_dynamic`.
 
 .. seealso::
 
