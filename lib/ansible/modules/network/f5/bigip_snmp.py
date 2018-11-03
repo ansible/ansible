@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,6 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_snmp
 short_description: Manipulate general SNMP settings on a BIG-IP
 description:
@@ -63,6 +64,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -122,33 +124,27 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.compat.ipaddress import ip_network
-
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import is_valid_hostname
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.compat.ipaddress import ip_network
-
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import is_valid_hostname
 
 
 class Parameters(AnsibleF5Parameters):
@@ -158,30 +154,34 @@ class Parameters(AnsibleF5Parameters):
         'bigipTraps': 'device_warning_traps',
         'sysLocation': 'location',
         'sysContact': 'contact',
-        'allowedAddresses': 'allowed_addresses'
+        'allowedAddresses': 'allowed_addresses',
     }
 
     updatables = [
-        'agent_status_traps', 'agent_authentication_traps',
-        'device_warning_traps', 'location', 'contact', 'allowed_addresses'
+        'agent_status_traps',
+        'agent_authentication_traps',
+        'device_warning_traps',
+        'location',
+        'contact',
+        'allowed_addresses',
     ]
 
     returnables = [
-        'agent_status_traps', 'agent_authentication_traps',
-        'device_warning_traps', 'location', 'contact', 'allowed_addresses'
+        'agent_status_traps',
+        'agent_authentication_traps',
+        'device_warning_traps',
+        'location', 'contact',
+        'allowed_addresses',
     ]
 
     api_attributes = [
-        'agentTrap', 'authTrap', 'bigipTraps', 'sysLocation', 'sysContact',
-        'allowedAddresses'
+        'agentTrap',
+        'authTrap',
+        'bigipTraps',
+        'sysLocation',
+        'sysContact',
+        'allowedAddresses',
     ]
-
-    def to_return(self):
-        result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
 
 
 class ApiParameters(Parameters):
@@ -228,7 +228,15 @@ class ModuleParameters(Parameters):
 
 
 class Changes(Parameters):
-    pass
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
 
 
 class UsableChanges(Changes):
@@ -305,10 +313,7 @@ class ModuleManager(object):
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.update()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.update()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -340,15 +345,41 @@ class ModuleManager(object):
         self.update_on_device()
         return True
 
-    def update_on_device(self):
-        params = self.want.api_params()
-        result = self.client.api.tm.sys.snmp.load()
-        result.modify(**params)
-
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.snmp.load()
-        result = resource.attrs
-        return ApiParameters(params=result)
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -381,18 +412,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
