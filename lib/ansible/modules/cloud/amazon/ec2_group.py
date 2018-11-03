@@ -771,10 +771,10 @@ def update_rule_descriptions(module, group_id, present_ingress, named_tuple_ingr
 
     if ingress_needs_desc_update:
         update_rules_description(module, client, 'in', group_id, rules_to_permissions(ingress_needs_desc_update))
-        changed |= True
+        changed = True
     if egress_needs_desc_update:
         update_rules_description(module, client, 'out', group_id, rules_to_permissions(egress_needs_desc_update))
-        changed |= True
+        changed = True
     return changed
 
 
@@ -980,6 +980,40 @@ def flatten_nested_targets(module, rules):
     return rules
 
 
+def generate_named_tuple_list(module, client, group, groups, vpc_id, rules):
+    named_tuple_rule_list = []
+    changed = False
+    if rules is None:
+        return [], False
+    for rule in rules:
+        target_type, target, target_group_created = get_target_from_rule(
+            module, client, rule, module.params['name'], group, groups, vpc_id)
+        changed |= target_group_created
+
+        if rule.get('proto', 'tcp') in ('all', '-1', -1):
+            rule['proto'] = '-1'
+            rule['from_port'] = None
+            rule['to_port'] = None
+        try:
+            int(rule.get('proto', 'tcp'))
+            rule['proto'] = to_text(rule.get('proto', 'tcp'))
+            rule['from_port'] = None
+            rule['to_port'] = None
+        except ValueError:
+            # rule does not use numeric protocol spec
+            pass
+
+        named_tuple_rule_list.append(
+            Rule(
+                port_range=(rule['from_port'], rule['to_port']),
+                protocol=to_text(rule.get('proto', 'tcp')),
+                target=target, target_type=target_type,
+                description=rule.get('rule_desc'),
+            )
+        )
+    return named_tuple_rule_list, changed
+
+
 def main():
     argument_spec = dict(
         name=dict(),
@@ -1068,47 +1102,25 @@ def main():
             changed |= update_tags(client, module, group['GroupId'], current_tags, tags, purge_tags)
 
     if group:
-        named_tuple_ingress_list = []
-        named_tuple_egress_list = []
-        current_ingress = sum([list(rule_from_group_permission(p)) for p in group['IpPermissions']], [])
-        current_egress = sum([list(rule_from_group_permission(p)) for p in group['IpPermissionsEgress']], [])
+        for iteration in 'first', 'second':
+            current_ingress = sum([list(rule_from_group_permission(p)) for p in group['IpPermissions']], [])
+            current_egress = sum([list(rule_from_group_permission(p)) for p in group['IpPermissionsEgress']], [])
 
-        for new_rules, rule_type, named_tuple_rule_list in [(rules, 'in', named_tuple_ingress_list),
-                                                            (rules_egress, 'out', named_tuple_egress_list)]:
-            if new_rules is None:
-                continue
-            for rule in new_rules:
-                target_type, target, target_group_created = get_target_from_rule(
-                    module, client, rule, name, group, groups, vpc_id)
-                changed |= target_group_created
+            named_tuple_ingress_list, group_added = generate_named_tuple_list(module, client, group, groups, vpc_id, rules)
+            changed |= group_added
+            named_tuple_egress_list, group_added = generate_named_tuple_list(module, client, group, groups, vpc_id, rules_egress)
+            changed |= group_added
 
-                if rule.get('proto', 'tcp') in ('all', '-1', -1):
-                    rule['proto'] = '-1'
-                    rule['from_port'] = None
-                    rule['to_port'] = None
-                try:
-                    int(rule.get('proto', 'tcp'))
-                    rule['proto'] = to_text(rule.get('proto', 'tcp'))
-                    rule['from_port'] = None
-                    rule['to_port'] = None
-                except ValueError:
-                    # rule does not use numeric protocol spec
-                    pass
-
-                named_tuple_rule_list.append(
-                    Rule(
-                        port_range=(rule['from_port'], rule['to_port']),
-                        protocol=to_text(rule.get('proto', 'tcp')),
-                        target=target, target_type=target_type,
-                        description=rule.get('rule_desc'),
-                    )
-                )
+            present_ingress = list(set(named_tuple_ingress_list).union(set(current_ingress)))
+            present_egress = list(set(named_tuple_egress_list).union(set(current_egress)))
+            if iteration == 'first':
+                changed |= update_rule_descriptions(module, group['GroupId'], present_ingress, named_tuple_ingress_list,
+                                                    present_egress, named_tuple_egress_list)
+                group, groups = group_exists(client, module, vpc_id, group_id, name)
 
         # List comprehensions for rules to add, rules to modify, and rule ids to determine purging
         new_ingress_permissions = [to_permission(r) for r in (set(named_tuple_ingress_list) - set(current_ingress))]
         new_egress_permissions = [to_permission(r) for r in (set(named_tuple_egress_list) - set(current_egress))]
-        present_ingress = list(set(named_tuple_ingress_list).union(set(current_ingress)))
-        present_egress = list(set(named_tuple_egress_list).union(set(current_egress)))
 
         if module.params.get('rules_egress') is None and 'VpcId' in group:
             # when no egress rules are specified and we're in a VPC,
@@ -1139,11 +1151,8 @@ def main():
         else:
             revoke_egress = []
 
-        changed |= update_rule_descriptions(module, group['GroupId'], present_ingress, named_tuple_ingress_list, present_egress, named_tuple_egress_list)
-
         # Revoke old rules
         changed |= remove_old_permissions(client, module, revoke_ingress, revoke_egress, group['GroupId'])
-        rule_msg = 'Revoking {0}, and egress {1}'.format(revoke_ingress, revoke_egress)
 
         new_ingress_permissions = [to_permission(r) for r in (set(named_tuple_ingress_list) - set(current_ingress))]
         new_ingress_permissions = rules_to_permissions(set(named_tuple_ingress_list) - set(current_ingress))
