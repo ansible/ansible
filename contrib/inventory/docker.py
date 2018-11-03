@@ -621,6 +621,14 @@ class DockerInventory(object):
                 if image_name:
                     self.groups["image_%s" % (image_name)].append(name)
 
+                stack_name = inspect.get('Config', dict()).get('Labels', dict()).get('com.docker.stack.namespace')
+                if stack_name:
+                    self.groups["stack_%s" % stack_name].append(name)
+
+                service_name = inspect.get('Config', dict()).get('Labels', dict()).get('com.docker.swarm.service.name')
+                if service_name:
+                    self.groups["service_%s" % service_name].append(name)
+
                 self.groups[id].append(name)
                 self.groups[name].append(name)
                 if short_id not in self.groups:
