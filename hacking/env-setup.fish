@@ -4,7 +4,7 @@
 set HACKING_DIR (dirname (status -f))
 set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 set ANSIBLE_HOME (dirname $FULL_PATH)
-set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib
+set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib:$ANSIBLE_HOME/test
 set PREFIX_PATH $ANSIBLE_HOME/bin
 set PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 
