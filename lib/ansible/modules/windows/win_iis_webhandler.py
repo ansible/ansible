@@ -11,17 +11,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_iis_webhandler
-short_description: Configures a IIS HTTP Handler
+short_description: Configures IIS HTTP Handler
 description:
 - Creates, removes and configures IIS HTTP Handler.
 version_added: '2.8'
 options:
-  applicationname:
+  application_name:
     description:
     - Specifies name of web application where you want to create or edit HTTP Handler.
-      This must be used with valid site name via I(sitename) parameter.
+      This must be used with valid site name via I(site_name) parameter.
     type: str
-  allowpathinfo:
+  allow_path_info:
     description:
     - Specifies whether the handler processes full path information in a URI,
       such as contoso/marketing/imageGallery.aspx. If the value is true, the handler
@@ -44,49 +44,49 @@ options:
     description:
     - Specifies the file name or the file name extension for which the handler applies.
     - For example, to process all PHP files you should use '*.php' path value.
-    - Whether to use full path or just last section of the path depends on I(allowpathinfo) parameter value.
+    - Whether to use full path or just last section of the path depends on I(allow_path_info) parameter value.
     type: str
     required: yes
   precondition:
     description:
     - Specifies conditions under which the handler will run.
-    - The preCondition attribute can be one or more of the following possible values.
+    - The precondition attribute can be one or more of the following possible values.
       If you specify more than one value, separate the values with a comma ','.
     - If no value for I(precondition) parameter specified resulted value will be NULL.
     type: str
     choices: [ bitness32, bitness64, integratedMode, ISAPIMode, runtimeVersionv1.1, runtimeVersionv2.0 ]
-  requireaccess:
+  require_access:
     description:
     - Specifies the type of access that a handler requires to the resource.
-    - The requireAccess attribute can be one or more of the following possible values.
+    - The require_access attribute can be one or more of the following possible values.
       If you specify more than one value, separate the values with a comma ','.
     type: str
     default: 'Script'
     choices: [ None, Read, Write, Script, Execute ]
-  resourcetype:
+  resource_type:
     description:
     - Specifies the type of resource to which the handler applies.
     type: str
     default: 'Unspecified'
     choices: [ Directory, Either, File, Script, Unspecified ]
-  responsebufferlimit:
+  response_buffer_limit:
     description:
     - Specifies the maximum size, in bytes, of the response buffer for a request handler.
     type: int
     default: '4194304'
-  scriptprocessor:
+  script_processor:
     description:
     - Specifies the physical path of the ISAPI extension .dll file or
       Common Gateway Interface 'CGI' .exe file that processes the request.
-    - The scriptProcessor attribute is required only for script map handler mappings.
+    - The script_processor attribute is required only for script map handler mappings.
       When you map a handler to an ISAPI extension, you must specify ISAPIModule for
       the I(modules) attribute.
       When you map a handler to a CGI file, you must specify CGIModule for the I(modules) attribute.
     type: path
-  sitename:
+  site_name:
     description:
     - Specifies name of web site where you want to create or edit HTTP Handler.
-      It can be used with valid web application which name specified via I(applicationname) parameter.
+      It can be used with valid web application which name specified via I(application_name) parameter.
     type: str
   state:
     description:
@@ -124,7 +124,7 @@ EXAMPLES = r'''
 - name: Create http handler to process php files
   win_iis_webhandler:
     name: php-fastcgi
-    scriptprocessor: C:\ProgramData\php\php-cgi.exe
+    script_processor: C:\ProgramData\php\php-cgi.exe
     modules: FastCgiModule
     path: '*.php'
     verb: '*'
@@ -136,12 +136,12 @@ EXAMPLES = r'''
     modules: IsapiModule
     path: '*.test'
     verb: 'GET,POST'
-    sitename: Default Web Site
+    site_name: Default Web Site
     state: present
 '''
 
 RETURN = r'''
-allowpathinfo:
+allow_path_info:
     description: Whether the handler process full path in URI or just last section
     returned: hanlder exists
     type: boolean
@@ -166,22 +166,22 @@ precondition:
     returned: hanlder exists
     type: string
     sample: integratedMode
-requireaccess:
+require_access:
     description: Type of access that a handler requires to the resource
     returned: hanlder exists
     type: string
     sample: Write
-resourcetype:
+resource_type:
     description: Type of resource to which the handler applies
     returned: hanlder exists
     type: string
     sample: Directory
-responsebufferlimit:
+response_buffer_limit:
     description: Maximum size of the response buffer for handler
     returned: hanlder exists
     type: int
     sample: 4194304
-scriptprocessor:
+script_processor:
     description: Physical path to .dll or .exe file that processes the request
     returned: hanlder exists
     type: string
