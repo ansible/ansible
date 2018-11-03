@@ -196,6 +196,8 @@ When run in --list mode (the default), container instances are grouped by:
  - container name
  - container short id
  - image_name  (image_<image name>)
+ - stack_name  (stack_<stack name>)
+ - service_name  (service_<service name>)
  - docker_host
  - running
  - stopped
