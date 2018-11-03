@@ -330,9 +330,6 @@ def create_volume(module, ec2, zone):
     volume_type = module.params.get('volume_type')
     snapshot = module.params.get('snapshot')
     tags = module.params.get('tags')
-    # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
-    if iops:
-        volume_type = 'io1'
 
     volume = get_volume(module, ec2)
     if volume is None:
