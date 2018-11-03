@@ -337,7 +337,8 @@ options:
     default: 'no'
   pid_mode:
     description:
-      - Set the PID namespace mode for the container. Currently only supports 'host'.
+      - Set the PID namespace mode for the container.
+      - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
   privileged:
     description:
       - Give extended privileges to the container.
