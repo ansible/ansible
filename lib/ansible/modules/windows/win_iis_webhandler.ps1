@@ -11,19 +11,19 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$allowpathinfo = Get-AnsibleParam -obj $params -name "allowpathinfo" -type "bool" -default "false"
+$allowpathinfo = Get-AnsibleParam -obj $params -name "allow_path_info" -type "bool" -default "false"
 $modules = Get-AnsibleParam -obj $params -name "modules" -type "str" -default "ManagedPipelineHandler"
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
 $precondition = Get-AnsibleParam -obj $params -name "precondition" -type "str" -validateset 'bitness32', 'bitness64', 'integratedMode', 'ISAPIMode', 'runtimeVersionv1.1', 'runtimeVersionv2.0'
-$requireaccess = Get-AnsibleParam -obj $params -name "requireaccess" -type "str" -default "Script" -validateset 'None', 'Read', 'Write', 'Script', 'Execute'
-$resourcetype = Get-AnsibleParam -obj $params -name "resourcetype" -type "str" -default "Unspecified" -validateset 'Directory', 'Either', 'File', 'Script', 'Unspecified'
-$responsebufferlimit = Get-AnsibleParam -obj $params -name "responsebufferlimit" -type "int" -default "4194304"
-$scriptprocessor = Get-AnsibleParam -obj $params -name "scriptprocessor" -type "path"
+$requireaccess = Get-AnsibleParam -obj $params -name "require_access" -type "str" -default "Script" -validateset 'None', 'Read', 'Write', 'Script', 'Execute'
+$resourcetype = Get-AnsibleParam -obj $params -name "resource_type" -type "str" -default "Unspecified" -validateset 'Directory', 'Either', 'File', 'Script', 'Unspecified'
+$responsebufferlimit = Get-AnsibleParam -obj $params -name "response_buffer_limit" -type "int" -default "4194304"
+$scriptprocessor = Get-AnsibleParam -obj $params -name "script_processor" -type "path"
 $type = Get-AnsibleParam -obj $params -name "type" -type "str"
 $verb = Get-AnsibleParam -obj $params -name "verb" -type "str" -failifempty $true
-$applicationname = Get-AnsibleParam -obj $params -name "applicationname" -type "str" -default ""
-$sitename = Get-AnsibleParam -obj $params -name "sitename" -type "str" -default ""
+$applicationname = Get-AnsibleParam -obj $params -name "application_name" -type "str" -default ""
+$sitename = Get-AnsibleParam -obj $params -name "site_name" -type "str" -default ""
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 
 $result = @{
@@ -223,14 +223,7 @@ else {
 }
 
 # Result
-try {
-    $webhandler = Get-WebHandler -Name $name -PSPath $iispath
-
-}
-catch {
-    $ErrorMessage = "Failed to get info about webhandler '$name' in IIS on '$iispath_for_messages' path (during creating the result object): $($_.Exception.Message)"
-    Fail-Json -obj $result -message $ErrorMessage
-}
+$webhandler = Get-WebHandler -Name $name -PSPath $iispath
 
 if ($webhandler) {
     $result.name = $webhandler.name
@@ -238,12 +231,12 @@ if ($webhandler) {
     $result.verb = $webhandler.verb
     $result.type = $webhandler.type
     $result.modules = $webhandler.modules
-    $result.scriptprocessor = $webhandler.scriptProcessor
-    $result.resourcetype = $webhandler.resourcetype
-    $result.requireaccess = $webhandler.requireaccess
-    $result.allowpathinfo = $webhandler.allowpathinfo
+    $result.script_processor = $webhandler.scriptProcessor
+    $result.resource_type = $webhandler.resourcetype
+    $result.require_access = $webhandler.requireaccess
+    $result.allow_path_info = $webhandler.allowpathinfo
     $result.precondition = $webhandler.precondition
-    $result.responsebufferlimit = $webhandler.responsebufferlimit
+    $result.response_buffer_limit = $webhandler.responsebufferlimit
     $result.state = "present"
 }
 else {
