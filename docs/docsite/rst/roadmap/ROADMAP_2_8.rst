@@ -15,7 +15,7 @@ Expected
 Release Manager
 ---------------
 
-Ryan Brown (IRC: ryansb; GitHub: @ryansb)
+Adam Miller (IRC: maxamillion; GitHub: @maxamillion)
 
 Planned work
 ============
