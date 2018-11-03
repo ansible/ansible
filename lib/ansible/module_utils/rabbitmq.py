@@ -89,8 +89,8 @@ class RabbitClient():
     def _read_file(self, path):
         try:
             fh = open(path, "rb").read()
-        except IOError:
-            self.module.fail_json(msg="Unable to open file %s." % path)
+        except IOError as e:
+            self.module.fail_json(msg="Unable to open file %s: %s" % (path, to_native(e)))
 
         return fh
 
@@ -136,42 +136,6 @@ class RabbitClient():
             self.connection.close()
         except pika.exceptions.AMQPConnectionError:
             pass
-
-    def basic_get(self):
-        ret = []
-        idx = 0
-        count = self.params.get('count', None)
-        queue = self.params.get('queue', None)
-
-        while True:
-            method_frame, properties, body = self.conn_channel.basic_get(queue=queue)
-            if method_frame:
-                msg_details = dict({
-                    'msg': body,
-                    'message_count': method_frame.message_count,
-                    'routing_key': method_frame.routing_key,
-                    'delivery_tag': method_frame.delivery_tag,
-                    'redelivered': method_frame.redelivered,
-                    'exchange': method_frame.exchange,
-                    'delivery_mode': properties.delivery_mode,
-                    'content_type': properties.content_type
-                })
-                if properties.content_type == 'application/json':
-                    try:
-                        msg_details['json'] = json.loads(body)
-                    except ValueError as e:
-                        self.module.fail_json(msg="Unable to decode JSON for message %s" % method_frame.delivery_tag)
-
-                ret.append(msg_details)
-                self.conn_channel.basic_ack(method_frame.delivery_tag)
-                idx += 1
-                if method_frame.message_count == 0 or idx == count:
-                    break
-            # If we didn't get a method_frame, exit.
-            else:
-                break
-
-        return [ret]
 
     def basic_publish(self):
         self.content_type = self.params.get("content_type")

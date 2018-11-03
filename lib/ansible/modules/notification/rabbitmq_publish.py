@@ -24,10 +24,11 @@ options:
   url:
     description:
       - An URL connection string to connect to the RabbitMQ server.
-      - URL and host/port/user/pass/vhost are mutually exclusive, use either or but not both.
+      - I(url) and I(host)/I(port)/I(user)/I(pass)/I(vhost) are mutually exclusive, use either or but not both.
   proto:
     description:
-      - The protocol to use.  ampq or ampqs.
+      - The protocol to use.
+    choices: [ampqs, ampq]
   host:
     description:
       - The RabbitMQ server hostname or IP.
@@ -151,7 +152,7 @@ def main():
         exchange=dict(type='str', default=''),
         routing_key=dict(type='str', required=False),
         body=dict(type='str', required=False),
-        src=dict(aliases=['file'], type='str', required=False),
+        src=dict(aliases=['file'], type='path', required=False),
         content_type=dict(default="text/plain", type='str'),
         durable=dict(default=False, type='bool'),
         exclusive=dict(default=False, type='bool'),
