@@ -14,8 +14,9 @@
 - name: Create containers
   docker_container:
     name: "{{ container_name }}"
-    image: hello-world
-    state: present
+    image: alpine:3.8
+    command: /bin/sleep 10m
+    state: started
   loop:
   - "{{ cname_1 }}"
   - "{{ cname_2 }}"
@@ -106,19 +107,17 @@
     name: "{{ nname_1 }}"
     state: absent
 
-# The idempotency tests do NOT work currently.
-
 - assert:
     that:
     - networks_1 is changed
     - networks_2 is changed
-    # - networks_2_idem is not changed
+    - networks_2_idem is not changed
     - networks_3 is changed
-    # - networks_3_idem is not changed
+    - networks_3_idem is not changed
     - networks_4 is changed
-    # - networks_4_idem is not changed
+    - networks_4_idem is not changed
     - networks_5 is changed
-    # - networks_5_idem is not changed
+    - networks_5_idem is not changed
 
 ####################################################################
 
