@@ -1,11 +1,6 @@
-- name: Install pika
+- name: Install requests and pika
   pip:
-    name: pika
-    state: latest
-
-- name: Install requests
-  pip:
-    name: requests
+    name: requests,pika
     state: present
 
 - name: RabbitMQ basic publish test
