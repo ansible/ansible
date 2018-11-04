@@ -34,8 +34,8 @@
 # Use option -DisableBasicAuth to disable basic authentication.
 #
 # Use option -SkipNetworkProfileCheck to skip the network profile check.
-# Without specifying this the script will only run If the device's interfaces
-# are in DOMAIN or PRIVATE zones.  Provide this switch If you want to enable
+# Without specifying this the script will only run if the device's interfaces
+# are in DOMAIN or PRIVATE zones.  Provide this switch if you want to enable
 # WinRM on a device with an interface in PUBLIC zone.
 #
 # Use option -SubjectName to specify the CN name of the certificate. This
@@ -380,7 +380,6 @@ Function Get-CertificateToUse {
     $thumbprint
 }
 
-
 # Setup error handling.
 Trap
 {
@@ -509,7 +508,7 @@ Else
 {
     Write-Verbose "SSL listener is already active."
 
-    # Force a new SSL cert on Listener If the $ForceNewSSLCert
+    # Force a new SSL cert on Listener if the $ForceNewSSLCert
     If ($ForceNewSSLCert)
     {
         $certSelectParams = @{
