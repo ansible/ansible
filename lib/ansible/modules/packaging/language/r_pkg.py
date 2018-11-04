@@ -77,7 +77,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def is_package_installed(module, exe, name, lib=None):
-    """Check if the package is installed."""
+    """Check if the package is installed.
+    
+    :param module: The current ansible module
+    :param exe: The R executable to run
+    :param name: The R package to check
+    :param lib: The library directory to check. Optional.
+    :returns: `True` if the package was found, `False` otherwise.
+    """
     # lib.loc isn't a valid Python variable,
     # so pass kwargs as a dict and unpack it.
     retcode, _, _ = run_command(module, exe, 'find.package', name,
@@ -87,16 +94,33 @@ def is_package_installed(module, exe, name, lib=None):
     return retcode == 0
 
 
-def install_package(module, exe, src, lib=None, repo=None):
-    """Install the R package, either by name or a source file."""
+def install_package(module, exe, name, src=None, lib=None, repo=None):
+    """Attempt to install the R package.
+    
+    :param module: The current ansible module
+    :param exe: The R executable to run
+    :param name: The name of the R package to install
+    :param src: The source file/directory of the R package to install. Optional.
+    :param lib: The library to use to install the package. Optional.
+    :param repo: The CRAN mirror/repo to use. Optional.
+    :return: The output of the `install.packages` R command.
+    """
     # Install the package from the repo to the lib.
-    _, out, _ = run_command(module, exe, 'install.packages', src,
+    install_name = src or name
+    _, out, _ = run_command(module, exe, 'install.packages', install_name,
                             lib=lib, repos=repo, check_rc=True)
     return out
 
 
 def remove_package(module, exe, name, lib=None):
-    """Uninstall the R package."""
+    """Attempt to remove the R package.
+    
+    :param module: The current ansible module
+    :param exe: The R executable to run
+    :param name: The name of the R package to install
+    :param lib: The library to remove the package from. Optional.
+    :return: The output of the `remove.packages` R command.
+    """
     # Remove the package from the specified lib or the default location.
     _, out, _ = run_command(module, exe, 'remove.packages', name,
                             lib=lib, check_rc=True)
@@ -121,9 +145,12 @@ def _escape_arg(arg):
 
 
 def build_r_function(funcname, *args, **kwargs):
-    """Build an R function string.
+    """Build an R function string to execute.
 
-    positional and keyword args are both supported and passed to R.
+    :param funcname: The name of the R function to call
+    :param args: Positional arguments to pass the R function
+    :param kwargs: Keyword arguments to pass to the R function
+    :return: A string of the R function with all parameters
     """
     r_args = [_escape_arg(a) for a in args]
     r_args += [k + ' = ' + _escape_arg(v) for k, v in kwargs.items() if v is not None]
@@ -131,7 +158,15 @@ def build_r_function(funcname, *args, **kwargs):
 
 
 def run_command(module, exe, funcname, *args, **kwargs):
-    """Build the R function and run the command."""
+    """Build the R function and run the command.
+
+    :param module: The current ansible module
+    :param exe: The R executable to run
+    :param funcname: The name of the R function to run.
+    :param args: Positional arguments to pass to the R function.
+    :param kwargs: Keyword arguments to pass to the R function.
+    :return: A tuple of the returncode, stdout, and stderr of the command.
+    """
     # Intercept the check_rc arg and use it to control module.run_command.
     try:
         check_rc = kwargs.pop('check_rc')
@@ -161,12 +196,11 @@ def main():
 
     exe = _find_r(module)
     name = module.params['name']
-    src = module.params['src'] or name
+    src = module.params['src']
     state = module.params['state']
     force = module.params['force']
     lib = module.params['lib']
     repo = module.params['repo']
-
 
     installed = is_package_installed(module, exe, name, lib)
     changed = False
@@ -177,7 +211,7 @@ def main():
         changed = True
     elif state == 'present' and (not installed or force):
         if not module.check_mode:
-            msg = install_package(module, exe, src, lib=lib, repo=repo)
+            msg = install_package(module, exe, name, src, lib=lib, repo=repo)
         changed = True
     module.exit_json(changed=changed, msg=msg)
 
