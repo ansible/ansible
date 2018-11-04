@@ -173,6 +173,20 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+response_metadata:
+  description: response metadata about the snapshot
+  returned: always
+  type: dict
+  sample:
+    http_headers:
+      content-length: 1490
+      content-type: text/xml
+      date: Tue, 07 Feb 2017 16:43:04 GMT
+      x-amz-crc32: 2745614147
+      x-amzn-requestid: 7f436dea-ed54-11e6-a04c-ab2372a1f14d
+    http_status_code: 200
+    request_id: 7f436dea-ed54-11e6-a04c-ab2372a1f14d
+    retry_attempts: 0
 item:
     description: Item when you peform a 'get' action.
     returned: success
@@ -191,20 +205,17 @@ item:
         }
 '''
 
-import ansible.module_utils.ec2
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto_exception
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass    # Handled by AnsibleAWSModule
 
 
-def get(connection, table, primary_key, projection_expression, result):
+def get(connection, table, primary_key, projection_expression):
 
     if projection_expression:
         response = connection.get_item(
@@ -218,61 +229,54 @@ def get(connection, table, primary_key, projection_expression, result):
             Key=primary_key
         )
 
-    if 'Item' in response:
-        result['item'] = response['Item']
-    else:
-        result = dict(failed=True, message='No item found')
-
-    return result
+    changed = False
+    return response, changed
 
 
-def put(connection, table, item, result):
+def put(connection, table, item):
 
-    connection.put_item(
+    response = connection.put_item(
         TableName=table,
         Item=item,
     )
 
-    result = dict(changed=True, message='Item added')
-
-    return result
+    changed = True
+    return response, changed
 
 
 def update(connection, table, primary_key, update_expression,
            condition_expression, expression_attribute_names,
-           expression_attribute_values, result):
+           expression_attribute_values):
 
     if condition_expression:
-        connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                               ConditionExpression=condition_expression, ExpressionAttributeValues=expression_attribute_values)
+        response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                                          ConditionExpression=condition_expression, ExpressionAttributeValues=expression_attribute_values)
     elif expression_attribute_names:
-        connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                               ExpressionAttributeValues=expression_attribute_values, ExpressionAttributeNames=expression_attribute_names)
+        response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                                          ExpressionAttributeValues=expression_attribute_values, ExpressionAttributeNames=expression_attribute_names)
     elif update_expression and expression_attribute_values:
-        connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                               ExpressionAttributeValues=expression_attribute_values)
+        response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                                          ExpressionAttributeValues=expression_attribute_values)
     else:
-        connection.update_item(
+        response = connection.update_item(
             TableName=table, Key=primary_key, UpdateExpression=update_expression)
 
-    result = dict(changed=True, message='Item updated')
-    return result
+    changed = True
+    return response, changed
 
 
 def delete(connection, table, primary_key, condition_expression,
-           expression_attribute_values, result):
+           expression_attribute_values):
 
-    connection.delete_item(TableName=table, Key=primary_key, ConditionExpression=condition_expression,
-                           ExpressionAttributeValues=expression_attribute_values)
+    response = connection.delete_item(TableName=table, Key=primary_key, ConditionExpression=condition_expression,
+                                      ExpressionAttributeValues=expression_attribute_values)
 
-    result = dict(changed=True, message='Item deleted')
-
-    return result
+    changed = True
+    return response, changed
 
 
 def main():
-    argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         table=dict(required=True),
         action=dict(required=True, choices=["get", "put", "update", "delete"]),
         primary_key=dict(required=False, type='dict'),
@@ -283,29 +287,11 @@ def main():
         update_expression=dict(required=False, type='str'),
         projection_expression=dict(required=False, type='str')
     )
-    )
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=False,
-    )
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=False)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='pip modules boto3 and botocore are required')
-
-    try:
-        region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(
-            module, boto3=True)
-        connection = ansible.module_utils.ec2.boto3_conn(module, conn_type='client',
-                                                         resource='dynamodb',
-                                                         region=region, endpoint=ec2_url,
-                                                         **aws_connect_kwargs)
-    except (botocore.exceptions.NoRegionError,
-            botocore.exceptions.ProfileNotFound,
-            botocore.exceptions.NoCredentialsError) as error:
-
-        error_msg = boto_exception(error)
-        module.fail_json(msg=error_msg)
+    connection = module.client('dynamodb')
 
     try:
         table = module.params.get('table')
@@ -320,37 +306,42 @@ def main():
             'expression_attribute_values')
         projection_expression = module.params.get('projection_expression')
 
-        result = dict(
-            changed=False,
-            item=''
-        )
+        changed = False
+        response = {}
 
         if action == 'get':
-            result = get(connection, table, primary_key, projection_expression,
-                         result)
+            response, changed = get(
+                connection, table, primary_key, projection_expression)
+            if 'Item' not in response:
+                module.fail_json(msg="No matching items")
 
         elif action == 'put':
-            result = put(connection, table, item, result)
+            response, changed = put(connection, table, item)
 
         elif action == 'update':
-            result = update(connection, table, primary_key, update_expression,
-                            condition_expression, expression_attribute_names,
-                            expression_attribute_values, result)
+            response, changed = update(connection, table, primary_key, update_expression,
+                                       condition_expression, expression_attribute_names,
+                                       expression_attribute_values)
 
         elif action == 'delete':
-            result = delete(connection, table, primary_key,
-                            condition_expression, expression_attribute_values,
-                            result)
+            response, changed = delete(connection, table, primary_key,
+                                       condition_expression, expression_attribute_values)
 
-    except connection.exceptions.ResourceNotFoundException as error:
-        error_msg = 'Table {0} not found'.format(table)
-        module.fail_json(msg=error_msg)
-    except connection.exceptions.ConditionalCheckFailedException as error:
-        error_msg = 'No item matches the condition'
-        module.fail_json(msg=error_msg)
-    except Exception as error:
-        error_msg = boto_exception(error)
-        module.fail_json(msg=error_msg)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            module.fail_json_aws(e, msg="Table {0} doesnt exist".format(table))
+        if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+            module.fail_json_aws(
+                e, msg="No item matching your conditional expression")
+        if e.response['Error']['Message'] == 'The provided key element does not match the schema':
+            module.fail_json_aws(
+                e, msg="Check the primary key, it doesnt match your table config")
+        else:
+            raise
+    except botocore.exceptions.BotoCoreError as e:
+        raise
+
+    result = dict(changed=changed, **camel_dict_to_snake_dict(response))
 
     module.exit_json(**result)
 
