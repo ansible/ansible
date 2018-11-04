@@ -76,7 +76,7 @@ class RabbitClient():
     def rabbitmq_argument_spec():
         return dict(
             url=dict(default=None, type='str'),
-            proto=dict(default=None, type='str', choices=['amqps','amqp']),
+            proto=dict(default=None, type='str', choices=['amqps', 'amqp']),
             host=dict(default=None, type='str'),
             port=dict(default=None, type='int'),
             username=dict(default=None, type='str'),
