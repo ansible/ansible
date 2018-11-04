@@ -17,7 +17,7 @@
   - name: ensure IAM role exists
     iam_role:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secrets-manager-role"
+      name: "test-secrets-manager-role-{{ resource_prefix }}"
       assume_role_policy_document: "{{ lookup('file','secretsmanager-trust-policy.json') }}"
       state: present
       create_instance_profile: no
@@ -41,18 +41,18 @@
   - name: dummy lambda for testing
     lambda:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-hello-world"
+      name: "hello-world-{{ resource_prefix }}"
       state: present
       zip_file: "{{ tmp.path }}/ansible_testing/hello_world.zip"
       runtime: 'python2.7'
-      role: "arn:aws:iam::{{ test_caller_facts.account }}:role/{{ resource_prefix }}-test-secrets-manager-role"
+      role: "arn:aws:iam::{{ test_caller_facts.account }}:role/test-secrets-manager-role-{{ resource_prefix }}"
       handler: 'hello_world.lambda_handler'
 
   - name: lambda policy for secrets manager
     lambda_policy:
       <<: *aws_connection_info
       state: present
-      function_name: "{{ resource_prefix }}-hello-world"
+      function_name: "hello-world-{{ resource_prefix }}"
       statement_id: LambdaSecretsManagerTestPolicy
       action: 'lambda:InvokeFunction'
       principal: secretsmanager.amazonaws.com
@@ -120,7 +120,7 @@
   - name: add secret to AWS Secrets Manager
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
@@ -130,8 +130,10 @@
     assert:
       that:
         - result.changed
-        - result.secret_arn is not none
-        - result.version_id is not none
+        - result.ARN is not none
+        - result.Name is not none
+        - result.Tags is not none
+        - result.VersionIdsToStages is not none
 
   - name: pausing for secret creation
     pause:
@@ -140,7 +142,7 @@
   - name: no changes to secret
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
@@ -150,12 +152,12 @@
     assert:
       that:
         - not result.changed
-        - result.secret_arn is not none
+        - result.ARN is not none
 
   - name: make change to secret
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
@@ -166,22 +168,22 @@
     assert:
       that:
         - result.changed
-        - result.secret_arn is not none
-        - result.version_id is not none
+        - result.ARN is not none
+        - result.Name is not none
+        - result.Tags is not none
+        - result.VersionIdsToStages is not none
 
   - name: add tags to secret
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
       tags:
-        - Key: 'Foo'
-          Value: 'Bar'
-        - Key: 'Test'
-          Value: 'Tag'
+        Foo: 'Bar'
+        Test: 'Tag'
     register: result
 
   - name: assert correct keys are returned
@@ -192,7 +194,7 @@
   - name: remove tags from secret
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
@@ -207,12 +209,12 @@
   - name: add rotation lambda to secret
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
-      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:{{ resource_prefix }}-hello-world"
+      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:hello-world-{{ resource_prefix }}"
     register: result
 
   - name: assert correct keys are returned
@@ -223,7 +225,7 @@
   - name: remove rotation lambda from secret
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       description: 'this is a change to this secret'
       state: present
       secret_type: 'string'
@@ -239,7 +241,7 @@
   - name: remove secret
     aws_secret:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secret-string"
+      name: "test-secret-string-{{ resource_prefix }}"
       state: absent
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
@@ -249,7 +251,7 @@
     lambda_policy:
       <<: *aws_connection_info
       state: absent
-      function_name: "{{ resource_prefix }}-hello-world"
+      function_name: "hello-world-{{ resource_prefix }}"
       statement_id: lambda-secretsmanager-test-policy
       action: lambda:InvokeFunction
       principal: secretsmanager.amazonaws.com
@@ -258,18 +260,18 @@
   - name: remove dummy lambda
     lambda:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-hello-world"
+      name: "hello-world-{{ resource_prefix }}"
       state: absent
       zip_file: "{{ tmp.path }}/ansible_testing/hello_world.zip"
       runtime: 'python2.7'
-      role: "{{ resource_prefix }}-test-secrets-manager-role"
+      role: "test-secrets-manager-role-{{ resource_prefix }}"
       handler: 'hello_world.lambda_handler'
     ignore_errors: yes
 
   - name: remove IAM role
     iam_role:
       <<: *aws_connection_info
-      name: "{{ resource_prefix }}-test-secrets-manager-role"
+      name: "test-secrets-manager-role-{{ resource_prefix }}"
       assume_role_policy_document: "{{ lookup('file','secretsmanager-trust-policy.json') }}"
       state: absent
       create_instance_profile: no
