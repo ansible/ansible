@@ -35,6 +35,8 @@ options:
     description: Path to the R executable. If not specified, find it from the PATH.
   src:
     description: The source file or directory to build the R package.
+  type:
+    description: Type of package to install, like "source" or "binary".
   lib:
     description: The library location to use to install or remove the package.
   repo:
@@ -64,6 +66,7 @@ EXAMPLES = '''
   r_package:
     name: h2o
     src: ~/Downloads/h2o.tar.gz
+    type: source
 '''
 
 RETURN = '''
@@ -108,8 +111,8 @@ def install_package(module, exe, name, src=None, pkg_type=None, lib=None, repo=N
     """
     # Install the package from the repo to the lib.
     install_name = src or name
-    _, out, _ = run_command(module, exe, 'install.packages', install_name,
-                            type=pkg_type, lib=lib, repos=repo, check_rc=True)
+    returncode, out, err = run_command(module, exe, 'install.packages', install_name,
+                                       type=pkg_type, lib=lib, repos=repo, check_rc=True)
     return out
 
 
@@ -123,8 +126,8 @@ def remove_package(module, exe, name, lib=None):
     :return: The output of the `remove.packages` R command.
     """
     # Remove the package from the specified lib or the default location.
-    _, out, _ = run_command(module, exe, 'remove.packages', name,
-                            lib=lib, check_rc=True)
+    returncode, out, err = run_command(module, exe, 'remove.packages', name,
+                                       lib=lib, check_rc=True)
     return out
 
 
