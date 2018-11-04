@@ -1,4 +1,3 @@
-examples/scripts/ConfigureRemotingForAnsible.ps1 PSAvoidUsingCmdletAliases
 examples/scripts/upgrade_to_ps3.ps1 PSAvoidUsingWriteHost
 examples/scripts/upgrade_to_ps3.ps1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 PSUseApprovedVerbs
