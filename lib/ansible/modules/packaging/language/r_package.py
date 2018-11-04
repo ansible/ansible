@@ -20,7 +20,7 @@ description:
     Install, remove, and update R packages.
     Flexibility is provided to specify the R executable,
     the remote repository, source to build, and library location.
-version_added: "2.7"
+version_added: "2.8"
 author: "Evan Van Dam (@evandam)"
 options:
   name:
