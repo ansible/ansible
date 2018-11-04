@@ -803,7 +803,7 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
-    from docker.errors import NotFound
+    from docker.errors import APIError, NotFound
 except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -2440,6 +2440,12 @@ class ContainerManager(DockerBaseClass):
                 response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
             except NotFound as exc:
                 pass
+            except APIError as exc:
+                if exc.response.status_code == 409 and ('removal of container ' in exc.explanation and
+                                                        ' is already in progress' in exc.explanation):
+                    pass
+                else:
+                    self.fail("Error removing container %s: %s" % (container_id, str(exc)))
             except Exception as exc:
                 self.fail("Error removing container %s: %s" % (container_id, str(exc)))
         return response
