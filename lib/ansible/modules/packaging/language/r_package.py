@@ -151,6 +151,8 @@ def _escape_arg(arg):
     """Strings must be quoted. Numbers are fine as is."""
     if isinstance(arg, Number):
         return arg
+    elif arg is None:
+        return 'NULL'
     return '"{0}"'.format(arg)
 
 
