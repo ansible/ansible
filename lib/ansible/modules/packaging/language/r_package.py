@@ -78,7 +78,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def is_package_installed(module, exe, name, lib=None):
     """Check if the package is installed.
-    
+
     :param module: The current ansible module
     :param exe: The R executable to run
     :param name: The R package to check
@@ -94,13 +94,14 @@ def is_package_installed(module, exe, name, lib=None):
     return retcode == 0
 
 
-def install_package(module, exe, name, src=None, lib=None, repo=None):
+def install_package(module, exe, name, src=None, pkg_type=None, lib=None, repo=None):
     """Attempt to install the R package.
-    
+
     :param module: The current ansible module
     :param exe: The R executable to run
     :param name: The name of the R package to install
     :param src: The source file/directory of the R package to install. Optional.
+    :param pkg_type: The package type. Ex: "source", "binary", "mac.binary". Optional.
     :param lib: The library to use to install the package. Optional.
     :param repo: The CRAN mirror/repo to use. Optional.
     :return: The output of the `install.packages` R command.
@@ -108,13 +109,13 @@ def install_package(module, exe, name, src=None, lib=None, repo=None):
     # Install the package from the repo to the lib.
     install_name = src or name
     _, out, _ = run_command(module, exe, 'install.packages', install_name,
-                            lib=lib, repos=repo, check_rc=True)
+                            type=pkg_type, lib=lib, repos=repo, check_rc=True)
     return out
 
 
 def remove_package(module, exe, name, lib=None):
     """Attempt to remove the R package.
-    
+
     :param module: The current ansible module
     :param exe: The R executable to run
     :param name: The name of the R package to install
@@ -188,6 +189,7 @@ def main():
             force=dict(default=False, type='bool'),
             executable=dict(required=False),
             src=dict(required=False),
+            type=dict(required=False),
             lib=dict(required=False),
             repo=dict(required=False),
         ),
@@ -198,6 +200,7 @@ def main():
     name = module.params['name']
     src = module.params['src']
     state = module.params['state']
+    pkg_type = module.params['type']
     force = module.params['force']
     lib = module.params['lib']
     repo = module.params['repo']
@@ -211,7 +214,7 @@ def main():
         changed = True
     elif state == 'present' and (not installed or force):
         if not module.check_mode:
-            msg = install_package(module, exe, name, src, lib=lib, repo=repo)
+            msg = install_package(module, exe, name, src, pkg_type, lib=lib, repo=repo)
         changed = True
     module.exit_json(changed=changed, msg=msg)
 
