@@ -59,7 +59,7 @@
 - assert:
     that:
       - "rabbit_basic_fail_output1 is failed"
-      - "'src and body cannot be specified at the same time' in rabbit_basic_fail_output1.msg"
+      - "'parameters are mutually exclusive' in rabbit_basic_fail_output1.msg"
 
 - name: Publish a file that does not exist
   rabbitmq_publish:

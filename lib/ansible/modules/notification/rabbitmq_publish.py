@@ -28,7 +28,7 @@ options:
   proto:
     description:
       - The protocol to use.
-    choices: [ampqs, ampq]
+    choices: [amqps, amqp]
   host:
     description:
       - The RabbitMQ server hostname or IP.
@@ -106,7 +106,6 @@ EXAMPLES = '''
     content_type: "text/plain"
     headers:
       myHeader: myHeaderValue
-  delegate_to: localhost
 
 
 - name: Publish a file to a queue
@@ -114,20 +113,18 @@ EXAMPLES = '''
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     queue: 'images'
     file: 'path/to/logo.gif'
-  delegate_to: localhost
 
 - name: RabbitMQ auto generated queue
   rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     body: "Hello world random queue from ansible module rabitmq_publish"
     content_type: "text/plain"
-  delegate_to: localhost
 '''
 
 RETURN = '''
 result:
   description:
-    - Contains the a message (msg), content type (content_type) and the queue name (queue).
+    - Contains the status I(msg), content type I(content_type) and the queue name I(queue).
   returned: success
   type: dict
   sample: |
@@ -161,13 +158,11 @@ def main():
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=[['body', 'src']],
         supports_check_mode=False
     )
 
     rabbitmq = RabbitClient(module)
-
-    if module.params['body'] is not None and module.params['src'] is not None:
-        module.fail_json(msg="src and body cannot be specified at the same time")
 
     if rabbitmq.basic_publish():
         rabbitmq.close_connection()

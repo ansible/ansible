@@ -57,7 +57,7 @@ class RabbitClient():
         if self.host is not None:
             self.build_url()
 
-        self.conn_channel = self.connect_to_rabbitmq()
+        self.connect_to_rabbitmq()
 
     def check_required_library(self):
         if not HAS_PIKA:
@@ -76,7 +76,7 @@ class RabbitClient():
     def rabbitmq_argument_spec():
         return dict(
             url=dict(default=None, type='str'),
-            proto=dict(default=None, type='str'),
+            proto=dict(default=None, type='str', choices=['amqps','amqp']),
             host=dict(default=None, type='str'),
             port=dict(default=None, type='int'),
             username=dict(default=None, type='str'),
@@ -122,14 +122,10 @@ class RabbitClient():
             self.module.fail_json(msg="Connection issue: %s" % to_native(e))
 
         try:
-            conn_channel = self.connection.channel()
+            self.conn_channel = self.connection.channel()
         except pika.exceptions.AMQPChannelError as e:
-            try:
-                self.connection.close()
-                self.module.fail_json(msg="Channel issue: %s" % to_native(e))
-            except pika.exceptions.AMQPConnectionError as ie:
-                self.module.fail_json(msg="Channel and connection closing issues: %s / %s" % (to_native(e), to_native(ie)))
-        return conn_channel
+            self.close_connection()
+            self.module.fail_json(msg="Channel issue: %s" % to_native(e))
 
     def close_connection(self):
         try:
