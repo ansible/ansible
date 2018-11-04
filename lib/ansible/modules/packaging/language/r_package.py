@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = '''
-module: r_pkg
+module: r_package
 short_description: A module to install and manage R packages
 description:
   >
@@ -44,24 +44,24 @@ notes: Requires R to already be installed. check_mode is supported.
 
 EXAMPLES = '''
 - name: Install dplyr
-  r_pkg:
+  r_package:
     name: dplyr
     state: present
 - name: Force dplyr to be reinstalled
-  r_pkg:
+  r_package:
     name: dplyr
     force: true
 - name: Uninstall dplyr
-  r_pkg:
+  r_package:
     name: dplyr
     state: absent
 - name: Install dplyr from the cloud CRAN mirror to your home lib
-  r_pkg:
+  r_package:
     name: dplyr
     repo: https://cloud.r-project.org/
     lib: "~/R"
 - name: Install h2o from source
-  r_pkg:
+  r_package:
     name: h2o
     src: ~/Downloads/h2o.tar.gz
 '''
