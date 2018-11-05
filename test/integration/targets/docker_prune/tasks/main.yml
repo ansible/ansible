@@ -1,0 +1,60 @@
+---
+- name: Create random names
+  set_fact:
+    cname: "{{ 'ansible-container-%0x' % ((2**32) | random) }}"
+    nname: "{{ 'ansible-network-%0x' % ((2**32) | random) }}"
+    vname: "{{ 'ansible-volume-%0x' % ((2**32) | random) }}"
+
+- block:
+  # Create objects to be pruned
+  - docker_container:
+      name: "{{ cname }}"
+      image: hello-world
+      state: present
+    register: container
+  - docker_network:
+      name: "{{ nname }}"
+      state: present
+    register: network
+  - docker_volume:
+      name: "{{ vname }}"
+      state: present
+    register: volume
+
+  # Prune objects
+  - docker_prune:
+      containers: yes
+      images: yes
+      networks: yes
+      volumes: yes
+      builder_cache: yes
+    register: result
+
+  # Analyze result
+  - debug: var=result
+  - assert:
+      that:
+      # containers
+      - container.ansible_facts.docker_container.Id in result.containers
+      - "'containers_space_reclaimed' in result"
+      # images
+      - "'images_space_reclaimed' in result"
+      # networks
+      - network.ansible_facts.docker_network.Name in result.networks
+      # volumes
+      - volume.ansible_facts.docker_volume.Name in result.volumes
+      - "'volumes_space_reclaimed' in result"
+      # builder_cache
+      - "'builder_cache_space_reclaimed' in result"
+
+  # Test with filters
+  - docker_prune:
+      images: yes
+      images_filters:
+        dangling: true
+    register: result
+
+  - debug: var=result
+
+  # Skip for CentOS 6
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
