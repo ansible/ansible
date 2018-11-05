@@ -24,7 +24,7 @@ Remote Connection Information
 `````````````````````````````
 
 Before we get started, it's important to understand how Ansible communicates with remote
-machines over SSH.
+machines over the `SSH protocol <https://www.ssh.com/ssh/protocol/>`_.
 
 By default, Ansible will try to use native
 OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of

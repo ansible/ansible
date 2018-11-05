@@ -42,7 +42,7 @@ files:
   changelogs/fragments/:
     support: community
   $modules/cloud/amazon/:
-    ignored: erydo seiffert simplesteph
+    ignored: erydo seiffert simplesteph nadirollo
   $modules/cloud/amazon/aws_api_gateway.py: willthames
   $modules/cloud/amazon/aws_kms.py: willthames
   $modules/cloud/amazon/cloudformation.py: ryansb tedder
@@ -265,7 +265,7 @@ files:
   $modules/packaging/language/npm.py:
     ignored: chrishoffman
     maintainers: shane-walker xcambar
-  $modules/packaging/language/pip.py: lujeni robinro
+  $modules/packaging/language/pip.py: lujeni webknjaz
   $modules/packaging/os/apk.py:
     ignored: kbrebanov
     maintainers: tdtrask
@@ -771,6 +771,7 @@ files:
     support: core
   lib/ansible/plugins/callback/grafana_annotations.py:
     maintainers: rrey
+    support: community
   lib/ansible/plugins/callback/junit:
     support: core
   lib/ansible/plugins/callback/minimal:
@@ -779,12 +780,17 @@ files:
     support: core
   lib/ansible/plugins/callback/profile:
     support: core
+  lib/ansible/plugins/callback/stderr.py:
+    maintainers: ysn2233
+    support: community
   lib/ansible/plugins/callback/sumologic.py:
     maintainers: ryancurrah
+    support: community
   lib/ansible/plugins/callback/tree:
     support: core
   lib/ansible/plugins/callback/unixy.py:
     maintainers: akatch
+    support: community
 ###############################
 # plugins/cliconf
 
@@ -1114,14 +1120,14 @@ macros:
   team_linode: intheclouddan lwm displague rmcintosh
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
-  team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py
+  team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi
   team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
-  team_onyx: samerd anasb
+  team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych

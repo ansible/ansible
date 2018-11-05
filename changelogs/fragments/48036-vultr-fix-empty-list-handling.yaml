@@ -1,0 +1,3 @@
+bugfixes:
+  - vultr - fixed the handling of an inconsistency in the response from
+    Vultr API when it returns an unexpected empty list instead a empty dict.

@@ -210,7 +210,7 @@ class MSCModule(object):
         if len(objs) == 0:
             return {}
         if len(objs) > 1:
-            self.fail_json('More than one object matches unique filter: {1}'.format(kwargs))
+            self.fail_json(msg='More than one object matches unique filter: {0}'.format(kwargs))
         return objs[0]
 
     def sanitize(self, updates, collate=False):
