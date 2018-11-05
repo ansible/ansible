@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ldap_attr map to list (https://github.com/ansible/ansible/pull/48009)
