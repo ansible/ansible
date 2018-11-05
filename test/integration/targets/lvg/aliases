@@ -1,0 +1,5 @@
+destructive
+needs/privileged
+shippable/posix/group1
+skip/freebsd
+skip/osx
