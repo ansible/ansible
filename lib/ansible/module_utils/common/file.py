@@ -151,8 +151,6 @@ class FileLock:
         :returns: True
         '''
         lock_path = os.path.join(tmpdir, 'ansible-{0}.lock'.format(os.path.basename(path)))
-        lock_path = lock_path.encode('utf-8')
-
         l_wait = 0.1
         r_exception = IOError
         if sys.version_info[0] == 3:
