@@ -321,7 +321,8 @@ EXAMPLES = '''
 import os
 import errno
 
-from ansible.module_utils.basic import AnsibleModule, to_bytes
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six.moves import shlex_quote
 
 
@@ -440,7 +441,7 @@ def main():
                 msg="to use rsync connection with passwords, you must install the sshpass program"
             )
         _sshpass_pipe = os.pipe()
-        cmd = ['sshpass', '-d' + _sshpass_pipe[0]] + cmd
+        cmd = ['sshpass', '-d' + to_native(_sshpass_pipe[0], errors='surrogate_or_strict')] + cmd
     if compress:
         cmd.append('--compress')
     if rsync_timeout:
