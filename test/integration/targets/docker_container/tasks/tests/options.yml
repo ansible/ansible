@@ -2609,24 +2609,21 @@
 - name: paused
   docker_container:
     image: alpine:3.8
-    command: "/bin/sh -c 'sleep 1s ; yes'"
+    command: "/bin/sh -c 'sleep 10m'"
     name: "{{ cname }}"
     state: started
     paused: yes
     stop_timeout: 1
   register: paused_1
 
-- pause:
-    seconds: 2
-
-- name: paused (logs)
-  command: docker logs --tail=20 "{{ cname }}"
+- name: inspect paused
+  command: "docker inspect -f {% raw %}'{{.State.Status}} {{.State.Paused}}'{% endraw %} {{ cname }}"
   register: paused_2
 
 - name: paused (idempotent)
   docker_container:
     image: alpine:3.8
-    command: "/bin/sh -c 'sleep 1s ; yes'"
+    command: "/bin/sh -c 'sleep 10m'"
     name: "{{ cname }}"
     state: started
     paused: yes
@@ -2643,17 +2640,8 @@
     stop_timeout: 1
   register: paused_4
 
-- pause:
-    seconds: 2
-
-- name: paused (stop)
-  docker_container:
-    name: "{{ cname }}"
-    state: stopped
-    stop_timeout: 1
-
-- name: paused (logs)
-  command: docker logs --tail=20 "{{ cname }}"
+- name: inspect paused
+  command: "docker inspect -f {% raw %}'{{.State.Status}} {{.State.Paused}}'{% endraw %} {{ cname }}"
   register: paused_5
 
 - name: cleanup
@@ -2665,10 +2653,10 @@
 - assert:
     that:
     - paused_1 is changed
-    - paused_2.stdout_lines | length == 0
+    - 'paused_2.stdout == "paused true"'
     - paused_3 is not changed
     - paused_4 is changed
-    - paused_5.stdout_lines | length > 0
+    - 'paused_5.stdout == "running false"'
 
 ####################################################################
 ## pid_mode ########################################################

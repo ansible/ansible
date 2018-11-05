@@ -2248,6 +2248,7 @@ class ContainerManager(DockerBaseClass):
                         self.fail("Error %s container %s: %s" % (
                             "pausing" if self.parameters.paused else "unpausing", container.Id, str(exc)
                         ))
+                    container = self._get_container(container.Id)
                 self.results['changed'] = True
                 self.results['actions'].append(dict(set_paused=self.parameters.paused))
 
