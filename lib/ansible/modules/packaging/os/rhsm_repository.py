@@ -115,10 +115,10 @@ def get_repository_list(module, list_parameter):
         '+----------------------------------------------------------+',
         '    Available Repositories in /etc/yum.repos.d/redhat.repo'
     ]
-    repo_id_re_str = r'Repo ID:   (.*)'
-    repo_name_re_str = r'Repo Name: (.*)'
-    repo_url_re_str = r'Repo URL:  (.*)'
-    repo_enabled_re_str = r'Enabled:   (.*)'
+    repo_id_re = re.compile(r'Repo ID:\s+(.*)')
+    repo_name_re = re.compile(r'Repo Name:\s+(.*)')
+    repo_url_re = re.compile(r'Repo URL:\s+(.*)')
+    repo_enabled_re = re.compile(r'Enabled:\s+(.*)')
 
     repo_id = ''
     repo_name = ''
@@ -131,32 +131,34 @@ def get_repository_list(module, list_parameter):
         if line in skip_lines:
             continue
 
-        repo_id_re = re.match(repo_id_re_str, line)
-        if repo_id_re:
-            repo_id = repo_id_re.group(1)
+        repo_id_match = repo_id_re.match(line)
+        if repo_id_match:
+            repo_id = repo_id_match.group(1)
             continue
 
-        repo_name_re = re.match(repo_name_re_str, line)
-        if repo_name_re:
-            repo_name = repo_name_re.group(1)
+        repo_name_match = repo_name_re.match(line)
+        if repo_name_match:
+            repo_name = repo_name_match.group(1)
             continue
 
-        repo_url_re = re.match(repo_url_re_str, line)
-        if repo_url_re:
-            repo_url = repo_url_re.group(1)
+        repo_url_match = repo_url_re.match(line)
+        if repo_url_match:
+            repo_url = repo_url_match.group(1)
             continue
 
-        repo_enabled_re = re.match(repo_enabled_re_str, line)
-        if repo_enabled_re:
-            repo_enabled = repo_enabled_re.group(1)
+        repo_enabled_match = repo_enabled_re.match(line)
+        if repo_enabled_match:
+            repo_enabled = repo_enabled_match.group(1)
 
-        repo = {
-            "id": repo_id,
-            "name": repo_name,
-            "url": repo_url,
-            "enabled": True if repo_enabled == '1' else False
-        }
+            repo = {
+                "id": repo_id,
+                "name": repo_name,
+                "url": repo_url,
+                "enabled": True if repo_enabled == '1' else False
+            }
+
         repo_result.append(repo)
+
     return repo_result
 
 
