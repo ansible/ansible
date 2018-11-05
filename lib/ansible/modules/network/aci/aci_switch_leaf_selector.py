@@ -260,6 +260,30 @@ def main():
     policy_group = module.params['policy_group']
     state = module.params['state']
 
+    # Build child_configs dynamically
+    child_configs = [
+        dict(
+            infraNodeBlk=dict(
+                attributes=dict(
+                    descr=leaf_node_blk_description,
+                    name=leaf_node_blk,
+                    from_=from_,
+                    to_=to_,
+                ),
+            ),
+        ),
+    ]
+
+    # Add infraRsAccNodePGrp only when policy_group was defined
+    if policy_group is not None:
+        child_configs.append(dict(
+            infraRsAccNodePGrp=dict(
+                attributes=dict(
+                    tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
+                ),
+            ),
+        ))
+
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
@@ -289,25 +313,7 @@ def main():
                 descr=description,
                 name=leaf,
             ),
-            child_configs=[
-                dict(
-                    infraNodeBlk=dict(
-                        attributes=dict(
-                            descr=leaf_node_blk_description,
-                            name=leaf_node_blk,
-                            from_=from_,
-                            to_=to_,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsAccNodePGrp=dict(
-                        attributes=dict(
-                            tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
-                        ),
-                    ),
-                ),
-            ],
+            child_configs=child_configs,
         )
 
         aci.get_diff(aci_class='infraLeafS')
