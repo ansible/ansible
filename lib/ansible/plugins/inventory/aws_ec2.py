@@ -320,13 +320,25 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         credentials = self._get_credentials()
 
+        try:
+            session = boto3.session.Session(profile_name=self.boto_profile)
+        except (botocore.exceptions.ProfileNotFound) as e:
+            raise AnsibleError("Profile not found: %s" % to_native(e))
+        
+        if regions == []:
+            region_name = session.region_name
+            if region_name is not None:
+                regions.append(region_name)
+            else:
+                regions = session.get_available_regions('ec2')
+        
         for region in regions:
             try:
-                connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
+                connection = session.client('ec2', region, **credentials)
             except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
                 if self.boto_profile:
                     try:
-                        connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
+                        connection = session.client('ec2', region)
                     except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
                         raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
                 else:
