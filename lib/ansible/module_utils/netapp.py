@@ -132,20 +132,13 @@ def setup_na_ontap_zapi(module, vserver=None):
     https = module.params['https']
     validate_certs = module.params['validate_certs']
     port = module.params['http_port']
-    version = module.params['ontapi']
 
     if HAS_NETAPP_LIB:
         # set up zapi
         server = zapi.NaServer(hostname)
         server.set_username(username)
         server.set_password(password)
-        if vserver:
-            server.set_vserver(vserver)
-        if version:
-            minor = version
-        else:
-            minor = 110
-        server.set_api_version(major=1, minor=minor)
+        server.set_api_version(major=1, minor=110)
         # default is HTTP
         if https:
             if port is None:
