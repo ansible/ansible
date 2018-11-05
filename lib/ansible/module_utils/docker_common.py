@@ -188,6 +188,8 @@ class AnsibleDockerClient(Client):
 
         NEEDS_DOCKER_PY2 = (LooseVersion(min_docker_version) >= LooseVersion('2.0.0'))
 
+        self.docker_py_version = LooseVersion(docker_version)
+
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
                       "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
@@ -201,7 +203,7 @@ class AnsibleDockerClient(Client):
                 msg = "Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)"
             self.fail(msg % HAS_DOCKER_ERROR)
 
-        if LooseVersion(docker_version) < LooseVersion(min_docker_version):
+        if self.docker_py_version < LooseVersion(min_docker_version):
             if NEEDS_DOCKER_PY2:
                 if docker_version < LooseVersion('2.0'):
                     msg = "Error: docker-py version is %s, while this module requires docker %s. Try `pip uninstall docker-py` and then `pip install docker`"
@@ -226,9 +228,10 @@ class AnsibleDockerClient(Client):
             self.fail("Error connecting: %s" % exc)
 
         if min_docker_api_version is not None:
-            docker_api_version = self.version()['ApiVersion']
-            if LooseVersion(docker_api_version) < LooseVersion(min_docker_api_version):
-                self.fail('docker API version is %s. Minimum version required is %s.' % (docker_api_version, min_docker_api_version))
+            self.docker_api_version_str = self.version()['ApiVersion']
+            self.docker_api_version = LooseVersion(self.docker_api_version_str)
+            if self.docker_api_version < LooseVersion(min_docker_api_version):
+                self.fail('docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
     def log(self, msg, pretty_print=False):
         pass

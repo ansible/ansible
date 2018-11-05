@@ -1,7 +1,3 @@
-- name: Check Docker API version
-  command: "{{ ansible_python.executable }} -c 'import docker; print(docker.from_env().version()[\"ApiVersion\"])'"
-  register: docker_api_version
-  ignore_errors: yes
-
+---
 - include_tasks: test_docker_config.yml
-  when: docker_api_version.rc == 0 and docker_api_version.stdout is version('1.30', '>=')
+  when: docker_api_version is version('1.30', '>=')
