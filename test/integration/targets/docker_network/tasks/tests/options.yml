@@ -1,0 +1,60 @@
+---
+- name: Registering network name
+  set_fact:
+    nname_1: "{{ name_prefix ~ '-network-1' }}"
+- name: Registering network name
+  set_fact:
+    dnetworks: "{{ dnetworks }} + [nname_1]"
+
+####################################################################
+## driver_options ##################################################
+####################################################################
+
+- name: driver_options
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: 'false'
+  register: driver_options_1
+
+- name: driver_options (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: 'false'
+  register: driver_options_2
+
+- name: driver_options (idempotency with string translation)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: False
+  register: driver_options_3
+
+- name: driver_options (change)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: 'true'
+  register: driver_options_4
+
+- name: driver_options (idempotency with string translation)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: True
+  register: driver_options_5
+
+- name: cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+    force: yes
+
+- assert:
+    that:
+    - driver_options_1 is changed
+    - driver_options_2 is not changed
+    - driver_options_3 is not changed
+    - driver_options_4 is changed
+    - driver_options_5 is not changed
