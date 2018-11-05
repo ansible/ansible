@@ -21,5 +21,5 @@ ansible-playbook -v playbooks/merge_type_fail.yml "$@"
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/openshift-recent"
 source "${MYTMPDIR}/openshift-recent/bin/activate"
-$PYTHON -m pip install 'openshift>=0.7.0'
+$PYTHON -m pip install 'openshift==0.7.2'
 ansible-playbook -v playbooks/full_test.yml "$@"
