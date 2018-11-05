@@ -101,6 +101,24 @@
     - name: there should be a warning complains about the character set of password
       assert:
         that: "'warnings' in test_user_encrypt2"
+
+    - name: change password to '!'
+      user:
+        name: ansibulluser
+        password: '!'
+      register: test_user_encrypt3
+
+    - name: change password to '*'
+      user:
+        name: ansibulluser
+        password: '*'
+      register: test_user_encrypt4
+
+    - name: there should be no warnings when setting the password to '!' and '*'
+      assert:
+        that:
+          - "'warnings' not in test_user_encrypt3"
+          - "'warnings' not in test_user_encrypt4"
   when: ansible_system != 'Darwin'
 
 
@@ -314,6 +332,8 @@
   timezone:
     name: America/Denver
   register: original_timezone
+  tags:
+    - timezone
 
 - name: Change system timezone to make sure expiration comparison works properly
   block:
@@ -333,6 +353,8 @@
     - name: Restore original timezone - {{ original_timezone.diff.before.name }}
       timezone:
         name: "{{ original_timezone.diff.before.name }}"
+      tags:
+        - timezone
 
 
 - name: Unexpire user
