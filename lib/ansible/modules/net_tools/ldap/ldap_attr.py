@@ -173,7 +173,7 @@ class LdapAttr(LdapGeneric):
 
         # Normalize values
         if isinstance(self.module.params['values'], list):
-            self.values = map(to_bytes, self.module.params['values'])
+            self.values = list(map(to_bytes, self.module.params['values']))
         else:
             self.values = [to_bytes(self.module.params['values'])]
 
