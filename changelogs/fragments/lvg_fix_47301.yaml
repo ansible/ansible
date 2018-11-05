@@ -1,0 +1,2 @@
+bugfixes:
+- lvg - fixed an idempotency regression in the lvg module (https://github.com/ansible/ansible/issues/47301)
