@@ -256,7 +256,7 @@ def grafana_create_dashboard(module, data):
             result['changed'] = False
         else:
             # update
-            if 'overwrite' in data and data['overwrite'] == 'yes':
+            if 'overwrite' in data and data['overwrite']:
                 payload['overwrite'] = True
             if 'message' in data and data['message']:
                 payload['message'] = data['message']
