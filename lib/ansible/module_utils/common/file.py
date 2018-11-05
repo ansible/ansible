@@ -151,21 +151,22 @@ class FileLock:
         :returns: True
         '''
         lock_path = os.path.join(tmpdir, 'ansible-{0}.lock'.format(os.path.basename(path)))
+        lock_path_b = to_bytes(lock_path, errors='surrogate_or_strict')
         l_wait = 0.1
         r_exception = IOError
         if sys.version_info[0] == 3:
             r_exception = BlockingIOError
 
-        self.lockfd = open(lock_path, 'w')
+        self.lockfd = open(lock_path_b, 'w')
 
         if lock_timeout is None or lock_timeout < 0:
             fcntl.flock(self.lockfd, fcntl.LOCK_EX)
-            os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
+            os.chmod(lock_path_b, stat.S_IWRITE | stat.S_IREAD)
             return True
 
         if lock_timeout == 0:
             fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
+            os.chmod(lock_path_b, stat.S_IWRITE | stat.S_IREAD)
             return True
 
         if lock_timeout > 0:
@@ -173,7 +174,7 @@ class FileLock:
             while e_secs < lock_timeout:
                 try:
                     fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
+                    os.chmod(lock_path_b, stat.S_IWRITE | stat.S_IREAD)
                     return True
                 except r_exception:
                     time.sleep(l_wait)

@@ -483,7 +483,7 @@ def main():
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
             firstmatch=dict(default=False, type='bool'),
-            validate=dict(type='str')
+            validate=dict(type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
