@@ -264,7 +264,7 @@ Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on t
 Latest Releases via sbopkg (Slackware Linux)
 ++++++++++++++++++++++++++++++++++++++++++++
 
-Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/repository/14.2/system/ansible/>`_ repository.
+Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository.
 Can be built and installed using `sbopkg <https://sbopkg.org/>`_.
 
 Create queue with Ansible and all dependencies::
