@@ -131,7 +131,7 @@ options:
   serial_logoff:
     description:
       - This is the logout character to assign to the port
-      - If preceded by a ^ character, the sequence will be a control character. Used if seq is set to 0 or 1
+      - If preceded by a ^ character, the sequence will be a control character. Used if serial_seq is set to 0 or 1
     required: false
 """
 
@@ -156,18 +156,18 @@ EXAMPLES = """
     cpm_password: "super"
     use_https: true
     validate_certs: false
-    serial_port: 2
+    serial_port: "2"
     serial_portname: "RouterLabel"
-    serial_baud: 7
-    serial_handshake: 1
-    serial_stopbits: 0
-    serial_parity: 0
-    serial_mode: 0
-    serial_cmd: 0
-    serial_seq: 1
-    serial_tout: 1
-    serial_echo: 0
-    serial_break: 0
+    serial_baud: "7"
+    serial_handshake: "1"
+    serial_stopbits: "0"
+    serial_parity: "0"
+    serial_mode: "0"
+    serial_cmd: "0"
+    serial_seq: "1"
+    serial_tout: "1"
+    serial_echo: "0"
+    serial_break: "0"
     serial_logoff: "^H"
 """
 
