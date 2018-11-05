@@ -1781,8 +1781,8 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
-    #ipc_mode: "container:{{ cname_h1 }}"
-    ipc_mode: shareable
+    ipc_mode: "container:{{ cname_h1 }}"
+    # ipc_mode: shareable
   register: ipc_mode_1
 
 - name: ipc_mode (idempotency)
@@ -1791,9 +1791,8 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
-    # THIS IS CURRENTLY NOT IDEMPOTENT! SEE https://github.com/ansible/ansible/issues/45829
-    # ipc_mode: "container:{{ cname_h1 }}"
-    ipc_mode: shareable
+    ipc_mode: "container:{{ cname_h1 }}"
+    # ipc_mode: shareable
   register: ipc_mode_2
 
 - name: ipc_mode (change)
@@ -2694,7 +2693,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
-    pid_mode: "container:{{ pid_mode_helper.ansible_facts.docker_container.Id }}"
+    pid_mode: "container:{{ cname_h1 }}"
   register: pid_mode_2
   ignore_errors: yes
   # docker-py < 2.0 does not support "arbitrary" pid_mode values
