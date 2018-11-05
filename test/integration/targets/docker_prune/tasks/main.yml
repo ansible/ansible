@@ -34,7 +34,7 @@
   - debug: var=result
   - assert:
       that:
-      # containres
+      # containers
       - container.ansible_facts.docker_container.Id in result.containers
       - "'containers_space_reclaimed' in result"
       # images
