@@ -327,6 +327,7 @@ class RecordManager(object):
         else:
             return 0
 
+
 def main():
     tsig_algs = ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224',
                  'hmac-sha256', 'hmac-sha384', 'hmac-sha512']
