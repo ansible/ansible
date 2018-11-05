@@ -1,0 +1,2 @@
+bugfixes:
+- Fix trailing command in net_neighbors nxos_facts (https://github.com/ansible/ansible/pull/47548).
