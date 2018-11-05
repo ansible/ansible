@@ -28,7 +28,7 @@
     - cmdout is not changed
     - cmdout.cmd == 'bogus_command1234'
     - cmdout.rc == 2
-    - "'Could not locate the following executable bogus_command1234' in cmdout.msg"
+    - "\"Could not find file 'bogus_command1234.exe'.\" in cmdout.msg"
 
 - name: execute something with error output
   win_command: cmd /c "echo some output & echo some error 1>&2"

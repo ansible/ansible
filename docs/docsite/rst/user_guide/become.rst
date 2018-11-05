@@ -523,6 +523,38 @@ Because local service accounts do not have passwords, the
 ``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
+Become without setting a Password
+---------------------------------
+
+As of Ansible 2.8, ``become`` can be used to become a local or domain account
+without requiring a password for that account. For this method to work, the
+following requirements must be met:
+
+* The connection user has the ``SeDebugPrivilege`` privilege assigned
+* The connection user is part of the ``BUILTIN\Administrators`` group
+* The ``become_user`` has either the ``SeBatchLogonRight`` or ``SeNetworkLogonRight`` user right
+
+Using become without a password is achieved in one of two different methods:
+
+* Duplicating an existing logon session's token if the account is already logged on
+* Using S4U to generate a logon token that is valid on the remote host only
+
+In the first scenario, the become process is spawned from another logon of that
+user account. This could be an existing RDP logon, console logon, but this is
+not guaranteed to occur all the time. This is similar to the
+``Run only when user is logged on`` option for a Scheduled Task.
+
+In the case where another logon of the become account does not exist, S4U is
+used to create a new logon and run the module through that. This is similar to
+the ``Run whether user is logged on or not`` with the ``Do not store password``
+option for a Scheduled Task. In this scenario, the become process will not be
+able to access any network resources like a normal WinRM process.
+
+.. Note:: Because there are no guarantees an existing token will exist for a
+  user when Ansible runs, there's a high change the become process will only
+  have access to local resources. Use become with a password if the task needs
+  to access network resources if this is needed.
+
 Accounts without a Password
 ---------------------------
 
