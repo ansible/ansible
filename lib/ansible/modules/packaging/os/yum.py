@@ -1279,7 +1279,7 @@ class YumModule(YumDnf):
         if cmd:     # update all
             rc, out, err = self.module.run_command(cmd)
             res['changed'] = True
-        elif self.update_only:
+        elif self.update_only and pkgs['update']:
             cmd = self.yum_basecmd + ['update'] + pkgs['update']
             lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
