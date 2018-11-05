@@ -1,0 +1,5 @@
+bugfixes:
+- Fix trailing command in net_neighbors nxos_facts (https://github.com/ansible/ansible/pull/47548).
+- Add force disruptive option nxos_instal_os module (https://github.com/ansible/ansible/pull/47694).
+- nxos_evpn_vni check_mode (https://github.com/ansible/ansible/pull/46612).
+- nxos_file_copy fix for binary files (https://github.com/ansible/ansible/pull/46822).
