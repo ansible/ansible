@@ -246,7 +246,7 @@ pause_test.expect('user requested abort!')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
 
-# -- Enter input and ensure it's caputered, echoed, and can be edited -- #
+# -- Enter input and ensure it's captured, echoed, and can be edited -- #
 
 playbook = 'pause-5.yml'
 
@@ -259,12 +259,15 @@ pause_test = pexpect.spawn(
 
 pause_test.logfile = log_buffer
 pause_test.expect(r'Enter some text:')
-pause_test.sendline('hello there')
+pause_test.send('hello there')
+pause_test.send('\r')
 pause_test.expect(r'Enter some text to edit:')
 pause_test.send('hello there')
 pause_test.send(backspace * 4)
-pause_test.send('ommy boy\r')
+pause_test.send('ommy boy')
+pause_test.send('\r')
 pause_test.expect(r'Enter some text \(output is hidden\):')
-pause_test.sendline('supersecretpancakes')
+pause_test.send('supersecretpancakes')
+pause_test.send('\r')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
