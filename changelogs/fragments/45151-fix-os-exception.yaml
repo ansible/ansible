@@ -1,0 +1,2 @@
+bugfixes:
+- replace renamed exceptions in multiple openstack modules
