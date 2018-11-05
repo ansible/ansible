@@ -408,7 +408,6 @@ def do_with_password(module, cmd, password):
 
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
-<<<<<<< HEAD
     argument_spec.update(
         db=dict(type='str', required=True, aliases=['name']),
         owner=dict(type='str', default=''),
@@ -421,23 +420,8 @@ def main():
         target_opts=dict(type='str', default=''),
         maintenance_db=dict(type='str', default="postgres"),
         session_role=dict(type='str'),
-        conn_limit=dict(type='str', default="-1")
+        conn_limit=dict(type='str', default='')
     )
-=======
-    argument_spec.update(dict(
-        db=dict(required=True, aliases=['name']),
-        owner=dict(default=""),
-        template=dict(default=""),
-        encoding=dict(default=""),
-        lc_collate=dict(default=""),
-        lc_ctype=dict(default=""),
-        state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
-        target=dict(default="", type="path"),
-        target_opts=dict(default=""),
-        maintenance_db=dict(default="postgres"),
-        conn_limit=dict(default=""),
-    ))
->>>>>>> From review done by amenonsen and bcoca - Set default at None, make the change detection less confusing
 
     module = AnsibleModule(
         argument_spec=argument_spec,
