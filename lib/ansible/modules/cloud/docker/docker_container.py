@@ -330,7 +330,8 @@ options:
     default: 'no'
   pid_mode:
     description:
-      - Set the PID namespace mode for the container. Currently only supports 'host'.
+      - Set the PID namespace mode for the container.
+      - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
   privileged:
     description:
       - Give extended privileges to the container.
@@ -1003,6 +1004,8 @@ class TaskParameters(DockerBaseClass):
         self.healthcheck, self.disable_healthcheck = self._parse_healthcheck()
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
+        self.pid_mode = self._replace_container_names(self.pid_mode)
+        self.ipc_mode = self._replace_container_names(self.ipc_mode)
 
         self.log("volumes:")
         self.log(self.volumes, pretty_print=True)
@@ -1554,6 +1557,24 @@ class TaskParameters(DockerBaseClass):
                 self.fail("Invalid device iops value: '{0}'. Must be a positive integer.".format(device_dict.get('Rate')))
 
         setattr(self, option, devices_list)
+
+    def _replace_container_names(self, mode):
+        """
+        Parse IPC and PID modes. If they contain a container name, replace
+        with the container's ID.
+        """
+        if mode is None or not mode.startswith('container:'):
+            return mode
+        container_name = mode[len('container:'):]
+        # Try to inspect container to see whether this is an ID or a
+        # name (and in the latter case, retrieve it's ID)
+        container = self.client.get_container(container_name)
+        if container is None:
+            # If we can't find the container, issue a warning and continue with
+            # what the user specified.
+            self.client.module.warn('Cannot find a container with name or ID "{0}"'.format(container_name))
+            return mode
+        return 'container:{0}'.format(container['Id'])
 
 
 class Container(DockerBaseClass):
