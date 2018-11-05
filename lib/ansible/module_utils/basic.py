@@ -167,6 +167,7 @@ from ansible.module_utils.common.file import (
 from ansible.module_utils.common.sys_info import (
     get_platform,
     get_distribution,
+    get_distribution_version,
     load_platform_subclass,
     _get_all_subclasses as get_all_subclasses
 )
