@@ -248,7 +248,7 @@ class Ec2Inventory(object):
 
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
-        raise TypeError ("Type %s not serializable" % type(obj))
+        raise TypeError("Type %s not serializable" % type(obj))
 
     def __init__(self):
         ''' Main execution path '''
