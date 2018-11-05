@@ -3,8 +3,13 @@
 
 ''' unit tests for module_utils netapp.py '''
 from __future__ import absolute_import, division, print_function
+import sys
+import inspect
+import os
 
 try:
+    import netapp_lib.api.zapi
+    sys.path.insert(0, os.path.dirname(inspect.getfile(netapp_lib.api.zapi)))
     from netapp_lib.api.zapi import zapi
     HAS_NETAPP_ZAPI = True
 except ImportError:
