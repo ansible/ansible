@@ -90,7 +90,7 @@
     - intf_policy_leaf_polgrp_check_mode_present is changed
     - intf_policy_leaf_polgrp_present is changed
     - intf_policy_leaf_polgrp_present.previous == []
-    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "link","name": "policygroupname_link"},"children": [{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}},{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "link","name": "policygroupname_link"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent is not changed
     - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update is changed
@@ -209,7 +209,7 @@
     - intf_policy_leaf_polgrp_check_mode_present is changed
     - intf_policy_leaf_polgrp_present is changed
     - intf_policy_leaf_polgrp_present.previous == []
-    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "node","name": "policygroupname_node"},"children": [{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}},{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "node","name": "policygroupname_node"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent is not changed
     - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update is changed
@@ -363,7 +363,7 @@
     - intf_policy_leaf_polgrp_check_mode_present is changed
     - intf_policy_leaf_polgrp_present is changed
     - intf_policy_leaf_polgrp_present.previous == []
-    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccPortGrp": {"attributes": {"name": "policygroupname_leaf"},"children": [{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}},{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccPortGrp": {"attributes": {"name": "policygroupname_leaf"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent is not changed
     - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update is changed
