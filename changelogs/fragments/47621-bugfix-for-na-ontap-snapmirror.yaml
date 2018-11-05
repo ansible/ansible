@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fixes issues with source and destination location for na_ontap_snapmirror
