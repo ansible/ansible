@@ -283,8 +283,6 @@ lib/ansible/modules/cloud/openstack/os_server.py E324
 lib/ansible/modules/cloud/openstack/os_server_action.py E324
 lib/ansible/modules/cloud/openstack/os_stack.py E324
 lib/ansible/modules/cloud/openstack/os_subnet.py E326
-lib/ansible/modules/cloud/openstack/os_subnets_facts.py E322
-lib/ansible/modules/cloud/openstack/os_subnets_facts.py E323
 lib/ansible/modules/cloud/openstack/os_volume.py E322
 lib/ansible/modules/cloud/openstack/os_zone.py E326
 lib/ansible/modules/cloud/ovirt/ovirt_affinity_label.py E317

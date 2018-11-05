@@ -24,10 +24,12 @@ requirements:
     - "python >= 2.7"
     - "openstacksdk"
 options:
-   subnet:
+   name:
      description:
-        - Name or ID of the subnet
+        - Name or ID of the subnet.
+        - Alias 'subnet' added in version 2.8.
      required: false
+     aliases: ['subnet']
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
@@ -131,13 +133,13 @@ openstack_subnets:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_cloud_from_module
 
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        name=dict(required=False, default=None),
+        name=dict(required=False, default=None, aliases=['subnet']),
         filters=dict(required=False, type='dict', default=None)
     )
     module = AnsibleModule(argument_spec)
