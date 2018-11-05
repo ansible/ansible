@@ -1,0 +1,2 @@
+bugfixes:
+- Add force disruptive option nxos_instal_os module (https://github.com/ansible/ansible/pull/47694).
