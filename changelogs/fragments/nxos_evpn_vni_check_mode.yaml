@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_evpn_vni check_mode (https://github.com/ansible/ansible/pull/46612).
