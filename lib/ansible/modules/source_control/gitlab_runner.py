@@ -15,12 +15,12 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: gitlab_runner
-short_description: Create, modify and delete Gitlab Runners.
+short_description: Create, modify and delete GitLab Runners.
 description:
-  - Register, update and delete runners with the Gitlab API.
-  - All operations are performed using the Gitlab API v4.
+  - Register, update and delete runners with the GitLab API.
+  - All operations are performed using the GitLab API v4.
   - For details, consult the full API documentation at U(https://docs.gitlab.com/ee/api/runners.html).
-  - A valid private API token is required for all operations. You can create as many tokens as you like using the Gitlab webinterface at
+  - A valid private API token is required for all operations. You can create as many tokens as you like using the GitLab webinterface at
     U(https://$GITLAB_URL/profile/personal_access_tokens).
   - A valid registration token is required for registering a new runner.
     To create shared runners, you need to ask your administrator to give you this token.
@@ -34,7 +34,7 @@ author: "Samy Coenen (SamyCoenen)"
 options:
     private_token:
         description:
-            - Your private token to interact with the Gitlab API.
+            - Your private token to interact with the GitLab API.
         required: True
         type: str
     name:
@@ -44,7 +44,7 @@ options:
         type: str
     api_timeout:
         description:
-            - The maximum time that a request will be attempted to the Gitlab API.
+            - The maximum time that a request will be attempted to the GitLab API.
         required: False
         default: 30
         type: int
@@ -62,7 +62,7 @@ options:
         type: str
     url:
         description:
-            - The Gitlab URL including the API v4 path and http or https.
+            - The GitLab URL including the API v4 path and http or https.
         required: False
         default: "https://gitlab.com/api/v4/"
         type: str
@@ -200,7 +200,7 @@ class AnsibleGitlabAPI(AnsibleModule):
         elif info['status'] in (403, 404):
             return None
         else:
-            self._module.fail_json(msg='Failure while calling the Gitlab API for '
+            self._module.fail_json(msg='Failure while calling the GitLab API for '
                                        '"%s".' % api_call, fetch_url_info=info)
 
     def _get(self, api_call):
