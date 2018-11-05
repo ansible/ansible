@@ -20,7 +20,7 @@ description:
   - Register, update and delete runners with the GitLab API.
   - All operations are performed using the GitLab API v4.
   - For details, consult the full API documentation at U(https://docs.gitlab.com/ee/api/runners.html).
-  - A valid private API token is required for all operations. You can create as many tokens as you like using the GitLab webinterface at
+  - A valid private API token is required for all operations. You can create as many tokens as you like using the GitLab web interface at
     U(https://$GITLAB_URL/profile/personal_access_tokens).
   - A valid registration token is required for registering a new runner.
     To create shared runners, you need to ask your administrator to give you this token.
