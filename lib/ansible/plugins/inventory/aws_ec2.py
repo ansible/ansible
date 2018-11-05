@@ -324,14 +324,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             session = boto3.session.Session(profile_name=self.boto_profile)
         except (botocore.exceptions.ProfileNotFound) as e:
             raise AnsibleError("Profile not found: %s" % to_native(e))
-        
+
         if regions == []:
             region_name = session.region_name
             if region_name is not None:
                 regions.append(region_name)
             else:
                 regions = session.get_available_regions('ec2')
-        
+
         for region in regions:
             try:
                 connection = session.client('ec2', region, **credentials)
