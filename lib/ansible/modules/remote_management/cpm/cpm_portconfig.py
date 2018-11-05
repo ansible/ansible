@@ -69,66 +69,66 @@ options:
     required: false
     type: bool
     default: false
-  port:
+  serial_port:
     description:
       - This is the port number that is getting the action performed on.
     required: true
-  portname:
+  serial_portname:
     description:
       - This is the Name of the Port that is displayed.
     required: false
-  baud:
+  serial_baud:
     description:
       - This is the baud rate to assign to the port.
       - 0=300, 1=1200, 2=2400, 3=4800, 4=9600, 5=19200, 6=38400, 7=57600, 8=115200, 9=230400, 10=460800
     required: false
     choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
-  handshake:
+  serial_handshake:
     description:
       - This is the handshake to assign to the port, 0=None, 1=XON/XOFF, 2=RTS/CTS, 3=Both.
     required: false
     choices: [ 0, 1, 2, 3 ]
-  stopbits:
+  serial_stopbits:
     description:
       - This is the stop bits to assign to the port, 0=1 Stop Bit, 1=1 Stop Bit.
     required: false
     choices: [ 0, 1 ]
-  parity:
+  serial_parity:
     description:
       - This is the parity to assign to the port, 0=7-None, 1=7-Even, 2=7-Odd, 3=8-None, 4=8-Even, 5=8-Odd.
     required: false
     choices: [ 0, 1, 2, 3, 4, 5 ]
-  mode:
+  serial_mode:
     description:
       - This is the port mode to assign to the port, 0=Any-to-Any. 1=Passive, 2=Buffer, 3=Modem, 4=ModemPPP.
     required: false
     choices: [ 0, 1, 2, 3, 4 ]
-  cmd:
+  serial_cmd:
     description:
       - This is the Admin Mode to assign to the port, 0=Deny, 1=Permit.
     required: false
     choices: [ 0, 1 ]
-  seq:
+  serial_seq:
     description:
       - This is the type of Sequence Disconnect to assign to the port, 0=Three Characters (before and after), 1=One Character Only, 2=Off
     required: false
     choices: [ 1, 2, 3 ]
-  tout:
+  serial_tout:
     description:
       - This is the Port Activity Timeout to assign to the port, 0=Off, 1=5 Min, 2=15 Min, 3=30 Min, 4=90 Min, 5=1 Min.
     required: false
     choices: [ 0, 1, 2, 3, 4, 5 ]
-  echo:
+  serial_echo:
     description:
       -This is the command echo parameter to assign to the port, 0=Off, 1=On
     required: false
     choices: [ 0, 1 ]
-  break:
+  serial_break:
     description:
       - This is the how to handle a break character for the port, . 0=No, 1=Yes
     required: false
     choices: [ 0, 1 ]
-  logoff:
+  serial_logoff:
     description:
       - This is the logout character to assign to the port
       - If preceded by a ^ character, the sequence will be a control character. Used if seq is set to 0 or 1
@@ -145,7 +145,7 @@ EXAMPLES = """
     cpm_password: "super"
     use_https: true
     validate_certs: true
-    port: "2"
+    serial_port: "2"
 
 # Get Port Parameters
 - name: Set the Port Parameters for port 2 of a WTI device
@@ -156,19 +156,19 @@ EXAMPLES = """
     cpm_password: "super"
     use_https: true
     validate_certs: false
-    port: 2,
-    portname: "RouterLabel",
-    baud: 7,
-    handshake: 1,
-    stopbits: 0,
-    parity: 0,
-    mode: 0,
-    cmd: 0,
-    seq: 1,
-    tout: 1,
-    echo: 0,
-    break: 0,
-    logoff: "^H"
+    serial_port: 2,
+    serial_portname: "RouterLabel",
+    serial_baud: 7,
+    serial_handshake: 1,
+    serial_stopbits: 0,
+    serial_parity: 0,
+    serial_mode: 0,
+    serial_cmd: 0,
+    serial_seq: 1,
+    serial_tout: 1,
+    serial_echo: 0,
+    serial_break: 0,
+    serial_logoff: "^H"
 """
 
 RETURN = """
@@ -185,7 +185,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
-from ansible.errors import AnsibleError
 
 
 def assemble_json(cpmmodule):
@@ -280,13 +279,17 @@ def run_module():
             result['changed'] = True
 
     except HTTPError as e:
-        raise AnsibleError("Received HTTP error for %s : %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Received HTTP error for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except URLError as e:
-        raise AnsibleError("Failed lookup url for %s : %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Failed lookup url for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except SSLValidationError as e:
-        raise AnsibleError("Error validating the server's certificate for %s: %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except ConnectionError as e:
-        raise AnsibleError("Error connecting to %s: %s" % (fullurl, to_native(e)))
+        fail_json = dict(msg='Error connecting to  for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
 
     result['data'] = json.loads(response.read())
 
