@@ -118,7 +118,7 @@ EXAMPLES = r'''
     access_port_selector: accessportselectorname
     leaf_port_blk: leafportblkname
     from_port: 13
-    toi_port: 16
+    to_port: 16
     policy_group: policygroupname
     state: present
   delegate_to: localhost
@@ -266,6 +266,13 @@ url:
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+INTERFACE_TYPE_MAPPING = dict(
+    fex='uni/infra/funcprof/accportgrp-{0}',
+    port_channel='uni/infra/funcprof/accbundle-{0}',
+    switch_port='uni/infra/funcprof/accportgrp-{0}',
+    vpc='uni/infra/funcprof/accbundle-{0}',
+)
+
 
 def main():
     argument_spec = aci_argument_spec()
@@ -306,6 +313,30 @@ def main():
     interface_type = module.params['interface_type']
     state = module.params['state']
 
+    # Build child_configs dyanmically
+    child_configs = [dict(
+        infraPortBlk=dict(
+            attributes=dict(
+                descr=leaf_port_blk_description,
+                name=leaf_port_blk,
+                fromPort=from_port,
+                toPort=to_port,
+                fromCard=from_card,
+                toCard=to_card,
+            ),
+        ),
+    )]
+
+    # Add infraRsAccBaseGrp only when policy_group was defined
+    if policy_group is not None:
+        child_configs.append(dict(
+            infraRsAccBaseGrp=dict(
+                attributes=dict(
+                    tDn=INTERFACE_TYPE_MAPPING[interface_type].format(policy_group),
+                ),
+            ),
+        ))
+
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
@@ -324,13 +355,6 @@ def main():
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp'],
     )
 
-    INTERFACE_TYPE_MAPPING = dict(
-        fex='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
-        port_channel='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
-        switch_port='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
-        vpc='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
-    )
-
     aci.get_existing()
 
     if state == 'present':
@@ -341,27 +365,7 @@ def main():
                 name=access_port_selector,
                 #  type='range',
             ),
-            child_configs=[
-                dict(
-                    infraPortBlk=dict(
-                        attributes=dict(
-                            descr=leaf_port_blk_description,
-                            name=leaf_port_blk,
-                            fromPort=from_port,
-                            toPort=to_port,
-                            fromCard=from_card,
-                            toCard=to_card,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsAccBaseGrp=dict(
-                        attributes=dict(
-                            tDn=INTERFACE_TYPE_MAPPING[interface_type],
-                        ),
-                    ),
-                ),
-            ],
+            child_configs=child_configs,
         )
 
         aci.get_diff(aci_class='infraHPortS')
