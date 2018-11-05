@@ -489,7 +489,7 @@ class VariableManager:
     def _get_delegated_vars(self, play, task, existing_variables):
         if not hasattr(task, 'loop'):
             # This "task" is not a Task, so we need to skip it
-            return {}
+            return {}, None
 
         # we unfortunately need to template the delegate_to field here,
         # as we're fetching vars before post_validate has been called on
