@@ -1,3 +1,4 @@
+---
 - name: Make sure we're not already using Docker swarm
   docker_swarm:
     state: absent
