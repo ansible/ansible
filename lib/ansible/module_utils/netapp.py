@@ -138,6 +138,9 @@ def setup_na_ontap_zapi(module, vserver=None):
         server = zapi.NaServer(hostname)
         server.set_username(username)
         server.set_password(password)
+        if vserver:
+            server.set_vserver(vserver)
+        # Todo : Replace hard-coded values with configurable parameters.
         server.set_api_version(major=1, minor=110)
         # default is HTTP
         if https:
