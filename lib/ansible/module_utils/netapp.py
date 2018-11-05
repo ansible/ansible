@@ -40,11 +40,15 @@ try:
 except ImportError:
     ansible_version = 'unknown'
 
+import inspect
 import os
+import sys
 import ssl
 
 HAS_NETAPP_LIB = False
 try:
+    import netapp_lib.api.zapi
+    sys.path.insert(0, os.path.dirname(inspect.getfile(netapp_lib.api.zapi)))
     from netapp_lib.api.zapi import zapi
     from netapp_lib.api.zapi import errors as zapi_errors
     HAS_NETAPP_LIB = True
@@ -93,7 +97,7 @@ def na_ontap_host_argument_spec():
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
         https=dict(required=False, type='bool', default=False),
         validate_certs=dict(required=False, type='bool', default=True),
-        http_port=dict(required=False, type='int')
+        http_port=dict(required=False, type='int'),
     )
 
 
@@ -128,6 +132,7 @@ def setup_na_ontap_zapi(module, vserver=None):
     https = module.params['https']
     validate_certs = module.params['validate_certs']
     port = module.params['http_port']
+    version = module.params['ontapi']
 
     if HAS_NETAPP_LIB:
         # set up zapi
@@ -136,8 +141,11 @@ def setup_na_ontap_zapi(module, vserver=None):
         server.set_password(password)
         if vserver:
             server.set_vserver(vserver)
-        # Todo : Replace hard-coded values with configurable parameters.
-        server.set_api_version(major=1, minor=110)
+        if version:
+            minor = version
+        else:
+            minor = 110
+        server.set_api_version(major=1, minor=minor)
         # default is HTTP
         if https:
             if port is None:
