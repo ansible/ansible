@@ -126,9 +126,8 @@ def get_repository_list(module, list_parameter):
     repo_enabled = ''
 
     repo_result = []
-
-    for line in out.split('\n'):
-        if line in skip_lines:
+    for line in out.splitlines():
+        if line == '' or line in skip_lines:
             continue
 
         repo_id_match = repo_id_re.match(line)
@@ -208,7 +207,7 @@ def repository_modify(module, state, name):
 
     if not module.check_mode:
         rc, out, err = run_subscription_manager(module, rhsm_arguments)
-        results = out.split('\n')
+        results = out.splitlines()
     module.exit_json(results=results, changed=changed, repositories=updated_repo_list, diff=diff)
 
 
