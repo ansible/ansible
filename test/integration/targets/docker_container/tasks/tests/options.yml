@@ -21,6 +21,7 @@
   - "{{ nname_2 }}"
   loop_control:
     loop_var: network_name
+  when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
 ## auto_remove #####################################################
@@ -34,6 +35,7 @@
     state: started
     auto_remove: yes
   register: auto_remove_1
+  ignore_errors: yes
 
 - name: Give container 1 second to be sure it terminated
   pause:
@@ -44,11 +46,18 @@
     name: "{{ cname }}"
     state: absent
   register: auto_remove_2
+  ignore_errors: yes
 
 - assert:
     that:
     - auto_remove_1 is changed
     - auto_remove_2 is not changed
+  when: docker_py_version is version('2.1.0', '>=')
+- assert:
+    that:
+    - auto_remove_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.1.0') in auto_remove_1.msg"
+  when: docker_py_version is version('2.1.0', '<')
 
 ####################################################################
 ## blkio_weight ####################################################
@@ -515,6 +524,7 @@
     auto_remove: yes
     cleanup: yes
   register: detach_auto_remove
+  ignore_errors: yes
 
 - name: cleanup (unnecessary)
   docker_container:
@@ -528,8 +538,11 @@
     - detach_no_cleanup_cleanup is changed
     - "'Hello from Docker!' in detach_cleanup.ansible_facts.docker_container.Output"
     - detach_cleanup_cleanup is not changed
+- assert:
+    that:
     - "'Cannot retrieve result as auto_remove is enabled' == detach_auto_remove.ansible_facts.docker_container.Output"
     - detach_auto_remove_cleanup is not changed
+  when: docker_py_version is version('2.1.0', '>=')
 
 ####################################################################
 ## devices #########################################################
@@ -606,6 +619,7 @@
     - "timeout:10"
     - rotate
   register: dns_opts_1
+  ignore_errors: yes
 
 - name: dns_opts (idempotency)
   docker_container:
@@ -617,6 +631,7 @@
     - rotate
     - "timeout:10"
   register: dns_opts_2
+  ignore_errors: yes
 
 - name: dns_opts (less resolv.conf options)
   docker_container:
@@ -627,6 +642,7 @@
     dns_opts:
     - "timeout:10"
   register: dns_opts_3
+  ignore_errors: yes
 
 - name: dns_opts (more resolv.conf options)
   docker_container:
@@ -639,6 +655,7 @@
     - no-check-names
     stop_timeout: 1
   register: dns_opts_4
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -652,6 +669,12 @@
     - dns_opts_2 is not changed
     - dns_opts_3 is not changed
     - dns_opts_4 is changed
+  when: docker_py_version is version('1.10.0', '>=')
+- assert:
+    that:
+    - dns_opts_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in dns_opts_1.msg"
+  when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
 ## dns_search_domains ##############################################
@@ -1238,6 +1261,7 @@
     init: yes
     state: started
   register: init_1
+  ignore_errors: yes
 
 - name: init (idempotency)
   docker_container:
@@ -1247,6 +1271,7 @@
     init: yes
     state: started
   register: init_2
+  ignore_errors: yes
 
 - name: init (change)
   docker_container:
@@ -1257,6 +1282,7 @@
     state: started
     stop_timeout: 1
   register: init_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -1269,6 +1295,12 @@
     - init_1 is changed
     - init_2 is not changed
     - init_3 is changed
+  when: docker_py_version is version('2.2.0', '>=')
+- assert:
+    that:
+    - init_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.2.0') in init_1.msg"
+  when: docker_py_version is version('2.2.0', '<')
 
 ####################################################################
 ## interactive #####################################################
@@ -2019,77 +2051,80 @@
 ## networks, purge_networks ########################################
 ####################################################################
 
-- name: networks, purge_networks
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    purge_networks: yes
-    networks:
-    - name: bridge
-    - name: "{{ nname_1 }}"
-  register: networks_1
+- block:
+  - name: networks, purge_networks
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      purge_networks: yes
+      networks:
+      - name: bridge
+      - name: "{{ nname_1 }}"
+    register: networks_1
 
-- name: networks, purge_networks (idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    purge_networks: yes
-    networks:
-    - name: "{{ nname_1 }}"
-    - name: bridge
-  register: networks_2
+  - name: networks, purge_networks (idempotency)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      purge_networks: yes
+      networks:
+      - name: "{{ nname_1 }}"
+      - name: bridge
+    register: networks_2
 
-- name: networks (less networks)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    networks:
-    - name: bridge
-  register: networks_3
+  - name: networks (less networks)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      networks:
+      - name: bridge
+    register: networks_3
 
-- name: networks, purge_networks (less networks)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    purge_networks: yes
-    networks:
-    - name: bridge
-  register: networks_4
+  - name: networks, purge_networks (less networks)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      purge_networks: yes
+      networks:
+      - name: bridge
+    register: networks_4
 
-- name: networks, purge_networks (more networks)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    purge_networks: yes
-    networks:
-    - name: bridge
-    - name: "{{ nname_2 }}"
-    stop_timeout: 1
-  register: networks_5
+  - name: networks, purge_networks (more networks)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      purge_networks: yes
+      networks:
+      - name: bridge
+      - name: "{{ nname_2 }}"
+      stop_timeout: 1
+    register: networks_5
 
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    stop_timeout: 1
+  - name: cleanup
+    docker_container:
+      name: "{{ cname }}"
+      state: absent
+      stop_timeout: 1
 
-- assert:
-    that:
-    - networks_1 is changed
-    - networks_2 is not changed
-    - networks_3 is not changed
-    - networks_4 is changed
-    - networks_5 is changed
+  - assert:
+      that:
+      - networks_1 is changed
+      - networks_2 is not changed
+      - networks_3 is not changed
+      - networks_4 is changed
+      - networks_5 is changed
+
+  when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
 ## oom_killer ######################################################
@@ -2103,6 +2138,7 @@
     oom_killer: yes
     state: started
   register: oom_killer_1
+  ignore_errors: yes
 
 - name: oom_killer (idempotency)
   docker_container:
@@ -2112,6 +2148,7 @@
     oom_killer: yes
     state: started
   register: oom_killer_2
+  ignore_errors: yes
 
 - name: oom_killer (change)
   docker_container:
@@ -2122,6 +2159,7 @@
     state: started
     stop_timeout: 1
   register: oom_killer_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2134,6 +2172,12 @@
     - oom_killer_1 is changed
     - oom_killer_2 is not changed
     - oom_killer_3 is changed
+  when: docker_py_version is version('2.0.0', '>=')
+- assert:
+    that:
+    - oom_killer_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_killer_1.msg"
+  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## oom_score_adj ###################################################
@@ -2147,6 +2191,7 @@
     oom_score_adj: 5
     state: started
   register: oom_score_adj_1
+  ignore_errors: yes
 
 - name: oom_score_adj (idempotency)
   docker_container:
@@ -2156,6 +2201,7 @@
     oom_score_adj: 5
     state: started
   register: oom_score_adj_2
+  ignore_errors: yes
 
 - name: oom_score_adj (change)
   docker_container:
@@ -2166,6 +2212,7 @@
     state: started
     stop_timeout: 1
   register: oom_score_adj_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2178,6 +2225,12 @@
     - oom_score_adj_1 is changed
     - oom_score_adj_2 is not changed
     - oom_score_adj_3 is changed
+  when: docker_py_version is version('2.0.0', '>=')
+- assert:
+    that:
+    - oom_score_adj_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_score_adj_1.msg"
+  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## output_logs #####################################################
@@ -2211,6 +2264,8 @@
     state: started
     pid_mode: "container:{{ pid_mode_helper.ansible_facts.docker_container.Id }}"
   register: pid_mode_1
+  ignore_errors: yes
+  # docker-py < 2.0 does not support "arbitrary" pid_mode values
 
 - name: pid_mode (idempotency)
   docker_container:
@@ -2220,6 +2275,8 @@
     state: started
     pid_mode: "container:{{ pid_mode_helper.ansible_facts.docker_container.Id }}"
   register: pid_mode_2
+  ignore_errors: yes
+  # docker-py < 2.0 does not support "arbitrary" pid_mode values
 
 - name: pid_mode (change)
   docker_container:
@@ -2247,6 +2304,13 @@
     - pid_mode_1 is changed
     - pid_mode_2 is not changed
     - pid_mode_3 is changed
+  when: docker_py_version is version('2.0.0', '>=')
+- assert:
+    that:
+    - pid_mode_1 is failed
+    - pid_mode_2 is failed
+    - pid_mode_3 is changed
+  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## privileged ######################################################
@@ -2701,6 +2765,7 @@
       net.ipv4.icmp_echo_ignore_all: 1
       net.ipv4.ip_forward: 1
   register: sysctls_1
+  ignore_errors: yes
 
 - name: sysctls (idempotency)
   docker_container:
@@ -2712,6 +2777,7 @@
       net.ipv4.ip_forward: 1
       net.ipv4.icmp_echo_ignore_all: 1
   register: sysctls_2
+  ignore_errors: yes
 
 - name: sysctls (less sysctls)
   docker_container:
@@ -2722,6 +2788,7 @@
     sysctls:
       net.ipv4.icmp_echo_ignore_all: 1
   register: sysctls_3
+  ignore_errors: yes
 
 - name: sysctls (more sysctls)
   docker_container:
@@ -2734,6 +2801,7 @@
       net.ipv6.conf.default.accept_redirects: 0
     stop_timeout: 1
   register: sysctls_4
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2747,6 +2815,12 @@
     - sysctls_2 is not changed
     - sysctls_3 is not changed
     - sysctls_4 is changed
+  when: docker_py_version is version('1.10.0', '>=')
+- assert:
+    that:
+    - sysctls_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in sysctls_1.msg"
+  when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
 ## timeout #########################################################
@@ -2982,6 +3056,7 @@
     userns_mode: host
     state: started
   register: userns_mode_1
+  ignore_errors: yes
 
 - name: userns_mode (idempotency)
   docker_container:
@@ -2991,6 +3066,7 @@
     userns_mode: host
     state: started
   register: userns_mode_2
+  ignore_errors: yes
 
 - name: userns_mode (change)
   docker_container:
@@ -3001,6 +3077,7 @@
     state: started
     stop_timeout: 1
   register: userns_mode_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -3013,6 +3090,12 @@
     - userns_mode_1 is changed
     - userns_mode_2 is not changed
     - userns_mode_3 is changed
+  when: docker_py_version is version('1.10.0', '>=')
+- assert:
+    that:
+    - userns_mode_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in userns_mode_1.msg"
+  when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
 ## uts #############################################################
@@ -3026,6 +3109,7 @@
     uts: host
     state: started
   register: uts_1
+  ignore_errors: yes
 
 - name: uts (idempotency)
   docker_container:
@@ -3035,6 +3119,7 @@
     uts: host
     state: started
   register: uts_2
+  ignore_errors: yes
 
 - name: uts (change)
   docker_container:
@@ -3045,6 +3130,7 @@
     state: started
     stop_timeout: 1
   register: uts_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -3057,6 +3143,12 @@
     - uts_1 is changed
     - uts_2 is not changed
     - uts_3 is changed
+  when: docker_py_version is version('3.5.0', '>=')
+- assert:
+    that:
+    - uts_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 3.5.0') in uts_1.msg"
+  when: docker_py_version is version('3.5.0', '<')
 
 ####################################################################
 ## keep_volumes ####################################################
@@ -3291,3 +3383,4 @@
   - "{{ nname_2 }}"
   loop_control:
     loop_var: network_name
+  when: docker_py_version is version('1.10.0', '>=')
