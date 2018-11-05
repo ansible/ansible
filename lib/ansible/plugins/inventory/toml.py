@@ -6,7 +6,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
     inventory: toml
@@ -107,6 +107,18 @@ try:
 except ImportError:
     HAS_TOML = False
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
+WARNING_MSG = (
+    'The TOML inventory format is marked as preview, which means that it is not guaranteed to have a backwards '
+    'compatible interface.'
+)
+
 
 if HAS_TOML and hasattr(toml, 'TomlEncoder'):
     class AnsibleTomlEncoder(toml.TomlEncoder):
@@ -117,9 +129,11 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
                 AnsibleSequence: self.dump_funcs.get(list),
                 AnsibleUnicode: self.dump_funcs.get(str),
             })
+            display.warning(WARNING_MSG)
     toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())
 else:
     def toml_dumps(data):
+        display.warning(WARNING_MSG)
         return toml.dumps(convert_yaml_objects_to_native(data))
 
 
@@ -227,6 +241,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError(
                 'The TOML inventory plugin requires the python "toml" library'
             )
+
+        display.warning(WARNING_MSG)
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
