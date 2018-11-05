@@ -253,7 +253,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self.azure_auth = AzureRMAuth(**auth_options)
 
-        self._clientconfig = AzureRMRestConfiguration(self.azure_auth.azure_credentials, self.azure_auth.subscription_id,
+        # Allow user to step / force a subscription ID while using CLI
+        subscription_id = self.get_option('subscription_id')
+        if subscription_id is None:
+            subscription_id = self.azure_auth.subscription_id
+
+        self._clientconfig = AzureRMRestConfiguration(self.azure_auth.azure_credentials, subscription_id,
                                                       self.azure_auth._cloud_environment.endpoints.resource_manager)
         self._client = ServiceClient(self._clientconfig.credentials, self._clientconfig)
 
