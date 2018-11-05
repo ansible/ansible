@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix argument spec for NetApp modules that are using the old version
