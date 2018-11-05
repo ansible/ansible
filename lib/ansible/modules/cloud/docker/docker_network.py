@@ -192,6 +192,21 @@ def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
 
+def get_driver_options(driver_options):
+    result = dict()
+    if driver_options is not None:
+        for k, v in driver_options.items():
+            # Go doesn't like 'True' or 'False'
+            if v is True:
+                v = 'true'
+            elif v is False:
+                v = 'false'
+            else:
+                v = str(v)
+            result[str(k)] = v
+    return result
+
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -208,6 +223,9 @@ class DockerNetworkManager(object):
 
         if not self.parameters.connected and self.existing_network:
             self.parameters.connected = container_names_in_network(self.existing_network)
+
+        if self.parameters.driver_options:
+            self.parameters.driver_options = get_driver_options(self.parameters.driver_options)
 
         state = self.parameters.state
         if state == 'present':
