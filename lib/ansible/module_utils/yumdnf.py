@@ -38,7 +38,7 @@ yumdnf_argument_spec = dict(
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
         # removed==absent, installed==present, these are accepted as aliases
-        state=dict(type='str', default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
+        state=dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed']),
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
@@ -99,6 +99,19 @@ class YumDnf(with_metaclass(ABCMeta, object)):
                 msg='It appears that a space separated string of packages was passed in '
                     'as an argument. To operate on several packages, pass a comma separated '
                     'string of packages or a list of packages.'
+            )
+
+        # Sanity checking for autoremove
+        if self.state is None:
+            if self.autoremove:
+                self.state = "absent"
+            else:
+                self.state = "present"
+
+        if self.autoremove and (self.state != "absent"):
+            self.module.fail_json(
+                msg="Autoremove should be used alone or with state=absent",
+                results=[],
             )
 
     def listify_comma_sep_strings_in_list(self, some_list):
