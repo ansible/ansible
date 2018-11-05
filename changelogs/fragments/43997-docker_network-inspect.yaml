@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_network - fixes idempotency issues (https://github.com/ansible/ansible/issues/33045) and name substring issue (https://github.com/ansible/ansible/issues/32926)."

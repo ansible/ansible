@@ -161,6 +161,7 @@ from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseCl
 
 try:
     from docker import utils
+    from docker.errors import NotFound
     if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import IPAMPool, IPAMConfig
 except:
@@ -215,14 +216,10 @@ class DockerNetworkManager(object):
             self.absent()
 
     def get_existing_network(self):
-        networks = self.client.networks(names=[self.parameters.network_name])
-        # check if a user is trying to find network by its Id
-        if not networks:
-            networks = self.client.networks(ids=[self.parameters.network_name])
-        if not networks:
+        try:
+            return self.client.inspect_network(self.parameters.network_name)
+        except NotFound:
             return None
-        else:
-            return networks[0]
 
     def has_different_config(self, net):
         '''
