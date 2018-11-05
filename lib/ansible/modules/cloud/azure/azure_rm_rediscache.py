@@ -66,9 +66,10 @@ options:
     enable_non_ssl_port:
         description:
             - When true, the non-ssl redis server port 6379 will be enabled.
+        type: bool
         default: false
     maxfragmentationmemory_reserved:
-        description: 
+        description:
             - Configures the amount of memory in MB that is reserved to accommodate for memory fragmentation.
             - Please see U(https://docs.microsoft.com/en-us/azure/redis-cache/cache-configure#advanced-settings) for more detail.
     maxmemory_reserved:
@@ -139,7 +140,7 @@ EXAMPLES = '''
 
   - name: Scale up the redis cache
     azure_rm_rediscache:
-      resource_group: myResourceGroup
+        resource_group: myResourceGroup
         name: myRedisCache
         sku:
           name: standard
@@ -149,12 +150,12 @@ EXAMPLES = '''
 
   - name: Create redis with subnet
     azure_rm_rediscache:
-      resource_group: myResourceGroup
-      name: myRedisCache2
-      sku:
-        name: premium
-        size: P1
-      subnet: /subscriptions/<subs_id>/resourceGroups/redistest1/providers/Microsoft.Network/virtualNetworks/testredisvnet1/subnets/subnet1
+        resource_group: myResourceGroup
+        name: myRedisCache2
+        sku:
+          name: premium
+          size: P1
+        subnet: /subscriptions/<subs_id>/resourceGroups/redistest1/providers/Microsoft.Network/virtualNetworks/testredisvnet1/subnets/subnet1
 
 '''
 
@@ -183,17 +184,19 @@ try:
     from msrestazure.azure_operation import AzureOperationPoller
     from msrest.serialization import Model
     from azure.mgmt.redis import RedisManagementClient
-    from azure.mgmt.redis.models import ( RedisCreateParameters, RedisUpdateParameters, Sku )
+    from azure.mgmt.redis.models import (RedisCreateParameters, RedisUpdateParameters, Sku)
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
 sku_spec = dict(
-    name=dict(type='str'),
+    name=dict(
+        type='str',
+        choices=['basic', 'standard', 'premium']),
     size=dict(
         type='str',
-        choices=['C0','C1','C2','C3','C4','C5','C6','P1','P2','P3','P4']
+        choices=['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'P1', 'P2', 'P3', 'P4']
     )
 )
 
@@ -328,8 +331,8 @@ class AzureRMRedisCaches(AzureRMModuleBase):
         self.frameworks = None
 
         super(AzureRMRedisCaches, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+                                                 supports_check_mode=True,
+                                                 supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -361,7 +364,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
         if self.subnet:
             self.subnet = self.parse_subnet()
 
-        #ubnet = self.parse_subnet()get existing redis cache
+        # get existing redis cache
         old_response = self.get_rediscache()
 
         if old_response:
@@ -374,7 +377,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
 
                 to_be_updated = True
                 self.to_do = Actions.Create
-                
+
                 if not self.sku:
                     self.fail("Please specify sku to creating new redis cache.")
 
@@ -396,17 +399,12 @@ class AzureRMRedisCaches(AzureRMModuleBase):
         elif self.state == 'absent':
             if old_response:
                 self.log("Delete Redis cache instance")
-                self.results['changed'] = True
-
-                if self.check_mode:
-                    return self.results
-
-                self.delete_rediscache()
-
-                self.log('Redis cache instance deleted')
-
+                self.results['id'] = old_response['id']
+                to_be_updated = True
+                self.to_do = Actions.Delete
             else:
-                self.fail("Redis cache {0} not exists.".format(self.name))
+                self.results['changed'] = False
+                self.log("Redis cache {0} not exists.".format(self.name))
 
         if to_be_updated:
             self.log('Need to Create/Update redis cache')
@@ -419,11 +417,15 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                 response = self.create_rediscache()
                 self.results['id'] = response['id']
                 self.results['host_name'] = response['host_name']
-            
+
             if self.to_do == Actions.Update:
                 response = self.update_rediscache()
                 self.results['id'] = response['id']
                 self.results['host_name'] = response['host_name']
+
+            if self.to_do == Actions.Delete:
+                self.delete_rediscache()
+                self.log('Redis cache instance deleted')
 
         return self.results
 
@@ -484,8 +486,8 @@ class AzureRMRedisCaches(AzureRMModuleBase):
             )
 
             response = self._client.redis.create(resource_group_name=self.resource_group,
-                                                name=self.name,
-                                                parameters=params)
+                                                 name=self.name,
+                                                 parameters=params)
             if isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -615,4 +617,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
