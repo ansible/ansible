@@ -81,7 +81,7 @@ options:
             - Sets the transport protocol (TCP or UDP). TCP is the recommended and a more robust option.
         default: 'tcp'
         choices: ['tcp', 'udp']
-        version_added: 2.8
+        version_added: 2.6
 '''
 
 EXAMPLES = '''
