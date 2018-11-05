@@ -48,8 +48,10 @@ DOCUMENTATION = '''
               - name: AWS_SESSION_TOKEN
               - name: EC2_SECURITY_TOKEN
         regions:
-          description: A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
-              and cn-north-1.
+          description: A list of regions in which to describe EC2 instances. By default this is region from environment
+              environment variable or region from boto configuration or all regions except us-gov-west-1 and cn-north-1.
+          env:
+              - name: AWS_DEFAULT_REGION
         hostnames:
           description: A list in order of precedence for hostname variables. You can use the options specified in
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
