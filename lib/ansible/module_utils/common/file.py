@@ -57,9 +57,9 @@ USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
 
 
-PERM_BITS = 0o7777          # file mode permission bits
-EXEC_PERM_BITS = 0o0111     # execute permission bits
-DEFAULT_PERM = 0o0666       # default file permission bits
+_PERM_BITS = 0o7777          # file mode permission bits
+_EXEC_PERM_BITS = 0o0111     # execute permission bits
+_DEFAULT_PERM = 0o0666       # default file permission bits
 
 
 def is_executable(path):

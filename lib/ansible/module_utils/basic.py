@@ -157,9 +157,9 @@ from ansible.module_utils.common._collections_compat import (
 )
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
-    PERM_BITS,
-    EXEC_PERM_BITS,
-    DEFAULT_PERM,
+    _PERM_BITS as PERM_BITS,
+    _EXEC_PERM_BITS as EXEC_PERM_BITS,
+    _DEFAULT_PERM as DEFAULT_PERM,
     is_executable,
     format_attributes,
     get_flags_from_attributes
