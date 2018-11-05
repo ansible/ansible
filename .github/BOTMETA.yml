@@ -771,6 +771,7 @@ files:
     support: core
   lib/ansible/plugins/callback/grafana_annotations.py:
     maintainers: rrey
+    support: community
   lib/ansible/plugins/callback/junit:
     support: core
   lib/ansible/plugins/callback/minimal:
@@ -779,12 +780,17 @@ files:
     support: core
   lib/ansible/plugins/callback/profile:
     support: core
+  lib/ansible/plugins/callback/stderr.py:
+    maintainers: ysn2233
+    support: community
   lib/ansible/plugins/callback/sumologic.py:
     maintainers: ryancurrah
+    support: community
   lib/ansible/plugins/callback/tree:
     support: core
   lib/ansible/plugins/callback/unixy.py:
     maintainers: akatch
+    support: community
 ###############################
 # plugins/cliconf
 
