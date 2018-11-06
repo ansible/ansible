@@ -20,9 +20,10 @@ DOCUMENTATION = '''
     notes:
         - It takes the place of the previously hardcoded INI inventory.
         - To function it requires being whitelisted in configuration.
-        - Variable values are processed by Python's ast.literal_eval function (U(https://docs.python.org/2/library/ast.html#ast.literal_eval))
-          which could cause the value to change in some cases. See the Examples for proper quoting to prevent changes. Another option would be
-          to use the yaml format for inventory source which processes the values correctly.
+        - Variable values inline to a host are processed by Python's ast.literal_eval function
+          (U(https://docs.python.org/2/library/ast.html#ast.literal_eval)), but not when declared in a `:vars` section,
+          which leasds to confusion on actual type of a variable in some cases.  See the Examples for proper quoting to prevent changes.
+          Another option would be to use the yaml format for inventory source which processes the values correctly.
 '''
 
 EXAMPLES = '''
@@ -30,11 +31,11 @@ EXAMPLES = '''
       # example cfg file
       [web]
       host1
-      host2 ansible_port=222
+      host2 ansible_port=222 # this is an int
 
       [web:vars]
       http_port=8080 # all members of 'web' will inherit these
-      myvar=23
+      myvar=23 # this is a string
 
       [web:children] # child groups will automatically add their hosts to partent group
       apache
