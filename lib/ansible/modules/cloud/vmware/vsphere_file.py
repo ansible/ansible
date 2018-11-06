@@ -168,8 +168,7 @@ def main():
             timeout=dict(type='int', default=10),
             validate_certs=dict(type='bool', default=True),
         ),
-        # Implementing check-mode using HEAD is impossible, since size/date is not 100% reliable
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     host = module.params.get('host')
@@ -189,13 +188,14 @@ def main():
     result = dict(
         path=path,
         size=None,
+        state=state,
         status=None,
         url=url,
     )
 
     # Check if the file/directory exists
     try:
-        r = open_url(url, method='GET', timeout=timeout,
+        r = open_url(url, method='HEAD', timeout=timeout,
                      url_username=username, url_password=password,
                      validate_certs=validate_certs, force_basic_auth=True)
     except HTTPError as e:
@@ -211,7 +211,7 @@ def main():
     status = r.getcode()
     if status == 200:
         exists = True
-        result['size'] = r.headers.get('content-length', None)
+        result['size'] = int(r.headers.get('content-length', None))
     elif status == 404:
         exists = False
     else:
@@ -223,26 +223,32 @@ def main():
         if not exists:
             module.exit_json(changed=False, **result)
 
-        try:
-            r = open_url(url, method='DELETE', timeout=timeout,
-                         url_username=username, url_password=password,
-                         validate_certs=validate_certs, force_basic_auth=True)
-        except HTTPError as e:
-            r = e
-        except socket.error as e:
-            module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
-        except Exception as e:
-            module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
+        if module.check_mode:
+            result['reason'] = 'No Content'
+            result['status'] = 204
+        else:
+            try:
+                r = open_url(url, method='DELETE', timeout=timeout,
+                             url_username=username, url_password=password,
+                             validate_certs=validate_certs, force_basic_auth=True)
+            except HTTPError as e:
+                r = e
+            except socket.error as e:
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
+            except Exception as e:
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
 
-        if PY2:
-            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
-        result['reason'] = r.msg
-        result['status'] = r.getcode()
-        if result['status'] == 405:
-            module.fail_json(msg='Directories cannot be removed with this module', errno=None, headers=dict(r.headers), **result)
-        elif result['status'] != 204:
-            module.fail_json(msg="Failed to remove '%s'" % path, errno=None, headers=dict(r.headers), **result)
+            result['reason'] = r.msg
+            result['status'] = r.getcode()
+
+            if result['status'] == 405:
+                result['state'] = 'directory'
+                module.fail_json(msg='Directories cannot be removed with this module', errno=None, headers=dict(r.headers), **result)
+            elif result['status'] != 204:
+                module.fail_json(msg="Failed to remove '%s'" % path, errno=None, headers=dict(r.headers), **result)
 
         result['size'] = None
         module.exit_json(changed=True, **result)
@@ -252,84 +258,97 @@ def main():
         if exists:
             module.exit_json(changed=False, **result)
 
-        # Create a tempory file in the new directory
-        remote_path = vmware_path(datastore, datacenter, path + '/foobar.tmp')
-        temp_url = 'https://%s%s' % (host, remote_path)
+        if module.check_mode:
+            result['reason'] = 'Created'
+            result['status'] = 201
+        else:
+            # Create a tempory file in the new directory
+            remote_path = vmware_path(datastore, datacenter, path + '/foobar.tmp')
+            temp_url = 'https://%s%s' % (host, remote_path)
 
-        try:
-            r = open_url(temp_url, method='PUT', timeout=timeout,
-                         url_username=username, url_password=password,
-                         validate_certs=validate_certs, force_basic_auth=True)
-        except HTTPError as e:
-            r = e
-        except socket.error as e:
-            module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
-        except Exception as e:
-            module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
+            try:
+                r = open_url(temp_url, method='PUT', timeout=timeout,
+                             url_username=username, url_password=password,
+                             validate_certs=validate_certs, force_basic_auth=True)
+            except HTTPError as e:
+                r = e
+            except socket.error as e:
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
+            except Exception as e:
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
 
-        if PY2:
-            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
-        status = r.getcode()
-        if status != 201:
             result['reason'] = r.msg
-            result['status'] = status
-            result['url'] = temp_url
-            module.fail_json(msg='Failed to create temporary file', errno=None, headers=dict(r.headers), **result)
+            result['status'] = r.getcode()
+            if result['status'] != 201:
+                result['url'] = temp_url
+                module.fail_json(msg='Failed to create temporary file', errno=None, headers=dict(r.headers), **result)
 
-        try:
-            r = open_url(temp_url, method='DELETE', timeout=timeout,
-                         url_username=username, url_password=password,
-                         validate_certs=validate_certs, force_basic_auth=True)
-        except HTTPError as e:
-            r = e
-        except socket.error as e:
-            module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
-        except Exception as e:
-            module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
+            try:
+                r = open_url(temp_url, method='DELETE', timeout=timeout,
+                             url_username=username, url_password=password,
+                             validate_certs=validate_certs, force_basic_auth=True)
+            except HTTPError as e:
+                r = e
+            except socket.error as e:
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
+            except Exception as e:
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
 
-        if PY2:
-            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
-        result['status'] = r.getcode()
-        if result['status'] != 204:
-            module.warn('Failed to remove temporary file ({reason})'.format(**result))
+            status = r.getcode()
+            if status != 204:
+                result['reason'] = r.msg
+                result['status'] = status
+                module.warn('Failed to remove temporary file ({reason})'.format(**result))
 
-        module.exit_json(changed=True, state='directory', **result)
+        module.exit_json(changed=True, **result)
 
     elif state == 'file':
         # result['data'] = r.read()
 
         if not exists:
-            module.fail_json(msg="File '%s' is absent, cannot continue" % path, state='absent')
+            result['state'] = 'absent'
+            result['status'] = status
+            module.fail_json(msg="File '%s' is absent, cannot continue" % path, **result)
 
         result['status'] = status
-        module.exit_json(changed=False, state='file', **result)
+        module.exit_json(changed=False, **result)
 
     elif state == 'touch':
         if exists:
+            result['state'] = 'file'
             module.exit_json(changed=False, **result)
 
-        try:
-            r = open_url(url, method='PUT', timeout=timeout,
-                         url_username=username, url_password=password,
-                         validate_certs=validate_certs, force_basic_auth=True)
-        except HTTPError as e:
-            r = e
-        except socket.error as e:
-            module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
-        except Exception as e:
-            module.fail_json(msg=to_native(e), errno=dir(e), reason=to_native(e), **result)
+        if module.check_mode:
+            result['reason'] = 'Created'
+            result['status'] = 201
+        else:
+            try:
+                r = open_url(url, method='PUT', timeout=timeout,
+                             url_username=username, url_password=password,
+                             validate_certs=validate_certs, force_basic_auth=True)
+            except HTTPError as e:
+                r = e
+            except socket.error as e:
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
+            except Exception as e:
+                module.fail_json(msg=to_native(e), errno=dir(e), reason=to_native(e), **result)
 
-        if PY2:
-            sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+            if PY2:
+                sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
-        result['reason'] = r.msg
-        result['status'] = r.getcode()
-        if result['status'] != 201:
-            module.fail_json(msg="Failed to touch '%s'" % path, errno=None, headers=dict(r.headers), **result)
+            result['reason'] = r.msg
+            result['status'] = r.getcode()
+            if result['status'] != 201:
+                module.fail_json(msg="Failed to touch '%s'" % path, errno=None, headers=dict(r.headers), **result)
 
         result['size'] = 0
+        result['state'] = 'file'
         module.exit_json(changed=True, **result)
 
 
