@@ -252,7 +252,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
         except Exception:
             return
-			
+
     def extract_services(self, host):
         try:
             url = urljoin(self.api_endpoint, "/api/ipam/services/?device=" + str(host["name"]))
@@ -260,7 +260,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             return device_lookup["results"]
         except Exception:
             return
-			
+
     def extract_primary_ip(self, host):
         try:
             address = host["primary_ip"]["address"]
@@ -448,4 +448,3 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.group_by = self.get_option("group_by")
         self.query_filters = self.get_option("query_filters")
         self.main()
-
