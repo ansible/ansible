@@ -85,4 +85,3 @@
     path: '{{ directory }}'
     state: file
   ignore_errors: true
-

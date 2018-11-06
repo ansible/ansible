@@ -126,6 +126,9 @@ EXAMPLES = r'''
   delegate_to: localhost
 '''
 
+RETURN = r'''
+'''
+
 import socket
 import sys
 
@@ -143,7 +146,6 @@ def vmware_path(datastore, datacenter, path):
     # Due to a software bug in vSphere, it fails to handle ampersand in datacenter names
     # The solution is to do what vSphere does (when browsing) and double-encode ampersands, maybe others ?
     datacenter = datacenter.replace('&', '%26')
-    #datacenter = datacenter.replace('-', '%2D')
     if not path.startswith('/'):
         path = '/' + path
     params = dict(dsName=datastore)
@@ -294,10 +296,9 @@ def main():
             module.warn('Failed to remove temporary file ({reason})'.format(**result))
 
         module.exit_json(changed=True, state='directory', **result)
-        
 
     elif state == 'file':
-        #result['data'] = r.read()
+        # result['data'] = r.read()
 
         if not exists:
             module.fail_json(msg="File '%s' is absent, cannot continue" % path, state='absent')
