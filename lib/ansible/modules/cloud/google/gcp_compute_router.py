@@ -32,91 +32,97 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_router
 description:
-    - Represents a Router resource.
+- Represents a Router resource.
 short_description: Creates a GCP Router
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    name:
-        description:
-            - Name of the resource. The name must be 1-63 characters long, and comply with RFC1035.
-              Specifically, the name must be 1-63 characters long and match the regular expression
-              `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
-              letter, and all following characters must be a dash, lowercase letter, or digit,
-              except the last character, which cannot be a dash.
-        required: true
+  state:
     description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  name:
+    description:
+    - Name of the resource. The name must be 1-63 characters long, and comply with
+      RFC1035. Specifically, the name must be 1-63 characters long and match the regular
+      expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must
+      be a lowercase letter, and all following characters must be a dash, lowercase
+      letter, or digit, except the last character, which cannot be a dash.
+    required: true
+  description:
+    description:
+    - An optional description of this resource.
+    required: false
+  network:
+    description:
+    - A reference to the network to which this router belongs.
+    - 'This field represents a link to a Network resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}" Alternatively,
+      you can set this network to a dictionary with the selfLink key where the value
+      is the selfLink of your Network'
+    required: true
+  bgp:
+    description:
+    - BGP information specific to this router.
+    required: false
+    suboptions:
+      asn:
         description:
-            - An optional description of this resource.
-        required: false
-    network:
-        description:
-            - A reference to the network to which this router belongs.
-            - 'This field represents a link to a Network resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
-              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
-              set this network to a dictionary with the selfLink key where the value is the selfLink
-              of your Network.'
+        - Local BGP Autonomous System Number (ASN). Must be an RFC6996 private ASN,
+          either 16-bit or 32-bit. The value will be fixed for this router resource.
+          All VPN tunnels that link to this router will have the same local ASN.
         required: true
-    bgp:
+      advertise_mode:
         description:
-            - BGP information specific to this router.
+        - User-specified flag to indicate which mode to use for advertisement.
+        - 'Valid values of this enum field are: DEFAULT, CUSTOM .'
+        required: false
+        default: DEFAULT
+        choices:
+        - DEFAULT
+        - CUSTOM
+      advertised_groups:
+        description:
+        - User-specified list of prefix groups to advertise in custom mode.
+        - This field can only be populated if advertiseMode is CUSTOM and is advertised
+          to all peers of the router. These groups will be advertised in addition
+          to any specified prefixes. Leave this field blank to advertise no custom
+          groups.
+        - 'This enum field has the one valid value: ALL_SUBNETS .'
+        required: false
+      advertised_ip_ranges:
+        description:
+        - User-specified list of individual IP ranges to advertise in custom mode.
+          This field can only be populated if advertiseMode is CUSTOM and is advertised
+          to all peers of the router. These IP ranges will be advertised in addition
+          to any specified groups.
+        - Leave this field blank to advertise no custom IP ranges.
         required: false
         suboptions:
-            asn:
-                description:
-                    - Local BGP Autonomous System Number (ASN). Must be an RFC6996 private ASN, either
-                      16-bit or 32-bit. The value will be fixed for this router resource. All VPN tunnels
-                      that link to this router will have the same local ASN.
-                required: true
-            advertise_mode:
-                description:
-                    - User-specified flag to indicate which mode to use for advertisement.
-                    - 'Valid values of this enum field are: DEFAULT, CUSTOM .'
-                required: false
-                default: DEFAULT
-                choices: ['DEFAULT', 'CUSTOM']
-            advertised_groups:
-                description:
-                    - User-specified list of prefix groups to advertise in custom mode.
-                    - This field can only be populated if advertiseMode is CUSTOM and is advertised to
-                      all peers of the router. These groups will be advertised in addition to any specified
-                      prefixes. Leave this field blank to advertise no custom groups.
-                    - 'This enum field has the one valid value: ALL_SUBNETS .'
-                required: false
-            advertised_ip_ranges:
-                description:
-                    - User-specified list of individual IP ranges to advertise in custom mode. This field
-                      can only be populated if advertiseMode is CUSTOM and is advertised to all peers
-                      of the router. These IP ranges will be advertised in addition to any specified groups.
-                    - Leave this field blank to advertise no custom IP ranges.
-                required: false
-                suboptions:
-                    range:
-                        description:
-                            - The IP range to advertise. The value must be a CIDR-formatted string.
-                        required: false
-                    description:
-                        description:
-                            - User-specified description for the IP range.
-                        required: false
-    region:
-        description:
-            - Region where the router resides.
-        required: true
+          range:
+            description:
+            - The IP range to advertise. The value must be a CIDR-formatted string.
+            required: false
+          description:
+            description:
+            - User-specified description for the IP range.
+            required: false
+  region:
+    description:
+    - Region where the router resides.
+    required: true
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routers)"
-    - "Google Cloud Router: U(https://cloud.google.com/router/docs/)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routers)'
+- 'Google Cloud Router: U(https://cloud.google.com/router/docs/)'
 '''
 
 EXAMPLES = '''
@@ -149,87 +155,88 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    id:
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+name:
+  description:
+  - Name of the resource. The name must be 1-63 characters long, and comply with RFC1035.
+    Specifically, the name must be 1-63 characters long and match the regular expression
+    `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+    letter, and all following characters must be a dash, lowercase letter, or digit,
+    except the last character, which cannot be a dash.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  returned: success
+  type: str
+network:
+  description:
+  - A reference to the network to which this router belongs.
+  returned: success
+  type: dict
+bgp:
+  description:
+  - BGP information specific to this router.
+  returned: success
+  type: complex
+  contains:
+    asn:
+      description:
+      - Local BGP Autonomous System Number (ASN). Must be an RFC6996 private ASN,
+        either 16-bit or 32-bit. The value will be fixed for this router resource.
+        All VPN tunnels that link to this router will have the same local ASN.
+      returned: success
+      type: int
+    advertiseMode:
+      description:
+      - User-specified flag to indicate which mode to use for advertisement.
+      - 'Valid values of this enum field are: DEFAULT, CUSTOM .'
+      returned: success
+      type: str
+    advertisedGroups:
+      description:
+      - User-specified list of prefix groups to advertise in custom mode.
+      - This field can only be populated if advertiseMode is CUSTOM and is advertised
+        to all peers of the router. These groups will be advertised in addition to
+        any specified prefixes. Leave this field blank to advertise no custom groups.
+      - 'This enum field has the one valid value: ALL_SUBNETS .'
+      returned: success
+      type: list
+    advertisedIpRanges:
+      description:
+      - User-specified list of individual IP ranges to advertise in custom mode. This
+        field can only be populated if advertiseMode is CUSTOM and is advertised to
+        all peers of the router. These IP ranges will be advertised in addition to
+        any specified groups.
+      - Leave this field blank to advertise no custom IP ranges.
+      returned: success
+      type: complex
+      contains:
+        range:
+          description:
+          - The IP range to advertise. The value must be a CIDR-formatted string.
+          returned: success
+          type: str
         description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    name:
-        description:
-            - Name of the resource. The name must be 1-63 characters long, and comply with RFC1035.
-              Specifically, the name must be 1-63 characters long and match the regular expression
-              `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
-              letter, and all following characters must be a dash, lowercase letter, or digit,
-              except the last character, which cannot be a dash.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-        returned: success
-        type: str
-    network:
-        description:
-            - A reference to the network to which this router belongs.
-        returned: success
-        type: dict
-    bgp:
-        description:
-            - BGP information specific to this router.
-        returned: success
-        type: complex
-        contains:
-            asn:
-                description:
-                    - Local BGP Autonomous System Number (ASN). Must be an RFC6996 private ASN, either
-                      16-bit or 32-bit. The value will be fixed for this router resource. All VPN tunnels
-                      that link to this router will have the same local ASN.
-                returned: success
-                type: int
-            advertiseMode:
-                description:
-                    - User-specified flag to indicate which mode to use for advertisement.
-                    - 'Valid values of this enum field are: DEFAULT, CUSTOM .'
-                returned: success
-                type: str
-            advertisedGroups:
-                description:
-                    - User-specified list of prefix groups to advertise in custom mode.
-                    - This field can only be populated if advertiseMode is CUSTOM and is advertised to
-                      all peers of the router. These groups will be advertised in addition to any specified
-                      prefixes. Leave this field blank to advertise no custom groups.
-                    - 'This enum field has the one valid value: ALL_SUBNETS .'
-                returned: success
-                type: list
-            advertisedIpRanges:
-                description:
-                    - User-specified list of individual IP ranges to advertise in custom mode. This field
-                      can only be populated if advertiseMode is CUSTOM and is advertised to all peers
-                      of the router. These IP ranges will be advertised in addition to any specified groups.
-                    - Leave this field blank to advertise no custom IP ranges.
-                returned: success
-                type: complex
-                contains:
-                    range:
-                        description:
-                            - The IP range to advertise. The value must be a CIDR-formatted string.
-                        returned: success
-                        type: str
-                    description:
-                        description:
-                            - User-specified description for the IP range.
-                        returned: success
-                        type: str
-    region:
-        description:
-            - Region where the router resides.
-        returned: success
-        type: str
+          description:
+          - User-specified description for the IP range.
+          returned: success
+          type: str
+region:
+  description:
+  - Region where the router resides.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -419,8 +426,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -445,7 +450,7 @@ class RouterBgp(object):
             u'asn': self.request.get('asn'),
             u'advertiseMode': self.request.get('advertise_mode'),
             u'advertisedGroups': self.request.get('advertised_groups'),
-            u'advertisedIpRanges': RouterAdvertisedIpRangesArray(self.request.get('advertised_ip_ranges', []), self.module).to_request()
+            u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get('advertised_ip_ranges', []), self.module).to_request()
         })
 
     def from_response(self):
@@ -453,11 +458,11 @@ class RouterBgp(object):
             u'asn': self.request.get(u'asn'),
             u'advertiseMode': self.request.get(u'advertiseMode'),
             u'advertisedGroups': self.request.get(u'advertisedGroups'),
-            u'advertisedIpRanges': RouterAdvertisedIpRangesArray(self.request.get(u'advertisedIpRanges', []), self.module).from_response()
+            u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get(u'advertisedIpRanges', []), self.module).from_response()
         })
 
 
-class RouterAdvertisedIpRangesArray(object):
+class RouterAdvertisediprangesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:

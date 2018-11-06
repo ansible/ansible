@@ -32,47 +32,50 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_target_http_proxy
 description:
-    - Represents a TargetHttpProxy resource, which is used by one or more global forwarding
-      rule to route incoming HTTP requests to a URL map.
+- Represents a TargetHttpProxy resource, which is used by one or more global forwarding
+  rule to route incoming HTTP requests to a URL map.
 short_description: Creates a GCP TargetHttpProxy
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - An optional description of this resource.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    url_map:
-        description:
-            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
-            - 'This field represents a link to a UrlMap resource in GCP. It can be specified in
-              two ways. You can add `register: name-of-resource` to a gcp_compute_url_map task
-              and then set this url_map field to "{{ name-of-resource }}" Alternatively, you can
-              set this url_map to a dictionary with the selfLink key where the value is the selfLink
-              of your UrlMap.'
-        required: true
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - An optional description of this resource.
+    required: false
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  url_map:
+    description:
+    - A reference to the UrlMap resource that defines the mapping from URL to the
+      BackendService.
+    - 'This field represents a link to a UrlMap resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_compute_url_map
+      task and then set this url_map field to "{{ name-of-resource }}" Alternatively,
+      you can set this url_map to a dictionary with the selfLink key where the value
+      is the selfLink of your UrlMap'
+    required: true
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetHttpProxies)"
-    - "Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetHttpProxies)'
+- 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies)'
 '''
 
 EXAMPLES = '''
@@ -134,36 +137,36 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    urlMap:
-        description:
-            - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
-        returned: success
-        type: dict
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+urlMap:
+  description:
+  - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -359,8 +362,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
