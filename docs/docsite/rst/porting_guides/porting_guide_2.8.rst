@@ -117,6 +117,10 @@ Plugins
   has changed to ``%USERPROFILE%\.ansible_async``. To control this path now, either set the ``ansible_async_dir``
   variable or the ``async_dir`` value in the ``powershell`` section of the config ini.
 
+* The default log level when `DEFAULT_LOG_PATH <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-log-path>`_
+  is set is now ``INFO``. The ``DEBUG`` log level is only used when `DEFAULT_DEBUG <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-debug>`_
+  is set.
+
 Porting custom scripts
 ======================
 
