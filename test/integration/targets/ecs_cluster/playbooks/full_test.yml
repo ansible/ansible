@@ -3,3 +3,4 @@
 
   roles:
     - ecs_cluster
+    - service_discovery
