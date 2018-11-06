@@ -70,6 +70,7 @@ Function Add-CSharpType {
 
     # pattern used to find referenced assemblies in the code
     $assembly_pattern = "^//\s*AssemblyReference\s+-Name\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?$"
+    $no_warn_pattern = "^//\s*NoWarn\s+-Name\s+(?<Name>[\w\d]*)(\s+-CLR\s+(?<CLR>Core|Framework))?$"
 
     # PSCore vs PSDesktop use different methods to compile the code,
     # PSCore uses Roslyn and can compile the code purely in memory
@@ -85,12 +86,14 @@ Function Add-CSharpType {
             [Microsoft.CodeAnalysis.CompilationReference]::CreateFromFile(([System.Reflection.Assembly]::GetAssembly([PSObject])).Location)
         )
         $netcore_app_ref_folder = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([PSObject].Assembly.Location), "ref")
+        $lib_assembly_location = [System.IO.Path]::GetDirectoryName([object].Assembly.Location)
         foreach ($file in [System.IO.Directory]::EnumerateFiles($netcore_app_ref_folder, "*.dll", [System.IO.SearchOption]::TopDirectoryOnly)) {
             $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($file)) > $null
         }
 
         # loop through the references, parse as a SyntaxTree and get
         # referenced assemblies
+        $ignore_warnings = New-Object -TypeName 'System.Collections.Generic.Dictionary`2[[String], [Microsoft.CodeAnalysis.ReportDiagnostic]]'
         $parse_options = ([Microsoft.CodeAnalysis.CSharp.CSharpParseOptions]::Default).WithPreprocessorSymbols($defined_symbols)
         $syntax_trees = [System.Collections.Generic.List`1[Microsoft.CodeAnalysis.SyntaxTree]]@()
         foreach ($reference in $References) {
@@ -104,7 +107,17 @@ Function Add-CSharpType {
                         if ($Matches.ContainsKey("CLR") -and $Matches.CLR -ne "Core") {
                             continue
                         }
-                        $assemblies.Add($Matches.Name) > $null
+                        $assembly_path = $Matches.Name
+                        if (-not ([System.IO.Path]::IsPathRooted($assembly_path))) {
+                            $assembly_path = Join-Path -Path $lib_assembly_location -ChildPath $assembly_path
+                        }
+                        $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($assembly_path)) > $null
+                    }
+                    if ($line -imatch $no_warn_pattern) {
+                        if ($Matches.ContainsKey("CLR") -and $Matches.CLR -ne "Core") {
+                            continue
+                        }
+                        $ignore_warnings.Add($Matches.Name, [Microsoft.CodeAnalysis.ReportDiagnostic]::Suppress)
                     }
                 }
             } finally {
@@ -122,6 +135,7 @@ Function Add-CSharpType {
         # set warnings to error out if IgnoreWarnings is not set
         if (-not $IgnoreWarnings.IsPresent) {
             $compiler_options = $compiler_options.WithGeneralDiagnosticOption([Microsoft.CodeAnalysis.ReportDiagnostic]::Error)
+            $compiler_options = $compiler_options.WithSpecificDiagnosticOptions($ignore_warnings)
         }
 
         # create compilation object
@@ -201,7 +215,6 @@ Function Add-CSharpType {
         }
 
         $compile_parameters = New-Object -TypeName System.CodeDom.Compiler.CompilerParameters
-        $compile_parameters.CompilerOptions = [String]::Join(" ", $compiler_options.ToArray())
         $compile_parameters.GenerateExecutable = $false
         $compile_parameters.GenerateInMemory = $true
         $compile_parameters.TreatWarningsAsErrors = (-not $IgnoreWarnings.IsPresent)
@@ -219,6 +232,7 @@ Function Add-CSharpType {
         # create a code snippet for each reference and check if we need
         # to reference any extra assemblies
         # //AssemblyReference -Name ... [-CLR Framework]
+        $ignore_warnings = [System.Collections.ArrayList]@()
         $compile_units = [System.Collections.Generic.List`1[System.CodeDom.CodeSnippetCompileUnit]]@()
         foreach ($reference in $References) {
             $sr = New-Object -TypeName System.IO.StringReader -ArgumentList $reference
@@ -231,13 +245,28 @@ Function Add-CSharpType {
                         }
                         $assemblies.Add($Matches.Name) > $null
                     }
+                    if ($line -imatch $no_warn_pattern) {
+                        if ($Matches.ContainsKey("CLR") -and $Matches.CLR -ne "Framework") {
+                            continue
+                        }
+                        $warning_id = $Matches.Name
+                        # /nowarn should only contain the numeric part
+                        if ($warning_id.StartsWith("CS")) {
+                            $warning_id = $warning_id.Substring(2)
+                        }
+                        $ignore_warnings.Add($warning_id) > $null
+                    }
                 }
             } finally {
                 $sr.Close()
             }
             $compile_units.Add((New-Object -TypeName System.CodeDom.CodeSnippetCompileUnit -ArgumentList $reference)) > $null
         }
+        if ($ignore_warnings.Count -gt 0) {
+            $compiler_options.Add("/nowarn:" + ([String]::Join(",", $ignore_warnings.ToArray()))) > $null
+        }
         $compile_parameters.ReferencedAssemblies.AddRange($assemblies)
+        $compile_parameters.CompilerOptions = [String]::Join(" ", $compiler_options.ToArray())
 
         # compile the code together and check for errors
         $provider = New-Object -TypeName Microsoft.CSharp.CSharpCodeProvider
