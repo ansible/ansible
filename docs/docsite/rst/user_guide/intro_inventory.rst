@@ -94,8 +94,8 @@ In the above example, trying to ansible against the host alias "jumper" (which m
 Note that this is using a feature of the inventory file to define some special variables.
 Generally speaking, this is not the best way to define variables that describe your system policy, but we'll share suggestions on doing this later.
 
-.. note:: Values passed in the INI format using the ``key=value`` syntax are not interpreted as Python literal structure
-          (strings, numbers, tuples, lists, dicts, booleans, None), but as a string. For example ``var=FALSE`` would create a string equal to 'FALSE'.
+.. note:: Values passed in the INI format using the ``key=value`` syntax are interpreted as Python literal structure
+          (strings, numbers, tuples, lists, dicts, booleans, None), alternatively as a string. For example ``var=FALSE`` would create a string equal to 'FALSE'.
           Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
