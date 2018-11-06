@@ -105,7 +105,11 @@ Function Add-CSharpType {
                 if ($clr -and $clr -ne "Core") {
                     continue
                 }
-                $assemblies.Add($match.Groups["Name"].Value) > $null
+                $assembly_path = $match.Groups["Name"]
+                if (-not ([System.IO.Path]::IsPathRooted($assembly_path))) {
+                    $assembly_path = Join-Path -Path $lib_assembly_location -ChildPath $assembly_path
+                }
+                $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($assembly_path)) > $null
             }
             $warn_matches = $no_warn_pattern.Matches($reference)
             foreach ($match in $warn_matches) {
@@ -243,7 +247,7 @@ Function Add-CSharpType {
                 if ($clr -and $clr -ne "Framework") {
                     continue
                 }
-                $warning_id = $match.Groups["Name"]
+                $warning_id = $match.Groups["Name"].Value
                 # /nowarn should only contain the numeric part
                 if ($warning_id.StartsWith("CS")) {
                     $warning_id = $warning_id.Substring(2)

@@ -190,42 +190,54 @@ A very basic powershell module `win_environment <https://github.com/ansible/ansi
 
 A slightly more advanced module is `win_uri <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/windows/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
 
-As part of the new ``AnsibleModule`` wrapper, the input parameters are defined and validated as part of an argument
-spec. This specification takes the form of a dictionary and can contain multiple values such as;
+As part of the new ``AnsibleModule`` wrapper, the input parameters are defined and validated based on an argument
+spec. The following options can be set at the root level of the argument spec:
 
-- ``apply_defaults``: When applied to a option key with the ``type=dict``, the value will a dict with it's options set to their defaults instead of a null value. By default this is set to ``False``
-- ``aliases``: A list of aliases for the module option
-- ``choices``: A list of value choices that are validated against the input value, if ``type=list`` then each list value is validated against the choices and not the whole list
-- ``default``: The default value for the module option if not set
-- ``elements``: When ``type=list``, this sets the type of each list value
 - ``mutually_exclusive``: A list of lists, where the inner list contains module options that cannot be set together
-- ``no_log``: When set at the root of the spec, not log, debug, or warning messages are sent to the Windows event log, if set at a module option, the value is sanitised before being returned in the ``module_invocation`` return value
-- ``options``: Module options either set at the root level or as a module option value when ``type=dict``, or ``type=list`` and ``elements=dict``
-- ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set
+- ``no_log``: Stops the module from emitting any logs to the Windows Event log
+- ``options``: A dictionary where the key is the module option and the value is the spec for that option
 - ``required``: Will fail when the module option is not set
 - ``required_if``: A list of lists where the inner list contains 3 or 4 elements;
     * The first element is the module option to check the value against
-    * The second element is the value of the module specified by the first element, if matched then the required if check is run
+    * The second element is the value of the option specified by the first element, if matched then the required if check is run
     * The third element is a list of required module options when the above is matched
-    * An optional fourth element is a boolean that states whether all module options in the third elements are required (default/``$false``) or only one (``$true``)
+    * An optional fourth element is a boolean that states whether all module options in the third elements are required (default: ``$false``) or only one (``$true``)
 - ``required_one_of``: A list of lists, where the inner list contains module options where at least one must be set
 - ``required_together``: A list of lists, where the inner list contains module options that must be set together
 - ``supports_check_mode``: Whether the module supports check mode, by default this is ``$false``
+
+The actual input options for a module are set within the ``options`` value as a dictionary. The keys of this dictionary
+are the module option names while the values are the spec of that module option. Each spec can have the following
+options set:
+
+- ``aliases``: A list of aliases for the module option
+- ``choices``: A list of valid values for the module option, if ``type=list`` then each list value is validated against the choices and not the list itself
+- ``default``: The default value for the module option if not set
+- ``elements``: When ``type=list``, this sets the type of each list value, the values are the same as ``type``
+- ``no_log``: Will sanitise the input value before being returned in the ``module_invocation`` return value
+- ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set
 - ``type``: The type of the module option, if not set then it defaults to ``str``. The valid types are;
     * ``bool``: A boolean value
     * ``dict``: A dictionary value, if the input is a JSON or key=value string then it is converted to dictionary
     * ``float``: A float or `Single <https://docs.microsoft.com/en-us/dotnet/api/system.single?view=netframework-4.7.2>`_ value
     * ``int``: An Int32 value
     * ``json``: A string where the value is converted to a JSON string if the input is a dictionary
-    * ``list``: A list of values, ``elements=<type>`` can convert the individual list value types and if ``elements=dict`` then ``options`` can be set to validate the dict value input. When the input is a string then the string is split by ``,`` and any whitespace is trimmed
-    * ``path``: A string where values likes ``%TEMP%`` are expanded based on environment values. If the input value starts with ``\\?\`` then no expandsion is run
+    * ``list``: A list of values, ``elements=<type>`` can convert the individual list value types if set. If ``elements=dict`` then ``options`` is defined, the values will be validated against the argument spec. When the input is a string then the string is split by ``,`` and any whitespace is trimmed
+    * ``path``: A string where values likes ``%TEMP%`` are expanded based on environment values. If the input value starts with ``\\?\`` then no expansion is run
     * ``raw``: No conversions occur on the value passed in by Ansible
     * ``sid``: Will convert Windows security identifier values or Windows account names to a `SecurityIdentifier <https://docs.microsoft.com/en-us/dotnet/api/system.security.principal.securityidentifier?view=netframework-4.7.2>`_ value
     * ``str``: The value is converted to a string
 
+When ``type=dict``, or ``type=list`` and ``elements=dict``, the following keys can also be set for that module option:
+
+- ``apply_defaults``: The value is based on the ``options`` spec defaults for that key if ``True`` and null if ``False``. Only valid when the module option is not defined by the user and ``type=dict``.
+- ``mutually_exclusive``: Same as the root level ``mutually_exclusive`` but validated against the values in the sub dict
+- ``options``: Same as the root level ``options`` but contains the valid options for the sub option
+- ``required_if``: Same as the root level ``required_if`` but validated against the values in the sub dict
+- ``required_one_of``: Same as the root level ``required_one_of`` but validated against the values in the sub dict
+
 A module type can also be a delegate function that converts the value to whatever is required by the module option. For
-example the following can be set as a type value to ensure the value retrievable by the module is the custom value
-required:
+example the following snippet shows how to create a custom type that creates a ``UInt64`` value:
 
 .. code-block:: powershell
 
@@ -300,8 +312,8 @@ using statements at the top of the util:
 There are special comments that can be set in a C# file for controlling the
 compilation parameters. The following comments can be added to the script;
 
-- ``//AssemblyReference -Name <assembly dll> [-CLR [Core|Framework]]``: The assembly DLL to reference during compilation, the ``-CLR`` flag can also be used to state whether to reference when running under .NET Core, Framework, or both (if omitted)
-- ``//NoWarn -Name <error id> [-CLR [Core|Framework]]``: A compiler warning ID to ignore when compiling the code, the ``-CLR`` works the same as above. A list of warnings can be found at `Compiler errors <https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/index>`_
+- ``//AssemblyReference -Name <assembly dll> [-CLR [Core|Framework]]``: The assembly DLL to reference during compilation, the optional ``-CLR`` flag can also be used to state whether to reference when running under .NET Core, Framework, or both (if omitted)
+- ``//NoWarn -Name <error id> [-CLR [Core|Framework]]``: A compiler warning ID to ignore when compiling the code, the optional ``-CLR`` works the same as above. A list of warnings can be found at `Compiler errors <https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/index>`_
 
 As well as this, the following pre-processor symbols are defined;
 
@@ -351,11 +363,11 @@ directory.
 
 C# module utilities can also be stored outside of the standard Ansible distribution for use with custom modules. Like
 PowerShell utils, these are stored in a folder called ``module_utils`` and the filename must end in the extension
-``.cs``, start with ``Ansible``  and be named after the namespace defined in the util.
+``.cs``, start with ``Ansible.``  and be named after the namespace defined in the util.
 
-The below example is a role structure that contains three custom module_utils
-called ``Ansible.ModuleUtils.ModuleUtil1``, ``Ansible.ModuleUtils.ModuleUtil2``, and a C# util containing the
-namespace ``Ansible.CustomUtil``::
+The below example is a role structure that contains two PowerShell custom module_utils called
+``Ansible.ModuleUtils.ModuleUtil1``, ``Ansible.ModuleUtils.ModuleUtil2``, and a C# util containing the namespace
+``Ansible.CustomUtil``::
 
     meta/
       main.yml
@@ -368,12 +380,12 @@ namespace ``Ansible.CustomUtil``::
     tasks/
       main.yml
 
-Each module_util must contain at least one function, and a list of functions, aliases and cmdlets to export for use
-in a module. This can be a blanket export by using ``*``. For example:
+Each PowerShell module_utils must contain at least one function that has been exported with ``Export-ModuleMember``
+at the end of the file. For example
 
 .. code-block:: powershell
 
-    Export-ModuleMember -Alias * -Function * -Cmdlet *
+    Export-ModuleMember -Function Invoke-CustomUtil, Get-CustomInfo
 
 
 Windows playbook module testing
@@ -429,28 +441,27 @@ are some steps that need to be followed to set this up:
         state = "present"
     }
 
-    # Import and C# utils referenced with '#AnsibleRequires -CSharpUtil' or 'using Ansible.;
+    # Import any C# utils referenced with '#AnsibleRequires -CSharpUtil' or 'using Ansible.;
     Import-Module -Name "$($pwd.Path)\powershell\Ansible.ModuleUtils.AddType.psm1"
     $_csharp_utils = @(
         "$($pwd.Path)\csharp\Ansible.Basic.cs"
     )
     Add-CSharpType -References $_csharp_utils -IncludeDebugInfo
 
-    # Import and PowerShell modules referenced with '#Requires -Module`
+    # Import any PowerShell modules referenced with '#Requires -Module`
     Import-Module -Name "$($pwd.Path)\powershell\Ansible.ModuleUtils.Legacy.psm1"
 
     # End of the setup code and start of the module code
     #!powershell
 
-You can add more args to ``$complex_args`` as required by the module. The
-module can now be run on the Windows host either directly through Powershell
-or through an IDE. If using an json args file for the module args, create the file with the structure::
+You can add more args to ``$complex_args`` as required by the module or define the module options through a JSON file
+with the structure::
 
     {
         "ANSIBLE_MODULE_ARGS": {
             "_ansible_check_mode": false,
             "_ansible_diff": false,
-            "path": "C:\\temp"",
+            "path": "C:\\temp",
             "state": "present"
         }
     }
@@ -471,7 +482,7 @@ these steps.
 - Log onto the Windows server using the same user account that Ansible used to execute the module.
 - Navigate to ``%TEMP%\..``. It should contain a folder starting with ``ansible-tmp-``.
 - Inside this folder, open the PowerShell script for the module.
-- In this script is a raw JSON script under ``$json_raw`` which contains the module arguments under ``module_args``. These args can be assigned manually to the ``$complex_args`` variable that is defined on your debug script.
+- In this script is a raw JSON script under ``$json_raw`` which contains the module arguments under ``module_args``. These args can be assigned manually to the ``$complex_args`` variable that is defined on your debug script or put in the ``args.json`` file.
 
 
 Windows unit testing
