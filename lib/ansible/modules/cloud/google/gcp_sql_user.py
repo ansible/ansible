@@ -280,7 +280,7 @@ def collection(module):
 
 def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -288,7 +288,7 @@ def return_if_object(module, response, kind, allow_not_found=False):
         return None
 
     # SQL only: return on 403 if not exist
-    if response.status_code == 403:
+    if allow_not_found and response.status_code == 403:
         return None
 
     try:
@@ -298,8 +298,6 @@ def return_if_object(module, response, kind, allow_not_found=False):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -355,8 +353,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'sql#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
