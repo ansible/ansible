@@ -1,0 +1,2 @@
+bugfixes:
+  - docker_service - correctly parse string values for the `scale` parameter https://github.com/ansible/ansible/pull/45508
