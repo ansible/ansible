@@ -16,11 +16,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ibm_sa_vol
-short_description: Handle volumes on an IBM Spectrum Accelerate storage array
+short_description: Handle volumes on IBM Spectrum Accelerate Family storage systems.
 version_added: "2.7"
 
 description:
-    - "This module creates or deletes volumes to be used on IBM Spectrum Accelerate storage systems."
+    - "This module creates or deletes volumes to be used on IBM Spectrum Accelerate Family storage systems."
 
 options:
     vol:
@@ -46,7 +46,7 @@ extends_documentation_fragment:
     - ibm_storage
 
 author:
-    - Tzur Eliyahu (tzure@il.ibm.com)
+    - Tzur Eliyahu (@tzure)
 '''
 
 EXAMPLES = '''
