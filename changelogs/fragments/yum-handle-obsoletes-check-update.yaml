@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "yum - when checking for updates, now properly include Obsoletes (both old and new) package data in the module JSON output, fixes https://github.com/ansible/ansible/issues/39978"

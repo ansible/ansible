@@ -1075,6 +1075,7 @@ class YumModule(YumDnf):
     @staticmethod
     def parse_check_update(check_update_output):
         updates = {}
+        obsoletes = {}
 
         # remove incorrect new lines in longer columns in output from yum check-update
         # yum line wrapping can move the repo to the next line
@@ -1099,17 +1100,24 @@ class YumModule(YumDnf):
             # ignore irrelevant lines
             # '*' in line matches lines like mirror lists:
             #      * base: mirror.corbina.net
-            # len(line) != 3 could be junk or a continuation
+            # len(line) != 3 or 6 could be junk or a continuation
+            # len(line) = 6 is package obsoletes
             #
             # FIXME: what is  the '.' not in line  conditional for?
 
-            if '*' in line or len(line) != 3 or '.' not in line[0]:
+            if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
             else:
-                pkg, version, repo = line
+                pkg, version, repo = line[0], line[1], line[2]
                 name, dist = pkg.rsplit('.', 1)
                 updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
-        return updates
+
+                if len(line) == 6:
+                    obsolete_pkg, obsolete_version, obsolete_repo = line[3], line[4], line[5]
+                    obsolete_name, obsolete_dist = obsolete_pkg.rsplit('.', 1)
+                    obsoletes.update({obsolete_name: {'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo}})
+
+        return updates, obsoletes
 
     def latest(self, items, repoq):
 
@@ -1122,6 +1130,7 @@ class YumModule(YumDnf):
         pkgs['update'] = []
         pkgs['install'] = []
         updates = {}
+        obsoletes = {}
         update_all = False
         cmd = None
 
@@ -1135,7 +1144,7 @@ class YumModule(YumDnf):
             res['results'].append('Nothing to do here, all packages are up to date')
             return res
         elif rc == 100:
-            updates = self.parse_check_update(out)
+            updates, obsoletes = self.parse_check_update(out)
         elif rc == 1:
             res['msg'] = err
             res['rc'] = rc
@@ -1267,6 +1276,9 @@ class YumModule(YumDnf):
             if will_update or pkgs['install']:
                 res['changed'] = True
 
+            if obsoletes:
+                res['obsoletes'] = obsoletes
+
             return res
 
         # run commands
@@ -1290,6 +1302,9 @@ class YumModule(YumDnf):
 
         if rc:
             res['failed'] = True
+
+        if obsoletes:
+            res['obsoletes'] = obsoletes
 
         return res
 
