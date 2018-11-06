@@ -1,0 +1,2 @@
+bugfixes:
+  - junos - fix terminal prompt regex (https://github.com/ansible/ansible/pull/47096)
