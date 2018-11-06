@@ -15,9 +15,9 @@ DOCUMENTATION = """
         to the containing role/play/include/etc's location.
       - The list of files has precedence over the paths searched.
         i.e, A task in a  role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
-      - Either a list of files (``_terms``) or a key `files` with a list of files is required for this plugin to operate.
+      - Either a list of files C(_terms) or a key `files` with a list of files is required for this plugin to operate.
     notes:
-      - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has ``files`` and ``paths``.
+      - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has C(files) and C(paths).
     options:
       _terms:
         description: list of file names
@@ -120,7 +120,7 @@ class LookupModule(LookupBase):
                 if isinstance(term, dict):
 
                     if 'skip' in term:
-                        display.deprecated('Use errors="ignore" instead of skip', version='2.12')
+                        self._display.deprecated('Use errors="ignore" instead of skip', version='2.12')
 
                     files = term.get('files', [])
                     paths = term.get('paths', [])
