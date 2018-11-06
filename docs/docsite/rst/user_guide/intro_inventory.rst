@@ -96,8 +96,8 @@ Generally speaking, this is not the best way to define variables that describe y
 
 .. note:: Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared.
           * When declared inline with the host, INI values are interpreted as Python literal structures
-          (strings, numbers, tuples, lists, dicts, booleans, None)
-          * When declared in a `:vars` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'.
+          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple C(key=value) parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator. 
+          * When declared in a `:vars` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, C(:vars) sections accept only a single entry per line, so everything after the C(=) must be the value for the entry.
           * Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
           * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 
