@@ -268,6 +268,21 @@ def get_ip_version(cidr):
     raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
 
 
+def get_driver_options(driver_options):
+    result = dict()
+    if driver_options is not None:
+        for k, v in driver_options.items():
+            # Go doesn't like 'True' or 'False'
+            if v is True:
+                v = 'true'
+            elif v is False:
+                v = 'false'
+            else:
+                v = str(v)
+            result[str(k)] = v
+    return result
+
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -287,6 +302,9 @@ class DockerNetworkManager(object):
 
         if self.parameters.ipam_options:
             self.parameters.ipam_config = [self.parameters.ipam_options]
+
+        if self.parameters.driver_options:
+            self.parameters.driver_options = get_driver_options(self.parameters.driver_options)
 
         state = self.parameters.state
         if state == 'present':
