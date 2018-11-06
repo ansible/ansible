@@ -1035,6 +1035,15 @@ def slaac(value, query=''):
     return eui.ipv6(value.network)
 
 
+def ipsort(value, query=''):
+    ''' Return sorted IP address list '''
+    return_v = value
+    if len(return_v) > 1:
+        return_v = sorted(return_v)
+  
+    return return_v
+
+
 # ---- HWaddr / MAC address filters ----
 def hwaddr(value, query='', alias='hwaddr'):
     ''' Check if string is a HW/MAC address and filter it '''
@@ -1102,6 +1111,7 @@ class FilterModule(object):
         'ip4_hex': ip4_hex,
         'ipv4': ipv4,
         'ipv6': ipv6,
+        'ipsort': ipsort,
         'ipsubnet': ipsubnet,
         'next_nth_usable': next_nth_usable,
         'network_in_network': network_in_network,
