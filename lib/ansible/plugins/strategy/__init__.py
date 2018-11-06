@@ -943,6 +943,9 @@ class StrategyBase:
 
         return ret
 
+    def _cond_not_supported_warn(self, task_name):
+        display.warning("%s task does not support when conditional" % task_name)
+
     def _execute_meta(self, task, play_context, iterator, target_host):
 
         # meta tasks store their args in the _raw_params field of args,
