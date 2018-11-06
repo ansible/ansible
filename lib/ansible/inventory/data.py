@@ -224,8 +224,8 @@ class InventoryData(object):
 
     def remove_host(self, host):
 
-        if host in self.hosts:
-            del self.hosts[host]
+        if host.name in self.hosts:
+            del self.hosts[host.name]
 
         for group in self.groups:
             g = self.groups[group]
