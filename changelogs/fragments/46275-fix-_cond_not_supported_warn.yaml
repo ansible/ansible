@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix for StrategyModule object has no attribute _cond_not_supported_warn (https://github.com/ansible/ansible/issues/46275)
