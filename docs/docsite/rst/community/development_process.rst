@@ -29,6 +29,57 @@ Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a 
 
 Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by **Ansibullbot**.
 
+Changelogs
+----------
+
+Please add a changelog fragment with any PR that is
+changelog-worthy (features, major bugfixes, backwards
+incompatiblities, etc) except for new modules and plugins (Our tooling
+will automatically add any new module or plugin)
+
+Ansbile developers in the community will require a changelog for any PRs to be
+merged that should appear in the changelog have a changelog fragment.
+This includes new features, major bugfixes, backward incompatibilities,
+deprecations, and other things that users should know on update.
+
+Minor bugfixes that are going to be backported we would want changelog
+entries in the backport PR (if they didn't already appear in the devel
+PR) as our changlog policy is for minor releases to list a short
+summary of all changes.
+
+How to
+~~~~~~
+A basic changelog fragment is a ``.yaml`` file placed in the
+``changelogs/fragments/`` directory.  Each file contains a yaml dict with
+keys like ``"bugfixes"`` or ``"major_changes"`` followed by a list of
+changelog entries of bugfixes or features.  Each changelog entry is
+rst embedded inside of the yaml file which means that certain
+constructs would need to be escaped so they can be interpreted by rst
+and not by yaml (or escaped for both yaml and rst if that's your
+desire).  Each PR should use a new fragment file rather than adding to
+an existing one.
+
+Here's an example of a changelog fragment for a bugfix:
+
+bugfixes:
+ * copy module - The copy module was attempting to change the mode of files for
+   remote_src=True even if mode was not set as a parameter.  This failed on
+   filesystems which do not have permission bits
+   (https://github.com/ansible/ansible/pull/40099)
+
+ * You can find more example changelog fragments in the changelog
+   directory for a previous release:
+   https://github.com/ansible/ansible/tree/stable-2.6/changelogs/fragments
+
+ * You can also find documentation of the format including hints on
+   embedding rst in the yaml in the reno documentation:
+   https://docs.openstack.org/reno/latest/user/usage.html#editing-a-release-note
+
+ * The toplevel keys (bugfixes, major_changes, etc) are defined in the
+   config file for our release note tool.  You can find the keys
+   recognized for the current release here:
+   https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml#L6
+
 Backport Pull Request Process
 -----------------------------
 
