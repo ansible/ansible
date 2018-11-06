@@ -1180,7 +1180,9 @@ class FreeBsdUser(User):
 
             current_expires = int(self.user_password()[1])
 
-            if self.expires < time.gmtime(0):
+            # If expiration is negative or zero and the current expiration is greater than zero, disable expiration.
+            # In OpenBSD, setting expiration to zero disables expiration. It does not expire the account.
+            if self.expires <= time.gmtime(0):
                 if current_expires > 0:
                     cmd.append('-e')
                     cmd.append('0')
