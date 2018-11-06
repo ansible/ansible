@@ -21,10 +21,10 @@ DOCUMENTATION = '''
       - requests (python library)
     options:
       url:
-        description: URL to the Foreman server
+        description: URL to the Foreman server.  If unset, will connect to the local host over HTTPS.
         env:
           - name: FOREMAN_URL
-        required: True
+        default: null
         ini:
           - section: callback_foreman
             key: url
@@ -105,6 +105,9 @@ class CallbackModule(CallbackBase):
                 self._disable_plugin('The `requests` python module is too old.')
         else:
             self._disable_plugin('The `requests` python module is not installed.')
+
+        if self.FOREMAN_URL is None:
+            self.FOREMAN_URL = 'https://' + os.uname()[1]
 
         if self.FOREMAN_URL.startswith('https://'):
             if not os.path.exists(self.FOREMAN_SSL_CERT[0]):
