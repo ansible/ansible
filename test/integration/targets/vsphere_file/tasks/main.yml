@@ -1,0 +1,88 @@
+- set_facts:
+    file: '/ansible_test_file.txt'
+    directory: '/ansible_test_directory/'
+    vsphere_connection: &vsphere_conn
+      host: '{{ vcenter_ipaddress }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      datacenter: '{{ vcenter_datacenter }}'
+      datastore: '{{ vcenter_datastore }}'
+      validate_certs: false
+
+# Clean up environment
+- name: Delete directory
+  vsphere_file:
+    <<: *vsphere_conn_dir
+    path: '{{ directory }}'
+    state: absent
+  ignore_errors: true
+
+- name: Delete file
+  vsphere_file:
+    <<: *vsphere_file
+    state: absent
+  ignore_errors: true
+
+# Test file operations
+- name: Test file at start
+  vsphere_file: &vsphere_conn_file
+    <<: *vsphere_conn
+    path: '{{ file }}'
+    state: file
+  ignore_errors: true
+
+- name: Touch file
+  vsphere_file:
+    <<: *vsphere_conn_file
+    state: touch
+
+- name: Test file after touch
+  vsphere_file:
+    <<: *vsphere_conn_file
+    state: file
+
+- name: Delete file
+  vsphere_file:
+    <<: *vsphere_conn_file
+    state: absent
+
+- name: Test file after delete
+  vsphere_file:
+    <<: *vsphere_conn_file
+    state: file
+  ignore_errors: true
+
+# Test directory operations
+- name: Test directory at start
+  vsphere_file: &vsphere_con_dir
+    <<: *vsphere_conn
+    path: '{{ directory }}'
+    state: file
+  ignore_errors: true
+
+- name: Create directory
+  vsphere_file:
+    <<: *vsphere_conn_dir
+    path: '{{ directory }}'
+    state: directory
+
+- name: Test directory after create
+  vsphere_file:
+    <<: *vsphere_conn_dir
+    path: '{{ directory }}'
+    state: file
+
+- name: Delete directory
+  vsphere_file:
+    <<: *vsphere_conn_dir
+    path: '{{ directory }}'
+    state: absent
+  ignore_errors: true
+
+- name: Test directory after delete
+  vsphere_file:
+    <<: *vsphere_conn_dir
+    path: '{{ directory }}'
+    state: file
+  ignore_errors: true
+
