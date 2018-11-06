@@ -174,7 +174,7 @@ extends_documentation_fragment: tower
 notes:
   - JSON for survey_spec can be found in Tower API Documentation. See
     U(https://docs.ansible.com/ansible-tower/latest/html/towerapi/api_ref.html#/Job_Templates/Job_Templates_job_templates_survey_spec_create)
-    for POST operation payload example. 
+    for POST operation payload example.
 '''
 
 
