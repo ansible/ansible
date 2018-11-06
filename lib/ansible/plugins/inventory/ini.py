@@ -14,16 +14,16 @@ DOCUMENTATION = '''
         - The C(children) modifier indicates that the section contains groups.
         - The C(vars) modifier indicates that the section contains variables assigned to members of the group.
         - Anything found outside a section is considered an 'ungrouped' host.
-        - Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared.
+        - Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared within your inventory:
         - When declared inline with the host, INI values are are processed by Python's ast.literal_eval function
           (U(https://docs.python.org/2/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures (strings, numbers, tuples, lists, dicts, booleans, None)
-        - When declared in a `:vars` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'.
+        - When declared in a C(:vars) section, INI values are interpreted as strings. For example C(var=FALSE) would create a string equal to C(FALSE).
         - Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
         - See the Examples for proper quoting to prevent changes to variable type.
     notes:
         - Replaces the previously hardcoded INI inventory.
         - Must be whitelisted in configuration to function.
-        - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable. The M(yaml) plugin processes variable values consistently and correctly.
+        - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 '''
 
 EXAMPLES = '''
