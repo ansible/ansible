@@ -330,8 +330,9 @@ class InventoryModule(BaseFileInventoryPlugin):
         if pattern.strip() == '---':
             raise AnsibleParserError("Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
 
-        if hostpattern.strip().endswith(':')  and port is None:
-            raise AnsibleParserError("Invalid host pattern '%s' supplied, ending in ':' is not allowed, this character is reserved to provide a port." % hostpattern)
+        if hostpattern.strip().endswith(':') and port is None:
+            raise AnsibleParserError("Invalid host pattern '%s' supplied, ending in ':' is not allowed, this character is reserved to provide a port." %
+                                     hostpattern)
 
         # Once we have separated the pattern, we expand it into list of one or
         # more hostnames, depending on whether it contains any [x:y] ranges.
