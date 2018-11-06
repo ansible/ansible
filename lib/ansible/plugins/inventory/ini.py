@@ -14,16 +14,16 @@ DOCUMENTATION = '''
         - The C(children) modifier indicates that the section contains groups.
         - The C(vars) modifier indicates that the section contains variables assigned to members of the group.
         - Anything found outside a section is considered an 'ungrouped' host.
-        - Values passed in using the C(key=value) syntax are interpreted as Python literal structure (strings, numbers, tuples, lists, dicts,
-          booleans, None), alternatively as string. For example C(var=FALSE) would create a string equal to 'FALSE'. Do not rely on types set
-          during definition, always make sure you specify type with a filter when needed when consuming the variable.
+        - Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared.
+        - When declared inline with the host, INI values are are processed by Python's ast.literal_eval function
+          (U(https://docs.python.org/2/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures (strings, numbers, tuples, lists, dicts, booleans, None)
+        - When declared in a `:vars` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'.
+        - Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+        - See the Examples for proper quoting to prevent changes to variable type.
     notes:
-        - It takes the place of the previously hardcoded INI inventory.
-        - To function it requires being whitelisted in configuration.
-        - Variable values inline to a host are processed by Python's ast.literal_eval function
-          (U(https://docs.python.org/2/library/ast.html#ast.literal_eval)), but not when declared in a `:vars` section,
-          which leasds to confusion on actual type of a variable in some cases.  See the Examples for proper quoting to prevent changes.
-          Another option would be to use the yaml format for inventory source which processes the values correctly.
+        - Replaces the previously hardcoded INI inventory.
+        - Must be whitelisted in configuration to function.
+        - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable. The M(yaml) plugin processes variable values consistently and correctly.
 '''
 
 EXAMPLES = '''
@@ -31,11 +31,11 @@ EXAMPLES = '''
       # example cfg file
       [web]
       host1
-      host2 ansible_port=222 # this is an int
+      host2 ansible_port=222 # defined inline, interpreted as an integer
 
       [web:vars]
       http_port=8080 # all members of 'web' will inherit these
-      myvar=23 # this is a string
+      myvar=23 # defined in a :vars section, interpreted as a string
 
       [web:children] # child groups will automatically add their hosts to partent group
       apache
