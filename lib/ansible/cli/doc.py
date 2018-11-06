@@ -185,7 +185,7 @@ class DocCLI(CLI):
                 (plugin_type, plugin_name, filename))
 
         if doc is None:
-            if plugin_type == 'module' and 'removed' not in metadata.get('status', []):
+            if 'removed' not in metadata.get('status', []):
                 raise AnsibleError(
                     "%s %s at %s has a documentation error formatting or is missing documentation." %
                     (plugin_type, plugin_name, filename))
