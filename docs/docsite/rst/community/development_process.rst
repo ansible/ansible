@@ -29,6 +29,9 @@ Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a 
 
 Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by **Ansibullbot**.
 
+
+.. _development_changelogs:
+
 Changelogs
 ----------
 
@@ -46,6 +49,46 @@ Minor bugfixes that are going to be backported we would want changelog
 entries in the backport PR (if they didn't already appear in the devel
 PR) as our changlog policy is for minor releases to list a short
 summary of all changes.
+
+Creating New Fragments
+~~~~~~~~~~~~~~~~~~~~~~
+
+Create a new file with a unique and descriptive name in ``changelogs/fragments/`` that ends in ``.yaml`` such as ``user-40696-backup-shadow-file.yaml``
+
+A single changelog fragment may contain multiple sections but most will only contain one section. Here are the valid sections and a description of each:
+
+**major_changes**
+    Major changes to Ansible itself. Generally does not include module or plugin changes.
+
+**minor_changes**
+  Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
+
+**deprecated_features**
+  Features that have been deprecated and are scheduled for removal in a future release.
+
+**removed_features**
+  Features that were previously deprecated and are now removed.
+
+**bugfixes**
+  Fixes that resolve issues. If there is a specific issue related to this bugfix, add a link in the changelog entry.
+
+**known_issues**
+  Known issues that are currently not fixed or will not be fixed.
+
+Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and include a link to the related issue if one exists. Here are some examples:
+
+.. code-block:: yaml
+
+  bugfixes:
+    - win_updates - fixed issue where running win_updates on async fails without any error
+
+.. code-block:: yaml
+
+  minor_changes:
+    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
+
+Commit the changelog fragment and include it with the pull request.
+
 
 How to
 ~~~~~~
