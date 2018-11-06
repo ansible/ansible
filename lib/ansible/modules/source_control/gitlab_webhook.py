@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gitlab_webhook
-short_description: Creates, updates or deletes Gitlab webhook
-version_added: "2.6"
+short_description: Creates, updates or deletes GitLab webhook
+version_added: "2.8"
 description:
-  - When the webhook does not exists in this Gitlab project, it will be created.
-  - When the webhook does exists and state=absent, the webhook will be deleted.
+  - When the webhook does not exists in this GitLab project, it will be created.
+  - When the webhook does exists and C(state=absent), the webhook will be deleted.
   - When changes are made to the webhook, the webhook will be updated.
 author: "Raphaël Droz (@drzraf)"
 requirements:
@@ -27,7 +27,7 @@ requirements:
 options:
   server_url:
     description:
-      - Url of Gitlab server, with protocol (http or https).
+      - Url of GitLab server, with protocol (http or https).
     required: true
   validate_certs:
     description:
@@ -36,15 +36,15 @@ options:
     default: 'yes'
   login_user:
     description:
-      - Gitlab user name
+      - GitLab user name
     default: null
   login_password:
     description:
-      - Gitlab password for login_user
+      - GitLab password for login_user
     default: null
   login_token:
     description:
-      - Gitlab personal token for logging in (preferred method)
+      - GitLab personal token for logging in (preferred method)
     default: null
   project:
     description:
@@ -62,7 +62,7 @@ options:
     default: ["push"]
   hook_id:
     description:
-      - The Gitlab id of the webhook
+      - The GitLab id of the webhook
     default: null
   solo:
     description:
@@ -76,7 +76,7 @@ options:
     default: 'yes'
   token:
     description:
-      - Secret token usually used to validate Gitlab HTTP requests
+      - Secret token usually used to validate GitLab HTTP requests
     default: null
   state:
     description:
@@ -87,8 +87,8 @@ options:
 '''
 
 EXAMPLES = '''
-# Deletes a Gitlab webhook specifying only its url
-- name: delete Gitlab webhook
+# Deletes a GitLab webhook specifying only its url
+- name: delete GitLab webhook
   gitlab_webhook:
     server_url: https://gitlab.com
     login_token: foobar
@@ -97,8 +97,8 @@ EXAMPLES = '''
     state: absent
   delegate_to: localhost
 
-# Deletes a Gitlab webhook specifying its hook_id (URL can be omitted)
-- name: delete Gitlab webhook
+# Deletes a GitLab webhook specifying its hook_id (URL can be omitted)
+- name: delete GitLab webhook
   gitlab_webhook:
     server_url: https://gitlab.com
     login_token: foobar
@@ -107,7 +107,7 @@ EXAMPLES = '''
     state: absent
   delegate_to: localhost
 
-# Creates a Gitlab webhook or alter it if one already exists
+# Creates a GitLab webhook or alter it if one already exists
 # for https://hook.me/app.php
 - name: webhook for hook.me
   gitlab_webhook:
@@ -163,7 +163,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 webhook:
-  description: A dict containing key/value pairs representing Gitlab webhook
+  description: A dict containing key/value pairs representing GitLab webhook
   returned: success
   type: dictionary
   sample:
@@ -351,7 +351,7 @@ def main():
         git.auth()
         project = git.projects.get(project)
     except (gitlab.GitlabHttpError, gitlab.GitlabAuthenticationError, gitlab.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server", exception=to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server", exception=to_native(e))
 
     HookHelper = GitLabWebhook(module, git)
     if hook_id:
