@@ -4,14 +4,14 @@
 Loops
 *****
 
-Sometimes you want to repeat a task multiple times. In computer programming, this is called a loop. Common Ansible loops include installing several packages with the :ref:`yum module <yum_module>`, creating multiple users with the :ref:`user module <user_module>`, and
+Sometimes you want to repeat a task multiple times. In computer programming, this is called a loop. Common Ansible loops include changing ownership on several files and/or directories with the :ref:`file module`, creating multiple users with the :ref:`user module <user_module>`, and
 repeating a polling step until a certain result is reached. Ansible offers two keywords for creating loops: ``loop`` and ``with_<lookup>``.
 
 .. note::
-   * We added ``loop`` in Ansible 2.5, but it is not yet a full replacement for ``with_<lookup>``.
-   * We have not deprecated the use of ``with_<lookup>``.
-   * We are still discussing what UX changes can be made to enable ``loop`` to replace ``with_<lookup>`` in the future.
-   * If we eventually deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
+   * We added ``loop`` in Ansible 2.5. It is not yet a full replacement for ``with_<lookup>``, but we recommend it for most use cases.
+   * We have not deprecated the use of ``with_<lookup>`` - that syntax will still be valid for the foreseeable future.
+   * We are looking to improve ``loop`` syntax - watch this page and the :ref:`changelog <https://github.com/ansible/ansible/tree/devel/changelogs>` for updates.
+   * If we ever deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
 
 .. contents::
    :local:
@@ -63,7 +63,7 @@ Either of these examples would be the equivalent of::
         state: present
         groups: "wheel"
 
-You can pass a list directly to a parameter for some plugins, like the yum and apt modules. When available, passing the list to a parameter is better than looping over the task. For example::
+You can pass a list directly to a parameter for some plugins. Most of the packaging modules, like :ref:`yum_module` and :ref:`apt_module`, have this capability. When available, passing the list to a parameter is better than looping over the task. For example::
 
    - name: optimal yum
      yum:
@@ -76,7 +76,7 @@ You can pass a list directly to a parameter for some plugins, like the yum and a
        state: present
      loop: "{{  list_of_packages  }}"
 
-Review the module or plugin's documentation for details.
+Check the :ref:`module documentation <modules_by_category>` to see if you can pass a list to any particular module's parameter(s).
 
 Iterating over a list of hashes
 -------------------------------
