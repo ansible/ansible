@@ -366,6 +366,17 @@ options:
     - Specify convert disk type while cloning template or virtual machine.
     choices: [ thin, thick, eagerzeroedthick ]
     version_added: '2.8'
+  answer:
+    description:
+    - A list of questions to answer, should one or more arise while waiting for the task to complete.
+    - Some common uses are to allow a cdrom to be changed even if locked, or to answer the question
+      as to whether a VM was copied or moved.
+    - 'Valid attributes are:'
+    - '  - C(question) (string): The message id, for example "msg.cdromdisconnect.locked".'
+    - '  - C(response) (string): The choice key, for example "button.yes".'
+    - If not set, the default behavior for any question that comes up will be the default answer
+      in order to avoid a situation where manual intervention is required to unblock a task.
+    version_added: '2.9'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -439,6 +450,21 @@ EXAMPLES = r'''
     wait_for_ip_address: yes
   delegate_to: localhost
   register: deploy
+
+- name: Forcibly change the attached virtual optical media
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    folder: /testvms
+    name: testvm_2
+    cdrom:
+      type: iso
+      iso_path: "[datastore1] livecd.iso"
+    answer:
+    - question: "msg.cdromdisconnect.locked"
+      response: "button.yes"
 
 - name: Clone a virtual machine from Windows template and customize
   vmware_guest:
@@ -852,6 +878,32 @@ class PyVmomiHelper(PyVmomi):
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
+        self.questions = None  # questions observed and answered as part of executing the task
+
+    def make_result(self, task, failed=None, op=None):
+        return {
+            'changed': self.change_applied,
+            'failed': failed,
+            'msg': task.info.error.msg if task.info.error else None,
+            'op': op,
+            'questions': self.questions
+        }
+
+    def record_answered_question(self, question, answer):
+        """
+        Record any VMware question and answer we provided.
+
+        Arguments:
+          - question: the vm.runtime.question
+          - answer: the label of the answer we gave
+        """
+        if not self.questions:
+            self.questions = []
+        self.questions.append({
+            "question": question.text,
+            "answer": answer,
+            "choices": [choice.label for choice in question.choice.choiceInfo]
+        })
 
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
@@ -865,9 +917,9 @@ class PyVmomiHelper(PyVmomi):
         task = vm.Destroy()
         self.wait_for_task(task)
         if task.info.state == 'error':
-            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'destroy'}
+            return self.make_result(task, failed=True, op='destroy')
         else:
-            return {'changed': self.change_applied, 'failed': False}
+            return self.make_result(task, failed=False, op='destroy')
 
     def configure_guestid(self, vm_obj, vm_creation=False):
         # guest_id is not required when using templates
@@ -1142,7 +1194,7 @@ class PyVmomiHelper(PyVmomi):
                         task = vm_obj.UpgradeVM_Task(new_version)
                         self.wait_for_task(task)
                         if task.info.state == 'error':
-                            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'upgrade'}
+                            return self.make_result(task, failed=True, op='upgrade')
                     except vim.fault.AlreadyUpgraded:
                         # Don't fail if VM is already upgraded.
                         pass
@@ -2260,17 +2312,10 @@ class PyVmomiHelper(PyVmomi):
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2173
 
             # provide these to the user for debugging
-            clonespec_json = serialize_spec(clonespec)
-            configspec_json = serialize_spec(self.configspec)
-            kwargs = {
-                'changed': self.change_applied,
-                'failed': True,
-                'msg': task.info.error.msg,
-                'clonespec': clonespec_json,
-                'configspec': configspec_json,
-                'clone_method': clone_method
-            }
-
+            kwargs = self.make_result(task, failed=True, op='deploy')
+            kwargs['clonespec'] = serialize_spec(clonespec)
+            kwargs['configspec'] = serialize_spec(self.configspec)
+            kwargs['clone_method'] = clone_method
             return kwargs
         else:
             # set annotation
@@ -2281,7 +2326,7 @@ class PyVmomiHelper(PyVmomi):
                 task = vm.ReconfigVM_Task(annotation_spec)
                 self.wait_for_task(task)
                 if task.info.state == 'error':
-                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'annotation'}
+                    return self.make_result(task, failed=True, op='annotation')
 
             if self.params['customvalues']:
                 vm_custom_spec = vim.vm.ConfigSpec()
@@ -2289,7 +2334,7 @@ class PyVmomiHelper(PyVmomi):
                 task = vm.ReconfigVM_Task(vm_custom_spec)
                 self.wait_for_task(task)
                 if task.info.state == 'error':
-                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customvalues'}
+                    return self.make_result(task, failed=True, op='customvalues')
 
             if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
@@ -2300,11 +2345,13 @@ class PyVmomiHelper(PyVmomi):
                 if self.params['wait_for_customization']:
                     is_customization_ok = self.wait_for_customization(vm)
                     if not is_customization_ok:
-                        vm_facts = self.gather_facts(vm)
-                        return {'changed': self.change_applied, 'failed': True, 'instance': vm_facts, 'op': 'customization'}
+                        kwargs = self.make_result(task, failed=True, op='customization')
+                        kwargs['instance'] = self.gather_facts(vm)
+                        return kwargs
 
-            vm_facts = self.gather_facts(vm)
-            return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
+            kwargs = self.make_result(task, failed=False, op='deploy')
+            kwargs['instance'] = self.gather_facts(vm)
+            return kwargs
 
     def get_snapshots_by_name_recursively(self, snapshots, snapname):
         snap_obj = []
@@ -2342,7 +2389,7 @@ class PyVmomiHelper(PyVmomi):
                 task = self.current_vm_obj.RelocateVM_Task(spec=self.relospec)
                 self.wait_for_task(task)
                 if task.info.state == 'error':
-                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'relocate'}
+                    return self.make_result(task, failed=True, op='relocate')
 
         # Only send VMWare task if we see a modification
         if self.change_detected:
@@ -2354,14 +2401,14 @@ class PyVmomiHelper(PyVmomi):
                                           " product versioning restrictions: %s" % to_native(e.msg))
             self.wait_for_task(task)
             if task.info.state == 'error':
-                return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'reconfig'}
+                return self.make_result(task, failed=True, op='reconfig')
 
         # Rename VM
         if self.params['uuid'] and self.params['name'] and self.params['name'] != self.current_vm_obj.config.name:
             task = self.current_vm_obj.Rename_Task(self.params['name'])
             self.wait_for_task(task)
             if task.info.state == 'error':
-                return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'rename'}
+                return self.make_result(task, failed=True, op='rename')
 
         # Mark VM as Template
         if self.params['is_template'] and not self.current_vm_obj.config.template:
@@ -2448,15 +2495,15 @@ class PyVmomiHelper(PyVmomi):
             self.module.fail_json(msg="failed to customization virtual machine due to fault: %s" % to_native(e.msg))
         self.wait_for_task(task)
         if task.info.state == 'error':
-            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customize_exist'}
+            return self.make_result(task, failed=True, op='customize_exist')
 
         if self.params['wait_for_customization']:
             set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
             is_customization_ok = self.wait_for_customization(self.current_vm_obj)
             if not is_customization_ok:
-                return {'changed': self.change_applied, 'failed': True, 'op': 'wait_for_customize_exist'}
+                return self.make_result(task, failed=True, op='wait_for_customize_exist')
 
-        return {'changed': self.change_applied, 'failed': False}
+        return self.make_result(task, failed=False, op='customize_exist')
 
     def wait_for_task(self, task, poll_interval=1):
         """
@@ -2469,12 +2516,49 @@ class PyVmomiHelper(PyVmomi):
         Modifies:
           - self.change_applied
         """
+        vm = self.current_vm_obj
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.Task.html
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.TaskInfo.html
         # https://github.com/virtdevninja/pyvmomi-community-samples/blob/master/samples/tools/tasks.py
-        while task.info.state not in ['error', 'success']:
+        while task.info.state not in [vim.TaskInfo.State.error,
+                                      vim.TaskInfo.State.success]:
+            # detect whether an interactive question is required to allow the task to proceed
+            if vm and vm.runtime and vm.runtime.question:
+                # Converting the question to json allows us to include the entire contents in any failure
+                question = self.to_json(vm.runtime.question)
+                question_id = vm.runtime.question.id
+                message_id = vm.runtime.question.message[0].id
+                if not self.params['answer']:
+                    # when the caller does not specify an answer, we choose the default to avoid
+                    # a situation where only an interactive response can resolve the situation
+                    choice = vm.runtime.question.choice
+                    self.params['answer'] = [{"question": message_id,
+                                              "response": choice.choiceInfo[choice.defaultIndex].label}]
+
+                match = [item for item in self.params['answer'] if item['question'] == message_id]
+                if len(match) > 1:
+                    self.module.fail_json(msg="While handling an interactive question, multiple answers for the same question were specified.",
+                                          match=match, question=question)
+                elif len(match) == 1:
+                    responses = [item for item in vm.runtime.question.choice.choiceInfo if item.label == match[0]['response']]
+                    if len(responses) > 1:
+                        # This would indicate the choiceInfo from vCenter contained a duplicate label (not expected):
+                        self.module.fail_json(msg="While handling an interactive question, multiple answer choices matched.",
+                                              match=match, responses=responses, question=question)
+                    elif len(responses) == 1:
+                        self.record_answered_question(vm.runtime.question, responses[0].label)
+                        vm.AnswerVM(
+                            questionId=question_id,
+                            answerChoice=responses[0].key)
+                    else:
+                        self.module.fail_json(msg="While handling an interactive question, none of the supplied answers could be used.",
+                                              match=match, question=question)
+                else:
+                    self.module.fail_json(
+                        msg="While waiting for a task to complete, an interactive question appeared that must be answered but no answers matched.",
+                        question=question)
             time.sleep(poll_interval)
-        self.change_applied = self.change_applied or task.info.state == 'success'
+        self.change_applied = self.change_applied or task.info.state == vim.TaskInfo.State.success
 
     def wait_for_vm_ip(self, vm, poll=100, sleep=5):
         ips = None
@@ -2556,6 +2640,7 @@ def main():
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
+        answer=dict(type='list', default=[])
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -2637,8 +2722,6 @@ def main():
                 )
                 module.exit_json(**result)
             result = pyv.deploy_vm()
-            if result['failed']:
-                module.fail_json(msg='Failed to create a virtual machine : %s' % result['msg'])
 
     if result['failed']:
         module.fail_json(**result)
