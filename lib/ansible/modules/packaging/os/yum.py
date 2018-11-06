@@ -1280,10 +1280,8 @@ class YumModule(YumDnf):
             rc, out, err = self.module.run_command(cmd)
             res['changed'] = True
         elif self.update_only:
-            import q; q.q("ELIF SELF.UPDATE_ONLY: {}".format(pkgs))
             if pkgs['update']:
                 cmd = self.yum_basecmd + ['update'] + pkgs['update']
-                import q; q.q(cmd)
                 lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
                 rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
                 out_lower = out.strip().lower()
@@ -1293,7 +1291,6 @@ class YumModule(YumDnf):
             else:
                 rc, out, err = [0, '', '']
         elif pkgs['install'] or will_update and not self.update_only:
-            import q; q.q("ELIF pkgs['install]': {}".format(pkgs))
             cmd = self.yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
             lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
