@@ -231,7 +231,7 @@ if ($return_content -or $dest) {
         $resp_st.Close()
 
         if ($return_content) {
-            $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin)
+            $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
             $content_bytes = $memory_st.ToArray()
             $result.content = [System.Text.Encoding]::UTF8.GetString($content_bytes)
             if ($result.ContainsKey("content_type") -and $result.content_type -Match ($JSON_CANDIDATES -join '|')) {
@@ -244,7 +244,7 @@ if ($return_content -or $dest) {
         }
 
         if ($dest) {
-            $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin)
+            $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
             $changed = $true
 
             if (Test-AnsiblePath -Path $dest) {
@@ -260,7 +260,7 @@ if ($return_content -or $dest) {
 
             $result.changed = $changed
             if ($changed -and (-not $check_mode)) {
-                $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin)
+                $memory_st.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
                 $file_stream = [System.IO.File]::Create($dest)
                 try {
                     $memory_st.CopyTo($file_stream)
