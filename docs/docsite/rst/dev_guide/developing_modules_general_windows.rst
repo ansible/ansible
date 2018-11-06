@@ -174,6 +174,7 @@ When creating a new module there are a few things to keep in mind:
 - Avoid using PSCustomObjects unless necessary
 - Look for common functions in ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work. These can be imported by adding the line ``#Requires -Module *`` where * is the filename to import, and will be automatically included with the module code sent to the Windows target when run via Ansible
 - As well as PowerShell module utils, C# module utils are stored in ``./lib/ansible/module_utils/csharp/`` and are automatically imported in a module execution if the line ``#AnsibleRequires -CSharpUtil *`` is present
+- C# and PowerShell module utils achieve the same goal but C# allows a developer to implement low level tasks, such as calling the Win32 API, and can be faster in some cases
 - Ensure the code runs under Powershell v3 and higher on Windows Server 2008 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
 - Ansible runs modules under strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
 - Favour native Powershell cmdlets over executable calls if possible
@@ -380,7 +381,7 @@ The below example is a role structure that contains two PowerShell custom module
     tasks/
       main.yml
 
-Each PowerShell module_utils must contain at least one function that has been exported with ``Export-ModuleMember``
+Each PowerShell module_util must contain at least one function that has been exported with ``Export-ModuleMember``
 at the end of the file. For example
 
 .. code-block:: powershell
