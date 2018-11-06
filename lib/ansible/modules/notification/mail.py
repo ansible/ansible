@@ -264,8 +264,8 @@ def main():
     try:
         if secure != 'never':
             try:
-                smtp = smtplib.SMTP_SSL(host=host, timeout=timeout)
-                code, smtpmessage = smtp.connect(host, port=port)
+                smtp = smtplib.SMTP_SSL(host=host, port=port, timeout=timeout)
+                code, smtpmessage = smtp.connect(host, port)
                 secure_state = True
             except ssl.SSLError as e:
                 if secure == 'always':
@@ -275,8 +275,8 @@ def main():
                 pass
 
         if not secure_state:
-            smtp = smtplib.SMTP(timeout=timeout)
-            code, smtpmessage = smtp.connect(host, port=port)
+            smtp = smtplib.SMTP(host=host, port=port, timeout=timeout)
+            code, smtpmessage = smtp.connect(host, port)
 
     except smtplib.SMTPException as e:
         module.fail_json(rc=1, msg='Unable to Connect %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
