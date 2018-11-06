@@ -147,6 +147,9 @@ class CallbackBase(AnsiblePlugin):
 
             self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
 
+    def _serialize_diff(self, diff):
+        return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+
     def _get_diff(self, difflist):
 
         if not isinstance(difflist, list):
@@ -166,7 +169,7 @@ class CallbackBase(AnsiblePlugin):
                 # format complex structures into 'files'
                 for x in ['before', 'after']:
                     if isinstance(diff[x], MutableMapping):
-                        diff[x] = json.dumps(diff[x], sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+                        diff[x] = self._serialize_diff(diff[x])
                 if 'before_header' in diff:
                     before_header = u"before: %s" % diff['before_header']
                 else:
