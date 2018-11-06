@@ -209,8 +209,9 @@ notes:
     "@development-tools" and environment groups are "@^gnome-desktop-environment".
     Use the "yum group list" command to see which category of group the group
     you want to install falls into.'
-  - 'use "shell: yum clean all" - there is no other way to clear the cache and its
-    been decided to not implement it as part of the module.
+  - 'The yum module does not support clearing yum cache in an idempotent way, so it
+    was decided not to implement it, the only method is to use shell and call the yum
+    command directly, namely "shell: yum clean all"
     https://github.com/ansible/ansible/pull/31450#issuecomment-352889579'
 # informational: requirements for nodes
 requirements:
