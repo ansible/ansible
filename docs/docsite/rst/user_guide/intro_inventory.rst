@@ -99,6 +99,7 @@ Generally speaking, this is not the best way to define variables that describe y
           (strings, numbers, tuples, lists, dicts, booleans, None)
           * When declared in a `:vars` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'.
           * Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+          * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
 
