@@ -355,9 +355,10 @@ the user token, it will continue to use the limited token during execution.
 
 Before Ansible 2.5, a token was only able to be elevated when UAC was disabled
 or the remote user had the ``SeTcbPrivilege`` assigned. This restriction has
-been lifted in Ansible 2.5 and a user that is a member of the
-``BUILTIN\Administrators`` group should have an elevated token during the
-module execution.
+been lifted in Ansible 2.5 and the remote user only requires the
+``SeDebugPrivilege`` which is assigned to Administrators by default. If the
+debug privilege is not available, the become process will run with a limited
+set of privileges and groups.
 
 To determine the type of token that Ansible was able to get, run the following
 task and check the output::
@@ -365,9 +366,9 @@ task and check the output::
     - win_whoami:
       become: yes
 
-Under the ``GROUP INFORMATION`` section, the ``Mandatory Label`` entry
-determines whether the user has Administrative rights. Here are the labels that
-can be returned and what they mean:
+Under the ``label`` key, the ``account_name`` entry determines whether the user
+has Administrative rights. Here are the labels that can be returned and what
+they represent:
 
 * ``Medium``: Ansible failed to get an elevated token and ran under a limited
   token. Only a subset of the privileges assigned to user are available during
@@ -380,9 +381,9 @@ can be returned and what they mean:
   level of privileges available.
 
 The output will also show the list of privileges that have been granted to the
-user. When ``State==Disabled``, the privileges have not been enabled but can be
-if required. In most scenarios these privileges are automatically enabled when
-required.
+user. When the privilege value is ``disabled``, the privilege is assigned to
+the logon token but has not been enabled. In most scenarios these privileges
+are automatically enabled when required.
 
 If running on a version of Ansible that is older than 2.5 or the normal
 ``runas`` escalation process fails, an elevated token can be retrieved by:
