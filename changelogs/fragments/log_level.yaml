@@ -1,4 +1,4 @@
 minor_changes:
 - Changed the default log level for `DEFAULT_LOG_PATH <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-log-path>`_
-  to ``INFO`` unless ``DEFAULT_DEBUG <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-debug>`_
+  to ``INFO`` unless `DEFAULT_DEBUG <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-debug>`_
   is set
