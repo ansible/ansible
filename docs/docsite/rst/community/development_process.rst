@@ -27,7 +27,7 @@ Pull Requests
 
 Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general.
 
-Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by **Ansibullbot**.
+Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by `Ansibullbot`_.
 
 
 .. _development_changelogs:
@@ -36,19 +36,19 @@ Changelogs
 ----------
 
 Please add a changelog fragment with any PR that is
-changelog-worthy (features, major bugfixes, backwards
-incompatiblities, etc) except for new modules and plugins (Our tooling
-will automatically add any new module or plugin)
+:ref:`changelog-worthy <creating_new_changelog_fragments>`. New modules and
+plugins do not require changelogs as our tooling will automatically add any new
+module or plugin.
 
-Ansbile developers in the community will require a changelog for any PRs to be
-merged that should appear in the changelog have a changelog fragment.
-This includes new features, major bugfixes, backward incompatibilities,
-deprecations, and other things that users should know on update.
+Ansbile requires a changelog for any PRs to be merged that should appear in the
+changelog have a changelog fragment.
+This includes all :ref:`changelog-worthy changes
+<creating_new_changelog_fragments>`. Minor bugfixes that are going to be
+backported we would want changelog entries in the backport PR (if they didn't
+already appear in the devel PR) as our changlog policy is for minor releases to
+list a short summary of all changes.
 
-Minor bugfixes that are going to be backported we would want changelog
-entries in the backport PR (if they didn't already appear in the devel
-PR) as our changlog policy is for minor releases to list a short
-summary of all changes.
+.. _creating_new_changelog_fragments:
 
 Creating New Fragments
 ~~~~~~~~~~~~~~~~~~~~~~
