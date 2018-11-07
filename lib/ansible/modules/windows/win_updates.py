@@ -34,8 +34,11 @@ options:
     category_names:
         description:
         - A scalar or list of categories to install updates from. To get the list
-          of categories, run the module with C(state=query). The category must
+          of categories, run the module with C(state=searched). The category must
           be the full category string, but is case insensitive.
+        - Some possible categories are Application, Connectors, Critical Updates,
+          Definition Updates, Developer Kits, Feature Packs, Guidance, Security
+          Updates, Service Packs, Tools, Update Rollups and Updates.
         type: list
         default: [ CriticalUpdates, SecurityUpdates, UpdateRollups ]
     reboot:
