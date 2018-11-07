@@ -94,9 +94,12 @@ In the above example, trying to ansible against the host alias "jumper" (which m
 Note that this is using a feature of the inventory file to define some special variables.
 Generally speaking, this is not the best way to define variables that describe your system policy, but we'll share suggestions on doing this later.
 
-.. note:: Values passed in the INI format using the ``key=value`` syntax are not interpreted as Python literal structure
-          (strings, numbers, tuples, lists, dicts, booleans, None), but as a string. For example ``var=FALSE`` would create a string equal to 'FALSE'.
-          Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+.. note:: Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared.
+          * When declared inline with the host, INI values are interpreted as Python literal structures
+          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple ``key=value`` parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator.
+          * When declared in a ``:vars`` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, ``:vars`` sections accept only a single entry per line, so everything after the ``=`` must be the value for the entry.
+          * Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+          * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
 
@@ -140,7 +143,7 @@ As described above, it is easy to assign variables to hosts that will be used la
 The YAML version:
 
 .. code-block:: yaml
-    
+
     atlanta:
       host1:
         http_port: 80
@@ -502,4 +505,3 @@ Here is an example of how to instantly deploy to created containers::
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
