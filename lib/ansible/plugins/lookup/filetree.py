@@ -183,6 +183,7 @@ class LookupModule(LookupBase):
             term_file = os.path.basename(term)
             dwimmed_path = self._loader.path_dwim_relative(basedir, 'files', os.path.dirname(term))
             path = os.path.join(dwimmed_path, term_file)
+            display.debug("Walking '{0}'".format(path))
             for root, dirs, files in os.walk(path, topdown=True):
                 for entry in dirs + files:
                     relpath = os.path.relpath(os.path.join(root, entry), path)
@@ -191,6 +192,7 @@ class LookupModule(LookupBase):
                     if relpath not in [entry['path'] for entry in ret]:
                         props = file_props(path, relpath)
                         if props is not None:
+                            display.debug("  found '{0}'".format(os.path.join(path, relpath)))
                             ret.append(props)
 
         return ret
