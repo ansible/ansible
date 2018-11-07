@@ -5,14 +5,6 @@
   register: invalid_state
   failed_when: invalid_state.msg != 'state must be either installed or searched'
 
-- name: expect failure with invalid category name
-  win_updates:
-    state: searched
-    category_names:
-    - Invalid
-  register: invalid_category_name
-  failed_when: invalid_category_name.msg != 'Unknown category_name Invalid, must be one of (Application,Connectors,CriticalUpdates,DefinitionUpdates,DeveloperKits,FeaturePacks,Guidance,SecurityUpdates,ServicePacks,Tools,UpdateRollups,Updates)'
-
 - name: ensure log file not present before tests
   win_file:
     path: '{{win_updates_dir}}/update.log'
