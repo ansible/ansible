@@ -20,13 +20,6 @@ version_added: "2.8"
 
 description:
     - This module creates a firmware group, so that you can apply firmware policy to nodes.
-    
-dependancies:
-    - This module is dependent on the aci_firmware_policy, so that must be created in conjunction with this module. 
-    The object, firmwareFwGrp is created with this module as well as sub-class firmwareRsFwgrpp. The sub-class, 
-    firmwareRsFwgrpp, references the firmwareFwP (Firmware Policy) which was created with aci_firmware_policy. When 
-    the firmware group is deleted using this current module, the class firmwareFwP is also deleted. 
-
 options:
     group:
         description:
@@ -35,7 +28,7 @@ options:
     firmwarepol:
         description:
             - This is the name of the firmware policy, which was create by aci_firmware_policy. It is important that
-            you use the same name as the policy created with aci_firmware_policy
+            - you use the same name as the policy created with aci_firmware_policy
         required: false
     state:
         description:
@@ -46,50 +39,18 @@ options:
 
 extends_documentation_fragment:
     - ACI
-    
-issues: 
-    - With this release, you are unable to remove the firmware group, the absent state currently does not work.
-    If the firmware group needs to be removed, please use the UI
-
 author:
     - Steven Gerhart (@sgerhart)
 '''
 
 EXAMPLES = '''
-- description:
-  This example create a firmware group - Please make sure that you create a firmware policy with aci_firmware_policy 
-  and name the option firmwarepol the same name as the policy
-  - name: firmware group
-     aci_firmware_group:
+    - name: firmware group
+      aci_firmware_group:
         host: "{{ inventory_hostname }}"
         username: "{{ user }}"
         password: "{{ pass }}"
         validate_certs: no
         group: testingfwgrp1
-        firmwarepol: test2FrmPol
-        state: present
-        
-- description
-  This example creates a firmware policy and group - Note that the firmware policy is calling the
-  aci_firmware_policy. Also, notice that the firmware policy name is the same as the firmware group firmwarepol. These 
-  have to match or there will be no firmware associated with the firmware group
-   - name: firmware policy
-     aci_firmware_policy:
-        host: "{{ inventory_hostname }}"
-        username: "{{ user }}"
-        password: "{{ pass }}"
-        validate_certs: no
-        name: test2FrmPol
-        version: n9000-13.2(1m)
-        ignoreCompat: False
-        state: present
-   - name: firmware group
-     aci_firmware_group:
-        host: "{{ inventory_hostname }}"
-        username: "{{ user }}"
-        password: "{{ pass }}"
-        validate_certs: no
-        group: testingfwgrp
         firmwarepol: test2FrmPol
         state: present
 '''
@@ -206,8 +167,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        group=dict(type='str', aliases=['name', 'group_name']),  # Not required for querying all objects
-        firmwarepol=dict(type='str', aliases=['firmware']),  # Not required for querying all objects
+        group=dict(type='str', aliases=['group']),  # Not required for querying all objects
+        firmwarepol=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -223,7 +184,6 @@ def main():
     state = module.params['state']
     group = module.params['group']
     firmwarepol = module.params['firmwarepol']
-
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -262,7 +222,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
 
     aci.exit_json()
 
