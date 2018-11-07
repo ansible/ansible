@@ -110,6 +110,8 @@ BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 
 if not HAS_DOCKER_PY:
+    docker_version = None
+
     # No docker-py. Create a place holder client to allow
     # instantiation of AnsibleModule and proper error handing
     class Client(object):
