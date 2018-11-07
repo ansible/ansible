@@ -502,6 +502,14 @@ class TestTaskExecutor(unittest.TestCase):
                 'a_list': ['POPCORN'],
             },
             'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [
+                {
+                    'remove': 'POPCORN',
+                }
+            ],
         }
 
         expected = {
@@ -516,6 +524,10 @@ class TestTaskExecutor(unittest.TestCase):
                 'a_list': ['POPCORN'],
             },
             'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [{}],
         }
 
         self.assertEqual(remove_omit(data, omit_token), expected)
