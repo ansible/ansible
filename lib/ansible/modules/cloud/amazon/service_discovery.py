@@ -300,9 +300,6 @@ class ServiceDiscovery:
         return matching_services
 
     def list_services(self, namespace_id):
-        # namespaces suck because there's not a guarantee that they're distinct
-        # I will try to make that guarantee for amazon.
-        # namespaces listed will include ID, arn, name, and type
 
         filters = ansible_dict_to_boto3_filter_list({'NAMESPACE_ID': namespace_id})
         services = self.sd.list_services(Filters=filters)

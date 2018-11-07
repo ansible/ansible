@@ -205,9 +205,6 @@ class ServiceDiscoveryNamespace:
                                              )
         
     def list_namespaces(self, type):
-        # namespaces suck because there's not a guarantee that they're distinct
-        # I will try to make that guarantee for amazon.
-        # namespaces listed will include ID, arn, name, and type
 
         if type:
             filters = ansible_dict_to_boto3_filter_list({'TYPE': type})
