@@ -149,9 +149,9 @@ def get_collector_names(valid_subsets=None,
         subset_id = subset.replace('!', '')
         alias = aliases_map.get(subset, set())
 
-        if subset_id not in valid_subsets and subset_id not in min_valid:
-            raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" %
-                            (subset_id, ", ".join(sorted(valid_subsets))))
+        if subset_id not in valid_subsets and subset_id not in min_valid and subset_id not in minimal_gather_subset:
+            raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: %s" %
+                            (subset_id, ", ".join(sorted(valid_subsets + minimal_gather_subset + min_valid))))
 
         if subset == 'all':
             explicitly_added.update(valid_subsets)
