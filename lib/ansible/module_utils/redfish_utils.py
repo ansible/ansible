@@ -745,7 +745,7 @@ class RedfishUtils(object):
         data = response['data']
         set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
 
-        payload = {"TargetSettingsURI": set_bios_attr_uri, "RebootJobType": "PowerCycle"}
+        payload = {"TargetSettingsURI": set_bios_attr_uri}
         response = self.post_request(self.root_uri + self.manager_uri + "/" + jobs, payload, HEADERS)
         if response['ret'] is False:
             return response
@@ -753,7 +753,8 @@ class RedfishUtils(object):
         response_output = response['resp'].__dict__
         job_id = response_output["headers"]["Location"]
         job_id = re.search("JID_.+", job_id).group()
-        return {'ret': True, 'msg': 'Config job created', 'job_id': job_id}
+        # Currently not passing job_id back to user but patch is coming
+        return {'ret': True, 'msg': "Config job %s created" % job_id}
 
     def get_fan_inventory(self):
         result = {}
