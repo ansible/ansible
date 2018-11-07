@@ -35,7 +35,7 @@ class ActionModule(ActionBase):
     DEFAULT_PRE_REBOOT_DELAY = 0
     DEFAULT_POST_REBOOT_DELAY = 0
     DEFAULT_TEST_COMMAND = 'whoami'
-    DEFAULT_BOOT_TIME_COMMAND = 'who -b'
+    DEFAULT_BOOT_TIME_COMMAND = 'cat /proc/sys/kernel/random/boot_id'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND = 'shutdown'
     DEFAULT_SUDOABLE = True
@@ -43,16 +43,18 @@ class ActionModule(ActionBase):
     DEPRECATED_ARGS = {}
 
     BOOT_TIME_COMMANDS = {
-        'linux': 'cat /proc/sys/kernel/random/boot_id',
-        'openbsd': "/sbin/sysctl kern.boottime",
+        'openbsd': '/sbin/sysctl kern.boottime',
+        'freebsd': '/sbin/sysctl kern.boottime',
+        'sunos': 'who -b',
+        'darwin': 'who -b',
     }
 
     SHUTDOWN_COMMANDS = {
         'linux': DEFAULT_SHUTDOWN_COMMAND,
         'freebsd': DEFAULT_SHUTDOWN_COMMAND,
+        'openbsd': DEFAULT_SHUTDOWN_COMMAND,
         'sunos': '/usr/sbin/shutdown',
         'darwin': '/sbin/shutdown',
-        'openbsd': DEFAULT_SHUTDOWN_COMMAND,
     }
 
     SHUTDOWN_COMMAND_ARGS = {
