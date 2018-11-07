@@ -423,7 +423,8 @@ def main():
                 try:
                     if format == 'zip':
                         arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
-                        arcfile.write(path, path[len(arcroot):])
+                        arcname = os.path.basename(path)
+                        arcfile.write(path, arcname)
                         arcfile.close()
                         state = 'archive'  # because all zip files are archives
 
