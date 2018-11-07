@@ -458,7 +458,7 @@ class AzureRMClusters(AzureRMModuleBase):
         return False
 
     def format_item(self, item):
-        if item is None:
+        if not item:
             return {}    
         d = {
             'id': item['id']
