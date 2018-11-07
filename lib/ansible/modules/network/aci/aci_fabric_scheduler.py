@@ -260,7 +260,7 @@ def main():
 
     state = module.params['state']
     name = module.params['name']
-    windowName = module.params['windowname']
+    windowname = module.params['windowname']
     recurring = module.params['recurring']
     date = module.params['date']
     hour = module.params['hour']
@@ -271,10 +271,10 @@ def main():
     description = module.params['description']
 
     if recurring:
-        child_configs = [dict(trigRecurrWindowP=dict(attributes=dict(name=windowName, hour=hour, minute=minute,
+        child_configs = [dict(trigRecurrWindowP=dict(attributes=dict(name=windowname, hour=hour, minute=minute,
                                                                      procCa=maxTime, concurCap=concurCap, day=day,)))]
     elif recurring is False:
-        child_configs = [dict(trigAbsWindowP=dict(attributes=dict(name=windowName, procCap=maxTime,
+        child_configs = [dict(trigAbsWindowP=dict(attributes=dict(name=windowname, procCap=maxTime,
                                                                   concurCap=concurCap, date=date,)))]
     else:
         child_configs = []
