@@ -289,7 +289,9 @@ class InventoryManager(object):
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
                         raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
-            display.warning("Unable to parse %s as an inventory source" % source)
+            if source != '/etc/ansible/hosts' or os.path.exists(source):
+                # only warn if NOT using the default and if using it, only if the file is present
+                display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None
