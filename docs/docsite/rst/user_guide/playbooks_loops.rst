@@ -4,13 +4,13 @@
 Loops
 *****
 
-Sometimes you want to repeat a task multiple times. In computer programming, this is called a loop. Common Ansible loops include changing ownership on several files and/or directories with the :ref:`file module`, creating multiple users with the :ref:`user module <user_module>`, and
+Sometimes you want to repeat a task multiple times. In computer programming, this is called a loop. Common Ansible loops include changing ownership on several files and/or directories with the :ref:`file module <file_module>`, creating multiple users with the :ref:`user module <user_module>`, and
 repeating a polling step until a certain result is reached. Ansible offers two keywords for creating loops: ``loop`` and ``with_<lookup>``.
 
 .. note::
    * We added ``loop`` in Ansible 2.5. It is not yet a full replacement for ``with_<lookup>``, but we recommend it for most use cases.
    * We have not deprecated the use of ``with_<lookup>`` - that syntax will still be valid for the foreseeable future.
-   * We are looking to improve ``loop`` syntax - watch this page and the :ref:`changelog <https://github.com/ansible/ansible/tree/devel/changelogs>` for updates.
+   * We are looking to improve ``loop`` syntax - watch this page and the `changelog <https://github.com/ansible/ansible/tree/devel/changelogs>`_ for updates.
    * If we ever deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
 
 .. contents::
