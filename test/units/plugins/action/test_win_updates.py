@@ -17,14 +17,6 @@ class TestWinUpdatesActionPlugin(object):
 
     INVALID_OPTIONS = (
         (
-            {"category_names": ["fake category"]},
-            False,
-            "Unknown category_name fake category, must be one of (Application,"
-            "Connectors,CriticalUpdates,DefinitionUpdates,DeveloperKits,"
-            "FeaturePacks,Guidance,SecurityUpdates,ServicePacks,Tools,"
-            "UpdateRollups,Updates)"
-        ),
-        (
             {"state": "invalid"},
             False,
             "state must be either installed or searched"
