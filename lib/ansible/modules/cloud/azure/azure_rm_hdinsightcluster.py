@@ -458,9 +458,8 @@ class AzureRMClusters(AzureRMModuleBase):
         return False
 
     def format_item(self, item):
-        d = item.as_dict()
         d = {
-            'id': d['id']
+            'id': item['id']
         }
         return d
 
