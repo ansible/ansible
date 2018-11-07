@@ -83,3 +83,4 @@ test/integration/targets/win_script/files/test_script.ps1 PSAvoidUsingWriteHost
 test/integration/targets/win_script/files/test_script_creates_file.ps1 PSAvoidUsingCmdletAliases
 test/integration/targets/win_script/files/test_script_with_args.ps1 PSAvoidUsingWriteHost
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 PSAvoidUsingWriteHost
+test/integration/targets/win_csharp_utils/library/ansible_basic_tests.ps1 PSUseDeclaredVarsMoreThanAssignments # test setup requires vars to be set globally and not referenced in the same scope

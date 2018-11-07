@@ -51,37 +51,6 @@
       - win_ping_ps1_result is not changed
       - win_ping_ps1_result.ping == 'bleep'
 
-# TODO: this will have to be removed once PS basic is implemented
-- name: test win_ping with extra args to verify that v2 module replacer escaping works as expected
-  win_ping:
-    data: bloop
-    a_null: null
-    a_boolean: true
-    another_boolean: false
-    a_number: 299792458
-    another_number: 22.7
-    yet_another_number: 6.022e23
-    a_string: |
-      it's magic
-      "@'
-      '@"
-    an_array:
-      - first
-      - 2
-      - 3.0
-    an_object:
-      - the_thing: the_value
-      - the_other_thing: 0
-      - the_list_of_things: [1, 2, 3, 5]
-  register: win_ping_extra_args_result
-
-- name: check that win_ping with extra args succeeds and ignores everything except data
-  assert:
-    that:
-      - win_ping_extra_args_result is not failed
-      - win_ping_extra_args_result is not changed
-      - win_ping_extra_args_result.ping == 'bloop'
-
 - name: test win_ping using data=crash so that it throws an exception
   win_ping:
     data: crash
