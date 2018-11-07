@@ -312,35 +312,19 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _expand_hostpattern(self, hostpattern):
         '''
-        Takes a single host pattern and returns a list of hostnames and an
-        optional port number that applies to all of them.
+        do some extra checks over normal processing
         '''
-
-        # Can the given hostpattern be parsed as a host with an optional port
         # specification?
 
-        try:
-            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except Exception:
-            # not a recognizable host pattern
-            pattern = hostpattern
-            port = None
-
-        # some YAML parsing prevention checks
-        if pattern.strip() == '---':
-            raise AnsibleParserError("Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
+        hostnames, port = super(InventoryModule, self)._expand_hostpattern(hostpattern)
 
         if hostpattern.strip().endswith(':') and port is None:
             raise AnsibleParserError("Invalid host pattern '%s' supplied, ending in ':' is not allowed, this character is reserved to provide a port." %
                                      hostpattern)
-
-        # Once we have separated the pattern, we expand it into list of one or
-        # more hostnames, depending on whether it contains any [x:y] ranges.
-
-        if detect_range(pattern):
-            hostnames = expand_hostname_range(pattern)
-        else:
-            hostnames = [pattern]
+        for pattern in hostnames:
+            # some YAML parsing prevention checks
+            if pattern.strip() == '---':
+                raise AnsibleParserError("Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
 
         return (hostnames, port)
 
