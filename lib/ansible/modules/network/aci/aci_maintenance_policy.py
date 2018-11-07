@@ -1,0 +1,279 @@
+#!/usr/bin/python
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
+
+DOCUMENTATION = '''
+---
+module: aci_maintenance_policy
+
+short_description: This creates a maintenance policy
+
+version_added: "2.8"
+
+description:
+    - This module creates a maintenance policy that is referenced by the ACI maintenance group. This policy is also
+     references the ACI scheduler (aci_fabric_scheduler). 
+     
+usage information:
+    - This module should be used inconjuction with the aci_maintenance_group module. The aci_maintenance_group module
+    creates the maintenance group that references this maintenance policy which this module creates. Do not use the 
+    absent state with this module. If you need to remove it, please remove the aci_maintenance_group and that will 
+    also delete this maintenance policy, so that there are no orphan objects.
+   
+options:
+    name:
+        description:
+            - This is the message to send to the sample module
+        required: true
+    runmode:
+        description:
+            - This specifies if the system pauses on error or just continues through it.
+            - The default is "pause"
+        type: bool
+        default: True
+        required: false
+    graceful:
+        description:
+            - This will bring down the nodes gracefully, which reduces traffic lost
+        type: bool
+        default: False
+        required: false
+    scheduler:
+        description:
+            - This is the scheduler name that was either created via the UI or via the aci_fabric_scheduler module.
+        type: str
+        required: true
+    state:
+        description:
+            - Use C(present) or C(absent) for adding or removing.
+            - Use C(query) for listing an object or multiple objects.
+        default: present
+        choices: [ absent, present, query ]
+
+extends_documentation_fragment:
+    - ACI
+
+author:
+    - Steven Gerhart (@sgerhart)
+'''
+
+EXAMPLES = '''
+description - This creates a scheduler and a maintenance policy
+ - name: Simple Scheduler (Empty)
+     aci_fabric_scheduler:
+        host: "{{ inventory_hostname }}"
+        username: "{{ user }}"
+        password: "{{ pass }}"
+        validate_certs: no
+        name: simpleScheduler
+        state: present
+   - name: maintenance policy
+     aci_maintenance_policy:
+        host: "{{ inventory_hostname }}"
+        username: "{{ user }}"
+        password: "{{ pass }}"
+        validate_certs: no
+        name: maintenancePol1
+        scheduler: simpleScheduler
+        runmode: False
+        state: present
+'''
+
+RETURN = '''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
+
+
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+
+
+def main():
+    argument_spec = aci_argument_spec()
+    argument_spec.update(
+        name=dict(type='str', aliases=['name']),  # Not required for querying all objects
+        runmode=dict(type='bool', default='true'),
+        graceful=dict(type=bool),
+        scheduler=dict(type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        required_if=[
+            ['state', 'absent', ['name']],
+            ['state', 'present', ['name', 'scheduler']],
+        ],
+    )
+
+    state = module.params['state']
+    name = module.params['name']
+    runmode = module.params['runmode']
+    scheduler = module.params['scheduler']
+    graceful = module.params['graceful']
+
+    if runmode:
+        mode = 'pauseOnlyOnFailures'
+    else:
+        mode = 'pauseNever'
+
+    if module.params['graceful']:
+        graceful_maint = 'yes'
+    else:
+        graceful_maint = 'no'
+
+
+    aci = ACIModule(module)
+    aci.construct_url(
+        root_class=dict(
+            aci_class='maintMaintP',
+            aci_rn='fabric/maintpol-{0}'.format(name),
+            filter_target='eq(maintMaintP.name, "{0}")'.format(name),
+            module_object=name,
+        ),
+        child_classes=['maintRsPolScheduler']
+
+    )
+
+    aci.get_existing()
+
+    if state == 'present':
+        aci.payload(
+            aci_class='maintMaintP',
+            class_config=dict(
+                name=name,
+                runMode=mode,
+                graceful=graceful_maint,
+            ),
+            child_configs=[
+                dict(
+                    maintRsPolScheduler=dict(
+                        attributes=dict(
+                            tnTrigSchedPName=scheduler,
+                        ),
+                    ),
+                ),
+            ],
+
+        )
+
+        aci.get_diff(aci_class='maintMaintP')
+
+        aci.post_config()
+
+    elif state == 'absent':
+        aci.delete_config()
+
+    aci.exit_json()
+
+
+if __name__ == "__main__":
+    main()
