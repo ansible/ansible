@@ -21,13 +21,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: service_discovery
-short_description: thin wrap for boto serviceDiscovery library
+module: service_discovery_namespace
+short_description: thin wrap for boto servicediscovery client
 description:
-    https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/servicediscovery.html
+    - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/servicediscovery.html
 notes:
-    
-version_added: ""
+     - nah.
+version_added: "2.8"
 author:
     - "tad merchant @ezmac"
 
@@ -37,36 +37,17 @@ options:
         description:
           - The desired state of the service
         required: true
-        choices: ["present", "absent", "deleting"]
+        choices: ["present", "absent"]
     name:
         description:
           - The name of the service
         required: true
     creator_request_id:
         description:
-          - A unique string that identifies the request and that allows failed CreateService requests to be retried without the risk of executing the operation twice. CreatorRequestId can be any unique string, for example, a date/time stamp.
-This field is autopopulated if not provided.
+          - A unique string that identifies the request and that allows failed CreateService requests to be retried without the risk of executing the operation twice. CreatorRequestId can be any unique string, for example, a date/time stamp. This field is autopopulated if not provided.
         required: false
-        version_added: 2.4
     description:
-        description: Description for the service..
-    dns_config: 
-        required: true
-        description: RTFM
-           A complex type that contains information about the records that you want Route 53 to create when you register an instance.
-           fastly, you'll probably want:
-              namespace_id: string
-              routing_policy: [MULTIVALUE, WEIGHTED]
-              dns_records:[
-                {
-                  type: [a, aaaa, srv, cname],
-                  ttl: int,
-                  
-                  }]
-      health_check_config: {}, # public zone only so I did not document
-
-
-
+        description: Description for the namespace
 
 extends_documentation_fragment:
     - aws
@@ -78,36 +59,63 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-Probably something like:
-{
-    'Service': {
-        'Id': 'string',
-        'Arn': 'string',
-        'Name': 'string',
-        'Description': 'string',
-        'InstanceCount': 123,
-        'DnsConfig': {
-            'NamespaceId': 'string',
-            'RoutingPolicy': 'MULTIVALUE'|'WEIGHTED',
-            'DnsRecords': [
-                {
-                    'Type': 'SRV'|'A'|'AAAA'|'CNAME',
-                    'TTL': 123
-                },
-            ]
-        },
-        'HealthCheckConfig': {
-            'Type': 'HTTP'|'HTTPS'|'TCP',
-            'ResourcePath': 'string',
-            'FailureThreshold': 123
-        },
-        'HealthCheckCustomConfig': {
-            'FailureThreshold': 123
-        },
-        'CreateDate': datetime(2015, 1, 1),
-        'CreatorRequestId': 'string'
-    }
-}
+namespace:
+    description: Details of created namespace.
+    returned: when creating a namespace with wait=true (default)
+    type: complex
+    contains:
+        id:
+            description: Identifier of service discovery namespace
+            returned: always
+            type: string
+        arn:
+            description: arn of namespace
+            returned: always
+            type: string
+        name:
+            description: name of service discovery service
+            returned: always
+            type: string
+        type:
+            description: The type of the namespace. Valid values are DNS_PUBLIC and DNS_PRIVATE .
+            type: string
+            returned: always
+        description:
+            description: Description of namespace
+            type: string
+            returned: always
+        service_count:
+            description: The number of services that are associated with the namespace.
+            type: integer
+            returned: if services are associated
+        properties:
+            type: complex
+            returned: always
+            description: A complex type that contains information that's specific to the type of the namespace.
+            contains:
+                dns_properties:
+                    type: complex
+                    returned: always
+                    description: A complex type that contains the ID for the hosted zone that Route 53 creates when you create a namespace.
+                    contains:
+                        hosted_zone_id:
+                            type: string
+                            returned: always
+                            description: The ID for the hosted zone that Route 53 creates when you create a namespace.
+        create_date: 
+            type: datetime
+            returned: always
+            description: datetime of creation
+        creator_request_id:
+            type: string
+            returned: always
+            description: A unique string that identifies the request and that allows failed requests to be retried without the risk of executing an operation twice.
+
+
+operation_id:
+    description: operation id of the non-waited namespace create request
+    type: string
+    returned: when creating and wait=false
 
 '''
 import time
@@ -124,6 +132,7 @@ from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type, get_ec2_security_group_ids_from_names
 import botocore.waiter as core_waiter
 import functools
+from pprint import pprint
 
 
 try:
@@ -152,32 +161,13 @@ sd_waiter_config = {
         }
     }
 } 
-class ServiceDiscovery:
-    """Handles route 53 Services"""
+class ServiceDiscoveryNamespace:
+    """Handles servicediscovery namespaces"""
 
 
     def __init__(self, module):
         self.module = module
         self.sd = module.client('servicediscovery')
-
-    def get_namespace(self, namespace_id):
-        self.sd.get_namespace(Id= id)
-
-    def describe_service(self, cluster_name, service_name):
-        response = self.sd.get_services(
-        )
-        msg = ''
-        if len(response['failures']) > 0:
-            c = self.find_in_array(response['failures'], service_name, 'arn')
-            msg += ", failure reason is " + c['reason']
-            if c and c['reason'] == 'MISSING':
-                return None
-            # fall thru and look through found ones
-        if len(response['services']) > 0:
-            c = self.find_in_array(response['services'], service_name)
-            if c:
-                return c
-        raise Exception("Unknown problem describing service %s." % service_name)
 
     def get_operation(self, operation_id):
         operation = self.sd.get_operation(OperationId = operation_id)
@@ -194,7 +184,10 @@ class ServiceDiscovery:
         return matching_namespaces
 
     def get_namespace(self, namespace_id):
-        self.sd.get_namespace(Id=namespace_id)['Namespace']
+        namespace=self.sd.get_namespace(Id=namespace_id)['Namespace']
+        if not namespace:
+            return None
+        return self.jsonize(namespace)
 
     def create_namespace(self, name, type, description, creator_request_id, vpc_id, wait):
         if type=="DNS_PRIVATE":
@@ -216,7 +209,10 @@ class ServiceDiscovery:
         # I will try to make that guarantee for amazon.
         # namespaces listed will include ID, arn, name, and type
 
-        filters = ansible_dict_to_boto3_filter_list({'TYPE': type})
+        if type:
+            filters = ansible_dict_to_boto3_filter_list({'TYPE': type})
+        else:
+            filters = []
         return self.sd.list_namespaces(Filters=filters)
 
     def create_public_dns_namespace(self, name, description, creator_request_id, wait):
@@ -238,6 +234,12 @@ class ServiceDiscovery:
                     self.sd.get_operation
             )
             waiter.wait(OperationId=operation)
+            operationResponse = self.sd.get_operation(OperationId=operation)
+            namespace_id = operationResponse['Operation']['Targets']["NAMESPACE"]
+            created_namespace = self.sd.get_namespace(Id = namespace_id)['Namespace']
+            return created_namespace
+        else:
+            return response
         
     def create_private_dns_namespace(self, name, description, creator_request_id, vpc_id, wait):
         # creator_req_id totes not needed, will be auto poulated if not given
@@ -254,15 +256,21 @@ class ServiceDiscovery:
         operation = response['OperationId']
         if wait:
             waiter=core_waiter.Waiter(
-            'namespace_created',
+                'namespace_created',
                 core_waiter.WaiterModel(waiter_config=sd_waiter_config).get_waiter("NamespaceCreated"),
-                    self.sd.get_operation
+                self.sd.get_operation
             )
-            return waiter.wait(OperationId=operation)
+            waiter.wait(OperationId=operation)
+            operationResponse = self.sd.get_operation(OperationId=operation)
+            namespace_id = operationResponse['Operation']['Targets']["NAMESPACE"]
+            created_namespace = self.sd.get_namespace(Id = namespace_id)['Namespace']
+            return created_namespace
+        else:
+            return response
         
 
     def delete_namespace(self, id):
-        response = self.sd.delete_namespace(id)
+        response = self.sd.delete_namespace(Id=id)
         return response
 
 
@@ -305,18 +313,17 @@ def main():
                                           ('type', 'private', ['vpc_id'])]
                               )
 
-    sd_mgr = ServiceDiscovery(module)
+    sd_mgr = ServiceDiscoveryNamespace(module)
 
 
-    results = dict(changed=False)
     if module.params['state'] == 'present':
 
         try:
             existing = sd_mgr.get_namespaces_by_name(module.params['name'], module.params['type'])
-
-
             if (len(existing) == 1):
-                module.exit_json( changed=False, **camel_dict_to_snake_dict(existing[0]))
+                namespace=sd_mgr.get_namespace(existing[0]['Id'])
+                
+                module.exit_json( changed=False, namespace = camel_dict_to_snake_dict(namespace))
             if (not existing):
                 namespace = sd_mgr.create_namespace(module.params['name'],
                                         module.params['type'],
@@ -324,17 +331,20 @@ def main():
                                         module.params['creator_request_id'],
                                         module.params['vpc_id'],
                                         module.params['wait'])
-                module.exit_json( changed=True, **camel_dict_to_snake_dict(namespace))
+                module.exit_json( changed=True, namespace = camel_dict_to_snake_dict(namespace))
 
         except Exception as e:
-
-            module.fail_json(msg="Exception describing service '" + module.params['name'] + "' in cluster '" + "': " + str(e))
-
-        
-
-
+            module.fail_json(msg="Exception '" + module.params['name'] +  "': " + str(e))
 
         module.exit_json(**existing)
+
+    if module.params['state'] == 'absent':
+        try:
+            existing = sd_mgr.get_namespaces_by_name(module.params['name'], module.params['type'])
+            sd_mgr.delete_namespace(existing[0]['Id'])
+            module.exit_json( changed=True)
+        except Exception as e:
+            module.fail_json(msg="Exception '" + module.params['name'] +  "': " + str(e))
 
 
 if __name__ == '__main__':
