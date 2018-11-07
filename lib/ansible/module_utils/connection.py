@@ -143,21 +143,26 @@ class Connection(object):
             data = req.get('params')
 
             if isinstance(data, dict):
-                data = data.get('var_options', {})
+                options = data.get('var_options', {})
 
-                for key, value in iteritems(data):
-                    try:
-                        dummy = json.dumps(value)
-                    except TypeError:
-                        raise ConnectionError(
-                            "Failed to encode some variables as JSON for communication with ansible-connection. "
-                            "Please open an issue and mention that the culprit is most likely '%s'" % key
-                        )
+                for key, value in iteritems(options):
+                    if type(value).__name__ == 'AnsibleVaultEncryptedUnicode':
+                        value = {'__ansible_vault': to_text(value._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
+                    req['params']['var_options'][key] = value
 
-            raise ConnectionError(
-                "Failed to encode some variables as JSON for communication with ansible-connection. "
-                "The original exception was: %s" % to_text(exc)
-            )
+                try:
+                    data = json.dumps(req)
+                except TypeError:
+                    raise ConnectionError(
+                        "Failed to encode some variables as JSON for communication with ansible-connection. "
+                        "The original exception was: %s" % to_text(exc)
+                    )
+
+            else:
+                raise ConnectionError(
+                    "Failed to encode some variables as JSON for communication with ansible-connection. "
+                    "The original exception was: %s" % to_text(exc)
+                )
 
         try:
             out = self.send(data)
