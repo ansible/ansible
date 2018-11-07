@@ -13,12 +13,6 @@
 ##### COMPONENT NAME
 <!--- Write the short name of the module, plugin, task or feature below -->
 
-##### ANSIBLE VERSION
-<!--- Paste verbatim output from "ansible --version" between quotes -->
-```paste below
-
-```
-
 ##### ADDITIONAL INFORMATION
 <!--- Include additional information to help people understand the change here -->
 <!--- A step-by-step reproduction of the problem is helpful if there is no related issue -->
