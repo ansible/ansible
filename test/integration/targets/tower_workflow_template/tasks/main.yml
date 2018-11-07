@@ -59,6 +59,19 @@
     job_type: run
     state: present
 
+- name: Add a Survey to second Job Template
+  tower_job_template:
+    name: my-job-2
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    credential: Demo Credential
+    job_type: run
+    state: present
+    survey_enabled: yes
+    survey_spec: '{"spec": [{"index": 0, "question_name": "my question?", "default": "mydef", "variable": "myvar", "type": "text", "required": "false"}], "description": "test", "name": "test"}'
+
+
 - name: Create a workflow job template
   tower_workflow_template:
     name: my-workflow
