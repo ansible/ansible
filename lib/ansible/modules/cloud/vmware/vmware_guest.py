@@ -337,7 +337,7 @@ options:
     version_added: '2.7'
   convert:
     description:
-    - Specify convert disk type while cloning template
+    - Specify convert disk type while cloning template or virtual machine.
     choices: [ thin, thick, eagerzeroedthick ]
     version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
@@ -2042,19 +2042,19 @@ class PyVmomiHelper(PyVmomi):
 
                 # Convert disk present in template if is set
                 if self.params['convert']:
-                        for device in vm_obj.config.hardware.device:
-                            if hasattr(device.backing, 'fileName'):
-                                disk_locator = vim.vm.RelocateSpec.DiskLocator()
-                                disk_locator.diskBackingInfo = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-                                if self.params['convert'] in ['thin']:
-                                    disk_locator.diskBackingInfo.thinProvisioned = True
-                                if self.params['convert'] in ['eagerzeroedthick']:
-                                    disk_locator.diskBackingInfo.eagerlyScrub = True
-                                if self.params['convert'] in ['thick']:
-                                    disk_locator.diskBackingInfo.diskMode = "persistent"
-                                disk_locator.diskId = device.key
-                                disk_locator.datastore = datastore
-                                relospec.disk.append(disk_locator)
+                    for device in vm_obj.config.hardware.device:
+                        if hasattr(device.backing, 'fileName'):
+                            disk_locator = vim.vm.RelocateSpec.DiskLocator()
+                            disk_locator.diskBackingInfo = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+                            if self.params['convert'] in ['thin']:
+                                disk_locator.diskBackingInfo.thinProvisioned = True
+                            if self.params['convert'] in ['eagerzeroedthick']:
+                                disk_locator.diskBackingInfo.eagerlyScrub = True
+                            if self.params['convert'] in ['thick']:
+                                disk_locator.diskBackingInfo.diskMode = "persistent"
+                            disk_locator.diskId = device.key
+                            disk_locator.datastore = datastore
+                            relospec.disk.append(disk_locator)
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
