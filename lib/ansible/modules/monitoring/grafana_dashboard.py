@@ -208,7 +208,8 @@ def grafana_dashboard_exists(module, grafana_url, uid, headers):
     if info['status'] == 200:
         dashboard_exists = True
         try:
-            dashboard = json.loads(r.read())
+            response = json.loads(r.read())
+            dashboard = response['dashboard']
         except Exception as e:
             raise GrafanaAPIException(e)
     elif info['status'] == 404:
@@ -225,6 +226,8 @@ def grafana_create_dashboard(module, data):
     try:
         with open(data['path'], 'r') as json_file:
             payload = json.load(json_file)
+            if 'dashboard' not in payload:
+                payload = {'dashboard': payload}
     except Exception as e:
         raise GrafanaAPIException("Can't load json file %s" % to_native(e))
 
@@ -256,7 +259,7 @@ def grafana_create_dashboard(module, data):
 
     result = {}
     if dashboard_exists is True:
-        if dashboard == payload:
+        if dashboard == payload['dashboard']:
             # unchanged
             result['uid'] = uid
             result['msg'] = "Dashboard %s unchanged." % uid
