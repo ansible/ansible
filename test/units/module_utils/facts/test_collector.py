@@ -116,7 +116,7 @@ class TestGetCollectorNames(unittest.TestCase):
     def test_none(self):
         res = collector.get_collector_names()
         self.assertIsInstance(res, set)
-        self.assertEqual(res, set([]))
+        self.assertEqual(res, set(['all', 'min']))
 
     def test_empty_sets(self):
         res = collector.get_collector_names(valid_subsets=frozenset([]),
@@ -130,7 +130,7 @@ class TestGetCollectorNames(unittest.TestCase):
                                             minimal_gather_subset=frozenset([]),
                                             gather_subset=['all'])
         self.assertIsInstance(res, set)
-        self.assertEqual(res, set([]))
+        self.assertEqual(res, set(['all', 'min']))
 
     def test_one_valid_with_all_gather_subset(self):
         valid_subsets = frozenset(['my_fact'])
