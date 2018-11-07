@@ -14,14 +14,13 @@ DOCUMENTATION = r'''
 ---
 module: ucs_dns_server
 
-
-short_description: Configures DNS server on Cisco UCS Manager
+short_description: Configure DNS servers on Cisco UCS Manager
 
 extends_documentation_fragment:
 - ucs
 
 description:
-- Configures DNS server on Cisco UCS Manager.
+- Configure DNS servers on Cisco UCS Manager.
 - Examples can be used with the L(UCS Platform Emulator,https://communities.cisco.com/ucspe).
 
 options:
@@ -37,6 +36,7 @@ options:
     description:
     - DNS server IP address.
     - Enter a valid IPV4 Address.
+    - UCS Manager supports up to 4 DNS Servers
     aliases: [ name ]
     type: str
 
