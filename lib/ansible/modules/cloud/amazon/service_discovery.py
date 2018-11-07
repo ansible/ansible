@@ -383,7 +383,7 @@ def main():
                     module.params['health_check_custom_config'])
                 changed=True
                 # service returned by sd_mgr is already unwrapped dict;
-            module.exit_json( changed=changed, Service = camel_dict_to_snake_dict(service))
+            module.exit_json( changed=changed, service = camel_dict_to_snake_dict(service))
             #TODO
         except Exception as e:
             module.fail_json(msg="Exception for servicediscovery '" + module.params['name'] +  "': " + str(e))
