@@ -89,7 +89,7 @@ RETURN = '''
 # for list_vms command
 list_vms:
     description: The list of vms defined on the remote system
-    type: dictionary
+    type: list
     returned: success
     sample: [
         "build.example.org",
