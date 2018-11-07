@@ -649,7 +649,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
     elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
             or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
-            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE):
+            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
+            or re.search(b'#AnsibleRequires -CSharpUtil', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
