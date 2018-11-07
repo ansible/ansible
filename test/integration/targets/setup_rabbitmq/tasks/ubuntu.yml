@@ -17,13 +17,13 @@
   apt: name=apt-transport-https state=latest force=yes
 
 - name: Add Erlang Solutions public GPG key
-  apt_key: url=https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc state=present
+  apt_key: url=https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/erlang_solutions.asc state=present
 
 - name: Add Erlang Solutions repository
   apt_repository: repo="deb https://packages.erlang-solutions.com/ubuntu {{ ansible_distribution_release }} contrib" filename='erlang-solutions' state=present update_cache=yes
 
 - name: Add RabbitMQ public GPG key
-  apt_key: url=https://www.rabbitmq.com/rabbitmq-release-signing-key.asc state=present
+  apt_key: url=https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/rabbitmq-release-signing-key.asc state=present
 
 - name: Add RabbitMQ repository
   apt_repository: repo='deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main' filename='rabbitmq' state=present update_cache=yes
