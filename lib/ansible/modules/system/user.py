@@ -706,7 +706,7 @@ class User(object):
             current_expires = int(self.user_password()[1])
 
             if self.expires < time.gmtime(0):
-                if current_expires > 0:
+                if current_expires >= 0:
                     cmd.append('-e')
                     cmd.append('')
             else:
@@ -714,7 +714,7 @@ class User(object):
                 current_expire_date = time.gmtime(current_expires * 86400)
 
                 # Current expires is negative or we compare year, month, and day only
-                if current_expires <= 0 or current_expire_date[:3] != self.expires[:3]:
+                if current_expires < 0 or current_expire_date[:3] != self.expires[:3]:
                     cmd.append('-e')
                     cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -1180,7 +1180,9 @@ class FreeBsdUser(User):
 
             current_expires = int(self.user_password()[1])
 
-            if self.expires < time.gmtime(0):
+            # If expiration is negative or zero and the current expiration is greater than zero, disable expiration.
+            # In OpenBSD, setting expiration to zero disables expiration. It does not expire the account.
+            if self.expires <= time.gmtime(0):
                 if current_expires > 0:
                     cmd.append('-e')
                     cmd.append('0')

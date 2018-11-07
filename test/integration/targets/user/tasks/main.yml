@@ -23,7 +23,7 @@
   changed_when: no
 
 - debug:
-    msg: "Jinja version: {{ jinja2_version.stdout }}, Python version: {{ ansible_python_version }}"
+    msg: "Jinja version: {{ jinja2_version.stdout }}, Python version: {{ ansible_facts.python_version }}"
 
 
 ## user add
@@ -50,7 +50,7 @@
     verbosity: 2
 
 - name: make a list of users
-  script: userlist.sh {{ ansible_distribution }}
+  script: userlist.sh {{ ansible_facts.distribution }}
   register: user_names
 
 - debug:
@@ -119,7 +119,7 @@
         that:
           - "'warnings' not in test_user_encrypt3"
           - "'warnings' not in test_user_encrypt4"
-  when: ansible_system != 'Darwin'
+  when: ansible_facts.system != 'Darwin'
 
 
 # https://github.com/ansible/ansible/issues/42484
@@ -129,28 +129,28 @@
       user:
         name: ansibulluser
         state: present
-        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
       register: user_test3_0
 
     - name: create user again specifying home
       user:
         name: ansibulluser
         state: present
-        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
       register: user_test3_1
 
     - name: change user home
       user:
         name: ansibulluser
         state: present
-        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser-mod"
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser-mod"
       register: user_test3_2
 
     - name: change user home back
       user:
         name: ansibulluser
         state: present
-        home: "{{ user_home_prefix[ansible_system] }}/ansibulluser"
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
       register: user_test3_3
 
     - name: validate results for testcase 3
@@ -160,7 +160,7 @@
           - user_test3_1 is not changed
           - user_test3_2 is changed
           - user_test3_3 is changed
-  when: ansible_system != 'Darwin'
+  when: ansible_facts.system != 'Darwin'
 
 
 ## user check
@@ -216,7 +216,7 @@
   register: user_test2
 
 - name: make a new list of users
-  script: userlist.sh {{ ansible_distribution }}
+  script: userlist.sh {{ ansible_facts.distribution }}
   register: user_names2
 
 - debug:
@@ -276,7 +276,7 @@
       user:
         name: macosuser
         state: absent
-  when: ansible_distribution == "MacOSX"
+  when: ansible_facts.distribution == "MacOSX"
 
 
 ## user expires
@@ -312,7 +312,7 @@
       assert:
         that:
           - getent_shadow['ansibulluser'][6] == '29281'
-  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
 
 
 - name: Verify expiration date for BSD
@@ -326,7 +326,7 @@
       assert:
         that:
           - bsd_account_expiration.stdout == '2529878400'
-  when: ansible_os_family == 'FreeBSD'
+  when: ansible_facts.os_family == 'FreeBSD'
 
 - name: Change timezone
   timezone:
@@ -376,9 +376,9 @@
         msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
         that:
           - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
-  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
 
-- name: Verify un expiration date for linux/BSD
+- name: Verify un expiration date for Linux/BSD
   block:
     - name: Unexpire user again to check for change
       user:
@@ -393,7 +393,7 @@
         that:
           - user_test_expires3 is changed
           - user_test_expires4 is not changed
-  when: ansible_os_family in ['RedHat', 'Debian', 'Suse', 'FreeBSD']
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse', 'FreeBSD']
 
 - name: Verify un expiration date for BSD
   block:
@@ -407,7 +407,7 @@
         msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
         that:
           - bsd_account_expiration.stdout == '0'
-  when: ansible_os_family == 'FreeBSD'
+  when: ansible_facts.os_family == 'FreeBSD'
 
 # Test setting no expiration when creating a new account
 # https://github.com/ansible/ansible/issues/44155
@@ -423,6 +423,20 @@
     expires: -1
   register: user_test_create_no_expires_1
 
+- name: Create user account without expiration again
+  user:
+    name: ansibulluser
+    state: present
+    expires: -1
+  register: user_test_create_no_expires_2
+
+- name: Ensure changes were made appropriately
+  assert:
+    msg: Setting 'expires='-1 resulted in incorrect changes
+    that:
+      - user_test_create_no_expires_1 is changed
+      - user_test_create_no_expires_2 is not changed
+
 - name: Verify un expiration date for Linux
   block:
     - name: LINUX | Get expiration date for ansibulluser
@@ -435,7 +449,7 @@
         msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
         that:
           - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
-  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
 
 - name: Verify un expiration date for BSD
   block:
@@ -449,7 +463,77 @@
         msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
         that:
           - bsd_account_expiration.stdout == '0'
-  when: ansible_os_family == 'FreeBSD'
+  when: ansible_facts.os_family == 'FreeBSD'
+
+# Test setting epoch 0 expiration when creating a new account, then removing the expiry
+# https://github.com/ansible/ansible/issues/47114
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: Create user account with epoch 0 expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: 0
+  register: user_test_expires_create0_1
+
+- name: Create user account with epoch 0 expiration again
+  user:
+    name: ansibulluser
+    state: present
+    expires: 0
+  register: user_test_expires_create0_2
+
+- name: Change the user account to remove the expiry time
+  user:
+    name: ansibulluser
+    expires: -1
+  register: user_test_remove_expires_1
+
+- name: Change the user account to remove the expiry time again
+  user:
+    name: ansibulluser
+    expires: -1
+  register: user_test_remove_expires_2
+
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Ensure changes were made appropriately
+      assert:
+        msg: Creating an account with 'expries=0' then removing that expriation with 'expires=-1' resulted in incorrect changes
+        that:
+          - user_test_expires_create0_1 is changed
+          - user_test_expires_create0_2 is not changed
+          - user_test_remove_expires_1 is changed
+          - user_test_remove_expires_2 is not changed
+
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+
+- name: Verify proper expiration behavior for BSD
+  block:
+    - name: BSD | Ensure changes were made appropriately
+      assert:
+        msg: Creating an account with 'expries=0' then removing that expriation with 'expires=-1' resulted in incorrect changes
+        that:
+          - user_test_expires_create0_1 is changed
+          - user_test_expires_create0_2 is not changed
+          - user_test_remove_expires_1 is not changed
+          - user_test_remove_expires_2 is not changed
+  when: ansible_facts.os_family == 'FreeBSD'
 
 # Test expiration with a very large negative number. This should have the same
 # result as setting -1.
@@ -477,7 +561,7 @@
         msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
         that:
           - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
-  when: ansible_os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
 
 - name: Verify un expiration date for BSD
   block:
@@ -491,7 +575,7 @@
         msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
         that:
           - bsd_account_expiration.stdout == '0'
-  when: ansible_os_family == 'FreeBSD'
+  when: ansible_facts.os_family == 'FreeBSD'
 
 
 ## shadow backup
@@ -514,7 +598,7 @@
         that:
           - result.bakup
           - shadow_backups.files | map(attribute='path') | list | length > 0
-  when: ansible_os_family == 'Solaris'
+  when: ansible_facts.os_family == 'Solaris'
 
 
 # Test creating ssh key with passphrase
