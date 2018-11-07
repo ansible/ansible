@@ -51,6 +51,7 @@ options:
   api_password:
     description:
       - Password of the user to login into OpenNebula RPC server. If not set
+      - then the value of the C(ONE_PASSWORD) environment variable is used.
   template_name:
     description:
       - Name of VM template to use to create a new instace
