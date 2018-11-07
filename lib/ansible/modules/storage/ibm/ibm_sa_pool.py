@@ -16,11 +16,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ibm_sa_pool
-short_description: Handles pools on an IBM Spectrum Accelerate storage array.
+short_description: Handles pools on IBM Spectrum Accelerate Family storage systems.
 version_added: "2.7"
 
 description:
-    - "This module creates or deletes pools to be used on IBM Spectrum Accelerate storage systems."
+    - "This module creates or deletes pools to be used on IBM Spectrum Accelerate Family storage systems"
 
 options:
     pool:
@@ -54,7 +54,7 @@ extends_documentation_fragment:
     - ibm_storage
 
 author:
-    - Tzur Eliyahu (tzure@il.ibm.com)
+    - Tzur Eliyahu (@tzure)
 '''
 
 EXAMPLES = '''
