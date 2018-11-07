@@ -1,0 +1,3 @@
+bugfixes:
+  - rhsm_repository - compile regular expressions to improve performance when looping over available repositories
+  - rhsm_repository - prevent duplicate repository entries from being entered in the final command
