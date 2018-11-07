@@ -1,0 +1,2 @@
+bugfixes:
+  - redfish_config - do not automatically reboot when scheduling a BIOS configuration job
