@@ -11,7 +11,6 @@ repeating a polling step until a certain result is reached. Ansible offers two k
    * We added ``loop`` in Ansible 2.5. It is not yet a full replacement for ``with_<lookup>``, but we recommend it for most use cases.
    * We have not deprecated the use of ``with_<lookup>`` - that syntax will still be valid for the foreseeable future.
    * We are looking to improve ``loop`` syntax - watch this page and the `changelog <https://github.com/ansible/ansible/tree/devel/changelogs>`_ for updates.
-   * If we ever deprecate the ``with_`` syntax, the deprecation cycle will be longer than usual.
 
 .. contents::
    :local:
@@ -23,7 +22,7 @@ Comparing ``loop`` and ``with_*``
 * The ``loop`` keyword is equivalent to ``with_list``, and is the best choice for simple loops.
 * The ``loop`` keyword will not accept a string as input, see :ref:`query_vs_lookup`.
 * Generally speaking, any use of ``with_*`` covered in :ref:`migrating_to_loop` can be updated to use ``loop``.
-* Be careful when changing ``with_items`` to ``loop``, as ``with_items`` performed implicit flattening. You may need to use ``flatten`` with ``loop`` to match the exact outcome.
+* Be careful when changing ``with_items`` to ``loop``, as ``with_items`` performed implicit single-level flattening. You may need to use ``flatten(1)`` with ``loop`` to match the exact outcome.
 * Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword.
 
 .. _standard_loops:
