@@ -1040,7 +1040,7 @@ def ipsort(value, query=''):
     return_v = value
     if len(return_v) > 1:
         return_v = sorted(return_v)
-  
+
     return return_v
 
 
