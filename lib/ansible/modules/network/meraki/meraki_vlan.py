@@ -21,6 +21,7 @@ version_added: "2.7"
 description:
 - Create, edit, query, or delete VLANs in a Meraki environment.
 notes:
+- Meraki's API will return an error if VLANs aren't enabled on a network. VLANs are returned properly if VLANs are enabled on a network.
 - Some of the options are likely only used for developers within Meraki.
 - Meraki's API defaults to networks having VLAN support disabled and there is no way to enable VLANs support in the API. VLAN support must be enabled manually.
 options:
