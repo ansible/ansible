@@ -148,6 +148,12 @@ options:
       version_added: 2.7
       type: bool
       default: 'no'
+    survey_spec:
+      description:
+        - JSON/YAML dict formatted survey definition.
+      version_added: 2.8
+      type: dict
+      required: False
     become_enabled:
       description:
         - Activate privilege escalation.
@@ -165,6 +171,10 @@ options:
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
+notes:
+  - JSON for survey_spec can be found in Tower API Documentation. See
+    U(https://docs.ansible.com/ansible-tower/latest/html/towerapi/api_ref.html#/Job_Templates/Job_Templates_job_templates_survey_spec_create)
+    for POST operation payload example.
 '''
 
 
@@ -179,6 +189,8 @@ EXAMPLES = '''
     credential: "Local"
     state: "present"
     tower_config_file: "~/tower_cli.cfg"
+    survey_enabled: yes
+    survey_spec: "{{ lookup('file', 'my_survey.json') }}"
 '''
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
@@ -280,6 +292,7 @@ def main():
         ask_inventory=dict(type='bool', default=False),
         ask_credential=dict(type='bool', default=False),
         survey_enabled=dict(type='bool', default=False),
+        survey_spec=dict(type='dict', required=False),
         become_enabled=dict(type='bool', default=False),
         diff_mode_enabled=dict(type='bool', default=False),
         concurrent_jobs_enabled=dict(type='bool', default=False),
