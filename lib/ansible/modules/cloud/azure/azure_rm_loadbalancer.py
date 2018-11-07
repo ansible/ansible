@@ -332,7 +332,6 @@ changed:
 
 import random
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-from ansible.module_utils.network.common.utils import dict_merge
 
 try:
     from msrestazure.tools import parse_resource_id
