@@ -65,7 +65,7 @@ EXAMPLES = '''
         username: "{{ user }}"
         password: "{{ pass }}"
         validate_certs: no
-        group: testingfwgrp
+        group: testingfwgrp1
         firmwarepol: test2FrmPol
         state: present
         
