@@ -42,13 +42,18 @@ def remove_omit(task_args, omit_token):
     Remove args with a value equal to the ``omit_token`` recursively
     to align with now having suboptions in the argument_spec
     '''
-    new_args = {}
 
+    if not isinstance(task_args, dict):
+        return task_args
+
+    new_args = {}
     for i in iteritems(task_args):
         if i[1] == omit_token:
             continue
         elif isinstance(i[1], dict):
             new_args[i[0]] = remove_omit(i[1], omit_token)
+        elif isinstance(i[1], list):
+            new_args[i[0]] = [remove_omit(v, omit_token) for v in i[1]]
         else:
             new_args[i[0]] = i[1]
 
