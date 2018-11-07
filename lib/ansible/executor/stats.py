@@ -34,6 +34,8 @@ class AggregateStats:
         self.dark = {}
         self.changed = {}
         self.skipped = {}
+        self.rescued = {}
+        self.ignored = {}
 
         # user defined stats, which can be per host or global
         self.custom = {}
@@ -63,7 +65,9 @@ class AggregateStats:
             failures=self.failures.get(host, 0),
             unreachable=self.dark.get(host, 0),
             changed=self.changed.get(host, 0),
-            skipped=self.skipped.get(host, 0)
+            skipped=self.skipped.get(host, 0),
+            rescued=self.rescued.get(host, 0),
+            ignored=self.ignored.get(host, 0),
         )
 
     def set_custom_stats(self, which, what, host=None):
