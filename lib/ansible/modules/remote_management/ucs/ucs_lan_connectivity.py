@@ -67,6 +67,7 @@ options:
           If C(absent), will verify vnic is absent from policy.
         choices: [ present, absent ]
         default: present
+    version_added: '2.8'
   iscsi_vnic_list:
     description:
     - List of iSCSI vNICs used by the LAN Connectivity Policy.
@@ -96,6 +97,7 @@ options:
           If C(absent), will verify iscsi vnic is absent from policy.
         choices: [ present, absent ]
         default: present
+    version_added: '2.8'
   org_dn:
     description:
     - Org dn (distinguished name)
