@@ -15,7 +15,7 @@ You can specify a different inventory file using the ``-i <path>`` option on the
 
 Not only is this inventory configurable, but you can also use multiple inventory files at the same time and
 pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
-Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
+Introduced in version 2.4, Ansible has :ref:`inventory_plugins` to make this flexible and customizable.
 
 .. _inventoryformat:
 
@@ -505,17 +505,18 @@ Here is an example of how to instantly deploy to created containers::
 .. note:: If you're reading the docs from the beginning, this may be the first example you've seen of an Ansible playbook. This is not an inventory file.
           Playbooks will be covered in great detail later in the docs.
 
-.. _using_multiple_inventory_directories:
+.. _using_multiple_inventory_sources:
 
-Using multiple inventory directories
-++++++++++++++++++++++++++++++++++++
+Using multiple inventory sources
+++++++++++++++++++++++++++++++++
 
-You can use multiple inventory directories if you want to target multiple environments or reuse common
-groups and variables across multiple environments. The targeted inventories are merged and run just like
+You can use multiple inventory sources if you want to target multiple environments, multiple inventory source types
+or reuse common groups and variables across multiple environments. The sources are merged and run just like
 only one inventory was given. One inventory can depend on groups or group variables of another inventory.
 Variable defined in the last inventory wins in precedence in accordance with :ref:`ansible_variable_precedence`.
 
-In this example we have two different environments: production and staging. Both have some
+In the following example the inventory sources are directories but could be any of the supported inventory plugins
+or dynamic inventory scripts. In the example we have two different environments: production and staging. Both have some
 common variables and groups but may also have some own environment specific configurations.
 To avoid copy pasting the commmon groups and variables the following directory layout is created::
 
@@ -577,6 +578,22 @@ You can target these inventories like this (note the order of the inventory para
     ansible-playbook example.yml -i inventories/common -i inventories/production
 
 It is also possible to configure :envvar:`ANSIBLE_INVENTORY` to use multiple inventories.
+
+**Aggregating inventory sources with a directory**
+
+You can combine multiple inventory sources under a directory. As an example the following inventory
+combines an inventory plugin source, a dynamic inventory script, and files with static hosts and groups::
+
+    inventory/
+      01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      02-dynamic-inventory.py   # add additional hosts with dynamic inventory script
+      03-static-inventory       # add static hosts
+      04-static-groups          # define static groups using groups from earlier inventory sources as children
+      group_vars/
+        all.yml                 # assign variables to all hosts
+
+The inventories are parsed in alphabetical order so number prefixes are used to make sure
+the parsing order is correct. For more details about inventory plugins see :ref:`inventory_plugins`.
 
 .. seealso::
 
