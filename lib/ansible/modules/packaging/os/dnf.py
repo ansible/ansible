@@ -254,6 +254,21 @@ EXAMPLES = '''
     name: httpd
     state: absent
     autoremove: no
+
+- name: install a modularity appstream with defined stream and profile
+  dnf:
+    name: @postgresql:9.6/client
+    state: present
+
+- name: install a modularity appstream with defined stream
+  dnf:
+    name: @postgresql:9.6
+    state: present
+
+- name: install a modularity appstream with defined profile
+  dnf:
+    name: @postgresql/client
+    state: present
 '''
 
 import os
@@ -295,6 +310,11 @@ class DnfModule(YumDnf):
         self._ensure_dnf()
         self.lockfile = "/var/cache/dnf/*_lock.pid"
         self.pkg_mgr_name = "dnf"
+
+        try:
+            self.with_modules = dnf.base.WITH_MODULES
+        except AttributeError:
+            self.with_modules = False
 
     def _sanitize_dnf_error_msg(self, spec, error):
         """
@@ -592,6 +612,7 @@ class DnfModule(YumDnf):
                     results=[],
                     rc=1
                 )
+
         return base
 
     def list_items(self, command):
@@ -720,17 +741,35 @@ class DnfModule(YumDnf):
                 }
 
     def _parse_spec_group_file(self):
-        pkg_specs, grp_specs, filenames = [], [], []
+        pkg_specs, grp_specs, env_specs, module_specs, filenames = [], [], [], [], []
+        already_loaded_comps = False  # Only load this if necessary, it's slow
+
         for name in self.names:
             if name.endswith(".rpm"):
                 if '://' in name:
                     name = self.fetch_rpm_from_url(name)
                 filenames.append(name)
-            elif name.startswith("@"):
-                grp_specs.append(name[1:])
+            elif name.startswith("@") or ('/' in name):
+                if not already_loaded_comps:
+                    self.base.read_comps()
+                    already_loaded_comps = True
+
+                grp_env_mdl_candidate = name[1:].strip()
+
+                grp = self.base.comps.group_by_pattern(grp_env_mdl_candidate)
+                if grp:
+                    grp_specs.append(grp.id)
+
+                env = self.base.comps.environment_by_pattern(grp_env_mdl_candidate)
+                if env:
+                    env_specs.append(env.id)
+
+                mdl = self.module_base._get_modules(grp_env_mdl_candidate)
+                if mdl[0]:
+                    module_specs.append(grp_env_mdl_candidate)
             else:
                 pkg_specs.append(name)
-        return pkg_specs, grp_specs, filenames
+        return pkg_specs, grp_specs, env_specs, module_specs, filenames
 
     def _update_only(self, pkgs):
         not_installed = []
@@ -784,6 +823,16 @@ class DnfModule(YumDnf):
                         rc=1,
                     )
 
+    def _is_module_installed(self, module_spec):
+        if self.with_modules:
+            module_spec = module_spec.strip()
+            module_list, nsv = self.module_base._get_modules(module_spec)
+
+            if nsv.stream in self.base._moduleContainer.getEnabledStream(nsv.name):
+                return True
+
+        return False # seems like a sane default
+
     def ensure(self):
         allow_erasing = False
 
@@ -816,27 +865,10 @@ class DnfModule(YumDnf):
                 failure_response['msg'] = "Depsolve Error occured attempting to upgrade all packages"
                 self.module.fail_json(**failure_response)
         else:
-            pkg_specs, group_specs, filenames = self._parse_spec_group_file()
-            if group_specs:
-                self.base.read_comps()
+            pkg_specs, group_specs, env_specs, module_specs, filenames = self._parse_spec_group_file()
 
             pkg_specs = [p.strip() for p in pkg_specs]
             filenames = [f.strip() for f in filenames]
-            groups = []
-            environments = []
-            for group_spec in (g.strip() for g in group_specs):
-                group = self.base.comps.group_by_pattern(group_spec)
-                if group:
-                    groups.append(group.id)
-                else:
-                    environment = self.base.comps.environment_by_pattern(group_spec)
-                    if environment:
-                        environments.append(environment.id)
-                    else:
-                        self.module.fail_json(
-                            msg="No group {0} available.".format(group_spec),
-                            results=[],
-                        )
 
             if self.state in ['installed', 'present']:
                 # Install files.
@@ -844,8 +876,25 @@ class DnfModule(YumDnf):
                 for filename in filenames:
                     response['results'].append("Installed {0}".format(filename))
 
+                # Install modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if not self._is_module_installed(module):
+                                response['results'].append("Module {0} installed.".format(module))
+                            self.module_base.install([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
+
                 # Install groups.
-                for group in groups:
+                for group in group_specs:
                     try:
                         group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                         if group_pkg_count_installed == 0:
@@ -861,7 +910,7 @@ class DnfModule(YumDnf):
                         # this but still install as much as possible.
                         failure_response['failures'].append(" ".join((group, to_native(e))))
 
-                for environment in environments:
+                for environment in env_specs:
                     try:
                         self.base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                     except dnf.exceptions.DepsolveError as e:
@@ -869,6 +918,13 @@ class DnfModule(YumDnf):
                         self.module.fail_json(**failure_response)
                     except dnf.exceptions.Error as e:
                         failure_response['failures'].append(" ".join((environment, to_native(e))))
+
+                if module_specs and not self.with_modules:
+                    # This means that the group or env wasn't found in comps
+                    self.module.fail_json(
+                        msg="No group {0} available.".format(module_specs[0]),
+                        results=[],
+                    )
 
                 # Install packages.
                 if self.update_only:
@@ -890,7 +946,24 @@ class DnfModule(YumDnf):
                 for filename in filenames:
                     response['results'].append("Installed {0}".format(filename))
 
-                for group in groups:
+                # Upgrade modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} upgraded.".format(module))
+                            self.module_base.upgrade([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
+
+                for group in group_specs:
                     try:
                         try:
                             self.base.group_upgrade(group)
@@ -906,7 +979,7 @@ class DnfModule(YumDnf):
                     except dnf.exceptions.Error as e:
                         failure_response['failures'].append(" ".join((group, to_native(e))))
 
-                for environment in environments:
+                for environment in env_specs:
                     try:
                         try:
                             self.base.environment_upgrade(environment)
@@ -942,7 +1015,25 @@ class DnfModule(YumDnf):
                         results=[],
                     )
 
-                for group in groups:
+                # Remove modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} removed.".format(module))
+                            self.module_base.disable([module])
+                            self.module_base.remove([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
+
+                for group in group_specs:
                     try:
                         self.base.group_remove(group)
                     except dnf.exceptions.CompsError:
@@ -957,7 +1048,7 @@ class DnfModule(YumDnf):
                         #   https://bugzilla.redhat.com/show_bug.cgi?id=1620324
                         pass
 
-                for environment in environments:
+                for environment in env_specs:
                     try:
                         self.base.environment_remove(environment)
                     except dnf.exceptions.CompsError:
@@ -1079,6 +1170,9 @@ class DnfModule(YumDnf):
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
                 self.enablerepo, self.installroot
             )
+
+            if self.with_modules:
+                self.module_base = dnf.module.module_base.ModuleBase(self.base)
 
             self.ensure()
 
