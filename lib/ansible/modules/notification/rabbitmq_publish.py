@@ -94,6 +94,7 @@ requirements: [ pika ]
 notes:
   - This module requires the pika python library U(https://pika.readthedocs.io/).
   - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
+  - This plugin is tested against RabbitMQ. Other AMQP 0.9.1 protocol based servers may work but not tested/guaranteed.
 author: "John Imison (@Im0)"
 '''
 
@@ -102,7 +103,7 @@ EXAMPLES = '''
   rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     queue: 'test'
-    body: "Hello world from ansible module rabitmq_publish"
+    body: "Hello world from ansible module rabbitmq_publish"
     content_type: "text/plain"
     headers:
       myHeader: myHeaderValue
@@ -117,7 +118,7 @@ EXAMPLES = '''
 - name: RabbitMQ auto generated queue
   rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
-    body: "Hello world random queue from ansible module rabitmq_publish"
+    body: "Hello world random queue from ansible module rabbitmq_publish"
     content_type: "text/plain"
 '''
 
