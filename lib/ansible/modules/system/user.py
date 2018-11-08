@@ -1220,7 +1220,6 @@ class FreeBsdUser(User):
             cmd = [
                 self.module.get_bin_path('pw', True),
                 'lock',
-                '-n',
                 self.name
             ]
             if self.uid is not None and info[2] != int(self.uid):
@@ -1231,7 +1230,6 @@ class FreeBsdUser(User):
             cmd = [
                 self.module.get_bin_path('pw', True),
                 'unlock',
-                '-n',
                 self.name
             ]
             if self.uid is not None and info[2] != int(self.uid):
