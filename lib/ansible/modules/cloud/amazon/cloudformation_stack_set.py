@@ -368,11 +368,11 @@ def await_stack_instance_completion(module, cfn, stack_set_name, max_wait):
         except is_boto3_error_code('StackSetNotFound'):  # pylint: disable=duplicate-except
             # this means the deletion beat us, or the stack set is not yet propagated
             pass
-        time.sleep(15)
+        time.sleep(5)
 
     module.warn(
         "Timed out waiting for stack set {0} instances {1} to complete after {2} seconds. Returning unfinished operation".format(
-            stack_set_name, ', '.join(s['StackId'] for s in to_await), max_wait
+            stack_set_name, ', '.join(s['StackSetId'] for s in to_await), max_wait
         )
     )
 
@@ -608,17 +608,8 @@ def main():
                 OperationId=operation_ids[-1],
             )
         else:
-            operation_ids.append('Ansible-StackInstance-Update-{0}'.format(operation_uuid))
-            cfn.update_stack_instances(
-                StackSetName=module.params['name'],
-                Accounts=list(set(acct for acct, region in existing_stack_instances)),
-                Regions=list(set(region for acct, region in existing_stack_instances)),
-                OperationPreferences=get_operation_preferences(module),
-                OperationId=operation_ids[-1],
-            )
-        for op in operation_ids:
             await_stack_set_operation(
-                module, cfn, operation_id=op,
+                module, cfn, operation_id=operation_ids[-1],
                 stack_set_name=module.params['name'],
                 max_wait=module.params.get('wait_timeout'),
             )
