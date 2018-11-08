@@ -50,9 +50,10 @@ def load_fixture(name):
 
 class TestIngateModule(ModuleTestCase):
 
-    def execute_module(self, failed=False, changed=False, fixture=None):
+    def execute_module(self, failed=False, changed=False, fixture=None,
+                       command=None):
 
-        self.load_fixtures(fixture)
+        self.load_fixtures(fixture, command, changed)
 
         if failed:
             result = self.failed()
@@ -79,5 +80,5 @@ class TestIngateModule(ModuleTestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, module_name=None):
+    def load_fixtures(self, fixture=None, command=None, changed=False):
         pass

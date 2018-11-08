@@ -45,7 +45,7 @@ class TestUnitInformationModule(TestIngateModule):
         super(TestUnitInformationModule, self).tearDown()
         self.mock_make_request.stop()
 
-    def load_fixtures(self, fixture=None):
+    def load_fixtures(self, fixture=None, command=None, changed=False):
         self.make_request.side_effect = [load_fixture(fixture)]
 
     def test_ig_unit_information(self):
