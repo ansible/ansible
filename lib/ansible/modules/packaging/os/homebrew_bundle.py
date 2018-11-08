@@ -49,23 +49,23 @@ options:
         description:
             - options flags to install a package
         aliases: ['options']
-        version_added: "1.4"
+        version_added: "2.8"
 '''
 EXAMPLES = '''
 # Install from a Brewfile.
 - homebrew_bundle:
     state: installed
-    file_path: /Users/dan/Brewfile
+    file_path: ~/.Brewfile
 
 # Dump to a Brewfile.
 - homebrew_bundle:
     state: dumped
-    file_path: /Users/dan
+    file_path: ~/.Brewfile
 
 # Cleanup from a Brewfile.
 - homebrew_bundle:
     state: cleanup
-    file_path: /Users/dan
+    file_path: ~/.Brewfile
 '''
 
 import os.path
