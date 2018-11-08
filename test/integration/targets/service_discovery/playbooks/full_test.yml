@@ -1,0 +1,5 @@
+- hosts: localhost
+  connection: local
+
+  roles:
+    - service_discovery
