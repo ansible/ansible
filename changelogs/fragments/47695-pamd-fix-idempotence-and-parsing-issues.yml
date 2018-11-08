@@ -1,0 +1,8 @@
+---
+bugfixes:
+- "pamd: update regex to allow leading dash and retain EOF newline (see https://github.com/ansible/ansible/issues/47418)"
+- "pamd: fix state: updated idempotence (see https://github.com/ansible/ansible/issues/47083)"
+- "pamd: fix state: args_present idempotence (see https://github.com/ansible/ansible/issues/47197)"
+
+minor_changes:
+- "pamd: remove description from RETURN values as it is unnecessary"
