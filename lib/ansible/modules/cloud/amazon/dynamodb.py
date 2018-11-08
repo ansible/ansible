@@ -69,14 +69,6 @@ options:
         required: false
         default: null
         type: dict
-    projection_expression:
-        description:
-            - A string that identifies one or more attributes
-              (separated by commas) to retrieve from the table.
-              Required when I(action=get).
-        required: false
-        default: null
-        type: str
     item:
         description:
             - A map of attribute name/value pairs, one for each attribute.
@@ -251,23 +243,14 @@ except ImportError:
 
 
 def get(connection, table, filter_expression, expression_attribute_names,
-        expression_attribute_values, projection_expression):
+        expression_attribute_values):
 
-    if projection_expression:
+    if expression_attribute_names:
         response = connection.scan(
             TableName=table,
             FilterExpression=filter_expression,
             ExpressionAttributeValues=expression_attribute_values,
-            ExpressionAttributeNames=expression_attribute_names,
-            ProjectionExpression=projection_expression
-        )
-    elif expression_attribute_names:
-        response = connection.scan(
-            TableName=table,
-            FilterExpression=filter_expression,
-            ExpressionAttributeValues=expression_attribute_values,
-            ExpressionAttributeNames=expression_attribute_names,
-            ProjectionExpression=projection_expression
+            ExpressionAttributeNames=expression_attribute_names
         )
     else:
         response = connection.scan(
@@ -332,8 +315,7 @@ def main():
         condition_expression=dict(required=False, type='str'),
         expression_attribute_names=dict(required=False, type='dict'),
         expression_attribute_values=dict(required=False, type='dict'),
-        update_expression=dict(required=False, type='str'),
-        projection_expression=dict(required=False, type='str')
+        update_expression=dict(required=False, type='str')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -353,7 +335,6 @@ def main():
             'expression_attribute_names')
         expression_attribute_values = module.params.get(
             'expression_attribute_values')
-        projection_expression = module.params.get('projection_expression')
 
         changed = False
         response = {}
@@ -361,8 +342,7 @@ def main():
         if action == 'get':
             response, changed = get(
                 connection, table, filter_expression,
-                expression_attribute_names, expression_attribute_values,
-                projection_expression)
+                expression_attribute_names, expression_attribute_values)
 
         elif action == 'put':
             response, changed = put(connection, table, item)
