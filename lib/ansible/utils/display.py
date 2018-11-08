@@ -118,11 +118,14 @@ class Display:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, host=None):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
+
+        pid = os.getpid()
+        dtime = time.time()
 
         nocolor = msg
         if color:
@@ -148,7 +151,16 @@ class Display:
             else:
                 fileobj = sys.stderr
 
-            fileobj.write(msg2)
+            if C.DEFAULT_DEBUG_STDOUT:
+                if '\n' in msg2:
+                    msgs = [x + '\n' for x in msg2.split('\n')]
+                else:
+                    msgs = [msg2]
+                msgs = ["%6d %0.5f [%s]: %s" % (pid, dtime, host, x) for x in msgs if x != '\n']
+                for _msg in msgs:
+                    fileobj.write(_msg)
+            else:
+                fileobj.write(msg2)
 
             try:
                 fileobj.flush()
@@ -193,17 +205,20 @@ class Display:
 
     def debug(self, msg, host=None):
         if C.DEFAULT_DEBUG:
-            if host is None:
-                self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            if C.DEFAULT_DEBUG_STDOUT:
+                self.display(msg, host=host, color=C.COLOR_DEBUG)
             else:
-                self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
+                if host is None:
+                    self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+                else:
+                    self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
         if self.verbosity > caplevel:
             if host is None:
-                self.display(msg, color=C.COLOR_VERBOSE)
+                self.display(msg, color=C.COLOR_VERBOSE, host=host)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True, host=host)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''

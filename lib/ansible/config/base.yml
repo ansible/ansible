@@ -533,6 +533,18 @@ DEFAULT_DEBUG:
   ini:
   - {key: debug, section: defaults}
   type: boolean
+DEFAULT_DEBUG_STDOUT:
+  name: Debug mode stdout format
+  default: False
+  description:
+    - "Toggles debug formatted output in Ansible for all lines. This is *very* verbose and can hinder
+      multiprocessing.  Debug output can also include secret information
+      despite no_log settings being enabled, which means debug mode should not be used in
+      production."
+  env: [{name: ANSIBLE_DEBUG_STDOUT}]
+  ini:
+  - {key: debug_stdout, section: defaults}
+  type: boolean
 DEFAULT_EXECUTABLE:
   name: Target shell executable
   default: /bin/sh
