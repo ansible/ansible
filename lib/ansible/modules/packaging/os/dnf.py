@@ -248,6 +248,21 @@ EXAMPLES = '''
     name: httpd
     state: absent
     autoremove: no
+
+- name: install a modularity appstream with defined stream and profile
+  dnf:
+    name: '@postgresql:9.6/client'
+    state: present
+
+- name: install a modularity appstream with defined stream
+  dnf:
+    name: '@postgresql:9.6'
+    state: present
+
+- name: install a modularity appstream with defined profile
+  dnf:
+    name: '@postgresql/client'
+    state: present
 '''
 
 import os
@@ -287,6 +302,11 @@ class DnfModule(YumDnf):
         super(DnfModule, self).__init__(module)
 
         self._ensure_dnf()
+
+        try:
+            self.with_modules = dnf.base.WITH_MODULES
+        except AttributeError:
+            self.with_modules = False
 
     def _sanitize_dnf_error_msg(self, spec, error):
         """
@@ -696,17 +716,32 @@ class DnfModule(YumDnf):
                 }
 
     def _parse_spec_group_file(self):
-        pkg_specs, grp_specs, filenames = [], [], []
+        pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
+        already_loaded_comps = False  # Only load this if necessary, it's slow
+
         for name in self.names:
             if name.endswith(".rpm"):
                 if '://' in name:
                     name = self.fetch_rpm_from_url(name)
                 filenames.append(name)
-            elif name.startswith("@"):
-                grp_specs.append(name[1:])
+            elif name.startswith("@") or ('/' in name):
+                if not already_loaded_comps:
+                    self.base.read_comps()
+                    already_loaded_comps = True
+
+                grp_env_mdl_candidate = name[1:].strip()
+
+                if self.with_modules:
+                    mdl = self.module_base._get_modules(grp_env_mdl_candidate)
+                    if mdl[0]:
+                        module_specs.append(grp_env_mdl_candidate)
+                    else:
+                        grp_specs.append(grp_env_mdl_candidate)
+                else:
+                    grp_specs.append(grp_env_mdl_candidate)
             else:
                 pkg_specs.append(name)
-        return pkg_specs, grp_specs, filenames
+        return pkg_specs, grp_specs, module_specs, filenames
 
     def _update_only(self, pkgs):
         not_installed = []
@@ -760,6 +795,16 @@ class DnfModule(YumDnf):
                         rc=1,
                     )
 
+    def _is_module_installed(self, module_spec):
+        if self.with_modules:
+            module_spec = module_spec.strip()
+            module_list, nsv = self.module_base._get_modules(module_spec)
+
+            if nsv.stream in self.base._moduleContainer.getEnabledStream(nsv.name):
+                return True
+
+        return False  # seems like a sane default
+
     def ensure(self):
         allow_erasing = False
 
@@ -792,9 +837,7 @@ class DnfModule(YumDnf):
                 failure_response['msg'] = "Depsolve Error occured attempting to upgrade all packages"
                 self.module.fail_json(**failure_response)
         else:
-            pkg_specs, group_specs, filenames = self._parse_spec_group_file()
-            if group_specs:
-                self.base.read_comps()
+            pkg_specs, group_specs, module_specs, filenames = self._parse_spec_group_file()
 
             pkg_specs = [p.strip() for p in pkg_specs]
             filenames = [f.strip() for f in filenames]
@@ -819,6 +862,23 @@ class DnfModule(YumDnf):
                 self._install_remote_rpms(filenames)
                 for filename in filenames:
                     response['results'].append("Installed {0}".format(filename))
+
+                # Install modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if not self._is_module_installed(module):
+                                response['results'].append("Module {0} installed.".format(module))
+                            self.module_base.install([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
 
                 # Install groups.
                 for group in groups:
@@ -846,6 +906,13 @@ class DnfModule(YumDnf):
                     except dnf.exceptions.Error as e:
                         failure_response['failures'].append(" ".join((environment, to_native(e))))
 
+                if module_specs and not self.with_modules:
+                    # This means that the group or env wasn't found in comps
+                    self.module.fail_json(
+                        msg="No group {0} available.".format(module_specs[0]),
+                        results=[],
+                    )
+
                 # Install packages.
                 if self.update_only:
                     not_installed = self._update_only(pkg_specs)
@@ -865,6 +932,23 @@ class DnfModule(YumDnf):
                 self._install_remote_rpms(filenames)
                 for filename in filenames:
                     response['results'].append("Installed {0}".format(filename))
+
+                # Upgrade modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} upgraded.".format(module))
+                            self.module_base.upgrade([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
 
                 for group in groups:
                     try:
@@ -917,6 +1001,24 @@ class DnfModule(YumDnf):
                         msg="Cannot remove paths -- please specify package name.",
                         results=[],
                     )
+
+                # Remove modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} removed.".format(module))
+                            self.module_base.disable([module])
+                            self.module_base.remove([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
 
                 for group in groups:
                     try:
@@ -1043,6 +1145,9 @@ class DnfModule(YumDnf):
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
                 self.enablerepo, self.installroot
             )
+
+            if self.with_modules:
+                self.module_base = dnf.module.module_base.ModuleBase(self.base)
 
             self.ensure()
 
