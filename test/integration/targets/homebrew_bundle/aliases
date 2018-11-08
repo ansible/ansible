@@ -1,4 +1,5 @@
 destructive
+shippable/posix/group1
 needs/root
 skip/freebsd
 skip/rhel
