@@ -198,7 +198,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "device_roles": self.extract_device_role,
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
-            "services": self.extract_services,
             "manufacturers": self.extract_manufacturer
         }
 
@@ -250,14 +249,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_manufacturer(self, host):
         try:
             return [self.manufacturers_lookup[host["device_type"]["manufacturer"]["id"]]]
-        except Exception:
-            return
-
-    def extract_services(self, host):
-        try:
-            url = urljoin(self.api_endpoint, "/api/ipam/services/?device=" + str(host["name"]))
-            device_lookup = self._fetch_information(url)
-            return device_lookup["results"]
         except Exception:
             return
 
