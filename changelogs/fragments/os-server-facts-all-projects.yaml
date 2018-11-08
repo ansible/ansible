@@ -1,0 +1,4 @@
+---
+minor_changes:
+- os_server_facts - added all_projects option to gather server facts from all
+  available projects
