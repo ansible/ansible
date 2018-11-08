@@ -130,7 +130,7 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP/CDP neighbors from the remote device
+  description: The list of LLDP and CDP neighbors from the device
   returned: when interfaces is configured
   type: dict
 
@@ -398,6 +398,7 @@ class Interfaces(FactsBase):
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
+        self.facts['neighbors'] = {}
         data = None
 
         data = self.run('show interface', output='json')
@@ -422,14 +423,14 @@ class Interfaces(FactsBase):
 
         data = self.run('show lldp neighbors')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(data)
+            self.facts['neighbors'].update(self.populate_neighbors(data))
 
         data = self.run('show cdp neighbors detail', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['neighbors'] = self.populate_structured_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_structured_neighbors_cdp(data))
             else:
-                self.facts['neighbors'] = self.populate_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_neighbors_cdp(data))
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
