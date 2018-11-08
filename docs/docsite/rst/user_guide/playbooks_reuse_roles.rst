@@ -173,9 +173,11 @@ Finally, you may wish to assign tags to the tasks inside the roles you specify. 
 
     - hosts: webservers
       roles:
-        - role: bar
-          tags: ["foo"]
-        # using YAML shorthand, this is equivalent to the above
+        - role: foo
+          tags:
+            - bar
+            - baz
+        # using YAML shorthand, this is equivalent to the above:
         - { role: foo, tags: ["bar", "baz"] }
 
 Or, again, using the newer syntax::
