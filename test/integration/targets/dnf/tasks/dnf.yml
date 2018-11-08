@@ -465,7 +465,7 @@
     name: coreutils
     state: present
     allowerasing: yes
-  changed_when: '"Nothing to do" not in coreutils_install.stdout'
+  changed_when: '"Nothing to do" not in coreutils_install.msg'
   register: coreutils_install
 
 - block:
