@@ -29,8 +29,13 @@ options:
     action:
         description:
             - Action to perform with the DyamoDB item.
-            - If get, returns a set of attributes for the item
-              with the given primary key.
+            - If get, returns a set of attributes for the item with the given
+              filter expression. If the total number of scanned items exceeds
+              the maximum data set size limit of 1 MB, the scan stops and
+              results are returned to the user as a LastEvaluatedKey value to
+              continue the scan in a subsequent operation. The results also
+              include the number of items exceeding the limit.
+              A scan can result in no table data meeting the filter criteria.
             - If put, creates a new item, or replaces an old item with a new item.
               If an item that has the same primary key as the new item
               already exists in the specified table, the new item completely
@@ -47,13 +52,20 @@ options:
         default: null
         type: str
         choices: [get, put, update, delete]
+    filter_expression:
+        description:
+            - A string that contains conditions.
+              Required when I(action=get)
+        required: false
+        default: null
+        type: str
     primary_key:
         description:
             - The primary key of the DynamoDB table. Each element consists of
               an attribute name and a value for that attribute. For a composite
               primary key, you must provide values for both the partition key
               and the sort key.
-              Required when I(action=get) I(action=update) I(action=delete)
+              Required when I(action=update) I(action=delete)
         required: false
         default: null
         type: dict
@@ -120,7 +132,17 @@ EXAMPLES = '''
     profile: pre
     table: narcos
     action: get
-    primary_key: {"bank": {"S": "hsbc"}}
+    filter_expression: 'bank = :bank_name AND quantity = :number'
+    expression_attribute_values: {":bank_name": {"S": "hsbc"}, ":number": {"N": "2000"}}
+
+- name: Gets a single item (where 'project' is a dynamodb protected keyword)
+  dynamodb:
+    profile: pre
+    table: narcos
+    action: get
+    filter_expression: '#p = :project'
+    expression_attribute_values: {":project": {"S": "narcos"}}
+    expression_attribute_names: {"#p" : "project"}
 
 # Creates a single item in 'narcos' DynamoDB table where column 'bank' equals 'hsbc' string,
 # column 'quantity' equals '1000' numeric and column 'person' equals 'ochoa' string
@@ -173,6 +195,35 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+items:
+    description: Item when you peform a 'get' action.
+    returned: success
+    type: dict
+    sample:
+        {
+            "bank": {
+                "s": "hsbc"
+            },
+            "quantity": {
+                "n": "1000"
+            },
+            "person": {
+                "s": "ochoa"
+            }
+        }
+last_evaluated_key:
+    description: Last evaluated key when you peform a 'get' action (scans a table)
+    returned: success
+    type: dict
+    sample:
+        {
+            "bank": {
+                "s": "hsbc"
+            },
+            "quantity": {
+                "n": "1000"
+            }
+        }
 response_metadata:
   description: response metadata about the snapshot
   returned: always
@@ -187,22 +238,6 @@ response_metadata:
     http_status_code: 200
     request_id: 7f436dea-ed54-11e6-a04c-ab2372a1f14d
     retry_attempts: 0
-item:
-    description: Item when you peform a 'get' action.
-    returned: success
-    type: dict
-    sample:
-        {
-            "bank": {
-                "S": "hsbc"
-            },
-            "quantity": {
-                "N": "1000"
-            },
-            "person": {
-                "S": "ochoa"
-            }
-        }
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -215,18 +250,30 @@ except ImportError:
     pass    # Handled by AnsibleAWSModule
 
 
-def get(connection, table, primary_key, projection_expression):
+def get(connection, table, filter_expression, expression_attribute_names,
+        expression_attribute_values, projection_expression):
 
     if projection_expression:
-        response = connection.get_item(
+        response = connection.scan(
             TableName=table,
-            Key=primary_key,
+            FilterExpression=filter_expression,
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names,
+            ProjectionExpression=projection_expression
+        )
+    elif expression_attribute_names:
+        response = connection.scan(
+            TableName=table,
+            FilterExpression=filter_expression,
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names,
             ProjectionExpression=projection_expression
         )
     else:
-        response = connection.get_item(
+        response = connection.scan(
             TableName=table,
-            Key=primary_key
+            ExpressionAttributeValues=expression_attribute_values,
+            FilterExpression=filter_expression
         )
 
     changed = False
@@ -280,6 +327,7 @@ def main():
         table=dict(required=True),
         action=dict(required=True, choices=["get", "put", "update", "delete"]),
         primary_key=dict(required=False, type='dict'),
+        filter_expression=dict(required=False, type='str'),
         item=dict(required=False, type='dict'),
         condition_expression=dict(required=False, type='str'),
         expression_attribute_names=dict(required=False, type='dict'),
@@ -297,6 +345,7 @@ def main():
         table = module.params.get('table')
         action = module.params.get('action')
         primary_key = module.params.get('primary_key')
+        filter_expression = module.params.get('filter_expression')
         condition_expression = module.params.get('condition_expression')
         item = module.params.get('item')
         update_expression = module.params.get('update_expression')
@@ -311,9 +360,9 @@ def main():
 
         if action == 'get':
             response, changed = get(
-                connection, table, primary_key, projection_expression)
-            if 'Item' not in response:
-                module.fail_json(msg="No matching items")
+                connection, table, filter_expression,
+                expression_attribute_names, expression_attribute_values,
+                projection_expression)
 
         elif action == 'put':
             response, changed = put(connection, table, item)
