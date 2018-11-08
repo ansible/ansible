@@ -24,7 +24,7 @@ import json
 
 from mock import MagicMock, patch, call
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.network.slxos import slxos
 
 

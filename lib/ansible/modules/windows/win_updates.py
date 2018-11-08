@@ -33,22 +33,14 @@ options:
         version_added: '2.5'
     category_names:
         description:
-        - A scalar or list of categories to install updates from
+        - A scalar or list of categories to install updates from. To get the list
+          of categories, run the module with C(state=searched). The category must
+          be the full category string, but is case insensitive.
+        - Some possible categories are Application, Connectors, Critical Updates,
+          Definition Updates, Developer Kits, Feature Packs, Guidance, Security
+          Updates, Service Packs, Tools, Update Rollups and Updates.
         type: list
         default: [ CriticalUpdates, SecurityUpdates, UpdateRollups ]
-        choices:
-        - Application
-        - Connectors
-        - CriticalUpdates
-        - DefinitionUpdates
-        - DeveloperKits
-        - FeaturePacks
-        - Guidance
-        - SecurityUpdates
-        - ServicePacks
-        - Tools
-        - UpdateRollups
-        - Updates
     reboot:
         description:
         - Ansible will automatically reboot the remote host if it is required
@@ -148,7 +140,7 @@ EXAMPLES = r'''
     - KB4056892
     - KB4073117
 
-- name: Exlude updates based on the update title
+- name: Exclude updates based on the update title
   win_updates:
     category_name:
     - SecurityUpdates
@@ -191,6 +183,11 @@ updates:
             returned: always
             type: boolean
             sample: True
+        categories:
+            description: A list of category strings for this update
+            returned: always
+            type: list of strings
+            sample: [ 'Critical Updates', 'Windows Server 2012 R2' ]
         failure_hresult_code:
             description: The HRESULT code from a failed update
             returned: on install failure
@@ -199,12 +196,17 @@ updates:
 
 filtered_updates:
     description: List of updates that were found but were filtered based on
-      I(blacklist) or I(whitelist). The return value is in the same form as
-      I(updates).
+      I(blacklist), I(whitelist) or I(category_names). The return value is in
+      the same form as I(updates), along with I(filtered_reason).
     returned: success
     type: complex
     sample: see the updates return value
-    contains: {}
+    contains:
+        filtered_reason:
+            description: The reason why this update was filtered
+            returned: always
+            type: string
+            sample: 'skip_hidden'
 
 found_update_count:
     description: The number of updates found needing to be applied

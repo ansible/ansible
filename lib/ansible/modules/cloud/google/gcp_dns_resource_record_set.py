@@ -71,6 +71,11 @@ options:
         description:
             - Identifies the managed zone addressed by this request.
             - Can be the managed zone name or id.
+            - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_dns_managed_zone
+              task and then set this managed_zone field to "{{ name-of-resource }}" Alternatively,
+              you can set this managed_zone to a dictionary with the name key where the value
+              is the name of your ManagedZone.'
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -97,7 +102,7 @@ EXAMPLES = '''
       - 10.1.2.3
       - 40.5.6.7
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -174,7 +179,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind, fetch)
@@ -238,9 +244,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'dns')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def fetch_wrapped_resource(module, kind, wrap_kind, wrap_path):
@@ -269,17 +275,17 @@ def self_link(module):
     return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/rrsets?name={name}&type={type}".format(**res)
 
 
-def collection(module, extra_url=''):
+def collection(module):
     res = {
         'project': module.params['project'],
         'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')
     }
-    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res) + extra_url
+    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -294,8 +300,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -436,7 +440,7 @@ def wait_for_change_to_complete(change_id, module):
 
 def get_change_status(change_id, module):
     auth = GcpSession(module, 'dns')
-    link = collection(module, "/%s" % change_id)
+    link = collection(module) + "/%s" % change_id
     return return_if_change_object(module, auth.get(link))['status']
 
 

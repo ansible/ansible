@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 import json
 import textwrap
 import re
+import os
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -36,6 +37,8 @@ from lib.util import (
 
 class IntegrationAliasesTest(SanitySingleVersion):
     """Sanity test to evaluate integration test aliases."""
+    SHIPPABLE_YML = 'shippable.yml'
+
     DISABLED = 'disabled/'
     UNSTABLE = 'unstable/'
     UNSUPPORTED = 'unsupported/'
@@ -86,7 +89,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         :rtype: list[str]
         """
         if not self._shippable_yml_lines:
-            with open('shippable.yml', 'r') as shippable_yml_fd:
+            with open(self.SHIPPABLE_YML, 'r') as shippable_yml_fd:
                 self._shippable_yml_lines = shippable_yml_fd.read().splitlines()
 
         return self._shippable_yml_lines
@@ -142,6 +145,12 @@ class IntegrationAliasesTest(SanitySingleVersion):
         """
         if args.explain:
             return SanitySuccess(self.name)
+
+        if not os.path.isfile(self.SHIPPABLE_YML):
+            return SanityFailure(self.name, messages=[SanityMessage(
+                message='file missing',
+                path=self.SHIPPABLE_YML,
+            )])
 
         results = dict(
             comments=[],

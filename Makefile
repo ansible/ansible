@@ -122,7 +122,7 @@ ifneq ($(REPOTAG),)
 endif
 
 # ansible-test parameters
-ANSIBLE_TEST ?= test/runner/ansible-test
+ANSIBLE_TEST ?= bin/ansible-test
 TEST_FLAGS ?=
 
 # ansible-test units parameters (make test / make test-py3)
@@ -217,7 +217,6 @@ clean:
 	rm -f AUTHORS.TXT
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
-	$(MAKE) -C docs/api clean
 
 .PHONY: python
 python:
@@ -231,8 +230,12 @@ install_manpages:
 	gzip -9 $(wildcard ./docs/man/man1/ansible*.1)
 	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
 
+.PHONY: sdist_check
+sdist_check:
+	$(PYTHON) packaging/sdist/check-link-behavior.py
+
 .PHONY: sdist
-sdist: clean docs
+sdist: sdist_check clean docs
 	$(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
@@ -398,4 +401,3 @@ alldocs: docs webdocs
 
 version:
 	@echo $(VERSION)
-

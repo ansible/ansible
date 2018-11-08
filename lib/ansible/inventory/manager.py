@@ -278,7 +278,7 @@ class InventoryManager(object):
                         display.debug('%s failed to parse %s' % (plugin_name, source))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
                 else:
-                    display.debug('%s did not meet %s requirements' % (source, plugin_name))
+                    display.v('%s did not meet %s requirements, check plugin documentation if this is unexpected' % (source, plugin_name))
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
@@ -289,7 +289,9 @@ class InventoryManager(object):
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
                         raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
-            display.warning("Unable to parse %s as an inventory source" % source)
+            if source != '/etc/ansible/hosts' or os.path.exists(source):
+                # only warn if NOT using the default and if using it, only if the file is present
+                display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None

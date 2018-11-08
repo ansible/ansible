@@ -31,12 +31,10 @@ options:
     secret_value:
         description:
             - Secret to be secured by keyvault.
-        required: false
     state:
         description:
             - Assert the state of the subnet. Use 'present' to create or update a secret and
               'absent' to delete a secret .
-        required: false
         default: present
         choices:
             - absent

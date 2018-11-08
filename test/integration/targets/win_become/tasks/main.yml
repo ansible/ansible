@@ -136,7 +136,8 @@
     register: become_invalid_pass
     failed_when:
     - '"Failed to become user " + become_test_username not in become_invalid_pass.msg'
-    - '"LogonUser failed (The user name or password is incorrect, Win32ErrorCode 1326)" not in become_invalid_pass.msg'
+    - '"LogonUser failed" not in become_invalid_pass.msg'
+    - '"Win32ErrorCode 1326)" not in become_invalid_pass.msg'
     
   - name: test become with SYSTEM account
     win_whoami:
@@ -206,21 +207,21 @@
     become_flags: logon_type=batch invalid_flags=a
     become_method: runas
     register: failed_flags_invalid_key
-    failed_when: "failed_flags_invalid_key.msg != \"Failed to parse become_flags 'logon_type=batch invalid_flags=a': become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'\""
+    failed_when: "failed_flags_invalid_key.msg != \"internal error: failed to parse become_flags 'logon_type=batch invalid_flags=a': become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'\""
 
   - name: test failure with invalid logon_type
     vars: *become_vars
     win_whoami:
     become_flags: logon_type=invalid
     register: failed_flags_invalid_type
-    failed_when: "failed_flags_invalid_type.msg != \"Failed to parse become_flags 'logon_type=invalid': become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials\""
+    failed_when: "failed_flags_invalid_type.msg != \"internal error: failed to parse become_flags 'logon_type=invalid': become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials\""
 
   - name: test failure with invalid logon_flag
     vars: *become_vars
     win_whoami:
     become_flags: logon_flags=with_profile,invalid
     register: failed_flags_invalid_flag
-    failed_when: "failed_flags_invalid_flag.msg != \"Failed to parse become_flags 'logon_flags=with_profile,invalid': become_flags logon_flags value 'invalid' is not valid, valid values are: with_profile, netcredentials_only\""
+    failed_when: "failed_flags_invalid_flag.msg != \"internal error: failed to parse become_flags 'logon_flags=with_profile,invalid': become_flags logon_flags value 'invalid' is not valid, valid values are: with_profile, netcredentials_only\""
 
   # Server 2008 doesn't work with network and network_cleartext, there isn't really a reason why you would want this anyway
   - name: check if we are running on a dinosaur, neanderthal or an OS of the modern age

@@ -70,8 +70,9 @@ import getpass
 from datetime import datetime
 from os.path import basename
 
-from ansible.plugins.callback import CallbackBase
 from ansible.module_utils.urls import open_url
+from ansible.parsing.ajson import AnsibleJSONEncoder
+from ansible.plugins.callback import CallbackBase
 
 
 class SplunkHTTPCollectorSource(object):
@@ -116,7 +117,7 @@ class SplunkHTTPCollectorSource(object):
         data['ansible_result'] = result._result
 
         # This wraps the json payload in and outer json event needed by Splunk
-        jsondata = json.dumps(data, sort_keys=True)
+        jsondata = json.dumps(data, cls=AnsibleJSONEncoder, sort_keys=True)
         jsondata = '{"event":' + jsondata + "}"
 
         open_url(

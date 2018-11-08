@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -40,7 +40,7 @@ options:
     description:
       - "The user or group name for which the permissions are listed."
     required: true
-short_description: "Manage NetApp cifs-share-access-control"
+short_description: "NetApp ONTAP manage cifs-share-access-control"
 version_added: "2.6"
 
 '''

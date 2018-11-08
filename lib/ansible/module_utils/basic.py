@@ -68,6 +68,7 @@ import locale
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import types
@@ -82,6 +83,7 @@ import pwd
 import platform
 import errno
 import datetime
+from collections import deque
 from itertools import chain, repeat
 
 try:
@@ -148,7 +150,6 @@ except Exception:
         pass
 
 from ansible.module_utils.common._collections_compat import (
-    deque,
     KeysView,
     Mapping, MutableMapping,
     Sequence, MutableSequence,
@@ -782,6 +783,12 @@ def jsonify(data, **kwargs):
         except UnicodeDecodeError:
             continue
     raise UnicodeError('Invalid unicode encoding encountered')
+
+
+def missing_required_lib(library):
+    hostname = platform.node()
+    return "Failed to import the required Python library (%s) on %s's Python %s. Please read module documentation " \
+           "and install in the appropriate location." % (library, hostname, sys.executable)
 
 
 class AnsibleFallbackNotFound(Exception):
@@ -2327,6 +2334,8 @@ class AnsibleModule(object):
                 for d in kwargs['deprecations']:
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
                         self.deprecate(d[0], version=d[1])
+                    elif isinstance(d, Mapping):
+                        self.deprecate(d['msg'], version=d.get('version', None))
                     else:
                         self.deprecate(d)
             else:
@@ -2679,8 +2688,14 @@ class AnsibleModule(object):
 
         return self._clean
 
+    def _restore_signal_handlers(self):
+        # Reset SIGPIPE to SIG_DFL, otherwise in Python2.7 it gets ignored in subprocesses.
+        if PY2 and sys.platform != 'win32':
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
-                    use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
+                    use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2718,6 +2733,18 @@ class AnsibleModule(object):
             python3 versions we support) otherwise a UnicodeError traceback
             will be raised.  This does not affect transformations of strings
             given as args.
+        :kw expand_user_and_vars: When ``use_unsafe_shell=False`` this argument
+            dictates whether ``~`` is expanded in paths and environment variables
+            are expanded before running the command. When ``True`` a string such as
+            ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
+            ``use_unsafe_shell=False`` no path or variable expansion will be done.
+        :kw pass_fds: When running on python3 this argument
+            dictates which file descriptors should be passed
+            to an underlying ``Popen`` constructor.
+        :kw before_communicate_callback: This function will be called
+            after ``Popen`` object will be created
+            but before communicating to the process.
+            (``Popen`` object will be passed to callback as a first argument)
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2756,8 +2783,11 @@ class AnsibleModule(object):
                     args = to_text(args, errors='surrogateescape')
                 args = shlex.split(args)
 
-            # expand shellisms
-            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
+            # expand ``~`` in paths, and all environment vars
+            if expand_user_and_vars:
+                args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
+            else:
+                args = [x for x in args if x is not None]
 
         prompt_re = None
         if prompt_regex:
@@ -2814,7 +2844,10 @@ class AnsibleModule(object):
             stdin=st_in,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            preexec_fn=self._restore_signal_handlers,
         )
+        if PY3 and pass_fds:
+            kwargs["pass_fds"] = pass_fds
 
         # store the pwd
         prev_dir = os.getcwd()
@@ -2837,6 +2870,8 @@ class AnsibleModule(object):
             if self._debug:
                 self.log('Executing: ' + self._clean_args(args))
             cmd = subprocess.Popen(args, **kwargs)
+            if before_communicate_callback:
+                before_communicate_callback(cmd)
 
             # the communication logic here is essentially taken from that
             # of the _communicate() function in ssh.py

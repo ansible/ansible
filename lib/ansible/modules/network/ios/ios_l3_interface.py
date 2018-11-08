@@ -218,7 +218,7 @@ def map_obj_to_commands(updates, module):
 
 
 def map_config_to_obj(module):
-    config = get_config(module, flags=['| section interface'])
+    config = get_config(module)
     configobj = NetworkConfig(indent=1, contents=config)
 
     match = re.findall(r'^interface (\S+)', config, re.M)

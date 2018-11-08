@@ -281,7 +281,7 @@ EXAMPLES = r'''
   win_chocolatey:
     name: '{{ item }}'
     state: present
-  with_items:
+  loop:
   - procexp
   - putty
   - windirstat

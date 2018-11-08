@@ -18,9 +18,6 @@
 
 import os
 import re
-import json
-import sys
-import copy
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -35,22 +32,18 @@ HAS_DOCKER_ERROR = None
 try:
     from requests.exceptions import SSLError
     from docker import __version__ as docker_version
-    from docker.errors import APIError, TLSParameterError, NotFound
+    from docker.errors import APIError, NotFound, TLSParameterError
     from docker.tls import TLSConfig
-    from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
     if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
         HAS_DOCKER_PY_3 = True
         from docker import APIClient as Client
-        from docker.types import Ulimit, LogConfig
     elif LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
-        from docker.types import Ulimit, LogConfig
     else:
         from docker import Client
-        from docker.utils.types import Ulimit, LogConfig
 
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
@@ -62,14 +55,14 @@ except ImportError as exc:
 # installed, as they utilize the same namespace are are incompatible
 try:
     # docker
-    import docker.models
+    import docker.models  # noqa: F401
     HAS_DOCKER_MODELS = True
 except ImportError:
     HAS_DOCKER_MODELS = False
 
 try:
     # docker-py
-    import docker.ssladapter
+    import docker.ssladapter  # noqa: F401
     HAS_DOCKER_SSLADAPTER = True
 except ImportError:
     HAS_DOCKER_SSLADAPTER = False
@@ -79,7 +72,7 @@ DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
 DEFAULT_TLS_HOSTNAME = 'localhost'
-MIN_DOCKER_VERSION = "1.7.0"
+MIN_DOCKER_VERSION = "1.8.0"
 DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
@@ -110,14 +103,26 @@ BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 
 if not HAS_DOCKER_PY:
+    docker_version = None
+
     # No docker-py. Create a place holder client to allow
     # instantiation of AnsibleModule and proper error handing
-    class Client(object):
+    class Client(object):  # noqa: F811
         def __init__(self, **kwargs):
             pass
 
-    class APIError(Exception):
+    class APIError(Exception):  # noqa: F811
         pass
+
+    class NotFound(Exception):  # noqa: F811
+        pass
+
+
+def is_image_name_id(name):
+    """Checks whether the given image name is in fact an image ID (hash)."""
+    if re.match('^sha256:[0-9a-fA-F]{64}$', name):
+        return True
+    return False
 
 
 def sanitize_result(data):
@@ -157,7 +162,8 @@ class DockerBaseClass(object):
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
-                 required_together=None, required_if=None):
+                 required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
+                 min_docker_api_version=None):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -182,6 +188,10 @@ class AnsibleDockerClient(Client):
             required_together=required_together_params,
             required_if=required_if)
 
+        NEEDS_DOCKER_PY2 = (LooseVersion(min_docker_version) >= LooseVersion('2.0.0'))
+
+        self.docker_py_version = LooseVersion(docker_version)
+
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
                       "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
@@ -189,11 +199,24 @@ class AnsibleDockerClient(Client):
                       "Please note that simply uninstalling one of the modules can leave the other module in a broken state.")
 
         if not HAS_DOCKER_PY:
-            self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
+            if NEEDS_DOCKER_PY2:
+                msg = "Failed to import docker - %s. Try `pip install docker`"
+            else:
+                msg = "Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)"
+            self.fail(msg % HAS_DOCKER_ERROR)
 
-        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
-            self.fail("Error: docker / docker-py version is %s. Minimum version required is %s." % (docker_version,
-                                                                                                    MIN_DOCKER_VERSION))
+        if self.docker_py_version < LooseVersion(min_docker_version):
+            if NEEDS_DOCKER_PY2:
+                if docker_version < LooseVersion('2.0'):
+                    msg = "Error: docker-py version is %s, while this module requires docker %s. Try `pip uninstall docker-py` and then `pip install docker`"
+                else:
+                    msg = "Error: docker version is %s. Minimum version required is %s. Use `pip install --upgrade docker` to upgrade."
+            else:
+                # The minimal required version is < 2.0 (and the current version as well).
+                # Advertise docker (instead of docker-py) for non-Python-2.6 users.
+                msg = ("Error: docker / docker-py version is %s. Minimum version required is %s. "
+                       "Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` followed by `pip install docker`")
+            self.fail(msg % (docker_version, min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -205,6 +228,12 @@ class AnsibleDockerClient(Client):
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
+
+        if min_docker_api_version is not None:
+            self.docker_api_version_str = self.version()['ApiVersion']
+            self.docker_api_version = LooseVersion(self.docker_api_version_str)
+            if self.docker_api_version < LooseVersion(min_docker_api_version):
+                self.fail('docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
     def log(self, msg, pretty_print=False):
         pass
@@ -421,6 +450,8 @@ class AnsibleDockerClient(Client):
                 self.log("Inspecting container Id %s" % result['Id'])
                 result = self.inspect_container(container=result['Id'])
                 self.log("Completed container inspection")
+            except NotFound as exc:
+                return None
             except Exception as exc:
                 self.fail("Error inspecting container: %s" % exc)
 
@@ -428,7 +459,7 @@ class AnsibleDockerClient(Client):
 
     def find_image(self, name, tag):
         '''
-        Lookup an image and return the inspection results.
+        Lookup an image (by name and tag) and return the inspection results.
         '''
         if not name:
             return None
@@ -456,6 +487,20 @@ class AnsibleDockerClient(Client):
 
         self.log("Image %s:%s not found." % (name, tag))
         return None
+
+    def find_image_by_id(self, id):
+        '''
+        Lookup an image (by ID) and return the inspection results.
+        '''
+        if not id:
+            return None
+
+        self.log("Find image %s (by ID)" % id)
+        try:
+            inspection = self.inspect_image(id)
+        except Exception as exc:
+            self.fail("Error inspecting image ID %s - %s" % (id, str(exc)))
+        return inspection
 
     def _image_lookup(self, name, tag):
         '''
@@ -501,3 +546,108 @@ class AnsibleDockerClient(Client):
         new_tag = self.find_image(name, tag)
 
         return new_tag, old_tag == new_tag
+
+
+def compare_dict_allow_more_present(av, bv):
+    '''
+    Compare two dictionaries for whether every entry of the first is in the second.
+    '''
+    for key, value in av.items():
+        if key not in bv:
+            return False
+        if bv[key] != value:
+            return False
+    return True
+
+
+def compare_generic(a, b, method, type):
+    '''
+    Compare values a and b as described by method and type.
+
+    Returns ``True`` if the values compare equal, and ``False`` if not.
+
+    ``a`` is usually the module's parameter, while ``b`` is a property
+    of the current object. ``a`` must not be ``None`` (except for
+    ``type == 'value'``).
+
+    Valid values for ``method`` are:
+    - ``ignore`` (always compare as equal);
+    - ``strict`` (only compare if really equal)
+    - ``allow_more_present`` (allow b to have elements which a does not have).
+
+    Valid values for ``type`` are:
+    - ``value``: for simple values (strings, numbers, ...);
+    - ``list``: for ``list``s or ``tuple``s where order matters;
+    - ``set``: for ``list``s, ``tuple``s or ``set``s where order does not
+      matter;
+    - ``set(dict)``: for ``list``s, ``tuple``s or ``sets`` where order does
+      not matter and which contain ``dict``s; ``allow_more_present`` is used
+      for the ``dict``s, and these are assumed to be dictionaries of values;
+    - ``dict``: for dictionaries of values.
+    '''
+    if method == 'ignore':
+        return True
+    # If a or b is None:
+    if a is None or b is None:
+        # If both are None: equality
+        if a == b:
+            return True
+        # Otherwise, not equal for values, and equal
+        # if the other is empty for set/list/dict
+        if type == 'value':
+            return False
+        # For allow_more_present, allow a to be None
+        if method == 'allow_more_present' and a is None:
+            return True
+        # Otherwise, the iterable object which is not None must have length 0
+        return len(b if a is None else a) == 0
+    # Do proper comparison (both objects not None)
+    if type == 'value':
+        return a == b
+    elif type == 'list':
+        if method == 'strict':
+            return a == b
+        else:
+            i = 0
+            for v in a:
+                while i < len(b) and b[i] != v:
+                    i += 1
+                if i == len(b):
+                    return False
+                i += 1
+            return True
+    elif type == 'dict':
+        if method == 'strict':
+            return a == b
+        else:
+            return compare_dict_allow_more_present(a, b)
+    elif type == 'set':
+        set_a = set(a)
+        set_b = set(b)
+        if method == 'strict':
+            return set_a == set_b
+        else:
+            return set_b >= set_a
+    elif type == 'set(dict)':
+        for av in a:
+            found = False
+            for bv in b:
+                if compare_dict_allow_more_present(av, bv):
+                    found = True
+                    break
+            if not found:
+                return False
+        if method == 'strict':
+            # If we would know that both a and b do not contain duplicates,
+            # we could simply compare len(a) to len(b) to finish this test.
+            # We can assume that b has no duplicates (as it is returned by
+            # docker), but we don't know for a.
+            for bv in b:
+                found = False
+                for av in a:
+                    if compare_dict_allow_more_present(av, bv):
+                        found = True
+                        break
+                if not found:
+                    return False
+        return True

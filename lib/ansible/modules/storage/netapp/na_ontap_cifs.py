@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
@@ -40,7 +40,7 @@ options:
       - "Whether the specified CIFS share should exist or not."
     required: false
     default: present
-short_description: "Manage NetApp cifs-share"
+short_description: "NetApp ONTAP manage cifs-share"
 version_added: "2.6"
 
 '''

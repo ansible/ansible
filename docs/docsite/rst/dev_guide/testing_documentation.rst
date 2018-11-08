@@ -1,12 +1,12 @@
 :orphan:
 
-.. _testing_documentation:
+.. _testing_module_documentation:
 
-*********************
-Testing documentation
-*********************
+****************************
+Testing module documentation
+****************************
 
-Before you submit a module for inclusion in the main Ansible repo, you must test your documentation for correct HTML rendering and to ensure that the argspec matches the documentation.
+Before you submit a module for inclusion in the main Ansible repo, you must test your module documentation for correct HTML rendering and to ensure that the argspec matches the documentation in your Python file. The community pages offer more information on :ref:`testing reStructuredText documentation <testing_documentation_locally>`.
 
 To check the HTML output of your module documentation:
 
@@ -17,7 +17,7 @@ To check the HTML output of your module documentation:
 
 To build the HTML documentation for multiple modules, use a comma-separated list of module names: ``MODULES=my_code,my_other_code make webdocs``.
 
-To ensure that your documentation matches your ``argument_spec``, run the ``validate-modules`` test. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
+To ensure that your documentation matches your ``argument_spec``, run the ``validate-modules`` test.
 
 .. code-block:: bash
 

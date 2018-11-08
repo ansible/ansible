@@ -78,6 +78,11 @@ options:
     url_map:
         description:
             - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
+            - 'This field represents a link to a UrlMap resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_compute_url_map task
+              and then set this url_map field to "{{ name-of-resource }}" Alternatively, you can
+              set this url_map to a dictionary with the selfLink key where the value is the selfLink
+              of your UrlMap.'
         required: true
 extends_documentation_fragment: gcp
 notes:
@@ -174,13 +179,13 @@ EXAMPLES = '''
       - "{{ sslcert }}"
       url_map: "{{ urlmap }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -205,7 +210,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    quic_override:
+    quicOverride:
         description:
             - Specifies the QUIC override policy for this resource. This determines whether the
               load balancer will attempt to negotiate QUIC with clients or not. Can specify one
@@ -214,13 +219,13 @@ RETURN = '''
               to specifying NONE.
         returned: success
         type: str
-    ssl_certificates:
+    sslCertificates:
         description:
             - A list of SslCertificate resources that are used to authenticate connections between
               users and the load balancer. Currently, exactly one SSL certificate must be specified.
         returned: success
         type: list
-    url_map:
+    urlMap:
         description:
             - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
         returned: success
@@ -266,7 +271,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -289,9 +295,58 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('quicOverride') != request.get('quicOverride'):
+        quic_override_update(module, request, response)
+    if response.get('sslCertificates') != request.get('sslCertificates'):
+        ssl_certificates_update(module, request, response)
+    if response.get('urlMap') != request.get('urlMap'):
+        url_map_update(module, request, response)
+
+
+def quic_override_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetHttpsProxies/{name}/setQuicOverride"
+        ]).format(**module.params),
+        {
+            u'quicOverride': module.params.get('quic_override')
+        }
+    )
+
+
+def ssl_certificates_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/targetHttpsProxies/{name}/setSslCertificates"
+        ]).format(**module.params),
+        {
+            u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')
+        }
+    )
+
+
+def url_map_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/targetHttpsProxies/{name}/setUrlMap"
+        ]).format(**module.params),
+        {
+            u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -316,9 +371,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -329,9 +384,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/targetHttpsProxies".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -346,8 +401,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 

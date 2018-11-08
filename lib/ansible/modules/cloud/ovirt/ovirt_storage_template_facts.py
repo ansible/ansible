@@ -91,9 +91,6 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    if module._name == 'ovirt_storage_templates_facts':
-        module.deprecate("The 'ovirt_storage_templates_facts' module is being renamed 'ovirt_storage_template_facts'", version=2.8)
-
     check_sdk(module)
 
     try:

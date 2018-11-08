@@ -16,7 +16,7 @@ DOCUMENTATION = '''
     requirements:
       - whitelisting in configuration
       - certifi (python library)
-      - flatdict (pytnon library), if you want to use the 'flatten' option
+      - flatdict (python library), if you want to use the 'flatten' option
     options:
       api:
         description: URI to the Logentries API
@@ -27,7 +27,7 @@ DOCUMENTATION = '''
           - section: callback_logentries
             key: api
       port:
-        description: Http port to use when connecting to the API
+        description: HTTP port to use when connecting to the API
         env:
             - name: LOGENTRIES_PORT
         default: 80
@@ -52,7 +52,7 @@ DOCUMENTATION = '''
             key: token
       use_tls:
         description:
-          - Toggle to decidewhether to use TLS to encrypt the communications with the API server
+          - Toggle to decide whether to use TLS to encrypt the communications with the API server
         env:
           - name: LOGENTRIES_USE_TLS
         default: False
@@ -127,7 +127,7 @@ class PlainTextSocketAppender(object):
         self.MIN_DELAY = 0.1
         self.MAX_DELAY = 10
         # Error message displayed when an incorrect Token has been detected
-        self.INVALID_TOKEN = ("\n\nIt appears the LOGENTRIES_TOKEN parameter you entered is incorrect!\n\n")
+        self.INVALID_TOKEN = "\n\nIt appears the LOGENTRIES_TOKEN parameter you entered is incorrect!\n\n"
         # Unicode Line separator character   \u2028
         self.LINE_SEP = u'\u2028'
 
@@ -150,7 +150,7 @@ class PlainTextSocketAppender(object):
                 self._display.vvvv("Unable to connect to Logentries: %s" % str(e))
 
             root_delay *= 2
-            if (root_delay > self.MAX_DELAY):
+            if root_delay > self.MAX_DELAY:
                 root_delay = self.MAX_DELAY
 
             wait_for = root_delay + random.uniform(0, root_delay)

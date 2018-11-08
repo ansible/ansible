@@ -53,4 +53,7 @@ class TerminalModule(TerminalBase):
             for cmd in commands:
                 self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
-            raise AnsibleConnectionFailure('unable to set terminal parameters')
+            try:
+                self._exec_cli_command(b'config paging disable')
+            except AnsibleConnectionFailure:
+                raise AnsibleConnectionFailure('unable to set terminal parameters')

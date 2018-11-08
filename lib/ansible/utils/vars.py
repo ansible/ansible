@@ -23,7 +23,6 @@ import ast
 import random
 import uuid
 
-from collections import MutableMapping
 from json import dumps
 
 
@@ -31,6 +30,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.splitter import parse_kv
 
 

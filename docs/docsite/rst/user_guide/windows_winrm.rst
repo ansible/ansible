@@ -4,6 +4,7 @@ Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
 configured with WinRM. This topic covers how to configure and use WinRM with Ansible.
 
 .. contents:: Topics
+   :local:
 
 What is WinRM?
 ``````````````
@@ -426,6 +427,8 @@ work. To troubleshoot Kerberos issues, ensure that:
   an alias is being used. The ``krb5.conf`` file needs to be updated so that
   the fully qualified domain name is used and not an alias.
 
+* If the default kerberos tooling has been replaced or modified (some IdM solutions may do this), this may cause issues when installing or upgrading the Python Kerberos library. As of the time of this writing, this library is called ``pykerberos`` and is known to work with both MIT and Heimdal Kerberos libraries. To resolve ``pykerberos`` installation issues, ensure the system dependencies for Kerberos have been met (see: `Installing the Kerberos Library`_), remove any custom Kerberos tooling paths from the PATH environment variable, and retry the installation of Python Kerberos library package.
+
 CredSSP
 -------
 CredSSP authentication is a newer authentication protocol that allows
@@ -483,7 +486,7 @@ There are two ways that older hosts can be used with CredSSP:
   has no way of supporting TLS 1.2
 
 To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
-`KRB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1-1-and-tls-1-2-in-windows-7-or-wind>`_
+`KB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1-1-and-tls-1-2-in-windows-7-or-wind>`_
 needs to be installed.
 
 Once the update has been applied and the Windows host rebooted, run the following
@@ -491,7 +494,7 @@ PowerShell commands to enable TLS 1.2:
 
 .. code-block:: guess
 
-    $reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProvider\SCHANNEL\Protocols\TLS 1.2"
+    $reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2"
     New-Item -Path $reg_path
     New-Item -Path "$reg_path\Server"
     New-Item -Path "$reg_path\Client"

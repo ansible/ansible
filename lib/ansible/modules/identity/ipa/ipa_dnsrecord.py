@@ -211,7 +211,7 @@ def ensure(module, client):
     module_dnsrecord = dict(
         record_type=module.params['record_type'],
         record_value=module.params['record_value'],
-        record_ttl=to_native(record_ttl),
+        record_ttl=to_native(record_ttl, nonstring='passthru'),
     )
 
     changed = False

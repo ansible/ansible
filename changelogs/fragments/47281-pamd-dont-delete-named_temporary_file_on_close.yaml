@@ -1,0 +1,5 @@
+---
+bugfixes:
+- "pamd: add delete=False to NamedTemporaryFile() fixes OSError on module completion, and
+   removes print statement from module code.
+   (see https://github.com/ansible/ansible/pull/47281 and https://github.com/ansible/ansible/issues/47080)" 

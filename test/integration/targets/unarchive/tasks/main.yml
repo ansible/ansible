@@ -590,3 +590,23 @@
 
 - name: remove our tar.gz unarchive destination
   file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+
+# Test downloading a file before unarchiving it
+- name: create our unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+
+- name: unarchive a tar from an URL
+  unarchive:
+    src: "https://releases.ansible.com/ansible/ansible-latest.tar.gz"
+    dest: "{{ output_dir }}/test-unarchive-tar-gz"
+    mode: "0700"
+    remote_src: yes
+  register: unarchive13
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive13.changed == true"
+
+- name: remove our tar.gz unarchive destination
+  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent

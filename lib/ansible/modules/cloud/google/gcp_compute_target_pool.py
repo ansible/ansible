@@ -59,6 +59,11 @@ options:
               the backup pool are unhealthy, the traffic will be directed back to the primary
               pool in the "force" mode, where traffic will be spread to the healthy instances
               with the best effort, or to all instances when no instance is healthy.
+            - 'This field represents a link to a TargetPool resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_target_pool
+              task and then set this backup_pool field to "{{ name-of-resource }}" Alternatively,
+              you can set this backup_pool to a dictionary with the selfLink key where the value
+              is the selfLink of your TargetPool.'
         required: false
     description:
         description:
@@ -84,6 +89,11 @@ options:
             - A member instance in this pool is considered healthy if and only if the health checks
               pass. If not specified it means all member instances will be considered healthy
               at all times.
+            - 'This field represents a link to a HttpHealthCheck resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_http_health_check
+              task and then set this health_check field to "{{ name-of-resource }}" Alternatively,
+              you can set this health_check to a dictionary with the selfLink key where the value
+              is the selfLink of your HttpHealthCheck.'
         required: false
     instances:
         description:
@@ -125,13 +135,13 @@ EXAMPLES = '''
       name: "test_object"
       region: us-west1
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    backup_pool:
+    backupPool:
         description:
             - This field is applicable only when the containing target pool is serving a forwarding
               rule as the primary pool, and its failoverRatio field is properly set to a value
@@ -146,7 +156,7 @@ RETURN = '''
               with the best effort, or to all instances when no instance is healthy.
         returned: success
         type: dict
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -156,7 +166,7 @@ RETURN = '''
             - An optional description of this resource.
         returned: success
         type: str
-    failover_ratio:
+    failoverRatio:
         description:
             - This field is applicable only when the containing target pool is serving a forwarding
               rule as the primary pool (i.e., not as a backup pool to some other target pool).
@@ -171,7 +181,7 @@ RETURN = '''
               or to all instances when no instance is healthy.
         returned: success
         type: str
-    health_check:
+    healthCheck:
         description:
             - A reference to a HttpHealthCheck resource.
             - A member instance in this pool is considered healthy if and only if the health checks
@@ -200,7 +210,7 @@ RETURN = '''
               be a dash.
         returned: success
         type: str
-    session_affinity:
+    sessionAffinity:
         description:
             - 'Session affinity option. Must be one of these values:  - NONE: Connections from
               the same client IP may go to any instance in   the pool.'
@@ -259,7 +269,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -312,9 +323,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -325,9 +336,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/targetPools".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -344,8 +355,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 

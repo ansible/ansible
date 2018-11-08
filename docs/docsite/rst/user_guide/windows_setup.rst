@@ -3,6 +3,7 @@ Setting up a Windows Host
 This document discusses the setup that is required before Ansible can communicate with a Microsoft Windows host.
 
 .. contents:: Topics
+   :local:
 
 Host Requirements
 `````````````````
@@ -408,7 +409,7 @@ connection. Some things to check for this are:
 
 HTTP 500 Error
 ++++++++++++++
-These indicate an error has occured with the WinRM service. Some things
+These indicate an error has occurred with the WinRM service. Some things
 to check for include:
 
 * Verify that the number of current open shells has not exceeded either

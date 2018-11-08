@@ -272,7 +272,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if module._name == 'panos_nat_policy':
-        module.deprecate("The 'panos_nat_policy' module is being renamed 'panos_nat_rule'", version=2.8)
+        module.deprecate("The 'panos_nat_policy' module is being renamed 'panos_nat_rule'", version=2.9)
 
     if not HAS_LIB:
         module.fail_json(msg='pan-python is required for this module')

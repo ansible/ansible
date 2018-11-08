@@ -31,7 +31,7 @@ if not HAS_BOTO3:
     pytestmark = pytest.mark.skip("test_api_gateway.py requires the `boto3` and `botocore` modules")
 
 import ansible.modules.cloud.amazon.aws_api_gateway as agw
-import ansible.module_utils.aws.core as core
+from ansible.module_utils.aws import core
 
 
 exit_return_dict = {}

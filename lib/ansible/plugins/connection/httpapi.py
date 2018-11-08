@@ -69,6 +69,7 @@ options:
     vars:
       - name: ansible_httpapi_use_ssl
   validate_certs:
+    type: boolean
     version_added: '2.7'
     description:
       - Whether to validate SSL certificates
@@ -175,7 +176,22 @@ class Connection(NetworkConnectionBase):
         self._url = None
         self._auth = None
 
-        if not self._network_os:
+        if self._network_os:
+
+            self.httpapi = httpapi_loader.get(self._network_os, self)
+            if self.httpapi:
+                self._sub_plugins.append({'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi})
+                display.vvvv('loaded API plugin for network_os %s' % self._network_os)
+            else:
+                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
+
+            self.cliconf = cliconf_loader.get(self._network_os, self)
+            if self.cliconf:
+                self._sub_plugins.append({'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf})
+                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
+            else:
+                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+        else:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
@@ -210,24 +226,8 @@ class Connection(NetworkConnectionBase):
             port = self.get_option('port') or (443 if protocol == 'https' else 80)
             self._url = '%s://%s:%s' % (protocol, host, port)
 
-            httpapi = httpapi_loader.get(self._network_os, self)
-            if httpapi:
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(httpapi)
-            else:
-                raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
-
-            cliconf = cliconf_loader.get(self._network_os, self)
-            if cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os, host=host)
-                self._implementation_plugins.append(cliconf)
-            else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
-
-            super(Connection, self)._connect()
-
-            httpapi.set_become(self._play_context)
-            httpapi.login(self.get_option('remote_user'), self.get_option('password'))
+            self.httpapi.set_become(self._play_context)
+            self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
 
             self._connected = True
 

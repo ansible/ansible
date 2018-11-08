@@ -18,6 +18,10 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage hosts in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the host to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the host to manage."
@@ -218,6 +222,11 @@ EXAMPLES = '''
     state: absent
     name: myhost
     force: True
+
+# Change host Name
+- ovirt_host:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new host name"
 '''
 
 RETURN = '''
@@ -263,6 +272,7 @@ class HostsModule(BaseModule):
 
     def build_entity(self):
         return otypes.Host(
+            id=self._module.params.get('id'),
             name=self.param('name'),
             cluster=otypes.Cluster(
                 name=self.param('cluster')
@@ -295,6 +305,7 @@ class HostsModule(BaseModule):
             equal(self.param('comment'), entity.comment) and
             equal(self.param('kdump_integration'), 'enabled' if entity.power_management.kdump_detection else 'disabled') and
             equal(self.param('spm_priority'), entity.spm.priority) and
+            equal(self.param('name'), entity.name) and
             equal(self.param('power_management_enabled'), entity.power_management.enabled) and
             equal(self.param('override_display'), getattr(entity.display, 'address', None)) and
             equal(
@@ -400,6 +411,7 @@ def main():
             default='present',
         ),
         name=dict(required=True),
+        id=dict(default=None),
         comment=dict(default=None),
         cluster=dict(default=None),
         address=dict(default=None),
@@ -427,9 +439,6 @@ def main():
             ['state', 'iscsilogin', ['iscsi']]
         ]
     )
-
-    if module._name == 'ovirt_hosts':
-        module.deprecate("The 'ovirt_hosts' module is being renamed 'ovirt_host'", version=2.8)
 
     check_sdk(module)
 
@@ -506,7 +515,16 @@ def main():
                 action_condition=lambda h: h.update_available,
                 wait_condition=lambda h: h.status == result_state,
                 post_action=lambda h: time.sleep(module.params['poll_interval']),
-                fail_condition=hosts_module.failed_state_after_reinstall,
+                fail_condition=lambda h: hosts_module.failed_state_after_reinstall(h) or (
+                    len([
+                        event
+                        for event in events_service.list(
+                            from_=int(last_event.id),
+                            # Fail upgrade if migration fails.
+                            search='type=65 or type=140',
+                        )
+                    ]) > 0
+                ),
                 reboot=module.params['reboot_after_upgrade'],
             )
         elif state == 'iscsidiscover':

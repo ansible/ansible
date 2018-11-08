@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -50,7 +50,7 @@ options:
     description:
       - Specifies whether AutoSupport notification to technical support is enabled.
     type: bool
-short_description: "Manage NetApp Autosupport"
+short_description: "NetApp ONTAP manage Autosupport"
 version_added: "2.7"
 
 """

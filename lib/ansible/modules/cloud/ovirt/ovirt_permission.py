@@ -274,9 +274,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_permissions':
-        module.deprecate("The 'ovirt_permissions' module is being renamed 'ovirt_permission'", version=2.8)
-
     check_sdk(module)
 
     if (module.params['object_name'] is None and module.params['object_id'] is None) and module.params['object_type'] != 'system':

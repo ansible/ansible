@@ -130,7 +130,7 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP/CDP neighbors from the remote device
+  description: The list of LLDP and CDP neighbors from the device
   returned: when interfaces is configured
   type: dict
 
@@ -178,6 +178,9 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six import string_types, iteritems
 
 
+g_config = None
+
+
 class FactsBase(object):
 
     def __init__(self, module):
@@ -200,6 +203,12 @@ class FactsBase(object):
         except IndexError:
             self.warnings.append('command %s failed, facts for this command will not be populated' % command_string)
             return None
+
+    def get_config(self):
+        global g_config
+        if not g_config:
+            g_config = get_config(self.module)
+        return g_config
 
     def transform_dict(self, data, keymap):
         transform = dict()
@@ -287,7 +296,22 @@ class Config(FactsBase):
 
     def populate(self):
         super(Config, self).populate()
-        self.facts['config'] = get_config(self.module)
+        self.facts['config'] = self.get_config()
+
+
+class Features(FactsBase):
+
+    def populate(self):
+        super(Features, self).populate()
+        data = self.get_config()
+
+        if data:
+            features = []
+            for line in data.splitlines():
+                if line.startswith('feature'):
+                    features.append(line.replace('feature', '').strip())
+
+            self.facts['features_enabled'] = features
 
 
 class Hardware(FactsBase):
@@ -374,6 +398,7 @@ class Interfaces(FactsBase):
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
+        self.facts['neighbors'] = {}
         data = None
 
         data = self.run('show interface', output='json')
@@ -398,14 +423,14 @@ class Interfaces(FactsBase):
 
         data = self.run('show lldp neighbors')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(data)
+            self.facts['neighbors'].update(self.populate_neighbors(data))
 
         data = self.run('show cdp neighbors detail', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['neighbors'] = self.populate_structured_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_structured_neighbors_cdp(data))
             else:
-                self.facts['neighbors'] = self.populate_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_neighbors_cdp(data))
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
@@ -630,14 +655,14 @@ class Interfaces(FactsBase):
             fact = dict()
             fact['port'] = self.parse_lldp_port(item)
             fact['sysname'] = self.parse_lldp_sysname(item)
-            facts[local_intf].append(facts)
+            facts[local_intf].append(fact)
 
         return facts
 
     def parse_lldp_intf(self, data):
         match = re.search(r'Interface:\s*(\S+)', data, re.M)
         if match:
-            return match.group(1)
+            return match.group(1).strip(',')
 
     def parse_lldp_port(self, data):
         match = re.search(r'Port ID \(outgoing port\):\s*(\S+)', data, re.M)
@@ -903,6 +928,7 @@ FACT_SUBSETS = dict(
     hardware=Hardware,
     interfaces=Interfaces,
     config=Config,
+    features=Features
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())

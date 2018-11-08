@@ -1,0 +1,2 @@
+bugfixes:
+  - "gcp_compute_instance - fix crash when the instance metadata is not set"

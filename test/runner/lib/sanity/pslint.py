@@ -18,6 +18,7 @@ from lib.util import (
     SubprocessError,
     run_command,
     find_executable,
+    read_lines_without_comments,
 )
 
 from lib.config import (
@@ -41,30 +42,31 @@ class PslintTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        with open(PSLINT_SKIP_PATH, 'r') as skip_fd:
-            skip_paths = skip_fd.read().splitlines()
+        skip_paths = read_lines_without_comments(PSLINT_SKIP_PATH)
 
         invalid_ignores = []
 
-        with open(PSLINT_IGNORE_PATH, 'r') as ignore_fd:
-            ignore_entries = ignore_fd.read().splitlines()
-            ignore = collections.defaultdict(dict)
-            line = 0
+        ignore_entries = read_lines_without_comments(PSLINT_IGNORE_PATH)
+        ignore = collections.defaultdict(dict)
+        line = 0
 
-            for ignore_entry in ignore_entries:
-                line += 1
+        for ignore_entry in ignore_entries:
+            line += 1
 
-                if ' ' not in ignore_entry:
-                    invalid_ignores.append((line, 'Invalid syntax'))
-                    continue
+            if not ignore_entry:
+                continue
 
-                path, code = ignore_entry.split(' ', 1)
+            if ' ' not in ignore_entry:
+                invalid_ignores.append((line, 'Invalid syntax'))
+                continue
 
-                if not os.path.exists(path):
-                    invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
-                    continue
+            path, code = ignore_entry.split(' ', 1)
 
-                ignore[path][code] = line
+            if not os.path.exists(path):
+                invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
+                continue
+
+            ignore[path][code] = line
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.ps1', '.psm1', '.psd1') and i.path not in skip_paths)
 
@@ -137,6 +139,9 @@ class PslintTest(SanitySingleVersion):
 
         for path in skip_paths:
             line += 1
+
+            if not path:
+                continue
 
             if not os.path.exists(path):
                 # Keep files out of the list which no longer exist in the repo.

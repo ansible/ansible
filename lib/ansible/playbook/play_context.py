@@ -178,8 +178,8 @@ class PlayContext(Base):
 
     # general flags
     _verbosity = FieldAttribute(isa='int', default=0)
-    _only_tags = FieldAttribute(isa='set', default=set())
-    _skip_tags = FieldAttribute(isa='set', default=set())
+    _only_tags = FieldAttribute(isa='set', default=set)
+    _skip_tags = FieldAttribute(isa='set', default=set)
     _force_handlers = FieldAttribute(isa='bool', default=False)
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)

@@ -23,6 +23,7 @@ description:
 requirements:
   - spotinst >= 1.0.21
   - python >= 2.7
+  - spotinst_sdk >= 1.0.38
 options:
 
   credentials_path:
@@ -106,7 +107,7 @@ options:
 
   elastic_ips:
     description:
-      - (List of Strings) List of ElasticIps Allocation Ids to associate to the group instances
+      - (List of Strings) List of ElasticIps Allocation Ids (Example C(eipalloc-9d4e16f8)) to associate to the group instances
 
   fallback_to_od:
     description:
@@ -264,6 +265,7 @@ options:
     description:
       - (Object) The Rancher integration configuration.;
         Expects the following keys -
+        version (String),
         access_key (String),
         secret_key (String),
         master_host (String)
@@ -882,7 +884,8 @@ right_scale_fields = ('account_id',
 
 rancher_fields = ('access_key',
                   'secret_key',
-                  'master_host')
+                  'master_host',
+                  'version')
 
 chef_fields = ('chef_server',
                'organization',

@@ -27,16 +27,18 @@ options:
   ip_address:
     description:
       - Public IP address.
-      - Required if C(state=absent) and C(tags) is not set
+      - Required if I(state=absent) and I(tags) is not set.
   domain:
     description:
       - Domain the IP address is related to.
   network:
     description:
       - Network the IP address is related to.
+      - Mutually exclusive with I(vpc).
   vpc:
     description:
       - VPC the IP address is related to.
+      - Mutually exclusive with I(network).
     version_added: "2.2"
   account:
     description:
@@ -55,7 +57,7 @@ options:
     choices: [ present, absent ]
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - Tags can be used as an unique identifier for the IP Addresses.
       - In this case, at least one of them must be unique to ensure idempontency.
     aliases: [ 'tag' ]
@@ -166,7 +168,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'vpcid': self.get_vpc(key='id'),
         }
-        ip_addresses = self.cs.listPublicIpAddresses(**args)
+        ip_addresses = self.query_api('listPublicIpAddresses', **args)
 
         if ip_addresses:
             tags = self.module.params.get('tags')
@@ -195,13 +197,14 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'networkid': self.get_network(key='id'),
+            # For the VPC case networkid is irrelevant, special case and we have to ignore it here.
+            'networkid': self.get_network(key='id') if not self.module.params.get('vpc') else None,
             'zoneid': self.get_zone(key='id'),
             'vpcid': self.get_vpc(key='id'),
         }
         ip_address = None
         if not self.module.check_mode:
-            res = self.cs.associateIpAddress(**args)
+            res = self.query_api('associateIpAddress', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -220,7 +223,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             self.module.params['tags'] = []
             ip_address = self.ensure_tags(resource=ip_address, resource_type='publicipaddress')
 
-            res = self.cs.disassociateIpAddress(id=ip_address['id'])
+            res = self.query_api('disassociateIpAddress', id=ip_address['id'])
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -249,6 +252,9 @@ def main():
         required_if=[
             ('state', 'absent', ['ip_address', 'tags'], True),
         ],
+        mutually_exclusive=(
+            ['vpc', 'network'],
+        ),
         supports_check_mode=True
     )
 

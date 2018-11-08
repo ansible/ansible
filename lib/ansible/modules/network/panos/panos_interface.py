@@ -33,7 +33,7 @@ description:
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
+    - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
 notes:
     - Checkmode is not supported.
 options:
