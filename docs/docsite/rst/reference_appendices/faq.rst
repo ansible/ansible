@@ -402,7 +402,7 @@ For environment variables on the TARGET machines, they are available via facts i
    {{ ansible_env.SOME_VARIABLE }}
 
 If you need to set environment variables for TASK execution, see the Advanced Playbooks section about environments.
-There is no set way to set environment variables on your target machines, you can use template/replace/other modules to do so,
+There is no way to set environment variables on your target machines, you can use template/replace/other modules to do so,
 but the exact files to edit vary depending on your OS and distribution and local configuration.
 
 .. _user_passwords:
