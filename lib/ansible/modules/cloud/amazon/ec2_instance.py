@@ -1111,8 +1111,8 @@ def build_top_level_options(params):
         spec['CreditSpecification'] = {'CpuCredits': params.get('cpu_credit_specification')}
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
-    if (params.get('network') or {}).get('ebs_optimized') is not None:
-        spec['EbsOptimized'] = params['network'].get('ebs_optimized')
+    if params.get('ebs_optimized') is not None:
+        spec['EbsOptimized'] = params.get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
     if params.get('termination_protection') is not None:
