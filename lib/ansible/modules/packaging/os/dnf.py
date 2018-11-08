@@ -1299,7 +1299,7 @@ def main():
 
     # Extend yumdnf_argument_spec with dnf-specific features that will never be
     # backported to yum because yum is now in "maintenance mode" upstream
-    yumdnf_argument_spec['argument_spec']['allowerasing']=dict(default=False, type='bool')
+    yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
 
     module = AnsibleModule(
         **yumdnf_argument_spec
