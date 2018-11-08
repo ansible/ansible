@@ -214,7 +214,7 @@ class Map():
         self.height = module.params['height']
         self.state = module.params['state']
         self.default_image = module.params['default_image']
-        self.map_id = self._get_map_id(self.map_name)
+        self.map_id = self._get_sysmap_id(self.map_name)
         self.margin = module.params['margin']
         self.expand_problem = module.params['expand_problem']
         self.highlight = module.params['highlight']
@@ -435,12 +435,8 @@ class Map():
 
     def _get_triggers(self, data):
         triggers = []
-        for trigger_raw in [remove_quotes(value) for key, value in data.items() if key.startswith("zbx_trigger")]:
-            try:
-                host, trigger = trigger_raw.split(':', 1)
-            except Exception as e:
-                self._module.fail_json(msg="Failed to parse zbx_trigger='%s': %s" % (trigger_raw, e))
-            triggerid = self._get_trigger_id(host, trigger)
+        for trigger_definition in [remove_quotes(value) for key, value in data.items() if key.startswith("zbx_trigger")]:
+            triggerid = self._get_trigger_id(trigger_definition)
             if triggerid:
                 triggers.append({
                     'triggerid': triggerid,
@@ -448,7 +444,7 @@ class Map():
                     'drawtype': self._get_link_draw_style_id(remove_quotes(data.get('zbx_trigger_draw_style', 'bold'))),
                 })
             else:
-                self._module.fail_json(msg="Failed to find trigger '%s' on host '%s'" % (trigger, host))
+                self._module.fail_json(msg="Failed to find trigger '%s'" % (trigger_definition))
         return triggers
 
     @staticmethod
@@ -461,7 +457,7 @@ class Map():
             label = default
         return label
 
-    def _get_map_id(self, map_name):
+    def _get_sysmap_id(self, map_name):
         exist_map = self._zapi.map.get({'filter': {'name': map_name}})
         if exist_map:
             return exist_map[0]['sysmapid']
@@ -620,7 +616,11 @@ class Map():
         if hostid:
             return str(hostid[0]['hostid'])
 
-    def _get_trigger_id(self, host, trigger):
+    def _get_trigger_id(self, trigger_definition):
+        try:
+            host, trigger = trigger_definition.split(':', 1)
+        except Exception as e:
+            self._module.fail_json(msg="Failed to parse zbx_trigger='%s': %s" % (trigger_definition, e))
         triggerid = self._zapi.trigger.get({
             'host': host,
             'filter': {
