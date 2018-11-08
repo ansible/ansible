@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2018, Mikhail Yohman (@FragmentedPacket) <mikhail.yohman@gmail.com>
 # Copyright: (c) 2018, David Gomez (@amb1s1) <david.gomez@networktocode.com>
-# Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: netbox_device
-short_description: Manage devices
+short_description: Create or delete devices within Netbox
 description:
   - Creates or removes devices from Netbox
 notes:
@@ -22,6 +22,7 @@ notes:
   - This should be ran with connection C(local) and hosts C(localhost)
 author:
   - Mikhail Yohman (@FragmentedPacket)
+  - David Gomez (@amb1s1)
 requirements:
   - pynetbox
 version_added: '2.8'
