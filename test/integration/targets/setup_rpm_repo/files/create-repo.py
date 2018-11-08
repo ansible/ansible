@@ -13,6 +13,10 @@ SPECS = [
     RPM('foo', '1.0', '1', None),
     RPM('foo', '1.0', '2', '1'),
     RPM('foo', '1.1', '1', '1'),
+    RPM('foo-bar', '1.0', '1', None),
+    RPM('foo-bar', '1.1', '1', None),
+    RPM('bar', '1.0', '1', None),
+    RPM('bar', '1.1', '1', None),
 ]
 
 
