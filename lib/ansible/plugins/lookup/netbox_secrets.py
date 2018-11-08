@@ -14,16 +14,9 @@ DOCUMENTATION = """
       device:
         description: Device secret_name you want to fetch secrets for
       netbox_host:
-        description: location of Netbox  host
-        default: '127.0.0.1'
+        description: URL of Netbox  host
         env:
           - secret_name: ANSIBLE_NETBOX_HOST
-      port:
-        description: port for Netox 
-        default: 8000
-        type: int
-        env:
-          - secret_name: ANSIBLE_NETBOX_PORT
       private_key_file:
         description: path to private key file for secrets authentication
         type: path
