@@ -377,6 +377,7 @@ class Interfaces(FactsBase):
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
+        self.facts['neighbors'] = {}
         data = None
 
         data = self.run('show interface', output='json')
@@ -411,6 +412,7 @@ class Interfaces(FactsBase):
                 self.facts['neighbors'].update(self.populate_neighbors_cdp(data))
 
         self.facts['neighbors'].pop(None, None)  # Remove null key
+
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
