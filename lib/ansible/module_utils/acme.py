@@ -588,7 +588,7 @@ class ACMEAccount(object):
 
             return result, info
 
-    def get_request(self, uri, parse_json_result=True, headers=None, get_only=False):
+    def get_request(self, uri, parse_json_result=True, headers=None, get_only=False, fail_on_error=True):
         '''
         Perform a GET-like request. Will try POST-as-GET for ACMEv2, with fallback
         to GET if server replies with a status code of 405.
@@ -626,7 +626,7 @@ class ACMEAccount(object):
         else:
             result = content
 
-        if info['status'] >= 400:
+        if fail_on_error and info['status'] >= 400:
             raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
         return result, info
 
