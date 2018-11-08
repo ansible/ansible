@@ -119,6 +119,20 @@ EXAMPLES = '''
     user: example@example.com
     state: absent
     window_id: '{{ pd_window.result.maintenance_window.id }}'
+
+# Delete a maintenance window from a separate playbook than its creation, and if it is the only existing maintenance window.
+- pagerduty:
+    requester_id: XXXXXXX
+    token: yourtoken
+    state: ongoing
+  register: pd_window
+
+- pagerduty:
+    requester_id: XXXXXXX
+    token: yourtoken
+    state: absent
+    window_id: "{{ pd_window.result.maintenance_windows[0].id }}"
+
 '''
 
 import datetime
