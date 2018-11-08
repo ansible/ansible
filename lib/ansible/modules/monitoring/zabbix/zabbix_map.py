@@ -317,11 +317,11 @@ class Map():
         }
         element_type = {
             'elementtype': types['image'],
-            # Elementid was mandatory even for image elements until Zabbix 3.4.
-            # Since Zabbix API ignores unknown fields, this is left here for simplicity:
-            # it works for Zabbix <= 3.2 and doesn't break Zabbix 3.4.
-            'elementid': "0",
         }
+        if StrictVersion(self.api_version) < StrictVersion('3.4'):
+            element_type.update({
+                'elementid': "0",
+            })
         for type_name, type_id in sorted(types.items()):
             field_name = 'zbx_' + type_name
             if field_name in data:
