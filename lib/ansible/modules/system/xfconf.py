@@ -153,12 +153,7 @@ def main():
     channel = module.params['channel']
     property = module.params['property']
     value_type = module.params['value_type']
-    if module.params['value'].lower() == "true":
-        value = "true"
-    elif module.params['value'] == "false":
-        value = "false"
-    else:
-        value = module.params['value']
+    value = module.params['value']
 
     state = state_values[module.params['state']]
 
@@ -173,6 +168,10 @@ def main():
         elif value_type is None or value_type == "":
             module.fail_json(msg='State %s requires "value_type" to be set'
                              % str(state))
+        if value.lower() == "true":
+            value = "true"
+        elif value.lower() == "false":
+            value = "false"
 
     # Create a Xfconf preference
     xfconf = XfconfPreference(module,
@@ -182,6 +181,10 @@ def main():
                               value)
     # Now we get the current value, if not found don't fail
     dummy, current_value = xfconf.call("get", fail_onerr=False)
+    
+    # For state "get", fill in "value" with what we already know
+    if state == "get":
+        value = current_value
 
     # Check if the current value equals the value we want to set.  If not, make
     # a change
