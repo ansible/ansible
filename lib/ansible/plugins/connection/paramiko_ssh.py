@@ -355,9 +355,9 @@ class Connection(ConnectionBase):
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except Exception as e:
             msg = to_text(e)
-            if "PID check failed" in msg:
+            if u"PID check failed" in msg:
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
-            elif "Private key file is encrypted" in msg:
+            elif u"Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     self._play_context.remote_user, self._play_context.remote_addr, port, msg)
                 raise AnsibleConnectionFailure(msg)
@@ -382,7 +382,7 @@ class Connection(ConnectionBase):
         except Exception as e:
             text_e = to_text(e)
             msg = u"Failed to open session"
-            if len(text_e) > 0:
+            if text_e:
                 msg += u": %s" % text_e
             raise AnsibleConnectionFailure(to_native(msg))
 
