@@ -280,6 +280,7 @@ import json
 import base64
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import quote_plus
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_text
 
@@ -310,7 +311,7 @@ def grafana_headers(module, data):
 def grafana_datasource_exists(module, grafana_url, name, headers):
     datasource_exists = False
     ds = {}
-    r, info = fetch_url(module, '%s/api/datasources/name/%s' % (grafana_url, name), headers=headers, method='GET')
+    r, info = fetch_url(module, '%s/api/datasources/name/%s' % (grafana_url, quote_plus(name)), headers=headers, method='GET')
     if info['status'] == 200:
         datasource_exists = True
         ds = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
@@ -468,7 +469,7 @@ def grafana_delete_datasource(module, data):
     result = {}
     if datasource_exists is True:
         # delete
-        r, info = fetch_url(module, '%s/api/datasources/name/%s' % (data['grafana_url'], data['name']), headers=headers, method='DELETE')
+        r, info = fetch_url(module, '%s/api/datasources/name/%s' % (data['grafana_url'], quote_plus(data['name'])), headers=headers, method='DELETE')
         if info['status'] == 200:
             res = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
             result['msg'] = "Datasource %s deleted : %s" % (data['name'], res['message'])
