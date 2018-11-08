@@ -518,12 +518,16 @@ class ACMEAccount(object):
         else:
             return _parse_key_openssl(self._openssl_bin, self.module, key_file, key_content)
 
-    def sign_request(self, protected, payload, key_data):
+    def sign_request(self, protected, payload, key_data, encode_payload=True):
         try:
             if payload is None:
+                # POST-as-GET
                 payload64 = ''
             else:
-                payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
+                # POST
+                if encode_payload:
+                    payload = self.module.jsonify(payload).encode('utf8')
+                payload64 = nopad_b64(to_bytes(payload))
             protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
         except Exception as e:
             raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
@@ -533,7 +537,7 @@ class ACMEAccount(object):
         else:
             return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
-    def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True):
+    def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True, encode_payload=True):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
@@ -551,7 +555,7 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
-            data = self.sign_request(protected, payload, key_data)
+            data = self.sign_request(protected, payload, key_data, encode_payload=encode_payload)
             if self.version == 1:
                 data["header"] = jws_header
             data = self.module.jsonify(data)
