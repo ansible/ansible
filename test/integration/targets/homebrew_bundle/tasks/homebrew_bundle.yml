@@ -1,7 +1,32 @@
+- name: Make sure {{ output_dir }} is a directory
+  block:
+    - name: Find brew binary
+      command: which brew
+      register: brew_which
+    - name: Get owner of brew binary
+      stat: path="{{ brew_which.stdout }}"
+      register: brew_stat
+    - name: Create {{ output_dir }} if it does not exist
+      file:
+        path: "{{ output_dir }}"
+        state: directory
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+
 - name: Copy Brewfile to {{ output_dir }}
-  copy:
-    src: Brewfile
-    dest: "{{ output_dir }}/Brewfile"
+  block:
+    - name: Find brew binary
+      command: which brew
+      register: brew_which
+    - name: Get owner of brew binary
+      stat: path="{{ brew_which.stdout }}"
+      register: brew_stat
+    - name: Copy Brewfile
+      copy:
+        src: Brewfile
+        dest: "{{ output_dir }}/Brewfile"
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
 
 - name: Install Brewfile
   block:
@@ -19,10 +44,20 @@
       become_user: "{{ brew_stat.stat.pw_name }}"
 
 - name: Uninstall hello
-  homebrew:
-    name: hello
-    state: absent
-  register: hello_uninstalled
+  block:
+    - name: Find brew binary
+      command: which brew
+      register: brew_which
+    - name: Get owner of brew binary
+      stat: path="{{ brew_which.stdout }}"
+      register: brew_stat
+    - name: Uninstall hello
+      homebrew:
+        name: hello
+        state: absent
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+      register: hello_uninstalled
 
 - name: Check that hello is uninstalled
   assert:
@@ -45,10 +80,20 @@
       become_user: "{{ brew_stat.stat.pw_name }}"
 
 - name: make sure that {{ output_dir }}/Brewfile0 is absent
-  file:
-    path: "{{ output_dir }}/Brewfile0"
-    state: absent
-  register: brewfile_removed
+  block:
+    - name: Find brew binary
+      command: which brew
+      register: brew_which
+    - name: Get owner of brew binary
+      stat: path="{{ brew_which.stdout }}"
+      register: brew_stat
+    - name: "Dump Brewfile"
+      file:
+        path: "{{ output_dir }}/Brewfile0"
+        state: absent
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+      register: brewfile_removed
 
 - name: check that {{ output_dir }}/Brewfile0 has changed
   assert:
