@@ -38,3 +38,8 @@
   when:
     - ansible_distribution == 'Fedora'
     - ansible_distribution_major_version|int >= 23
+
+- import_tasks: 'modularity.yml'
+  when:
+    - ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 29
+    - ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8
