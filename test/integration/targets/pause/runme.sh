@@ -25,5 +25,4 @@ ansible-playbook pause-3.yml -i ../../inventory > /dev/null \
 ansible-playbook test-pause.yml -i ../../inventory "$@"
 
 # Interactively test pause
-pip install pexpect
 python test-pause.py -i ../../inventory "$@"
