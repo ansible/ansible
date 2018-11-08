@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_vxlan_vtep
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -48,7 +48,7 @@ class TestNxosVxlanVtepVniModule(TestNxosModule):
 
     def test_nxos_vxlan_vtep(self):
         set_module_args(dict(interface='nve1', description='simple description'))
-        self.execute_module(changed=True, commands=['interface nve1', 'description simple description'])
+        self.execute_module(changed=True, commands=['interface nve1', 'terminal dont-ask', 'description simple description'])
 
     def test_nxos_vxlan_vtep_present_no_change(self):
         set_module_args(dict(interface='nve1'))

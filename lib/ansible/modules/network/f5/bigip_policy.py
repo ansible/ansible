@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -108,7 +108,7 @@ EXAMPLES = r'''
     name: "{{ item.name }}"
     conditions: "{{ item.conditions }}"
     actions: "{{ item.actions }}"
-  with_items:
+  loop:
     - name: rule1
       actions:
         - type: forward

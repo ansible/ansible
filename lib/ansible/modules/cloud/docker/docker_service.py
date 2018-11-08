@@ -1009,16 +1009,24 @@ class ContainerManager(DockerBaseClass):
                     scale=0
                 )
                 containers = service.containers(stopped=True)
-                if len(containers) != self.scale[service.name]:
+                scale = self.parse_scale(service.name)
+                if len(containers) != scale:
                     result['changed'] = True
-                    service_res['scale'] = self.scale[service.name] - len(containers)
+                    service_res['scale'] = scale - len(containers)
                     if not self.check_mode:
                         try:
-                            service.scale(int(self.scale[service.name]))
+                            service.scale(scale)
                         except Exception as exc:
                             self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
                     result['actions'].append(service_res)
         return result
+
+    def parse_scale(self, service_name):
+        try:
+            return int(self.scale[service_name])
+        except ValueError:
+            self.client.fail("Error scaling %s - expected int, got %s",
+                             service_name, str(type(self.scale[service_name])))
 
 
 def main():
@@ -1053,7 +1061,8 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         mutually_exclusive=mutually_exclusive,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_api_version='1.20',
     )
 
     result = ContainerManager(client).exec_module()

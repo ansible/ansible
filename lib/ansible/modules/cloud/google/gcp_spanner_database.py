@@ -61,6 +61,11 @@ options:
     instance:
         description:
             - The instance to create the database on.
+            - 'This field represents a link to a Instance resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_spanner_instance
+              task and then set this instance field to "{{ name-of-resource }}" Alternatively,
+              you can set this instance to a dictionary with the name key where the value is the
+              name of your Instance.'
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -85,7 +90,7 @@ EXAMPLES = '''
       name: webstore
       instance: "{{ instance }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
@@ -98,7 +103,7 @@ RETURN = '''
               The final segment of the name must be between 6 and 30 characters in length.
         returned: success
         type: str
-    extra_statements:
+    extraStatements:
         description:
             - 'An optional list of DDL statements to run inside the newly created database. Statements
               can create tables, indexes, etc. These statements execute atomically with the creation
@@ -147,7 +152,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -194,9 +200,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -216,9 +222,9 @@ def collection(module):
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases".format(**res)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.

@@ -45,6 +45,7 @@
          - name: default
            count: 1
            vm_size: Standard_DS1_v2
+     enable_rbac: yes
    register: output
 
  - name: Assert the AKS instance is well created
@@ -81,6 +82,7 @@
          - name: default
            count: 1
            vm_size: Standard_DS1_v2
+     enable_rbac: yes
    register: output
 
  - name: Assert idempotent

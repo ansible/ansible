@@ -145,3 +145,100 @@
   register: present
 
 - debug: var=present
+
+- name: Change facts about all hosts in given cluster in check mode
+  vmware_host_ntp:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    esxi_hostname: "{{ host1 }}"
+    state: present
+    ntp_server:
+      - 0.pool.ntp.org
+    validate_certs: no
+  register: present
+  check_mode: yes
+
+- debug: var=present
+
+- name: Change facts about all hosts in given cluster in check mode
+  vmware_host_ntp:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    esxi_hostname: "{{ host1 }}"
+    state: present
+    ntp_server:
+      - 1.pool.ntp.org
+    validate_certs: no
+  register: present
+  check_mode: yes
+
+- debug: var=present
+
+- name: Change facts about all hosts in given cluster in check mode
+  vmware_host_ntp:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    esxi_hostname: "{{ host1 }}"
+    state: absent
+    ntp_server:
+      - 1.pool.ntp.org
+    validate_certs: no
+  register: present
+  check_mode: yes
+
+- debug: var=present
+
+- name: Change facts about all hosts in given cluster in check mode
+  vmware_host_ntp:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    esxi_hostname: "{{ host1 }}"
+    state: present
+    ntp_server:
+      - 1.pool.ntp.org
+    validate_certs: no
+  register: present
+  check_mode: yes
+
+- debug: var=present
+
+- name: Change facts about all hosts in given cluster in check mode
+  vmware_host_ntp:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    esxi_hostname: "{{ host1 }}"
+    state: present
+    ntp_server:
+      - 2.pool.ntp.org
+      - 3.pool.ntp.org
+      - 4.pool.ntp.org
+    validate_certs: no
+  register: present
+  check_mode: yes
+
+- debug: var=present
+
+- name: Change facts about all hosts in given cluster in check mode
+  vmware_host_ntp:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    esxi_hostname: "{{ host1 }}"
+    state: absent
+    ntp_server:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+      - 3.pool.ntp.org
+      - 4.pool.ntp.org
+      - 6.pool.ntp.org
+    validate_certs: no
+  register: present
+  check_mode: yes
+
+- debug: var=present

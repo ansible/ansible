@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: vmware_host_firewall_manager
 short_description: Manage firewall configurations about an ESXi host
@@ -170,10 +170,11 @@ class VmwareFirewallManager(PyVmomi):
                 current_rule_state = self.firewall_facts[host.name][rule_name]['enabled']
                 if current_rule_state != rule_enabled:
                     try:
-                        if rule_enabled:
-                            firewall_system.EnableRuleset(id=rule_name)
-                        else:
-                            firewall_system.DisableRuleset(id=rule_name)
+                        if not self.module.check_mode:
+                            if rule_enabled:
+                                firewall_system.EnableRuleset(id=rule_name)
+                            else:
+                                firewall_system.DisableRuleset(id=rule_name)
                         fw_change_list.append(True)
                     except vim.fault.NotFound as not_found:
                         self.module.fail_json(msg="Failed to enable rule set %s as"
@@ -206,7 +207,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_firewall_manager = VmwareFirewallManager(module)

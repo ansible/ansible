@@ -102,7 +102,10 @@ class NetconfBase(AnsiblePlugin):
 
     def __init__(self, connection):
         self._connection = connection
-        self.m = self._connection._manager
+
+    @property
+    def m(self):
+        return self._connection._manager
 
     @ensure_connected
     def rpc(self, name):

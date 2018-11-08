@@ -1,0 +1,3 @@
+---
+- include_tasks: test_docker_config.yml
+  when: docker_api_version is version('1.30', '>=')

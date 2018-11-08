@@ -256,11 +256,11 @@
     extra_args: --user --upgrade --root {{ output_dir }}/pip_root
 
 - name: register python_site_lib
-  command: 'python -c "import site; print(site.USER_SITE)"'
+  command: '{{ ansible_python.executable }} -c "import site; print(site.USER_SITE)"'
   register: pip_python_site_lib
 
 - name: register python_user_base
-  command: 'python -c "import site; print(site.USER_BASE)"'
+  command: '{{ ansible_python.executable }} -c "import site; print(site.USER_BASE)"'
   register: pip_python_user_base
 
 - name: run test module
@@ -469,6 +469,10 @@
 - name: the invalid package should make module failed
   assert:
     that: "version13 is failed"
+
+- name: try install package with setuptools extras
+  pip:
+    name: "{{pip_test_package}}[dev,test]"
 
 - name: clean up
   pip:

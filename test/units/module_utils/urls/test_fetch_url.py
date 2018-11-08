@@ -178,13 +178,14 @@ def test_fetch_url_httperror(open_url_mock, fake_ansible_module):
         'http://ansible.com/',
         500,
         'Internal Server Error',
-        {},
+        {'Content-Type': 'application/json'},
         StringIO('TESTS')
     )
 
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
 
-    assert info == {'msg': 'HTTP Error 500: Internal Server Error', 'body': 'TESTS', 'status': 500, 'url': 'http://ansible.com/'}
+    assert info == {'msg': 'HTTP Error 500: Internal Server Error', 'body': 'TESTS',
+                    'status': 500, 'url': 'http://ansible.com/', 'content-type': 'application/json'}
 
 
 def test_fetch_url_urlerror(open_url_mock, fake_ansible_module):

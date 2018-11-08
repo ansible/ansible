@@ -62,7 +62,7 @@ following::
       - name: 'YUM - async task'
         yum:
           name: docker-io
-          state: installed
+          state: present
         async: 1000
         poll: 0
         register: yum_sleeper
@@ -95,8 +95,7 @@ of tasks running concurrently, you can do it this way::
           - 5
         durations: "{{ item }}"
       include_tasks: execute_batch.yml
-      loop:
-        - "{{ sleep_durations | batch(2) | list }}"
+      loop: "{{ sleep_durations | batch(2) | list }}"
 
     #####################
     # execute_batch.yml

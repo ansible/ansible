@@ -62,7 +62,7 @@ EXAMPLES = '''
       filters:
       - name = test_object
       project: test_project
-      auth_kind: service_account
+      auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
 '''
 
@@ -79,13 +79,13 @@ items:
                   be inside the specified subnetwork, if any.
             returned: success
             type: str
-        address_type:
+        addressType:
             description:
                 - The type of address to reserve, either INTERNAL or EXTERNAL.
                 - If unspecified, defaults to EXTERNAL.
             returned: success
             type: str
-        creation_timestamp:
+        creationTimestamp:
             description:
                 - Creation timestamp in RFC3339 text format.
             returned: success
@@ -107,6 +107,13 @@ items:
                   `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
                   letter, and all following characters must be a dash, lowercase letter, or digit,
                   except the last character, which cannot be a dash.
+            returned: success
+            type: str
+        networkTier:
+            description:
+                - 'The networking tier used for configuring this address. This field can take the
+                  following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
+                  to be PREMIUM.'
             returned: success
             type: str
         subnetwork:

@@ -1,0 +1,129 @@
+- name: Create security group check
+  check_mode: yes
+  scaleway_security_group:
+    state: present
+    region: '{{ scaleway_region }}'
+    name: security_group
+    description: 'my security group description'
+    organization: '{{ scaleway_organization }}'
+    stateful: false
+    inbound_default_policy: accept
+    outbound_default_policy: accept
+    organization_default: false
+  register: security_group_creation
+
+- debug: var=security_group_creation
+
+- name: Ensure security groups check facts is success
+  assert:
+    that:
+      - security_group_creation is success
+      - security_group_creation is changed
+
+- block:
+  - name: Create security group
+    scaleway_security_group:
+      state: present
+      region: '{{ scaleway_region }}'
+      name: security_group
+      description: 'my security group description'
+      organization: '{{ scaleway_organization }}'
+      stateful: false
+      inbound_default_policy: accept
+      outbound_default_policy: accept
+      organization_default: false
+    register: security_group_creation
+
+  - debug: var=security_group_creation
+
+  - name: Ensure security groups facts is success
+    assert:
+      that:
+        - security_group_creation is success
+        - security_group_creation is changed
+
+  - name: Create security group duplicate
+    scaleway_security_group:
+      state: present
+      region: '{{ scaleway_region }}'
+      name: security_group
+      description: 'my security group description'
+      organization: '{{ scaleway_organization }}'
+      stateful: false
+      inbound_default_policy: accept
+      outbound_default_policy: accept
+      organization_default: false
+    register: security_group_creation
+
+  - debug: var=security_group_creation
+
+  - name: Ensure security groups duplicate facts is success
+    assert:
+      that:
+        - security_group_creation is success
+        - security_group_creation is not changed
+
+  - name: Delete security group check
+    check_mode: yes
+    scaleway_security_group:
+      state: absent
+      region: '{{ scaleway_region }}'
+      name: security_group
+      description: 'my security group description'
+      organization: '{{ scaleway_organization }}'
+      stateful: false
+      inbound_default_policy: accept
+      outbound_default_policy: accept
+      organization_default: false
+    register: security_group_deletion
+
+  - debug: var=security_group_deletion
+
+  - name: Ensure security groups delete check facts is success
+    assert:
+      that:
+        - security_group_deletion is success
+        - security_group_deletion is changed
+
+  always:
+    - name: Delete security group
+      scaleway_security_group:
+        state: absent
+        region: '{{ scaleway_region }}'
+        name: security_group
+        description: 'my security group description'
+        organization: '{{ scaleway_organization }}'
+        stateful: false
+        inbound_default_policy: accept
+        outbound_default_policy: accept
+        organization_default: false
+      register: security_group_deletion
+
+    - debug: var=security_group_deletion
+
+    - name: Ensure security groups delete facts is success
+      assert:
+        that:
+          - security_group_deletion is success
+          - security_group_deletion is changed
+
+- name: Delete security group duplicate
+  scaleway_security_group:
+    state: absent
+    region: '{{ scaleway_region }}'
+    name: security_group
+    description: 'my security group description'
+    organization: '{{ scaleway_organization }}'
+    stateful: false
+    inbound_default_policy: accept
+    outbound_default_policy: accept
+    organization_default: false
+  register: security_group_deletion
+
+- debug: var=security_group_deletion
+
+- name: Ensure security groups delete duplicate facts is success
+  assert:
+    that:
+      - security_group_deletion is success
+      - security_group_deletion is not changed

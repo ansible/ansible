@@ -28,8 +28,8 @@
 import json
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
@@ -119,16 +119,6 @@ def get_config(module, flags=None):
         return cfg
 
 
-def to_commands(module, commands):
-    spec = {
-        'command': dict(key=True),
-        'prompt': dict(),
-        'answer': dict()
-    }
-    transform = ComplexList(spec, module)
-    return transform(commands)
-
-
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
     try:
@@ -178,6 +168,10 @@ def normalize_interface(name):
         if_type = 'port-channel'
     elif name.lower().startswith('nv'):
         if_type = 'nve'
+    elif name.lower().startswith('twe'):
+        if_type = 'TwentyFiveGigE'
+    elif name.lower().startswith('hu'):
+        if_type = 'HundredGigE'
     else:
         if_type = None
 

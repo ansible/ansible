@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
-#
-# (c) 2018, Adrien Fleury <fleu42@gmail.com>
-# GNU General Public License v3.0+
-# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Copyright: (c) 2018, Adrien Fleury <fleu42@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -27,18 +26,13 @@ options:
     allow_simultaneous:
       description:
         - If enabled, simultaneous runs of this job template will be allowed.
-      required: False
       type: bool
     description:
       description:
         - The description to use for the workflow.
-      required: False
-      default: null
     extra_vars:
       description:
-        - >
-          Extra variables used by Ansible in YAML or key=value format.
-      required: False
+        - Extra variables used by Ansible in YAML or key=value format.
     name:
       description:
         - The name to use for the workflow.
@@ -46,28 +40,23 @@ options:
     organization:
       description:
         - The organization the workflow is linked to.
-      required: False
     schema:
       description:
         - >
           The schema is a JSON- or YAML-formatted string defining the
           hierarchy structure that connects the nodes. Refer to Tower
           documentation for more information.
-      required: False
     survey_enabled:
       description:
         - Setting that variable will prompt the user for job type on the
           workflow launch.
-      required: False
       type: bool
     survey:
       description:
         - The definition of the survey associated to the workflow.
-      required: False
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

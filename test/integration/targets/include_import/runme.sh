@@ -81,3 +81,8 @@ ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_include_dupe_loop.yml -i ../
 test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
 
 ansible-playbook public_exposure/playbook.yml -i ../../inventory "$@"
+ansible-playbook public_exposure/no_bleeding.yml -i ../../inventory "$@"
+ansible-playbook public_exposure/no_overwrite_roles.yml -i ../../inventory "$@"
+
+# https://github.com/ansible/ansible/pull/48068
+ansible-playbook run_once/playbook.yml "$@"

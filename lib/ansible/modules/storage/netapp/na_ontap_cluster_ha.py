@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -24,7 +24,7 @@ options:
     description:
       - "Whether HA on cluster should be enabled or disabled."
     default: present
-short_description: "Manage HA status for cluster"
+short_description: NetApp ONTAP Manage HA status for cluster
 version_added: "2.6"
 '''
 

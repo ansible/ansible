@@ -1,0 +1,4 @@
+---
+bugfixes:
+- k8s_facts now returns a resources key in all situations
+- "k8s_facts: fix handling of unknown resource types"

@@ -76,6 +76,12 @@ Assert-Equals -actual $actual.rc -expected 0
 Assert-Equals -actual $actual.stdout -expected "stdout `r`n"
 Assert-Equals -actual $actual.stderr -expected "stderr `r`n"
 
+$test_name = "Test UTF8 output from stdout stream"
+$actual = Run-Command -command "powershell.exe -ExecutionPolicy ByPass -Command `"Write-Host '💩'`""
+Assert-Equals -actual $actual.rc -expected 0
+Assert-Equals -actual $actual.stdout -expected "💩`n"
+Assert-Equals -actual $actual.stderr -expected ""
+
 $test_name = "test default environment variable"
 Set-Item -Path env:TESTENV -Value "test"
 $actual = Run-Command -command "cmd.exe /c set"

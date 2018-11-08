@@ -160,6 +160,7 @@ EXAMPLES = '''
     name: django
     password: ceec4eif7ya
     priv: "CONNECT/products:ALL"
+    expires: "Jan 31 2020"
 
 # Create rails user, set its password (MD5-hashed) and grant privilege to create other
 # databases and demote rails from super user status
@@ -189,7 +190,7 @@ EXAMPLES = '''
     name: django
     password: mysupersecretword
     priv: "CONNECT/products:ALL"
-    expire: infinity
+    expires: infinity
 
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL
@@ -405,6 +406,8 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
                 return changed
             else:
                 raise psycopg2.InternalError(e)
+        except psycopg2.NotSupportedError as e:
+            module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
 
     elif no_password_changes and role_attr_flags != '':
         # Grab role information from pg_roles instead of pg_authid

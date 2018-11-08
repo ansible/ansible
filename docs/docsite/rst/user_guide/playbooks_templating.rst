@@ -1,3 +1,5 @@
+.. _playbooks_templating:
+
 Templating (Jinja2)
 ===================
 
@@ -33,5 +35,3 @@ Please note that all templating happens on the Ansible controller before the tas
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

@@ -25,41 +25,42 @@ description:
 options:
   target:
     description:
-      - The target to run
+      - The target to run.
+      - "Examples: C(install) or C(test)"
   params:
     description:
       - Any extra parameters to pass to make
   chdir:
     description:
-      - cd into this directory before running make
+      - Change to this directory before running make
     required: true
   file:
     description:
-      - Use file as a Makefile
+      - Use a custom Makefile
     version_added: 2.5
 '''
 
 EXAMPLES = '''
-# Build the default target
-- make:
+- name: Build the default target
+  make:
     chdir: /home/ubuntu/cool-project
 
-# Run `install` target as root
-- make:
+- name: Run 'install' target as root
+  make:
     chdir: /home/ubuntu/cool-project
     target: install
   become: yes
 
-# Pass in extra arguments to build
-- make:
+- name: Build 'all' target with extra arguments
+  make:
     chdir: /home/ubuntu/cool-project
     target: all
     params:
       NUM_THREADS: 4
       BACKEND: lapack
 
-# Pass a file as a Makefile
-- make:
+- name: Build 'all' target with a custom Makefile
+  make:
     chdir: /home/ubuntu/cool-project
     target: all
     file: /some-project/Makefile

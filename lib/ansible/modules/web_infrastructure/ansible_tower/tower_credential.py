@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# Copyright: (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -42,9 +42,10 @@ options:
     organization:
       description:
         - Organization that should own the credential.
+      required: True
     kind:
       description:
-        - Type of credential being added.
+        - Type of credential being added.  The ssh choice refers to a Tower Machine credential.
       required: True
       choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower"]
     host:
@@ -74,13 +75,9 @@ options:
     client:
       description:
         - Client or application ID for azure_rm type.
-      required: False
-      default: null
     security_token:
       description:
         - STS token for aws type.
-      required: False
-      default: null
       version_added: "2.6"
     secret:
       description:
@@ -122,6 +119,7 @@ EXAMPLES = '''
     name: Team Name
     description: Team Description
     organization: test-org
+    kind: ssh
     state: present
     tower_config_file: "~/tower_cli.cfg"
 
@@ -135,6 +133,18 @@ EXAMPLES = '''
     password: secret
     ssh_key_data: "{{ lookup('file', '/tmp/id_rsa') }}"
     ssh_key_unlock: "passphrase"
+
+- name: Add Credential Into Tower
+  tower_credential:
+    name: Workshop Credential
+    ssh_key_data: "/home/{{ansible_user}}/.ssh/aws-private.pem"
+    kind: ssh
+    organization: Default
+    tower_username: admin
+    tower_password: ansible
+    tower_host: https://localhost
+  run_once: true
+  delegate_to: localhost
 '''
 
 import os

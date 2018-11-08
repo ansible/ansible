@@ -119,7 +119,7 @@ To enable the Ansible Engine repository, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.6-rpms
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.7-rpms
 
 RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
@@ -147,8 +147,7 @@ To configure the PPA on your machine and install ansible run these commands:
 
     $ sudo apt-get update
     $ sudo apt-get install software-properties-common
-    $ sudo apt-add-repository ppa:ansible/ansible
-    $ sudo apt-get update
+    $ sudo apt-add-repository --yes --update ppa:ansible/ansible
     $ sudo apt-get install ansible
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
@@ -195,24 +194,36 @@ To install the newest version, you may need to unmask the ansible package prior 
 
     $ echo 'app-admin/ansible' >> /etc/portage/package.accept_keywords
 
-.. note::
-
-    The current default Python slot on Gentoo is version 3.4.  Ansible needs Python-3.5 or higher so
-    you will need to `:ref:`bootstrap <managed_node_requirements>` a compatible version onto the
-    machines.
-
 Latest Releases via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
 
+Though Ansible works with both Python 2 and 3 versions, FreeBSD has different packages for each Python version.
+So to install you can use:
+
 .. code-block:: bash
 
-    $ sudo pkg install ansible
+    $ sudo pkg install py27-ansible
+
+or:
+
+.. code-block:: bash
+
+    $ sudo pkg install py36-ansible
+
 
 You may also wish to install from ports, run:
 
 .. code-block:: bash
 
     $ sudo make -C /usr/ports/sysutils/ansible install
+
+You can also choose a specific version, i.e  ``ansible25``.
+
+Older versions of FreeBSD worked with something like this (substitute for your choice of package manager):
+
+.. code-block:: bash
+
+    $ sudo pkg install ansible
 
 .. _on_macos:
 
@@ -247,6 +258,22 @@ Ansible is available in the Community repository::
 The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
 
 Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
+
+.. _from_sbopkg:
+
+Latest Releases via sbopkg (Slackware Linux)
+++++++++++++++++++++++++++++++++++++++++++++
+
+Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository.
+Can be built and installed using `sbopkg <https://sbopkg.org/>`_.
+
+Create queue with Ansible and all dependencies::
+
+    # sqg -p ansible
+
+Build and install packages from created queuefile (answer Q for question if sbopkg should use queue or package)::
+
+    # sbopkg -k -i ansible
 
 .. _from_pip:
 
@@ -364,10 +391,6 @@ other than /etc/ansible/hosts:
 
     $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_INVENTORY=~/ansible_hosts
-
-.. note::
-
-    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
 
 You can read more about the inventory file in later parts of the manual.
 

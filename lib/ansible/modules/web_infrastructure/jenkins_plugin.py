@@ -264,7 +264,7 @@ state:
 from ansible.module_utils.basic import AnsibleModule, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, text_type, binary_type
 import base64
 import hashlib
 import json
@@ -610,7 +610,7 @@ class JenkinsPlugin(object):
         # Store the plugin into a temp file and then move it
         tmp_f_fd, tmp_f = tempfile.mkstemp()
 
-        if isinstance(data, str):
+        if isinstance(data, (text_type, binary_type)):
             os.write(tmp_f_fd, data)
         else:
             os.write(tmp_f_fd, data.read())

@@ -1,7 +1,9 @@
 #!/usr/bin/python
-# Copyright (c) 2018 Loic BLOT <loic.blot@unix-experience.fr>
-# This module is sponsored by E.T.A.I. (www.etai.fr)
+
+# Copyright: (c) 2018, Loic BLOT (@nerzhul) <loic.blot@unix-experience.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# This module is sponsored by E.T.A.I. (www.etai.fr)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -15,7 +17,7 @@ description:
     - Fetch AWS Storage Gateway facts
 version_added: "2.6"
 requirements: [ boto3 ]
-author: "Loic Blot <loic.blot@unix-experience.fr>"
+author: Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 options:
   gather_local_disks:
     description:

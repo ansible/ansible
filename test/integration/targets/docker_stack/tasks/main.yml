@@ -1,0 +1,4 @@
+- include_tasks: test_stack.yml
+  when:
+  - ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6'
+  - ansible_distribution != 'Fedora' or ansible_distribution_major_version|int >= 26

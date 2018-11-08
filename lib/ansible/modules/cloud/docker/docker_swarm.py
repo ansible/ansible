@@ -136,7 +136,7 @@ extends_documentation_fragment:
     - docker
 requirements:
     - python >= 2.7
-    - "docker-py >= 2.6.0"
+    - "docker >= 2.6.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
@@ -151,7 +151,6 @@ EXAMPLES = '''
 - name: Init a new swarm with default parameters
   docker_swarm:
     state: present
-    advertise_addr: 192.168.1.1
 
 - name: Update swarm configuration
   docker_swarm:
@@ -330,9 +329,6 @@ class SwarmManager(DockerBaseClass):
             return
 
         try:
-            if self.parameters.advertise_addr is None:
-                self.client.fail(msg="advertise_addr is required to initialize a swarm cluster.")
-
             self.client.init_swarm(
                 advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
                 force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
@@ -508,7 +504,9 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_version='2.6.0',
+        min_docker_api_version='1.35',
     )
 
     results = dict(

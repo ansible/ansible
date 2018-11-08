@@ -152,27 +152,31 @@ class ElasticLoadBalancerV2(object):
         :return: bool True if they match otherwise False
         """
 
-        subnet_id_list = []
-        subnets = []
+        subnet_mapping_id_list = []
+        subnet_mappings = []
 
         # Check if we're dealing with subnets or subnet_mappings
         if self.subnets is not None:
-            # We need to first get the subnet ID from the list
-            subnets = self.subnets
+            # Convert subnets to subnet_mappings format for comparison
+            for subnet in self.subnets:
+                subnet_mappings.append({'SubnetId': subnet})
 
         if self.subnet_mappings is not None:
-            # Make a list from the subnet_mappings dict
-            subnets_from_mappings = []
-            for subnet_mapping in self.subnet_mappings:
-                subnets.append(subnet_mapping['SubnetId'])
+            # Use this directly since we're comparing as a mapping
+            subnet_mappings = self.subnet_mappings
 
+        # Build a subnet_mapping style struture of what's currently
+        # on the load balancer
         for subnet in self.elb['AvailabilityZones']:
-            subnet_id_list.append(subnet['SubnetId'])
+            this_mapping = {'SubnetId': subnet['SubnetId']}
+            for address in subnet['LoadBalancerAddresses']:
+                if 'AllocationId' in address:
+                    this_mapping['AllocationId'] = address['AllocationId']
+                    break
 
-        if set(subnet_id_list) != set(subnets):
-            return False
-        else:
-            return True
+            subnet_mapping_id_list.append(this_mapping)
+
+        return set(frozenset(mapping.items()) for mapping in subnet_mapping_id_list) == set(frozenset(mapping.items()) for mapping in subnet_mappings)
 
     def modify_subnets(self):
         """
@@ -247,6 +251,8 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
+        if self.subnet_mappings is not None:
+            params['SubnetMappings'] = self.subnet_mappings
         if self.security_groups is not None:
             params['SecurityGroups'] = self.security_groups
         params['Scheme'] = self.scheme
@@ -359,6 +365,8 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
+        if self.subnet_mappings is not None:
+            params['SubnetMappings'] = self.subnet_mappings
         params['Scheme'] = self.scheme
         if self.tags:
             params['Tags'] = self.tags
@@ -399,6 +407,14 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
                 if self.new_load_balancer:
                     AWSRetry.jittered_backoff()(self.connection.delete_load_balancer)(LoadBalancerArn=self.elb['LoadBalancerArn'])
                 self.module.fail_json_aws(e)
+
+    def modify_subnets(self):
+        """
+        Modify elb subnets to match module parameters (unsupported for NLB)
+        :return:
+        """
+
+        self.module.fail_json(msg='Modifying subnets and elastic IPs is not supported for Network Load Balancer')
 
 
 class ELBListeners(object):

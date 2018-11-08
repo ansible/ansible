@@ -264,11 +264,11 @@ class NetAppCDOTLicense(object):
                     codes.add_new_child('license-code-v2', str_value)
 
         # Remove requested licenses.
-        if not len(remove_list) == 0:
+        if len(remove_list) != 0:
             self.remove_licenses(remove_list)
 
         # Add requested licenses
-        if not len(codes.get_children()) == 0:
+        if len(codes.get_children()) != 0:
             license_add.add_child_elem(codes)
             try:
                 self.server.invoke_successfully(license_add,
@@ -284,7 +284,7 @@ class NetAppCDOTLicense(object):
         self.update_licenses()
         new_license_status = self.get_licensing_status()
 
-        if not license_status == new_license_status:
+        if license_status != new_license_status:
             changed = True
 
         self.module.exit_json(changed=changed)

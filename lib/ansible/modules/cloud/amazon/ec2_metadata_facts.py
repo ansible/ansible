@@ -22,7 +22,7 @@ author:
     - Vinay Dandekar (@roadmapper)
 description:
     - This module fetches data from the instance metadata endpoint in ec2 as per
-      http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html.
+      U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html).
       The module must be called from within the EC2 instance itself.
 notes:
     - Parameters to filter on ec2_metadata_facts may be added later.
@@ -467,8 +467,8 @@ class Ec2Metadata(object):
         new_fields = {}
         for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
-            if len(split_fields) == 3 and split_fields[0:2] == ['iam', 'security-credentials']:
-                new_fields[self._prefix % "iam-instance-profile-role"] = split_fields[2]
+            if len(split_fields) == 2 and split_fields[0:2] == ['iam', 'info_instanceprofilearn']:
+                new_fields[self._prefix % "iam-instance-profile-role"] = value.split('/')[1]
             if len(split_fields) > 1 and split_fields[1]:
                 new_key = "-".join(split_fields)
                 new_fields[self._prefix % new_key] = value

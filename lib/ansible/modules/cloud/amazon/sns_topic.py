@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -215,7 +215,7 @@ try:
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import compare_policies, AWSRetry, camel_dict_to_snake_dict
 
 
@@ -367,13 +367,15 @@ class SnsTopicManager(object):
     def _list_topic_subscriptions(self):
         try:
             return self._list_topic_subscriptions_with_backoff()
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        except is_boto3_error_code('AuthorizationError'):
             try:
                 # potentially AuthorizationError when listing subscriptions for third party topic
                 return [sub for sub in self._list_subscriptions_with_backoff()
                         if sub['TopicArn'] == self.topic_arn]
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg="Couldn't get subscriptions list for topic %s" % self.topic_arn)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
+            self.module.fail_json_aws(e, msg="Couldn't get subscriptions list for topic %s" % self.topic_arn)
 
     def _delete_subscriptions(self):
         # NOTE: subscriptions in 'PendingConfirmation' timeout in 3 days

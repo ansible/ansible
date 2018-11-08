@@ -702,6 +702,7 @@ class ModuleValidator(Validator):
         # check "shape" of each module name
 
         module_requires = r'(?im)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'
+        csharp_requires = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*(Ansible\..+)'
         found_requires = False
 
         for req_stmt in re.finditer(module_requires, self.text):
@@ -725,12 +726,33 @@ class ModuleValidator(Validator):
                     msg='Module #Requires should not end in .psm1: "%s"' % module_name
                 )
 
+        for req_stmt in re.finditer(csharp_requires, self.text):
+            found_requires = True
+            # this will bomb on dictionary format - "don't do that"
+            module_list = [x.strip() for x in req_stmt.group(1).split(',')]
+            if len(module_list) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=210,
+                    msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
+                )
+                continue
+
+            module_name = module_list[0]
+
+            if module_name.lower().endswith('.cs'):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=211,
+                    msg='Module #AnsibleRequires -CSharpUtil should not end in .cs: "%s"' % module_name
+                )
+
         # also accept the legacy #POWERSHELL_COMMON replacer signal
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
                 code=207,
-                msg='No Ansible.ModuleUtils module requirements/imports found'
+                msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 
     def _find_ps_docs_py_file(self):
@@ -823,10 +845,15 @@ class ModuleValidator(Validator):
             else:
                 error_message = error
 
+            if path:
+                combined_path = '%s.%s' % (name, '.'.join(path))
+            else:
+                combined_path = name
+
             self.reporter.error(
                 path=self.object_path,
                 code=error_code,
-                msg='%s.%s: %s' % (name, '.'.join(path), error_message)
+                msg='%s: %s' % (combined_path, error_message)
             )
 
     def _validate_docs(self):
@@ -980,7 +1007,6 @@ class ModuleValidator(Validator):
                     msg='No EXAMPLES provided'
                 )
             else:
-                examples_exists = True
                 _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
                                                doc_info['EXAMPLES']['lineno'],
                                                self.name, 'EXAMPLES', load_all=True)
@@ -997,7 +1023,6 @@ class ModuleValidator(Validator):
                     )
 
             if not bool(doc_info['RETURN']['value']):
-                returns_exists = True
                 if self._is_new_module():
                     self.reporter.error(
                         path=self.object_path,
@@ -1014,9 +1039,7 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                if data:
-                    for ret_key in data:
-                        self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN.%s' % ret_key, 319)
+                self._validate_docs_schema(data, return_schema, 'RETURN', 319)
 
                 for error in errors:
                     self.reporter.error(

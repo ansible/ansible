@@ -29,7 +29,7 @@ requirements:
 - python >= 2.6
 - PyVmomi
 notes:
-    - Please make sure the user used for vmware_guest should have correct level of privileges.
+    - Please make sure that the user used for vmware_guest has the correct level of privileges.
     - For example, following is the list of minimum privileges required by users to create virtual machines.
     - "   DataStore > Allocate Space"
     - "   Virtual Machine > Configuration > Add New Disk"
@@ -38,12 +38,13 @@ notes:
     - "   Network > Assign Network"
     - "   Resource > Assign Virtual Machine to Resource Pool"
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
-    - Tested on vSphere 5.5, 6.0 and 6.5
+    - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
+    - Use SCSI disks instead of IDE when you want to resize online disks by specifing a SCSI controller
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
     description:
-    - Specify state of the virtual machine be in.
+    - Specify the state the virtual machine should be in.
     - 'If C(state) is set to C(present) and virtual machine exists, ensure the virtual machine
        configurations conforms to task arguments.'
     - 'If C(state) is set to C(absent) and virtual machine exists, then the specified virtual machine
@@ -88,6 +89,7 @@ options:
     - If the virtual machine already exists, this parameter will be ignored.
     - This parameter is case sensitive.
     - You can also specify template or VM UUID for identifying source. version_added 2.8. Use C(hw_product_uuid) from M(vmware_guest_facts) as UUID value.
+    - From version 2.8 onwards, absolute path to virtual machine or template can be used.
     aliases: [ 'template_src' ]
   is_template:
     description:
@@ -714,6 +716,22 @@ class PyVmomiDeviceHelper(object):
         """
         mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
         return bool(mac_addr_regex.match(mac_addr))
+
+    def integer_value(self, input_value, name):
+        """
+        Function to return int value for given input, else return error
+        Args:
+            input_value: Input value to retrive int value from
+            name:  Name of the Input value (used to build error message)
+        Returns: (int) if integer value can be obtained, otherwise will send a error message.
+        """
+        if isinstance(input_value, int):
+            return input_value
+        elif isinstance(input_value, str) and input_value.isdigit():
+            return int(input_value)
+        else:
+            self.module.fail_json(msg='"%s" attribute should be an'
+                                  ' integer value.' % name)
 
 
 class PyVmomiCache(object):
@@ -1512,7 +1530,10 @@ class PyVmomiHelper(PyVmomi):
                 ident.guiUnattended.autoLogonCount = self.params['customization'].get('autologoncount', 1)
 
             if 'timezone' in self.params['customization']:
-                ident.guiUnattended.timeZone = self.params['customization']['timezone']
+                # Check if timezone value is a int before proceeding.
+                ident.guiUnattended.timeZone = self.device_helper.integer_value(
+                    self.params['customization']['timezone'],
+                    'customization.timezone')
 
             ident.identification = vim.vm.customization.Identification()
 
@@ -2019,7 +2040,7 @@ class PyVmomiHelper(PyVmomi):
                     network_changes = True
                     break
 
-        if len(self.params['customization']) > 0 or network_changes is True:
+        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec'):
             self.customize_vm(vm_obj=vm_obj)
 
         clonespec = None
@@ -2052,6 +2073,8 @@ class PyVmomiHelper(PyVmomi):
                     clonespec.customization = self.customspec
 
                 if snapshot_src is not None:
+                    if vm_obj.snapshot is None:
+                        self.module.fail_json(msg="No snapshots present for virtual machine or template [%(template)s]" % self.params)
                     snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
                                                                       snapname=snapshot_src)
                     if len(snapshot) != 1:

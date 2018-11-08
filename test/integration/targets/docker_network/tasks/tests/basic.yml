@@ -1,0 +1,134 @@
+---
+- name: Registering container and network names
+  set_fact:
+    cname_1: "{{ name_prefix ~ '-container-1' }}"
+    cname_2: "{{ name_prefix ~ '-container-2' }}"
+    cname_3: "{{ name_prefix ~ '-container-3' }}"
+    nname_1: "{{ name_prefix ~ '-network-1' }}"
+    nname_2: "{{ name_prefix ~ '-network-2' }}"
+- name: Registering container and network names
+  set_fact:
+    cnames: "{{ cnames }} + [cname_1, cname_2, cname_3]"
+    dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"
+
+- name: Create containers
+  docker_container:
+    name: "{{ container_name }}"
+    image: alpine:3.8
+    command: /bin/sleep 10m
+    state: started
+  loop:
+  - "{{ cname_1 }}"
+  - "{{ cname_2 }}"
+  - "{{ cname_3 }}"
+  loop_control:
+    loop_var: container_name
+
+####################################################################
+
+- name: Create network
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+  register: networks_1
+
+- name: Connect network to containers 1
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_1 }}"
+  register: networks_2
+
+- name: Connect network to containers 1 (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_1 }}"
+  register: networks_2_idem
+
+- name: Connect network to containers 1 and 2
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_1 }}"
+    - "{{ cname_2 }}"
+  register: networks_3
+
+- name: Connect network to containers 1 and 2 (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_1 }}"
+    - "{{ cname_2 }}"
+  register: networks_3_idem
+
+- name: Connect network to container 3
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_3 }}"
+    appends: yes
+  register: networks_4
+
+- name: Connect network to container 3 (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_3 }}"
+    appends: yes
+  register: networks_4_idem
+
+- name: Disconnect network from container 1
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_2 }}"
+    - "{{ cname_3 }}"
+  register: networks_5
+
+- name: Disconnect network from container 1 (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: present
+    connected:
+    - "{{ cname_2 }}"
+    - "{{ cname_3 }}"
+  register: networks_5_idem
+
+- name: Cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+
+- assert:
+    that:
+    - networks_1 is changed
+    - networks_2 is changed
+    - networks_2_idem is not changed
+    - networks_3 is changed
+    - networks_3_idem is not changed
+    - networks_4 is changed
+    - networks_4_idem is not changed
+    - networks_5 is changed
+    - networks_5_idem is not changed
+
+####################################################################
+
+- name: Delete containers
+  docker_container:
+    name: "{{ container_name }}"
+    state: absent
+    stop_timeout: 1
+  loop:
+  - "{{ cname_1 }}"
+  - "{{ cname_2 }}"
+  - "{{ cname_3 }}"
+  loop_control:
+    loop_var: container_name

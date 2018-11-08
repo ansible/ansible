@@ -15,13 +15,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: iptables
-short_description: Modify the systems iptables
+short_description: Modify iptables rules
 version_added: "2.0"
 author:
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 - Sébastien DA ROCHA (@sebastiendarocha)
 description:
-  - Iptables is used to set up, maintain, and inspect the tables of IP packet
+  - C(iptables) is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
   - This module does not handle the saving and/or loading of rules, but rather
     only manipulates the current rules that are present in memory. This is the
@@ -64,10 +64,14 @@ options:
     default: ipv4
   chain:
     description:
-      - Chain to operate on.
-      - "This option can either be the name of a user defined chain or any of
-        the builtin chains: 'INPUT', 'FORWARD', 'OUTPUT', 'PREROUTING',
-        'POSTROUTING', 'SECMARK', 'CONNSECMARK'."
+      - "Specify the iptables chain to modify. This could be a user-defined chain or one of the standard iptables chains:"
+      - C(INPUT)
+      - C(FORWARD)
+      - C(OUTPUT)
+      - C(PREROUTING)
+      - C(POSTROUTING)
+      - C(SECMARK)
+      - C(CONNSECMARK)
   protocol:
     description:
       - The protocol of the rule or of the packet to check.
@@ -227,9 +231,14 @@ options:
   ctstate:
     description:
       - "C(ctstate) is a list of the connection states to match in the conntrack
-        module.
-        Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED',
-        'UNTRACKED', 'SNAT', 'DNAT'"
+        module. Possible states are:"
+      - C(INVALID)
+      - C(NEW)
+      - C(ESTABLISHED)
+      - C(RELATED)
+      - C(UNTRACKED)
+      - C(SNAT)
+      - C(DNAT)
     choices: [ DNAT, ESTABLISHED, INVALID, NEW, RELATED, SNAT, UNTRACKED ]
     default: []
   limit:

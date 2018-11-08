@@ -177,7 +177,7 @@ options:
     - List of dictionaries describing the service configs.
     - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --config option.
-    default: []
+    default: null
   networks:
     required: false
     default: []
@@ -189,8 +189,9 @@ options:
     required: false
     description:
     - List of dictionaries describing the service published ports.
-    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp'), mode <ingress|host>, default to ingress.
+    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp')
     - Only used with api_version >= 1.25
+    - If api_version >= 1.32 the dictionaries can contain the attribute 'mode' set to 'ingress' or 'host' (default 'ingress').
   replicas:
     required: false
     default: -1
@@ -262,13 +263,11 @@ options:
     - Maps to docker service --update-max-failure-ratio
   update_order:
     required: false
-    default: stop-first
+    default: null
     description:
     - Specifies the order of operations when rolling out an updated task.
     - Maps to docker service --update-order
-    choices:
-    - stop-first
-    - start-first
+    - Requires docker api version >= 1.29
   user:
     required: false
     default: root
@@ -277,6 +276,10 @@ extends_documentation_fragment:
 - docker
 requirements:
 - "docker-py >= 2.0"
+- "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+   module has been superseded by L(docker,https://pypi.org/project/docker/)
+   (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+   Version 2.1.0 or newer is only available with the C(docker) module."
 '''
 
 RETURN = '''
@@ -462,13 +465,7 @@ try:
     from distutils.version import LooseVersion
     from docker import utils
     from docker import types
-    from docker import __version__ as docker_version
-    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
-        from docker.types import Ulimit, LogConfig
-        HAS_DOCKER_PY_2 = True
-    else:
-        from docker.utils.types import Ulimit, LogConfig
-except:
+except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
@@ -498,7 +495,7 @@ class DockerService(DockerBaseClass):
         self.mode = "replicated"
         self.user = "root"
         self.mounts = []
-        self.configs = []
+        self.configs = None
         self.secrets = []
         self.constraints = []
         self.networks = []
@@ -515,7 +512,7 @@ class DockerService(DockerBaseClass):
         self.update_failure_action = "continue"
         self.update_monitor = 5000000000
         self.update_max_failure_ratio = 0.00
-        self.update_order = "stop-first"
+        self.update_order = None
 
     def get_facts(self):
         return {
@@ -532,7 +529,7 @@ class DockerService(DockerBaseClass):
             'env': self.env,
             'force_update': self.force_update,
             'log_driver': self.log_driver,
-            'log_driver_options ': self.log_driver_options,
+            'log_driver_options': self.log_driver_options,
             'publish': self.publish,
             'constraints': self.constraints,
             'labels': self.labels,
@@ -610,13 +607,13 @@ class DockerService(DockerBaseClass):
         for param_p in ap['publish']:
             service_p = {}
             service_p['protocol'] = param_p.get('protocol', 'tcp')
-            service_p['mode'] = param_p.get('mode', 'ingress')
+            service_p['mode'] = param_p.get('mode', None)
             service_p['published_port'] = int(param_p['published_port'])
             service_p['target_port'] = int(param_p['target_port'])
             if service_p['protocol'] not in ['tcp', 'udp']:
                 raise ValueError("got publish.protocol '%s', valid values:'tcp', 'udp'" %
                                  service_p['protocol'])
-            if service_p['mode'] not in ['ingress', 'host']:
+            if service_p['mode'] not in [None, 'ingress', 'host']:
                 raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
                                  service_p['mode'])
             s.publish.append(service_p)
@@ -629,16 +626,18 @@ class DockerService(DockerBaseClass):
             service_m['target'] = param_m['target']
             s.mounts.append(service_m)
 
-        s.configs = []
-        for param_m in ap['configs']:
-            service_c = {}
-            service_c['config_id'] = param_m['config_id']
-            service_c['config_name'] = str(param_m['config_name'])
-            service_c['filename'] = param_m.get('filename', service_c['config_name'])
-            service_c['uid'] = int(param_m.get('uid', "0"))
-            service_c['gid'] = int(param_m.get('gid', "0"))
-            service_c['mode'] = param_m.get('mode', 0o444)
-            s.configs.append(service_c)
+        s.configs = None
+        if ap['configs']:
+            s.configs = []
+            for param_m in ap['configs']:
+                service_c = {}
+                service_c['config_id'] = param_m['config_id']
+                service_c['config_name'] = str(param_m['config_name'])
+                service_c['filename'] = param_m.get('filename', service_c['config_name'])
+                service_c['uid'] = int(param_m.get('uid', "0"))
+                service_c['gid'] = int(param_m.get('gid', "0"))
+                service_c['mode'] = param_m.get('mode', 0o444)
+                s.configs.append(service_c)
 
         s.secrets = []
         for param_m in ap['secrets']:
@@ -756,18 +755,21 @@ class DockerService(DockerBaseClass):
                             read_only=mount_config['readonly'])
             )
 
-        configs = []
-        for config_config in self.configs:
-            configs.append(
-                types.ConfigReference(
-                    config_id=config_config['config_id'],
-                    config_name=config_config['config_name'],
-                    filename=config_config.get('filename'),
-                    uid=config_config.get('uid'),
-                    gid=config_config.get('gid'),
-                    mode=config_config.get('mode')
+        configs = None
+        if self.configs:
+            configs = []
+            for config_config in self.configs:
+                configs.append(
+                    types.ConfigReference(
+                        config_id=config_config['config_id'],
+                        config_name=config_config['config_name'],
+                        filename=config_config.get('filename'),
+                        uid=config_config.get('uid'),
+                        gid=config_config.get('gid'),
+                        mode=config_config.get('mode')
+                    )
                 )
-            )
+
         secrets = []
         for secret_config in self.secrets:
             secrets.append(
@@ -839,7 +841,7 @@ class DockerService(DockerBaseClass):
             network_id = None
             try:
                 network_id = list(filter(lambda n: n['name'] == network_name, docker_networks))[0]['id']
-            except:
+            except Exception as dummy:
                 pass
             if network_id:
                 networks.append({'Target': network_id})
@@ -848,7 +850,10 @@ class DockerService(DockerBaseClass):
 
         ports = {}
         for port in self.publish:
-            ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
+            if port['mode']:
+                ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
+            else:
+                ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'])
         endpoint_spec = types.EndpointSpec(mode=self.endpoint_mode, ports=ports)
         return update_policy, task_template, networks, endpoint_spec, mode, self.labels
 
@@ -885,7 +890,9 @@ class DockerServiceManager():
         ds.update_failure_action = update_config_data['FailureAction']
         ds.update_monitor = update_config_data['Monitor']
         ds.update_max_failure_ratio = update_config_data['MaxFailureRatio']
-        ds.update_order = update_config_data['Order']
+
+        if 'Order' in update_config_data:
+            ds.update_order = update_config_data['Order']
 
         dns_config = task_template_data['ContainerSpec'].get('DNSConfig', None)
         if dns_config:
@@ -915,7 +922,7 @@ class DockerServiceManager():
                 for port in raw_data_endpoint_spec.get('Ports', []):
                     ds.publish.append({
                         'protocol': port['Protocol'],
-                        'mode': port.get('PublishMode', 'ingress'),
+                        'mode': port.get('PublishMode', None),
                         'published_port': int(port['PublishedPort']),
                         'target_port': int(port['TargetPort'])})
 
@@ -1021,7 +1028,8 @@ class DockerServiceManager():
             {'param': 'hostname', 'attribute': 'hostname', 'min_version': '1.25'},
             {'param': 'tty', 'attribute': 'tty', 'min_version': '1.25'},
             {'param': 'secrets', 'attribute': 'secrets', 'min_version': '1.25'},
-            {'param': 'configs', 'attribute': 'configs', 'min_version': '1.30'}]
+            {'param': 'configs', 'attribute': 'configs', 'min_version': '1.30'},
+            {'param': 'update_order', 'attribute': 'update_order', 'min_version': '1.29'}]
         params = self.client.module.params
         empty_service = DockerService()
         for pv in parameters_versions:
@@ -1069,7 +1077,6 @@ class DockerServiceManager():
             else:
                 changed, changes, need_rebuild, force_update = new_service.compare(current_service)
                 if changed:
-                    changed = True
                     if need_rebuild:
                         if not module.check_mode:
                             self.remove_service(module.params['name'])
@@ -1077,7 +1084,6 @@ class DockerServiceManager():
                                                 new_service)
                         msg = 'Service rebuilt'
                         rebuilt = True
-                        changes = changes
                     else:
                         if not module.check_mode:
                             self.update_service(module.params['name'],
@@ -1085,16 +1091,15 @@ class DockerServiceManager():
                                                 new_service)
                         msg = 'Service updated'
                         rebuilt = False
-                        changes = changes
                 else:
-                    if force_update and not module.check_mode:
-                        self.update_service(module.params['name'],
-                                            current_service,
-                                            new_service)
+                    if force_update:
+                        if not module.check_mode:
+                            self.update_service(module.params['name'],
+                                                current_service,
+                                                new_service)
                         msg = 'Service forcefully updated'
                         rebuilt = False
                         changed = True
-                        changes = changes
                     else:
                         msg = 'Service unchanged'
                 facts = new_service.get_facts()
@@ -1118,7 +1123,7 @@ def main():
         image=dict(type='str'),
         state=dict(default="present", choices=['present', 'absent']),
         mounts=dict(default=[], type='list'),
-        configs=dict(default=[], type='list'),
+        configs=dict(default=None, type='list'),
         secrets=dict(default=[], type='list'),
         networks=dict(default=[], type='list'),
         args=dict(default=[], type='list'),
@@ -1151,7 +1156,7 @@ def main():
         update_failure_action=dict(default='continue', choices=['continue', 'pause']),
         update_monitor=dict(default=5000000000, type='int'),
         update_max_failure_ratio=dict(default=0, type='float'),
-        update_order=dict(default='stop-first', choices=['stop-first', 'start-first']),
+        update_order=dict(default=None, type='string'),
         user=dict(default='root'))
     required_if = [
         ('state', 'present', ['image'])
@@ -1159,14 +1164,9 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         required_if=required_if,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_version='2.0.0',
     )
-
-    if not HAS_DOCKER_PY_2:
-        client.module.fail_json(
-            msg=("docker python library version is %s. " +
-                 "this module requires version 2.0.0 or greater")
-            % docker_version)
 
     dsm = DockerServiceManager(client)
     msg, changed, rebuilt, changes, facts = dsm.run()

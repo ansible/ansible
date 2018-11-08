@@ -85,7 +85,7 @@ EXAMPLES = """
 
 - name: Use role in loop
   include_role:
-    name: myrole
+    name: '{{ roleinputvar }}'
   with_items:
     - '{{ roleinput1 }}'
     - '{{ roleinput2 }}'

@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 import os
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 

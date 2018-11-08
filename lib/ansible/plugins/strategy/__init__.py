@@ -32,7 +32,7 @@ from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
@@ -317,6 +317,7 @@ class StrategyBase:
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker] = worker_prc
+                    self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
@@ -846,10 +847,15 @@ class StrategyBase:
                 self._tqm._stats.increment('ok', host.name)
 
         except AnsibleError as e:
+            if isinstance(e, AnsibleFileNotFound):
+                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(included_file._filename)
+            else:
+                reason = to_text(e)
+
             # mark all of the hosts including this file as failed, send callbacks,
             # and increment the stats for this host
             for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=to_text(e)))
+                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
                 iterator.mark_host_failed(host)
                 self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
@@ -947,9 +953,12 @@ class StrategyBase:
                         iterator._play.handlers.append(block)
                         iterator.cache_block_tasks(block)
                         for task in block.block:
+                            task_name = task.get_name()
+                            display.debug("adding task '%s' included in handler '%s'" % (task_name, handler_name))
+                            self._notified_handlers[task._uuid] = included_file._hosts[:]
                             result = self._do_handler_run(
                                 handler=task,
-                                handler_name=task.get_name(),
+                                handler_name=task_name,
                                 iterator=iterator,
                                 play_context=play_context,
                                 notified_hosts=included_file._hosts[:],
@@ -1191,6 +1200,16 @@ class Debugger(cmd.Cmd):
         return True
 
     do_r = do_redo
+
+    def do_update_task(self, args):
+        """Recreate the task from ``task._ds``, and template with updated ``task_vars``"""
+        templar = Templar(None, shared_loader_obj=None, variables=self.scope['task_vars'])
+        task = self.scope['task']
+        task = task.load_data(task._ds)
+        task.post_validate(templar)
+        self.scope['task'] = task
+
+    do_u = do_update_task
 
     def evaluate(self, args):
         try:

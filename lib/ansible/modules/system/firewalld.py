@@ -144,7 +144,7 @@ EXAMPLES = '''
     permanent: yes
     immediate: yes
     state:     enabled
-  with_items:
+  loop:
     - ipv4
     - ipv6
 '''

@@ -136,7 +136,6 @@ uid:
 '''
 
 import json
-import string
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
@@ -184,7 +183,7 @@ def get_grafana_version(module, grafana_url, headers):
     if info['status'] == 200:
         try:
             settings = json.loads(r.read())
-            grafana_version = string.split(settings['buildInfo']['version'], '.')[0]
+            grafana_version = str.split(settings['buildInfo']['version'], '.')[0]
         except Exception as e:
             raise GrafanaAPIException(e)
     else:
@@ -257,7 +256,7 @@ def grafana_create_dashboard(module, data):
             result['changed'] = False
         else:
             # update
-            if 'overwrite' in data and data['overwrite'] == 'yes':
+            if 'overwrite' in data and data['overwrite']:
                 payload['overwrite'] = True
             if 'message' in data and data['message']:
                 payload['message'] = data['message']

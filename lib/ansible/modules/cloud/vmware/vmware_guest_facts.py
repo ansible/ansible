@@ -8,9 +8,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -18,7 +20,7 @@ DOCUMENTATION = '''
 module: vmware_guest_facts
 short_description: Gather facts about a single VM
 description:
-    - Gather facts about a single VM on a VMware ESX cluster
+    - Gather facts about a single VM on a VMware ESX cluster.
 version_added: 2.3
 author:
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
@@ -29,40 +31,48 @@ requirements:
     - PyVmomi
 options:
    name:
-        description:
-            - Name of the VM to work with
-            - This is required if UUID is not supplied.
+     description:
+     - Name of the VM to work with
+     - This is required if UUID is not supplied.
    name_match:
-        description:
-            - If multiple VMs matching the name, use the first or last found
-        default: 'first'
-        choices: ['first', 'last']
+     description:
+     - If multiple VMs matching the name, use the first or last found
+     default: 'first'
+     choices: ['first', 'last']
    uuid:
-        description:
-            - UUID of the instance to manage if known, this is VMware's unique identifier.
-            - This is required if name is not supplied.
+     description:
+     - UUID of the instance to manage if known, this is VMware's unique identifier.
+     - This is required if name is not supplied.
    folder:
-        description:
-            - Destination folder, absolute or relative path to find an existing guest.
-            - This is required if name is supplied.
-            - The folder should include the datacenter. ESX's datacenter is ha-datacenter
-            - 'Examples:'
-            - '   folder: /ha-datacenter/vm'
-            - '   folder: ha-datacenter/vm'
-            - '   folder: /datacenter1/vm'
-            - '   folder: datacenter1/vm'
-            - '   folder: /datacenter1/vm/folder1'
-            - '   folder: datacenter1/vm/folder1'
-            - '   folder: /folder1/datacenter1/vm'
-            - '   folder: folder1/datacenter1/vm'
-            - '   folder: /folder1/datacenter1/vm/folder2'
-            - '   folder: vm/folder2'
-            - '   folder: folder2'
-        default: /vm
+     description:
+     - Destination folder, absolute or relative path to find an existing guest.
+     - This is required if name is supplied.
+     - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+     - 'Examples:'
+     - '   folder: /ha-datacenter/vm'
+     - '   folder: ha-datacenter/vm'
+     - '   folder: /datacenter1/vm'
+     - '   folder: datacenter1/vm'
+     - '   folder: /datacenter1/vm/folder1'
+     - '   folder: datacenter1/vm/folder1'
+     - '   folder: /folder1/datacenter1/vm'
+     - '   folder: folder1/datacenter1/vm'
+     - '   folder: /folder1/datacenter1/vm/folder2'
+     - '   folder: vm/folder2'
+     - '   folder: folder2'
    datacenter:
-        description:
-            - Destination datacenter for the deploy operation
-        required: True
+     description:
+     - Destination datacenter for the deploy operation
+     required: True
+   tags:
+     description:
+     - Whether to show tags or not.
+     - If set C(True), shows tag facts.
+     - If set C(False), hides tags facts.
+     - vSphere Automation SDK and vCloud Suite SDK is required.
+     default: 'no'
+     type: bool
+     version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -84,17 +94,84 @@ instance:
     description: metadata about the virtual machine
     returned: always
     type: dict
-    sample: None
+    sample: {
+        "annotation": "",
+        "current_snapshot": null,
+        "customvalues": {},
+        "guest_consolidation_needed": false,
+        "guest_question": null,
+        "guest_tools_status": "guestToolsNotRunning",
+        "guest_tools_version": "10247",
+        "hw_cores_per_socket": 1,
+        "hw_datastores": [
+            "ds_226_3"
+        ],
+        "hw_esxi_host": "10.76.33.226",
+        "hw_eth0": {
+            "addresstype": "assigned",
+            "ipaddresses": null,
+            "label": "Network adapter 1",
+            "macaddress": "00:50:56:87:a5:9a",
+            "macaddress_dash": "00-50-56-87-a5-9a",
+            "portgroup_key": null,
+            "portgroup_portkey": null,
+            "summary": "VM Network"
+        },
+        "hw_files": [
+            "[ds_226_3] ubuntu_t/ubuntu_t.vmx",
+            "[ds_226_3] ubuntu_t/ubuntu_t.nvram",
+            "[ds_226_3] ubuntu_t/ubuntu_t.vmsd",
+            "[ds_226_3] ubuntu_t/vmware.log",
+            "[ds_226_3] u0001/u0001.vmdk"
+        ],
+        "hw_folder": "/DC0/vm/Discovered virtual machine",
+        "hw_guest_full_name": null,
+        "hw_guest_ha_state": null,
+        "hw_guest_id": null,
+        "hw_interfaces": [
+            "eth0"
+        ],
+        "hw_is_template": false,
+        "hw_memtotal_mb": 1024,
+        "hw_name": "ubuntu_t",
+        "hw_power_status": "poweredOff",
+        "hw_processor_count": 1,
+        "hw_product_uuid": "4207072c-edd8-3bd5-64dc-903fd3a0db04",
+        "hw_version": "vmx-13",
+        "instance_uuid": "5007769d-add3-1e12-f1fe-225ae2a07caf",
+        "ipv4": null,
+        "ipv6": null,
+        "module_hw": true,
+        "snapshots": [],
+        "tags": [
+            "backup"
+        ],
+        "vnc": {}
+    }
 """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
+from ansible.module_utils.vmware_rest_client import VmwareRestClient
+try:
+    from com.vmware.vapi.std_client import DynamicID
+    from com.vmware.cis.tagging_client import Tag, TagAssociation
+    HAS_VCLOUD = True
+except ImportError:
+    HAS_VCLOUD = False
 
 
 class PyVmomiHelper(PyVmomi):
     def __init__(self, module):
         super(PyVmomiHelper, self).__init__(module)
+
+
+class VmwareTag(VmwareRestClient):
+    def __init__(self, module):
+        super(VmwareTag, self).__init__(module)
+        self.tag_service = Tag(self.connect)
+        self.tag_association_svc = TagAssociation(self.connect)
 
 
 def main():
@@ -103,15 +180,17 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
+        tags=dict(type='bool', default=False)
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=[['name', 'uuid']])
 
-    # FindByInventoryPath() does not require an absolute path
-    # so we should leave the input folder path unmodified
-    module.params['folder'] = module.params['folder'].rstrip('/')
+    if module.params.get('folder'):
+        # FindByInventoryPath() does not require an absolute path
+        # so we should leave the input folder path unmodified
+        module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
@@ -120,11 +199,25 @@ def main():
     # VM already exists
     if vm:
         try:
-            module.exit_json(instance=pyv.gather_facts(vm))
+            instance = pyv.gather_facts(vm)
+            if module.params.get('tags'):
+                if not HAS_VCLOUD:
+                    module.fail_json(msg="Unable to find 'vCloud Suite SDK' Python library which is required."
+                                         " Please refer this URL for installation steps"
+                                         " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")
+
+                vm_rest_client = VmwareTag(module)
+                instance.update(
+                    tags=vm_rest_client.get_vm_tags(vm_rest_client.tag_service,
+                                                    vm_rest_client.tag_association_svc,
+                                                    vm_mid=vm._moId)
+                )
+            module.exit_json(instance=instance)
         except Exception as exc:
             module.fail_json(msg="Fact gather failed with exception %s" % to_text(exc))
     else:
-        module.fail_json(msg="Unable to gather facts for non-existing VM %s" % module.params.get('uuid') or module.params.get('name'))
+        module.fail_json(msg="Unable to gather facts for non-existing VM %s" % (module.params.get('uuid') or
+                                                                                module.params.get('name')))
 
 
 if __name__ == '__main__':
