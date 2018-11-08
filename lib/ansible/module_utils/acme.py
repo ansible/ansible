@@ -59,8 +59,8 @@ class ModuleFailException(Exception):
         self.msg = msg
         self.module_fail_args = args
 
-    def do_fail(self, module):
-        module.fail_json(msg=self.msg, other=self.module_fail_args)
+    def do_fail(self, module, **arguments):
+        module.fail_json(msg=self.msg, other=self.module_fail_args, **arguments)
 
 
 def nopad_b64(data):
