@@ -15,32 +15,32 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: amqp_publish
-short_description: Publish a message to an AMQP queue.
+module: rabbitmq_publish
+short_description: Publish a message to a RabbitMQ queue.
 version_added: "2.8"
 description:
-   - Publish a message on an AMQP queue using a blocking connection.
+   - Publish a message on a RabbitMQ queue using a blocking connection.
 options:
   url:
     description:
-      - An URL connection string to connect to the AMQP server.
-      - I(url) and I(host)/I(port)/I(user)/I(pass)/I(vhost) are mutually exclusive.
+      - An URL connection string to connect to the RabbitMQ server.
+      - I(url) and I(host)/I(port)/I(user)/I(pass)/I(vhost) are mutually exclusive, use either or but not both.
   proto:
     description:
       - The protocol to use.
     choices: [amqps, amqp]
   host:
     description:
-      - The AMQP server hostname or IP.
+      - The RabbitMQ server hostname or IP.
   port:
     description:
-      - The AMQP server port.
+      - The RabbitMQ server port.
   username:
     description:
-      - The AMQP username.
+      - The RabbitMQ username.
   password:
     description:
-      - The AMQP password.
+      - The RabbitMQ password.
   vhost:
     description:
       - The virtual host to target.
@@ -62,7 +62,7 @@ options:
     description:
       - A file to upload to the queue.  Automatic mime type detection is attempted if content_type is not defined (left as default).
       - A C(src) cannot be provided if a C(body) is specified.
-      - The filename is added to the headers of the posted message to the AMQP server. Key being the C(filename), value is the filename.
+      - The filename is added to the headers of the posted message to RabbitMQ. Key being the C(filename), value is the filename.
     aliases: ['file']
   content_type:
     description:
@@ -94,31 +94,30 @@ requirements: [ pika ]
 notes:
   - This module requires the pika python library U(https://pika.readthedocs.io/).
   - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
-  - This module has been tested with RabbitMQ, but, may support other AMQP implementations.
 author: "John Imison (@Im0)"
 '''
 
 EXAMPLES = '''
 - name: Publish a message to a queue with headers
-  amqp_publish:
+  rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     queue: 'test'
-    body: "Hello world from ansible module amqp_publish"
+    body: "Hello world from ansible module rabitmq_publish"
     content_type: "text/plain"
     headers:
       myHeader: myHeaderValue
 
 
 - name: Publish a file to a queue
-  amqp_publish:
+  rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     queue: 'images'
     file: 'path/to/logo.gif'
 
-- name: AMQP auto generated queue
-  amqp_publish:
+- name: RabbitMQ auto generated queue
+  rabbitmq_publish:
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
-    body: "Hello world random queue from ansible module amqp_publish"
+    body: "Hello world random queue from ansible module rabitmq_publish"
     content_type: "text/plain"
 '''
 
@@ -141,11 +140,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.amqp import AMQPClient
+from ansible.module_utils.rabbitmq import RabbitClient
 
 
 def main():
-    argument_spec = AMQPClient.amqp_argument_spec()
+    argument_spec = RabbitClient.rabbitmq_argument_spec()
     argument_spec.update(
         exchange=dict(type='str', default=''),
         routing_key=dict(type='str', required=False),
@@ -163,16 +162,16 @@ def main():
         supports_check_mode=False
     )
 
-    amqp = AMQPClient(module)
+    rabbitmq = RabbitClient(module)
 
-    if amqp.basic_publish():
-        amqp.close_connection()
-        module.exit_json(changed=True, result={"msg": "Successfully published to queue %s" % amqp.queue,
-                                               "queue": amqp.queue,
-                                               "content_type": amqp.content_type})
+    if rabbitmq.basic_publish():
+        rabbitmq.close_connection()
+        module.exit_json(changed=True, result={"msg": "Successfully published to queue %s" % rabbitmq.queue,
+                                               "queue": rabbitmq.queue,
+                                               "content_type": rabbitmq.content_type})
     else:
-        amqp.close_connection()
-        module.fail_json(changed=False, msg="Unsuccessful publishing to queue %s" % amqp.queue)
+        rabbitmq.close_connection()
+        module.fail_json(changed=False, msg="Unsuccessful publishing to queue %s" % rabbitmq.queue)
 
 
 if __name__ == '__main__':
