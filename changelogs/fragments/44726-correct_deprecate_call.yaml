@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix calling deprecate with correct arguments (https://github.com/ansible/ansible/pull/46062).
