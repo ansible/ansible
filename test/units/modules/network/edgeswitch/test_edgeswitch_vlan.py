@@ -107,8 +107,8 @@ class TestEdgeswitchVlanModule(TestEdgeswitchModule):
             'vlan name 3 \"vlan3\"',
             'exit',
             'interface 0/7-0/8',
-            'vlan pvid 3',
             'vlan participation include 3',
+            'vlan pvid 3',
         ]
         self.assertEqual(result['commands'], expected_commands)
 
