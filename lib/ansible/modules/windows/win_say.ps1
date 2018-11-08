@@ -3,51 +3,61 @@
 # Copyright: (c) 2016, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-
-$msg = Get-AnsibleParam -obj $params -name "msg" -type "str"
-$msg_file = Get-AnsibleParam -obj $params -name "msg_file" -type "path"
-$start_sound_path = Get-AnsibleParam -obj $params -name "start_sound_path" -type "path"
-$end_sound_path = Get-AnsibleParam -obj $params -name "end_sound_path" -type "path"
-$voice = Get-AnsibleParam -obj $params -name "voice" -type "str"
-$speech_speed = Get-AnsibleParam -obj $params -name "speech_speed" -type "int" -default 0
-
-$result = @{
-    changed = $false
+$spec = @{
+   options = @{
+      msg = @{ type = "str"  }
+      msg_file = @{ type = "path"  }
+      start_sound_path = @{ type = "path"  }
+      end_sound_path = @{ type = "path"  }
+      voice = @{ type = "str"  }
+      speech_speed = @{ type = "int"; default = 0  }
+   }
+   supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+
+$msg = $module.params.msg
+$msg_file = $module.params.msg_file
+$start_sound_path = $module.params.start_sound_path
+$end_sound_path = $module.params.end_sound_path
+$voice = $module.params.voice
+$speech_speed = $module.params.speech_speed
+
+$module.Result.changed = $false
 
 $words = $null
 
 if ($speech_speed -lt -10 -or $speech_speed -gt 10) {
-   Fail-Json $result "speech_speed needs to a integer in the range -10 to 10.  The value $speech_speed is outside this range."
+   $module.FailJson("speech_speed needs to be an integer in the range -10 to 10.  The value $speech_speed is outside this range.")
 }
 
 if ($msg_file -and $msg) {
-   Fail-Json $result "Please specify either msg_file or msg parameters, not both"
+   $module.FailJson("Please specify either msg_file or msg parameters, not both")
 }
 
 if (-not $msg_file -and -not $msg -and -not $start_sound_path -and -not $end_sound_path) {
-   Fail-Json $result "No msg_file, msg, start_sound_path, or end_sound_path parameters have been specified.  Please specify at least one so the module has something to do"
+   $module.FailJson("No msg_file, msg, start_sound_path, or end_sound_path parameters have been specified.  Please specify at least one so the module has something to do")
 }
 
 if ($msg_file) {
    if (Test-Path -Path $msg_file) {
       $words = Get-Content $msg_file | Out-String
    } else {
-      Fail-Json $result "Message file $msg_file could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file."
+      $module.FailJson("Message file $msg_file could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
    }
 }
 
 if ($start_sound_path) {
    if (Test-Path -Path $start_sound_path) {
-      if (-not $check_mode) {
+      if (-not $module.CheckMode) {
          (new-object Media.SoundPlayer $start_sound_path).playSync()
       }
    } else {
-      Fail-Json $result "Start sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file."
+      $module.FailJson("Start sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
    }
 }
 
@@ -62,15 +72,16 @@ if ($words) {
       try {
          $tts.SelectVoice($voice)
       } catch  [System.Management.Automation.MethodInvocationException] {
-         $result.voice_info = "Could not load voice $voice, using system default voice."
+         $module.Result.voice_info = "Could not load voice '$voice', using system default voice."
+         $module.Warn("Could not load voice '$voice', using system default voice.")
       }
    }
 
-   $result.voice = $tts.Voice.Name
+   $module.Result.voice = $tts.Voice.Name
    if ($speech_speed -ne 0) {
       $tts.Rate = $speech_speed
    }
-   if (-not $check_mode) {
+   if (-not $module.CheckMode) {
        $tts.Speak($words)
    }
    $tts.Dispose()
@@ -78,14 +89,14 @@ if ($words) {
 
 if ($end_sound_path) {
    if (Test-Path -Path $end_sound_path) {
-      if (-not $check_mode) {
+      if (-not $module.CheckMode) {
          (new-object Media.SoundPlayer $end_sound_path).playSync()
       }
    } else {
-      Fail-Json $result "End sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file."
+      $module.FailJson("End sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
    }
 }
 
-$result.message_text = $words
+$module.Result.message_text = $words
 
-Exit-Json $result
+$module.ExitJson()
