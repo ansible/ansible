@@ -187,22 +187,24 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
+returned_items:
     description: Item when you peform a 'get' action.
     returned: success
-    type: dict
+    type: list
     sample:
-        {
-            "bank": {
-                "s": "hsbc"
-            },
-            "quantity": {
-                "n": "1000"
-            },
-            "person": {
-                "s": "ochoa"
+        [
+            {
+                "bank": {
+                    "s": "hsbc"
+                },
+                "quantity": {
+                    "n": "1000"
+                },
+                "person": {
+                    "s": "ochoa"
+                }
             }
-        }
+        ]
 last_evaluated_key:
     description: Last evaluated key when you peform a 'get' action (scans a table)
     returned: success
@@ -260,6 +262,9 @@ def get(connection, table, filter_expression, expression_attribute_names,
         )
 
     changed = False
+
+    response['returned_items'] = response.pop('Items')
+
     return response, changed
 
 
