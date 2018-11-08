@@ -1,0 +1,56 @@
+- name: Copy Brewfile to {{ output_dir }}
+  copy:
+    src: Brewfile
+    dest: "{{ output_dir }}/Brewfile"
+
+- name: Install Brewfile
+  block:
+    - name: Find brew binary
+      command: which brew
+      register: brew_which
+    - name: Get owner of brew binary
+      stat: path="{{ brew_which.stdout }}"
+      register: brew_stat
+    - name: "Install Brewfile"
+      homebrew_bundle:
+        state: installed
+        file_path: "{{ output_dir }}/Brewfile"
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+
+- name: Uninstall hello
+  homebrew:
+    name: hello
+    state: absent
+  register: hello_uninstalled
+
+- name: Check that hello is uninstalled
+  assert:
+    that:
+      - "hello_uninstalled.changed"
+
+- name: Dump Brewfile
+  block:
+    - name: Find brew binary
+      command: which brew
+      register: brew_which
+    - name: Get owner of brew binary
+      stat: path="{{ brew_which.stdout }}"
+      register: brew_stat
+    - name: "Dump Brewfile"
+      homebrew_bundle:
+        state: dumped
+        file_path: "{{ output_dir }}/Brewfile0"
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+
+- name: make sure that {{ output_dir }}/Brewfile0 is absent
+  file:
+    path: "{{ output_dir }}/Brewfile0"
+    state: absent
+  register: brewfile_removed
+
+- name: check that {{ output_dir }}/Brewfile0 has changed
+  assert:
+    that:
+      "brewfile_removed.changed"
