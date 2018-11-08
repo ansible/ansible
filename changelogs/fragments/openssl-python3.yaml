@@ -1,0 +1,2 @@
+bugfixes:
+- openssl_csr - fix byte encoding issue on Python 3
