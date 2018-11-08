@@ -33,6 +33,17 @@ It's also possible to change the indentation of both (new in version 2.2)::
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}
 
+
+``to_yaml`` and ``to_nice_yaml`` filters use `PyYAML library`_ which has a default 80 symbol string length limit. That causes unexpected line break after 80th symbol (if there is a space after 80th symbol)
+To avoid such behaviour and generate long lines it is possible to use ``width`` option::
+
+    {{ some_variable | to_yaml(indent=8, width=1337) }}
+    {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
+
+While it would be nicer to use a construction like ``float("inf")`` instead of hardcoded number, unfortunately the filter doesn't support proxying python functions.
+Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
+
+
 Alternatively, you may be reading in some already formatted data::
 
     {{ some_variable | from_json }}
@@ -1249,6 +1260,11 @@ to be added to core so everyone can make use of them.
 .. _Jinja2 map() docs: http://jinja.pocoo.org/docs/dev/templates/#map
 
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+
+.. _PyYAML library: https://pyyaml.org/
+
+.. _PyYAML documentation: https://pyyaml.org/wiki/PyYAMLDocumentation
+
 
 .. seealso::
 
