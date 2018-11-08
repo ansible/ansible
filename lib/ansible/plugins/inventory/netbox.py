@@ -246,8 +246,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 return [self.device_roles_lookup[host["device_role"]["id"]]]
             elif "role" in host:
                 return [self.device_roles_lookup[host["role"]["id"]]]
-            else:
-                return
         except Exception:
             return
 
