@@ -4,12 +4,12 @@ tested_filesystems:
   #   grow: True if resizefs is supported
   # Other minimal sizes:
   # - XFS: 20Mo
-  # - Btrfs: 100Mo (50Mo when "--metadata single" is used)
+  # - Btrfs: 150Mo (50Mo when "--metadata single" is used and 100Mb when on newer Fedora versions)
   ext4: {fssize: 10, grow: True}
   ext4dev: {fssize: 10, grow: True}
   ext3: {fssize: 10, grow: True}
   ext2: {fssize: 10, grow: True}
   xfs: {fssize: 20, grow: False}  # grow requires a mounted filesystem
-  btrfs: {fssize: 100, grow: False}  # grow not implemented
+  btrfs: {fssize: 150, grow: False}  # grow not implemented
   vfat: {fssize: 20, grow: True}
   # untested: lvm, requires a block device
