@@ -181,7 +181,7 @@ def main():
                               value)
     # Now we get the current value, if not found don't fail
     dummy, current_value = xfconf.call("get", fail_onerr=False)
-    
+
     # For state "get", fill in "value" with what we already know
     if state == "get":
         value = current_value
