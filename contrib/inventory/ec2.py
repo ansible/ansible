@@ -222,9 +222,12 @@ DEFAULTS = {
     'hostname_variable': '',
     'iam_role': '',
     'include_rds_clusters': 'False',
+    'include_private_hosts': 'False',
     'nested_groups': 'False',
     'pattern_exclude': '',
     'pattern_include': '',
+    'private_destination_variable': 'private_ip_address',
+    'private_host_group': 'ec2_private_host',
     'rds': 'False',
     'regions': 'all',
     'regions_exclude': 'us-gov-west-1, cn-north-1',
@@ -365,8 +368,13 @@ class Ec2Inventory(object):
 
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
+        self.private_destination_variable = config.get('ec2', 'private_destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
         self.hostname_variable = config.get('ec2', 'hostname_variable')
+        self.private_host_group = config.get('ec2', 'private_host_group')
+
+        # include private hosts?
+        self.include_private_hosts = config.getboolean('ec2', 'include_private_hosts')
 
         if config.has_option('ec2', 'destination_format') and \
            config.has_option('ec2', 'destination_format_tags'):
@@ -896,6 +904,7 @@ class Ec2Inventory(object):
         # the following code will attempt to find the instance tags first,
         # then the instance attributes next, and finally if neither are found
         # assign nil for the desired destination format attribute.
+        private_host = False
         if self.destination_format and self.destination_format_tags:
             dest_vars = []
             inst_tags = getattr(instance, 'tags')
@@ -916,6 +925,12 @@ class Ec2Inventory(object):
             dest = getattr(instance, self.destination_variable, None)
             if dest is None:
                 dest = getattr(instance, 'tags').get(self.destination_variable, None)
+
+        if self.include_private_hosts and not dest:
+            private_host = True
+            dest = getattr(instance, self.private_destination_variable, None)
+            if dest is None:
+                dest = instance.tags.get(self.private_destination_variable, None)
 
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
@@ -955,6 +970,9 @@ class Ec2Inventory(object):
 
         # Add to index
         self.index[hostname] = [region, instance.id]
+
+        if private_host:
+            self.push(self.inventory, self.private_host_group, hostname)
 
         # Inventory: Group by instance ID (always a group of 1)
         if self.group_by_instance_id:
