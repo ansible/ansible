@@ -129,7 +129,6 @@ class MerakiModule(object):
         else:
             self.params['protocol'] = 'http'
 
-
     def filter_items(self, d):
         ''' Filter out keys when returning items() '''
         l = []
