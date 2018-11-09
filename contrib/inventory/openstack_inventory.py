@@ -48,8 +48,11 @@
 #                When set to False, the inventory will return hosts from
 #                whichever other clouds it can contact. (Default: True)
 #
-# Also it is possible to pass the correct user by setting an ansible_user: $myuser
-# metadata attribute.
+# Metadata-Usage with Ansible:
+# It is possible to pass the correct user by setting the metadata-attribute ansible_user, for example: ansible_user: $myuser
+# Also groups for Ansible can be prepared, using an attribute groups: $group1,$group2
+# Furthermore, Ansible Host specific variables can be set using the attribute ansible_host_vars, for example:
+# ansible_host_vars: ansible_python_interpreter=/usr/bin/env python3,dnsserver=mydns.example.com
 
 import argparse
 import collections
@@ -134,7 +137,10 @@ def append_hostvars(hostvars, groups, key, server, namegroup=False):
     metadata = server.get('metadata', {})
     if 'ansible_user' in metadata:
         hostvars[key]['ansible_user'] = metadata['ansible_user']
-
+    if 'ansible_host_vars' in metadata:
+        for ansible_hostvars_kv in metadata['ansible_host_vars'].split(','):
+            ansible_hostvars_key, ansible_hostvars_value = ansible_hostvars_kv.split('=')
+            hostvars[key][ansible_key] = ansible_hostvars_value
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)
 
