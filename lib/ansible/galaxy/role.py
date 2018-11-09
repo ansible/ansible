@@ -46,7 +46,7 @@ except ImportError:
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
-    META_MAIN = os.path.join('meta', 'main.yml')
+    META_MAIN = (os.path.join('meta', 'main.yml'), os.path.join('meta', 'main.yaml'))
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
@@ -96,16 +96,17 @@ class GalaxyRole(object):
         Returns role metadata
         """
         if self._metadata is None:
-            meta_path = os.path.join(self.path, self.META_MAIN)
-            if os.path.isfile(meta_path):
-                try:
-                    f = open(meta_path, 'r')
-                    self._metadata = yaml.safe_load(f)
-                except:
-                    display.vvvvv("Unable to load metadata for %s" % self.name)
-                    return False
-                finally:
-                    f.close()
+            for meta_main in self.META_MAIN:
+                meta_path = os.path.join(self.path, meta_main)
+                if os.path.isfile(meta_path):
+                    try:
+                        f = open(meta_path, 'r')
+                        self._metadata = yaml.safe_load(f)
+                    except:
+                        display.vvvvv("Unable to load metadata for %s" % self.name)
+                        return False
+                    finally:
+                        f.close()
 
         return self._metadata
 
@@ -268,18 +269,19 @@ class GalaxyRole(object):
                 members = role_tar_file.getmembers()
                 # next find the metadata file
                 for member in members:
-                    if self.META_MAIN in member.name:
-                        # Look for parent of meta/main.yml
-                        # Due to possibility of sub roles each containing meta/main.yml
-                        # look for shortest length parent
-                        meta_parent_dir = os.path.dirname(os.path.dirname(member.name))
-                        if not meta_file:
-                            archive_parent_dir = meta_parent_dir
-                            meta_file = member
-                        else:
-                            if len(meta_parent_dir) < len(archive_parent_dir):
+                    for meta_main in self.META_MAIN:
+                        if meta_main in member.name:
+                            # Look for parent of meta/main.yml
+                            # Due to possibility of sub roles each containing meta/main.yml
+                            # look for shortest length parent
+                            meta_parent_dir = os.path.dirname(os.path.dirname(member.name))
+                            if not meta_file:
                                 archive_parent_dir = meta_parent_dir
                                 meta_file = member
+                            else:
+                                if len(meta_parent_dir) < len(archive_parent_dir):
+                                    archive_parent_dir = meta_parent_dir
+                                    meta_file = member
                 if not meta_file:
                     raise AnsibleError("this role does not appear to have a meta/main.yml file.")
                 else:
