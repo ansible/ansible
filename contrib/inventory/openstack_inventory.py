@@ -140,7 +140,7 @@ def append_hostvars(hostvars, groups, key, server, namegroup=False):
     if 'ansible_host_vars' in metadata:
         for ansible_hostvars_kv in metadata['ansible_host_vars'].split(','):
             ansible_hostvars_key, ansible_hostvars_value = ansible_hostvars_kv.split('=')
-            hostvars[key][ansible_key] = ansible_hostvars_value
+            hostvars[key][ansible_hostvars_key] = ansible_hostvars_value
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)
 
