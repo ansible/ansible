@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "docker_swarm - making ``advertise_addr`` optional, as it was already documented."
