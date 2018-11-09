@@ -233,6 +233,7 @@ DEFAULTS = {
     'route53': 'False',
     'route53_excluded_zones': '',
     'route53_hostnames': '',
+    'route53_hostname_as_destination': 'False',
     'stack_filters': 'False',
     'vpc_destination_variable': 'ip_address'
 }
@@ -387,6 +388,7 @@ class Ec2Inventory(object):
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
         self.route53_hostnames = config.get('ec2', 'route53_hostnames')
+        self.route53_hostname_as_destination = config.getboolean('ec2', 'route53_hostname_as_destination')
 
         self.route53_excluded_zones = []
         self.route53_excluded_zones = [a for a in config.get('ec2', 'route53_excluded_zones').split(',') if a]
@@ -1079,7 +1081,10 @@ class Ec2Inventory(object):
         self.push(self.inventory, 'ec2', hostname)
 
         self.inventory["_meta"]["hostvars"][hostname] = self.get_host_info_dict_from_instance(instance)
-        self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = dest
+        if self.route53_enabled and self.route53_hostname_as_destination:
+            self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = hostname
+        else:
+            self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = dest
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
