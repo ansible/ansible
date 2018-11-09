@@ -13,7 +13,7 @@
               security_token: "{{ security_token }}"
               region: "{{ aws_region }}"
           no_log: True
-          
+
         - name: Include vars file in roles/ec2_instance/defaults/main.yml
           include_vars:
             file: 'roles/ec2_instance/defaults/main.yml'
@@ -31,8 +31,8 @@
           register: ec2_instance_cpu_options_creation
           ignore_errors: yes
 
-        - name: check that graceful error message is returned when creation with cpu_options and old botocore 
+        - name: check that graceful error message is returned when creation with cpu_options and old botocore
           assert:
             that:
               - ec2_instance_cpu_options_creation.failed
-              - 'ec2_instance_cpu_options_creation.msg == "cpu_options is only supported with botocore >= 1.10.16"' 
+              - 'ec2_instance_cpu_options_creation.msg == "cpu_options is only supported with botocore >= 1.10.16"'

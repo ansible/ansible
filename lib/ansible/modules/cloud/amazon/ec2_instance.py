@@ -1111,7 +1111,10 @@ def build_top_level_options(params):
         spec['CreditSpecification'] = {'CpuCredits': params.get('cpu_credit_specification')}
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
-    if (params.get('network') or {}).get('ebs_optimized') is not None:
+    if params.get('ebs_optimized') is not None:
+        spec['EbsOptimized'] = params.get('ebs_optimized')
+    elif (params.get('network') or {}).get('ebs_optimized') is not None:
+        # Backward compatibility for workaround described in https://github.com/ansible/ansible/issues/48159
         spec['EbsOptimized'] = params['network'].get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
@@ -1597,6 +1600,9 @@ def main():
     )
 
     if module.params.get('network'):
+        if 'ebs_optimized' in module.params['network']:
+            module.deprecate("network.ebs_optimized is deprecated."
+                             "Use the top level ebs_optimized parameter instead", 2.9)
         if module.params.get('network').get('interfaces'):
             if module.params.get('security_group'):
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_group")
@@ -1646,7 +1652,7 @@ def main():
         module.params['filters'] = filters
 
     if module.params.get('cpu_options') and not module.botocore_at_least('1.10.16'):
-            module.fail_json(msg="cpu_options is only supported with botocore >= 1.10.16")
+        module.fail_json(msg="cpu_options is only supported with botocore >= 1.10.16")
 
     existing_matches = find_instances(ec2, filters=module.params.get('filters'))
     changed = False

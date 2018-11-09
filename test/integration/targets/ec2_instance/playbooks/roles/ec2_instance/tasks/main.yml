@@ -97,6 +97,7 @@
     - include_tasks: default_vpc_tests.yml
     - include_tasks: iam_instance_role.yml
     - include_tasks: checkmode_tests.yml
+    - include_tasks: ebs_optimized.yml
 
 
     # ============================================================
