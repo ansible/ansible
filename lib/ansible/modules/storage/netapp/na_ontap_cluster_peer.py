@@ -27,10 +27,12 @@ options:
     description:
       - Intercluster addresses of the source cluster.
       - Used as peer-addresses in destination cluster.
+    version_added: "2.8"
   dest_intercluster_lifs:
     description:
       - Intercluster addresses of the destination cluster.
       - Used as peer-addresses in source cluster.
+    version_added: "2.8"
   passphrase:
     description:
       - The arbitrary passphrase that matches the one given to the peer cluster.
@@ -125,7 +127,7 @@ class NetAppONTAPClusterPeer(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
             # set destination server connection
             self.module.params['hostname'] = self.parameters['dest_hostname']
             if self.parameters.get('dest_username'):
@@ -133,6 +135,8 @@ class NetAppONTAPClusterPeer(object):
             if self.parameters.get('dest_password'):
                 self.module.params['password'] = self.parameters['dest_password']
             self.dest_server = netapp_utils.setup_na_ontap_zapi(module=self.module)
+            # reset to source host connection for asup logs
+            self.module.params['hostname'] = self.parameters['hostname']
 
     def cluster_peer_get_iter(self, cluster):
         """
