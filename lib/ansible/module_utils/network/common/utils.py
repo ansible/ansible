@@ -42,7 +42,7 @@ from ansible.module_utils.basic import AnsibleFallbackNotFound
 
 # Backwards compatibility for 3rd party modules
 from ansible.module_utils.common.network import (
-    to_bits, is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
+    to_bits, is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, to_ipv6_subnet, VALID_MASKS
 )
 
 try:
