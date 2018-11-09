@@ -401,14 +401,14 @@ For environment variables on the TARGET machines, they are available via facts i
 
    {{ ansible_env.SOME_VARIABLE }}
 
-If you need to set environment variables for TASK execution, see the Advanced Playbooks section about environments.
-There is no set way to set environment variables on your target machines, you can use template/replace/other modules to do so,
-but the exact files to edit vary depending on your OS and distribution and local configuration.
+If you need to set environment variables for TASK execution, see :ref:`playbooks_environment` in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
+There are several ways to set environment variables on your target machines. You can use the :ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>` modules to introduce environment variables into files.
+The exact files to edit vary depending on your OS and distribution and local configuration.
 
 .. _user_passwords:
 
-How do I generate crypted passwords for the user module?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How do I generate encrypted passwords for the user module?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Ansible ad-hoc command is the easiest option:
 
