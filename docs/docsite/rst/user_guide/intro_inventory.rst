@@ -311,6 +311,10 @@ Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
+Tip: The ``ansible-playbook`` command looks for playbooks in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, etc.) will only look for ``group_vars/`` and ``host_vars/`` in the
+inventory directory unless you provide the ``--playbook-dir`` option
+on the command line.
+
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
 
