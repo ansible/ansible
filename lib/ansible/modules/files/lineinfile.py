@@ -41,11 +41,15 @@ options:
     required: true
   regexp:
     description:
-      - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found. Only the last line
-        found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove. Uses Python regular expressions.
-        See U(http://docs.python.org/2/library/re.html).
+      - The regular expression to look for in every line of the file.
+      - For C(state=present), the pattern to replace if found. Only the last line found will be replaced.
+      - For C(state=absent), the pattern of the line(s) to remove.
+      - If the regular expression is not matched, the line will be
+        added to the file in keeping with`insertbefore` or `insertafter`
+        settings.
+      - When modifying a line the regexp should typically match both the initial state of
+        the line as well as its state after replacement by C(line) to ensure idempotence.
+      - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
     description:
