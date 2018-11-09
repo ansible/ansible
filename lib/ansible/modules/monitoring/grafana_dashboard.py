@@ -225,6 +225,10 @@ def grafana_create_dashboard(module, data):
     except Exception as e:
         raise GrafanaAPIException("Can't load json file %s" % to_native(e))
 
+    # Check that the dashboard JSON is nested under the 'dashboard' key
+    if 'dashboard' not in payload:
+        payload = {'dashboard': payload}
+
     # define http header
     headers = grafana_headers(module, data)
 
@@ -277,8 +281,6 @@ def grafana_create_dashboard(module, data):
                 raise GrafanaAPIException('Unable to update the dashboard %s : %s' % (uid, body['message']))
     else:
         # create
-        if 'dashboard' not in payload:
-            payload = {'dashboard': payload}
         r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
             result['msg'] = "Dashboard %s created" % uid
