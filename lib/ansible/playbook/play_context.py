@@ -157,9 +157,16 @@ class PlayContext(Base):
             self.set_attributes_from_cli()
 
         if play:
-            self.set_attributes_from_play(play)
+            self.set_play(play)
 
-    def set_attributes_from_plugin(self, plugin):
+    def set_play(self, play):
+        '''
+        Adds play information that is not inherited by tasks that also override CLI options
+        '''
+        if play.force_handlers is not None:
+            self.force_handlers = play.force_handlers
+
+    def set_options_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
@@ -169,23 +176,6 @@ class PlayContext(Base):
                 flag = options[option].get('name')
                 if flag:
                     setattr(self, flag, self.connection.get_option(flag))
-
-    def set_attributes_from_play(self, play):
-        # From ansible.playbook.Become
-        self.become = play.become
-        self.become_method = play.become_method
-        self.become_user = play.become_user
-
-        # From ansible.playbook.Base
-        self.check_mode = play.check_mode
-        self.diff = play.diff
-        self.connection = play.connection
-        self.remote_user = play.remote_user
-
-        # from ansible.playbook.Play
-        self.force_handlers = play.force_handlers
-        self.only_tags = play.only_tags
-        self.skip_tags = play.skip_tags
 
     def set_attributes_from_cli(self):
         '''

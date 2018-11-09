@@ -91,12 +91,7 @@ def test_play_context(mocker, parser, reset_cli_args):
 
     assert play_context.connection == 'mock_inventory'
     assert play_context.remote_user == 'mocktask'
-    assert play_context.port == 4321
     assert play_context.no_log is True
-    assert play_context.become is True
-    assert play_context.become_method == "mocktask"
-    assert play_context.become_user == "mocktaskroot"
-    assert play_context.become_pass == "mocktaskpass"
 
     mock_task.no_log = False
     play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
