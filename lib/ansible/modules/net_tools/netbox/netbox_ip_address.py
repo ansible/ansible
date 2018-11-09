@@ -40,7 +40,10 @@ options:
     suboptions:
       family:
         description:
-          - Options: C(4) or C(6)
+          - Specifies with address family the IP address belongs to
+        choices:
+          - 4
+          - 6
       address:
         description:
           - Required if state is C(present)
@@ -98,7 +101,7 @@ options:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
     default: 'yes'
-    type: boolean
+    type: bool
 '''
 
 EXAMPLES = r'''
@@ -253,6 +256,7 @@ def main():
         if 'success' in response[0]:
             changed = True
     module.exit_json(changed=changed, meta=response)
+
 
 if __name__ == "__main__":
     main()
