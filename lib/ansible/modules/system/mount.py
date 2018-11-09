@@ -355,6 +355,37 @@ def _set_fstab_args(fstab_file):
     return result
 
 
+def _set_fstype_arg(fstype):
+    result = []
+
+    result += ['-t'] + [fstype]
+
+    return result
+
+
+def _set_vnd(src):
+    vnconfig_bin = module.get_bin_path('vnconfig', required=True)
+    cmd = [vnconfig_bin] + ['vnd0'] + [src]
+    rc, out, err = module.run_command(cmd)
+
+    if rc == 0:
+        return 0
+    else:
+        return rc, out, err
+
+
+def _unset_vnd():
+    vnconfig_bin = module.get_bin_path('vnconfig', required=True)
+    cmd = [vnconfig_bin] + ['-u'] + ['vnd0']
+    rc, out, err = module.run_command(cmd)
+
+    if rc == 0:
+        return 0
+    else:
+        return rc, out, err
+    
+
+
 def mount(module, args):
     """Mount up a path or remount if needed."""
 
@@ -382,14 +413,45 @@ def mount(module, args):
     else:
         return rc, out + err
 
+def mount_live(module, args):
+    """Live mount a path."""
+    
+    mount_bin = module.get_bin_path('mount', required=True)
+    name = args['name']
+    src = args['src']
+    if get_platform().lower() == 'openbsd':
+        rc, out, err = _set_vnd(src)
+        if rc != 0:
+            return rc, out + err
+        else:
+            src = '/dev/vnd0a'
+
+    cmd = [mount_bin] + [_set_fstype_args('fstype')] + [src] + [name]
+   
+    rc, out, err = module.run_command(cmd)
+  
+    if rc == 0:
+        return 0, ''
+    else:
+        return rc, out + err
+ 
 
 def umount(module, path):
     """Unmount a path."""
 
     umount_bin = module.get_bin_path('umount', required=True)
+    
+        
     cmd = [umount_bin, path]
 
     rc, out, err = module.run_command(cmd)
+    if rc != 0:
+        return rc, out + err
+    
+    if get_platform().lower() == 'openbsd':
+        rc, out2, err2 = _unset_vnd()
+        out += out2
+        err += err2
 
     if rc == 0:
         return 0, ''
@@ -584,12 +646,13 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(default=False, type='bool'),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'mounted_live', 'unmounted']),
         ),
         supports_check_mode=True,
         required_if=(
             ['state', 'mounted', ['src', 'fstype']],
             ['state', 'present', ['src', 'fstype']],
+            ['state', 'mounted_live', ['src', 'fstype']],
         ),
     )
 
@@ -643,7 +706,7 @@ def main():
 
     # If fstab file does not exist, we first need to create it. This mainly
     # happens when fstab option is passed to the module.
-    if not os.path.exists(args['fstab']):
+    if not os.path.exists(args['fstab']) and args['state'] != 'mounted_live':
         if not os.path.exists(os.path.dirname(args['fstab'])):
             os.makedirs(os.path.dirname(args['fstab']))
 
@@ -658,6 +721,8 @@ def main():
     # mounted:
     #   Add to fstab if not there and make sure it is mounted. If it has
     #   changed in fstab then remount it.
+    # mounted_live:
+    #   Do a live mount without modifying fstab.
 
     state = module.params['state']
     name = module.params['path']
@@ -715,6 +780,31 @@ def main():
 
         if res:
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
+    elif state == 'mounted_live':
+        if not os.path.exists(name) and not module.check_mode:
+            try:
+                os.makedirs(name)
+            except (OSError, IOError) as e:
+                module.fail_json(
+                    msg="Error making dir %s: %s" % (name, to_native(e)))
+        res = 0
+
+        if (
+                ismount(name) or
+                is_bind_mounted(
+                    module, linux_mounts, name, args['src'], args['fstype'])):
+            if not module.check_mode:
+                res, msg = remount(module, args)
+                changed = True
+        else:
+            changed = True
+
+            if not module.check_mode:
+                res, msg = mount(module, args)
+
+        if res:
+            module.fail_json(msg="Error mounting %s: %s" % (name, msg))
+        
     elif state == 'present':
         name, changed = set_mount(module, args)
     else:
