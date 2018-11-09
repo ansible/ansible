@@ -20,12 +20,12 @@ $spec = @{
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 
-$msg = $module.params.msg
-$msg_file = $module.params.msg_file
-$start_sound_path = $module.params.start_sound_path
-$end_sound_path = $module.params.end_sound_path
-$voice = $module.params.voice
-$speech_speed = $module.params.speech_speed
+$msg = $module.Params.msg
+$msg_file = $module.Params.msg_file
+$start_sound_path = $module.Params.start_sound_path
+$end_sound_path = $module.Params.end_sound_path
+$voice = $module.Params.voice
+$speech_speed = $module.Params.speech_speed
 
 $module.Result.changed = $false
 
