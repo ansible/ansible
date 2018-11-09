@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - support yaml extension for meta file (https://github.com/ansible/ansible/pull/46505)
