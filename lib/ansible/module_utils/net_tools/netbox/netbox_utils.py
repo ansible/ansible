@@ -5,8 +5,6 @@
 
 __metaclass__ = type
 
-import json
-
 API_APPS_ENDPOINTS = dict(
     circuits=[],
     dcim=['device_roles', 'device_types', 'devices', 'interfaces', 'platforms', 'racks', 'sites'],
@@ -134,12 +132,12 @@ def find_ids(nb, data):
 
 
 def normalize_data(data):
-    clean_json = data.replace("'", '"')
-    data = json.loads(clean_json)
     for k, v in data.items():
         data_type = QUERY_TYPES.get(k, "q")
         if data_type == "slug":
-            if " " in v:
+            if "-" in v:
+                data[k] = v.replace(" ", "").lower()
+            elif " " in v:
                 data[k] = v.replace(" ", "-").lower()
             else:
                 data[k] = v.lower()
