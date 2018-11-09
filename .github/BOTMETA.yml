@@ -48,6 +48,7 @@ files:
   $modules/cloud/amazon/ec2_asg.py: $team_ansible s-hertel ryansb
   $modules/cloud/amazon/ec2_group.py: $team_ansible
   $modules/cloud/amazon/ec2_group_facts.py: willthames
+  $modules/cloud/amazon/ec2_instance.py: Shaps
   $modules/cloud/amazon/ec2_instance_facts.py: willthames
   $modules/cloud/amazon/ec2_key.py: $team_ansible
   $modules/cloud/amazon/ec2_lc.py: $team_ansible
