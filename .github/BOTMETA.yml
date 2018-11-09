@@ -199,6 +199,7 @@ files:
     labels:
       - networking
       - infoblox
+  $modules/net_tools/netbox/: fragmentedpacket
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: $team_aci
   $modules/network/aireos/: jmighion
