@@ -120,7 +120,10 @@ def find_ids(nb, data):
             nb_app = getattr(nb, app)
             nb_endpoint = getattr(nb_app, endpoint)
 
-            query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
+            if 'interface' in k:
+                query_id = nb_endpoint.get(**{"name": v["name"], "device": v["device"]})
+            else:
+                query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
 
             if k in NO_DEFAULT_ID:
                 pass
