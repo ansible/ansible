@@ -111,7 +111,7 @@ try:
 except ImportError:
     HAS_FLATDICT = False
 
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 
 # Todo:
@@ -147,7 +147,7 @@ class PlainTextSocketAppender(object):
                 self.open_connection()
                 return
             except Exception as e:
-                self._display.vvvv("Unable to connect to Logentries: %s" % str(e))
+                self._display.vvvv(u"Unable to connect to Logentries: %s" % to_text(e))
 
             root_delay *= 2
             if root_delay > self.MAX_DELAY:
@@ -247,7 +247,7 @@ class CallbackModule(CallbackBase):
             self.use_tls = self.get_option('use_tls')
             self.flatten = self.get_option('flatten')
         except KeyError as e:
-            self._display.warning("Missing option for Logentries callback plugin: %s" % to_native(e))
+            self._display.warning(u"Missing option for Logentries callback plugin: %s" % to_text(e))
             self.disabled = True
 
         try:

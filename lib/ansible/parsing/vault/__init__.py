@@ -1033,7 +1033,7 @@ class VaultEditor:
                 with open(filename, "rb") as fh:
                     data = fh.read()
         except Exception as e:
-            raise AnsibleError(str(e))
+            raise AnsibleError(to_native(e))
 
         return data
 
