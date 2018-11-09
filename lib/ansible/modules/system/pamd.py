@@ -248,7 +248,7 @@ action:
     description:
     - "That action that was taken and is one of: update_rule,
       insert_before_rule, insert_after_rule, args_present, args_absent,
-      absent. This was available in Ansible version 2.4 and removed in 2.7"
+      absent."
     returned: always
     type: string
     sample: "update_rule"
@@ -854,6 +854,7 @@ def main():
         changed=(changes > 0),
         change_count=changes,
         backupdest='',
+        action=action,
     )
 
     # If not check mode and something changed, backup the original if necessary then write out the file or fail
