@@ -233,6 +233,8 @@ DEFAULTS = {
     'route53_excluded_zones': '',
     'route53_hostnames': '',
     'stack_filters': 'False',
+    'tag_exclude': '',
+    'tag_include': '',
     'vpc_destination_variable': 'ip_address'
 }
 
@@ -492,6 +494,10 @@ class Ec2Inventory(object):
         self.pattern_exclude = config.get('ec2', 'pattern_exclude')
         if self.pattern_exclude:
             self.pattern_exclude = re.compile(self.pattern_exclude)
+
+        # include/exclude hosts with tags that match
+        self.tag_exclude = self.parse_tag_option(config.get('ec2', 'tag_exclude'))
+        self.tag_include = self.parse_tag_option(config.get('ec2', 'tag_include'))
 
         # Do we want to stack multiple filters?
         self.stack_filters = config.getboolean('ec2', 'stack_filters')
@@ -951,6 +957,12 @@ class Ec2Inventory(object):
 
         # if we need to exclude hosts that match a pattern, skip those
         if self.pattern_exclude and self.pattern_exclude.match(hostname):
+            return
+
+        if self.tag_include and not self.tag_pair_matches(instance.tags, self.tag_include):
+            return
+
+        if self.tag_exclude and self.tag_pair_matches(instance.tags, self.tag_exclude):
             return
 
         # Add to index
@@ -1702,6 +1714,35 @@ class Ec2Inventory(object):
             return json.dumps(data, sort_keys=True, indent=2)
         else:
             return json.dumps(data)
+
+    def parse_tag_option(self, value):
+        """Parses a comma-separated list of tags into a list of tuples.
+
+        The list should look something like:
+
+            tag=value,tag2,tag3=,tag4=value4
+
+        Tags with empty values may include the equals sign or not.
+
+        That example would parse to:
+
+            [('tag', 'value'), ('tag2', ''), ('tag3', ''), ('tag4', 'value4')]
+        """
+        retval = []
+        if value:
+            for tag_pair in value.split(','):
+                if '=' in tag_pair:
+                    tag, tag_val = tag_pair.split('=', 1)
+                else:
+                    tag = tag_pair
+                    tag_val = ''
+                retval.append((tag, tag_val))
+        return retval
+
+    def tag_pair_matches(self, instance_tags, tag_pairs):
+        """Return true if any tag in instance_tags matches a tag pair."""
+        return any((tag, tag_val) in tag_pairs
+                   for tag, tag_val in instance_tags.items())
 
 
 if __name__ == '__main__':
