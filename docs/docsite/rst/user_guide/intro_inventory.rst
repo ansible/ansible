@@ -140,7 +140,7 @@ As described above, it is easy to assign variables to hosts that will be used la
 The YAML version:
 
 .. code-block:: yaml
-    
+
     atlanta:
       host1:
         http_port: 80
@@ -308,9 +308,7 @@ Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
-Tip: When running the ``ansible`` command (rather than
-``ansible-playbook``) there is by default no "playbook directory". The
-command will only look for ``group_vars/`` and ``host_vars/`` in the
+Tip: The ``ansible-playbook`` command looks for playbooks in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, etc.) will only look for ``group_vars/`` and ``host_vars/`` in the
 inventory directory unless you provide the ``--playbook-dir`` option
 on the command line.
 
@@ -508,4 +506,3 @@ Here is an example of how to instantly deploy to created containers::
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
