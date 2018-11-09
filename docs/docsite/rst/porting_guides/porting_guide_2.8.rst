@@ -114,7 +114,7 @@ Noteworthy module changes
   a return value called ``diff`` was returned of type ``list``. To enable proper diff output, this was changed to
   type ``dict``; the original ``list`` is returned as ``diff.differences``.
 
-* The ``na_ontap_cluster_peer`` module has replace ``source_intercluster_lif`` and ``dest_intercluster_lif`` string options with
+* The ``na_ontap_cluster_peer`` module has replaced ``source_intercluster_lif`` and ``dest_intercluster_lif`` string options with
   ``source_intercluster_lifs`` and ``dest_intercluster_lifs`` list options
 
 
