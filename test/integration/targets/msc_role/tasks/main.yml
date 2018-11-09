@@ -51,9 +51,9 @@
     that:
     - cm_add_role is changed
     - cm_add_role.previous == {}
-    - cm_add_role.current.id is not defined
-    - cm_add_role.current.displayName == 'ansible_test'
     - cm_add_role.current.description == 'Ansible test role'
+    - cm_add_role.current.displayName == 'ansible_test'
+    - cm_add_role.current.id is not defined
 
 - name: Add role (normal mode)
   msc_role: *role_present
@@ -64,9 +64,9 @@
     that:
     - nm_add_role is changed
     - nm_add_role.previous == {}
-    - nm_add_role.current.id is defined
-    - nm_add_role.current.displayName == 'ansible_test'
     - nm_add_role.current.description == 'Ansible test role'
+    - nm_add_role.current.displayName == 'ansible_test'
+    - nm_add_role.current.id is defined
 
 - name: Add role again (check_mode)
   msc_role: *role_present
@@ -77,11 +77,11 @@
   assert:
     that:
     - cm_add_role_again is not changed
-    - cm_add_role_again.previous.displayName == 'ansible_test'
     - cm_add_role_again.previous.description == 'Ansible test role'
-    - cm_add_role_again.current.id == nm_add_role.current.id
-    - cm_add_role_again.current.displayName == 'ansible_test'
+    - cm_add_role_again.previous.displayName == 'ansible_test'
     - cm_add_role_again.current.description == 'Ansible test role'
+    - cm_add_role_again.current.displayName == 'ansible_test'
+    - cm_add_role_again.current.id == nm_add_role.current.id
 
 - name: Add role again (normal mode)
   msc_role: *role_present
@@ -91,11 +91,11 @@
   assert:
     that:
     - nm_add_role_again is not changed
-    - nm_add_role_again.previous.displayName == 'ansible_test'
     - nm_add_role_again.previous.description == 'Ansible test role'
-    - nm_add_role_again.current.id == nm_add_role.current.id
-    - nm_add_role_again.current.displayName == 'ansible_test'
+    - nm_add_role_again.previous.displayName == 'ansible_test'
     - nm_add_role_again.current.description == 'Ansible test role'
+    - nm_add_role_again.current.displayName == 'ansible_test'
+    - nm_add_role_again.current.id == nm_add_role.current.id
 
 
 # CHANGE ROLE
@@ -112,9 +112,9 @@
   assert:
     that:
     - cm_change_role is changed
-    - cm_change_role.current.id == nm_add_role.current.id
-    - cm_change_role.current.displayName == 'ansible_test2'
     - cm_change_role.current.description == 'Ansible test role 2'
+    - cm_change_role.current.displayName == 'ansible_test2'
+    - cm_change_role.current.id == nm_add_role.current.id
 
 - name: Change role (normal mode)
   msc_role:
@@ -129,9 +129,9 @@
   assert:
     that:
     - nm_change_role is changed
-    - nm_change_role.current.id == nm_add_role.current.id
-    - nm_change_role.current.displayName == 'ansible_test2'
     - nm_change_role.current.description == 'Ansible test role 2'
+    - nm_change_role.current.displayName == 'ansible_test2'
+    - nm_change_role.current.id == nm_add_role.current.id
 
 - name: Change role again (check_mode)
   msc_role:
@@ -146,9 +146,9 @@
   assert:
     that:
     - cm_change_role_again is not changed
-    - cm_change_role_again.current.id == nm_add_role.current.id
-    - cm_change_role_again.current.displayName == 'ansible_test2'
     - cm_change_role_again.current.description == 'Ansible test role 2'
+    - cm_change_role_again.current.displayName == 'ansible_test2'
+    - cm_change_role_again.current.id == nm_add_role.current.id
 
 - name: Change role again (normal mode)
   msc_role:
@@ -162,9 +162,9 @@
   assert:
     that:
     - nm_change_role_again is not changed
-    - nm_change_role_again.current.id == nm_add_role.current.id
-    - nm_change_role_again.current.displayName == 'ansible_test2'
     - nm_change_role_again.current.description == 'Ansible test role 2'
+    - nm_change_role_again.current.displayName == 'ansible_test2'
+    - nm_change_role_again.current.id == nm_add_role.current.id
 
 
 # QUERY ALL ROLES
@@ -212,13 +212,13 @@
   assert:
     that:
     - cm_query_role is not changed
-    - cm_query_role.current.id == nm_add_role.current.id
-    - cm_query_role.current.displayName == 'ansible_test2'
     - cm_query_role.current.description == 'Ansible test role 2'
+    - cm_query_role.current.displayName == 'ansible_test2'
+    - cm_query_role.current.id == nm_add_role.current.id
     - nm_query_role is not changed
-    - nm_query_role.current.id == nm_add_role.current.id
-    - nm_query_role.current.displayName == 'ansible_test2'
     - nm_query_role.current.description == 'Ansible test role 2'
+    - nm_query_role.current.displayName == 'ansible_test2'
+    - nm_query_role.current.id == nm_add_role.current.id
     - cm_query_role == nm_query_role
 
 
