@@ -27,23 +27,19 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $src = $module.Params.src
 $dest = $module.Params.dest
 $state = $module.Params.state
-$args = $module.Params.args
+$arguments = $module.Params.args  # Variable $args is a special variable
 $directory = $module.Params.directory
 $hotkey = $module.Params.hotkey
 $icon = $module.Params.icon
 $description = $module.Params.description
 $windowstyle = $module.Params.windowstyle
 
-$orig_src = $module.Params.src
-$orig_args = $module.Params.args
-$orig_description = $module.Params.description
-
 # Expand environment variables on non-path types
 if ($null -ne $src) {
     $src = [System.Environment]::ExpandEnvironmentVariables($src)
 }
-if ($null -ne $args) {
-    $src = [System.Environment]::ExpandEnvironmentVariables($args)
+if ($null -ne $arguments) {
+    $arguments = [System.Environment]::ExpandEnvironmentVariables($arguments)
 }
 if ($null -ne $description) {
     $description = [System.Environment]::ExpandEnvironmentVariables($description)
@@ -67,7 +63,7 @@ If ($state -eq "absent") {
     If (Test-Path -Path $dest) {
         # If the shortcut exists, try to remove it
         Try {
-            Remove-Item -Path $dest -WhatIf:$check_mode
+            Remove-Item -Path $dest -WhatIf:$module.CheckMode
         } Catch {
             # Report removal failure
             $module.FailJson("Failed to remove shortcut '$dest'. ($($_.Exception.Message))")
@@ -84,7 +80,7 @@ If ($state -eq "absent") {
 
     # Compare existing values with new values, report as changed if required
 
-    If ($src -ne $null) {
+    If ($null -ne $src) {
         # Windows translates executables to absolute path, so do we
         If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
             $src = (Get-Command -Name $src -Type Application).Definition
@@ -96,7 +92,7 @@ If ($state -eq "absent") {
         }
     }
 
-    If ($src -ne $null -and $ShortCut.TargetPath -ne $src) {
+    If (($null -ne $src) -and ($ShortCut.TargetPath -ne $src)) {
         $module.Result.changed = $true
         $ShortCut.TargetPath = $src
     }
@@ -108,45 +104,45 @@ If ($state -eq "absent") {
     If (Get-Member -InputObject $ShortCut -Name Arguments) {
 
         # This is a full-featured application shortcut !
-        If ($orig_args -ne $null -and $ShortCut.Arguments -ne $args) {
+        If (($null -ne $arguments) -and ($ShortCut.Arguments -ne $arguments)) {
             $module.Result.changed = $true
-            $ShortCut.Arguments = $args
+            $ShortCut.Arguments = $arguments
         }
         $module.Result.args = $ShortCut.Arguments
 
-        If ($directory -ne $null -and $ShortCut.WorkingDirectory -ne $directory) {
+        If (($null -ne $directory) -and ($ShortCut.WorkingDirectory -ne $directory)) {
             $module.Result.changed = $true
             $ShortCut.WorkingDirectory = $directory
         }
         $module.Result.directory = $ShortCut.WorkingDirectory
 
         # FIXME: Not all values are accepted here ! Improve docs too.
-        If ($hotkey -ne $null -and $ShortCut.Hotkey -ne $hotkey) {
+        If (($null -ne $hotkey) -and ($ShortCut.Hotkey -ne $hotkey)) {
             $module.Result.changed = $true
             $ShortCut.Hotkey = $hotkey
         }
         $module.Result.hotkey = $ShortCut.Hotkey
 
-        If ($icon -ne $null -and $ShortCut.IconLocation -ne $icon) {
+        If (($null -ne $icon) -and ($ShortCut.IconLocation -ne $icon)) {
             $module.Result.changed = $true
             $ShortCut.IconLocation = $icon
         }
         $module.Result.icon = $ShortCut.IconLocation
 
-        If ($orig_description -ne $null -and $ShortCut.Description -ne $description) {
+        If (($null -ne $description) -and ($ShortCut.Description -ne $description)) {
             $module.Result.changed = $true
             $ShortCut.Description = $description
         }
         $module.Result.description = $ShortCut.Description
 
-        If ($windowstyle -ne $null -and $ShortCut.WindowStyle -ne $windowstyles.$windowstyle) {
+        If (($null -ne $windowstyle) -and ($ShortCut.WindowStyle -ne $windowstyles.$windowstyle)) {
             $module.Result.changed = $true
             $ShortCut.WindowStyle = $windowstyles.$windowstyle
         }
         $module.Result.windowstyle = $windowstyleids[$ShortCut.WindowStyle]
     }
 
-    If ($module.Result.changed -eq $true -and $check_mode -ne $true) {
+    If (($module.Result.changed -eq $true) -and ($module.CheckMode -ne $true)) {
         Try {
             $ShortCut.Save()
         } Catch {
