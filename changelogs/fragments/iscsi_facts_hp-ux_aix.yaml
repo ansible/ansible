@@ -1,0 +1,4 @@
+minor_changes:
+  - setup - gather iSCSI facts for HP-UX (https://github.com/ansible/ansible/pull/44644)
+bugfixes:
+  - setup - properly gather iSCSI information for AIX (https://github.com/ansible/ansible/pull/44644)
