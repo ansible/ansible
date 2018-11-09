@@ -35,6 +35,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
+from ansible.executor.process.model import keyboard_interrupt_event
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
@@ -317,6 +318,8 @@ class StrategyBase:
 
         cur_pass = 0
         while True:
+            self._check_for_keyboard_interrupt()
+
             task_result = self._tqm._process_manager.get_result()
             if task_result is None:
                 break
@@ -562,6 +565,8 @@ class StrategyBase:
                handler_results < len(notified_hosts) and
                not self._tqm._terminated):
 
+            self._check_for_keyboard_interrupt()
+
             if self._tqm.has_dead_workers():
                 raise AnsibleError("A worker was found in a dead state")
 
@@ -588,6 +593,8 @@ class StrategyBase:
         display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
 
+            self._check_for_keyboard_interrupt()
+
             if self._tqm.has_dead_workers():
                 raise AnsibleError("A worker was found in a dead state")
 
@@ -599,6 +606,12 @@ class StrategyBase:
         display.debug("no more pending results, returning what we have")
 
         return ret_results
+
+    def _check_for_keyboard_interrupt(self):
+        if keyboard_interrupt_event.is_set():
+            self.cleanup()
+            self._tqm.cleanup()
+            sys.exit(255)
 
     def _add_host(self, host_info, iterator):
         '''

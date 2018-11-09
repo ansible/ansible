@@ -29,7 +29,7 @@ from collections import deque
 from jinja2.exceptions import TemplateNotFound
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.executor.process.model import ProcessModelBase, ResultsSentinel
+from ansible.executor.process.model import ProcessModelBase, ResultsSentinel, keyboard_interrupt_event
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
@@ -104,8 +104,10 @@ def run_worker(pm, shared_loader_obj):
 
     display.debug("STARTING WORKER")
     while not pm._terminated:
+
+        display.debug("WORKER TRYING TO GET A JOB")
         job = pm.get_job()
-        if isinstance(job, ResultsSentinel):
+        if isinstance(job, ResultsSentinel) or keyboard_interrupt_event.is_set():
             break
         elif job is None:
             time.sleep(0.0001)

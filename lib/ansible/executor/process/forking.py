@@ -51,7 +51,6 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
->>>>>>> Start of work to redo the threading and forking split:lib/ansible/executor/process/forking.py
 
 __all__ = ['ProcessModelForking', 'WorkerProcess']
 

@@ -16,6 +16,7 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
+from ansible.executor.process.model import keyboard_interrupt_event
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.six import iteritems, string_types, binary_type
@@ -322,6 +323,9 @@ class TaskExecutor:
         for item_index, item in enumerate(items):
             task_vars['ansible_loop_var'] = loop_var
 
+            if keyboard_interrupt_event.is_set():
+                return dict(_ansible_cancelled=True)
+
             task_vars[loop_var] = item
             if index_var:
                 task_vars[index_var] = item_index
@@ -503,6 +507,9 @@ class TaskExecutor:
         the retry/until and block rescue/always execution
         '''
 
+        if keyboard_interrupt_event.is_set():
+            return dict(_ansible_cancelled=True)
+
         if variables is None:
             variables = self._job_vars
 
@@ -629,6 +636,9 @@ class TaskExecutor:
         display.debug("starting attempt loop")
         result = None
         for attempt in xrange(1, retries + 1):
+            if keyboard_interrupt_event.is_set():
+                return dict(_ansible_cancelled=True)
+
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
