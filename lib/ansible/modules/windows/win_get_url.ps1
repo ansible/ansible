@@ -15,7 +15,7 @@ $spec = @{
         headers = @{ type='dict'; default=@{} }
         validate_certs = @{ type='bool'; default=$true }
         url_username = @{ type='str'; aliases=@( 'username' ) }
-        url_password = @{ type='str'; aliases=@( 'password '); no_log=$true }
+        url_password = @{ type='str'; aliases=@( 'password' ); no_log=$true }
         force_basic_auth = @{ type='bool'; default=$false }
         use_proxy = @{ type='bool'; default=$true }
         proxy_url = @{ type='str' }
