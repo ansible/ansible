@@ -1107,8 +1107,6 @@ def main():
         # List comprehensions for rules to add, rules to modify, and rule ids to determine purging
         new_ingress_permissions = [to_permission(r) for r in (set(named_tuple_ingress_list) - set(current_ingress))]
         new_egress_permissions = [to_permission(r) for r in (set(named_tuple_egress_list) - set(current_egress))]
-        present_ingress = list(set(named_tuple_ingress_list).union(set(current_ingress)))
-        present_egress = list(set(named_tuple_egress_list).union(set(current_egress)))
 
         if module.params.get('rules_egress') is None and 'VpcId' in group:
             # when no egress rules are specified and we're in a VPC,
@@ -1125,7 +1123,10 @@ def main():
         present_egress = list(set(named_tuple_egress_list).union(set(current_egress)))
 
         if purge_rules:
-            revoke_ingress = [to_permission(r) for r in set(present_ingress) - set(named_tuple_ingress_list)]
+            revoke_ingress = []
+            for p in present_ingress:
+                if not any([rule_cmp(p, b) for b in named_tuple_ingress_list]):
+                    revoke_ingress.append(to_permission(p))
         else:
             revoke_ingress = []
         if purge_rules_egress and module.params.get('rules_egress') is not None:
@@ -1135,7 +1136,10 @@ def main():
                     if r != Rule((None, None), '-1', '0.0.0.0/0', 'ipv4', None)
                 ]
             else:
-                revoke_egress = [to_permission(r) for r in set(present_egress) - set(named_tuple_egress_list)]
+                revoke_egress = []
+                for p in present_egress:
+                    if not any([rule_cmp(p, b) for b in named_tuple_egress_list]):
+                        revoke_egress.append(to_permission(p))
         else:
             revoke_egress = []
 
