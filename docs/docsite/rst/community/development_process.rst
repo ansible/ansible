@@ -137,19 +137,19 @@ Making your PR merge-worthy
 
 We don't merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy.
 
-.. _development_changelogs:
+.. _community_changelogs:
 
 Changelogs
 ----------
 
 Changelogs help users and developers keep up with changes to Ansible.
-Ansible builds a changelog for each release from fragments. You must add a changelog fragment to any PR that changes functionality or fixes a bug.
+Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
 You don't have to add a changelog fragment for PRs that add new
 modules and plugins, because our tooling does that for you automatically.
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
 
-.. _creating_a_changelog_fragment:
+.. _changelogs_how_to:
 
 Creating a changelog fragment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -161,8 +161,8 @@ changelog entries of bugfixes or features.  Each changelog entry is
 rst embedded inside of the yaml file which means that certain
 constructs would need to be escaped so they can be interpreted by rst
 and not by yaml (or escaped for both yaml and rst if that's your
-desire).  Each PR should use a new fragment file rather than adding to
-an existing one.
+desire).  Each PR **must** use a new fragment file rather than adding to
+an existing one, so we can trace the change back to the PR that introduced it.
 
 To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
@@ -207,8 +207,7 @@ Here are some examples:
   bugfixes:
     - copy module - The copy module was attempting to change the mode of files for
    remote_src=True even if mode was not set as a parameter.  This failed on
-   filesystems which do not have permission bits
-   (https://github.com/ansible/ansible/pull/40099)
+   filesystems which do not have permission bits.
 
 You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.6/changelogs/fragments>`_ for the 2.6 release. You can also find documentation of the format, including hints on embedding rst in the yaml, in the `reno documentation <https://docs.openstack.org/reno/latest/user/usage.html#editing-a-release-note>`_.
 

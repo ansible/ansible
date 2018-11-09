@@ -3,7 +3,7 @@
 Release and maintenance
 =======================
 
-.. contents:: Topics
+.. contents::
    :local:
 
 .. _release_cycle:
@@ -96,7 +96,7 @@ releases of Ansible, there can sometimes be exceptions for critical issues.
 
 .. _GitHub: https://github.com/ansible/ansible
 
-.. _changelogs_how_to:
+.. _release_changelogs:
 
 Changelogs
 ~~~~~~~~~~
@@ -105,8 +105,7 @@ Older versions logged changes in ``stable-<version>`` branches at ``stable-<vers
 
 We now generate changelogs based on fragments. Here is the generated changelog for 2.6_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
-For more information on changelogs, please reference the developer documentation
-:ref:`developer documentation <changelogs_how_to>`.
+We've got :ref:`examples and instructions on creating changelog fragments <changelogs_how_to>` in the Community Guide.
 
 
 Release candidates
