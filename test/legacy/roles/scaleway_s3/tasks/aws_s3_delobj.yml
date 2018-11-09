@@ -1,0 +1,73 @@
+- name: Delete an object (Check)
+  check_mode: yes
+  aws_s3:
+    mode: delobj
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    object: test.txt
+    encrypt: false
+  register: delobj_check_task
+
+- name: Show delobj_check_task
+  debug:
+    var: delobj_check_task
+
+- name: delobj_check_task is success
+  assert:
+    that:
+      - delobj_check_task is success
+
+- name: delobj_check_task is changed
+  assert:
+    that:
+      - delobj_check_task is changed
+
+- name: Delete an object
+  aws_s3:
+    mode: delobj
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    object: test.txt
+    encrypt: false
+  register: delobj_task
+
+- name: Show delobj_task
+  debug:
+    var: delobj_task
+
+- name: delobj_task is success
+  assert:
+    that:
+      - delobj_task is success
+
+- name: delobj_task is changed
+  assert:
+    that:
+      - delobj_task is changed
+
+
+- name: Delete an object (Confirmation)
+  aws_s3:
+    mode: delobj
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    object: test.txt
+    encrypt: false
+  register: delobj_confirmation_task
+
+- name: Show delobj_confirmation_task
+  debug:
+    var: delobj_confirmation_task
+
+- name: delobj_confirmation_task is success
+  assert:
+    that:
+      - delobj_confirmation_task is success
+
+- name: delobj_confirmation_task is changed
+  assert:
+    that:
+      - delobj_confirmation_task is changed
