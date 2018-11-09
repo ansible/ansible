@@ -180,7 +180,7 @@ class PlayIterator:
         }
 
         # Unless play is specifically tagged, gathering should 'always' run
-        if self._play.tags is None:
+        if not self._play.tags:
             setup_task.tags = ['always']
 
         if gather_timeout:
