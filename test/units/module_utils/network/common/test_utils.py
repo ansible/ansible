@@ -204,3 +204,8 @@ def test_to_ipv6_network():
     assert '2001:db8::' == to_ipv6_network('2001:db8::')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
     assert '2001:0db8:85a3::' == to_ipv6_network('2001:0db8:85a3:0:0:8a2e:0370:7334')
+
+def test_to_ipv6_subnet():
+    assert '2001:db8::' == to_ipv6_subnet('2001:db8::')
+    assert '2001:0db8:85a3:4242::' == to_ipv6_subnet('2001:0db8:85a3:4242:0000:8a2e:0370:7334')
+    assert '2001:0db8:85a3:4242::' == to_ipv6_subnet('2001:0db8:85a3:4242:0:8a2e:0370:7334')
