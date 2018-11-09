@@ -238,7 +238,7 @@ class GalaxyAPI(object):
                 done = (data.get('next_link', None) is None)
             return results
         except Exception as error:
-            raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
+            raise AnsibleError("Failed to download the %s list: %s" % (what, to_native(error)))
 
     @g_connect
     def search_roles(self, search, **kwargs):
