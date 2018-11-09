@@ -20,6 +20,14 @@ $spec = @{
         state = @{ type='str'; default='present'; choices=@( 'absent', 'present' ) }
         timeout = @{ type='int'; default=300 }
     }
+    mutually_exclusive = @(
+        @( 'pid', 'process_name_exact' ),
+        @( 'pid', 'process_name_pattern' ),
+        @( 'process_name_exact', 'process_name_pattern' )
+    )
+    required_one_of = @(
+        ,@( 'owner', 'pid', 'process_name_exact', 'process_name_pattern' )
+    )
     supports_check_mode = $true
 }
 
@@ -47,17 +55,6 @@ if ($state -eq "absent" -and $sleep -ne 1) {
 
 if ($state -eq "absent" -and $process_min_count -ne 1) {
     $module.Warn("Parameter 'process_min_count' has no effect when waiting for a process to stop.")
-}
-
-if (($process_name_exact -or $process_name_pattern) -and $process_id) {
-    $module.FailJson("Parameter 'pid' may not be used with process_name_exact or process_name_pattern.")
-}
-if ($process_name_exact -and $process_name_pattern) {
-    $module.FailJson("Parameter 'process_name_exact' and 'process_name_pattern' may not be used at the same time.")
-}
-
-if (-not ($process_name_exact -or $process_name_pattern -or $process_id -or $owner)) {
-    $module.FailJson("At least one of 'process_name_exact', 'process_name_pattern', 'pid' or 'owner' must be supplied.")
 }
 
 if ($owner -and ("IncludeUserName" -notin (Get-Command -Name Get-Process).Parameters.Keys)) {
