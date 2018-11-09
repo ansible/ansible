@@ -161,7 +161,12 @@ RETURN = r'''
 #
 '''
 
-from importlib import import_module
+try:
+    from importlib import import_module
+    HAS_IMPORT_MODULE = True
+except:
+    HAS_IMPORT_MODULE = False
+
 from copy import deepcopy
 import json
 from ansible.module_utils.basic import AnsibleModule
@@ -234,19 +239,16 @@ def main():
         argument_spec,
         supports_check_mode=True,
     )
+
+    if not HAS_IMPORT_MODULE:
+        module.fail_json(msg='import_module is required for this module')
     ucs = UCSModule(module)
 
     ucs.result['err'] = False
     # note that all objects specified in the object list report a single result (including a single changed).
     ucs.result['changed'] = False
-    if module.params.get('objects'):
-        objects = module.params['objects']
-    else:
-        # either objects or json_config_file will be specified, so if there is no objects option use a config file
-        with open(module.params['json_config_file']) as f:
-            objects = json.load(f)['objects']
 
-    for managed_object in objects:
+    for managed_object in module.params['objects']:
         traverse_objects(module, ucs, managed_object)
 
     if ucs.result['err']:
