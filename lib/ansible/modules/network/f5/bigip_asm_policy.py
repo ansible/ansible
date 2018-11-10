@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -105,83 +105,91 @@ author:
 EXAMPLES = r'''
 - name: Import and activate ASM policy
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: new_asm_policy
     file: /root/asm_policy.xml
     active: yes
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Import ASM policy from template
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: new_sharepoint_policy
     template: SharePoint 2007 (http)
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create blank ASM policy
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: new_blank_policy
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create blank ASM policy and activate
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: new_blank_policy
     active: yes
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Activate ASM policy
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: inactive_policy
     active: yes
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Deactivate ASM policy
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: active_policy
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Import and activate ASM policy in Role
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: new_asm_policy
     file: "{{ role_path }}/files/asm_policy.xml"
     active: yes
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Import ASM binary policy
   bigip_asm_policy:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: new_asm_policy
     file: "/root/asm_policy.plc"
     active: yes
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -220,46 +228,52 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
+
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.icontrol import upload_file
+    from library.module_utils.network.f5.icontrol import tmos_version
+    from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.icontrol import upload_file
+    from ansible.module_utils.network.f5.icontrol import tmos_version
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
 class Parameters(AnsibleF5Parameters):
     updatables = [
-        'active'
+        'active',
     ]
 
     returnables = [
-        'name', 'template', 'file', 'active'
+        'name',
+        'template',
+        'file',
+        'active',
     ]
 
     api_attributes = [
-        'name', 'file', 'active'
+        'name',
+        'file',
+        'active',
     ]
     api_map = {
-        'filename': 'file'
+        'filename': 'file',
     }
 
     @property
@@ -267,18 +281,33 @@ class Parameters(AnsibleF5Parameters):
         if self._values['template_link'] is not None:
             return self._values['template_link']
         collection = self._templates_from_device()
-        for resource in collection:
-            if resource.name == self.template.upper():
-                return dict(link=resource.selfLink)
+        for resource in collection['items']:
+            if resource['name'] == self.template.upper():
+                return dict(link=resource['selfLink'])
         return None
 
     @property
     def full_path(self):
-        return fqdn_name(self.name)
+        return fq_name(self.name)
 
     def _templates_from_device(self):
-        collection = self.client.api.tm.asm.policy_templates_s.get_collection()
-        return collection
+        uri = "https://{0}:{1}/mgmt/tm/asm/policy-templates/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
 
     def to_return(self):
         result = {}
@@ -463,13 +492,10 @@ class BaseManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
@@ -521,13 +547,24 @@ class BaseManager(object):
             return self.remove()
 
     def exists(self):
-        policies = self.client.api.tm.asm.policies_s.get_collection()
-        if any(p.name == self.want.name and p.partition == self.want.partition for p in policies):
+        uri = "https://{0}:{1}/mgmt/tm/asm/policies/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if any(p['name'] == self.want.name and p['partition'] == self.want.partition for p in response['items']):
             return True
         return False
 
     def _file_is_missing(self):
         if self.want.template and self.want.file is None:
+            return False
+        if self.want.template is None and self.want.file is None:
             return False
         if not os.path.exists(self.want.file):
             return True
@@ -571,32 +608,92 @@ class BaseManager(object):
 
     def activate(self):
         self.have = self.read_current_from_device()
-        task = self.apply_on_device()
-        if self.wait_for_task(task):
+        task_id = self.apply_on_device()
+        if self.wait_for_task(task_id, 'apply'):
             return True
         else:
             raise F5ModuleError('Apply policy task failed.')
 
-    def wait_for_task(self, task):
+    def wait_for_task(self, task_id, task):
+        uri = ''
+        if task == 'apply':
+            uri = "https://{0}:{1}/mgmt/tm/asm/tasks/apply-policy/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                task_id
+            )
+        elif task == 'import':
+            uri = "https://{0}:{1}/mgmt/tm/asm/tasks/import-policy/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                task_id
+            )
         while True:
-            task.refresh()
-            if task.status in ['COMPLETED', 'FAILURE']:
+            resp = self.client.api.get(uri)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+            if response['status'] in ['COMPLETED', 'FAILURE']:
                 break
             time.sleep(1)
-        if task.status == 'FAILURE':
+
+        if response['status'] == 'FAILURE':
             return False
-        if task.status == 'COMPLETED':
+        if response['status'] == 'COMPLETED':
             return True
+
+    def _get_policy_id(self):
+        name = self.want.name
+        partition = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/asm/policies/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        policy_id = next(
+            (p['id'] for p in response['items'] if p['name'] == name and p['partition'] == partition), None
+        )
+
+        if not policy_id:
+            raise F5ModuleError("The policy was not found")
+        return policy_id
 
     def update_on_device(self):
         params = self.changes.api_params()
-        policies = self.client.api.tm.asm.policies_s.get_collection()
-        name = self.want.name
-        partition = self.want.partition
-        resource = next((p for p in policies if p.name == name and p.partition == partition), None)
-        if resource:
-            if not params['active']:
-                resource.modify(**params)
+        policy_id = self._get_policy_id()
+        uri = "https://{0}:{1}/mgmt/tm/asm/policies/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            policy_id
+        )
+        if not params['active']:
+            resp = self.client.api.patch(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
 
     def create_blank(self):
         self.create_on_device()
@@ -624,57 +721,180 @@ class BaseManager(object):
             return False
 
     def read_current_from_device(self):
-        policies = self.client.api.tm.asm.policies_s.get_collection()
-        for policy in policies:
-            if policy.name == self.want.name and policy.partition == self.want.partition:
-                params = policy.attrs
-                params.update(dict(self_link=policy.selfLink))
-                return Parameters(params=params)
-        raise F5ModuleError("The policy was not found")
+        policy_id = self._get_policy_id()
+        uri = "https://{0}:{1}/mgmt/tm/asm/policies/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            policy_id
+        )
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        response.update((dict(self_link=response['selfLink'])))
+
+        return Parameters(params=response)
+
+    def upload_file_to_device(self, content, name):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, content, name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
 
     def import_to_device(self):
-        self.client.api.tm.asm.file_transfer.uploads.upload_file(self.want.file)
-        time.sleep(2)
         name = os.path.split(self.want.file)[1]
-        tasks = self.client.api.tm.asm.tasks
-        result = tasks.import_policy_s.import_policy.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            filename=name
+        self.upload_file_to_device(self.want.file, name)
+        time.sleep(2)
+
+        full_name = fq_name(self.want.partition, self.want.name)
+        cmd = 'tmsh load asm policy {0} file /var/config/rest/downloads/{1}'.format(full_name, name)
+
+        uri = "https://{0}:{1}/mgmt/tm/util/bash/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
-        return result
+        args = dict(
+            command='run',
+            utilCmdArgs='-c "{0}"'.format(cmd)
+        )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+            if 'commandResult' in response:
+                if 'Unexpected Error' in response['commandResult']:
+                    raise F5ModuleError(response['commandResult'])
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
+
+    def remove_temp_policy_from_device(self):
+        name = os.path.split(self.want.file)[1]
+        tpath_name = '/var/config/rest/downloads/{0}'.format(name)
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-rm/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
+            utilCmdArgs=tpath_name
+        )
+        resp = self.client.api.post(uri, json=args)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def apply_on_device(self):
-        tasks = self.client.api.tm.asm.tasks
-        result = tasks.apply_policy_s.apply_policy.create(
-            policyReference={'link': self.have.self_link}
+        uri = "https://{0}:{1}/mgmt/tm/asm/tasks/apply-policy/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
-        return result
+        params = dict(policyReference={'link': self.have.self_link})
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['id']
 
     def create_from_template_on_device(self):
-        tasks = self.client.api.tm.asm.tasks
-        result = tasks.import_policy_s.import_policy.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            policyTemplateReference=self.want.template_link
+        full_name = fq_name(self.want.partition, self.want.name)
+        cmd = 'tmsh create asm policy {0} policy-template {1}'.format(full_name, self.want.template)
+        uri = "https://{0}:{1}/mgmt/tm/util/bash/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
-        time.sleep(2)
-        return result
+        args = dict(
+            command='run',
+            utilCmdArgs='-c "{0}"'.format(cmd)
+        )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+            if 'commandResult' in response:
+                if 'Unexpected Error' in response['commandResult']:
+                    raise F5ModuleError(response['commandResult'])
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
-        result = self.client.api.tm.asm.policies_s.policy.create(
-            name=self.want.name,
-            partition=self.want.partition
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        # we need to remove active from params as API will raise an error if the active is set to True,
+        # policies can only be activated via apply-policy task endpoint.
+        params.pop('active')
+        uri = "https://{0}:{1}/mgmt/tm/asm/policies/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
-        return result
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 401, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        time.sleep(2)
+        return response['selfLink']
 
     def remove_from_device(self):
-        policies = self.client.api.tm.asm.policies_s.get_collection()
-        name = self.want.name
-        partition = self.want.partition
-        resource = next((p for p in policies if p.name == name and p.partition == partition), None)
-        if resource:
-            resource.delete()
+        policy_id = self._get_policy_id()
+        uri = "https://{0}:{1}/mgmt/tm/asm/policies/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            policy_id
+        )
+        response = self.client.api.delete(uri)
+        if response.status in [200, 201]:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ModuleManager(object):
@@ -683,6 +903,10 @@ class ModuleManager(object):
         self.kwargs = kwargs
 
     def exec_module(self):
+        if not module_provisioned(self.client, 'asm'):
+            raise F5ModuleError(
+                "ASM must be provisioned to use this module."
+            )
         if self.version_is_less_than_13():
             manager = self.get_manager('v1')
         else:
@@ -696,7 +920,7 @@ class ModuleManager(object):
             return V2Manager(**self.kwargs)
 
     def version_is_less_than_13(self):
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('13.0.0'):
             return True
         else:
@@ -717,31 +941,6 @@ class V1Manager(BaseManager):
     def create_from_template(self):
         self.create_from_template_on_device()
 
-    def create_from_template_on_device(self):
-        full_name = fqdn_name(self.want.partition, self.want.name)
-        cmd = 'tmsh create asm policy {0} policy-template {1}'.format(full_name, self.want.template)
-        self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "{0}"'.format(cmd)
-        )
-
-    def remove_temp_policy_from_device(self):
-        name = os.path.split(self.want.file)[1]
-        tpath_name = '/var/config/rest/downloads/{0}'.format(name)
-        self.client.api.tm.util.unix_rm.exec_cmd('run', utilCmdArgs=tpath_name)
-
-    def import_to_device(self):
-        self.client.api.shared.file_transfer.uploads.upload_file(self.want.file)
-        time.sleep(2)
-        name = os.path.split(self.want.file)[1]
-        full_name = fqdn_name(self.want.partition, self.want.name)
-        cmd = 'tmsh load asm policy {0} file /var/config/rest/downloads/{1}'.format(full_name, name)
-        self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "{0}"'.format(cmd)
-        )
-        return True
-
 
 class V2Manager(BaseManager):
     def __init__(self, *args, **kwargs):
@@ -751,18 +950,13 @@ class V2Manager(BaseManager):
         self.want = V2Parameters(params=module.params, client=client)
 
     def create_from_template(self):
-        task = self.create_from_template_on_device()
-        if not task:
+        if not self.create_from_template_on_device():
             return False
-        if not self.wait_for_task(task):
-            raise F5ModuleError('Import policy task failed.')
 
     def create_from_file(self):
-        task = self.import_to_device()
-        if not task:
+        if not self.import_to_device():
             return False
-        if not self.wait_for_task(task):
-            raise F5ModuleError('Import policy task failed.')
+        self.remove_temp_policy_from_device()
 
 
 class ArgumentSpec(object):
@@ -840,18 +1034,17 @@ def main():
             ['file', 'template']
         ]
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
-    except F5ModuleError as e:
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(e))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
