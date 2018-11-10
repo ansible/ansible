@@ -736,7 +736,7 @@ def main():
         db=dict(default=''),
         fail_on_user=dict(type='bool', default='yes'),
         role_attr_flags=dict(default=''),
-        encrypted=dict(type='bool', default='no'),
+        encrypted=dict(type='bool', default='yes'),
         no_password_changes=dict(type='bool', default='no'),
         expires=dict(default=None),
         ssl_mode=dict(default='prefer', choices=[
