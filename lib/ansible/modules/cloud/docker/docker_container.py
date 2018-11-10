@@ -101,34 +101,74 @@ options:
   device_read_bps:
     description:
       - "List of device path and read rate (bytes per second) from device."
-      - "I(path) - device path in the container."
-      - "I(rate) - device read limit (format: <number>[<unit>])"
-      - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-        C(T) (tebibyte), or C(P) (pebibyte)"
-      - "Omitting the unit defaults to bytes."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: str
+        required: true
+        description:
+        - "Device read limit. Format: <number>[<unit>]"
+        - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+          C(T) (tebibyte), or C(P) (pebibyte)"
+        - "Omitting the unit defaults to bytes."
     version_added: "2.8"
   device_write_bps:
     description:
       - "List of device and write rate (bytes per second) to device."
-      - "I(path) - device path in the container."
-      - "I(rate) - device write limit (format: <number>[<unit>])"
-      - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-        C(T) (tebibyte), or C(P) (pebibyte)"
-      - "Omitting the unit defaults to bytes."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: str
+        required: true
+        description:
+        - "Device read limit. Format: <number>[<unit>]"
+        - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+          C(T) (tebibyte), or C(P) (pebibyte)"
+        - "Omitting the unit defaults to bytes."
     version_added: "2.8"
   device_read_iops:
     description:
       - "List of device and read rate (IO per second) from device."
-      - "I(path) - device path in the container."
-      - "I(rate) - device read limit (format: <number>)"
-      - "Number is a positive integer."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: int
+        required: true
+        description:
+        - "Device read limit."
+        - "Must be a positive integer."
     version_added: "2.8"
   device_write_iops:
     description:
       - "List of device and write rate (IO per second) to device."
-      - "I(path) - device path in the container."
-      - "I(rate) - device write limit (format: <number>)"
-      - "Number is a positive integer."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: int
+        required: true
+        description:
+        - "Device read limit."
+        - "Must be a positive integer."
     version_added: "2.8"
   dns_opts:
     description:
@@ -184,14 +224,29 @@ options:
       - 'Configure a check that is run to determine whether or not containers for this service are "healthy".
         See the docs for the L(HEALTHCHECK Dockerfile instruction,https://docs.docker.com/engine/reference/builder/#healthcheck)
         for details on how healthchecks work.'
-      - 'I(test) - Command to run to check health. C(test) must be either a string or a list. If it is a list, the first item must
-        be one of C(NONE), C(CMD) or C(CMD-SHELL).'
-      - 'I(interval) - Time between running the check. (default: 30s)'
-      - 'I(timeout) - Maximum time to allow one check to run. (default: 30s)'
-      - 'I(retries) - Consecutive failures needed to report unhealthy. It accept integer value. (default: 3)'
-      - 'I(start_period) - Start period for the container to initialize before starting health-retries countdown. (default: 0s)'
-      - 'C(interval), C(timeout) and C(start_period) are specified as durations. They accept duration as a string in a format
+      - 'I(interval), I(timeout) and I(start_period) are specified as durations. They accept duration as a string in a format
         that look like: C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)'
+    suboptions:
+      test:
+        description:
+          - Command to run to check health.
+          - Must be either a string or a list. If it is a list, the first item must be one of C(NONE), C(CMD) or C(CMD-SHELL).
+      interval:
+        description:
+          - 'Time between running the check. (default: 30s)'
+        type: str
+      timeout:
+        description:
+          - 'Maximum time to allow one check to run. (default: 30s)'
+        type: str
+      retries:
+        description:
+          - 'Consecutive failures needed to report unhealthy. It accept integer value. (default: 3)'
+        type: int
+      start_period:
+        description:
+          - 'Start period for the container to initialize before starting health-retries countdown. (default: 0s)'
+        type: str
   hostname:
     description:
       - Container hostname.
@@ -300,15 +355,36 @@ options:
   networks:
      description:
        - List of networks the container belongs to.
-       - Each network is a dict with keys C(name), C(ipv4_address), C(ipv6_address), C(links), C(aliases).
-       - For each network C(name) is required, all other keys are optional.
-       - If included, C(links) or C(aliases) are lists.
        - For examples of the data structure and usage see EXAMPLES below.
        - To remove a container from one or more networks, use the C(purge_networks) option.
        - Note that as opposed to C(docker run ...), M(docker_container) does not remove the default
          network if C(networks) is specified. You need to explicity use C(purge_networks) to enforce
          the removal of the default network (and all other networks not explicitly mentioned in C(networks)).
      version_added: "2.2"
+     type: list
+     suboptions:
+        name:
+           type: str
+           required: true
+           description:
+             - The network's name.
+        ipv4_address:
+           type: str
+           description:
+             - The container's IPv4 address in this network.
+        ipv6_address:
+           type: str
+           description:
+             - The container's IPv6 address in this network.
+        links:
+           type: list
+           description:
+             - A list of containers to link to.
+        aliases:
+           type: list
+           description:
+             - List of aliases for this container in this network. These names
+               can be used in the network to reach this container.
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -2723,8 +2799,8 @@ def main():
     argument_spec = dict(
         auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
-        capabilities=dict(type='list'),
-        cap_drop=dict(type='list'),
+        capabilities=dict(type='list', elements='str'),
+        cap_drop=dict(type='list', elements='str'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         comparisons=dict(type='dict'),
@@ -2734,23 +2810,41 @@ def main():
         cpuset_mems=dict(type='str'),
         cpu_shares=dict(type='int'),
         detach=dict(type='bool', default=True),
-        devices=dict(type='list'),
-        device_read_bps=dict(type='list'),
-        device_write_bps=dict(type='list'),
-        device_read_iops=dict(type='list'),
-        device_write_iops=dict(type='list'),
-        dns_servers=dict(type='list'),
-        dns_opts=dict(type='list'),
-        dns_search_domains=dict(type='list'),
+        devices=dict(type='list', elements='str'),
+        device_read_bps=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='str'),
+        )),
+        device_write_bps=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='str'),
+        )),
+        device_read_iops=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='int'),
+        )),
+        device_write_iops=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='int'),
+        )),
+        dns_servers=dict(type='list', elements='str'),
+        dns_opts=dict(type='list', elements='str'),
+        dns_search_domains=dict(type='list', elements='str'),
         domainname=dict(type='str'),
-        entrypoint=dict(type='list'),
+        entrypoint=dict(type='list', elements='str'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
         etc_hosts=dict(type='dict'),
-        exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
+        exposed_ports=dict(type='list', aliases=['exposed', 'expose'], elements='str'),
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),
-        groups=dict(type='list'),
-        healthcheck=dict(type='dict'),
+        groups=dict(type='list', elements='str'),
+        healthcheck=dict(type='dict', options=dict(
+            test=dict(type='raw'),
+            interval=dict(type='str'),
+            timeout=dict(type='str'),
+            start_period=dict(type='str'),
+            retries=dict(type='int'),
+        )),
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
@@ -2761,7 +2855,7 @@ def main():
         kernel_memory=dict(type='str'),
         kill_signal=dict(type='str'),
         labels=dict(type='dict'),
-        links=dict(type='list'),
+        links=dict(type='list', elements='str'),
         log_driver=dict(type='str'),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
@@ -2771,14 +2865,20 @@ def main():
         memory_swappiness=dict(type='int'),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
-        networks=dict(type='list'),
+        networks=dict(type='list', elements='dict', options=dict(
+            name=dict(required=True, type='str'),
+            ipv4_address=dict(type='str'),
+            ipv6_address=dict(type='str'),
+            aliases=dict(type='list', elements='str'),
+            links=dict(type='list', elements='str'),
+        )),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         output_logs=dict(type='bool', default=False),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
         privileged=dict(type='bool', default=False),
-        published_ports=dict(type='list', aliases=['ports']),
+        published_ports=dict(type='list', aliases=['ports'], elements='str'),
         pull=dict(type='bool', default=False),
         purge_networks=dict(type='bool', default=False),
         read_only=dict(type='bool', default=False),
@@ -2787,22 +2887,22 @@ def main():
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int', default=None),
         runtime=dict(type='str', default=None),
-        security_opts=dict(type='list'),
+        security_opts=dict(type='list', elements='str'),
         shm_size=dict(type='str'),
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
         stop_signal=dict(type='str'),
         stop_timeout=dict(type='int'),
         sysctls=dict(type='dict'),
-        tmpfs=dict(type='list'),
+        tmpfs=dict(type='list', elements='str'),
         trust_image_content=dict(type='bool', default=False),
         tty=dict(type='bool', default=False),
-        ulimits=dict(type='list'),
+        ulimits=dict(type='list', elements='str'),
         user=dict(type='str'),
         userns_mode=dict(type='str'),
         uts=dict(type='str'),
         volume_driver=dict(type='str'),
-        volumes=dict(type='list'),
-        volumes_from=dict(type='list'),
+        volumes=dict(type='list', elements='str'),
+        volumes_from=dict(type='list', elements='str'),
         working_dir=dict(type='str'),
     )
 
