@@ -440,7 +440,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             name=dict(type='str', required=True),
             location=dict(type='str'),
             enable_accelerated_networking=dict(type='bool', default=False),
-            create_with_default_security_group=dict(type='bool', default=True, aliases=['create_with_security_group']),
+            create_with_default_security_group=dict(type='bool', default=True,
+                aliases=['create_with_security_group']),
             security_group=dict(type='raw', aliases=['security_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
@@ -457,7 +458,9 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             dns_servers=dict(type='list'),
         )
 
-        mutually_exclusive = [('create_with_default_security_group', 'security_group')]
+        mutually_exclusive = [
+            ('create_with_default_security_group', 'security_group')
+        ]
 
         required_if = [
             ('state', 'present', ['subnet_name', 'virtual_network'])
