@@ -607,6 +607,11 @@ def main():
                 OperationPreferences=get_operation_preferences(module),
                 OperationId=operation_ids[-1],
             )
+            await_stack_set_operation(
+                module, cfn, operation_id=operation_ids[-1],
+                stack_set_name=module.params['name'],
+                max_wait=module.params.get('wait_timeout'),
+            )
         else:
             await_stack_set_operation(
                 module, cfn, operation_id=operation_ids[-1],
