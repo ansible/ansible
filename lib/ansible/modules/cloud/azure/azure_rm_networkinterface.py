@@ -457,6 +457,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             dns_servers=dict(type='list'),
         )
 
+        mutually_exclusive = [('create_with_default_security_group', 'security_group')]
+
         required_if = [
             ('state', 'present', ['subnet_name', 'virtual_network'])
         ]
@@ -489,7 +491,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         super(AzureRMNetworkInterface, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                       supports_check_mode=True,
-                                                      required_if=required_if)
+                                                      required_if=required_if,
+                                                      mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
 
