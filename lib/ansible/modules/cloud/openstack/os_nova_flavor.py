@@ -64,6 +64,9 @@ options:
         - ID for the flavor. This is optional as a unique UUID will be
           assigned if a value is not specified.
      default: "auto"
+   project:
+     description:
+        - Project name or ID containing the flavor (name admin-only)
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -189,6 +192,7 @@ def main():
         is_public=dict(required=False, default=True, type='bool'),
         flavorid=dict(required=False, default="auto"),
         extra_specs=dict(required=False, default=None, type='dict'),
+        project=dict(default=None)
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -203,10 +207,20 @@ def main():
     state = module.params['state']
     name = module.params['name']
     extra_specs = module.params['extra_specs'] or {}
+    project = module.params.get('project')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        flavor = cloud.get_flavor(name)
+        if project is not None:
+            proj = cloud.get_project(project)
+            if proj is None:
+                module.fail_json(msg='Project %s could not be found' % project)
+            project_id = proj['id']
+            filters = {'tenant_id': project_id}
+        else:
+            project_id = None
+            filters = None
+        flavor = cloud.get_flavor(name, filters=filters)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, flavor))
@@ -217,7 +231,7 @@ def main():
 
             if flavor:
                 old_extra_specs = flavor['extra_specs']
-                for param_key in ['ram', 'vcpus', 'disk', 'ephemeral', 'swap', 'rxtx_factor', 'is_public']:
+                for param_key in ['ram', 'vcpus', 'disk', 'ephemeral', 'swap', 'rxtx_factor', 'is_public', 'project']:
                     if module.params[param_key] != flavor[param_key]:
                         require_update = True
                         break
@@ -227,17 +241,31 @@ def main():
                 flavor = None
 
             if not flavor:
-                flavor = cloud.create_flavor(
-                    name=name,
-                    ram=module.params['ram'],
-                    vcpus=module.params['vcpus'],
-                    disk=module.params['disk'],
-                    flavorid=module.params['flavorid'],
-                    ephemeral=module.params['ephemeral'],
-                    swap=module.params['swap'],
-                    rxtx_factor=module.params['rxtx_factor'],
-                    is_public=module.params['is_public']
-                )
+                if project_id is not None:
+                    flavor = cloud.create_flavor(
+                        name=name,
+                        ram=module.params['ram'],
+                        vcpus=module.params['vcpus'],
+                        disk=module.params['disk'],
+                        flavorid=module.params['flavorid'],
+                        ephemeral=module.params['ephemeral'],
+                        swap=module.params['swap'],
+                        rxtx_factor=module.params['rxtx_factor'],
+                        is_public=module.params['is_public'],
+                        project=module.params['project']
+                    )
+                else:
+                  flavor = cloud.create_flavor(
+                      name=name,
+                      ram=module.params['ram'],
+                      vcpus=module.params['vcpus'],
+                      disk=module.params['disk'],
+                      flavorid=module.params['flavorid'],
+                      ephemeral=module.params['ephemeral'],
+                      swap=module.params['swap'],
+                      rxtx_factor=module.params['rxtx_factor'],
+                      is_public=module.params['is_public']
+                  )
                 changed = True
             else:
                 changed = False
