@@ -1072,8 +1072,9 @@ files:
   test/utils/shippable/:
     notified: mattclay
   test/integration/targets/aci: *aci
-  test/integration/targets/meraki: *meraki
   test/integration/targets/docker: $team_docker
+  test/integration/targets/meraki: *meraki
+  test/integration/targets/msc: *aci
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
