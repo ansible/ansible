@@ -241,31 +241,21 @@ def main():
                 flavor = None
 
             if not flavor:
+                kwargs = {
+                    'name': name,
+                    'ram': module.params['ram'],
+                    'vcpus': module.params['vcpus'],
+                    'disk': module.params['disk'],
+                    'flavorid': module.params['flavorid'],
+                    'ephemeral': module.params['ephemeral'],
+                    'swap': module.params['swap'],
+                    'rxtx_factor': module.params['rxtx_factor'],
+                    'is_public': module.params['is_public']
+                }
                 if project_id is not None:
-                    flavor = cloud.create_flavor(
-                        name=name,
-                        ram=module.params['ram'],
-                        vcpus=module.params['vcpus'],
-                        disk=module.params['disk'],
-                        flavorid=module.params['flavorid'],
-                        ephemeral=module.params['ephemeral'],
-                        swap=module.params['swap'],
-                        rxtx_factor=module.params['rxtx_factor'],
-                        is_public=module.params['is_public'],
-                        project=module.params['project']
-                    )
-                else:
-                  flavor = cloud.create_flavor(
-                      name=name,
-                      ram=module.params['ram'],
-                      vcpus=module.params['vcpus'],
-                      disk=module.params['disk'],
-                      flavorid=module.params['flavorid'],
-                      ephemeral=module.params['ephemeral'],
-                      swap=module.params['swap'],
-                      rxtx_factor=module.params['rxtx_factor'],
-                      is_public=module.params['is_public']
-                  )
+                    kwargs['project'] = module.params['project']
+
+                flavor = cloud.create_flavor(**kwargs)
                 changed = True
             else:
                 changed = False
