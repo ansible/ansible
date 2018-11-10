@@ -92,6 +92,21 @@ EXAMPLES = """
       - "{{ ansible_os_family }}.yaml"
       - default.yaml
 
+- name: Additive loading of OS specific variables
+  include_vars: "{{ vars_item }}"
+  when: vars_item | length
+  vars:
+      vars_item: "{{ lookup('first_found', vars_search) }}"
+      vars_search:
+          files: "{{ item }}"
+          paths: vars
+          skip: true
+  loop:
+      - "{{ ansible_os_family | lower }}.yml"
+      - "{{ ansible_distribution | lower }}.yml"
+      - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+      - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version.replace('.', '-') | lower }}.yml"
+
 - name: Bare include (free-form)
   include_vars: myvars.yaml
 
