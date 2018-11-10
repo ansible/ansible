@@ -17,16 +17,13 @@
   - name: ensure IAM role exists
     iam_role:
       <<: *aws_connection_info
-      name: "test-secrets-manager-role-{{ resource_prefix }}"
+      name: "test-secrets-manager-role"
       assume_role_policy_document: "{{ lookup('file','secretsmanager-trust-policy.json') }}"
       state: present
       create_instance_profile: no
       managed_policy:
         - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
-
-  - name: pausing for role creation
-    pause:
-      seconds: 10
+    register: iam_role_output
 
   - name: create a temporary directory
     tempfile:
@@ -36,26 +33,24 @@
   - name: move lambda into place for upload
     copy:
       src: "files/hello_world.zip"
-      dest: "{{ tmp.path }}/ansible_testing/hello_world.zip"
+      dest: "{{ tmp.path }}/hello_world.zip"
 
   - name: dummy lambda for testing
     lambda:
       <<: *aws_connection_info
       name: "hello-world-{{ resource_prefix }}"
       state: present
-      zip_file: "{{ tmp.path }}/ansible_testing/hello_world.zip"
+      zip_file: "{{ tmp.path }}/hello_world.zip"
       runtime: 'python2.7'
-      role: "arn:aws:iam::{{ test_caller_facts.account }}:role/test-secrets-manager-role-{{ resource_prefix }}"
+      role: "{{ iam_role_output.arn }}"
       handler: 'hello_world.lambda_handler'
+    register: lambda_output
+    until: not lambda_output.failed
+    retries: 10
+    delay: 5
 
-  - name: lambda policy for secrets manager
-    lambda_policy:
-      <<: *aws_connection_info
-      state: present
-      function_name: "hello-world-{{ resource_prefix }}"
-      statement_id: LambdaSecretsManagerTestPolicy
-      action: 'lambda:InvokeFunction'
-      principal: secretsmanager.amazonaws.com
+  - debug:
+      var: lambda_output
 
   # ============================================================
   # Module parameter testing
@@ -67,48 +62,6 @@
     check_mode: true
 
   - name: assert failure when called with no parameters
-    assert:
-      that:
-         - result.failed
-         - 'result.msg.startswith("missing required arguments:")'
-
-  - name: test with missing parameters
-    aws_secret:
-      name: 'test_secret_string'
-    register: result
-    ignore_errors: true
-    check_mode: true
-
-  - name: assert failure when called with missing parameters
-    assert:
-      that:
-         - result.failed
-         - 'result.msg.startswith("missing required arguments:")'
-
-  - name: test with missing parameters
-    aws_secret:
-      name: 'test_secret_string'
-      state: present
-    register: result
-    ignore_errors: true
-    check_mode: true
-
-  - name: assert failure when called with missing parameters
-    assert:
-      that:
-         - result.failed
-         - 'result.msg.startswith("missing required arguments:")'
-
-  - name: test with missing parameters
-    aws_secret:
-      name: 'test_secret_string'
-      state: present
-      secret_type: 'string'
-    register: result
-    ignore_errors: true
-    check_mode: true
-
-  - name: assert failure when called with missing parameters
     assert:
       that:
          - result.failed
@@ -130,14 +83,10 @@
     assert:
       that:
         - result.changed
-        - result.ARN is not none
-        - result.Name is not none
-        - result.Tags is not none
-        - result.VersionIdsToStages is not none
-
-  - name: pausing for secret creation
-    pause:
-      seconds: 30
+        - result.arn is not none
+        - result.name is not none
+        - result.tags is not none
+        - result.version_ids_to_stages is not none
 
   - name: no changes to secret
     aws_secret:
@@ -152,7 +101,7 @@
     assert:
       that:
         - not result.changed
-        - result.ARN is not none
+        - result.arn is not none
 
   - name: make change to secret
     aws_secret:
@@ -164,14 +113,17 @@
       secret: "{{ super_secret_string }}"
     register: result
 
+  - debug:
+      var: result
+
   - name: assert correct keys are returned
     assert:
       that:
         - result.changed
-        - result.ARN is not none
-        - result.Name is not none
-        - result.Tags is not none
-        - result.VersionIdsToStages is not none
+        - result.arn is not none
+        - result.name is not none
+        - result.tags is not none
+        - result.version_ids_to_stages is not none
 
   - name: add tags to secret
     aws_secret:
@@ -206,6 +158,15 @@
       that:
         - result.changed
 
+  - name: lambda policy for secrets manager
+    lambda_policy:
+      <<: *aws_connection_info
+      state: present
+      function_name: "hello-world-{{ resource_prefix }}"
+      statement_id: LambdaSecretsManagerTestPolicy
+      action: 'lambda:InvokeFunction'
+      principal: "secretsmanager.amazonaws.com"
+
   - name: add rotation lambda to secret
     aws_secret:
       <<: *aws_connection_info
@@ -214,8 +175,11 @@
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
-      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:hello-world-{{ resource_prefix }}"
+      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:hello-world-rre"
     register: result
+    retries: 100
+    delay: 5
+    until: not result.failed
 
   - name: assert correct keys are returned
     assert:
@@ -245,6 +209,7 @@
       state: absent
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
+      recovery_window: 0
     ignore_errors: yes
 
   - name: remove lambda policy
@@ -262,16 +227,16 @@
       <<: *aws_connection_info
       name: "hello-world-{{ resource_prefix }}"
       state: absent
-      zip_file: "{{ tmp.path }}/ansible_testing/hello_world.zip"
+      zip_file: "{{ tmp.path }}/hello_world.zip"
       runtime: 'python2.7'
-      role: "test-secrets-manager-role-{{ resource_prefix }}"
+      role: "test-secrets-manager-role"
       handler: 'hello_world.lambda_handler'
     ignore_errors: yes
 
   - name: remove IAM role
     iam_role:
       <<: *aws_connection_info
-      name: "test-secrets-manager-role-{{ resource_prefix }}"
+      name: "test-secrets-manager-role"
       assume_role_policy_document: "{{ lookup('file','secretsmanager-trust-policy.json') }}"
       state: absent
       create_instance_profile: no

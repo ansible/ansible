@@ -17,7 +17,7 @@ module: aws_secret
 short_description: Manage secrets stored in AWS Secrets Manager.
 description:
     - Create, update, and delete secrets stored in AWS Secrets Manager.
-author: "REY Rémi (@rrey)"
+author: "REY Remi (@rrey)"
 version_added: "2.8"
 requirements: [ 'botocore>=1.10.0', 'boto3' ]
 options:
@@ -34,7 +34,7 @@ options:
     description:
     - Only used if state is absent.
     - Specifies the number of days that Secrets Manager waits before it can delete the secret.
-    - If set to 0, the deletion is forced without recoery.
+    - If set to 0, the deletion is forced without recovery.
     default: 30
   description:
     description:
@@ -87,9 +87,40 @@ EXAMPLES = r'''
 
 RETURN = r'''
 secret:
-  description: The secret description as returned by the describe_secret API
+  description: The secret information
   returned: always
-  type: dict
+  type: complex
+  contains:
+    arn:
+      description: The ARN of the secret
+      returned: always
+      type: string
+      sample: arn:aws:secretsmanager:eu-west-1:xxxxxxxxxx:secret:xxxxxxxxxxx
+    last_accessed_date:
+      description: The date the secret was last accessed
+      returned: always
+      type: string
+      sample: '2018-11-20T01:00:00+01:00'
+    last_changed_date:
+      description: The date the secret was last modified.
+      returned: always
+      type: string
+      sample: '2018-11-20T12:16:38.433000+01:00'
+    name:
+      description: The secret name.
+      returned: always
+      type: string
+      sample: my_secret
+    rotation_enabled:
+      description: The secret rotation status.
+      returned: always
+      type: bool
+      sample: false
+    version_ids_to_stages:
+      description: Provide the secret version ids and the associated secret stage.
+      returned: always
+      type: complex
+      sample: { "dc1ed59b-6d8e-4450-8b41-536dfe4600a9": [ "AWSCURRENT" ] }
 '''
 
 import os
@@ -97,9 +128,9 @@ import os
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, compare_aws_tags, ansible_dict_to_boto3_tag_list
-from boto3.exceptions import ResourceNotExistsError
 
 try:
+    from boto3.exceptions import ResourceNotExistsError
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # handled by AnsibleAWSModule
@@ -108,7 +139,7 @@ except ImportError:
 class Secret(object):
     """An object representation of the Secret described by the self.module args"""
     def __init__(self, name, secret_type, secret, description="", kms_key_id=None,
-                 tags={}, lambda_arn=None, rotation_interval=None):
+                 tags=None, lambda_arn=None, rotation_interval=None):
         self.name = name
         self.description = description
         self.kms_key_id = kms_key_id
@@ -117,7 +148,7 @@ class Secret(object):
         else:
             self.secret_type = "SecretString"
         self.secret = secret
-        self.tags = tags
+        self.tags = tags or {}
         self.rotation_enabled = False
         if lambda_arn:
             self.rotation_enabled = True
@@ -206,7 +237,7 @@ class SecretsManagerInterface(object):
             response = self.client.restore_secret(SecretId=name)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Failed to restore secret")
-        return camel_dict_to_snake_dict(response)
+        return response
 
     def delete_secret(self, name, recovery_window):
         if self.module.check_mode:
@@ -218,19 +249,22 @@ class SecretsManagerInterface(object):
                 response = self.client.delete_secret(SecretId=name, RecoveryWindowInDays=recovery_window)
         except (BotoCoreError, ClientError) as e:
             self.module.fail_json_aws(e, msg="Failed to delete secret")
-        return camel_dict_to_snake_dict(response)
+        return response
 
     def update_rotation(self, secret):
-        try:
-            if secret.rotation_enabled:
+        if secret.rotation_enabled:
+            try:
                 response = self.client.rotate_secret(
                     SecretId=secret.name,
                     RotationLambdaARN=secret.rotation_lambda_arn,
                     RotationRules=secret.rotation_rules)
-            else:
+            except (BotoCoreError, ClientError) as e:
+                self.module.fail_json_aws(e, msg="Failed to rotate secret secret")
+        else:
+            try:
                 response = self.client.cancel_rotate_secret(SecretId=secret.name)
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg="Failed to remove rotation policy from secret")
+            except (BotoCoreError, ClientError) as e:
+                self.module.fail_json_aws(e, msg="Failed to cancel rotation")
         return response
 
     def tag_secret(self, secret_name, tags):
@@ -254,10 +288,9 @@ class SecretsManagerInterface(object):
 
         Returns: bool
         """
-        if desired_secret.description and desired_secret.description != current_secret.get("Description"):
+        if desired_secret.description != current_secret.get("Description", ""):
             return False
         if desired_secret.kms_key_id != current_secret.get("KmsKeyId"):
-            raise Exception("KmsKey don't match")
             return False
         current_secret_value = self.client.get_secret_value(SecretId=current_secret.get("Name"))
         if desired_secret.secret != current_secret_value.get(desired_secret.secret_type).encode("utf-8"):
@@ -274,7 +307,7 @@ def rotation_match(desired_secret, current_secret):
 
     Returns: bool
     """
-    if desired_secret.rotation_enabled != current_secret.get("RotationEnabled"):
+    if desired_secret.rotation_enabled != current_secret.get("RotationEnabled", False):
         return False
     if desired_secret.rotation_enabled:
         if desired_secret.rotation_lambda_arn != current_secret.get("RotationLambdaARN"):
@@ -289,7 +322,7 @@ def main():
         argument_spec={
             'name': dict(required=True),
             'state': dict(choices=['present', 'absent'], default='present'),
-            'description': dict(),
+            'description': dict(default=""),
             'kms_key_id': dict(),
             'secret_type': dict(choices=['binary', 'string'], default="string"),
             'secret': dict(default=""),
@@ -321,14 +354,13 @@ def main():
     if state == 'absent':
         if current_secret:
             if not current_secret.get("DeletedDate"):
-                result = secrets_mgr.delete_secret(secret.name, recovery_window=recovery_window)
+                result = camel_dict_to_snake_dict(secrets_mgr.delete_secret(secret.name, recovery_window=recovery_window))
                 changed = True
             elif current_secret.get("DeletedDate") and recovery_window == 0:
-                result = secrets_mgr.delete_secret(secret.name, recovery_window=recovery_window)
+                result = camel_dict_to_snake_dict(secrets_mgr.delete_secret(secret.name, recovery_window=recovery_window))
                 changed = True
         else:
             result = "secret does not exist"
-
     if state == 'present':
         if current_secret is None:
             result = secrets_mgr.create_secret(secret)
@@ -351,7 +383,8 @@ def main():
             if tags_to_remove:
                 secrets_mgr.untag_secret(secret.name, tags_to_remove)
                 changed = True
-        result = secrets_mgr.get_secret(secret.name)
+        result = camel_dict_to_snake_dict(secrets_mgr.get_secret(secret.name))
+        result.pop("response_metadata")
     module.exit_json(changed=changed, secret=result)
 
 
