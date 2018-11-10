@@ -441,7 +441,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             location=dict(type='str'),
             enable_accelerated_networking=dict(type='bool', default=False),
             create_with_default_security_group=dict(type='bool', default=True,
-                aliases=['create_with_security_group']),
+                                                    aliases=['create_with_security_group']),
             security_group=dict(type='raw', aliases=['security_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
