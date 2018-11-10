@@ -175,7 +175,7 @@ options:
     security_group:
         description:
             - An existing security group with which to associate the network interface. If not provided, a
-              default security group will be created when C(create_with_security_group) is true.
+              default security group will be created when C(create_with_default_security_group) is true.
             - It can be the name of security group.
             - Make sure the security group is in the same resource group when you only give its name.
             - It can be the resource id.
@@ -229,7 +229,7 @@ EXAMPLES = '''
         resource_group: Testing
         virtual_network: vnet001
         subnet_name: subnet001
-        create_with_security_group: False
+        create_with_default_security_group: False
         ip_configurations:
           - name: ipconfig1
             primary: True
@@ -469,7 +469,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.location = None
-        self.create_with_security_group = None
+        self.create_with_default_security_group = None
         self.enable_accelerated_networking = None
         self.security_group = None
         self.private_ip_address = None
@@ -550,7 +550,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                if self.create_with_security_group != bool(results.get('network_security_group')):
+                if self.create_with_default_security_group != bool(results.get('network_security_group')):
                     self.log("CHANGED: add or remove network interface {0} network security group".format(self.name))
                     changed = True
 
@@ -646,7 +646,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                                         self.location,
                                                         self.security_group['name'],
                                                         self.os_type,
-                                                        self.open_ports) if self.create_with_security_group else None
+                                                        self.open_ports) if self.create_with_default_security_group else None
 
                 self.log('Creating or updating network interface {0}'.format(self.name))
                 nic = self.network_models.NetworkInterface(
