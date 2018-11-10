@@ -164,12 +164,14 @@ options:
         type: bool
         version_added: 2.7
         default: False
-    create_with_security_group:
+    create_with_default_security_group:
         description:
             - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
         type: bool
         version_added: 2.6
         default: True
+        aliases:
+            - create_with_security_group
     security_group:
         description:
             - An existing security group with which to associate the network interface. If not provided, a
@@ -438,7 +440,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             name=dict(type='str', required=True),
             location=dict(type='str'),
             enable_accelerated_networking=dict(type='bool', default=False),
-            create_with_security_group=dict(type='bool', default=True),
+            create_with_default_security_group=dict(type='bool', default=True, aliases=['create_with_security_group']),
             security_group=dict(type='raw', aliases=['security_group_name']),
             state=dict(default='present', choices=['present', 'absent']),
             private_ip_address=dict(type='str'),
