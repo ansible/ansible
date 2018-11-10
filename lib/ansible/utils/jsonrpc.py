@@ -1,20 +1,6 @@
-#
-# (c) 2016 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017, Peter Sprygada <psprygad@redhat.com>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -22,6 +8,8 @@ import json
 import traceback
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import binary_type
+
 
 try:
     from __main__ import display
@@ -30,13 +18,13 @@ except ImportError:
     display = Display()
 
 
-class Rpc:
+class JsonRpcServer(object):
 
-    def __init__(self, *args, **kwargs):
-        self._rpc = set()
-        super(Rpc, self).__init__(*args, **kwargs)
+    _objects = set()
 
-    def _exec_rpc(self, request):
+    def handle_request(self, request):
+        request = json.loads(to_text(request, errors='surrogate_then_replace'))
+
         method = request.get('method')
 
         if method.startswith('rpc.') or method.startswith('_'):
@@ -45,6 +33,7 @@ class Rpc:
 
         params = request.get('params')
         setattr(self, '_identifier', request.get('id'))
+
         args = []
         kwargs = {}
 
@@ -54,7 +43,7 @@ class Rpc:
             kwargs = params
 
         rpc_method = None
-        for obj in self._rpc:
+        for obj in self._objects:
             rpc_method = getattr(obj, method, None)
             if rpc_method:
                 break
@@ -66,7 +55,7 @@ class Rpc:
             try:
                 result = rpc_method(*args, **kwargs)
             except Exception as exc:
-                display.display(traceback.format_exc(), log_only=True)
+                display.vvv(traceback.format_exc())
                 error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
                 response = json.dumps(error)
             else:
@@ -78,14 +67,20 @@ class Rpc:
                 response = json.dumps(response)
 
         delattr(self, '_identifier')
+
         return response
+
+    def register(self, obj):
+        self._objects.add(obj)
 
     def header(self):
         return {'jsonrpc': '2.0', 'id': self._identifier}
 
     def response(self, result=None):
         response = self.header()
-        response['result'] = result or 'ok'
+        if isinstance(result, binary_type):
+            result = to_text(result)
+        response['result'] = result
         return response
 
     def error(self, code, message, data=None):

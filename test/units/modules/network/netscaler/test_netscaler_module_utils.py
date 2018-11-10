@@ -17,11 +17,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
+from units.compat import unittest
+from units.compat.mock import Mock
 
 
-from ansible.module_utils.netscaler import ConfigProxy, get_immutables_intersection, ensure_feature_is_enabled, log, loglines
+from ansible.module_utils.network.netscaler.netscaler import ConfigProxy, get_immutables_intersection, ensure_feature_is_enabled, log, loglines
 
 
 class TestNetscalerConfigProxy(unittest.TestCase):

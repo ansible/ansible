@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -29,13 +29,9 @@ options:
     name:
         description:
             - Limit results to a specific resource group.
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
@@ -144,7 +140,7 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
         try:
             response = self.rm_client.resource_groups.list()
         except CloudError as exc:
-            self.fail("Failed to list all items - {1}".format(str(exc)))
+            self.fail("Failed to list all items - {0}".format(str(exc)))
 
         results = []
         for item in response:
@@ -155,6 +151,7 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 
 def main():
     AzureRMResourceGroupFacts()
+
 
 if __name__ == '__main__':
     main()

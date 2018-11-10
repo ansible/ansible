@@ -17,9 +17,9 @@ DOCUMENTATION = """
 module: ironware_command
 version_added: "2.5"
 author: "Paul Baker (@paulquack)"
-short_description: Run arbitrary commands on Brocade IronWare devices
+short_description: Run arbitrary commands on Extreme IronWare devices
 description:
-  - Sends arbitrary commands to a Brocade Ironware node and returns the
+  - Sends arbitrary commands to a Extreme Ironware node and returns the
     results read from the device. This module includes a I(wait_for)
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
@@ -40,8 +40,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -49,7 +47,6 @@ options:
         is set to C(all) then all conditionals in the I(wait_for) must be
         satisfied.  If the value is set to C(any) then only one of the
         values must be satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
   retries:
@@ -58,7 +55,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -66,34 +62,18 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: username
-    password: secret
-    authorize: yes
-    auth_pass: supersecret
-    transport: cli
-
----
 - ironware_command:
     commands:
       - show version
-    provider: "{{ cli }}"
 
 - ironware_command:
     commands:
       - show interfaces brief wide
       - show mpls vll
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -118,9 +98,9 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ironware import ironware_argument_spec, check_args
-from ansible.module_utils.ironware import run_commands
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network.ironware.ironware import ironware_argument_spec, check_args
+from ansible.module_utils.network.ironware.ironware import run_commands
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
 
@@ -176,7 +156,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({

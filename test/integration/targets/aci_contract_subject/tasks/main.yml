@@ -1,0 +1,241 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    tenant: anstest
+  register: tenant_present
+
+- name: ensure contract exists for tests to kick off
+  aci_contract: &aci_contract_present
+    <<: *aci_tenant_present
+    contract: anstest
+  register: contract_present
+
+- name: create subject - check mode works
+  aci_contract_subject: &aci_subject_present
+    <<: *aci_contract_present
+    subject: anstest
+    description: Ansible Test
+  check_mode: yes
+  register: subject_present_check_mode
+
+- name: create subject - creation works
+  aci_contract_subject:
+    <<: *aci_subject_present
+  register: subject_present
+
+- name: create subject - idempotency works
+  aci_contract_subject:
+    <<: *aci_subject_present
+  register: subject_present_idempotent
+
+- name: update subject - update works
+  aci_contract_subject:
+    <<: *aci_subject_present
+    description: Ansible Test
+    reverse_filter: "yes"
+    provider_match: at_most_one
+    priority: level2
+  register: subject_update
+
+- name: create subject - try additional params
+  aci_contract_subject: &aci_subject_present_2
+    <<: *aci_contract_present
+    subject: anstest2
+    reverse_filter: "no"
+    consumer_match: all
+    priority: level3
+  register: subject_present_2
+
+- name: missing param - failure message works
+  aci_contract_subject:
+    <<: *aci_tenant_present
+  ignore_errors: yes
+  register: present_missing_param
+
+- name: present assertions
+  assert:
+    that:
+      - subject_present_check_mode is changed
+      - 'subject_present_check_mode.sent == {"vzSubj": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+      - subject_present is changed
+      - subject_present.previous == []
+      - subject_present.sent == subject_present_check_mode.sent
+      - subject_present_idempotent is not changed
+      - subject_present_idempotent.previous != []
+      - subject_update is changed
+      - subject_update.sent != subject_update.proposed
+      - 'subject_update.sent.vzSubj.attributes == {"prio": "level2", "provMatchT": "AtmostOne"}'
+      - subject_present_2 is changed
+      - 'subject_present_2.sent.vzSubj.attributes == {"consMatchT": "All", "name": "anstest2", "prio": "level3", "revFltPorts": "no"}'
+      - present_missing_param is failed
+      - 'present_missing_param.msg == "state is present but all of the following are missing: contract, subject"'
+
+- name: query tenant contract subject
+  aci_contract_subject: &aci_query_subject
+    <<: *aci_subject_present
+    state: query
+  register: query_tenant_contract_subject
+
+- name: query tenant contract
+  aci_contract_subject:
+    <<: *aci_query_subject
+    subject: "{{ fakevar | default(omit) }}"
+  register: query_tenant_contract
+
+- name: query tenant subject
+  aci_contract_subject:
+    <<: *aci_query_subject
+    contract: "{{ fakevar | default(omit) }}"
+  register: query_tenant_subject
+
+- name: query contract subject
+  aci_contract_subject:
+    <<: *aci_query_subject
+    tenant: "{{ fakevar | default(omit) }}"
+  register: query_contract_subject
+
+- name: query tenant
+  aci_contract_subject:
+    <<: *aci_tenant_present
+    state: query
+  register: query_tenant
+
+- name: query contract
+  aci_contract_subject:
+    <<: *aci_contract_present
+    state: query
+    tenant: "{{ fakevar | default(omit) }}"
+  register: query_contract
+
+- name: query subject
+  aci_contract_subject:
+    <<: *aci_query_subject
+    tenant: "{{ fakevar | default(omit) }}"
+    contract: "{{ fakevar | default(omit) }}"
+  register: query_subject
+
+- name: query all
+  aci_contract_subject:
+    <<: *aci_tenant_present
+    state: query
+    tenant: "{{ fakevar | default(omit) }}"
+  register: query_all
+
+- name: query assertions
+  assert:
+    that:
+      - query_tenant_contract_subject is not changed
+      - query_tenant_contract_subject.current | length == 1
+      - query_tenant_contract_subject.current.0.vzSubj.attributes.name == "anstest"
+      - '"tn-anstest/brc-anstest/subj-anstest.json" in query_tenant_contract_subject.url'
+      - query_tenant_contract is not changed
+      - query_tenant_contract.current | length == 1
+      - query_tenant_contract.current.0.vzBrCP.attributes.name == "anstest"
+      - query_tenant_contract.current.0.vzBrCP.children | length == 2
+      - '"rsp-subtree-class=vzSubj" in query_tenant_contract.filter_string'
+      - '"tn-anstest/brc-anstest.json" in query_tenant_contract.url'
+      - query_tenant_subject is not changed
+      - query_tenant_subject.current | length == 1
+      - query_tenant_subject.current.0.fvTenant.attributes.name == "anstest"
+      - query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children | length == 1
+      - query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"
+      - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_tenant_subject.filter_string'
+      - '"rsp-subtree-class=vzSubj" in query_tenant_subject.filter_string'
+      - '"tn-anstest.json" in query_tenant_subject.url'
+      - query_contract_subject is not changed
+      - query_contract_subject.current.0.vzBrCP.attributes.name == "anstest"
+      - query_contract_subject.current.0.vzBrCP.children | length == 1
+      - query_contract_subject.current.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"
+      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract_subject.filter_string'
+      - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_contract_subject.filter_string'
+      - '"rsp-subtree-class=vzSubj" in query_contract_subject.filter_string'
+      - '"class/vzBrCP.json" in query_contract_subject.url'
+      - query_tenant is not changed
+      - query_tenant.current | length == 1
+      - query_tenant.current.0.fvTenant.attributes.name == "anstest"
+      - '"rsp-subtree-class=vzBrCP,vzSubj" in query_tenant.filter_string'
+      - '"tn-anstest.json" in query_tenant.url'
+      - query_contract is not changed
+      - query_contract.current.0.vzBrCP.attributes.name == "anstest"
+      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract.filter_string'
+      - '"rsp-subtree-class=vzSubj" in query_contract.filter_string'
+      - '"class/vzBrCP.json" in query_contract.url'
+      - query_subject is not changed
+      - query_subject.current.0.vzSubj.attributes.name == "anstest"
+      - '"query-target-filter=eq(vzSubj.name, \"anstest\")" in query_subject.filter_string'
+      - '"class/vzSubj.json" in query_subject.url'
+      - query_all is not changed
+      - query_all.current > 1
+      - query_all.current.0.vzSubj is defined
+      - '"class/vzSubj.json" in query_all.url'
+
+- name: delete subject - check mode works
+  aci_contract_subject: &aci_subject_absent
+    <<: *aci_subject_present
+    state: absent
+  check_mode: yes
+  register: subject_absent_check_mode
+
+- name: delete subject - deletion works
+  aci_contract_subject:
+    <<: *aci_subject_absent
+  register: subject_absent
+
+- name: delete subject - idempotency works
+  aci_contract_subject:
+    <<: *aci_subject_absent
+  register: subject_absent_idempotent
+
+- name: delete subject - cleanup
+  aci_contract_subject:
+    <<: *aci_subject_present_2
+    state: absent
+
+- name: missing params - failure message works
+  aci_contract_subject:
+    <<: *aci_subject_absent
+    subject: "{{ fakevar | default(omit) }}"
+  ignore_errors: yes
+  register: absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - subject_absent_check_mode is changed
+      - subject_absent_check_mode.previous != []
+      - subject_absent_check_mode.proposed == {}
+      - subject_absent is changed
+      - subject_absent.previous == subject_absent_check_mode.previous
+      - subject_absent_idempotent is not changed
+      - subject_absent_idempotent.previous == []
+      - absent_missing_param is failed
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: subject"'
+
+- name: cleanup contract
+  aci_contract:
+    <<: *aci_contract_present
+    state: absent
+  when: contract_present is changed
+
+- name: cleanup tenant
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present is changed

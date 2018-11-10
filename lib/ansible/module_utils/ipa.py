@@ -27,15 +27,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
+import re
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import quote
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import env_fallback
 
 
 class IPAClient(object):
@@ -45,6 +44,7 @@ class IPAClient(object):
         self.protocol = protocol
         self.module = module
         self.headers = None
+        self.timeout = module.params.get('ipa_timeout')
 
     def get_base_url(self):
         return '%s://%s/ipa' % (self.protocol, self.host)
@@ -59,7 +59,7 @@ class IPAClient(object):
                    'Content-Type': 'application/x-www-form-urlencoded',
                    'Accept': 'text/plain'}
         try:
-            resp, info = fetch_url(module=self.module, url=url, data=to_bytes(data), headers=headers)
+            resp, info = fetch_url(module=self.module, url=url, data=to_bytes(data), headers=headers, timeout=self.timeout)
             status_code = info['status']
             if status_code not in [200, 201, 204]:
                 self._fail('login', info['msg'])
@@ -78,13 +78,34 @@ class IPAClient(object):
             err_string = e
         self.module.fail_json(msg='%s: %s' % (msg, err_string))
 
+    def get_ipa_version(self):
+        response = self.ping()['summary']
+        ipa_ver_regex = re.compile(r'IPA server version (\d\.\d\.\d).*')
+        version_match = ipa_ver_regex.match(response)
+        ipa_version = None
+        if version_match:
+            ipa_version = version_match.groups()[0]
+        return ipa_version
+
+    def ping(self):
+        return self._post_json(method='ping', name=None)
+
     def _post_json(self, method, name, item=None):
         if item is None:
             item = {}
         url = '%s/session/json' % self.get_base_url()
-        data = {'method': method, 'params': [[name], item]}
+        data = dict(method=method)
+
+        # TODO: We should probably handle this a little better.
+        if method in ('ping', 'config_show'):
+            data['params'] = [[], {}]
+        elif method == 'config_mod':
+            data['params'] = [[], item]
+        else:
+            data['params'] = [[name], item]
+
         try:
-            resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)), headers=self.headers)
+            resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)), headers=self.headers, timeout=self.timeout)
             status_code = info['status']
             if status_code not in [200, 201, 204]:
                 self._fail(method, info['msg'])
@@ -159,10 +180,11 @@ class IPAClient(object):
 
 def ipa_argument_spec():
     return dict(
-        ipa_prot=dict(type='str', default='https', choices=['http', 'https']),
-        ipa_host=dict(type='str', default='ipa.example.com'),
-        ipa_port=dict(type='int', default=443),
-        ipa_user=dict(type='str', default='admin'),
-        ipa_pass=dict(type='str', required=True, no_log=True),
+        ipa_prot=dict(type='str', default='https', choices=['http', 'https'], fallback=(env_fallback, ['IPA_PROT'])),
+        ipa_host=dict(type='str', default='ipa.example.com', fallback=(env_fallback, ['IPA_HOST'])),
+        ipa_port=dict(type='int', default=443, fallback=(env_fallback, ['IPA_PORT'])),
+        ipa_user=dict(type='str', default='admin', fallback=(env_fallback, ['IPA_USER'])),
+        ipa_pass=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['IPA_PASS'])),
+        ipa_timeout=dict(type='int', default=10, fallback=(env_fallback, ['IPA_TIMEOUT'])),
         validate_certs=dict(type='bool', default=True),
     )

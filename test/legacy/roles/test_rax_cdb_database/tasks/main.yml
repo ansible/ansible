@@ -7,7 +7,7 @@
 - name: Validate results of rax_cdb_database with no args
   assert:
     that:
-      - rax_cdb_database|failed
+      - rax_cdb_database is failed
       - 'rax_cdb_database.msg == "missing required arguments: name,cdb_id"'
 # ============================================================
 
@@ -23,7 +23,7 @@
 - name: Validate results of rax_cdb_database with name
   assert:
     that:
-      - rax_cdb_database|failed
+      - rax_cdb_database is failed
       - 'rax_cdb_database.msg == "missing required arguments: cdb_id"'
 # ============================================================
 
@@ -40,7 +40,7 @@
 - name: Validate results of rax_cdb_database with name and cdb_id
   assert:
     that:
-      - rax_cdb_database|failed
+      - rax_cdb_database is failed
       - rax_cdb_database.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -59,7 +59,7 @@
 - name: Validate results of rax_cdb_database with name, cdb_id and creds
   assert:
     that:
-      - rax_cdb_database|failed
+      - rax_cdb_database is failed
       - rax_cdb_database.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -79,7 +79,7 @@
 - name: Validate rax_cdb_database name, invalid cdb_id, creds and region
   assert:
     that:
-      - rax_cdb_database|failed
+      - rax_cdb_database is failed
 # ============================================================
 
 
@@ -98,8 +98,8 @@
 - name: Validate build
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == '{{ resource_prefix }}-rax_cdb_database'
       - rax_cdb.cdb.status == 'ACTIVE'
 # ============================================================
@@ -119,8 +119,8 @@
 - name: Validate rax_cdb_database name, cdb_id, creds and region
   assert:
     that:
-      - rax_cdb_database|success
-      - rax_cdb_database|changed
+      - rax_cdb_database is successful
+      - rax_cdb_database is changed
       - rax_cdb_database.database.name == "{{ resource_prefix }}-1"
 
 - name: Delete integration 1
@@ -136,8 +136,8 @@
 - name: Validate delete integration 1
   assert:
     that:
-      - rax_cdb_database|success
-      - rax_cdb_database|changed
+      - rax_cdb_database is successful
+      - rax_cdb_database is changed
       - rax_cdb_database.database.name == "{{ resource_prefix }}-1"
 # ============================================================
 
@@ -156,8 +156,8 @@
 - name: Validate rax_cdb_database idempotency 1
   assert:
     that:
-      - rax_cdb_database|success
-      - rax_cdb_database|changed
+      - rax_cdb_database is successful
+      - rax_cdb_database is changed
       - rax_cdb_database.database.name == "{{ resource_prefix }}-2"
 
 - name: Test rax_cdb_database idempotency 2
@@ -172,8 +172,8 @@
 - name: Validate rax_cdb_database idempotency 2
   assert:
     that:
-      - rax_cdb_database|success
-      - not rax_cdb_database|changed
+      - rax_cdb_database is successful
+      - rax_cdb_database is not changed
       - rax_cdb_database.database.name == "{{ resource_prefix }}-2"
 
 - name: Delete integration 2
@@ -189,8 +189,8 @@
 - name: Validate delete integration 2
   assert:
     that:
-      - rax_cdb_database|success
-      - rax_cdb_database|changed
+      - rax_cdb_database is successful
+      - rax_cdb_database is changed
       - rax_cdb_database.database.name == "{{ resource_prefix }}-2"
 # ============================================================
 
@@ -211,7 +211,7 @@
 - name: Validate Delete
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-rax_cdb_database"
 # ============================================================

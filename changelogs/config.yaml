@@ -1,0 +1,13 @@
+---
+release_tag_re: '(v(?:[\d.ab\-]|rc)+)'
+pre_release_tag_re: '(?P<pre_release>(?:[ab]|rc)+\d*)$'
+notesdir: fragments
+prelude_section_name: release_summary
+new_plugins_after_name: removed_features
+sections:
+- ['major_changes', 'Major Changes']
+- ['minor_changes', 'Minor Changes']
+- ['deprecated_features', 'Deprecated Features']
+- ['removed_features', 'Removed Features (previously deprecated)']
+- ['bugfixes', 'Bugfixes']
+- ['known_issues', 'Known Issues']

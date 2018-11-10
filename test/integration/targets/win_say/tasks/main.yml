@@ -1,18 +1,24 @@
+# CI hosts don't have a valid Speech package so we rely on check mode for basic
+# sanity tests
+---
 - name: Warn of impending deployment
   win_say:
     msg: Warning, deployment commencing in 5 minutes, please log out.
+  check_mode: yes
 
 - name: Using a different voice and a start sound
   win_say:
     msg: Warning, deployment commencing in 5 minutes, please log out.
     start_sound_path: C:\Windows\Media\ding.wav
     voice: Microsoft Hazel Desktop
+  check_mode: yes
 
 - name: Example with start and end sound
   win_say:
     msg: New software installed
     start_sound_path: C:\Windows\Media\Windows Balloon.wav
     end_sound_path: C:\Windows\Media\chimes.wav
+  check_mode: yes
 
 - name: Create message file
   win_copy:
@@ -24,6 +30,7 @@
     msg_file: C:\Windows\Temp\win_say_message.txt
     start_sound_path: C:\Windows\Media\Windows Balloon.wav
     end_sound_path: C:\Windows\Media\chimes.wav
+  check_mode: yes
 
 - name: Remove message file
   win_file:
@@ -34,3 +41,4 @@
   win_say:
     speech_speed: 5
     msg: Stay calm and proceed to the closest fire exit.
+  check_mode: yes

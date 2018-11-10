@@ -24,7 +24,9 @@ description:
     the netconf system service running on Junos devices.  This module
     can be used to easily enable the Netconf API. Netconf provides
     a programmatic interface for working with configuration and state
-    resources as defined in RFC 6242.
+    resources as defined in RFC 6242. If the C(netconf_port) is not
+    mentioned in the task by default netconf will be enabled on port 830
+    only.
 extends_documentation_fragment: junos
 options:
   netconf_port:
@@ -48,6 +50,11 @@ options:
     choices: ['present', 'absent']
 notes:
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(network_cli). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
+  - If C(netconf_port) value is not mentioned in task by default it will be enabled on port 830 only.
+    Although C(netconf_port) value can be from 1 through 65535, avoid configuring access on a port
+    that is normally assigned for another service. This practice avoids potential resource conflicts.
 """
 
 EXAMPLES = """
@@ -70,11 +77,12 @@ commands:
 """
 import re
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import commit_configuration, discard_changes
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
@@ -103,10 +111,10 @@ def parse_port(config):
 
 
 def map_config_to_obj(module):
-    cmd = 'show configuration system services netconf'
-    rc, out, err = exec_command(module, cmd)
-    if rc != 0:
-        module.fail_json(msg='unable to retrieve current config', stderr=err)
+    conn = get_connection(module)
+    out = conn.get(command='show configuration system services netconf')
+    if out is None:
+        module.fail_json(msg='unable to retrieve current config')
     config = str(out).strip()
 
     obj = {'state': 'absent'}
@@ -139,25 +147,21 @@ def map_params_to_obj(module):
 
 
 def load_config(module, config, commit=False):
+    conn = get_connection(module)
+    try:
+        resp = conn.edit_config(to_list(config) + ['top'])
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-    exec_command(module, 'configure')
-
-    for item in to_list(config):
-        rc, out, err = exec_command(module, item)
-        if rc != 0:
-            module.fail_json(msg=str(err))
-
-    exec_command(module, 'top')
-    rc, diff, err = exec_command(module, 'show | compare')
-
+    diff = resp.get('diff', '')
     if diff:
         if commit:
-            exec_command(module, 'commit and-quit')
-        else:
-            for cmd in ['rollback 0', 'exit']:
-                exec_command(module, cmd)
+            commit_configuration(module)
 
-    return str(diff).strip()
+        else:
+            discard_changes(module)
+
+    return to_text(diff, errors='surrogate_then_replace').strip()
 
 
 def main():
@@ -174,8 +178,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)

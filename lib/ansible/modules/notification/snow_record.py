@@ -171,7 +171,7 @@ def run_module():
         state=dict(choices=['present', 'absent'],
                    type='str', required=True),
         number=dict(default=None, required=False, type='str'),
-        data=dict(default=None, requried=False, type='dict'),
+        data=dict(default=None, required=False, type='dict'),
         lookup_field=dict(default='number', required=False, type='str'),
         attachment=dict(default=None, required=False, type='str')
     )
@@ -326,6 +326,7 @@ def run_module():
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()

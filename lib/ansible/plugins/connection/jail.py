@@ -36,6 +36,7 @@ import os
 import os.path
 import subprocess
 import traceback
+import ansible.constants as C
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
@@ -58,10 +59,8 @@ class Connection(ConnectionBase):
     # Pipelining may work.  Someone needs to test by setting this to True and
     # having pipelining=True in their ansible.cfg
     has_pipelining = True
-    # Some become_methods may work in v2 (sudo works for other chroot-based
-    # plugins while su seems to be failing).  If some work, check chroot.py to
-    # see how to disable just some methods.
-    become_methods = frozenset()
+
+    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -159,8 +158,12 @@ class Connection(ConnectionBase):
         out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
+                if not os.fstat(in_file.fileno()).st_size:
+                    count = ' count=0'
+                else:
+                    count = ''
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), stdin=in_file)
                 except OSError:
                     raise AnsibleError("jail connection requires dd command in the jail")
                 try:

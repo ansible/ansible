@@ -52,8 +52,8 @@ options:
 requirements:
     - boto3
 extends_documentation_fragment:
-    - aws
-
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -235,7 +235,7 @@ def validate_params(module, aws):
     function_name = module.params['function_name']
 
     # validate function name
-    if not re.search('^[\w\-:]+$', function_name):
+    if not re.search(r'^[\w\-:]+$', function_name):
         module.fail_json(
             msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(function_name)
         )

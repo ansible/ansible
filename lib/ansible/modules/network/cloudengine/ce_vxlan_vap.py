@@ -33,46 +33,33 @@ options:
         description:
             - Specifies a bridge domain ID.
               The value is an integer ranging from 1 to 16777215.
-        required: false
-        default: null
     bind_vlan_id:
         description:
             - Specifies the VLAN binding to a BD(Bridge Domain).
               The value is an integer ranging ranging from 1 to 4094.
-        required: false
-        default: null
     l2_sub_interface:
         description:
             - Specifies an Sub-Interface full name, i.e. "10GE1/0/41.1".
               The value is a string of 1 to 63 case-insensitive characters, spaces supported.
-        required: false
-        default: null
     encapsulation:
         description:
             - Specifies an encapsulation type of packets allowed to pass through a Layer 2 sub-interface.
         choices: ['dot1q', 'default', 'untag', 'qinq', 'none']
-        required: false
-        default: null
     ce_vid:
         description:
             - When I(encapsulation) is 'dot1q', specifies a VLAN ID in the outer VLAN tag.
               When I(encapsulation) is 'qinq', specifies an outer VLAN ID for
               double-tagged packets to be received by a Layer 2 sub-interface.
               The value is an integer ranging from 1 to 4094.
-        required: false
-        default: null
     pe_vid:
         description:
             - When I(encapsulation) is 'qinq', specifies an inner VLAN ID for
               double-tagged packets to be received by a Layer 2 sub-interface.
               The value is an integer ranging from 1 to 4094.
-        required: false
-        default: null
     state:
         description:
             - Determines whether the config should be present or not
               on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
 """
@@ -144,7 +131,7 @@ changed:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_BD_VAP = """
     <filter type="subtree">

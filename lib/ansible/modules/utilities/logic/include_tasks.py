@@ -7,51 +7,80 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'core'
+}
 
 
 DOCUMENTATION = '''
 ---
-author:
-    - "Ansible Core Team (@ansible)"
+author: Ansible Core Team (@ansible)
 module: include_tasks
-short_description: dynamically include a task list.
+short_description: Dynamically include a task list
 description:
-     - Includes a file with a list of tasks to be executed in the current playbook.
+  - Includes a file with a list of tasks to be executed in the current playbook.
 version_added: "2.4"
 options:
+  file:
+    description:
+      - The name of the imported file is specified directly without any other option.
+      - Unlike M(import_tasks), most keywords, including loops and conditionals, apply to this statement.
+    version_added: '2.7'
+  apply:
+    description:
+      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+    version_added: '2.7'
   free-form:
     description:
-      - This action allows you to specify the name of the file directly w/o any other options.
-      - Unlike M(import_tasks) this action will be affected by most keywords, including loops and conditionals.
+      - |
+        Supplying a file name via free-form C(- include_tasks: file.yml) of a file to be included is the equivalent
+        of specifying an argument of I(file).
 notes:
-  - This is really not a module, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a module can.
+  - This is a core feature of the Ansible, rather than a module, and cannot be overridden like a module.
 '''
 
 EXAMPLES = """
-# include task list in play
 - hosts: all
   tasks:
     - debug:
         msg: task1
 
-    - include_tasks: stuff.yml
+    - name: Include task list in play
+      include_tasks: stuff.yaml
 
     - debug:
         msg: task10
 
-# dyanmic include task list in play
 - hosts: all
   tasks:
     - debug:
         msg: task1
 
-    - include_tasks: "{{ hostvar }}.yml"
+    - name: Include task list in play only if the condition is true
+      include_tasks: "{{ hostvar }}.yaml"
       when: hostvar is defined
+
+- name: Apply tags to tasks within included file
+  include_tasks:
+    file: install.yml
+    apply:
+      tags:
+        - install
+  tags:
+    - always
+
+- name: Apply tags to tasks within included file when using free-form
+  include_tasks: install.yml
+  args:
+    apply:
+      tags:
+        - install
+  tags:
+    - always
 """
 
 RETURN = """
-# this module does not return anything except tasks to execute
+# This module does not return anything except tasks to execute.
 """

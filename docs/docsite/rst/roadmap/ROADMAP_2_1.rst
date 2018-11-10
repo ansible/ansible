@@ -1,6 +1,6 @@
-================
-Ansible Core 2.1
-================
+===========
+Ansible 2.1
+===========
 **Target: April**
 
 .. contents:: Topics

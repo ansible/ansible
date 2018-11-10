@@ -1,0 +1,18 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: test that we have an aci apic host, aci username and aci password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- include_tasks: vlan.yml
+  when: "vlan is not defined or (vlan is defined and vlan == 'True')"
+
+- include_tasks: vxlan.yml
+  when: "vxlan is not defined or (vxlan is defined and vxlan == 'True')"
+
+- include_tasks: vsan.yml
+  when: "vsan is not defined or (vsan is defined and vsan == 'True')"

@@ -6,48 +6,21 @@ import re
 import uuid
 from urllib3.response import HTTPResponse
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 from ansible.modules.monitoring import circonus_annotation
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-
-class AnsibleExitJson(Exception):
-    pass
-
-
-class AnsibleFailJson(Exception):
-    pass
-
-
-def exit_json(*args, **kwargs):
-    if 'changed' not in kwargs:
-        kwargs['changed'] = False
-    raise AnsibleExitJson(kwargs)
-
-
-def fail_json(*args, **kwargs):
-    kwargs['failed'] = True
-    raise AnsibleFailJson(kwargs)
-
-
-class TestCirconusAnnotation(unittest.TestCase):
+class TestCirconusAnnotation(ModuleTestCase):
 
     def setUp(self):
+        super(TestCirconusAnnotation, self).setUp()
         self.module = circonus_annotation
 
-        self.mock_exit_fail = patch.multiple(basic.AnsibleModule, exit_json=exit_json, fail_json=fail_json)
-        self.mock_exit_fail.start()
-        self.addCleanup(self.mock_exit_fail.stop)
-
     def tearDown(self):
-        pass
+        super(TestCirconusAnnotation, self).tearDown()
 
     def test_without_required_parameters(self):
         """Failure must occurs when all parameters are missing"""

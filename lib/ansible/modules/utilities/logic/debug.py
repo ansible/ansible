@@ -66,4 +66,10 @@ EXAMPLES = '''
   debug:
     var: hostvars[inventory_hostname]
     verbosity: 4
+
+# Example that prints two lines of messages, but only if there's an environment value set
+- debug:
+    msg:
+      - "Provisioning based on YOUR_KEY which is: '{{ lookup('env', 'YOUR_KEY') }}"
+      - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
 '''

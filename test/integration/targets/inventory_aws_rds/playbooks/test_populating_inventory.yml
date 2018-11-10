@@ -1,0 +1,106 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+
+    - block:
+
+        - set_fact:
+            instance_id: "{{ resource_prefix }}-mariadb"
+
+        - debug: var=groups
+        - name: assert group was populated with inventory but is empty
+          assert:
+            that:
+              - "'aws_rds' in groups"
+              - "not groups.aws_rds"
+
+        # Create new host, refresh inventory, remove host, refresh inventory
+
+        #- name: set connection information for all tasks
+        #  set_fact:
+        #    aws_connection_info: &aws_connection_info
+        #      aws_access_key: '{{ aws_access_key }}'
+        #      aws_secret_key: '{{ aws_secret_key }}'
+        #      security_token: '{{ security_token }}'
+        #      region: '{{ aws_region }}'
+        #  no_log: yes
+
+        - name: Use AWS CLI to create an RDS DB instance
+          command: "aws rds create-db-instance --db-instance-identifier '{{ instance_id }}' --engine 'mariadb' --db-instance-class 'db.t2.micro' --allocated-storage 20 --master-user-password '{{ resource_prefix }}' --master-username 'ansibletestuser'"
+          environment:
+            AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+            AWS_SESSION_TOKEN: "{{ security_token }}"
+            AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+        # TODO: Uncomment once rds_instance has been added
+        #- name: create minimal mariadb instance in default VPC and default subnet group
+        #  rds_instance:
+        #    state: present
+        #    engine: mariadb
+        #    instance_class: db.t2.micro
+        #    storage: 20
+        #    instance_id: 'rds-mariadb-{{ resource_prefix }}'
+        #    master_username: 'ansible-test-user'
+        #    master_password: 'password-{{ resource_prefix }}'
+        #    <<: *aws_connection_info
+        #  register: setup_instance
+
+        - meta: refresh_inventory
+
+        - name: assert group was populated with inventory and is no longer empty
+          assert:
+            that:
+              - "'aws_rds' in groups"
+              - "groups.aws_rds | length == 1"
+              - "groups.aws_rds.0 == '{{ instance_id }}'"
+
+        - name: Use AWS CLI to delete the DB instance
+          command: "aws rds delete-db-instance --db-instance-identifier '{{ instance_id }}' --skip-final-snapshot"
+          ignore_errors: True
+          environment:
+            AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+            AWS_SESSION_TOKEN: "{{ security_token }}"
+            AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+        # TODO: Uncomment once rds_instance has been added
+        #- name: remove mariadb instance
+        #  rds_instance:
+        #    state: absent
+        #    engine: mariadb
+        #    skip_final_snapshot: yes
+        #    instance_id: ansible-rds-mariadb-example
+        #    <<: *aws_connection_info
+
+        - meta: refresh_inventory
+
+        - name: assert group was populated with inventory but is empty
+          assert:
+            that:
+              - "'aws_rds' in groups"
+              - "not groups.aws_rds"
+
+      always:
+
+        - name: Use AWS CLI to delete the DB instance
+          command: "aws rds delete-db-instance --db-instance-identifier '{{ instance_id }}' --skip-final-snapshot"
+          ignore_errors: True
+          environment:
+            AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+            AWS_SESSION_TOKEN: "{{ security_token }}"
+            AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+        # TODO: Uncomment once rds_instance has been added
+        #- name: remove mariadb instance
+        #  rds_instance:
+        #    state: absent
+        #    engine: mariadb
+        #    skip_final_snapshot: yes
+        #    instance_id: ansible-rds-mariadb-example
+        #    <<: *aws_connection_info
+        #  ignore_errors: yes
+        #  when: setup_instance is defined

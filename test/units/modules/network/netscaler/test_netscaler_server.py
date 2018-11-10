@@ -17,8 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests.mock import patch, Mock, MagicMock, call
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.compat.mock import patch, Mock, MagicMock, call
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 import sys
 
@@ -53,12 +54,14 @@ class TestNetscalerServerModule(TestModule):
         cls.nitro_specific_patcher.stop()
 
     def setUp(self):
+        super(TestNetscalerServerModule, self).setUp()
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerServerModule, self).tearDown()
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 
@@ -67,7 +70,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         self.nitro_base_patcher.stop()
@@ -81,7 +84,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -107,7 +110,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -131,7 +134,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -158,7 +161,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -174,6 +177,7 @@ class TestNetscalerServerModule(TestModule):
             get_nitro_client=m,
             server_exists=Mock(side_effect=[False, True]),
             ConfigProxy=Mock(return_value=server_proxy_mock),
+            diff_list=Mock(return_value={}),
             do_state_change=Mock(return_value=Mock(errorcode=0))
         ):
             self.module = netscaler_server
@@ -184,7 +188,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -200,6 +204,7 @@ class TestNetscalerServerModule(TestModule):
             get_nitro_client=m,
             server_exists=Mock(side_effect=[True, False]),
             ConfigProxy=Mock(return_value=server_proxy_mock),
+            diff_list=Mock(return_value={}),
             do_state_change=Mock(return_value=Mock(errorcode=0))
         ):
             self.module = netscaler_server
@@ -210,7 +215,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
             save_config=False,
         ))
@@ -227,6 +232,7 @@ class TestNetscalerServerModule(TestModule):
             get_nitro_client=m,
             server_exists=Mock(side_effect=[False, True]),
             ConfigProxy=Mock(return_value=server_proxy_mock),
+            diff_list=Mock(return_value={}),
             do_state_change=Mock(return_value=Mock(errorcode=0))
         ):
             self.module = netscaler_server
@@ -237,7 +243,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
             save_config=False,
         ))
@@ -264,7 +270,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -281,17 +287,53 @@ class TestNetscalerServerModule(TestModule):
             get_nitro_client=m,
             server_exists=Mock(side_effect=[True, False]),
             ConfigProxy=Mock(return_value=server_proxy_mock),
+            diff_list=Mock(return_value={}),
             do_state_change=Mock(return_value=Mock(errorcode=1, message='Failed on purpose'))
         ):
             self.module = netscaler_server
             result = self.failed()
             self.assertEqual(result['msg'], 'Error when setting disabled state. errorcode: 1 message: Failed on purpose')
 
+    def test_disable_server_graceful(self):
+        set_module_args(dict(
+            nitro_user='user',
+            nitro_pass='pass',
+            nsip='192.0.2.1',
+            state='present',
+            disabled=True,
+            graceful=True
+        ))
+        from ansible.modules.network.netscaler import netscaler_server
+
+        client_mock = Mock()
+
+        m = Mock(return_value=client_mock)
+
+        server_proxy_mock = Mock()
+
+        d = {
+            'graceful': True,
+            'delay': 20,
+        }
+        with patch.multiple(
+            'ansible.modules.network.netscaler.netscaler_server',
+            nitro_exception=self.MockException,
+            get_nitro_client=m,
+            diff_list=Mock(return_value=d),
+            get_immutables_intersection=Mock(return_value=[]),
+            server_exists=Mock(side_effect=[True, True]),
+            ConfigProxy=Mock(return_value=server_proxy_mock),
+            do_state_change=Mock(return_value=Mock(errorcode=0))
+        ):
+            self.module = netscaler_server
+            result = self.exited()
+            self.assertEqual(d, {}, 'Graceful disable options were not discarded from the diff_list with the actual object')
+
     def test_new_server_execution_flow(self):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -323,7 +365,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -357,7 +399,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -391,7 +433,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -425,7 +467,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -459,7 +501,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -495,7 +537,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -531,7 +573,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -567,7 +609,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -603,7 +645,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_server
@@ -630,7 +672,7 @@ class TestNetscalerServerModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_server

@@ -1,0 +1,56 @@
+---
+- debug: msg="START netconf_get sros/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Get complete configuration data (SROS)
+  netconf_get:
+    filter: <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf"/>
+  register: result
+
+- assert:
+    that:
+      - "'urn:nokia.com:sros:ns:yang:sr:conf' in result.stdout"
+      - "'urn:nokia.com:sros:ns:yang:sr:state' not in result.stdout"
+
+- name: Get complete state data (SROS)
+  netconf_get:
+    filter: <state xmlns="urn:nokia.com:sros:ns:yang:sr:state"/>
+  register: result
+
+- assert:
+    that:
+      - "'urn:nokia.com:sros:ns:yang:sr:state' in result.stdout"
+      - "'urn:nokia.com:sros:ns:yang:sr:conf' not in result.stdout"
+
+- name: Get service configuration data from candidate datastore (SROS)
+  netconf_get:
+    source: candidate
+    filter: <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf"><service/></configure>
+    display: json
+  register: result
+
+- assert:
+    that:
+      - "'<service>' in result.stdout"
+
+- name: Get system configuration data from running datastore (SROS)
+  netconf_get:
+    source: running
+    filter: <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf"><system/></configure>
+  register: result
+
+- assert:
+    that:
+      - "'<system>' in result.stdout"
+
+- name: Get complete configuration and state data (SROS)
+  netconf_get:
+  register: result
+
+- assert:
+    that:
+      - "'<service>' in result.stdout"
+      - "'<system>' in result.stdout"
+      - "'urn:nokia.com:sros:ns:yang:sr:conf' in result.stdout"
+      - "'urn:nokia.com:sros:ns:yang:sr:state' in result.stdout"
+
+- debug: msg="END netconf_get sros/basic.yaml on connection={{ ansible_connection }}"

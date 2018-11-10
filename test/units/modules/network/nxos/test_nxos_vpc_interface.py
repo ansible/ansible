@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_vpc_interface
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -31,6 +29,8 @@ class TestNxosVpcModule(TestNxosModule):
     module = nxos_vpc_interface
 
     def setUp(self):
+        super(TestNxosVpcModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vpc_interface.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -41,6 +41,7 @@ class TestNxosVpcModule(TestNxosModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestNxosVpcModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
         self.mock_run_commands.stop()

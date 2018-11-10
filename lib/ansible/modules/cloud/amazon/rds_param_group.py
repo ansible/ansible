@@ -26,6 +26,7 @@ version_added: "1.5"
 short_description: manage RDS parameter groups
 description:
      - Creates, modifies, and deletes RDS parameter groups. This module has a dependency on python-boto >= 2.5.
+requirements: [ boto3 ]
 options:
   state:
     description:
@@ -81,6 +82,7 @@ options:
     description:
       - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3),
         or T for tera (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
+    aliases: [parameters]
   tags:
     description:
       - Dictionary of tags to attach to the parameter group

@@ -1,0 +1,114 @@
+- name: 'Create directory for Node'
+  file:
+    path: /usr/local/lib/nodejs
+    state: directory
+
+- name: 'Download Nodejs'
+  unarchive:
+    src: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yarn/{{ nodejs_path }}.tar.gz'
+    dest: '{{ output_dir }}'
+    remote_src: yes
+    creates: '{{ output_dir }}/{{ nodejs_path }}.tar.gz'
+
+- name: 'Download Yarn'
+  unarchive:
+    src: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yarn/yarn-v{{yarn_version}}.tar.gz'
+    dest: '{{ output_dir }}'
+    remote_src: yes
+    creates: '{{ output_dir }}/yarn-v{{yarn_version}}_pkg.tar.gz'
+
+- name: 'Copy node to directory created earlier'
+  command: "mv {{ output_dir }}/{{ nodejs_path }} /usr/local/lib/nodejs/{{nodejs_path}}"
+
+# Clean up before running tests
+- name: Remove any previous Nodejs modules
+  file:
+    path: '{{output_dir}}/node_modules'
+    state: absent
+
+# Set vars for our test harness
+- vars:
+    #node_bin_path: "/usr/local/lib/nodejs/node-v{{nodejs_version}}/bin"
+    node_bin_path: "/usr/local/lib/nodejs/{{ nodejs_path }}/bin"
+    yarn_bin_path: "{{ output_dir }}/yarn-v{{ yarn_version }}/bin"
+    package: 'iconv-lite'
+  environment:
+    PATH: "{{ node_bin_path }}:{{ansible_env.PATH}}"
+  block:
+
+    # Get the version of Yarn and register to a variable
+    - shell: '{{ yarn_bin_path }}/yarn --version'
+      environment:
+        PATH: '{{ node_bin_path }}:{{ ansible_env.PATH }}'
+      register: yarn_version
+
+    - name: 'Create dummy package.json'
+      copy:
+        src: templates/package.j2
+        dest: '{{ output_dir }}/package.json'
+
+    - name: 'Install all packages.'
+      yarn:
+        path: '{{ output_dir }}'
+        executable: '{{ yarn_bin_path }}/yarn'
+        state: present
+      environment:
+        PATH: '{{ node_bin_path }}:{{ ansible_env.PATH }}'
+
+    - name: 'Install the same package from package.json again.'
+      yarn:
+        path: '{{ output_dir }}'
+        executable: '{{ yarn_bin_path }}/yarn'
+        name: '{{ package }}'
+        state: present
+      environment:
+        PATH: '{{ node_bin_path }}:{{ ansible_env.PATH }}'
+      register: yarn_install
+
+    - assert:
+        that:
+          - not (yarn_install is changed)
+
+    - name: 'Install package with explicit version (older version of package)'
+      yarn:
+        path: '{{ output_dir }}'
+        executable: '{{ yarn_bin_path }}/yarn'
+        name: left-pad
+        version: 1.1.0
+        state: present
+      environment:
+        PATH: '{{ node_bin_path }}:{{ ansible_env.PATH }}'
+      register: yarn_install_old_package
+
+    - assert:
+        that:
+          - yarn_install_old_package is changed
+
+    - name: 'Upgrade old package'
+      yarn:
+        path: '{{ output_dir }}'
+        executable: '{{ yarn_bin_path }}/yarn'
+        name: left-pad
+        state: latest
+      environment:
+        PATH: '{{ node_bin_path }}:{{ ansible_env.PATH }}'
+      register: yarn_update_old_package
+
+    - assert:
+        that:
+          - yarn_update_old_package is changed
+
+    - name: 'Remove a package'
+      yarn:
+        path: '{{ output_dir }}'
+        executable: '{{ yarn_bin_path }}/yarn'
+        name: '{{ package }}'
+        state: absent
+      environment:
+        PATH: '{{ node_bin_path }}:{{ ansible_env.PATH }}'
+      register: yarn_uninstall_package
+
+    - name: 'Assert package removed'
+      assert:
+        that:
+          - yarn_uninstall_package is changed

@@ -1,0 +1,18 @@
+{
+    "kind": "tm:gtm:pool:a:members:membersstate",
+    "name": "foo_gtm_server:bar",
+    "partition": "Common",
+    "fullPath": "/Common/foo_gtm_server:bar",
+    "generation": 398,
+    "selfLink": "https://localhost/mgmt/tm/gtm/pool/a/~Common~foo-pool/members/~Common~foo_gtm_server:bar?ver=13.0.0",
+    "enabled": true,
+    "limitMaxBps": 0,
+    "limitMaxBpsStatus": "disabled",
+    "limitMaxConnections": 0,
+    "limitMaxConnectionsStatus": "disabled",
+    "limitMaxPps": 0,
+    "limitMaxPpsStatus": "disabled",
+    "memberOrder": 1,
+    "monitor": "default",
+    "ratio": 1
+}

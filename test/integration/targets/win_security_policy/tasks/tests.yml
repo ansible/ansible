@@ -32,7 +32,7 @@
 - name: assert change existing key check
   assert:
     that:
-    - change_existing_check|changed
+    - change_existing_check is changed
     - change_existing_actual_check.value == 0
 
 - name: change existing key
@@ -51,7 +51,7 @@
 - name: assert change existing key
   assert:
     that:
-    - change_existing|changed
+    - change_existing is changed
     - change_existing_actual.value == 1
 
 - name: change existing key again
@@ -64,7 +64,7 @@
 - name: assert change existing key again
   assert:
     that:
-    - not change_existing_again|changed
+    - change_existing_again is not changed
     - change_existing_again.value == 1
 
 - name: change existing key with string type
@@ -77,7 +77,7 @@
 - name: assert change existing key with string type
   assert:
     that:
-    - not change_existing_key_with_type|changed
+    - change_existing_key_with_type is not changed
     - change_existing_key_with_type.value == "1"
 
 - name: change existing string key check
@@ -97,7 +97,7 @@
 - name: assert change existing string key check
   assert:
     that:
-    - change_existing_string_check|changed
+    - change_existing_string_check is changed
     - change_existing_string_actual_check.value == "Guest"
 
 - name: change existing string key
@@ -116,7 +116,7 @@
 - name: assert change existing string key
   assert:
     that:
-    - change_existing_string|changed
+    - change_existing_string is changed
     - change_existing_string_actual.value == "New Guest"
 
 - name: change existing string key again
@@ -129,5 +129,58 @@
 - name: assert change existing string key again
   assert:
     that:
-    - not change_existing_string_again|changed
+    - change_existing_string_again is not changed
     - change_existing_string_again.value == "New Guest"
+
+- name: add policy setting
+  win_security_policy:
+    section: Privilege Rights
+    # following key is empty by default
+    key: SeCreateTokenPrivilege
+    # add Guests
+    value: '*S-1-5-32-546'
+    
+- name: get actual policy setting
+  test_win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+  register: add_policy_setting_actual
+  
+- name: assert add policy setting
+  assert:
+    that:
+    - add_policy_setting_actual.value == '*S-1-5-32-546'
+  
+- name: remove policy setting
+  win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+    value: ''
+  diff: yes
+  register: remove_policy_setting
+
+- name: get actual policy setting
+  test_win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+  register: remove_policy_setting_actual
+
+- name: assert remove policy setting
+  assert:
+    that:
+    - remove_policy_setting is changed
+    - remove_policy_setting.diff.prepared == "[Privilege Rights]\n-SeCreateTokenPrivilege = *S-1-5-32-546\n+SeCreateTokenPrivilege = "
+    - remove_policy_setting_actual.value is none
+    
+- name: remove policy setting again
+  win_security_policy:
+    section: Privilege Rights
+    key: SeCreateTokenPrivilege
+    value: ''
+  register: remove_policy_setting_again
+
+- name: assert remove policy setting again
+  assert:
+    that:
+    - remove_policy_setting_again is not changed
+    - remove_policy_setting_again.value == ''

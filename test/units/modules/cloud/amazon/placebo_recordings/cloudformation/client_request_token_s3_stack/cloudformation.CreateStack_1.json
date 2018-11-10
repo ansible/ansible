@@ -1,0 +1,17 @@
+{
+    "status_code": 200,
+    "data": {
+        "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "RequestId": "03fbfc36-b5d0-11e7-ae09-550cfe4b2358",
+            "HTTPHeaders": {
+                "x-amzn-requestid": "03fbfc36-b5d0-11e7-ae09-550cfe4b2358",
+                "date": "Fri, 20 Oct 2017 19:51:07 GMT",
+                "content-length": "393",
+                "content-type": "text/xml"
+            }
+        }
+    }
+}

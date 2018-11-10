@@ -35,33 +35,24 @@ options:
             - Specifies the label of the configuration rollback point to which system configurations are
               expected to roll back.
               The value is an integer that the system generates automatically.
-        required: false
     label:
         description:
             - Specifies a user label for a configuration rollback point.
               The value is a string of 1 to 256 case-sensitive ASCII characters, spaces not supported.
               The value must start with a letter and cannot be presented in a single hyphen (-).
-        required: false
-        default: null
     filename:
         description:
             - Specifies a configuration file for configuration rollback.
               The value is a string of 5 to 64 case-sensitive characters in the format of *.zip, *.cfg, or *.dat,
               spaces not supported.
-        required: false
-        default: null
     last:
         description:
             - Specifies the number of configuration rollback points.
               The value is an integer that ranges from 1 to 80.
-        required: false
-        default: null
     oldest:
         description:
             - Specifies the number of configuration rollback points.
               The value is an integer that ranges from 1 to 80.
-        required: false
-        default: null
     action:
         description:
             - The operation of configuration rollback.
@@ -124,7 +115,7 @@ end_state:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, execute_nc_action, ce_argument_spec, run_commands
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, execute_nc_action, ce_argument_spec, run_commands
 
 
 CE_NC_GET_CHECKPOINT = """

@@ -1,0 +1,285 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: anstest
+    state: absent
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    tenant: anstest
+    state: present
+  register: tenant_present
+
+- name: ensure filter exists for tests to kick off
+  aci_filter: &aci_filter_present
+    <<: *aci_tenant_present
+    filter: anstest
+  register: filter_present
+
+- name: create filter entry - check mode works
+  aci_filter_entry: &aci_entry_present
+    <<: *aci_filter_present
+    entry: anstest
+    description: Ansible Test
+    ether_type: ip
+    ip_protocol: tcp
+    dst_port_start: 80
+    dst_port_end: 88
+  check_mode: yes
+  register: entry_present_check_mode
+
+- name: create filter entry - creation works
+  aci_filter_entry:
+    <<: *aci_entry_present
+  register: entry_present
+
+- name: create filter entry - idempotency works
+  aci_filter_entry:
+    <<: *aci_entry_present
+  register: entry_present_idempotent
+
+- name: update filter entry - update works
+  aci_filter_entry:
+    <<: *aci_entry_present
+    description: Ansible Test Update
+    dst_port_start: 80
+    dst_port_end: 90
+  register: entry_present_update
+
+- name: create filter entry - test different types
+  aci_filter_entry:
+    <<: *aci_filter_present
+    entry: anstest2
+    ether_type: arp
+    arp_flag: arp_reply
+  register: entry_present_2
+
+- name: create filter entry - test different types
+  aci_filter_entry:
+    <<: *aci_filter_present
+    entry: anstest3
+    ether_type: ip
+    ip_protocol: icmp
+    icmp_msg_type: echo
+  register: entry_present_3
+
+- name: create filter entry - test different types
+  aci_filter_entry:
+    <<: *aci_filter_present
+    entry: anstest4
+    ether_type: ip
+    ip_protocol: udp
+    dst_port: 1000
+  register: entry_present_4
+
+- name: missing param - failure message works
+  aci_filter_entry:
+    <<: *aci_filter_present
+  ignore_errors: yes
+  register: present_missing_param
+
+- name: incompatable params - failure message works
+  aci_filter_entry:
+    <<: *aci_entry_present
+    dst_port: 99
+  ignore_errors: yes
+  register: present_incompatible_params
+
+- name: present assertions
+  assert:
+    that:
+      - entry_present_check_mode is changed
+      - entry_present_check_mode.previous == []
+      - 'entry_present_check_mode.sent == {"vzEntry": {"attributes": {"dFromPort": "http","dToPort": "88","descr": "Ansible Test","etherT": "ip","name": "anstest","prot": "tcp"}}}'
+      - entry_present is changed
+      - entry_present.previous == []
+      - entry_present.sent == entry_present_check_mode.sent
+      - entry_present_idempotent is not changed
+      - entry_present_idempotent.previous != []
+      - entry_present_idempotent.sent == {}
+      - entry_present_update is changed
+      - entry_present_update.previous != []
+      - entry_present_update.sent != entry_present_update.proposed
+      - entry_present_2 is changed
+      - 'entry_present_2.sent.vzEntry.attributes == {"arpOpc": "reply",  "etherT": "arp", "name": "anstest2"}'
+      - entry_present_3 is changed
+      - 'entry_present_3.sent.vzEntry.attributes == {"etherT": "ip", "icmpv4T": "echo", "name": "anstest3", "prot": "icmp"}'
+      - entry_present_4 is changed
+      - 'entry_present_4.sent.vzEntry.attributes == {"dFromPort": "1000", "dToPort": "1000", "etherT": "ip", "name": "anstest4", "prot": "udp"}'
+      - present_missing_param is failed
+      - 'present_missing_param.msg == "state is present but all of the following are missing: entry"'
+      - present_incompatible_params is failed
+      - present_incompatible_params.msg.startswith("Parameter")
+
+- name: query tenant filter entry
+  aci_filter_entry: &aci_query_entry
+    <<: *aci_entry_present
+    state: query
+  register: query_tenant_filter_entry
+
+- name: query filter entry
+  aci_filter_entry:
+    <<: *aci_query_entry
+    tenant: "{{ fakevar | default(omit) }}"
+  register: query_filter_entry
+
+- name: query tenant entry
+  aci_filter_entry:
+    <<: *aci_query_entry
+    filter: "{{ fakevar | default(omit) }}"
+  register: query_tenant_entry
+
+- name: query tenant filter
+  aci_filter_entry:
+    <<: *aci_query_entry
+    entry: "{{ fakevar | default(omit) }}"
+  register: query_tenant_filter
+
+- name: query entry
+  aci_filter_entry: &aci_query_entry_2
+    <<: *aci_query_entry
+    tenant: "{{ fakevar | default(omit) }}"
+    filter: "{{ fakevar | default(omit) }}"
+  register: query_entry
+
+- name: query filter
+  aci_filter_entry:
+    <<: *aci_query_entry
+    tenant: "{{ fakevar | default(omit) }}"
+    entry: "{{ fakevar | default(omit) }}"
+  register: query_filter
+
+- name: query tenant
+  aci_filter_entry:
+    <<: *aci_query_entry
+    filter: "{{ fakevar | default(omit) }}"
+    entry: "{{ fakevar | default(omit) }}"
+  register: query_tenant
+
+- name: query all
+  aci_filter_entry:
+    <<: *aci_query_entry_2
+    entry: "{{ fakevar | default(omit) }}"
+  register: query_all
+
+- name: query assertions
+  assert:
+    that:
+      - query_tenant_filter_entry is not changed
+      - query_tenant_filter_entry.current | length == 1
+      - query_tenant_filter_entry.current.0.vzEntry.attributes.name == "anstest"
+      - '"tn-anstest/flt-anstest/e-anstest.json" in query_tenant_filter_entry.url'
+      - query_filter_entry is not changed
+      - query_filter_entry.current.0.vzFilter.attributes.name == "anstest"
+      - query_filter_entry.current.0.vzFilter.children | length == 1
+      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter_entry.filter_string'
+      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_filter_entry.filter_string'
+      - '"class/vzFilter.json" in query_filter_entry.url'
+      - query_tenant_entry is not changed
+      - query_tenant_entry.current | length == 1
+      - query_tenant_entry.current.0.fvTenant.attributes.name == "anstest"
+      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_tenant_entry.filter_string'
+      - '"rsp-subtree-class=vzEntry" in query_tenant_entry.filter_string'
+      - '"tn-anstest.json" in query_tenant_entry.url'
+      - query_tenant_filter is not changed
+      - query_tenant_filter.current | length == 1
+      - query_tenant_filter.current.0.vzFilter.attributes.name == "anstest"
+      - query_tenant_filter.current.0.vzFilter.children | length == 4
+      - '"rsp-subtree-class=vzEntry" in query_tenant_filter.filter_string'
+      - '"tn-anstest/flt-anstest.json" in query_tenant_filter.url'
+      - query_entry is not changed
+      - query_entry.current.0.vzEntry.attributes.name == "anstest"
+      - '"query-target-filter=eq(vzEntry.name, \"anstest\")" in query_entry.filter_string'
+      - '"class/vzEntry.json" in query_entry.url'
+      - query_filter is not changed
+      - query_filter.current.0.vzFilter.attributes.name == "anstest"
+      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter.filter_string'
+      - '"rsp-subtree-class=vzEntry" in query_filter.filter_string'
+      - '"class/vzFilter.json" in query_filter.url'
+      - query_tenant is not changed
+      - query_tenant.current | length == 1
+      - query_tenant.current.0.fvTenant.attributes.name == "anstest"
+      - '"rsp-subtree-class=vzEntry,vzFilter" in query_tenant.filter_string'
+      - '"tn-anstest.json" in query_tenant.url'
+      - query_all is not changed
+      - query_all.current | length > 1
+      - query_all.current.0.vzEntry is defined
+      - '"class/vzEntry.json" in query_all.url'
+
+- name: delete entry - check mode works
+  aci_filter_entry: &aci_entry_absent
+    <<: *aci_entry_present
+    state: absent
+  check_mode: yes
+  register: entry_absent_check_mode
+
+- name: delete entry - deletion works
+  aci_filter_entry:
+    <<: *aci_entry_absent
+  register: entry_absent
+
+- name: delete entry - idempotency works
+  aci_filter_entry:
+    <<: *aci_entry_absent
+  register: entry_absent_idempotent
+
+- name: missing param - failure message works
+  aci_filter_entry:
+    <<: *aci_tenant_present
+    state: absent
+  ignore_errors: yes
+  register: absent_missing_param
+
+- name: cleanup remaining entries
+  aci_filter_entry:
+    <<: *aci_entry_absent
+    entry: "{{ item }}"
+  with_items: ["anstest2", "anstest3", "anstest4"]
+
+- name: absent assertions
+  assert:
+    that:
+      - entry_absent_check_mode is changed
+      - entry_absent_check_mode.previous != []
+      - entry_absent is changed
+      - entry_absent.previous == entry_absent_check_mode.previous
+      - entry_absent.proposed == {}
+      - entry_absent_idempotent is not changed
+      - entry_absent_idempotent.previous == []
+      - absent_missing_param is failed
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: entry, filter"'
+
+- name: cleanup filter
+  aci_filter:
+    <<: *aci_filter_present
+    state: absent
+  when: filter_present is changed
+
+- name: cleanup tenant
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present is changed

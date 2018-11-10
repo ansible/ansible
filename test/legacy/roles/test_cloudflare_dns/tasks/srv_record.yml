@@ -20,8 +20,8 @@
 - name: "Validate: SRV record creation"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '5\t3500\tsrv1.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.data.target == 'srv1.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
@@ -54,8 +54,8 @@
 - name: "Validate: SRV record idempotency"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 # changing the following attributes creates a new record:
 #  weight
@@ -82,8 +82,8 @@
 - name: "Validate: SRV record update"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.ttl == 300
       - cloudflare_dns.result.record.data.target == 'srv1.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
       - cloudflare_dns.result.record.data.port == 3500
@@ -112,8 +112,8 @@
 - name: "Validate: SRV record duplicate (create new record)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '19\t9999\tsrv2.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.data.target == 'srv2.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
@@ -146,8 +146,8 @@
 - name: "Validate: SRV record duplicate (old record present)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
       - cloudflare_dns.result.record.content == '5\t3500\tsrv1.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
       - cloudflare_dns.result.record.ttl == 300
       - cloudflare_dns.result.record.data.target == 'srv1.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
@@ -181,8 +181,8 @@
 - name: "Validate: SRV record duplicate (make new record solo)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == '19\t9999\tsrv2.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.data.target == 'srv2.{{ cloudflare_dns_record  }}.{{ cloudflare_zone }}'
@@ -216,8 +216,8 @@
 - name: "Validate: SRV record duplicate (old record absent)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: SRV record deletion"
   cloudflare_dns:
@@ -239,8 +239,8 @@
 - name: "Validate: SRV record deletion"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
 
 - name: "Test: SRV record deletion succeeded"
   cloudflare_dns:
@@ -262,5 +262,5 @@
 - name: "Validate: SRV record deletion succeeded"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

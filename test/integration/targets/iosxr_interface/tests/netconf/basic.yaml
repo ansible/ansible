@@ -1,0 +1,276 @@
+---
+- debug: msg="START iosxr_interface netconf/basic.yaml"
+
+- name: Setup interface
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+
+- name: Confgure interface
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test-interface-initial
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+
+- name: Confgure interface (idempotent)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test-interface-initial
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Confgure interface parameters
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test-interface
+    speed: 100
+    duplex: half
+    mtu: 512
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"test-interface" in result.xml[0]'
+      - '"100" in result.xml[0]'
+      - '"512" in result.xml[0]'
+
+- name: Change interface parameters
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test-interface-1
+    speed: 10
+    duplex: full
+    mtu: 256
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"test-interface-1" in result.xml[0]'
+      - '"10" in result.xml[0]'
+      - '"256" in result.xml[0]'
+
+- name: Change interface parameters (idempotent)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test-interface-1
+    speed: 10
+    duplex: full
+    mtu: 256
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable interface
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    enabled: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Enable interface
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    enabled: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Confgure second interface (setup)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/0
+    description: test-interface-initial
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/0" in result.xml[0]'
+
+- name: Delete interface aggregate (setup)
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Add interface aggregate
+  iosxr_interface:
+    aggregate:
+      - { name: GigabitEthernet0/0/0/0, mtu: 256, description: test-interface-1 }
+      - { name: GigabitEthernet0/0/0/1, mtu: 516, description: test-interface-2 }
+    speed: 100
+    duplex: full
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"GigabitEthernet0/0/0/0" in result.xml[0]'
+
+- name: Add interface aggregate (idempotent)
+  iosxr_interface:
+    aggregate:
+      - { name: GigabitEthernet0/0/0/0, mtu: 256, description: test-interface-1 }
+      - { name: GigabitEthernet0/0/0/1, mtu: 516, description: test-interface-2 }
+    speed: 100
+    duplex: full
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable interface aggregate
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    enabled: False
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Disable interface aggregate (idempotent)
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    enabled: False
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Enable interface aggregate
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    enabled: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Enable interface aggregate
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    enabled: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: interface aggregate (setup)
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    description: test-interface-initial
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Create interface aggregate
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+        description: test_interface_1
+      - name: GigabitEthernet0/0/0/1
+        description: test_interface_2
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"GigabitEthernet0/0/0/0" in result.xml[0]'
+      - '"GigabitEthernet0/0/0/1" in result.xml[0]'
+      - '"test_interface_1" in result.xml[0]'
+      - '"test_interface_2" in result.xml[0]'
+
+- name: Delete interface aggregate
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Delete interface aggregate (idempotent)
+  iosxr_interface:
+    aggregate:
+      - name: GigabitEthernet0/0/0/0
+      - name: GigabitEthernet0/0/0/1
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END iosxr_interface netconf/basic.yaml"

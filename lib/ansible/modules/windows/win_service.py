@@ -1,39 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# this is a windows documentation stub.  actual code lives in the .ps1
-# file of the same name
+# Copyright: (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_service
-version_added: "1.7"
-short_description: Manages Windows services
+version_added: '1.7'
+short_description: Manage and query Windows services
 description:
-    - Manages Windows services.
-    - For non-Windows targets, use the M(service) module instead.
+- Manage and query Windows services.
+- For non-Windows targets, use the M(service) module instead.
 options:
   dependencies:
     description:
@@ -42,7 +24,8 @@ options:
       service.
     - This works by C(dependency_action) to either add/remove or set the
       services in this list.
-    version_added: "2.3"
+    type: list
+    version_added: '2.3'
   dependency_action:
     description:
     - Used in conjunction with C(dependency) to either add the dependencies to
@@ -50,82 +33,85 @@ options:
     - Remove the dependencies to the existing dependencies.
     - Set the dependencies to only the values in the list replacing the
       existing dependencies.
+    type: str
+    choices: [ add, remove, set ]
     default: set
-    choices:
-    - set
-    - add
-    - remove
-    version_added: "2.3"
+    version_added: '2.3'
   desktop_interact:
     description:
-      - Whether to allow the service user to interact with the desktop.
-      - This should only be set to true when using the LocalSystem username.
-    default: False
-    version_added: "2.3"
+    - Whether to allow the service user to interact with the desktop.
+    - This should only be set to C(yes) when using the C(LocalSystem) username.
+    type: bool
+    default: no
+    version_added: '2.3'
   description:
     description:
       - The description to set for the service.
-    version_added: "2.3"
+    type: str
+    version_added: '2.3'
   display_name:
     description:
       - The display name to set for the service.
-    version_added: "2.3"
+    type: str
+    version_added: '2.3'
   force_dependent_services:
     description:
-    - If True, stopping or restarting a service with dependent services will
+    - If C(yes), stopping or restarting a service with dependent services will
       force the dependent services to stop or restart also.
-    - If False, stopping or restarting a service with dependent services may
+    - If C(no), stopping or restarting a service with dependent services may
       fail.
-    default: False
-    version_added: "2.3"
+    type: bool
+    default: no
+    version_added: '2.3'
   name:
     description:
-      - Name of the service
-    required: true
+    - Name of the service.
+    - If only the name parameter is specified, the module will report
+      on whether the service exists or not without making any changes.
+    required: yes
+    type: str
   path:
     description:
-      - The path to the executable to set for the service.
-    version_added: "2.3"
+    - The path to the executable to set for the service.
+    version_added: '2.3'
   password:
     description:
-      - The password to set the service to start as.
-      - This and the C(username) argument must be supplied together.
-      - If specifying LocalSystem, NetworkService or LocalService this field
-        must be an empty string and not null.
-    version_added: "2.3"
+    - The password to set the service to start as.
+    - This and the C(username) argument must be supplied together.
+    - If specifying C(LocalSystem), C(NetworkService) or C(LocalService) this field
+      must be an empty string and not null.
+    version_added: '2.3'
   start_mode:
     description:
-      - Set the startup type for the service.
-      - C(delayed) added in Ansible 2.3
-    choices:
-      - auto
-      - manual
-      - disabled
-      - delayed
+    - Set the startup type for the service.
+    - A newly created service will default to C(auto).
+    - C(delayed) added in Ansible 2.3
+    choices: [ auto, delayed, disabled, manual ]
   state:
     description:
-      - C(started)/C(stopped)/C(absent)/C(pause) are idempotent actions that will not run
-        commands unless necessary.
-      - C(restarted) will always bounce the service.
-      - C(absent) added in Ansible 2.3
-      - C(pause) was added in Ansible 2.4
-      - Only services that support the paused state can be paused, you can
-        check the return value C(can_pause_and_continue).
-      - You can only pause a service that is already started.
-    choices:
-      - started
-      - stopped
-      - restarted
-      - absent
-      - paused
+    - The desired state of the service.
+    - C(started)/C(stopped)/C(absent)/C(paused) are idempotent actions that will not run
+      commands unless necessary.
+    - C(restarted) will always bounce the service.
+    - C(absent) was added in Ansible 2.3
+    - C(paused) was added in Ansible 2.4
+    - Only services that support the paused state can be paused, you can
+      check the return value C(can_pause_and_continue).
+    - You can only pause a service that is already started.
+    - A newly created service will default to C(stopped).
+    choices: [ absent, paused, started, stopped, restarted ]
   username:
     description:
-      - The username to set the service to start as.
-      - This and the C(password) argument must be supplied together.
-    version_added: "2.3"
+    - The username to set the service to start as.
+    - This and the C(password) argument must be supplied together when using
+      a local or domain account.
+    - Set to C(LocalSystem) to use the SYSTEM account.
+    - A newly created service will default to C(LocalSystem).
+    version_added: '2.3'
 notes:
-    - For non-Windows targets, use the M(service) module instead.
-author: "Chris Hoffman (@chrishoffman)"
+- For non-Windows targets, use the M(service) module instead.
+author:
+- Chris Hoffman (@chrishoffman)
 '''
 
 EXAMPLES = r'''
@@ -140,95 +126,102 @@ EXAMPLES = r'''
     start_mode: auto
     state: started
 
-- name: pause a service
+- name: Pause a service
   win_service:
     name: Netlogon
     state: paused
 
-# a new service will also default to the following values:
+- name: Ensure that WinRM is started when the system has settled
+  win_service:
+    name: WinRM
+    start_mode: delayed
+
+# A new service will also default to the following values:
 # - username: LocalSystem
 # - state: stopped
 # - start_mode: auto
-- name: create a new service
+- name: Create a new service
   win_service:
     name: service name
     path: C:\temp\test.exe
 
-- name: create a new service with extra details
+- name: Create a new service with extra details
   win_service:
     name: service name
     path: C:\temp\test.exe
     display_name: Service Name
     description: A test service description
 
-- name: remove a service
+- name: Remove a service
   win_service:
     name: service name
     state: absent
 
-- name: check if a service is installed
+- name: Check if a service is installed
   win_service:
     name: service name
   register: service_info
 
-- name: set the log on user to a domain account
+- name: Set the log on user to a domain account
   win_service:
     name: service name
     state: restarted
     username: DOMAIN\User
     password: Password
 
-- name: set the log on user to a local account
+- name: Set the log on user to a local account
   win_service:
     name: service name
     state: restarted
     username: .\Administrator
     password: Password
 
-- name: set the log on user to Local System
+- name: Set the log on user to Local System
+  win_service:
+    name: service name
+    state: restarted
+    username: LocalSystem
+    password: ''
+
+- name: Set the log on user to Local System and allow it to interact with the desktop
   win_service:
     name: service name
     state: restarted
     username: LocalSystem
     password: ""
+    desktop_interact: yes
 
-- name: set the log on user to Local System and allow it to interact with the desktop
-  win_service:
-    name: service name
-    state: restarted
-    username: LocalSystem
-    password: ""
-    desktop_interact: True
-
-- name: set the log on user to Network Service
+- name: Set the log on user to Network Service
   win_service:
     name: service name
     state: restarted
     username: NT AUTHORITY\NetworkService
-    password: ""
+    password: ''
 
-- name: set the log on user to Local Service
+- name: Set the log on user to Local Service
   win_service:
     name: service name
     state: restarted
     username: NT AUTHORITY\LocalService
-    password: ""
+    password: ''
 
-- name: set dependencies to ones only in the list
+- name: Set dependencies to ones only in the list
   win_service:
     name: service name
-    dependencies: ['service1', 'service2']
+    dependencies: [ service1, service2 ]
 
-- name: add dependencies to existing dependencies
+- name: Add dependencies to existing dependencies
   win_service:
     name: service name
-    dependencies: ['service1', 'service2']
+    dependencies: [ service1, service2 ]
     dependency_action: add
 
-- name: remove dependencies from existing dependencies
+- name: Remove dependencies from existing dependencies
   win_service:
     name: service name
-    dependencies: ['service1', 'service2']
+    dependencies:
+    - service1
+    - service2
     dependency_action: remove
 '''
 

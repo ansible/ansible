@@ -20,7 +20,7 @@ def is_chroot():
             # check if my file system is the root one
             proc_root = os.stat('/proc/1/root/.')
             is_chroot = my_root.st_ino != proc_root.st_ino or my_root.st_dev != proc_root.st_dev
-        except:
+        except Exception:
             # I'm not root or no proc, fallback to checking it is inode #2
             is_chroot = (my_root.st_ino != 2)
 

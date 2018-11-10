@@ -1,33 +1,19 @@
 #!powershell
-# This file is part of Ansible
-#
-# Copyright 2017, Daniele Lazzari <lazzari@mailup.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 # win_psmodule (Powershell modules Additions/Removal)
 
 $params = Parse-Args $args -supports_check_mode $true
 
-$name = Get-AnsibleParam -obj $params "name" -type "str" -failifempty $true
-$repo = Get-AnsibleParam -obj $params "repository" -type "str" 
-$url = Get-AnsibleParam -obj $params "url" -type "str"
-$state = Get-AnsibleParam -obj $params "state" -type "str" -default "present" -validateset "present", "absent"
-$allow_clobber = Get-AnsibleParam -obj $params "allow_clobber" -type "bool" -default $false
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$repo = Get-AnsibleParam -obj $params -name "repository" -type "str"
+$url = Get-AnsibleParam -obj $params -name "url" -type "str"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
+$allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool" -default $false
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $result = @{"changed" = $false
@@ -108,6 +94,7 @@ Function Install-PsModule {
     param(
       [Parameter(Mandatory=$true)]
       [string]$Name,
+      [string]$Repository,
       [bool]$AllowClobber,
       [bool]$CheckMode
     )
@@ -117,15 +104,27 @@ Function Install-PsModule {
     else {      
       try{
         # Install NuGet Provider if needed
-        Install-NugetProvider -CheckMode $CheckMode
+        Install-NugetProvider -CheckMode $CheckMode;
 
-        # Check Powershell Version (-AllowClobber was introduced in early version only)
-        if ($PsVersion.Minor -ge 1){
-          Install-Module -Name $Name -Force -ErrorAction Stop -Whatif:$CheckMode -AllowClobber:$AllowClobber | out-null
+        $ht = @{
+            Name      = $Name;
+            WhatIf    = $CheckMode;
+            ErrorAction = "Stop";
+            Force     = $true;
+        };
+
+        # If specified, use repository name to select module source
+        if ($Repository) {
+            $ht["Repository"] = "$Repository";
         }
-        else {
-          Install-Module -Name $Name -Force -ErrorAction Stop -Whatif:$CheckMode | out-null
+
+        # Check Powershell Version (-AllowClobber was introduced in PowerShellGet 1.6.0)
+        if ("AllowClobber" -in ((Get-Command PowerShellGet\Install-Module | Select -ExpandProperty Parameters).Keys)) {
+          $ht['AllowClobber'] = $AllowClobber;
         }
+        
+        Install-Module @ht | out-null;
+        
         $result.output = "Module $($Name) installed"
         $result.changed = $true
       }
@@ -174,7 +173,8 @@ if ($state -eq "present") {
     else {
         $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
     }
-    Install-PsModule -Name $Name -CheckMode $check_mode -AllowClobber $allow_clobber
+
+    Install-PsModule -Name $Name -Repository $repo -CheckMode $check_mode -AllowClobber $allow_clobber;
 }
 else {  
     if ($repo) {   

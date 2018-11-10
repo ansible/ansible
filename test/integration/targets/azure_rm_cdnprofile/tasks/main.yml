@@ -1,0 +1,132 @@
+- name: Prepare random number
+  set_fact:
+    cdnprofilename: "cdnprofile{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+
+- name: Create a CDN profile(check mode)
+  azure_rm_cdnprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+      sku: standard_akamai
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+  check_mode: yes
+
+- name: Check there is no CDN profile created
+  azure_rm_cdnprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+  register: fact
+
+- name: Check there is no CDN profile created
+  assert: { that: "{{ fact.cdnprofiles | length }} == 0" }
+
+- name: Create a CDN profile
+  azure_rm_cdnprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+      sku: standard_akamai
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+  register: output
+
+- name: Assert the CDN profile is well created
+  assert:
+    that:
+      - output.changed
+      - output.id != ''
+
+- name: Gather CDN profile facts
+  azure_rm_cdnprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+  register: fact
+
+- name: Assert fact returns the created one
+  assert:
+      that:
+        - "fact.cdnprofiles | length == 1"
+        - fact.cdnprofiles[0].sku == 'Standard_Akamai'
+        - fact.cdnprofiles[0].tags.foo == 'bar'
+
+- name: Create a CDN profile (idempotent)
+  azure_rm_cdnprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+      sku: standard_akamai
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+  register: output
+
+- name: Assert idempotent
+  assert:
+    that:
+      - not output.changed
+
+- name: Update the CDN profile
+  azure_rm_cdnprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+      sku: standard_akamai
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+          baz: qux
+  register: output
+
+- name: Assert the CDN profile is updated
+  assert:
+    that:
+      - output.changed
+
+- name: Delete the CDN profile(check mode)
+  azure_rm_cdnprofile:
+    resource_group: "{{ resource_group }}"
+    name: "{{ cdnprofilename }}"
+    state: absent
+  check_mode: yes
+
+- name: Gather CDN profile facts
+  azure_rm_cdnprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+  register: fact
+
+- name: Assert the CDN is still there
+  assert:
+      that:
+        - "fact.cdnprofiles | length == 1"
+        - fact.cdnprofiles[0].sku == 'Standard_Akamai'
+        - fact.cdnprofiles[0].tags.foo == 'bar'
+        - fact.cdnprofiles[0].tags.baz == 'qux'
+
+- name: Delete the CDN profile
+  azure_rm_cdnprofile:
+    resource_group: "{{ resource_group }}"
+    name: "{{ cdnprofilename }}"
+    state: absent
+  register: output
+
+- name: Assert the CDN profile is well deleted
+  assert:
+    that:
+      - output.changed
+
+- name: Get CDN profile fact
+  azure_rm_cdnprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ cdnprofilename }}"
+  register: fact
+
+- name: Assert fact returns empty
+  assert:
+    that:
+      - "fact.cdnprofiles | length == 0"

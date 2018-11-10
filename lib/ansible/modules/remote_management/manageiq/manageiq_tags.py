@@ -32,15 +32,12 @@ options:
       - absent - tags should not exist,
       - present - tags should exist,
       - list - list current tags.
-    required: False
     choices: ['absent', 'present', 'list']
     default: 'present'
   tags:
     description:
       - tags - list of dictionaries, each includes 'name' and 'category' keys.
       - required if state is present or absent.
-    required: false
-    default: null
   resource_type:
     description:
       - the relevant resource type in manageiq
@@ -48,12 +45,10 @@ options:
     choices: ['provider', 'host', 'vm', 'blueprint', 'category', 'cluster',
         'data store', 'group', 'resource pool', 'service', 'service template',
         'template', 'tenant', 'user']
-    default: null
   resource_name:
     description:
       - the relevant resource name in manageiq
     required: true
-    default: null
 '''
 
 EXAMPLES = '''
@@ -246,18 +241,19 @@ class ManageIQTags(object):
 
 def main():
     actions = {'present': 'assign', 'absent': 'unassign', 'list': 'list'}
+    argument_spec = dict(
+        tags=dict(type='list'),
+        resource_name=dict(required=True, type='str'),
+        resource_type=dict(required=True, type='str',
+                           choices=manageiq_entities().keys()),
+        state=dict(required=False, type='str',
+                   choices=['present', 'absent', 'list'], default='present'),
+    )
+    # add the manageiq connection arguments to the arguments
+    argument_spec.update(manageiq_argument_spec())
 
     module = AnsibleModule(
-        argument_spec=dict(
-            manageiq_connection=dict(required=True, type='dict',
-                                     options=manageiq_argument_spec()),
-            tags=dict(type='list'),
-            resource_name=dict(required=True, type='str'),
-            resource_type=dict(required=True, type='str',
-                               choices=manageiq_entities().keys()),
-            state=dict(required=False, type='str',
-                       choices=['present', 'absent', 'list'], default='present'),
-        ),
+        argument_spec=argument_spec,
         required_if=[
             ('state', 'present', ['tags']),
             ('state', 'absent', ['tags'])

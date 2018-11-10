@@ -60,115 +60,80 @@ options:
       - Install a backup path into the forwarding table and provide
         prefix independent convergence (PIC) in case of a PE-CE link
         failure.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   additional_paths_receive:
     description:
       - Enables the receive capability of additional paths for all of
         the neighbors under this address family for which the capability
         has not been disabled.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   additional_paths_selection:
     description:
       - Configures the capability of selecting additional paths for
         a prefix. Valid values are a string defining the name of
         the route-map.
-    required: false
-    default: null
   additional_paths_send:
     description:
       - Enables the send capability of additional paths for all of
         the neighbors under this address family for which the capability
         has not been disabled.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   advertise_l2vpn_evpn:
     description:
       - Advertise evpn routes.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   client_to_client:
     description:
       - Configure client-to-client route reflection.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   dampen_igp_metric:
     description:
       - Specify dampen value for IGP metric-related changes, in seconds.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   dampening_state:
     description:
       - Enable/disable route-flap dampening.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   dampening_half_time:
     description:
       - Specify decay half-life in minutes for route-flap dampening.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   dampening_max_suppress_time:
     description:
       - Specify max suppress time for route-flap dampening stable route.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   dampening_reuse_time:
     description:
       - Specify route reuse time for route-flap dampening.
         Valid values are integer and keyword 'default'.
-    required: false
   dampening_routemap:
     description:
       - Specify route-map for route-flap dampening. Valid values are a
         string defining the name of the route-map.
-    required: false
-    default: null
   dampening_suppress_time:
     description:
       - Specify route suppress time for route-flap dampening.
         Valid values are integer and keyword 'default'.
-    required: false
-    default: null
   default_information_originate:
     description:
       - Default information originate.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   default_metric:
     description:
       - Sets default metrics for routes redistributed into BGP.
         Valid values are Integer or keyword 'default'
-    required: false
-    default: null
   distance_ebgp:
     description:
       - Sets the administrative distance for eBGP routes.
         Valid values are Integer or keyword 'default'.
-    required: false
-    default: null
   distance_ibgp:
     description:
       - Sets the administrative distance for iBGP routes.
         Valid values are Integer or keyword 'default'.
-    required: false
-    default: null
   distance_local:
     description:
       - Sets the administrative distance for local BGP routes.
         Valid values are Integer or keyword 'default'.
-    required: false
-    default: null
   inject_map:
     description:
       - An array of route-map names which will specify prefixes to
@@ -178,19 +143,14 @@ options:
         the aggregate. For example [['lax_inject_map', 'lax_exist_map'],
         ['nyc_inject_map', 'nyc_exist_map', 'copy-attributes'],
         ['fsd_inject_map', 'fsd_exist_map']].
-    required: false
-    default: null
   maximum_paths:
     description:
       - Configures the maximum number of equal-cost paths for
         load sharing. Valid value is an integer in the range 1-64.
-    default: null
   maximum_paths_ibgp:
     description:
       - Configures the maximum number of ibgp equal-cost paths for
         load sharing. Valid value is an integer in the range 1-64.
-    required: false
-    default: null
   networks:
     description:
       - Networks to configure. Valid value is a list of network
@@ -199,14 +159,10 @@ options:
         optional route-map. For example [['10.0.0.0/16', 'routemap_LA'],
         ['192.168.1.1', 'Chicago'], ['192.168.2.0/24'],
         ['192.168.3.0/24', 'routemap_NYC']].
-    required: false
-    default: null
   next_hop_route_map:
     description:
       - Configure a route-map for valid nexthops. Valid values are a
         string defining the name of the route-map.
-    required: false
-    default: null
   redistribute:
     description:
       - A list of redistribute directives. Multiple redistribute entries
@@ -216,32 +172,23 @@ options:
         A route-map is highly advised but may be optional on some
         platforms, in which case it may be omitted from the array list.
         For example [['direct', 'rm_direct'], ['lisp', 'rm_lisp']].
-    required: false
-    default: null
   suppress_inactive:
     description:
       - Advertises only active routes to peers.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   table_map:
     description:
       - Apply table-map to filter routes downloaded into URIB.
         Valid values are a string.
-    required: false
-    default: null
   table_map_filter:
     description:
       - Filters routes rejected by the route-map and does not download
         them to the RIB.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -267,10 +214,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -337,42 +284,15 @@ def get_value(arg, config, module):
     command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
     has_command_val = command_val_re.search(config)
 
-    if arg == 'inject_map':
-        inject_re = r'.*inject-map\s(?P<inject_map>\S+)\sexist-map\s(?P<exist_map>\S+)-*'
-
+    if arg in ['networks', 'redistribute', 'inject_map']:
         value = []
-        match_inject = re.match(inject_re, config, re.DOTALL)
-        if match_inject:
-            inject_group = match_inject.groupdict()
-            inject_map = inject_group['inject_map']
-            exist_map = inject_group['exist_map']
-            value.append(inject_map)
-            value.append(exist_map)
-
-            inject_map_command = ('inject-map {0} exist-map {1} '
-                                  'copy-attributes'.format(
-                                      inject_group['inject_map'],
-                                      inject_group['exist_map']))
-
-            inject_re = re.compile(r'\s+{0}\s*$'.format(inject_map_command), re.M)
-            if inject_re.search(config):
-                value.append('copy_attributes')
-
-    elif arg == 'networks':
-        value = []
-        for network in command_val_re.findall(config):
-            value.append(network.split())
-
-    elif arg == 'redistribute':
-        value = []
-        if has_command_val:
-            value = has_command_val.group('value').split()
-
-            if value:
-                if len(value) == 3:
-                    value.pop(1)
-                elif len(value) == 4:
-                    value = ['{0} {1}'.format(value[0], value[1]), value[3]]
+        for ele in command_val_re.findall(config):
+            tl = ele.split()
+            if 'exist-map' in tl:
+                tl.remove('exist-map')
+            elif 'route-map' in tl:
+                tl.remove('route-map')
+            value.append(tl)
 
     elif command == 'distance':
         distance_re = r'.*distance\s(?P<d_ebgp>\w+)\s(?P<d_ibgp>\w+)\s(?P<d_local>\w+)'
@@ -408,7 +328,9 @@ def get_value(arg, config, module):
                     value = dampening_group['suppress']
                 elif arg == 'dampening_max_suppress_time':
                     value = dampening_group['max_suppress']
-
+            else:
+                if arg == 'dampening_state':
+                    value = True if 'dampening' in config else False
     elif arg == 'table_map_filter':
         tmf_regex = re.compile(r'\s+table-map.*filter$', re.M)
         value = False
@@ -449,7 +371,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.DOTALL)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.DOTALL)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:
@@ -464,7 +386,14 @@ def get_existing(module, args, warnings):
         if config:
             for arg in args:
                 if arg not in ['asn', 'afi', 'safi', 'vrf']:
-                    existing[arg] = get_value(arg, config, module)
+                    gv = get_value(arg, config, module)
+                    if gv:
+                        existing[arg] = gv
+                    else:
+                        if arg != 'client_to_client' and arg in PARAM_TO_DEFAULT_KEYMAP.keys():
+                            existing[arg] = PARAM_TO_DEFAULT_KEYMAP.get(arg)
+                        else:
+                            existing[arg] = gv
 
             existing['asn'] = existing_asn
             existing['afi'] = module.params['afi']
@@ -540,6 +469,11 @@ def default_existing(existing_value, key, value):
             elif len(maps) == 3:
                 commands.append('no inject-map {0} exist-map {1} '
                                 'copy-attributes'.format(maps[0], maps[1]))
+
+    elif key == 'redistribute':
+        for maps in existing_value:
+            commands.append('no redistribute {0} route-map {1}'.format(maps[0], maps[1]))
+
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
     return commands
@@ -556,7 +490,16 @@ def get_network_command(existing, key, value):
                 command = '{0} {1}'.format(key, inet[0])
             elif len(inet) == 2:
                 command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
-            commands.append(command)
+            if command:
+                commands.append(command)
+    for enet in existing_networks:
+        if enet not in value:
+            if len(enet) == 1:
+                command = 'no {0} {1}'.format(key, enet[0])
+            elif len(enet) == 2:
+                command = 'no {0} {1} route-map {2}'.format(key, enet[0], enet[1])
+            if command:
+                commands.append(command)
     return commands
 
 
@@ -574,22 +517,36 @@ def get_inject_map_command(existing, key, value):
                 command = ('inject-map {0} exist-map {1} '
                            'copy-attributes'.format(maps[0],
                                                     maps[1]))
-            commands.append(command)
+            if command:
+                commands.append(command)
+    for emaps in existing_maps:
+        if emaps not in value:
+            if len(emaps) == 2:
+                command = ('no inject-map {0} exist-map {1}'.format(
+                    emaps[0], emaps[1]))
+            elif len(emaps) == 3:
+                command = ('no inject-map {0} exist-map {1} '
+                           'copy-attributes'.format(emaps[0],
+                                                    emaps[1]))
+            if command:
+                commands.append(command)
     return commands
 
 
 def get_redistribute_command(existing, key, value):
     commands = []
+    existing_rules = existing.get('redistribute', [])
     for rule in value:
-        if rule[1] == 'default':
-            existing_rule = existing.get('redistribute', [])
-            for each_rule in existing_rule:
-                if rule[0] in each_rule:
-                    command = 'no {0} {1} route-map {2}'.format(
-                        key, each_rule[0], each_rule[1])
-                    commands.append(command)
-        else:
-            command = '{0} {1} route-map {2}'.format(key, rule[0], rule[1])
+        if not isinstance(rule, list):
+            rule = [rule]
+        if rule not in existing_rules:
+            command = ('redistribute {0} route-map {1}'.format(
+                rule[0], rule[1]))
+            commands.append(command)
+    for erule in existing_rules:
+        if erule not in value:
+            command = ('no redistribute {0} route-map {1}'.format(
+                erule[0], erule[1]))
             commands.append(command)
     return commands
 
@@ -740,8 +697,19 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
+    mutually_exclusive = [('dampening_state', 'dampening_routemap'),
+                          ('dampening_state', 'dampening_half_time'),
+                          ('dampening_state', 'dampening_suppress_time'),
+                          ('dampening_state', 'dampening_reuse_time'),
+                          ('dampening_state', 'dampening_max_suppress_time'),
+                          ('dampening_routemap', 'dampening_half_time'),
+                          ('dampening_routemap', 'dampening_suppress_time'),
+                          ('dampening_routemap', 'dampening_reuse_time'),
+                          ('dampening_routemap', 'dampening_max_suppress_time')]
+
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
         required_together=[DAMPENING_PARAMS, ['distance_ibgp', 'distance_ebgp', 'distance_local']],
         supports_check_mode=True,
     )
@@ -751,12 +719,6 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-
-    if module.params['dampening_routemap']:
-        for param in DAMPENING_PARAMS:
-            if module.params[param]:
-                module.fail_json(msg='dampening_routemap cannot be used with'
-                                     ' the {0} param'.format(param))
 
     if module.params['advertise_l2vpn_evpn']:
         if module.params['vrf'] == 'default':
@@ -780,7 +742,7 @@ def main():
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
 
-    for arg in ['networks', 'inject_map']:
+    for arg in ['networks', 'inject_map', 'redistribute']:
         if proposed_args.get(arg):
             if proposed_args[arg][0] == 'default':
                 proposed_args[arg] = 'default'

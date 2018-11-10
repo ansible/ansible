@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -23,6 +23,7 @@ options:
   expire:
     description:
       - How long in seconds before the notification expires.
+    type: int
     default: 45
   group:
     description:
@@ -30,11 +31,12 @@ options:
     default: Powershell
   msg:
     description:
-      - The message to appear inside the notification.  May include \n to format the message to appear within the Action Center.
-    default: 'Hello, World!'
+      - The message to appear inside the notification.
+      - May include \n to format the message to appear within the Action Center.
+    default: Hello, World!
   popup:
     description:
-      - If false, the notification will not pop up and will only appear in the Action Center.
+      - If C(no), the notification will not pop up and will only appear in the Action Center.
     type: bool
     default: yes
   tag:

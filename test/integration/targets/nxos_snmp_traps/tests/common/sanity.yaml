@@ -1,0 +1,84 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_traps sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Setup - Remove snmp_traps if configured
+  nxos_snmp_traps: &remove
+    group: all 
+    provider: "{{ connection }}"
+    state: disabled
+
+- block:
+  - name: Configure one snmp trap group 
+    nxos_snmp_traps: &config
+      group: bridge 
+      provider: "{{ connection }}"
+      state: enabled
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Idempotence Check
+    nxos_snmp_traps: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove snmp trap group
+    nxos_snmp_traps: &rem1
+      group: bridge
+      provider: "{{ connection }}"
+      state: disabled
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_traps: *rem1
+    register: result
+
+  - assert: *false
+
+  - name: Configure all snmp trap groups
+    nxos_snmp_traps: &config1
+      group: all
+      provider: "{{ connection }}"
+      state: enabled
+    register: result
+
+  - assert: *true
+
+  - block:
+    # On I2, link command does not work properly
+    # On D1, callhome command does not work properly
+    # skip for these older platforms
+    - name: Idempotence Check
+      nxos_snmp_traps: *config1
+      register: result
+      when: imagetag is not search("I2|D1")
+
+    - assert: *false
+      when: imagetag is not search("I2|D1")
+
+  - name: Cleanup
+    nxos_snmp_traps: *remove
+    register: result
+
+  - assert: *true
+
+  - name: Cleanup Idempotence
+    nxos_snmp_traps: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Cleanup
+    nxos_snmp_traps: *remove
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_snmp_traps sanity test"

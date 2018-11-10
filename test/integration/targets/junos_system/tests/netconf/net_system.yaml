@@ -1,0 +1,37 @@
+---
+- debug: msg="START junos netconf/net_system.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove hostname
+  net_system:
+    hostname: vsrx01
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Set hostname using platform agnostic module
+  net_system:
+    hostname: vsrx01
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<host-name>vsrx01</host-name>' in config.xml"
+
+- name: teardown - remove hostname
+  net_system:
+    hostname: vsrx01
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_system.yaml on connection={{ ansible_connection }}"

@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -29,18 +29,12 @@ options:
     name:
         description:
             - Only show results for a specific security group.
-        default: null
-        required: false
     resource_group:
         description:
             - Limit results by resource group. Required when filtering by name.
-        default: null
-        required: false
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        default: null
-        required: false
 
 extends_documentation_fragment:
     - azure
@@ -178,8 +172,10 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
 
+
 def main():
     AzureRMNetworkInterfaceFacts()
+
 
 if __name__ == '__main__':
     main()

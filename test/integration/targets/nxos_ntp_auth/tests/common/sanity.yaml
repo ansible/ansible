@@ -1,0 +1,144 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_ntp_auth sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Configure text ntp authentication
+  nxos_ntp_auth: &setup
+    key_id: 32
+    md5string: hello
+    provider: "{{ connection }}"
+    state: absent
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure text ntp authentication
+    nxos_ntp_auth: &configure_text
+      key_id: 32
+      md5string: hello
+      authentication: off
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Remove text ntp authentication
+    nxos_ntp_auth: &remove_text
+      key_id: 32
+      md5string: hello
+      authentication: off
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: Configure encrypt ntp authentication
+    nxos_ntp_auth: &configure_encrypt
+      key_id: 32
+      md5string: hello
+      auth_type: encrypt
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure encrypt ntp authentication"
+    nxos_ntp_auth: *configure_encrypt
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Turn on authentication
+    nxos_ntp_auth: &authon
+      authentication: on
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Turn on authentication"
+    nxos_ntp_auth: *authon
+    register: result
+
+  - assert: *false
+
+  - name: Turn off authentication
+    nxos_ntp_auth: &authoff
+      authentication: off
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Turn off authentication"
+    nxos_ntp_auth: *authoff
+    register: result
+
+  - assert: *false
+
+  - name: Add trusted key
+    nxos_ntp_auth: &tkey
+      key_id: 32
+      trusted_key: true
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Add trusted key"
+    nxos_ntp_auth: *tkey
+    register: result
+
+  - assert: *false
+
+  - name: Remove trusted key
+    nxos_ntp_auth: &rtkey
+      key_id: 32
+      trusted_key: false
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Remove trusted key"
+    nxos_ntp_auth: *rtkey
+    register: result
+
+  - assert: *false
+
+  - name: Remove encrypt ntp authentication
+    nxos_ntp_auth: &remove_encrypt
+      key_id: 32
+      md5string: hello
+      auth_type: encrypt
+      authentication: on
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Remove encrypt ntp authentication"
+    nxos_ntp_auth: *remove_encrypt
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Cleanup ntp auth config
+    nxos_ntp_auth: *setup
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_ntp_auth sanity test"

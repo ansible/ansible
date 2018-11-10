@@ -37,7 +37,7 @@ options:
     use_packages:
         description:
             - use packages instead of ports whenever available
-        choices: [ 'yes', 'no' ]
+        type: bool
         required: false
         default: yes
 author: "berenddeboer (@berenddeboer)"
@@ -138,7 +138,7 @@ def remove_packages(module, packages):
             name_without_digits = re.sub('[0-9]', '', package)
             rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path,
                                                               shlex_quote(name_without_digits)),
-                                                              use_unsafe_shell=True)
+                                              use_unsafe_shell=True)
             if query_package(module, package):
                 module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
@@ -163,10 +163,10 @@ def install_packages(module, packages, use_packages):
             module.run_command("pkg install -y portupgrade")
         portinstall_path = module.get_bin_path('portinstall', True)
 
-    if use_packages == "yes":
-        portinstall_params="--use-packages"
+    if use_packages:
+        portinstall_params = "--use-packages"
     else:
-        portinstall_params=""
+        portinstall_params = ""
 
     for package in packages:
         if query_package(module, package):
@@ -193,10 +193,10 @@ def install_packages(module, packages, use_packages):
 
 def main():
     module = AnsibleModule(
-        argument_spec    = dict(
-            state        = dict(default="present", choices=["present","absent"]),
-            name         = dict(aliases=["pkg"], required=True),
-            use_packages = dict(type='bool', default='yes')))
+        argument_spec=dict(
+            state=dict(default="present", choices=["present", "absent"]),
+            name=dict(aliases=["pkg"], required=True),
+            use_packages=dict(type='bool', default='yes')))
 
     p = module.params
 

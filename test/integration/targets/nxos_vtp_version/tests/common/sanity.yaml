@@ -1,12 +1,14 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_vtp_version sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_vtp_version sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
   - name: enable feature vtp
     nxos_feature:
       feature: vtp
-      state: enabled
       provider: "{{ connection }}"
+      state: enabled
 
   - name: configure vtp version
     nxos_vtp_version: &configure
@@ -30,7 +32,7 @@
   - name: disable feature vtp
     nxos_feature:
       feature: vtp
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_vtp_version sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_vtp_version sanity test"

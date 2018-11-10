@@ -1,0 +1,51 @@
+# Test code for the vmware_local_user_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Commenting local user testcases as older vcsim docker image
+# does not support this.
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+# Local user manager works only with standalone ESXi server
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?esx=1
+  register: vcsim_instance
+
+- debug:
+    var: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: Gather facts about users
+  vmware_local_user_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: False
+  register: all_user_facts
+
+- name: ensure user facts are gathered
+  assert:
+    that:
+        - not all_user_facts.changed
+        - all_user_facts.local_user_facts is defined

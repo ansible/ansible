@@ -16,7 +16,7 @@ DOCUMENTATION = """
       remote_addr:
         description:
             - Container identifier
-        default: The set user as per docker's configuration
+        default: inventory_hostname
         vars:
             - name: ansible_host
             - name: ansible_lxd_host
@@ -31,7 +31,7 @@ DOCUMENTATION = """
 
 import os
 from distutils.spawn import find_executable
-from subprocess import call, Popen, PIPE
+from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_text
@@ -43,6 +43,7 @@ class Connection(ConnectionBase):
 
     transport = "lxd"
     has_pipelining = True
+    default_user = 'root'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -102,7 +103,8 @@ class Connection(ConnectionBase):
 
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
 
-        call(local_cmd)
+        process = Popen(local_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        process.communicate()
 
     def fetch_file(self, in_path, out_path):
         """ fetch a file from lxd to local """
@@ -114,7 +116,8 @@ class Connection(ConnectionBase):
 
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
 
-        call(local_cmd)
+        process = Popen(local_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        process.communicate()
 
     def close(self):
         """ close the connection (nothing to do here) """

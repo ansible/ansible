@@ -1,0 +1,24 @@
+---
+- name: "Unconfigure VDC setting limit-resource module-type f3"
+  nxos_config:
+    commands:
+      - 'terminal dont-ask ; vdc {{ vdcid }} ;  no limit-resource module-type f3'
+    match: none
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: Previous command is asynchronous and can take a while.  Allow time for it to complete
+  pause:
+    seconds: 45
+
+- name: "Configure VDC setting allocate interface unallocated-interfaces"
+  nxos_config: &allocate
+    commands:
+      - 'terminal dont-ask ; vdc {{ vdcid }} ; allocate interface unallocated-interfaces'
+    match: none
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: Previous command is asynchronous can take a while.  Allow time for it to complete
+  pause:
+    seconds: 45

@@ -1,0 +1,20 @@
+plugin: aws_ec2
+aws_access_key_id: '{{ aws_access_key }}'
+aws_secret_access_key: '{{ aws_secret_key }}'
+aws_security_token: '{{ security_token }}'
+regions:
+  - '{{ aws_region }}'
+filters:
+  tag:Name:
+    - '{{ resource_prefix }}'
+keyed_groups:
+  - key: 'security_groups|json_query("[].group_id")'
+    prefix: 'security_groups'
+  - key: 'tags'
+    prefix: 'tag'
+  - prefix: 'arch'
+    key: "architecture"
+compose:
+  test_compose_var_sum: tags.tag1 + tags.tag2
+groups:
+  tag_with_name_key: "'Name' in (tags | list)"

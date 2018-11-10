@@ -1,0 +1,103 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: "Setup"
+  nxos_aaa_server: &remove
+    server_type: radius
+    deadtime: default
+    server_timeout: default
+    directed_request: default
+    provider: "{{ connection }}"
+    state: default
+  ignore_errors: yes
+
+- block:
+  - name: "Configure radius server defaults"
+    nxos_aaa_server: &configure_default_radius
+      server_type: radius
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_default_radius
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Configure radius server non defaults"
+    nxos_aaa_server: &configure_radius_non_default
+      server_type: radius
+      server_timeout: 9
+      deadtime: 20
+      directed_request: enabled
+      provider: "{{ connection }}"
+      state: present
+    register: result
+  
+  - assert: &true
+     that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_radius_non_default
+    register: result
+
+  - assert: *false
+
+  - name: "Remove radius server configuration"
+    nxos_aaa_server: *remove
+    register: result
+
+  - assert: *true
+
+  - name: "Configure radius server with global key"
+    nxos_aaa_server: &configure_radius_global_key
+      server_type: radius
+      encrypt_type: 7
+      global_key: test_key
+      provider: "{{ connection }}"
+      state: present
+    register: result
+   
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *configure_radius_global_key
+    register: result
+
+  - assert: *false
+
+  - name: "Remove radius server configuration"
+    nxos_aaa_server: &rad_def
+      server_type: radius
+      deadtime: default
+      server_timeout: default
+      global_key: default
+      directed_request: default
+      provider: "{{ connection }}"
+      state: default
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *rad_def
+    register: result
+
+  - assert: *false
+
+  rescue:
+
+  - debug: msg="connection={{ ansible_connection }} nxos_aaa_server failure detected"
+
+  always:
+  - name: "Remove radius server configuration"
+    nxos_aaa_server: *remove
+    register: result
+
+- debug: msg="END connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"

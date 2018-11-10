@@ -42,7 +42,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg.startswith("state is present but the following are missing: handler")'
+           - 'result.msg.startswith("state is present but all of the following are missing: handler")'
 
     # ============================================================
     - name: test with all module required variables but no region
@@ -115,7 +115,7 @@
     - name: assert lambda upload succeeded
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
 
     - name: test lambda works
       execute_lambda:
@@ -131,7 +131,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
            - 'result.result.output.message == "hello Mr Ansible Tests"'
 
     # ============================================================
@@ -157,7 +157,7 @@
     - name: assert lambda fails with proper message
       assert:
         that:
-           - 'result|failed'
+           - 'result is failed'
            - 'result.msg != "MODULE FAILURE"'
            - 'result.changed == False'
            - '"requires at least one security group and one subnet" in result.msg'
@@ -188,7 +188,7 @@
     - name: assert lambda remains as before
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
            - 'result.changed == False'
 
 
@@ -212,7 +212,7 @@
     - name: assert lambda upload succeeded
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
            - 'result.changed == True'
 
     - name: test lambda works
@@ -229,7 +229,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
            - 'result.result.output.message == "hello Mr Ansible Tests. I think you are great!!"'
 
     # ============================================================
@@ -250,7 +250,7 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - 'result|failed'
+           - 'result is failed'
            - 'result.changed == False'
 
     # ============================================================
@@ -267,7 +267,7 @@
     - name: assert state=absent
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
            - 'result.changed == True'
 
     # ============================================================
@@ -331,24 +331,24 @@
     - name: assert lambda manages to respond as expected
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
 
     - name: wait for async job 1
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 2
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 3
       async_status: jid={{ async_3.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
 
@@ -402,24 +402,24 @@
     - name: assert lambda creation has succeeded
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
 
     - name: wait for async job 1
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 2
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 3
       async_status: jid={{ async_3.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
 
@@ -446,5 +446,5 @@
     - name: assert state=absent
       assert:
         that:
-           - 'not result|failed'
+           - 'result is not failed'
            - 'result.changed == False'

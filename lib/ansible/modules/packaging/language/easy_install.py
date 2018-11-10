@@ -25,14 +25,10 @@ options:
     description:
       - A Python library name
     required: true
-    default: null
-    aliases: []
   virtualenv:
     description:
       - an optional I(virtualenv) directory path to install into. If the
         I(virtualenv) does not exist, it is created automatically
-    required: false
-    default: null
   virtualenv_site_packages:
     version_added: "1.1"
     description:
@@ -41,15 +37,13 @@ options:
         changed on an already existing virtual environment it will not
         have any effect, the environment must be deleted and newly
         created.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   virtualenv_command:
     version_added: "1.1"
     description:
       - The command to create the virtual environment with. For example
         C(pyvenv), C(virtualenv), C(virtualenv2).
-    required: false
     default: virtualenv
   executable:
     description:
@@ -59,13 +53,10 @@ options:
         and 3.3 installations in the system and you want to run easy_install
         for the Python 3.3 installation.
     version_added: "1.3"
-    required: false
-    default: null
   state:
     version_added: "2.0"
     description:
       - The desired state of the library. C(latest) ensures that the latest version is installed.
-    required: false
     choices: [present, latest]
     default: present
 notes:

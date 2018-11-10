@@ -21,9 +21,10 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.vyos import vyos_facts
-from .vyos_module import TestVyosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .vyos_module import TestVyosModule, load_fixture
 
 
 class TestVyosFactsModule(TestVyosModule):
@@ -31,10 +32,12 @@ class TestVyosFactsModule(TestVyosModule):
     module = vyos_facts
 
     def setUp(self):
+        super(TestVyosFactsModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.vyos.vyos_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestVyosFactsModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
@@ -60,7 +63,7 @@ class TestVyosFactsModule(TestVyosModule):
         facts = result.get('ansible_facts')
         self.assertEqual(len(facts), 5)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
-        self.assertEqual(facts['ansible_net_version'], 'VyOS')
+        self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
     def test_vyos_facts_not_all(self):
         set_module_args(dict(gather_subset='!all'))
@@ -68,7 +71,7 @@ class TestVyosFactsModule(TestVyosModule):
         facts = result.get('ansible_facts')
         self.assertEqual(len(facts), 5)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
-        self.assertEqual(facts['ansible_net_version'], 'VyOS')
+        self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
     def test_vyos_facts_exclude_most(self):
         set_module_args(dict(gather_subset=['!neighbors', '!config']))
@@ -76,7 +79,7 @@ class TestVyosFactsModule(TestVyosModule):
         facts = result.get('ansible_facts')
         self.assertEqual(len(facts), 5)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
-        self.assertEqual(facts['ansible_net_version'], 'VyOS')
+        self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
     def test_vyos_facts_invalid_subset(self):
         set_module_args(dict(gather_subset='cereal'))

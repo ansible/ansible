@@ -80,8 +80,9 @@ commands:
 '''
 import re
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -97,23 +98,6 @@ def execute_show_command(command, module):
     return run_commands(module, cmds)[0]
 
 
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
-
-
 def get_interface_mode(interface, intf_type, module):
     command = 'show interface {0}'.format(interface)
     interface = {}
@@ -121,10 +105,18 @@ def get_interface_mode(interface, intf_type, module):
 
     if intf_type in ['ethernet', 'portchannel']:
         body = execute_show_command(command, module)
-        interface_table = body['TABLE_interface']['ROW_interface']
-        mode = str(interface_table.get('eth_mode', 'layer3'))
-        if mode == 'access' or mode == 'trunk':
-            mode = 'layer2'
+        try:
+            interface_table = body['TABLE_interface']['ROW_interface']
+        except KeyError:
+            return mode
+
+        if interface_table and isinstance(interface_table, dict):
+            mode = str(interface_table.get('eth_mode', 'layer3'))
+            if mode == 'access' or mode == 'trunk':
+                mode = 'layer2'
+        else:
+            return mode
+
     elif intf_type == 'loopback' or intf_type == 'svi':
         mode = 'layer3'
     return mode
@@ -150,8 +142,8 @@ def get_interface_info(interface, module):
     if not interface.startswith('loopback'):
         interface = interface.capitalize()
 
-    command = 'show run | section interface.{0}'.format(interface)
-    vrf_regex = ".*vrf\s+member\s+(?P<vrf>\S+).*"
+    command = 'show run interface {0}'.format(interface)
+    vrf_regex = r".*vrf\s+member\s+(?P<vrf>\S+).*"
 
     try:
         body = execute_show_command(command, module)
@@ -191,12 +183,14 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     vrf = module.params['vrf']
     interface = module.params['interface'].lower()
     state = module.params['state']
+
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     current_vrfs = get_vrf_list(module)
     if vrf not in current_vrfs:
@@ -204,7 +198,7 @@ def main():
                         "Use nxos_vrf to fix this.")
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and module.params['provider']['transport'] == 'cli'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg="interface does not exist on switch. Verify "
                                  "switch platform or create it first with "

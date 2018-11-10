@@ -48,13 +48,10 @@ import time
 from optparse import OptionParser
 import subprocess
 import ConfigParser
+import json
 
 from six import iteritems
 
-try:
-    import json
-except:
-    import simplejson as json
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 default_ini_file = os.path.join(base_dir, "spacewalk.ini")

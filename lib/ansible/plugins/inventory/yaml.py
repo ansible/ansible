@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     inventory: yaml
     version_added: "2.4"
-    short_description: Uses a specifically YAML file as inventory source.
+    short_description: Uses a specific YAML file as an inventory source.
     description:
         - "YAML based inventory, starts with the 'all' group and has hosts/vars/children entries."
         - Host entries can have sub-entries defined, which will be treated as variables.
@@ -18,10 +18,19 @@ DOCUMENTATION = '''
         - It takes the place of the previously hardcoded YAML inventory.
         - To function it requires being whitelisted in configuration.
     options:
-        yaml_extensions:
-            description: list of 'valid' extensions for files containing YAML
-            type: list
-            default: ['.yaml', '.yml', '.json']
+      yaml_extensions:
+        description: list of 'valid' extensions for files containing YAML
+        type: list
+        default: ['.yaml', '.yml', '.json']
+        env:
+          - name: ANSIBLE_YAML_FILENAME_EXT
+          - name: ANSIBLE_INVENTORY_PLUGIN_EXTS
+        ini:
+          - key: yaml_valid_extensions
+            section: defaults
+          - section: inventory_plugin_yaml
+            key: yaml_valid_extensions
+
 '''
 EXAMPLES = '''
 all: # keys must be unique, i.e. only one 'hosts' per group
@@ -50,14 +59,12 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 '''
 
 import os
-from collections import MutableMapping
 
-from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
-from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
+from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 
 class InventoryModule(BaseFileInventoryPlugin):
@@ -73,7 +80,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         valid = False
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
-            if not ext or ext in C.YAML_FILENAME_EXTENSIONS:
+            if not ext or ext in self.get_option('yaml_extensions'):
                 valid = True
         return valid
 
@@ -81,9 +88,10 @@ class InventoryModule(BaseFileInventoryPlugin):
         ''' parses the inventory file '''
 
         super(InventoryModule, self).parse(inventory, loader, path)
+        self.set_options()
 
         try:
-            data = self.loader.load_from_file(path)
+            data = self.loader.load_from_file(path, cache=False)
         except Exception as e:
             raise AnsibleParserError(e)
 
@@ -104,36 +112,41 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
 
-        self.inventory.add_group(group)
+        if isinstance(group_data, (MutableMapping, type(None))):
 
-        if isinstance(group_data, MutableMapping):
-            # make sure they are dicts
-            for section in ['vars', 'children', 'hosts']:
-                if section in group_data:
-                    # convert strings to dicts as these are allowed
-                    if isinstance(group_data[section], string_types):
-                        group_data[section] = {group_data[section]: None}
+            self.inventory.add_group(group)
 
-                    if not isinstance(group_data[section], MutableMapping):
-                        raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
-                                                 (section, group, type(group_data[section])))
+            if group_data is not None:
+                # make sure they are dicts
+                for section in ['vars', 'children', 'hosts']:
+                    if section in group_data:
+                        # convert strings to dicts as these are allowed
+                        if isinstance(group_data[section], string_types):
+                            group_data[section] = {group_data[section]: None}
 
-            for key in group_data:
-                if key == 'vars':
-                    for var in group_data['vars']:
-                        self.inventory.set_variable(group, var, group_data['vars'][var])
+                        if not isinstance(group_data[section], (MutableMapping, type(None))):
+                            raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
+                                                     (section, group, type(group_data[section])))
 
-                elif key == 'children':
-                    for subgroup in group_data['children']:
-                        self._parse_group(subgroup, group_data['children'][subgroup])
-                        self.inventory.add_child(group, subgroup)
+                for key in group_data:
+                    if key == 'vars':
+                        for var in group_data['vars']:
+                            self.inventory.set_variable(group, var, group_data['vars'][var])
 
-                elif key == 'hosts':
-                    for host_pattern in group_data['hosts']:
-                        hosts, port = self._parse_host(host_pattern)
-                        self.populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
-                else:
-                    self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+                    elif key == 'children':
+                        for subgroup in group_data['children']:
+                            self._parse_group(subgroup, group_data['children'][subgroup])
+                            self.inventory.add_child(group, subgroup)
+
+                    elif key == 'hosts':
+                        for host_pattern in group_data['hosts']:
+                            hosts, port = self._parse_host(host_pattern)
+                            self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
+                    else:
+                        self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+
+        else:
+            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
 
     def _parse_host(self, host_pattern):
         '''
@@ -142,28 +155,3 @@ class InventoryModule(BaseFileInventoryPlugin):
         (hostnames, port) = self._expand_hostpattern(host_pattern)
 
         return hostnames, port
-
-    def _expand_hostpattern(self, hostpattern):
-        '''
-        Takes a single host pattern and returns a list of hostnames and an
-        optional port number that applies to all of them.
-        '''
-        # Can the given hostpattern be parsed as a host with an optional port
-        # specification?
-
-        try:
-            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except:
-            # not a recognizable host pattern
-            pattern = hostpattern
-            port = None
-
-        # Once we have separated the pattern, we expand it into list of one or
-        # more hostnames, depending on whether it contains any [x:y] ranges.
-
-        if detect_range(pattern):
-            hostnames = expand_hostname_range(pattern)
-        else:
-            hostnames = [pattern]
-
-        return (hostnames, port)

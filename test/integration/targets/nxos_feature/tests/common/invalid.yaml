@@ -1,5 +1,5 @@
 ---
-- debug: msg="START {{ connection.transport }}/invalid.yaml"
+- debug: msg="START connection={{ ansible_connection }}/invalid.yaml"
 
 - name: configure invalid feature name
   nxos_feature:
@@ -12,4 +12,4 @@
     that:
       - result.failed == true
 
-- debug: msg="END {{ connection.transport }}/invalid.yaml"
+- debug: msg="END connection={{ ansible_connection }}/invalid.yaml"

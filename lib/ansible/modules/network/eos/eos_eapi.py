@@ -47,16 +47,14 @@ options:
         when the value is set to False, the HTTP protocol is disabled.
         By default, when eAPI is first configured, the HTTP protocol is
         disabled.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases: ['enable_http']
   http_port:
     description:
       - Configures the HTTP port that will listen for connections when
         the HTTP transport protocol is enabled.  This argument accepts
         integer values in the valid range of 1 to 65535.
-    required: false
     default: 80
   https:
     description:
@@ -66,16 +64,14 @@ options:
         when the value is set to False, the HTTPS protocol is disabled.
         By default, when eAPI is first configured, the HTTPS protocol is
         enabled.
-    required: false
-    default: yes
-    choices: ['yes', 'no']
-    aliases: ['enable_http']
+    type: bool
+    default: 'yes'
+    aliases: ['enable_https']
   https_port:
     description:
       - Configures the HTTP port that will listen for connections when
         the HTTP transport protocol is enabled.  This argument accepts
         integer values in the valid range of 1 to 65535.
-    required: false
     default: 443
   local_http:
     description:
@@ -85,16 +81,14 @@ options:
         is enabled and restricted to connections from localhost only.  When
         the value is set to False, the HTTP local protocol is disabled.
       - Note is value is independent of the C(http) argument
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases: ['enable_local_http']
   local_http_port:
     description:
       - Configures the HTTP port that will listen for connections when
         the HTTP transport protocol is enabled.  This argument accepts
         integer values in the valid range of 1 to 65535.
-    required: false
     default: 8080
   socket:
     description:
@@ -104,9 +98,8 @@ options:
         requests.  When the value is set to False, the UDS will not be
         available to handle requests.  By default when eAPI is first
         configured, the UDS is disabled.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases: ['enable_socket']
   vrf:
     description:
@@ -114,7 +107,6 @@ options:
         in the specified VRF.  By default, eAPI transports will listen
         for connections in the global table.  This value requires the
         VRF to already be created otherwise the task will fail.
-    required: false
     default: default
     version_added: "2.2"
   config:
@@ -126,8 +118,6 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: nul
     version_added: "2.2"
   state:
     description:
@@ -135,7 +125,6 @@ options:
         on the remote device.  When this argument is set to C(started),
         eAPI is enabled to receive requests and when this argument is
         C(stopped), eAPI is disabled and will not receive requests.
-    required: false
     default: started
     choices: ['started', 'stopped']
 """
@@ -183,9 +172,10 @@ import re
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.eos import run_commands, load_config
+from ansible.module_utils.network.eos.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+
 
 def check_transport(module):
     transport = module.params['transport']
@@ -194,30 +184,44 @@ def check_transport(module):
     if 'eapi' in (transport, provider_transport):
         module.fail_json(msg='eos_eapi module is only supported over cli transport')
 
+
 def validate_http_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
+
 
 def validate_https_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
 
+
 def validate_local_http_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
 
+
 def validate_vrf(value, module):
     out = run_commands(module, ['show vrf'])
-    configured_vrfs = re.findall('^\s+(\w+)(?=\s)', out[0], re.M)
+    configured_vrfs = []
+    lines = out[0].strip().splitlines()[3:]
+    for l in lines:
+        if not l:
+            continue
+        splitted_line = re.split(r'\s{2,}', l.strip())
+        if len(splitted_line) > 2:
+            configured_vrfs.append(splitted_line[0])
+
     configured_vrfs.append('default')
     if value not in configured_vrfs:
         module.fail_json(msg='vrf `%s` is not configured on the system' % value)
+
 
 def map_obj_to_commands(updates, module, warnings):
     commands = list()
     want, have = updates
 
-    needs_update = lambda x: want.get(x) is not None and (want.get(x) != have.get(x))
+    def needs_update(x):
+        return want.get(x) is not None and (want.get(x) != have.get(x))
 
     def add(cmd):
         if 'management api http-commands' not in commands:
@@ -260,17 +264,23 @@ def map_obj_to_commands(updates, module, warnings):
         else:
             add('protocol unix-socket')
 
+    if needs_update('state') and not needs_update('vrf'):
+        if want['state'] == 'stopped':
+            add('shutdown')
+        elif want['state'] == 'started':
+            add('no shutdown')
 
     if needs_update('vrf'):
         add('vrf %s' % want['vrf'])
-
-    if needs_update('state'):
+        # switching operational vrfs here
+        # need to add the desired state as well
         if want['state'] == 'stopped':
             add('shutdown')
         elif want['state'] == 'started':
             add('no shutdown')
 
     return commands
+
 
 def parse_state(data):
     if data[0]['enabled']:
@@ -293,6 +303,7 @@ def map_config_to_obj(module):
         'state': parse_state(out)
     }
 
+
 def map_params_to_obj(module):
     obj = {
         'http': module.params['http'],
@@ -313,6 +324,7 @@ def map_params_to_obj(module):
                 validator(value, module)
 
     return obj
+
 
 def verify_state(updates, module):
     want, have = updates
@@ -342,6 +354,7 @@ def verify_state(updates, module):
         if timeout == 0:
             module.fail_json(msg='timeout expired before eapi running state changed')
 
+
 def collect_facts(module, result):
     out = run_commands(module, ['show management api http-commands | json'])
     facts = dict(eos_eapi_urls=dict())
@@ -352,6 +365,7 @@ def collect_facts(module, result):
             facts['eos_eapi_urls'][key] = list()
         facts['eos_eapi_urls'][key].append(str(url).strip())
     result['ansible_facts'] = facts
+
 
 def main():
     """ main entry point for module execution

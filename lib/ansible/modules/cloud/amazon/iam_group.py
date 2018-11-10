@@ -25,7 +25,9 @@ short_description: Manage AWS IAM groups
 description:
   - Manage AWS IAM groups
 version_added: "2.4"
-author: Nick Aslanidis, @naslanidis, Maksym Postument, @infectsoldier
+author:
+- Nick Aslanidis (@naslanidis)
+- Maksym Postument (@infectsoldier)
 options:
   name:
     description:
@@ -57,6 +59,7 @@ options:
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -158,14 +161,12 @@ users:
             sample: /
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import HAS_BOTO3, AWSRetry
-
-import traceback
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import AWSRetry
 
 try:
-    from botocore.exceptions import ClientError, ParamValidationError
+    from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -191,7 +192,6 @@ def compare_group_members(current_group_members, new_group_members):
     # If new_attached_policies is None it means we want to remove all policies
     if len(current_group_members) > 0 and new_group_members is None:
         return False
-
     if set(current_group_members) == set(new_group_members):
         return True
     else:
@@ -199,6 +199,7 @@ def compare_group_members(current_group_members, new_group_members):
 
 
 def convert_friendly_names_to_arns(connection, module, policy_names):
+
     if not any([not policy.startswith('arn:') for policy in policy_names if policy is not None]):
         return policy_names
     allpolicies = {}
@@ -219,69 +220,65 @@ def create_or_update_group(connection, module):
     params = dict()
     params['GroupName'] = module.params.get('name')
     managed_policies = module.params.get('managed_policy')
-    if managed_policies:
-        managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
     users = module.params.get('users')
     purge_users = module.params.get('purge_users')
     purge_policy = module.params.get('purge_policy')
     changed = False
+    if managed_policies:
+        managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
 
     # Get group
     try:
         group = get_group(connection, module, params['GroupName'])
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Couldn't get group")
 
     # If group is None, create it
     if group is None:
+        # Check mode means we would create the group
+        if module.check_mode:
+            module.exit_json(changed=True)
+
         try:
             group = connection.create_group(**params)
             changed = True
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-        except ParamValidationError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc())
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Couldn't create group")
 
     # Manage managed policies
     current_attached_policies = get_attached_policy_list(connection, module, params['GroupName'])
     if not compare_attached_group_policies(current_attached_policies, managed_policies):
+        current_attached_policies_arn_list = []
+        for policy in current_attached_policies:
+            current_attached_policies_arn_list.append(policy['PolicyArn'])
+
         # If managed_policies has a single empty element we want to remove all attached policies
         if purge_policy:
             # Detach policies not present
-            current_attached_policies_arn_list = []
-            for policy in current_attached_policies:
-                current_attached_policies_arn_list.append(policy['PolicyArn'])
-
             for policy_arn in list(set(current_attached_policies_arn_list) - set(managed_policies)):
-                try:
-                    connection.detach_group_policy(GroupName=params['GroupName'], PolicyArn=policy_arn)
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                                     **camel_dict_to_snake_dict(e.response))
-                except ParamValidationError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc())
-
-        # If there are policies in managed_policies attach each policy
-        if managed_policies != [None]:
-            for policy_arn in managed_policies:
-                try:
-                    connection.attach_group_policy(GroupName=params['GroupName'], PolicyArn=policy_arn)
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                                     **camel_dict_to_snake_dict(e.response))
-                except ParamValidationError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc())
-
-        changed = True
+                changed = True
+                if not module.check_mode:
+                    try:
+                        connection.detach_group_policy(GroupName=params['GroupName'], PolicyArn=policy_arn)
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Couldn't detach policy from group %s" % params['GroupName'])
+        # If there are policies to adjust that aren't in the current list, then things have changed
+        # Otherwise the only changes were in purging above
+        if set(managed_policies) - set(current_attached_policies_arn_list):
+            changed = True
+            # If there are policies in managed_policies attach each policy
+            if managed_policies != [None] and not module.check_mode:
+                for policy_arn in managed_policies:
+                    try:
+                        connection.attach_group_policy(GroupName=params['GroupName'], PolicyArn=policy_arn)
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Couldn't attach policy to group %s" % params['GroupName'])
 
     # Manage group memberships
     try:
         current_group_members = get_group(connection, module, params['GroupName'])['Users']
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, "Couldn't get group %s" % params['GroupName'])
 
     current_group_members_list = []
     for member in current_group_members:
@@ -291,32 +288,33 @@ def create_or_update_group(connection, module):
 
         if purge_users:
             for user in list(set(current_group_members_list) - set(users)):
-                try:
-                    connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                                     **camel_dict_to_snake_dict(e.response))
-                except ParamValidationError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc())
-
-        if users != [None]:
-            for user in users:
-                try:
-                    connection.add_user_to_group(GroupName=params['GroupName'], UserName=user)
-                except ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                                     **camel_dict_to_snake_dict(e.response))
-                except ParamValidationError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc())
-
-        changed = True
+                # Ensure we mark things have changed if any user gets purged
+                changed = True
+                # Skip actions for check mode
+                if not module.check_mode:
+                    try:
+                        connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Couldn't remove user %s from group %s" % (user, params['GroupName']))
+        # If there are users to adjust that aren't in the current list, then things have changed
+        # Otherwise the only changes were in purging above
+        if set(users) - set(current_group_members_list):
+            changed = True
+            # Skip actions for check mode
+            if users != [None] and not module.check_mode:
+                for user in users:
+                    try:
+                        connection.add_user_to_group(GroupName=params['GroupName'], UserName=user)
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Couldn't add user %s to group %s" % (user, params['GroupName']))
+    if module.check_mode:
+        module.exit_json(changed=changed)
 
     # Get the group again
     try:
         group = get_group(connection, module, params['GroupName'])
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, "Couldn't get group %s" % params['GroupName'])
 
     module.exit_json(changed=changed, iam_group=camel_dict_to_snake_dict(group))
 
@@ -328,46 +326,38 @@ def destroy_group(connection, module):
 
     try:
         group = get_group(connection, module, params['GroupName'])
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, "Couldn't get group %s" % params['GroupName'])
     if group:
+        # Check mode means we would remove this group
+        if module.check_mode:
+            module.exit_json(changed=True)
 
         # Remove any attached policies otherwise deletion fails
         try:
             for policy in get_attached_policy_list(connection, module, params['GroupName']):
                 connection.detach_group_policy(GroupName=params['GroupName'], PolicyArn=policy['PolicyArn'])
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-        except ParamValidationError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc())
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Couldn't remove policy from group %s" % params['GroupName'])
 
         # Remove any users in the group otherwise deletion fails
         current_group_members_list = []
         try:
             current_group_members = get_group(connection, module, params['GroupName'])['Users']
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, "Couldn't get group %s" % params['GroupName'])
         for member in current_group_members:
             current_group_members_list.append(member['UserName'])
         for user in current_group_members_list:
             try:
                 connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
-            except ParamValidationError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc())
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, "Couldn't remove user %s from group %s" % (user, params['GroupName']))
 
         try:
             connection.delete_group(**params)
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-        except ParamValidationError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc())
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, "Couldn't delete group %s" % params['GroupName'])
 
     else:
         module.exit_json(changed=False)
@@ -402,28 +392,21 @@ def get_attached_policy_list(connection, module, name):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            managed_policy=dict(default=[], type='list'),
-            users=dict(default=[], type='list'),
-            state=dict(choices=['present', 'absent'], required=True),
-            purge_users=dict(default=False, type='bool'),
-            purge_policy=dict(default=False, type='bool')
-        )
+    argument_spec = dict(
+        name=dict(required=True),
+        managed_policy=dict(default=[], type='list'),
+        users=dict(default=[], type='list'),
+        state=dict(choices=['present', 'absent'], required=True),
+        purge_users=dict(default=False, type='bool'),
+        purge_policy=dict(default=False, type='bool')
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('iam')
 
     state = module.params.get("state")
 

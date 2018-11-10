@@ -162,6 +162,9 @@ changed:
 
 import shlex
 
+# Ansible boiler-plate
+from ansible.module_utils.basic import AnsibleModule
+
 VROUTER_EXISTS = None
 NEIGHBOR_EXISTS = None
 
@@ -333,7 +336,7 @@ def main():
     )
 
     # Accessing the arguments
-    state= module.params['state']
+    state = module.params['state']
     vrouter_name = module.params['pn_vrouter_name']
     neighbor = module.params['pn_neighbor']
     remote_as = module.params['pn_remote_as']
@@ -467,8 +470,7 @@ def main():
             cli += ' route-map-out ' + route_mapout
 
     run_cli(module, cli)
-# Ansible boiler-plate
-from ansible.module_utils.basic import AnsibleModule
+
 
 if __name__ == '__main__':
     main()

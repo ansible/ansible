@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_vrf
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -31,6 +29,8 @@ class TestNxosVrfModule(TestNxosModule):
     module = nxos_vrf
 
     def setUp(self):
+        super(TestNxosVrfModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vrf.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosVrfModule(TestNxosModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestNxosVrfModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
 
@@ -58,7 +59,7 @@ class TestNxosVrfModule(TestNxosModule):
 
     def test_nxos_vrf_present(self):
         set_module_args(dict(vrf='ntc', state='present', admin_state='up'))
-        self.execute_module(changed=True, commands=['vrf context ntc', 'no shutdown'])
+        self.execute_module(changed=True, commands=['vrf context ntc', 'no shutdown', 'exit'])
 
     def test_nxos_vrf_present_no_change(self):
         set_module_args(dict(vrf='management', state='present', admin_state='up'))

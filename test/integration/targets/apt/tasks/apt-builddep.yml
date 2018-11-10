@@ -26,7 +26,7 @@
 - name: uninstall quilt with apt
   apt: pkg=quilt state=absent purge=yes
   register: apt_result
-  when: dpkg_result|success
+  when: dpkg_result is successful
   tags: ['test_apt_builddep']
 
 # install build-dep for netcat

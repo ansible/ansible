@@ -1,11 +1,12 @@
 ---
-- debug: msg="START cli/all_facts.yaml"
+- debug: msg="START cli/all_facts.yaml on connection={{ ansible_connection }}"
 
 
 - name: test getting all facts
   iosxr_facts:
     gather_subset:
       - all
+    provider: "{{ cli }}"
   register: result
 
 
@@ -24,4 +25,4 @@
       # Items from those subsets are present
       - "result.ansible_facts.ansible_net_filesystems is defined"
 
-- debug: msg="END cli/all_facts.yaml"
+- debug: msg="END cli/all_facts.yaml on connection={{ ansible_connection }}"

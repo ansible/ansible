@@ -27,8 +27,6 @@ options:
   description:
     description:
       - A description for the loadbalancer
-    required: False
-    default: None
   alias:
     description:
       - The alias of your CLC Account
@@ -40,36 +38,27 @@ options:
   method:
     description:
       -The balancing method for the load balancer pool
-    required: False
-    default: None
     choices: ['leastConnection', 'roundRobin']
   persistence:
     description:
       - The persistence method for the load balancer
-    required: False
-    default: None
     choices: ['standard', 'sticky']
   port:
     description:
       - Port to configure on the public-facing side of the load balancer pool
-    required: False
-    default: None
     choices: [80, 443]
   nodes:
     description:
       - A list of nodes that needs to be added to the load balancer pool
-    required: False
     default: []
   status:
     description:
       - The status of the loadbalancer
-    required: False
     default: enabled
     choices: ['enabled', 'disabled']
   state:
     description:
       - Whether to create or delete the load balancer pool
-    required: False
     default: present
     choices: ['present', 'absent', 'port_absent', 'nodes_present', 'nodes_absent']
 requirements:
@@ -796,7 +785,7 @@ class ClcLoadBalancer:
         for node in nodes_to_add:
             if not node.get('status'):
                 node['status'] = 'enabled'
-            if not node in nodes:
+            if node not in nodes:
                 changed = True
                 nodes.append(node)
         if changed is True and not self.module.check_mode:

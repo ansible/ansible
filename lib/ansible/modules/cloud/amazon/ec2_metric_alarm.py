@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -103,7 +103,7 @@ options:
         required: false
     alarm_actions:
         description:
-          - A list of the names action(s) taken when the alarm is in the 'alarm' status
+          - A list of the names action(s) taken when the alarm is in the 'alarm' status, denoted as Amazon Resource Name(s)
         required: false
     insufficient_data_actions:
         description:
@@ -111,7 +111,7 @@ options:
         required: false
     ok_actions:
         description:
-          - A list of the names of action(s) to take when the alarm is in the 'ok' status
+          - A list of the names of action(s) to take when the alarm is in the 'ok' status, denoted as Amazon Resource Name(s)
         required: false
 extends_documentation_fragment:
     - aws
@@ -136,6 +136,22 @@ EXAMPLES = '''
       dimensions: {'InstanceId':'i-XXX'}
       alarm_actions: ["action1","action2"]
 
+  - name: Create an alarm to recover a failed instance
+    ec2_metric_alarm:
+      state: present
+      region: us-west-1
+      name: "recover-instance"
+      metric: "StatusCheckFailed_System"
+      namespace: "AWS/EC2"
+      statistic: "Minimum"
+      comparison: ">="
+      threshold: 1.0
+      period: 60
+      evaluation_periods: 2
+      unit: "Seconds"
+      description: "This will recover an instance when it fails"
+      dimensions: {"InstanceId":'i-XXX'}
+      alarm_actions: ["arn:aws:automate:us-west-1:ec2:recover"]
 
 '''
 
@@ -199,13 +215,13 @@ def create_metric_alarm(connection, module):
         alarm = alarms[0]
         changed = False
 
-        for attr in ('comparison','metric','namespace','statistic','threshold','period','evaluation_periods','unit','description'):
+        for attr in ('comparison', 'metric', 'namespace', 'statistic', 'threshold', 'period', 'evaluation_periods', 'unit', 'description'):
             if getattr(alarm, attr) != module.params.get(attr):
                 changed = True
                 setattr(alarm, attr, module.params.get(attr))
-        #this is to deal with a current bug where you cannot assign '<=>' to the comparator when modifying an existing alarm
+        # this is to deal with a current bug where you cannot assign '<=>' to the comparator when modifying an existing alarm
         comparison = alarm.comparison
-        comparisons = {'<=' : 'LessThanOrEqualToThreshold', '<' : 'LessThanThreshold', '>=' : 'GreaterThanOrEqualToThreshold', '>' : 'GreaterThanThreshold'}
+        comparisons = {'<=': 'LessThanOrEqualToThreshold', '<': 'LessThanThreshold', '>=': 'GreaterThanOrEqualToThreshold', '>': 'GreaterThanThreshold'}
         alarm.comparison = comparisons[comparison]
 
         dim1 = module.params.get('dimensions')
@@ -215,10 +231,10 @@ def create_metric_alarm(connection, module):
             if not isinstance(dim1[keys], list):
                 dim1[keys] = [dim1[keys]]
             if keys not in dim2 or dim1[keys] != dim2[keys]:
-                changed=True
+                changed = True
                 setattr(alarm, 'dimensions', dim1)
 
-        for attr in ('alarm_actions','insufficient_data_actions','ok_actions'):
+        for attr in ('alarm_actions', 'insufficient_data_actions', 'ok_actions'):
             action = module.params.get(attr) or []
             # Boto and/or ansible may provide same elements in lists but in different order.
             # Compare on sets since they do not need any order.
@@ -233,24 +249,25 @@ def create_metric_alarm(connection, module):
             module.fail_json(msg=str(e))
     result = alarms[0]
     module.exit_json(changed=changed, name=result.name,
-        actions_enabled=result.actions_enabled,
-        alarm_actions=result.alarm_actions,
-        alarm_arn=result.alarm_arn,
-        comparison=result.comparison,
-        description=result.description,
-        dimensions=result.dimensions,
-        evaluation_periods=result.evaluation_periods,
-        insufficient_data_actions=result.insufficient_data_actions,
-        last_updated=result.last_updated,
-        metric=result.metric,
-        namespace=result.namespace,
-        ok_actions=result.ok_actions,
-        period=result.period,
-        state_reason=result.state_reason,
-        state_value=result.state_value,
-        statistic=result.statistic,
-        threshold=result.threshold,
-        unit=result.unit)
+                     actions_enabled=result.actions_enabled,
+                     alarm_actions=result.alarm_actions,
+                     alarm_arn=result.alarm_arn,
+                     comparison=result.comparison,
+                     description=result.description,
+                     dimensions=result.dimensions,
+                     evaluation_periods=result.evaluation_periods,
+                     insufficient_data_actions=result.insufficient_data_actions,
+                     last_updated=result.last_updated,
+                     metric=result.metric,
+                     namespace=result.namespace,
+                     ok_actions=result.ok_actions,
+                     period=result.period,
+                     state_reason=result.state_reason,
+                     state_value=result.state_value,
+                     statistic=result.statistic,
+                     threshold=result.threshold,
+                     unit=result.unit)
+
 
 def delete_metric_alarm(connection, module):
     name = module.params.get('name')
@@ -289,7 +306,7 @@ def main():
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
             state=dict(default='present', choices=['present', 'absent']),
-            )
+        )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)

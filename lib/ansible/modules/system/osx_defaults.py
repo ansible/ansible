@@ -5,22 +5,21 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: osx_defaults
 author: Franck Nijhof (@frenck)
-short_description: osx_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible
+short_description: osx_defaults allows users to read, write, and delete macOS user defaults from Ansible
 description:
-  - osx_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible scripts.
-    Mac OS X applications and other programs use the defaults system to record user preferences and other
+  - osx_defaults allows users to read, write, and delete macOS user defaults from Ansible scripts.
+    macOS applications and other programs use the defaults system to record user preferences and other
     information that must be maintained when the applications aren't running (such as default font for new
     documents, or the position of an Info panel).
 version_added: "2.0"
@@ -28,14 +27,11 @@ options:
   domain:
     description:
       - The domain is a domain name of the form com.companyname.appname.
-    required: false
     default: NSGlobalDomain
   host:
     description:
       - The host on which the preference should apply. The special value "currentHost" corresponds to the
         "-currentHost" switch of the defaults commandline tool.
-    required: false
-    default: null
     version_added: "2.1"
   key:
     description:
@@ -44,24 +40,19 @@ options:
   type:
     description:
       - The type of value to write.
-    required: false
     default: string
     choices: [ "array", "bool", "boolean", "date", "float", "int", "integer", "string" ]
   array_add:
     description:
       - Add new elements to the array for a key which has an array as its value.
-    required: false
-    default: false
-    choices: [ "true", "false" ]
+    type: bool
+    default: 'no'
   value:
     description:
       - The value to write. Only required when state = present.
-    required: false
-    default: null
   state:
     description:
       - The state of the user defaults
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:
@@ -118,15 +109,17 @@ from ansible.module_utils.six import binary_type, text_type
 # exceptions --------------------------------------------------------------- {{{
 class OSXDefaultsException(Exception):
     pass
+
+
 # /exceptions -------------------------------------------------------------- }}}
 
 # class MacDefaults -------------------------------------------------------- {{{
 class OSXDefaults(object):
-
     """ Class to manage Mac OS user defaults """
 
     # init ---------------------------------------------------------------- {{{
     """ Initialize this module. Finds 'defaults' executable and preps the parameters """
+
     def __init__(self, **kwargs):
 
         # Initial var for storing current defaults value
@@ -157,6 +150,7 @@ class OSXDefaults(object):
 
     # tools --------------------------------------------------------------- {{{
     """ Converts value to given type """
+
     def _convert_type(self, type, value):
 
         if type == "string":
@@ -194,6 +188,7 @@ class OSXDefaults(object):
         raise OSXDefaultsException('Type is not supported: {0}'.format(type))
 
     """ Returns a normalized list of commandline arguments based on the "host" attribute """
+
     def _host_args(self):
         if self.host is None:
             return []
@@ -203,10 +198,12 @@ class OSXDefaults(object):
             return ['-host', self.host]
 
     """ Returns a list containing the "defaults" executable and any common base arguments """
+
     def _base_command(self):
         return [self.executable] + self._host_args()
 
     """ Converts array output from defaults to an list """
+
     @staticmethod
     def _convert_defaults_str_to_list(value):
 
@@ -221,15 +218,17 @@ class OSXDefaults(object):
         value = [re.sub(',$', '', x.strip(' ')) for x in value]
 
         return value
+
     # /tools -------------------------------------------------------------- }}}
 
     # commands ------------------------------------------------------------ {{{
     """ Reads value of this domain & key from defaults """
+
     def read(self):
         # First try to find out the type
         rc, out, err = self.module.run_command(self._base_command() + ["read-type", self.domain, self.key])
 
-        # If RC is 1, the key does not exists
+        # If RC is 1, the key does not exist
         if rc == 1:
             return None
 
@@ -258,6 +257,7 @@ class OSXDefaults(object):
         self.current_value = self._convert_type(type, out)
 
     """ Writes value to this domain & key to defaults """
+
     def write(self):
 
         # We need to convert some values so the defaults commandline understands it
@@ -289,6 +289,7 @@ class OSXDefaults(object):
             raise OSXDefaultsException('An error occurred while writing value to defaults: ' + out)
 
     """ Deletes defaults key from domain """
+
     def delete(self):
         rc, out, err = self.module.run_command(self._base_command() + ['delete', self.domain, self.key])
         if rc != 0:
@@ -298,6 +299,7 @@ class OSXDefaults(object):
 
     # run ----------------------------------------------------------------- {{{
     """ Does the magic! :) """
+
     def run(self):
 
         # Get the current value from defaults
@@ -319,10 +321,9 @@ class OSXDefaults(object):
 
         # Current value matches the given value. Nothing need to be done. Arrays need extra care
         if self.type == "array" and self.current_value is not None and not self.array_add and \
-                set(self.current_value) == set(self.value):
+                        set(self.current_value) == set(self.value):
             return False
-        elif self.type == "array" and self.current_value is not None and self.array_add and \
-                len(list(set(self.value) - set(self.current_value))) == 0:
+        elif self.type == "array" and self.current_value is not None and self.array_add and len(list(set(self.value) - set(self.current_value))) == 0:
             return False
         elif self.current_value == self.value:
             return False
@@ -334,7 +335,8 @@ class OSXDefaults(object):
         self.write()
         return True
 
-    # /run ---------------------------------------------------------------- }}}
+        # /run ---------------------------------------------------------------- }}}
+
 
 # /class MacDefaults ------------------------------------------------------ }}}
 
@@ -409,6 +411,7 @@ def main():
         module.exit_json(changed=changed)
     except OSXDefaultsException as e:
         module.fail_json(msg=e.message)
+
 
 # /main ------------------------------------------------------------------- }}}
 

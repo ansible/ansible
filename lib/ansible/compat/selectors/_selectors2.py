@@ -4,29 +4,11 @@
 # PSF License and MIT License:
 # https://github.com/SethMichaelLarson/selectors2#license
 #
-# Seth's copy of the MIT license is reproduced below
-#
-# MIT License
-#
 # Copyright (c) 2016 Seth Michael Larson
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+# PSF License (see licenses/PSF-license.txt or https://opensource.org/licenses/Python-2.0)
+# MIT License (see licenses/MIT-license.txt or https://opensource.org/licenses/MIT)
 #
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 
 
 # Backport of selectors.py from Python 3.5+ to support Python < 3.4
@@ -42,7 +24,8 @@ import select
 import socket
 import sys
 import time
-from collections import namedtuple, Mapping
+from collections import namedtuple
+from ansible.module_utils.common._collections_compat import Mapping
 
 try:
     monotonic = time.monotonic
@@ -94,6 +77,7 @@ def _fileobj_to_fd(fileobj):
     if fd < 0:
         raise ValueError("Invalid file descriptor: {0}".format(fd))
     return fd
+
 
 # Python 3.5 uses a more direct route to wrap system calls to increase speed.
 if sys.version_info >= (3, 5):
@@ -154,7 +138,7 @@ else:
                     if expires is not None:
                         current_time = monotonic()
                         if current_time > expires:
-                            raise OSError(errno=errno.ETIMEDOUT)
+                            raise OSError(errno.ETIMEDOUT)
                         if recalc_timeout:
                             if "timeout" in kwargs:
                                 kwargs["timeout"] = expires - current_time
@@ -323,6 +307,7 @@ class BaseSelector(object):
     def __exit__(self, *args):
         self.close()
 
+
 # Almost all platforms have select.select()
 if hasattr(select, "select"):
     class SelectSelector(BaseSelector):
@@ -358,7 +343,7 @@ if hasattr(select, "select"):
             timeout = None if timeout is None else max(timeout, 0.0)
             ready = []
             r, w, _ = _syscall_wrapper(self._select, True, self._readers,
-                                       self._writers, timeout)
+                                       self._writers, timeout=timeout)
             r = set(r)
             w = set(w)
             for fd in r | w:
@@ -579,14 +564,14 @@ if hasattr(select, "kqueue"):
                                        select.KQ_FILTER_READ,
                                        select.KQ_EV_ADD)
 
-                _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
 
             if events & EVENT_WRITE:
                 kevent = select.kevent(key.fd,
                                        select.KQ_FILTER_WRITE,
                                        select.KQ_EV_ADD)
 
-                _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
 
             return key
 
@@ -597,7 +582,7 @@ if hasattr(select, "kqueue"):
                                        select.KQ_FILTER_READ,
                                        select.KQ_EV_DELETE)
                 try:
-                    _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                    _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
                 except SelectorError:
                     pass
             if key.events & EVENT_WRITE:
@@ -605,7 +590,7 @@ if hasattr(select, "kqueue"):
                                        select.KQ_FILTER_WRITE,
                                        select.KQ_EV_DELETE)
                 try:
-                    _syscall_wrapper(self._kqueue.control, False, [kevent], 0, 0)
+                    _syscall_wrapper(self._wrap_control, False, [kevent], 0, 0)
                 except SelectorError:
                     pass
 
@@ -618,8 +603,8 @@ if hasattr(select, "kqueue"):
             max_events = len(self._fd_to_key) * 2
             ready_fds = {}
 
-            kevent_list = _syscall_wrapper(self._kqueue.control, True,
-                                           None, max_events, timeout)
+            kevent_list = _syscall_wrapper(self._wrap_control, True,
+                                           None, max_events, timeout=timeout)
 
             for kevent in kevent_list:
                 fd = kevent.ident
@@ -643,6 +628,9 @@ if hasattr(select, "kqueue"):
         def close(self):
             self._kqueue.close()
             super(KqueueSelector, self).close()
+
+        def _wrap_control(self, changelist, max_events, timeout):
+            return self._kqueue.control(changelist, max_events, timeout)
 
     __all__.append('KqueueSelector')
 

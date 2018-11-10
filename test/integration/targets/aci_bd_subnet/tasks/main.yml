@@ -1,0 +1,237 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    tenant: anstest
+  register: tenant_present
+
+- name: ensure bd exists for tests to kick off
+  aci_bd: &aci_bd_present
+    <<: *aci_tenant_present
+    bd: anstest
+  register: bd_present
+
+- name: ensure subnet does not exist for tests to kick off
+  aci_bd_subnet: &aci_subnet_absent
+    <<: *aci_bd_present
+    state: absent
+    gateway: 10.100.100.1
+    mask: 24
+
+- name: ensure subnet does not exist for tests to kick off
+  aci_bd_subnet: &aci_subnet2_absent
+    <<: *aci_subnet_absent
+    gateway: 10.100.101.1
+    mask: 25
+
+- name: create subnet - check mode works
+  aci_bd_subnet: &aci_subnet_present
+    <<: *aci_subnet_absent
+    state: present
+    subnet_name: anstest
+    descr: Ansible Test
+  check_mode: yes
+  register: create_check_mode
+
+- name: create subnet - creation works
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+  register: create_subnet
+
+- name: create new subnet - creation works
+  aci_bd_subnet: &aci_subnet2_present
+    <<: *aci_subnet2_absent
+    state: present
+    descr: Ansible Test
+    scope: [private, shared]
+    route_profile: default
+    route_profile_l3_out: default
+  register: create_subnet2
+
+- name: create subnet again - idempotency works
+  aci_bd_subnet:
+    <<: *aci_subnet2_present
+  register: create_idempotency
+
+- name: modify subnet - update works
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+    scope: [shared, public]
+    subnet_control: querier_ip
+  register: modify_subnet
+
+- name: create subnet with bad scope - failure message works
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+    scope: [private, public]
+  register: create_bad_scope
+  ignore_errors: yes
+
+- name: create subnet without all necessary params - failure message works
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+    bd: "{{ fake_var | default(omit) }}"
+  register: create_incomplete_data
+  ignore_errors: yes
+
+- name: asserts for subnet creation tasks
+  assert:
+    that:
+      - create_check_mode is changed
+      - 'create_check_mode.sent == {"fvSubnet": {"attributes": {"descr": "Ansible Test", "ip": "10.100.100.1/24", "name": "anstest"}}}'
+      - create_subnet is changed
+      - 'create_subnet.sent == {"fvSubnet": {"attributes": {"descr": "Ansible Test", "ip": "10.100.100.1/24", "name": "anstest"}}}'
+      - create_subnet.previous == []
+      - create_subnet2 is changed
+      - create_subnet2.sent == create_subnet2.proposed
+      - create_subnet2.sent.fvSubnet.attributes.scope == "private,shared"
+      - 'create_subnet2.sent.fvSubnet.children.0.fvRsBDSubnetToProfile.attributes == {"tnL3extOutName": "default", "tnRtctrlProfileName": "default"}'
+      - create_idempotency is not changed
+      - create_idempotency.previous != []
+      - modify_subnet is changed
+      - modify_subnet.previous != []
+      - modify_subnet.sent != modify_subnet.proposed
+      - 'modify_subnet.sent == {"fvSubnet": {"attributes": {"ctrl": "querier", "scope": "public,shared"}}}'
+      - create_bad_scope is failed
+      - create_bad_scope.msg.startswith("Parameter 'scope' cannot be both 'private' and 'public'")
+      - create_incomplete_data is failed
+      - 'create_incomplete_data.msg == "state is present but all of the following are missing: bd"'
+
+- name: get all subnets
+  aci_bd_subnet: &aci_query
+    <<: *aci_tenant_present
+    state: query
+    tenant: "{{ fake_var | default(omit) }}"
+  register: get_all
+
+- name: get all in tenant
+  aci_bd_subnet:
+    <<: *aci_query
+    tenant: anstest
+  register: get_all_tenant
+
+- name: get all in bd
+  aci_bd_subnet:
+    <<: *aci_query
+    bd: anstest
+  register: get_all_bd
+
+- name: get all tenant and bd
+  aci_bd_subnet:
+    <<: *aci_bd_present
+    state: query
+  register: get_all_tenant_bd
+
+- name: get subnet in tenant
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+    state: query
+    bd: "{{ fake_var | default(omit) }}"
+  register: get_subnet_tenant
+
+- name: get subnet in bd
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+    state: query
+    tenant: "{{ fake_var | default(omit) }}"
+  register: get_subnet_bd
+
+- name: get specific subnet
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+    state: query
+  register: get_subnet
+
+- name: get all subnets matching gateway
+  aci_bd_subnet:
+    <<: *aci_subnet_present
+    state: query
+    tenant: "{{ fake_var | default(omit) }}"
+    bd: "{{ fake_var | default(omit) }}"
+  register: get_subnets_gateway
+
+- name: asserts for query tasks
+  assert:
+    that:
+      - get_all is not changed
+      - get_all.current | length > 1
+      - get_all_tenant is not changed
+      - '"tn-anstest.json" in get_all_tenant.url'
+      - get_all_bd is not changed
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in get_all_bd.filter_string'
+      - '"class/fvBD.json" in get_all_bd.url'
+      - get_all_tenant_bd is not changed
+      - '"tn-anstest/BD-anstest.json" in get_all_tenant_bd.url'
+      - get_all_tenant_bd.current.0.fvBD.children | length > 1
+      - get_subnet_tenant is not changed
+      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_tenant.filter_string'
+      - '"tn-anstest.json" in get_subnet_tenant.url'
+      - get_subnet_bd is not changed
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")"'
+      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_bd.filter_string'
+      - '"class/fvBD.json" in get_subnet_bd.url'
+      - get_subnet is not changed
+      - get_subnet.current | length == 1
+      - '"tn-anstest/BD-anstest/subnet-[10.100.100.1/24].json" in get_subnet.url'
+      - get_subnets_gateway is not changed
+      - '"query-target-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnets_gateway.filter_string'
+      - '"class/fvSubnet.json" in get_subnets_gateway.url'
+
+- name: delete subnet - check mode works
+  aci_bd_subnet:
+    <<: *aci_subnet_absent
+  check_mode: yes
+  register: delete_check_mode
+
+- name: delete subnet - delete works
+  aci_bd_subnet:
+    <<: *aci_subnet_absent
+  register: delete_subnet
+
+- name: delete subnet - cleanup
+  aci_bd_subnet:
+    <<: *aci_subnet2_absent
+
+- name: delete subnet again - idempotency works
+  aci_bd_subnet:
+    <<: *aci_subnet2_absent
+  register: delete_idempotency
+
+- name: asserts for deletion task
+  assert:
+    that:
+      - delete_check_mode is changed
+      - delete_check_mode.proposed == {}
+      - delete_subnet is changed
+      - delete_subnet.previous != []
+      - delete_subnet.method == "DELETE"
+      - delete_idempotency is not changed
+      - delete_idempotency.previous == []
+
+- name: delete bd - cleanup before ending tests
+  aci_bd:
+    <<: *aci_bd_present
+    state: absent
+  when: bd_present is changed
+
+- name: delete tenant - cleanup before ending tests
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present is changed

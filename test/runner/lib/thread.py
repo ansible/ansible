@@ -23,13 +23,14 @@ class WrappedThread(threading.Thread):
         super(WrappedThread, self).__init__()
         self._result = queue.Queue()
         self.action = action
+        self.result = None
 
     def run(self):
         """
         Run action and capture results or exception.
         Do not override. Do not call directly. Executed by the start() method.
         """
-        # noinspection PyBroadException
+        # noinspection PyBroadException, PyPep8
         try:
             self._result.put((self.action(), None))
         except:  # pylint: disable=locally-disabled, bare-except
@@ -41,9 +42,13 @@ class WrappedThread(threading.Thread):
         :rtype: any
         """
         result, exception = self._result.get()
+
         if exception:
             if sys.version_info[0] > 2:
                 raise exception[1].with_traceback(exception[2])
             # noinspection PyRedundantParentheses
             exec('raise exception[0], exception[1], exception[2]')  # pylint: disable=locally-disabled, exec-used
+
+        self.result = result
+
         return result

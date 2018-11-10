@@ -1,0 +1,21 @@
+---
+# set up a zabbix proxy to test zabbix_host with
+
+- name: Create a new proxy
+  local_action:
+    module: zabbix_proxy
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    proxy_name: ExampleProxy
+    description: ExampleProxy
+    status: active
+    state: present
+    interface:
+        type: 0
+        main: 1
+        useip: 1
+        ip: 10.5.6.7
+        dns: ""
+        port: 10050
+  register: zabbix_proxy

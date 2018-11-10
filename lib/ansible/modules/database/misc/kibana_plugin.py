@@ -31,42 +31,33 @@ options:
     state:
         description:
             - Desired state of a plugin.
-        required: False
         choices: ["present", "absent"]
         default: present
     url:
         description:
             - Set exact URL to download the plugin from.
               For local file, prefix its absolute path with file://
-        required: False
-        default: None
     timeout:
         description:
             - "Timeout setting: 30s, 1m, 1h..."
-        required: False
         default: 1m
     plugin_bin:
         description:
             - Location of the plugin binary
-        required: False
         default: /opt/kibana/bin/kibana
     plugin_dir:
         description:
             - Your configured plugin directory specified in Kibana
-        required: False
         default: /opt/kibana/installedPlugins/
     version:
         description:
             - Version of the plugin to be installed.
               If plugin exists with previous version, it will NOT be updated if C(force) is not set to yes
-        required: False
-        default: None
     force:
         description:
             - Delete and re-install the plugin. Can be useful for plugins update
-        required: False
-        choices: ["yes", "no"]
-        default: no
+        type: bool
+        default: 'no'
 '''
 
 EXAMPLES = '''
@@ -147,8 +138,10 @@ def parse_plugin_repo(string):
 
     return repo
 
+
 def is_plugin_present(plugin_dir, working_dir):
     return os.path.isdir(os.path.join(working_dir, plugin_dir))
+
 
 def parse_error(string):
     reason = "reason: "
@@ -156,6 +149,7 @@ def parse_error(string):
         return string[string.index(reason) + len(reason):].strip()
     except ValueError:
         return string
+
 
 def install_plugin(module, plugin_bin, plugin_name, url, timeout):
     cmd_args = [plugin_bin, "plugin", PACKAGE_STATE_MAP["present"], plugin_name]
@@ -178,6 +172,7 @@ def install_plugin(module, plugin_bin, plugin_name, url, timeout):
 
     return True, cmd, out, err
 
+
 def remove_plugin(module, plugin_bin, plugin_name):
     cmd_args = [plugin_bin, "plugin", PACKAGE_STATE_MAP["absent"], plugin_name]
 
@@ -192,6 +187,7 @@ def remove_plugin(module, plugin_bin, plugin_name):
         module.fail_json(msg=reason)
 
     return True, cmd, out, err
+
 
 def main():
     module = AnsibleModule(
@@ -208,14 +204,14 @@ def main():
         supports_check_mode=True,
     )
 
-    name        = module.params["name"]
-    state       = module.params["state"]
-    url         = module.params["url"]
-    timeout     = module.params["timeout"]
-    plugin_bin  = module.params["plugin_bin"]
-    plugin_dir  = module.params["plugin_dir"]
-    version     = module.params["version"]
-    force       = module.params["force"]
+    name = module.params["name"]
+    state = module.params["state"]
+    url = module.params["url"]
+    timeout = module.params["timeout"]
+    plugin_bin = module.params["plugin_bin"]
+    plugin_dir = module.params["plugin_dir"]
+    version = module.params["version"]
+    force = module.params["force"]
 
     present = is_plugin_present(parse_plugin_repo(name), plugin_dir)
 

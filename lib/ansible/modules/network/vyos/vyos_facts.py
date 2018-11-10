@@ -100,8 +100,8 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.vyos import run_commands
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.vyos.vyos import run_commands
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 class FactsBase(object):
@@ -135,7 +135,7 @@ class Default(FactsBase):
         self.facts['hostname'] = self.responses[1]
 
     def parse_version(self, data):
-        match = re.search(r'Version:\s*(\S+)', data)
+        match = re.search(r'Version:\s*(.*)', data)
         if match:
             return match.group(1)
 

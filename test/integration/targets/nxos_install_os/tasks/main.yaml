@@ -1,0 +1,5 @@
+---
+- { include: network_cli.yaml, tags: ['cli'] }
+- { include: network_local.yaml, tags: ['local'] }
+- { include: httpapi.yaml, tags: ['httpapi'] }
+- { include: nxapi.yaml, tags: ['nxapi'] }

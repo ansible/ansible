@@ -17,6 +17,7 @@ short_description: Gather facts about application ELBs in AWS
 description:
     - Gather facts about application ELBs in AWS
 version_added: "2.4"
+requirements: [ boto3 ]
 author: Rob White (@wimnat)
 options:
   load_balancer_arns:
@@ -257,7 +258,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=['load_balancer_arns', 'names'],
+                           mutually_exclusive=[['load_balancer_arns', 'names']],
                            supports_check_mode=True
                            )
 

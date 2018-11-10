@@ -69,7 +69,9 @@ options:
       - absent
     default: present
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

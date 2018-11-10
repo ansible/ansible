@@ -13,96 +13,90 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: assemble
-short_description: Assembles a configuration file from fragments
+short_description: Assemble configuration files from fragments
 description:
-     - Assembles a configuration file from fragments. Often a particular
-       program will take a single configuration file and does not support a
-       C(conf.d) style structure where it is easy to build up the configuration
-       from multiple sources. C(assemble) will take a directory of files that can be
-       local or have already been transferred to the system, and concatenate them
-       together to produce a destination file. Files are assembled in string sorting order.
-       Puppet calls this idea I(fragments).
-version_added: "0.5"
+- Assembles a configuration file from fragments.
+- Often a particular program will take a single configuration file and does not support a
+  C(conf.d) style structure where it is easy to build up the configuration
+  from multiple sources. C(assemble) will take a directory of files that can be
+  local or have already been transferred to the system, and concatenate them
+  together to produce a destination file.
+- Files are assembled in string sorting order.
+- Puppet calls this idea I(fragments).
+- This module is also supported for Windows targets.
+notes:
+- This module is also supported for Windows targets.
+- See also M(copy) and M(template).
+version_added: '0.5'
 options:
   src:
     description:
-      - An already existing directory full of source files.
+    - An already existing directory full of source files.
     required: true
-    default: null
-    aliases: []
   dest:
     description:
-      - A file to create using the concatenation of all of the source files.
+    - A file to create using the concatenation of all of the source files.
     required: true
-    default: null
   backup:
     description:
-      - Create a backup file (if C(yes)), including the timestamp information so
-        you can get the original file back if you somehow clobbered it
-        incorrectly.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    - Create a backup file (if C(yes)), including the timestamp information so
+      you can get the original file back if you somehow clobbered it
+      incorrectly.
+    type: bool
+    default: no
   delimiter:
     description:
-      - A delimiter to separate the file contents.
-    version_added: "1.4"
-    required: false
-    default: null
+    - A delimiter to separate the file contents.
+    version_added: '1.4'
   remote_src:
     description:
-      - If False, it will search for src at originating/master machine, if True it will
-        go to the remote/target machine for the src. Default is True.
-    choices: [ "True", "False" ]
-    required: false
-    default: "True"
-    version_added: "1.4"
+    - If C(no), it will search for src at originating/master machine.
+    - If C(yes), it will go to the remote/target machine for the src.
+    type: bool
+    default: yes
+    version_added: '1.4'
   regexp:
     description:
-      - Assemble files only if C(regex) matches the filename. If not set,
-        all files are assembled. All "\\" (backslash) must be escaped as
-        "\\\\" to comply yaml syntax. Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
-    required: false
-    default: null
+    - Assemble files only if C(regex) matches the filename.
+    - If not set, all files are assembled.
+    - Every "\" (backslash) must be escaped as "\\" to comply to YAML syntax.
+    - Uses L(Python regular expressions,http://docs.python.org/2/library/re.html).
   ignore_hidden:
     description:
-      - A boolean that controls if files that start with a '.' will be included or not.
-    required: false
-    default: false
-    version_added: "2.0"
+    - A boolean that controls if files that start with a '.' will be included or not.
+    type: bool
+    default: no
+    version_added: '2.0'
   validate:
     description:
-      - The validation command to run before copying into place.  The path to the file to
-        validate is passed in via '%s' which must be present as in the sshd example below.
-        The command is passed securely so shell features like expansion and pipes won't work.
-    required: false
-    default: null
-    version_added: "2.0"
-author: "Stephen Fromm (@sfromm)"
+    - The validation command to run before copying into place.
+    - The path to the file to validate is passed in via '%s' which must be present as in the sshd example below.
+    - The command is passed securely so shell features like expansion and pipes won't work.
+    version_added: '2.0'
+author:
+- Stephen Fromm (@sfromm)
 extends_documentation_fragment:
-    - files
-    - decrypt
+- files
+- decrypt
 '''
 
-EXAMPLES = '''
-# Example from Ansible Playbooks
-- assemble:
+EXAMPLES = r'''
+- name: Assemble from fragments from a directory
+  assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
-# When a delimiter is specified, it will be inserted in between each fragment
-- assemble:
+- name: Inserted provided delimiter in between each fragment
+  assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
     delimiter: '### START FRAGMENT ###'
 
-# Copy a new "sshd_config" file into place, after passing validation with sshd
-- assemble:
+- name: Assemble a new "sshd_config" file into place, after passing validation with sshd
+  assemble:
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: '/usr/sbin/sshd -t -f %s'
@@ -110,7 +104,6 @@ EXAMPLES = '''
 
 import codecs
 import os
-import os.path
 import re
 import tempfile
 
@@ -119,12 +112,9 @@ from ansible.module_utils.six import b
 from ansible.module_utils._text import to_native
 
 
-# ===========================================
-# Support method
-
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
     ''' assemble a file from a directory of fragments '''
-    tmpfd, temp_path = tempfile.mkstemp()
+    tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
@@ -178,27 +168,27 @@ def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src = dict(required=True, type='path'),
-            delimiter = dict(required=False),
-            dest = dict(required=True, type='path'),
+        argument_spec=dict(
+            src=dict(required=True, type='path'),
+            delimiter=dict(required=False),
+            dest=dict(required=True, type='path'),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
-            regexp = dict(required=False),
-            ignore_hidden = dict(default=False, type='bool'),
-            validate = dict(required=False, type='str'),
+            regexp=dict(required=False),
+            ignore_hidden=dict(default=False, type='bool'),
+            validate=dict(required=False, type='str'),
         ),
-        add_file_common_args=True
+        add_file_common_args=True,
     )
 
-    changed   = False
-    path_hash   = None
-    dest_hash   = None
-    src       = module.params['src']
-    dest      = module.params['dest']
-    backup    = module.params['backup']
+    changed = False
+    path_hash = None
+    dest_hash = None
+    src = module.params['src']
+    dest = module.params['dest']
+    backup = module.params['backup']
     delimiter = module.params['delimiter']
-    regexp    = module.params['regexp']
+    regexp = module.params['regexp']
     compiled_regexp = None
     ignore_hidden = module.params['ignore_hidden']
     validate = module.params.get('validate', None)
@@ -219,7 +209,7 @@ def main():
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden)
+    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
     path_hash = module.sha1(path)
     result['checksum'] = path_hash
 
@@ -255,6 +245,7 @@ def main():
     # Mission complete
     result['msg'] = "OK"
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

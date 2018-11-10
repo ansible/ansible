@@ -1,0 +1,371 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+
+- debug: var=vmlist
+
+- set_fact:
+   vm1: "{{ vmlist['json'][0] }}"
+
+- debug: var=vm1
+
+- name: create new VMs with non-existent network
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "Non existent VM"
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: non_existent_network
+  ignore_errors: yes
+
+- debug: var=non_existent_network
+
+- name: assert that no changes were not made
+  assert:
+    that:
+        - "not non_existent_network.changed"
+        - "\"Network 'Non existent VM' does not exist\" in non_existent_network.msg"
+
+- name: create new VMs with network and with only IP
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+        type: static
+        ip: 10.10.10.10
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: no_netmask
+  ignore_errors: yes
+
+- debug: var=no_netmask
+
+- name: assert that no changes were not made
+  assert:
+    that:
+        - "not no_netmask.changed"
+        - "\"'netmask' is required if 'ip' is specified under VM network list.\" in no_netmask.msg"
+
+- name: create new VMs with network and with only netmask
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+        type: static
+        netmask: 255.255.255.0
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: no_ip
+  ignore_errors: yes
+
+- debug: var=no_ip
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - "not no_ip.changed"
+        - "\"'ip' is required if 'netmask' is specified under VM network list.\" in no_ip.msg"
+
+- name: create new VMs with network and without network name
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - ip: 10.10.10.10
+        netmask: 255.255.255
+        type: static
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: no_network_name
+  ignore_errors: yes
+
+- debug: var=no_network_name
+
+- name: assert that no changes were not made
+  assert:
+    that:
+        - "not no_network_name.changed"
+        - "\"Please specify at least a network name or a VLAN name under VM network list.\" in no_network_name.msg"
+
+- name: create new VMs with network and without network name
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - vlan: non_existing_vlan
+        ip: 10.10.10.10
+        netmask: 255.255.255
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: no_network
+  ignore_errors: yes
+
+- debug: var=no_network
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - "not no_network.changed"
+        - "\"VLAN 'non_existing_vlan' does not exist.\" in no_network.msg"
+
+- name: create new VMs with invalid device type
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+        ip: 10.10.10.10
+        netmask: 255.255.255
+        device_type: abc
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: invalid_device_type
+  ignore_errors: yes
+
+- debug: var=invalid_device_type
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - "not invalid_device_type.changed"
+        - "\"Device type specified 'abc' is not valid.\" in invalid_device_type.msg"
+
+- name: create new VMs with invalid device MAC address
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+        ip: 10.10.10.10
+        netmask: 255.255.255
+        device_type: e1000
+        mac: abcdef
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: invalid_mac
+  ignore_errors: yes
+
+- debug: var=invalid_mac
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - "not invalid_mac.changed"
+        - "\"Device MAC address 'abcdef' is invalid.\" in invalid_mac.msg"
+
+- name: create new VMs with invalid network type
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+        ip: 10.10.10.10
+        netmask: 255.255.255
+        device_type: e1000
+        mac: 01:23:45:67:89:ab
+        type: aaaaa
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: invalid_network_type
+  ignore_errors: yes
+
+- debug: var=invalid_network_type
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - "not invalid_network_type.changed"
+        - "\"Network type 'aaaaa' is not a valid parameter.\" in invalid_network_type.msg"
+
+- name: create new VMs with IP, netmask and network type as "DHCP"
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+        ip: 10.10.10.10
+        netmask: 255.255.255
+        device_type: e1000
+        mac: 01:23:45:67:89:ab
+        type: dhcp
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: invalid_dhcp_network_type
+  ignore_errors: yes
+
+- debug: var=invalid_dhcp_network_type
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - "not invalid_dhcp_network_type.changed"
+        - "\"Static IP information provided for network\" in invalid_dhcp_network_type.msg"
+
+- name: create new VMs with no network type which set network type as "DHCP"
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm_no_nw_type
+    guest_id: centos64Guest
+    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "VM Network"
+    hardware:
+        num_cpus: 3
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1 | dirname }}"
+  register: no_network_type
+  ignore_errors: yes
+
+- debug: var=no_network_type
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "no_network_type.changed"

@@ -1,0 +1,88 @@
+- block:
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - ec2_ami_facts:
+        <<: *aws_connection_info
+        filters:
+          architecture: x86_64
+          virtualization-type: hvm
+          root-device-type: ebs
+          name: "amzn-ami-hvm*"
+      register: amis
+
+    - set_fact:
+        latest_amazon_linux: "{{ amis.images | sort(attribute='creation_date') | last }}"
+
+    - ec2_asg:
+        <<: *aws_connection_info
+        state: absent
+        name: "{{ resource_prefix }}-webservers"
+        wait_timeout: 900
+
+    - ec2_lc:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-web-lcfg"
+        state: absent
+
+    - name: Create launch config for testing
+      ec2_lc:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-web-lcfg"
+        assign_public_ip: true
+        image_id: "{{ latest_amazon_linux.image_id }}"
+        security_groups: "{{ sec_group.group_id }}"
+        instance_type: t2.medium
+        user_data: |
+          #!/bin/bash
+          set -x
+          yum update -y --nogpgcheck
+          yum install -y --nogpgcheck httpd
+          echo "Hello Ansiblings!" >> /var/www/html/index.html
+          service httpd start
+        volumes:
+          - device_name: /dev/xvda
+            volume_size: 10
+            volume_type: gp2
+            delete_on_termination: true
+
+    - name: Create autoscaling group for app server fleet
+      ec2_asg:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-webservers"
+        vpc_zone_identifier: "{{ alb_subnets }}"
+        launch_config_name: "{{ resource_prefix }}-web-lcfg"
+        termination_policies:
+        - OldestLaunchConfiguration
+        - Default
+        health_check_period: 600
+        health_check_type: EC2
+        replace_all_instances: true
+        min_size: 0
+        max_size: 2
+        desired_capacity: 1
+        wait_for_instances: true
+        target_group_arns:
+        - "{{ tg.target_group_arn }}"
+
+  always:
+
+    - ec2_asg:
+        <<: *aws_connection_info
+        state: absent
+        name: "{{ resource_prefix }}-webservers"
+        wait_timeout: 900
+      ignore_errors: yes
+
+    - ec2_lc:
+        <<: *aws_connection_info
+        name: "{{ resource_prefix }}-web-lcfg"
+        state: absent
+      ignore_errors: yes

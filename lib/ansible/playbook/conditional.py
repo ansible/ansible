@@ -49,7 +49,7 @@ class Conditional:
     to be run conditionally when a condition is met or skipped.
     '''
 
-    _when = FieldAttribute(isa='list', default=[])
+    _when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
@@ -65,17 +65,6 @@ class Conditional:
     def _validate_when(self, attr, name, value):
         if not isinstance(value, list):
             setattr(self, name, [value])
-
-    def _get_attr_when(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        when = self._attributes['when']
-        if when is None:
-            when = []
-        if hasattr(self, '_get_parent_attribute'):
-            when = self._get_parent_attribute('when', extend=True, prepend=True)
-        return when
 
     def extract_defined_undefined(self, conditional):
         results = []
@@ -103,10 +92,6 @@ class Conditional:
             ds = getattr(self, '_ds')
 
         try:
-            # this allows for direct boolean assignments to conditionals "when: False"
-            if isinstance(self.when, bool):
-                return self.when
-
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
@@ -127,6 +112,10 @@ class Conditional:
         original = conditional
         if conditional is None or conditional == '':
             return True
+
+        # this allows for direct boolean assignments to conditionals "when: False"
+        if isinstance(conditional, bool):
+            return conditional
 
         if templar.is_template(conditional):
             display.warning('when statements should not include jinja2 '
@@ -187,7 +176,7 @@ class Conditional:
                         )
             try:
                 e = templar.environment.overlay()
-                e.filters.update(templar._get_filters())
+                e.filters.update(templar._get_filters(e.filters))
                 e.tests.update(templar._get_tests())
 
                 res = e._parse(conditional, None, None)

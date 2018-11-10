@@ -1,0 +1,8 @@
+- hosts: localhost
+  connection: local
+
+  vars:
+    resource_prefix: 'ansible-testing'
+
+  roles:
+    - efs

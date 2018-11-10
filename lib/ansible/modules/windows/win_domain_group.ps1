@@ -1,31 +1,15 @@
 #!powershell
-# This file is part of Ansible
-#
-# (c) 2017, Jordan Borean <jborean93@gmail.com>, and others
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Jordan Borean <jborean93@gmail.com>, and others
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$diff_mode = Get-AnsibleParam -obj $Params -name "_ansible_diff" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
@@ -40,6 +24,7 @@ $organizational_unit = Get-AnsibleParam -obj $params -name "organizational_unit"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 $protect = Get-AnsibleParam -obj $params -name "protect" -type "bool"
 $ignore_protection = Get-AnsibleParam -obj $params -name "ignore_protection" -type "bool" -default $false
+$domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 $result = @{
     changed = $false
@@ -59,6 +44,9 @@ if ($domain_username -ne $null) {
     $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
+}
+if ($domain_server -ne $null) {
+    $extra_args.Server = $domain_server
 }
 
 try {

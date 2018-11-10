@@ -1,0 +1,9 @@
+{
+    "prefixes": [
+        "test/runner/requirements/"
+    ],
+    "extensions": [
+        ".txt"
+    ],
+    "output": "path-line-column-message"
+}

@@ -34,10 +34,11 @@ options:
     description:
       - A list of subnet IDs to gather facts for.
     version_added: "2.5"
+    aliases: [subnet_id]
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -71,7 +72,7 @@ EXAMPLES = '''
     filters:
       vpc-id: vpc-abcdef00
       "tag:Name": "{{ item }}"
-  with_items:
+  loop:
     - publicA
     - publicB
     - publicC
@@ -223,7 +224,7 @@ def describe_subnets(connection, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        subnet_ids=dict(type='list', default=[]),
+        subnet_ids=dict(type='list', default=[], aliases=['subnet_id']),
         filters=dict(type='dict', default={})
     ))
 

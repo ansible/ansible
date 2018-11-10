@@ -29,9 +29,18 @@ from ansible.plugins.terminal import TerminalBase
 
 class TerminalModule(TerminalBase):
 
+    ansi_re = [
+        # check ECMA-48 Section 5.4 (Control Sequences)
+        re.compile(br'(\x1b\[\?1h\x1b=)'),
+        re.compile(br'((?:\x9b|\x1b\x5b)[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e])'),
+        re.compile(br'\x08.')
+    ]
+
     terminal_stdout_re = [
         re.compile(br"[\r\n]?[\w]*\(.+\) ?#(?:\s*)$"),
-        re.compile(br"[pP]assword:$")
+        re.compile(br"[pP]assword:$"),
+        re.compile(br"(?<=\s)[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\s*#\s*$"),
+        re.compile(br"[\r\n]?[\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$"),
     ]
 
     terminal_stderr_re = [
@@ -46,8 +55,14 @@ class TerminalModule(TerminalBase):
         re.compile(br"'[^']' +returned error code: ?\d+"),
     ]
 
+    terminal_initial_prompt = b'Press any key to continue'
+
+    terminal_initial_answer = b'\r'
+
+    terminal_inital_prompt_newline = False
+
     def on_open_shell(self):
         try:
-            self._exec_cli_command(b'no paging')
+            self._exec_cli_command(b'no pag')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')

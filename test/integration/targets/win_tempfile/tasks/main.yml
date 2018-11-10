@@ -21,9 +21,9 @@
 - name: assert create temp file defaults check
   assert:
     that:
-    - create_tmp_file_defaults_check|changed
+    - create_tmp_file_defaults_check is changed
     - create_tmp_file_defaults_check.state == 'file'
-    - create_tmp_file_defaults_check.path | regex_replace('\\\\', '/') | match(temp_value + '/ansible.*')
+    - create_tmp_file_defaults_check.path | regex_replace('\\\\', '/')  is match(temp_value + '/ansible.*')
     - actual_create_tmp_file_defaults_check.stat.exists == False
 
 - name: create temp file defaults
@@ -38,9 +38,9 @@
 - name: assert create temp file defaults
   assert:
     that:
-    - create_tmp_file_defaults|changed
+    - create_tmp_file_defaults is changed
     - create_tmp_file_defaults.state == 'file'
-    - create_tmp_file_defaults.path | regex_replace('\\\\', '/') | match(temp_value + '/ansible.*')
+    - create_tmp_file_defaults.path | regex_replace('\\\\', '/')  is match(temp_value + '/ansible.*')
     - actual_create_tmp_file_defaults.stat.exists == True
     - actual_create_tmp_file_defaults.stat.isdir == False
 
@@ -56,9 +56,9 @@
 - name: assert create temp file defaults
   assert:
     that:
-    - create_tmp_file_defaults_again|changed
+    - create_tmp_file_defaults_again is changed
     - create_tmp_file_defaults_again.state == 'file'
-    - create_tmp_file_defaults_again.path | regex_replace('\\\\', '/') | match(temp_value + '/ansible.*')
+    - create_tmp_file_defaults_again.path | regex_replace('\\\\', '/')  is match(temp_value + '/ansible.*')
     - create_tmp_file_defaults_again.path != create_tmp_file_defaults.path
     - actual_create_tmp_file_defaults_again.stat.exists == True
     - actual_create_tmp_file_defaults_again.stat.isdir == False
@@ -77,9 +77,9 @@
 - name: assert create temp folder check
   assert:
     that:
-    - create_tmp_folder_check|changed
+    - create_tmp_folder_check is changed
     - create_tmp_folder_check.state == 'directory'
-    - create_tmp_folder_check.path | regex_replace('\\\\', '/') | match(temp_value + '/ansible.*')
+    - create_tmp_folder_check.path | regex_replace('\\\\', '/')  is match(temp_value + '/ansible.*')
     - actual_create_tmp_folder_check.stat.exists == False
 
 - name: create temp folder
@@ -95,9 +95,9 @@
 - name: assert create temp folder
   assert:
     that:
-    - create_tmp_folder|changed
+    - create_tmp_folder is changed
     - create_tmp_folder.state == 'directory'
-    - create_tmp_folder.path | regex_replace('\\\\', '/') | match(temp_value + '/ansible.*')
+    - create_tmp_folder.path | regex_replace('\\\\', '/')  is match(temp_value + '/ansible.*')
     - actual_create_tmp_folder.stat.exists == True
     - actual_create_tmp_folder.stat.isdir == True
 
@@ -114,9 +114,9 @@
 - name: assert create temp file with suffix
   assert:
     that:
-    - create_tmp_file_suffix|changed
+    - create_tmp_file_suffix is changed
     - create_tmp_file_suffix.state == 'file'
-    - create_tmp_file_suffix.path | regex_replace('\\\\', '/') | match(temp_value + '/ansible.*.test-suffix')
+    - create_tmp_file_suffix.path | regex_replace('\\\\', '/')  is match(temp_value + '/ansible.*.test-suffix')
     - actual_creat_tmp_file_suffix.stat.exists == True
     - actual_creat_tmp_file_suffix.stat.isdir == False
 
@@ -133,9 +133,9 @@
 - name: assert create temp file with prefix
   assert:
     that:
-    - create_tmp_file_prefix|changed
+    - create_tmp_file_prefix is changed
     - create_tmp_file_prefix.state == 'file'
-    - create_tmp_file_prefix.path | regex_replace('\\\\', '/') | match(temp_value + '/test-prefix.*')
+    - create_tmp_file_prefix.path | regex_replace('\\\\', '/')  is match(temp_value + '/test-prefix.*')
     - actual_creat_tmp_file_prefix.stat.exists == True
     - actual_creat_tmp_file_prefix.stat.isdir == False
 
@@ -161,9 +161,9 @@
 - name: assert create temp file with different path
   assert:
     that:
-    - create_tmp_file_difference_path|changed
+    - create_tmp_file_difference_path is changed
     - create_tmp_file_difference_path.state == 'file'
-    - create_tmp_file_difference_path.path | regex_replace('\\\\', '/') | match(test_tempfile_path_regex + '/ansible.*')
+    - create_tmp_file_difference_path.path | regex_replace('\\\\', '/')  is match(test_tempfile_path_regex + '/ansible.*')
     - actual_creat_tmp_file_different_path.stat.exists == True
     - actual_creat_tmp_file_different_path.stat.isdir == False
 

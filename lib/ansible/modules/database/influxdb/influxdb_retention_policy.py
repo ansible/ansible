@@ -6,7 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -23,29 +22,11 @@ author: "Kamil Szczygiel (@kamsz)"
 requirements:
     - "python >= 2.6"
     - "influxdb >= 0.9"
+    - requests
 options:
-    hostname:
-        description:
-            - The hostname or IP address on which InfluxDB server is listening
-        required: true
-    username:
-        description:
-            - Username that will be used to authenticate against InfluxDB server
-        default: root
-        required: false
-    password:
-        description:
-            - Password that will be used to authenticate against InfluxDB server
-        default: root
-        required: false
-    port:
-        description:
-            - The port on which InfluxDB server is listening
-        default: 8086
-        required: false
     database_name:
         description:
-            - Name of the database where retention policy will be created
+            - Name of the database.
         required: true
     policy_name:
         description:
@@ -63,6 +44,7 @@ options:
         description:
             - Sets the retention policy as default retention policy
         required: true
+extends_documentation_fragment: influxdb
 '''
 
 EXAMPLES = '''
@@ -74,6 +56,8 @@ EXAMPLES = '''
       policy_name: test
       duration: 1h
       replication: 1
+      ssl: yes
+      validate_certs: yes
 
 - name: create 1 day retention policy
   influxdb_retention_policy:
@@ -98,55 +82,31 @@ EXAMPLES = '''
       policy_name: test
       duration: INF
       replication: 1
+      ssl: no
+      validate_certs: no
 '''
 
 RETURN = '''
-#only defaults
+# only defaults
 '''
 
 import re
 
 try:
     import requests.exceptions
-    from influxdb import InfluxDBClient
     from influxdb import exceptions
-    HAS_INFLUXDB = True
 except ImportError:
-    HAS_INFLUXDB = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-
-
-def influxdb_argument_spec():
-    return dict(
-        hostname=dict(required=True, type='str'),
-        port=dict(default=8086, type='int'),
-        username=dict(default='root', type='str'),
-        password=dict(default='root', type='str', no_log=True),
-        database_name=dict(required=True, type='str')
-    )
-
-
-def connect_to_influxdb(module):
-    hostname = module.params['hostname']
-    port = module.params['port']
-    username = module.params['username']
-    password = module.params['password']
-    database_name = module.params['database_name']
-
-    client = InfluxDBClient(
-        host=hostname,
-        port=port,
-        username=username,
-        password=password,
-        database=database_name
-    )
-    return client
+from ansible.module_utils.influxdb import InfluxDb
+from ansible.module_utils._text import to_native
 
 
 def find_retention_policy(module, client):
     database_name = module.params['database_name']
     policy_name = module.params['policy_name']
+    hostname = module.params['hostname']
     retention_policy = None
 
     try:
@@ -156,7 +116,7 @@ def find_retention_policy(module, client):
                 retention_policy = policy
                 break
     except requests.exceptions.ConnectionError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg="Cannot connect to database %s on %s : %s" % (database_name, hostname, to_native(e)))
     return retention_policy
 
 
@@ -181,7 +141,7 @@ def alter_retention_policy(module, client, retention_policy):
     duration = module.params['duration']
     replication = module.params['replication']
     default = module.params['default']
-    duration_regexp = re.compile('(\d+)([hdw]{1})|(^INF$){1}')
+    duration_regexp = re.compile(r'(\d+)([hdw]{1})|(^INF$){1}')
     changed = False
 
     duration_lookup = duration_regexp.search(duration)
@@ -208,8 +168,9 @@ def alter_retention_policy(module, client, retention_policy):
 
 
 def main():
-    argument_spec = influxdb_argument_spec()
+    argument_spec = InfluxDb.influxdb_argument_spec()
     argument_spec.update(
+        database_name=dict(required=True, type='str'),
         policy_name=dict(required=True, type='str'),
         duration=dict(required=True, type='str'),
         replication=dict(required=True, type='int'),
@@ -220,10 +181,9 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_INFLUXDB:
-        module.fail_json(msg='influxdb python package is required for this module')
+    influxdb = InfluxDb(module)
+    client = influxdb.connect_to_influxdb()
 
-    client = connect_to_influxdb(module)
     retention_policy = find_retention_policy(module, client)
 
     if retention_policy:

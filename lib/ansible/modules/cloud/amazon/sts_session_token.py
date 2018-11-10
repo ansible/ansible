@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -23,20 +23,14 @@ options:
   duration_seconds:
     description:
       - The duration, in seconds, of the session token.
-        See http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters
+        See U(https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters)
         for acceptable and default values.
-    required: false
-    default: null
   mfa_serial_number:
     description:
       - The identification number of the MFA device that is associated with the user who is making the GetSessionToken call.
-    required: false
-    default: null
   mfa_token:
     description:
       - The value provided by the MFA device, if the trust policy of the user requires MFA.
-    required: false
-    default: null
 notes:
   - In order to use the session token in a following playbook task you must pass the I(access_key), I(access_secret) and I(access_token).
 extends_documentation_fragment:
@@ -68,7 +62,7 @@ changed:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Get a session token (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html)
+# Get a session token (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html)
 sts_session_token:
   duration_seconds: 3600
 register: session_credentials
@@ -108,6 +102,7 @@ def normalize_credentials(credentials):
         'expiration': expiration
     }
 
+
 def get_session_token(connection, module):
     duration_seconds = module.params.get('duration_seconds')
     mfa_serial_number = module.params.get('mfa_serial_number')
@@ -131,13 +126,14 @@ def get_session_token(connection, module):
     credentials = normalize_credentials(response.get('Credentials', {}))
     module.exit_json(changed=changed, sts_creds=credentials)
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            duration_seconds = dict(required=False, default=None, type='int'),
-            mfa_serial_number = dict(required=False, default=None),
-            mfa_token = dict(required=False, default=None)
+            duration_seconds=dict(required=False, default=None, type='int'),
+            mfa_serial_number=dict(required=False, default=None),
+            mfa_token=dict(required=False, default=None)
         )
     )
 

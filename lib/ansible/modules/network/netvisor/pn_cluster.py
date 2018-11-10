@@ -112,6 +112,9 @@ changed:
 
 import shlex
 
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
+
 NAME_EXISTS = None
 NODE1_EXISTS = None
 NODE2_EXISTS = None
@@ -243,8 +246,8 @@ def main():
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state =dict(required=True, type='str',
-                            choices=['present', 'absent']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent']),
             pn_name=dict(required=True, type='str'),
             pn_cluster_node1=dict(type='str'),
             pn_cluster_node2=dict(type='str'),
@@ -310,8 +313,6 @@ def main():
 
     run_cli(module, cli)
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

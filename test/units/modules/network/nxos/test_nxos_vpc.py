@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_vpc
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -31,6 +29,8 @@ class TestNxosVpcModule(TestNxosModule):
     module = nxos_vpc
 
     def setUp(self):
+        super(TestNxosVpcModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vpc.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosVpcModule(TestNxosModule):
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestNxosVpcModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
 
@@ -60,6 +61,6 @@ class TestNxosVpcModule(TestNxosModule):
                              peer_gw=True, auto_recovery=True))
         self.execute_module(changed=True, commands=[
             'vpc domain 100', 'terminal dont-ask', 'role priority 32667', 'system-priority 2000',
-            'peer-keepalive destination 192.168.100.4 source 10.1.100.20 vrf management',
+            'peer-keepalive destination 192.168.100.4 source 10.1.100.20',
             'peer-gateway', 'auto-recovery',
         ])

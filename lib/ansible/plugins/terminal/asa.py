@@ -30,12 +30,12 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
     terminal_stderr_re = [
-        re.compile(r"error:", re.I),
+        re.compile(br"error:", re.I),
         re.compile(br"Removing.* not allowed, it is being used")
     ]
 
@@ -50,7 +50,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to disable terminal pager')
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().strip().endswith(b'#'):
             return
 

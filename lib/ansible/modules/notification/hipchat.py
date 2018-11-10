@@ -33,50 +33,43 @@ options:
     description:
       - Name the message will appear to be sent from. Max length is 15
         characters - above this it will be truncated.
-    required: false
     default: Ansible
   msg:
     description:
       - The message body.
     required: true
-    default: null
   color:
     description:
       - Background color for the message.
-    required: false
     default: yellow
     choices: [ "yellow", "red", "green", "purple", "gray", "random" ]
   msg_format:
     description:
       - Message format.
-    required: false
     default: text
     choices: [ "text", "html" ]
   notify:
     description:
       - If true, a notification will be triggered for users in the room.
-    required: false
+    type: bool
     default: 'yes'
-    choices: [ "yes", "no" ]
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: 1.5.1
   api:
     description:
       - API url if using a self-hosted hipchat server. For Hipchat API version
         2 use the default URI with C(/v2) instead of C(/v1).
-    required: false
     default: 'https://api.hipchat.com/v1'
     version_added: 1.6.0
 
-
-requirements: [ ]
-author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
+author:
+- Shirou Wakayama (@shirou)
+- Paul Bourdel (@pb8226)
 '''
 
 EXAMPLES = '''

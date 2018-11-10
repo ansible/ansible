@@ -25,8 +25,8 @@ import tempfile
 
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 from ansible import errors
 from ansible.parsing import vault
@@ -35,11 +35,6 @@ from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
 from ansible.module_utils._text import to_bytes, to_text
 
 from units.mock.vault_helper import TextVaultSecret
-
-v10_data = """$ANSIBLE_VAULT;1.0;AES
-53616c7465645f5fd0026926a2d415a28a2622116273fbc90e377225c12a347e1daf4456d36a77f9
-9ad98d59f61d06a4b66718d855f16fb7bdfe54d1ec8aeaa4d06c2dc1fa630ae1846a029877f0eeb1
-83c62ffb04c2512995e815de4b4d29ed"""
 
 v11_data = """$ANSIBLE_VAULT;1.1;AES256
 62303130653266653331306264616235333735323636616539316433666463323964623162386137
@@ -458,33 +453,6 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertTrue(os.path.exists(tmp_file.name))
 
-    def test_decrypt_1_0(self):
-        # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
-        v10_file = tempfile.NamedTemporaryFile(delete=False)
-        with v10_file as f:
-            f.write(to_bytes(v10_data))
-
-        ve = self._vault_editor(self._secrets("ansible"))
-
-        # make sure the password functions for the cipher
-        error_hit = False
-        try:
-            ve.decrypt_file(v10_file.name)
-        except errors.AnsibleError:
-            error_hit = True
-            raise
-
-        # verify decrypted content
-        f = open(v10_file.name, "rb")
-        fdata = to_text(f.read())
-        f.close()
-
-        os.unlink(v10_file.name)
-
-        assert error_hit is False, "error decrypting 1.0 file"
-        self.assertEqual(fdata.strip(), "foo")
-        assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
-
     def test_decrypt_1_1(self):
         v11_file = tempfile.NamedTemporaryFile(delete=False)
         with v11_file as f:
@@ -508,43 +476,6 @@ class TestVaultEditor(unittest.TestCase):
 
         assert error_hit is False, "error decrypting 1.1 file"
         assert fdata.strip() == "foo", "incorrect decryption of 1.1 file: %s" % fdata.strip()
-
-    def test_rekey_migration(self):
-        v10_file = tempfile.NamedTemporaryFile(delete=False)
-        with v10_file as f:
-            f.write(to_bytes(v10_data))
-
-        ve = self._vault_editor(self._secrets("ansible"))
-
-        # make sure the password functions for the cipher
-        error_hit = False
-        new_secrets = self._secrets("ansible2")
-        try:
-            ve.rekey_file(v10_file.name, vault.match_encrypt_secret(new_secrets)[1])
-        except errors.AnsibleError:
-            error_hit = True
-
-        # verify decrypted content
-        f = open(v10_file.name, "rb")
-        fdata = f.read()
-        f.close()
-
-        assert error_hit is False, "error rekeying 1.0 file to 1.1"
-
-        # ensure filedata can be decrypted, is 1.1 and is AES256
-        vl = VaultLib(new_secrets)
-        dec_data = None
-        error_hit = False
-        try:
-            dec_data = vl.decrypt(fdata)
-        except errors.AnsibleError:
-            error_hit = True
-
-        os.unlink(v10_file.name)
-
-        self.assertIn(b'AES256', fdata, 'AES256 was not found in vault file %s' % to_text(fdata))
-        assert error_hit is False, "error decrypting migrated 1.0 file"
-        assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
 
     def test_real_path_dash(self):
         filename = '-'

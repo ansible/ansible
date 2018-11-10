@@ -29,17 +29,15 @@ options:
     description:
       - Get details of specific endpoint IDs
       - Provide this value as a list
-    required: false
-    default: None
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcEndpoints.html)
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcEndpoints.html)
         for possible filters.
-    required: false
-    default: None
-author: Karen Cheng(@Etherdaemon)
-extends_documentation_fragment: aws
+author: Karen Cheng (@Etherdaemon)
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -116,13 +114,14 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, get_aws_connection_info,
-                                      ansible_dict_to_boto3_filter_list, HAS_BOTO3, camel_dict_to_snake_dict)
+                                      ansible_dict_to_boto3_filter_list, HAS_BOTO3, camel_dict_to_snake_dict, AWSRetry)
 
 
 def date_handler(obj):
     return obj.isoformat() if hasattr(obj, 'isoformat') else obj
 
 
+@AWSRetry.exponential_backoff()
 def get_supported_services(client, module):
     results = list()
     params = dict()
@@ -136,6 +135,7 @@ def get_supported_services(client, module):
     return dict(service_names=results)
 
 
+@AWSRetry.exponential_backoff()
 def get_endpoints(client, module):
     results = list()
     params = dict()

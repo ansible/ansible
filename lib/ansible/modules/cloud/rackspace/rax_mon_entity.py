@@ -47,7 +47,7 @@ options:
     - Hash of arbitrary C(name), C(value) pairs that are passed to associated
       rax_mon_alarms. Names and values must all be between 1 and 255 characters
       long.
-author: Ash Wilson
+author: Ash Wilson (@smashwilson)
 extends_documentation_fragment: rackspace.openstack
 '''
 
@@ -151,6 +151,7 @@ def cloud_monitoring(module, state, label, agent_id, named_ip_addresses,
         module.exit_json(changed=changed, entity=entity_dict)
     else:
         module.exit_json(changed=changed)
+
 
 def main():
     argument_spec = rax_argument_spec()

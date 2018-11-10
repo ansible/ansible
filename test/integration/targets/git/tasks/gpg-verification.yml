@@ -99,8 +99,8 @@
 - name: GPG-VERIFICATION | Check that unsigned lightweight tag verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
 - name: GPG-VERIFICATION | Clone repo and verify a signed commit
   environment:
@@ -125,8 +125,8 @@
 - name: GPG-VERIFICATION | Check that unsigned commit verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
 - name: GPG-VERIFICATION | Clone repo and verify a signed annotated tag
   environment:
@@ -151,8 +151,8 @@
 - name: GPG-VERIFICATION | Check that unsigned annotated tag verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
 - name: GPG-VERIFICATION | Clone repo and verify a signed branch
   environment:
@@ -177,8 +177,8 @@
 - name: GPG-VERIFICATION | Check that unsigned branch verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
 - name: GPG-VERIFICATION | Remove GnuPG verification workdir
   file:

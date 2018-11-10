@@ -87,6 +87,82 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = '''
+ansible_sysdescr:
+  description: A textual description of the entity.
+  returned: success
+  type: string
+  sample: Linux ubuntu-user 4.4.0-93-generic #116-Ubuntu SMP Fri Aug 11 21:17:51 UTC 2017 x86_64
+ansible_sysobjectid:
+  description: The vendor's authoritative identification of the network management subsystem contained in the entity.
+  returned: success
+  type: string
+  sample: 1.3.6.1.4.1.8072.3.2.10
+ansible_sysuptime:
+  description: The time (in hundredths of a second) since the network management portion of the system was last re-initialized.
+  returned: success
+  type: int
+  sample: 42388
+ansible_syscontact:
+  description: The textual identification of the contact person for this managed node, together with information on how to contact this person.
+  returned: success
+  type: string
+  sample: Me <me@example.org>
+ansible_sysname:
+  description: An administratively-assigned name for this managed node.
+  returned: success
+  type: string
+  sample: ubuntu-user
+ansible_syslocation:
+  description: The physical location of this node (e.g., `telephone closet, 3rd floor').
+  returned: success
+  type: string
+  sample: Sitting on the Dock of the Bay
+ansible_all_ipv4_addresses:
+  description: List of all IPv4 addresses.
+  returned: success
+  type: list
+  sample: ["127.0.0.1", "172.17.0.1"]
+ansible_interfaces:
+  description: Dictionary of each network interface and its metadata.
+  returned: success
+  type: dict
+  sample: {
+    "1": {
+        "adminstatus": "up",
+        "description": "",
+        "ifindex": "1",
+        "ipv4": [
+            {
+                "address": "127.0.0.1",
+                "netmask": "255.0.0.0"
+            }
+        ],
+        "mac": "",
+        "mtu": "65536",
+        "name": "lo",
+        "operstatus": "up",
+        "speed": "65536"
+    },
+    "2": {
+        "adminstatus": "up",
+        "description": "",
+        "ifindex": "2",
+        "ipv4": [
+            {
+                "address": "192.168.213.128",
+                "netmask": "255.255.255.0"
+            }
+        ],
+        "mac": "000a305a52a1",
+        "mtu": "1500",
+        "name": "Intel Corporation 82545EM Gigabit Ethernet Controller (Copper)",
+        "operstatus": "up",
+        "speed": "1500"
+    }
+  }
+'''
+
 import binascii
 from collections import defaultdict
 
@@ -102,32 +178,32 @@ from ansible.module_utils._text import to_text
 
 class DefineOid(object):
 
-    def __init__(self,dotprefix=False):
+    def __init__(self, dotprefix=False):
         if dotprefix:
             dp = "."
         else:
             dp = ""
 
         # From SNMPv2-MIB
-        self.sysDescr    = dp + "1.3.6.1.2.1.1.1.0"
+        self.sysDescr = dp + "1.3.6.1.2.1.1.1.0"
         self.sysObjectId = dp + "1.3.6.1.2.1.1.2.0"
-        self.sysUpTime   = dp + "1.3.6.1.2.1.1.3.0"
-        self.sysContact  = dp + "1.3.6.1.2.1.1.4.0"
-        self.sysName     = dp + "1.3.6.1.2.1.1.5.0"
+        self.sysUpTime = dp + "1.3.6.1.2.1.1.3.0"
+        self.sysContact = dp + "1.3.6.1.2.1.1.4.0"
+        self.sysName = dp + "1.3.6.1.2.1.1.5.0"
         self.sysLocation = dp + "1.3.6.1.2.1.1.6.0"
 
         # From IF-MIB
-        self.ifIndex       = dp + "1.3.6.1.2.1.2.2.1.1"
-        self.ifDescr       = dp + "1.3.6.1.2.1.2.2.1.2"
-        self.ifMtu         = dp + "1.3.6.1.2.1.2.2.1.4"
-        self.ifSpeed       = dp + "1.3.6.1.2.1.2.2.1.5"
+        self.ifIndex = dp + "1.3.6.1.2.1.2.2.1.1"
+        self.ifDescr = dp + "1.3.6.1.2.1.2.2.1.2"
+        self.ifMtu = dp + "1.3.6.1.2.1.2.2.1.4"
+        self.ifSpeed = dp + "1.3.6.1.2.1.2.2.1.5"
         self.ifPhysAddress = dp + "1.3.6.1.2.1.2.2.1.6"
         self.ifAdminStatus = dp + "1.3.6.1.2.1.2.2.1.7"
-        self.ifOperStatus  = dp + "1.3.6.1.2.1.2.2.1.8"
-        self.ifAlias       = dp + "1.3.6.1.2.1.31.1.1.1.18"
+        self.ifOperStatus = dp + "1.3.6.1.2.1.2.2.1.8"
+        self.ifAlias = dp + "1.3.6.1.2.1.31.1.1.1.18"
 
         # From IP-MIB
-        self.ipAdEntAddr    = dp + "1.3.6.1.2.1.4.20.1.1"
+        self.ipAdEntAddr = dp + "1.3.6.1.2.1.4.20.1.1"
         self.ipAdEntIfIndex = dp + "1.3.6.1.2.1.4.20.1.2"
         self.ipAdEntNetMask = dp + "1.3.6.1.2.1.4.20.1.3"
 
@@ -141,6 +217,7 @@ def decode_hex(hexstring):
     else:
         return hexstring
 
+
 def decode_mac(hexstring):
 
     if len(hexstring) != 14:
@@ -150,16 +227,18 @@ def decode_mac(hexstring):
     else:
         return hexstring
 
+
 def lookup_adminstatus(int_adminstatus):
     adminstatus_options = {
         1: 'up',
         2: 'down',
         3: 'testing'
-        }
+    }
     if int_adminstatus in adminstatus_options:
         return adminstatus_options[int_adminstatus]
     else:
         return ""
+
 
 def lookup_operstatus(int_operstatus):
     operstatus_options = {
@@ -170,11 +249,12 @@ def lookup_operstatus(int_operstatus):
         5: 'dormant',
         6: 'notPresent',
         7: 'lowerLayerDown'
-        }
+    }
     if int_operstatus in operstatus_options:
         return operstatus_options[int_operstatus]
     else:
         return ""
+
 
 def main():
     module = AnsibleModule(
@@ -189,7 +269,7 @@ def main():
             authkey=dict(required=False),
             privkey=dict(required=False),
             removeplaceholder=dict(required=False)),
-        required_together = ( ['username','level','integrity','authkey'],['privacy','privkey'],),
+        required_together=(['username', 'level', 'integrity', 'authkey'], ['privacy', 'privkey'],),
         supports_check_mode=False)
 
     m_args = module.params
@@ -210,7 +290,6 @@ def main():
 
         if m_args['level'] == "authPriv" and m_args['privacy'] is None:
             module.fail_json(msg='Privacy algorithm not set when using authPriv')
-
 
         if m_args['integrity'] == "sha":
             integrity_proto = cmdgen.usmHMACSHAAuthProtocol
@@ -240,7 +319,8 @@ def main():
     # Use v without a prefix to use with return values
     v = DefineOid(dotprefix=False)
 
-    Tree = lambda: defaultdict(Tree)
+    def Tree():
+        return defaultdict(Tree)
 
     results = Tree()
 
@@ -255,7 +335,6 @@ def main():
         cmdgen.MibVariable(p.sysLocation,),
         lookupMib=False
     )
-
 
     if errorIndication:
         module.fail_json(msg=str(errorIndication))
@@ -294,7 +373,6 @@ def main():
         lookupMib=False
     )
 
-
     if errorIndication:
         module.fail_json(msg=str(errorIndication))
 
@@ -317,7 +395,7 @@ def main():
             if v.ifMtu in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['mtu'] = current_val
-            if v.ifMtu in current_oid:
+            if v.ifSpeed in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['speed'] = current_val
             if v.ifPhysAddress in current_oid:
@@ -351,10 +429,10 @@ def main():
     for ipv4_network in ipv4_networks:
         current_interface = ipv4_networks[ipv4_network]['interface']
         current_network = {
-            'address':  ipv4_networks[ipv4_network]['address'],
-            'netmask':  ipv4_networks[ipv4_network]['netmask']
-            }
-        if not current_interface in interface_to_ipv4:
+            'address': ipv4_networks[ipv4_network]['address'],
+            'netmask': ipv4_networks[ipv4_network]['netmask']
+        }
+        if current_interface not in interface_to_ipv4:
             interface_to_ipv4[current_interface] = []
             interface_to_ipv4[current_interface].append(current_network)
         else:

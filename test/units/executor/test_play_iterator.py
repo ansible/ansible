@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.play_iterator import HostState, PlayIterator
@@ -154,16 +154,6 @@ class TestPlayIterator(unittest.TestCase):
             variable_manager=mock_var_manager,
             all_vars=dict(),
         )
-
-        # lookup up an original task
-        target_task = p._entries[0].tasks[0].block[0]
-        task_copy = target_task.copy(exclude_parent=True)
-        found_task = itr.get_original_task(hosts[0], task_copy)
-        self.assertEqual(target_task, found_task)
-
-        bad_task = Task()
-        found_task = itr.get_original_task(hosts[0], bad_task)
-        self.assertIsNone(found_task)
 
         # pre task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])

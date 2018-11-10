@@ -20,7 +20,7 @@ author: "Dhivya P (@dhivyap)"
 short_description: Run commands on remote devices running Dell OS9
 description:
   - Sends arbitrary commands to a Dell OS9 node and returns the results
-    read from the device. This  module includes an
+    read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
@@ -42,15 +42,24 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of I(retries), the task fails.
         See examples.
-    required: false
-    default: null
+    version_added: "2.2"
+  match:
+    description:
+      - The I(match) argument is used in conjunction with the
+        I(wait_for) argument to specify the match policy.  Valid
+        values are C(all) or C(any).  If the value is set to C(all)
+        then all conditionals in the wait_for must be satisfied.  If
+        the value is set to C(any) then only one of the values must be
+        satisfied.
+    default: all
+    choices: ['any', 'all']
+    version_added: "2.5"
   retries:
     description:
       - Specifies the number of retries a command should be tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -58,7 +67,6 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 
 notes:
@@ -72,33 +80,21 @@ notes:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
-
 tasks:
   - name: run show version on remote devices
     dellos9_command:
       commands: show version
-      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains OS9
     dellos9_command:
       commands: show version
       wait_for: result[0] contains OS9
-      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
     dellos9_command:
       commands:
         - show version
         - show interfaces
-      provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
     dellos9_command:
@@ -108,7 +104,6 @@ tasks:
       wait_for:
         - result[0] contains OS9
         - result[1] contains Loopback
-      provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -136,10 +131,10 @@ warnings:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos9 import run_commands
-from ansible.module_utils.dellos9 import dellos9_argument_spec, check_args
-from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network.dellos9.dellos9 import run_commands
+from ansible.module_utils.network.dellos9.dellos9 import dellos9_argument_spec, check_args
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
 
@@ -178,7 +173,7 @@ def main():
         # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
@@ -222,14 +217,14 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-    result = {
+    result.update({
         'changed': False,
         'stdout': responses,
         'stdout_lines': list(to_lines(responses))
-    }
+    })
 
     module.exit_json(**result)
 

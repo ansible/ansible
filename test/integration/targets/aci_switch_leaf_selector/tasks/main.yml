@@ -1,0 +1,138 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Bruno Calogero <brunocalogero@hotmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Deleting Switch Policy Leaf profile exists for kick off
+  aci_switch_policy_leaf_profile:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    leaf_profile: sw_name_test
+    state: absent
+
+- name: Ensuring Switch Policy Leaf profile exists for kick off
+  aci_switch_policy_leaf_profile: &aci_switch_policy_leaf_profile_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    leaf_profile: sw_name_test
+    state: present
+  register: leaf_profile_present
+
+# TODO: Ensure that leaf Policy Group Exists (module missing) (infra:AccPortGrp)
+
+- name: Adding a switch policy leaf profile selector associated Node Block range (w/o policy group) - check mode works
+  aci_switch_leaf_selector: &aci_switch_leaf_selector_present
+    <<: *aci_switch_policy_leaf_profile_present
+    leaf: leaf_selector_name
+    leaf_node_blk: node_blk_name
+    from: 1011
+    to: 1011
+  check_mode: yes
+  register: sw_leaf_selec_check_mode_present
+
+- name: Adding a switch policy leaf profile selector associated Node Block range (w/o policy group) - creation works
+  aci_switch_leaf_selector:
+    <<: *aci_switch_leaf_selector_present
+  register: sw_leaf_selec_present
+
+- name: Adding a switch policy leaf profile selector associated Node Block range (w/o policy group) - idempotency works
+  aci_switch_leaf_selector:
+    <<: *aci_switch_leaf_selector_present
+  register: sw_leaf_selec_idempotent
+
+- name: Adding a switch policy leaf profile selector associated Node Block range (w/ policy group) - update works
+  aci_switch_leaf_selector:
+    <<: *aci_switch_leaf_selector_present
+    policy_group: anstest_policygroupname
+  register: sw_leaf_selec_update
+
+# TODO: also test for errors
+- name: present assertions
+  assert:
+    that:
+    - sw_leaf_selec_check_mode_present is changed
+    - sw_leaf_selec_present is changed
+    - sw_leaf_selec_present.previous == []
+    - 'sw_leaf_selec_present.sent ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}}]}}'
+    - sw_leaf_selec_idempotent is not changed
+    - sw_leaf_selec_idempotent.sent == {}
+    - sw_leaf_selec_update is changed
+    - 'sw_leaf_selec_update.sent == {"infraLeafS": {"attributes": {},"children": [{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-anstest_policygroupname"}}}]}}'
+
+- name: Query Specific switch policy leaf profile selector
+  aci_switch_leaf_selector:
+    <<: *aci_switch_policy_leaf_profile_present
+    leaf: leaf_selector_name # "{{ fake_var | default(omit) }}" ?
+    state: query
+  register: binding_query
+
+- name: present assertions
+  assert:
+    that:
+      - binding_query is not changed
+      - binding_query.current | length >= 1
+      - '"api/mo/uni/infra/nprof-sw_name_test/leaves-leaf_selector_name-typ-range.json" in binding_query.url'
+
+- name: Remove binding of interface access port selector and Interface Policy Leaf Profile - check mode
+  aci_switch_leaf_selector: &aci_switch_leaf_selector_absent
+    <<: *aci_switch_policy_leaf_profile_present
+    leaf: leaf_selector_name
+    state: absent
+  check_mode: yes
+  register: sw_leaf_selec_check_mode_absent
+
+- name: Remove switch policy leaf profile selector - delete works
+  aci_switch_leaf_selector:
+    <<: *aci_switch_leaf_selector_absent
+  register: sw_leaf_selec_absent
+
+- name: Remove switch policy leaf profile selector - idempotency works
+  aci_switch_leaf_selector:
+    <<: *aci_switch_leaf_selector_absent
+  register: sw_leaf_selec_absent_idempotent
+
+- name: Remove switch policy leaf profile selector - check mode
+  aci_switch_leaf_selector:
+    <<: *aci_switch_policy_leaf_profile_present
+    #access_port_selector: anstest_accessportselector
+    state: absent
+  ignore_errors: yes
+  register: sw_leaf_selec_absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - sw_leaf_selec_check_mode_absent is changed
+      - sw_leaf_selec_check_mode_absent.previous != []
+      - sw_leaf_selec_absent is changed
+      - sw_leaf_selec_absent.previous == sw_leaf_selec_check_mode_absent.previous
+      - sw_leaf_selec_absent_idempotent is not changed
+      - sw_leaf_selec_absent_idempotent.previous == []
+      - sw_leaf_selec_absent_missing_param is failed
+      - 'sw_leaf_selec_absent_missing_param.msg == "state is absent but all of the following are missing: leaf"'
+
+
+- name: Remove switch policy leaf profile selector - Clean up
+  aci_switch_leaf_selector:
+    <<: *aci_switch_leaf_selector_absent
+    state: absent
+
+- name: Deleting Switch Policy Leaf profile exists for kick off
+  aci_switch_policy_leaf_profile:
+    <<: *aci_switch_policy_leaf_profile_present
+    state: absent

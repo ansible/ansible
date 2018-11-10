@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: Ansible Project
+
+# Copyright: (c) 2016, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -24,46 +25,33 @@ options:
     description:
       - Name of the schema to add or remove.
     required: true
-    default: null
   database:
     description:
       - Name of the database to connect to.
-    required: false
     default: postgres
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database.
-    required: false
     default: localhost
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
-    required: false
-    default: null
   owner:
     description:
       - Name of the role to set as owner of the schema.
-    required: false
-    default: null
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   state:
     description:
       - The schema state.
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:
@@ -72,7 +60,7 @@ notes:
      on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before
      using this module.
 requirements: [ psycopg2 ]
-author: "Flavien Chantelot <contact@flavien.io>"
+author: Flavien Chantelot (@Dorn-) <contact@flavien.io>
 '''
 
 EXAMPLES = '''
@@ -125,6 +113,7 @@ def set_owner(cursor, schema, owner):
     cursor.execute(query)
     return True
 
+
 def get_schema_info(cursor, schema):
     query = """
     SELECT schema_owner AS owner
@@ -134,10 +123,12 @@ def get_schema_info(cursor, schema):
     cursor.execute(query, {'schema': schema})
     return cursor.fetchone()
 
+
 def schema_exists(cursor, schema):
     query = "SELECT schema_name FROM information_schema.schemata WHERE schema_name = %(schema)s"
     cursor.execute(query, {'schema': schema})
     return cursor.rowcount == 1
+
 
 def schema_delete(cursor, schema):
     if schema_exists(cursor, schema):
@@ -146,6 +137,7 @@ def schema_delete(cursor, schema):
         return True
     else:
         return False
+
 
 def schema_create(cursor, schema, owner):
     if not schema_exists(cursor, schema):
@@ -162,6 +154,7 @@ def schema_create(cursor, schema, owner):
         else:
             return False
 
+
 def schema_matches(cursor, schema, owner):
     if not schema_exists(cursor, schema):
         return False
@@ -176,6 +169,7 @@ def schema_matches(cursor, schema, owner):
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -189,7 +183,7 @@ def main():
             database=dict(default="postgres"),
             state=dict(default="present", choices=["absent", "present"]),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not postgresqldb_found:
@@ -205,13 +199,13 @@ def main():
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '' )
+    kw = dict((params_map[k], v) for (k, v) in module.params.items()
+              if k in params_map and v != '')
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"

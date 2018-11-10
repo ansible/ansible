@@ -64,7 +64,7 @@ options:
     description:
       - Install/Remove category instead of a single package.
     required: false
-    choices: ["true", "false"]
+    type: bool
     version_added: "1.6"
 '''
 
@@ -105,6 +105,9 @@ EXAMPLES = '''
 import os
 import tempfile
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 def package_installed(module, name, category):
     cmd = [module.get_bin_path('pkginfo', True)]
     cmd.append('-q')
@@ -116,6 +119,7 @@ def package_installed(module, name, category):
         return True
     else:
         return False
+
 
 def create_admin_file():
     (desc, filename) = tempfile.mkstemp(prefix='ansible_svr4pkg', text=True)
@@ -141,48 +145,52 @@ basedir=default
     os.close(desc)
     return filename
 
+
 def run_command(module, cmd):
     progname = cmd[0]
     cmd[0] = module.get_bin_path(progname, True)
     return module.run_command(cmd)
 
+
 def package_install(module, name, src, proxy, response_file, zone, category):
     adminfile = create_admin_file()
-    cmd = [ 'pkgadd', '-n']
+    cmd = ['pkgadd', '-n']
     if zone == 'current':
-        cmd += [ '-G' ]
-    cmd += [ '-a', adminfile, '-d', src ]
+        cmd += ['-G']
+    cmd += ['-a', adminfile, '-d', src]
     if proxy is not None:
-        cmd += [ '-x', proxy ]
+        cmd += ['-x', proxy]
     if response_file is not None:
-        cmd += [ '-r', response_file ]
+        cmd += ['-r', response_file]
     if category:
-        cmd += [ '-Y' ]
+        cmd += ['-Y']
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     os.unlink(adminfile)
     return (rc, out, err)
 
+
 def package_uninstall(module, name, src, category):
     adminfile = create_admin_file()
     if category:
-        cmd = [ 'pkgrm', '-na', adminfile, '-Y', name ]
+        cmd = ['pkgrm', '-na', adminfile, '-Y', name]
     else:
-        cmd = [ 'pkgrm', '-na', adminfile, name]
+        cmd = ['pkgrm', '-na', adminfile, name]
     (rc, out, err) = run_command(module, cmd)
     os.unlink(adminfile)
     return (rc, out, err)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required = True),
-            state = dict(required = True, choices=['present', 'absent']),
-            src = dict(default = None),
-            proxy = dict(default = None),
-            response_file = dict(default = None),
-            zone = dict(required=False, default = 'all', choices=['current','all']),
-            category = dict(default=False, type='bool')
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=True, choices=['present', 'absent']),
+            src=dict(default=None),
+            proxy=dict(default=None),
+            response_file=dict(default=None),
+            zone=dict(required=False, default='all', choices=['current', 'all']),
+            category=dict(default=False, type='bool')
         ),
         supports_check_mode=True
     )
@@ -251,8 +259,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,36 @@
+# test code for the async keyword failing in the middle of output
+# (c) 2018, Ansible Project
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# This uses a special copy of the normal action plugin which simulates
+# a transient failure in the module
+- name: test that we can recover from initial failures to read
+  async_test:
+    fail_mode: recovered_fail
+  async: 10
+  poll: 1
+  register: async_result
+
+- name: validate that by the end of the retry interval, we succeeded
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result is finished
+    - async_result is changed
+    - async_result is successful
+    - async_result.msg is search('succeeded')

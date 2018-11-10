@@ -1,0 +1,66 @@
+# test code for the synchronize module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: cleanup old files
+  file:
+    path: '{{ output_dir }}'
+    state: absent
+
+- name: ensure the target directory exists
+  file:
+    path: '{{ output_dir }}'
+    state: directory
+
+- name: synchronize file to new filename
+  synchronize:
+    src: normal_file.txt
+    dest: '{{ output_dir }}/remote_file.txt'
+  register: sync_result
+
+- assert:
+    that:
+        - "'changed' in sync_result"
+        - "sync_result.changed == true"
+        - "'cmd' in sync_result"
+        - "'rsync' in sync_result.cmd"
+        - "'msg' in sync_result"
+        - "sync_result.msg.startswith('<f+')"
+        - "sync_result.msg.endswith('+ normal_file.txt\n')"
+
+- name: test that the file was really copied over
+  stat:
+    path: "{{ output_dir }}/remote_file.txt"
+  register: stat_result
+
+- assert:
+    that:
+      - "stat_result.stat.exists == True"
+      - "stat_result.stat.checksum == '4f11fb5cd9fe0171ea6fab02ae33f65138f3e44e'"
+
+- name: test that the file is not copied a second time
+  synchronize: src=normal_file.txt dest={{output_dir}}/remote_file.txt
+  register: sync_result
+
+- assert:
+    that:
+     - "sync_result.changed == False"
+
+- name: cleanup old files
+  file:
+    path: '{{ output_dir }}'
+    state: absent

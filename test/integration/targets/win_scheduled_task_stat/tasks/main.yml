@@ -1,4 +1,12 @@
 ---
+- name: Look up built-in Administrator account name (-500 user whose domain == computer name)
+  raw: $machine_sid = (Get-CimInstance Win32_UserAccount -Filter "Domain='$env:COMPUTERNAME'")[0].SID -replace '(S-1-5-21-\d+-\d+-\d+)-\d+', '$1'; (Get-CimInstance Win32_UserAccount -Filter "SID='$machine_sid-500'").Name
+  check_mode: no
+  register: admin_account_result
+
+- set_fact:
+    admin_account_name: "{{ admin_account_result.stdout_lines[0] }}"
+
 - name: ensure task is deleted before test
   win_scheduled_task:
     name: '{{test_scheduled_task_stat_name}}'
@@ -34,7 +42,7 @@
     name: '{{test_scheduled_task_stat_name}}'
     state: present
     logon_type: interactive_token
-    username: Administrator
+    username: '{{ admin_account_name }}'
     author: Ansible Author
     description: Fake description
     execution_time_limit: PT23H
@@ -69,6 +77,18 @@
     - stat_folder_with_task.task_exists is not defined
 
 # task stat tests
+- name: get stat of missing task with invalid folder
+  win_scheduled_task_stat:
+    path: fake path
+    name: fake task
+  register: stat_task_missing_folder
+
+- name: assert get stat of missing task with invalid folder
+  assert:
+    that:
+    - stat_task_missing_folder.folder_exists == False
+    - stat_task_missing_folder.task_exists == False
+
 - name: get stat of missing task
   win_scheduled_task_stat:
     path: '{{test_scheduled_task_stat_path}}'
@@ -102,7 +122,7 @@
     - stat_task_present.principal.group_id == None
     - stat_task_present.principal.logon_type == "TASK_LOGON_INTERACTIVE_TOKEN"
     - stat_task_present.principal.run_level == "TASK_RUNLEVEL_LUA"
-    - stat_task_present.principal.user_id.endswith("Administrator")
+    - stat_task_present.principal.user_id.endswith(admin_account_name)
     - stat_task_present.registration_info.author == "Ansible Author"
     - stat_task_present.registration_info.date is defined
     - stat_task_present.registration_info.description == "Fake description"
@@ -114,11 +134,17 @@
     - stat_task_present.triggers|count == 2
     - stat_task_present.triggers[0].delay == "PT15M"
     - stat_task_present.triggers[0].type == "TASK_TRIGGER_BOOT"
+    - stat_task_present.triggers[0].repetition.stop_at_duration_end == False
+    - stat_task_present.triggers[0].repetition.duration == None
+    - stat_task_present.triggers[0].repetition.interval == None
     - stat_task_present.triggers[1].days_of_month == "5,15,30"
     - stat_task_present.triggers[1].months_of_year == "june,december"
     - stat_task_present.triggers[1].run_on_last_day_of_month == True
     - stat_task_present.triggers[1].start_boundary == "2017-09-20T03:44:38"
     - stat_task_present.triggers[1].type == "TASK_TRIGGER_MONTHLY"
+    - stat_task_present.triggers[1].repetition.stop_at_duration_end == False
+    - stat_task_present.triggers[1].repetition.duration == None
+    - stat_task_present.triggers[1].repetition.interval == None
 
 - name: change principal to system account so it will run in the next step
   win_scheduled_task:

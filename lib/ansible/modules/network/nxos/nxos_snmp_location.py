@@ -70,8 +70,8 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -96,7 +96,7 @@ def flatten_list(command_lists):
 
 def get_snmp_location(module):
     location = {}
-    location_regex = r'^\s*snmp-server\slocation\s(?P<location>.+)$'
+    location_regex = r'^\s*snmp-server\s+location\s+(?P<location>.+)$'
 
     body = execute_show_command('show run snmp', module)[0]
     match_location = re.search(location_regex, body, re.M)

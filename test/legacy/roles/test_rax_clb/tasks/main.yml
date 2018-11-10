@@ -7,7 +7,7 @@
 - name: Validate results of rax_clb with no args
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - 'rax_clb.msg == "missing required arguments: name"'
 # ============================================================
 
@@ -23,7 +23,7 @@
 - name: Validate results of rax_clb with only creds
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - rax_clb.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -41,7 +41,7 @@
 - name: Validate results of rax_clb with only creds
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - rax_clb.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -59,7 +59,7 @@
 - name: Validate rax_clb creds and region
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - 'rax_clb.msg == "missing required arguments: name"'
 # ============================================================
 
@@ -79,7 +79,7 @@
 - name: Validate rax_clb with creds, region and name
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
       - rax_clb.balancer.port == 80
       - rax_clb.balancer.protocol == 'HTTP'
       - rax_clb.balancer.timeout == 30
@@ -102,7 +102,7 @@
 - name: "Validate delete integration 1"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.name == "{{ resource_prefix }}-1"
 
 # ============================================================
@@ -124,7 +124,7 @@
 - name: Validate rax_clb with creds, region, name and protocol
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
       - rax_clb.balancer.port == 80
       - rax_clb.balancer.protocol == 'TCP'
       - rax_clb.balancer.timeout == 30
@@ -146,7 +146,7 @@
 - name: "Validate delete integration 2"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.name == "{{ resource_prefix }}-2"
 # ============================================================
 
@@ -168,7 +168,7 @@
 - name: Validate rax_clb with creds, region, name, protocol and port
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
       - rax_clb.balancer.port == 8080
       - rax_clb.balancer.protocol == 'TCP'
       - rax_clb.balancer.timeout == 30
@@ -190,7 +190,7 @@
 - name: "Validate delete integration 3"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.name == "{{ resource_prefix }}-3"
 # ============================================================
 
@@ -213,7 +213,7 @@
 - name: Validate rax_clb with creds, region, name, protocol and type
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
       - rax_clb.balancer.port == 8080
       - rax_clb.balancer.protocol == 'TCP'
       - rax_clb.balancer.timeout == 30
@@ -235,7 +235,7 @@
 - name: "Validate delete integration 4"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.name == "{{ resource_prefix }}-4"
 # ============================================================
 
@@ -260,7 +260,7 @@
 - name: Validate rax_clb with invalid timeout
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - rax_clb.msg == '"timeout" must be greater than or equal to 30'
 # ============================================================
 
@@ -284,7 +284,7 @@
 - name: Validate rax_clb with creds, region, name, protocol, type and timeout
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
       - rax_clb.balancer.port == 8080
       - rax_clb.balancer.protocol == 'TCP'
       - rax_clb.balancer.timeout == 60
@@ -306,7 +306,7 @@
 - name: "Validate delete integration 5"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.name == "{{ resource_prefix }}-5"
 # ============================================================
 
@@ -331,7 +331,7 @@
 - name: Validate rax_clb with creds, region, name, protocol, type, timeout and algorithm
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
       - rax_clb.balancer.port == 8080
       - rax_clb.balancer.protocol == 'TCP'
       - rax_clb.balancer.timeout == 60
@@ -354,7 +354,7 @@
 - name: "Validate delete integration 6"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.name == "{{ resource_prefix }}-6"
 # ============================================================
 
@@ -377,7 +377,7 @@
 - name: Validate rax_clb with invalid timeout
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - 'rax_clb.msg == "value of type must be one of: PUBLIC,SERVICENET, got: BAD"'
 # ============================================================
 
@@ -400,7 +400,7 @@
 - name: Validate rax_clb with invalid timeout
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - 'rax_clb.msg == "value of protocol must be one of: DNS_TCP,DNS_UDP,FTP,HTTP,HTTPS,IMAPS,IMAPv4,LDAP,LDAPS,MYSQL,POP3,POP3S,SMTP,TCP,TCP_CLIENT_FIRST,UDP,UDP_STREAM,SFTP, got: BAD"'
 # ============================================================
 
@@ -423,7 +423,7 @@
 - name: Validate rax_clb with invalid timeout
   assert:
     that:
-      - rax_clb|failed
+      - rax_clb is failed
       - 'rax_clb.msg == "value of algorithm must be one of: RANDOM,LEAST_CONNECTIONS,ROUND_ROBIN,WEIGHTED_LEAST_CONNECTIONS,WEIGHTED_ROUND_ROBIN, got: BAD"'
 # ============================================================
 
@@ -450,7 +450,7 @@
 - name: Validate rax_clb with creds, region, name, protocol, type, timeout, algorithm and metadata
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
       - rax_clb.balancer.port == 8080
       - rax_clb.balancer.protocol == 'TCP'
       - rax_clb.balancer.timeout == 60
@@ -474,7 +474,7 @@
 - name: "Validate delete integration 7"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.name == "{{ resource_prefix }}-7"
 # ============================================================
 
@@ -494,7 +494,7 @@
 - name: Validate rax_clb with shared VIP HTTP
   assert:
     that:
-      - rax_clb_http|success
+      - rax_clb_http is successful
       - rax_clb_http.balancer.protocol == 'HTTP'
       - rax_clb_http.balancer.virtual_ips.0.type == 'PUBLIC'
       - rax_clb_http.balancer.status == 'ACTIVE'
@@ -515,7 +515,7 @@
 - name: Validate Test rax_clb with shared VIP
   assert:
     that:
-      - rax_clb_https|success
+      - rax_clb_https is successful
       - rax_clb_https.balancer.protocol == 'HTTPS'
       - rax_clb_https.balancer.status == 'ACTIVE'
       - rax_clb_http.balancer.virtual_ips == rax_clb_https.balancer.virtual_ips
@@ -545,8 +545,8 @@
 - name: "Validate delete integration 8"
   assert:
     that:
-      - rax_clb_http|changed
-      - rax_clb_https|changed
+      - rax_clb_http is changed
+      - rax_clb_https is changed
 # ============================================================
 
 
@@ -565,7 +565,7 @@
 - name: Validate rax_clb with updated protocol 1
   assert:
     that:
-      - rax_clb_p1|success
+      - rax_clb_p1 is successful
       - rax_clb_p1.balancer.protocol == 'HTTP'
       - rax_clb_p1.balancer.virtual_ips.0.type == 'PUBLIC'
       - rax_clb_p1.balancer.status == 'ACTIVE'
@@ -585,8 +585,8 @@
   assert:
     that:
       - rax_clb_p1.balancer.id == rax_clb_p2.balancer.id
-      - rax_clb_p2|success
-      - rax_clb_p2|changed
+      - rax_clb_p2 is successful
+      - rax_clb_p2 is changed
       - rax_clb_p2.balancer.protocol == 'TCP'
       - rax_clb_p2.balancer.status == 'ACTIVE'
 
@@ -604,7 +604,7 @@
 - name: "Validate delete integration 9"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
 # ============================================================
 
 
@@ -623,7 +623,7 @@
 - name: Validate rax_clb with updated algorithm 1
   assert:
     that:
-      - rax_clb_a1|success
+      - rax_clb_a1 is successful
       - rax_clb_a1.balancer.algorithm == 'LEAST_CONNECTIONS'
       - rax_clb_a1.balancer.status == 'ACTIVE'
 
@@ -642,8 +642,8 @@
   assert:
     that:
       - rax_clb_a1.balancer.id == rax_clb_a2.balancer.id
-      - rax_clb_a2|success
-      - rax_clb_a2|changed
+      - rax_clb_a2 is successful
+      - rax_clb_a2 is changed
       - rax_clb_a2.balancer.algorithm == 'RANDOM'
       - rax_clb_a2.balancer.status == 'ACTIVE'
 
@@ -661,7 +661,7 @@
 - name: "Validate delete integration 10"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb_a1.balancer.id == rax_clb.balancer.id
 # ============================================================
 
@@ -681,7 +681,7 @@
 - name: Validate rax_clb with updated port 1
   assert:
     that:
-      - rax_clb_1|success
+      - rax_clb_1 is successful
       - rax_clb_1.balancer.port == 80
       - rax_clb_1.balancer.status == 'ACTIVE'
 
@@ -700,8 +700,8 @@
   assert:
     that:
       - rax_clb_1.balancer.id == rax_clb_2.balancer.id
-      - rax_clb_2|success
-      - rax_clb_2|changed
+      - rax_clb_2 is successful
+      - rax_clb_2 is changed
       - rax_clb_2.balancer.port == 8080
       - rax_clb_2.balancer.status == 'ACTIVE'
 
@@ -719,7 +719,7 @@
 - name: "Validate delete integration 11"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb_1.balancer.id == rax_clb.balancer.id
 # ============================================================
 
@@ -739,7 +739,7 @@
 - name: Validate rax_clb with updated timeout 1
   assert:
     that:
-      - rax_clb_1|success
+      - rax_clb_1 is successful
       - rax_clb_1.balancer.timeout == 30
       - rax_clb_1.balancer.status == 'ACTIVE'
 
@@ -758,8 +758,8 @@
   assert:
     that:
       - rax_clb_1.balancer.id == rax_clb_2.balancer.id
-      - rax_clb_2|success
-      - rax_clb_2|changed
+      - rax_clb_2 is successful
+      - rax_clb_2 is changed
       - rax_clb_2.balancer.timeout == 60
       - rax_clb_2.balancer.status == 'ACTIVE'
 
@@ -777,7 +777,7 @@
 - name: "Validate delete integration 12"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb_1.balancer.id == rax_clb.balancer.id
 # ============================================================
 
@@ -797,7 +797,7 @@
 - name: Validate rax_clb with invalid updated type 1
   assert:
     that:
-      - rax_clb_1|success
+      - rax_clb_1 is successful
       - rax_clb_1.balancer.status == 'ACTIVE'
 
 - name: Test rax_clb with invalid updated type 2
@@ -815,7 +815,7 @@
 - name: Validate rax_clb with updated timeout 2
   assert:
     that:
-      - rax_clb_2|failed
+      - rax_clb_2 is failed
       - rax_clb_2.msg == 'Load balancer Virtual IP type cannot be changed'
 
 - name: Delete integration 13
@@ -832,7 +832,7 @@
 - name: "Validate delete integration 13"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb_1.balancer.id == rax_clb.balancer.id
 # ============================================================
 
@@ -852,7 +852,7 @@
 - name: Validate rax_clb with updated meta 1
   assert:
     that:
-      - rax_clb_1|success
+      - rax_clb_1 is successful
       - rax_clb_1.balancer.status == 'ACTIVE'
       - rax_clb_1.balancer.metadata is not defined
 
@@ -872,8 +872,8 @@
   assert:
     that:
       - rax_clb_1.balancer.id == rax_clb_2.balancer.id
-      - rax_clb_2|success
-      - rax_clb_2|changed
+      - rax_clb_2 is successful
+      - rax_clb_2 is changed
       - rax_clb_2.balancer.metadata.0.key == 'foo'
       - rax_clb_2.balancer.metadata.0.value == 'bar'
       - rax_clb_2.balancer.status == 'ACTIVE'
@@ -892,6 +892,6 @@
 - name: "Validate delete integration 14"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb_1.balancer.id == rax_clb.balancer.id
 # ============================================================

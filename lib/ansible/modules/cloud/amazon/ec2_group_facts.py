@@ -18,7 +18,9 @@ short_description: Gather facts about ec2 security groups in AWS.
 description:
     - Gather facts about ec2 security groups in AWS.
 version_added: "2.3"
-author: "Henrique Rodrigues (github.com/Sodki)"
+requirements: [ boto3 ]
+author:
+- Henrique Rodrigues (@Sodki)
 options:
   filters:
     description:

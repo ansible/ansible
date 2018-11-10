@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -31,53 +31,43 @@ options:
       - The IP address of a previously allocated EIP.
       - If present and device is specified, the EIP is associated with the device.
       - If absent and device is specified, the EIP is disassociated from the device.
-    required: false
     aliases: [ ip ]
   state:
     description:
       - If present, allocate an EIP or associate an existing EIP with a device.
       - If absent, disassociate the EIP from the device and optionally release it.
-    required: false
     choices: ['present', 'absent']
     default: present
   in_vpc:
     description:
-      - allocate an EIP inside a VPC or not
-    required: false
-    default: false
+      - Allocate an EIP inside a VPC or not. Required if specifying an ENI.
+    default: 'no'
     version_added: "1.4"
   reuse_existing_ip_allowed:
     description:
       - Reuse an EIP that is not associated to a device (when available), instead of allocating a new one.
-    required: false
-    default: false
+    default: 'no'
     version_added: "1.6"
   release_on_disassociation:
     description:
       - whether or not to automatically release the EIP when it is disassociated
-    required: false
-    default: false
+    default: 'no'
     version_added: "2.0"
   private_ip_address:
     description:
       - The primary or secondary private IP address to associate with the Elastic IP address.
-    required: False
-    default: None
     version_added: "2.3"
   allow_reassociation:
     description:
       -  Specify this option to allow an Elastic IP address that is already associated with another
          network interface or instance to be re-associated with the specified instance or interface.
-    required: false
-    default: false
+    default: 'no'
     version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
-   - This module will return C(public_ip) on success, which will contain the
-     public IP address associated with the device.
    - There may be a delay between the time the EIP is assigned and when
      the cloud instance is reachable via the new address. Use wait_for and
      pause to delay further playbook execution until the instance is reachable,
@@ -131,10 +121,6 @@ EXAMPLES = '''
   debug:
     msg: "Allocated IP is {{ eip.public_ip }}"
 
-- name: another way of allocating an elastic IP without associating it to anything
-  ec2_eip:
-    state: 'present'
-
 - name: provision new instances with ec2
   ec2:
     keypair: mykey
@@ -148,7 +134,7 @@ EXAMPLES = '''
 - name: associate new elastic IPs with each of the instances
   ec2_eip:
     device_id: "{{ item }}"
-  with_items: "{{ ec2.instance_ids }}"
+  loop: "{{ ec2.instance_ids }}"
 
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip:
@@ -159,6 +145,19 @@ EXAMPLES = '''
 - name: output the IP
   debug:
     msg: "Allocated IP inside a VPC is {{ eip.public_ip }}"
+'''
+
+RETURN = '''
+allocation_id:
+  description: allocation_id of the elastic ip
+  returned: on success
+  type: string
+  sample: eipalloc-51aa3a6c
+public_ip:
+  description: an elastic ip address
+  returned: on success
+  type: string
+  sample: 52.88.159.209
 '''
 
 try:

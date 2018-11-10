@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_amg_role
-short_description: Update the role of a storage array within an Asynchronous Mirror Group (AMG).
+short_description: NetApp E-Series update the role of a storage array within an Asynchronous Mirror Group (AMG).
 description:
     - Update a storage array to become the primary or secondary instance in an asynchronous mirror group
 version_added: '2.2'
@@ -52,7 +52,7 @@ options:
             - Whether to avoid synchronization prior to role reversal
         required: no
         default: no
-        choices: [yes, no]
+        type: bool
     force:
         description:
             - Whether to force the role reversal regardless of the online-state of the primary

@@ -5,7 +5,7 @@
 - name: verify setup
   assert:
     that:
-    - user|success
+    - user is successful
 
 - name: test fail if missing username
   action: cs_user
@@ -14,7 +14,7 @@
 - name: verify results of fail if missing params
   assert:
     that:
-    - user|failed
+    - user is failed
     - 'user.msg == "missing required arguments: username"'
 
 - name: test fail if missing params if state=present
@@ -25,8 +25,8 @@
 - name: verify results of fail if missing params if state=present
   assert:
     that:
-    - user|failed
-    - 'user.msg == "missing required arguments: account,email,password,first_name,last_name"'
+    - user is failed
+    - 'user.msg == "missing required arguments: account, email, password, first_name, last_name"'
 
 - name: test create user in check mode
   cs_user:
@@ -41,8 +41,8 @@
 - name: verify results of create user in check mode
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
 
 - name: test create user
   cs_user:
@@ -56,8 +56,8 @@
 - name: verify results of create user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name"
     - user.last_name == "{{ cs_resource_prefix }}_last_name"
@@ -80,8 +80,8 @@
 - name: verify results of create user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name"
     - user.last_name == "{{ cs_resource_prefix }}_last_name"
@@ -105,14 +105,14 @@
 - name: verify results of create account
   assert:
     that:
-    - acc|success
-    - acc|changed
+    - acc is successful
+    - acc is changed
     - acc.name == "{{ cs_resource_prefix }}_acc"
     - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
-    - acc|changed
+    - acc is changed
 
 - name: test create user2 in check mode
   cs_user:
@@ -128,8 +128,8 @@
 - name: verify results of create user idempotence
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
 
 - name: test create user2
   cs_user:
@@ -144,8 +144,8 @@
 - name: verify results of create user idempotence
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user2"
     - user.first_name == "{{ cs_resource_prefix }}_first_name2"
     - user.last_name == "{{ cs_resource_prefix }}_last_name2"
@@ -169,8 +169,8 @@
 - name: verify results of create user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
     - user.username == "{{ cs_resource_prefix }}_user2"
     - user.first_name == "{{ cs_resource_prefix }}_first_name2"
     - user.last_name == "{{ cs_resource_prefix }}_last_name2"
@@ -195,8 +195,8 @@
 - name: verify results of update user in check mode
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name"
     - user.last_name == "{{ cs_resource_prefix }}_last_name"
@@ -220,8 +220,8 @@
 - name: verify results of update user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name1"
     - user.last_name == "{{ cs_resource_prefix }}_last_name1"
@@ -245,8 +245,8 @@
 - name: verify results of update user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name1"
     - user.last_name == "{{ cs_resource_prefix }}_last_name1"
@@ -266,8 +266,8 @@
 - name: verify results of lock user in check mode
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -282,8 +282,8 @@
 - name: verify results of lock user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -298,8 +298,8 @@
 - name: verify results of lock user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -315,8 +315,8 @@
 - name: verify results of disable user in check mode
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -331,8 +331,8 @@
 - name: verify results of disable user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -347,8 +347,8 @@
 - name: verify results of disable user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -364,8 +364,8 @@
 - name: verify results of lock disabled user in check mode
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -380,8 +380,8 @@
 - name: verify results of lock disabled user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -396,8 +396,8 @@
 - name: verify results of lock disabled user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -413,8 +413,8 @@
 - name: verify results of enable user in check mode
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -429,8 +429,8 @@
 - name: verify results of enable user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -445,8 +445,8 @@
 - name: verify results of enable user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -462,8 +462,8 @@
 - name: verify results of remove user in check mode
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -478,8 +478,8 @@
 - name: verify results of remove user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -494,8 +494,8 @@
 - name: verify results of remove user idempotence
   assert:
     that:
-    - user|success
-    - not user|changed
+    - user is successful
+    - user is not changed
 
 - name: test create locked user
   cs_user:
@@ -510,8 +510,8 @@
 - name: verify results of create locked user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name"
     - user.last_name == "{{ cs_resource_prefix }}_last_name"
@@ -529,8 +529,8 @@
 - name: verify results of remove locked user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -550,8 +550,8 @@
 - name: verify results of create disabled user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name"
     - user.last_name == "{{ cs_resource_prefix }}_last_name"
@@ -569,8 +569,8 @@
 - name: verify results of remove disabled user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"
@@ -590,8 +590,8 @@
 - name: verify results of create enabled user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.first_name == "{{ cs_resource_prefix }}_first_name"
     - user.last_name == "{{ cs_resource_prefix }}_last_name"
@@ -609,8 +609,8 @@
 - name: verify results of remove enabled user
   assert:
     that:
-    - user|success
-    - user|changed
+    - user is successful
+    - user is changed
     - user.username == "{{ cs_resource_prefix }}_user"
     - user.account_type == "root_admin"
     - user.account == "admin"

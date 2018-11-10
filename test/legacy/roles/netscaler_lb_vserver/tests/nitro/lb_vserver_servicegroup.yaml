@@ -5,21 +5,21 @@
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/setup.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/setup.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/setup.yaml"
   vars:
@@ -30,21 +30,21 @@
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update.yaml"
   vars:
@@ -55,21 +55,21 @@
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update_service.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update_service.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update_service.yaml"
   vars:
@@ -80,53 +80,53 @@
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/update.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/remove.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/remove.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/remove.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/lb_vserver_servicegroup/remove.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: not result|changed
+    that: result is not changed

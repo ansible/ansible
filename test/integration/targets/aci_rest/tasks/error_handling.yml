@@ -1,0 +1,191 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+# PROVOKE ERRORS
+- name: Error on name resolution
+  aci_rest:
+    host: foo.bar.cisco.com
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    path: /api/mo/uni.json
+    method: post
+    content:
+      fvTenant:
+        attributes:
+          name: ansible_test
+  ignore_errors: yes
+  register: error_on_name_resolution
+
+- name: Verify error_on_name_resolution
+  assert:
+    that:
+    - error_on_name_resolution is failed
+    - "error_on_name_resolution.msg == 'Connection failed for https://foo.bar.cisco.com/api/aaaLogin.json. Request failed: <urlopen error [Errno -2] Name or service not known>'"
+    - "'current' not in error_on_name_resolution"
+    - "'previous' not in error_on_name_resolution"
+    - "'sent' not in error_on_name_resolution"
+    - "'proposed' not in error_on_name_resolution"
+    - "'filter_string' not in error_on_name_resolution"
+
+- name: Error when required parameter is missing
+  aci_rest:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    method: post
+    content:
+      fvTenant:
+        attributes:
+          name: ansible_test
+  ignore_errors: yes
+  register: error_on_missing_required_param
+
+- name: Verify error_on_missing_required_param
+  assert:
+    that:
+    - error_on_missing_required_param is failed
+    - 'error_on_missing_required_param.msg == "missing required arguments: path"'
+    - "'current' not in error_on_missing_required_param"
+    - "'previous' not in error_on_missing_required_param"
+    - "'sent' not in error_on_missing_required_param"
+    - "'proposed' not in error_on_missing_required_param"
+    - "'filter_string' not in error_on_missing_required_param"
+
+- name: Error when attributes are missing
+  aci_rest:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    path: /api/mo/uni/tn-ansible_test.json
+    method: post
+    content:
+      fvTenant:
+        children:
+  ignore_errors: yes
+  register: error_on_missing_attributes
+
+- name: Verify error_on_missing_attributes
+  assert:
+    that:
+    - error_on_missing_attributes is failed
+    - error_on_missing_attributes.method == 'POST'
+    - "error_on_missing_attributes.msg == 'APIC Error 400: invalid data at line \\'1\\'. Attributes are missing, tag \\'attributes\\' must be specified first, before any other tag'"
+    - 'error_on_missing_attributes.response == "HTTP Error 400: Bad Request"'
+    - error_on_missing_attributes.status == 400
+    - "'current' not in error_on_missing_attributes"
+    - "'previous' not in error_on_missing_attributes"
+    - "'sent' not in error_on_missing_attributes"
+    - "'proposed' not in error_on_missing_attributes"
+    - "'filter_string' not in error_on_missing_attributes"
+
+- name: Error when input does not validate
+  aci_rest:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    path: /api/mo/uni.json
+    method: post
+    content:
+      fvTenant:
+        attributes:
+          name: ansible_test
+          descr: This is an [invalid] description
+  ignore_errors: yes
+  register: error_on_input_validation
+
+- name: Verify error_on_input_validation
+  assert:
+    that:
+    - error_on_input_validation is failed
+    - error_on_input_validation.method == 'POST'
+    - "error_on_input_validation.msg == 'APIC Error 801: property descr of tn-ansible_test failed validation for value \\'This is an [invalid] description\\''"
+    - 'error_on_input_validation.response == "HTTP Error 400: Bad Request"'
+    - error_on_input_validation.status == 400
+    - "'current' not in error_on_input_validation"
+    - "'previous' not in error_on_input_validation"
+    - "'sent' not in error_on_input_validation"
+    - "'proposed' not in error_on_input_validation"
+    - "'filter_string' not in error_on_input_validation"
+
+- name: Error when invalid attributes are used
+  aci_rest:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    path: /api/mo/uni.json
+    method: post
+    content:
+      fvTenant:
+        attributes:
+          name: ansible_test
+          description: This is an "invalid" description
+  ignore_errors: yes
+  register: error_on_invalid_attributes
+
+- name: Verify error_on_invalid_attributes
+  assert:
+    that:
+    - error_on_invalid_attributes is failed
+    - error_on_invalid_attributes.method == 'POST'
+    - "error_on_invalid_attributes.msg == 'APIC Error 400: unknown attribute \\'description\\' in element \\'fvTenant\\''"
+    - 'error_on_invalid_attributes.response == "HTTP Error 400: Bad Request"'
+    - error_on_invalid_attributes.status == 400
+    - "'current' not in error_on_invalid_attributes"
+    - "'previous' not in error_on_invalid_attributes"
+    - "'sent' not in error_on_invalid_attributes"
+    - "'proposed' not in error_on_invalid_attributes"
+    - "'filter_string' not in error_on_invalid_attributes"
+
+- name: Error on invalid object
+  aci_rest:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    path: /api/mo/uni.json
+    method: post
+    content:
+      fvFoobar:
+        attributes:
+          name: ansible_test
+  ignore_errors: yes
+  register: error_on_invalid_object
+
+- name: Verify error_on_invalid_object
+  assert:
+    that:
+    - error_on_invalid_object is failed
+    - error_on_invalid_object.method == 'POST'
+    - "error_on_invalid_object.msg == 'APIC Error 122: unknown managed object class fvFoobar'"
+    - 'error_on_invalid_object.response == "HTTP Error 400: Bad Request"'
+    - error_on_invalid_object.status == 400
+    - "'current' not in error_on_invalid_object"
+    - "'previous' not in error_on_invalid_object"
+    - "'sent' not in error_on_invalid_object"
+    - "'proposed' not in error_on_invalid_object"

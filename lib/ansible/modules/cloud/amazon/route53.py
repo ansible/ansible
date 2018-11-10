@@ -33,9 +33,7 @@ options:
   hosted_zone_id:
     description:
       - The Hosted Zone ID of the DNS zone to modify
-    required: false
     version_added: "2.0"
-    default: null
   record:
     description:
       - The full DNS record to create or delete
@@ -43,7 +41,6 @@ options:
   ttl:
     description:
       - The TTL to give the new record
-    required: false
     default: 3600 (one hour)
   type:
     description:
@@ -53,53 +50,43 @@ options:
   alias:
     description:
       - Indicates if this is an alias record.
-    required: false
     version_added: "1.9"
-    default: False
-    choices: [ 'True', 'False' ]
+    type: bool
+    default: 'no'
   alias_hosted_zone_id:
     description:
       - The hosted zone identifier.
-    required: false
     version_added: "1.9"
-    default: null
   alias_evaluate_target_health:
     description:
       - Whether or not to evaluate an alias target health. Useful for aliases to Elastic Load Balancers.
-    required: false
+    type: bool
+    default: no
     version_added: "2.1"
-    default: false
   value:
     description:
       - The new value when creating a DNS record.  YAML lists or multiple comma-spaced values are allowed for non-alias records.
       - When deleting a record all values for the record must be specified or Route53 will not delete it.
-    required: false
-    default: null
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
-    required: false
-    default: null
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
         domain names, the default of 500 seconds may be too long.
-    required: false
     default: 500
   private_zone:
     description:
-      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones.
+      - If set to C(yes), the private zone matching the requested name within the domain will be used if there are both public and private zones.
         The default is to use the public zone.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "1.9"
   identifier:
     description:
       - Have to be specified for Weighted, latency-based and failover resource record sets only. An identifier
         that differentiates among multiple resource record sets that have the
         same combination of DNS name and type.
-    required: false
-    default: null
     version_added: "2.0"
   weight:
     description:
@@ -107,8 +94,6 @@ options:
         have the same combination of DNS name and type, a value that
         determines what portion of traffic for the current resource record set
         is routed to the associated location.
-    required: false
-    default: null
     version_added: "2.0"
   region:
     description:
@@ -116,39 +101,30 @@ options:
         that have the same combination of DNS name and type, a value that
         determines which region this should be associated with for the
         latency-based routing
-    required: false
-    default: null
     version_added: "2.0"
   health_check:
     description:
       - Health check to associate with this record
-    required: false
-    default: null
     version_added: "2.0"
   failover:
     description:
       - Failover resource record sets only. Whether this is the primary or
         secondary resource record set. Allowed values are PRIMARY and SECONDARY
-    required: false
-    default: null
     version_added: "2.0"
   vpc_id:
     description:
       - "When used in conjunction with private_zone: true, this will only modify records in the private hosted zone attached to this VPC."
       - This allows you to have multiple private hosted zones, all with the same name, attached to different VPCs.
-    required: false
-    default: null
     version_added: "2.0"
   wait:
     description:
       - Wait until the changes have been replicated to all Amazon Route 53 DNS servers.
-    required: false
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.1"
   wait_timeout:
     description:
       - How long to wait for the changes to be replicated, in seconds.
-    required: false
     default: 300
     version_added: "2.1"
 author:
@@ -157,6 +133,83 @@ author:
 extends_documentation_fragment: aws
 '''
 
+RETURN = '''
+nameservers:
+  description: nameservers associated with the zone
+  returned: when state is 'get'
+  type: list
+  sample:
+  - ns-1036.awsdns-00.org.
+  - ns-516.awsdns-00.net.
+  - ns-1504.awsdns-00.co.uk.
+  - ns-1.awsdns-00.com.
+set:
+  description: info specific to the resource record
+  returned: when state is 'get'
+  type: complex
+  contains:
+    alias:
+      description: whether this is an alias
+      returned: always
+      type: bool
+      sample: false
+    failover:
+      description: ""
+      returned: always
+      type: NoneType
+      sample: null
+    health_check:
+      description: health_check associated with this record
+      returned: always
+      type: NoneType
+      sample: null
+    identifier:
+      description: ""
+      returned: always
+      type: NoneType
+      sample: null
+    record:
+      description: domain name for the record set
+      returned: always
+      type: string
+      sample: new.foo.com.
+    region:
+      description: ""
+      returned: always
+      type:
+      sample:
+    ttl:
+      description: resource record cache TTL
+      returned: always
+      type: string
+      sample: '3600'
+    type:
+      description: record set type
+      returned: always
+      type: string
+      sample: A
+    value:
+      description: value
+      returned: always
+      type: string
+      sample: 52.43.18.27
+    values:
+      description: values
+      returned: always
+      type: list
+      sample:
+      - 52.43.18.27
+    weight:
+      description: weight of the record
+      returned: always
+      type: string
+      sample: '3'
+    zone:
+      description: zone this record set belongs to
+      returned: always
+      type: string
+      sample: foo.bar.com.
+'''
 
 EXAMPLES = '''
 # Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
@@ -311,7 +364,6 @@ import distutils.version
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
     from boto.route53.status import Status
@@ -383,6 +435,7 @@ def commit(changes, retry_interval, wait, wait_timeout):
             raise TimeoutError()
         return result
 
+
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
 MAX_RETRIES = 5
@@ -413,7 +466,7 @@ def main():
         alias=dict(required=False, type='bool'),
         alias_hosted_zone_id=dict(required=False),
         alias_evaluate_target_health=dict(required=False, type='bool', default=False),
-        value=dict(required=False, type='list', default=[]),
+        value=dict(required=False, type='list'),
         overwrite=dict(required=False, type='bool'),
         retry_interval=dict(required=False, default=500),
         private_zone=dict(required=False, type='bool', default=False),
@@ -438,7 +491,7 @@ def main():
     mutually_exclusive = [('failover', 'region', 'weight')]
 
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together, required_if=required_if,
-                           mutually_exclusive=mutually_exclusive)
+                           mutually_exclusive=mutually_exclusive, supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -458,7 +511,7 @@ def main():
     ttl_in = module.params.get('ttl')
     record_in = module.params.get('record').lower()
     type_in = module.params.get('type')
-    value_in = module.params.get('value')
+    value_in = module.params.get('value') or []
     alias_in = module.params.get('alias')
     alias_hosted_zone_id_in = module.params.get('alias_hosted_zone_id')
     alias_evaluate_target_health_in = module.params.get('alias_evaluate_target_health')
@@ -521,6 +574,13 @@ def main():
         else:
             wanted_rset.add_value(v)
 
+    need_to_sort_records = (type_in == 'CAA')
+
+    # Sort records for wanted_rset if necessary (keep original list)
+    unsorted_records = wanted_rset.resource_records
+    if need_to_sort_records:
+        wanted_rset.resource_records = sorted(unsorted_records)
+
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
     sets_iter = iter(sets)
@@ -540,13 +600,14 @@ def main():
             identifier_in = str(identifier_in)
 
         if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
+            if need_to_sort_records:
+                # Sort records
+                rset.resource_records = sorted(rset.resource_records)
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
             record['record'] = decoded_name
             record['ttl'] = rset.ttl
-            record['value'] = ','.join(sorted(rset.resource_records))
-            record['values'] = sorted(rset.resource_records)
             if hosted_zone_id_in:
                 record['hosted_zone_id'] = hosted_zone_id_in
             record['identifier'] = rset.identifier
@@ -599,19 +660,22 @@ def main():
             command = 'UPSERT'
         else:
             command = command_in.upper()
+        # Restore original order of records
+        wanted_rset.resource_records = unsorted_records
         changes.add_change_record(command, wanted_rset)
 
-    try:
-        result = invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
-    except boto.route53.exception.DNSServerError as e:
-        txt = e.body.split("<Message>")[1]
-        txt = txt.split("</Message>")[0]
-        if "but it already exists" in txt:
-            module.exit_json(changed=False)
-        else:
-            module.fail_json(msg=txt)
-    except TimeoutError:
-        module.fail_json(msg='Timeout waiting for changes to replicate')
+    if not module.check_mode:
+        try:
+            invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
+        except boto.route53.exception.DNSServerError as e:
+            txt = e.body.split("<Message>")[1]
+            txt = txt.split("</Message>")[0]
+            if "but it already exists" in txt:
+                module.exit_json(changed=False)
+            else:
+                module.fail_json(msg=txt)
+        except TimeoutError:
+            module.fail_json(msg='Timeout waiting for changes to replicate')
 
     module.exit_json(changed=True)
 

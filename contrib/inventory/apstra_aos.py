@@ -572,7 +572,7 @@ class AosInventory(object):
           - Converting to lowercase
         """
 
-        rx = re.compile('\W+')
+        rx = re.compile(r'\W+')
         clean_group = rx.sub('_', group_name).lower()
 
         return clean_group
@@ -582,6 +582,7 @@ class AosInventory(object):
         if 'status' in device.value.keys():
             for key, value in device.value['status'].items():
                 self.add_var_to_host(device.name, key, value)
+
 
 # Run the script
 if __name__ == '__main__':

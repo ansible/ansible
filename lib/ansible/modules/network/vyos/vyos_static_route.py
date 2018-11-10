@@ -57,6 +57,7 @@ options:
       - State of the static route configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -106,9 +107,9 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.vyos import get_config, load_config
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.vyos.vyos import get_config, load_config
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def spec_to_commands(updates, module):
@@ -258,6 +259,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

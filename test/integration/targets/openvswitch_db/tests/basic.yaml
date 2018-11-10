@@ -1,6 +1,13 @@
 ---
 
-- command: ovs-vsctl add-br br-test
+- name: Make sure test bridge does not exist before tests
+  command: ovs-vsctl del-br br-test
+  become: yes
+  ignore_errors: yes
+
+- name: Create test bridge
+  command: ovs-vsctl add-br br-test
+  become: yes
 
 - name: Create bridge
   openvswitch_db:
@@ -9,6 +16,7 @@
     col: other_config
     key: disable-in-band
     value: true
+  become: yes
   register: result
 
 - assert:
@@ -22,6 +30,35 @@
     col: other_config
     key: disable-in-band
     value: true
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Change column value in a map
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Change column value in a map again (idempotent)
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    key: disable-in-band
+    value: false
+  become: yes
   register: result
 
 - assert:
@@ -32,9 +69,9 @@
   openvswitch_db:
     table: Bridge
     record: br-test
-    col: other_config
-    key: disable-in-band
-    value: false
+    col: stp_enable
+    value: 'true'
+  become: yes
   register: result
 
 - assert:
@@ -45,14 +82,28 @@
   openvswitch_db:
     table: Bridge
     record: br-test
-    col: other_config
-    key: disable-in-band
-    value: false
+    col: stp_enable
+    value: 'true'
+  become: yes
   register: result
 
 - assert:
     that:
       - "result.changed == false"
+
+- name: Try to set value on a map type without a key (negative)
+  ignore_errors: true
+  openvswitch_db:
+    table: Bridge
+    record: br-test
+    col: other_config
+    value: true
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
 
 - name: Remove bridge
   openvswitch_db:
@@ -62,6 +113,7 @@
     key: disable-in-band
     value: false
     state: absent
+  become: yes
   register: result
 
 - assert:
@@ -76,8 +128,13 @@
     key: disable-in-band
     value: false
     state: absent
+  become: yes
   register: result
 
 - assert:
     that:
       - "result.changed == false"
+
+- name: Tear down test bridge
+  command: ovs-vsctl del-br br-test
+  become: yes

@@ -1,0 +1,79 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_user_data
+
+- name: Create a server
+  scaleway_compute:
+    name: foobar
+    state: present
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_creation_task
+
+- debug: var=server_creation_task
+
+- set_fact:
+    server_id: "{{ server_creation_task.msg.id }}"
+
+- debug: var=server_id
+
+- name: Patch user_data cloud-init configuration (Check)
+  check_mode: yes
+  scaleway_user_data:
+    region: '{{ scaleway_region }}'
+    server_id: "{{ server_id }}"
+    user_data:
+      cloud-init: "{{ cloud_init_script }}"
+  register: user_data_check_task
+
+- debug: var=user_data_check_task
+
+- assert:
+    that:
+      - user_data_check_task is success
+      - user_data_check_task is changed
+
+- name: Patch user_data cloud-init configuration
+  scaleway_user_data:
+    region: '{{ scaleway_region }}'
+    server_id: "{{ server_id }}"
+    user_data:
+      cloud-init: "{{ cloud_init_script }}"
+  register: user_data_task
+
+- debug: var=user_data_task
+
+- assert:
+    that:
+      - user_data_task is success
+      - user_data_task is changed
+
+- name: Patch user_data cloud-init configuration (Confirmation)
+  scaleway_user_data:
+    region: '{{ scaleway_region }}'
+    server_id: "{{ server_id }}"
+    user_data:
+      cloud-init: "{{ cloud_init_script }}"
+  register: user_data_confirmation_task
+
+- debug: var=user_data_confirmation_task
+
+- assert:
+    that:
+      - user_data_confirmation_task is success
+      - user_data_confirmation_task is not changed
+
+- name: Destroy it
+  scaleway_compute:
+    name: foobar
+    state: absent
+    region: '{{ scaleway_region }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+  register: server_destroy_task
+
+- debug: var=server_destroy_task

@@ -17,11 +17,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.vyos import vyos_banner
-from .vyos_module import TestVyosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .vyos_module import TestVyosModule, load_fixture
 
 
 class TestVyosBannerModule(TestVyosModule):
@@ -29,6 +28,8 @@ class TestVyosBannerModule(TestVyosModule):
     module = vyos_banner
 
     def setUp(self):
+        super(TestVyosBannerModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.vyos.vyos_banner.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -36,6 +37,7 @@ class TestVyosBannerModule(TestVyosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestVyosBannerModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

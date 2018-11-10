@@ -36,7 +36,7 @@
 - assert:
     that:
       - 'async_hello_world.msg == "Hello, World!"'
-  when: not async_hello_world|skipped
+  when: async_hello_world is not skipped
 
 - name: Async Hello, Ansible!
   action: "helloworld_{{ ansible_system|lower }}"
@@ -50,4 +50,4 @@
 - assert:
     that:
       - 'async_hello_ansible.msg == "Hello, Ansible!"'
-  when: not async_hello_ansible|skipped
+  when: async_hello_ansible is not skipped

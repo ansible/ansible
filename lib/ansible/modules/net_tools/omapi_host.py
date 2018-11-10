@@ -36,7 +36,6 @@ options:
     name:
         description:
             - Sets the host lease hostname (mandatory if state=present).
-        default: None
     host:
         description:
             - Sets OMAPI server host to interact with.
@@ -60,18 +59,15 @@ options:
     ip:
         description:
             - Sets the lease host IP address.
-        required: false
-        default: None
     statements:
         description:
             - Attach a list of OMAPI DHCP statements with host lease (without ending semicolon).
-        required: false
         default: []
     ddns:
         description:
             - Enable dynamic DNS updates for this host.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
 
 '''
 EXAMPLES = '''
@@ -234,7 +230,7 @@ class OmapiHostManager:
             fields_to_update = {}
 
             if to_bytes('ip-address', errors='surrogate_or_strict') not in response_obj or \
-                            unpack_ip(response_obj[to_bytes('ip-address', errors='surrogate_or_strict')]) != self.module.params['ip']:
+                    unpack_ip(response_obj[to_bytes('ip-address', errors='surrogate_or_strict')]) != self.module.params['ip']:
                 fields_to_update['ip-address'] = pack_ip(self.module.params['ip'])
 
             # Name cannot be changed

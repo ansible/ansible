@@ -1,0 +1,51 @@
+# This contain sample template execution tasks
+---
+- name: Test Vlag  - enable
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}'
+  with_items: "{{test_vlag_data1}}"
+- name: Test Vlag - autorecovery
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}'
+  with_items: "{{test_vlag_data2}}"
+- name: Test Vlag - config-consistency
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}'
+  with_items: "{{test_vlag_data3}}"
+- name: Test Vlag - isl
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}'
+  with_items: "{{test_vlag_data4}}"
+- name: Test Vlag  - mac-address-table
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}'
+  with_items: "{{test_vlag_data5}}"
+- name: Test Vlag - peer-gateway
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}'
+  with_items: "{{test_vlag_data6}}"
+- name: Test Vlag - priority
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}'
+  with_items: "{{test_vlag_data7}}"
+- name: Test Vlag - startup-delay
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}'
+  with_items: "{{test_vlag_data8}}"
+- name: Test Vlag  - tier-id
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}'
+  with_items: "{{test_vlag_data9}}"
+- name: Test Vlag - vrrp
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}'
+  with_items: "{{test_vlag_data10}}"
+- name: Test Vlag - instance
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}' vlagArg3='{{item.vlagArg3}}'
+  with_items: "{{test_vlag_data11}}"
+- name: Test Vlag - instance2
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}'
+  with_items: "{{test_vlag_data12}}"
+- name: Test Vlag  - keepalive-attempts
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}' vlagArg3='{{item.vlagArg3}}'
+  with_items: "{{test_vlag_data13}}"
+- name: Test Vlag - keepalive-interval
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}' vlagArg3='{{item.vlagArg3}}'
+  with_items: "{{test_vlag_data14}}"
+- name: Test Vlag - retry-interval
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}' vlagArg3='{{item.vlagArg3}}'
+  with_items: "{{test_vlag_data15}}"
+- name: Test Vlag - peer ip
+  cnos_vlag:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_vlag_{{ inventory_hostname }}_output.txt vlagArg1='{{item.vlagArg1}}' vlagArg2='{{item.vlagArg2}}' vlagArg3='{{item.vlagArg3}}'
+  with_items: "{{test_vlag_data16}}"
+# Completed file

@@ -1,0 +1,76 @@
+{
+  "kind": "tm:cm:device:devicestate",
+  "name": "bigip1",
+  "partition": "Common",
+  "fullPath": "/Common/bigip1",
+  "generation": 65,
+  "selfLink": "https://localhost/mgmt/tm/cm/device/~Common~bigip1?ver=12.1.2",
+  "activeModules": [
+    "APM, Max, VE (2500 CCU, 10000 Access Sessions)|P961057-1761515|Anti-Virus Checks|Base Endpoint Security Checks|Firewall Checks|Machine Certificate Checks|Network Access|Protected Workspace|Secure Virtual Keyboard|APM, Web Application|App Tunnel|Remote Desktop",
+    "LTM, 10 Gbps, VE|T487107-2453693|IPV6 Gateway|Rate Shaping|Ram Cache|External Interface and Network HSM, VE|SSL, Forward Proxy, VE|DENY-VER-GBB|Application Acceleration Manager, Core|PEM, Quota Management, VE|BIG-IP, iAppsLX (Node.js)|Max Compression, VE|BIG-IP VE, Multicast Routing|Recycle, BIG-IP, VE|APM, Limited|LTM to Best Bundle Upgrade, 10Gbps|BIG-IP, iRulesLX (Node.js)|SSL, VE|Anti-Virus Checks|Base Endpoint Security Checks|Firewall Checks|Machine Certificate Checks|Network Access|Protected Workspace|Secure Virtual Keyboard|APM, Web Application|App Tunnel|Remote Desktop|SDN Services, VE|Acceleration Manager, VE|AFM, VE|APM, Base, VE GBB (500 CCU)|ASM, VE|DNS-GTM, Base, 10Gbps|DNS Licensed Objects, Unlimited|GTM Licensed Objects, Unlimited|GTM Rate, 250K|DNS Rate Fallback, 250K|DNS Rate Limit, 250K QPS|GTM Rate Fallback, 250K|CGN, BIG-IP VE, AFM ONLY|PSM, VE|Routing Bundle, VE|DNSSEC",
+    "PEM, VE|X895364-1851682"
+  ],
+  "baseMac": "08:00:27:27:74:82",
+  "build": "0.0.249",
+  "cert": "/Common/dtdi.crt",
+  "certReference": {
+    "link": "https://localhost/mgmt/tm/cm/cert/~Common~dtdi.crt?ver=12.1.2"
+  },
+  "chassisId": "2d37dfa6-c0e8-4e4a-ae983c67356d",
+  "chassisType": "individual",
+  "configsyncIp": "10.2.2.2",
+  "edition": "Final",
+  "failoverState": "active",
+  "haCapacity": 0,
+  "hostname": "bigip1",
+  "key": "/Common/dtdi.key",
+  "keyReference": {
+    "link": "https://localhost/mgmt/tm/cm/key/~Common~dtdi.key?ver=12.1.2"
+  },
+  "managementIp": "10.0.2.15",
+  "marketingName": "BIG-IP Virtual Edition",
+  "mirrorIp": "10.2.2.2",
+  "mirrorSecondaryIp": "10.2.3.2",
+  "multicastInterface": "eth0",
+  "multicastIp": "224.0.0.245",
+  "multicastPort": 62960,
+  "optionalModules": [
+    "APM, Base, VE (50 CCU / 200 Access Sessions)",
+    "App Mode (TMSH Only, No Root/Bash)",
+    "Concurrent Users",
+    "Concurrent Users and Access Sessions, VE",
+    "IPI Subscription, 1Yr, VE",
+    "IPI Subscription, 1Yr, VE-10G",
+    "IPI Subscription, 3Yr, VE-10G",
+    "LTM to Better Bundle Upgrade, 10Gbps",
+    "PEM URL Filtering, 1Yr, HIGH PERF",
+    "PEM URL Filtering, 3Yr, HIGH PERF",
+    "Routing Bundle",
+    "SWG Subscription, 1Yr, VE",
+    "URL Filtering Subscription, 1Yr, VE"
+  ],
+  "platformId": "Z100",
+  "product": "BIG-IP",
+  "selfDevice": "true",
+  "timeLimitedModules": [
+    "IPI Subscription, 3Yr, VE|E430735-0717882|20170429|20170511|SUBSCRIPTION",
+    "SWG Subscription, 3Yr, VE|W797718-6984294|20170429|20170511|SUBSCRIPTION",
+    "URL Filtering Subscription, 3Yr, VE|G132953-9613041|20170429|20170511|SUBSCRIPTION"
+  ],
+  "timeZone": "America/Los_Angeles",
+  "version": "12.1.2",
+  "unicastAddress": [
+    {
+      "effectiveIp": "management-ip",
+      "effectivePort": 1026,
+      "ip": "management-ip",
+      "port": 1026
+    },
+    {
+      "effectiveIp": "10.2.2.2",
+      "effectivePort": 1026,
+      "ip": "10.2.2.2",
+      "port": 1026
+    }
+  ]
+}

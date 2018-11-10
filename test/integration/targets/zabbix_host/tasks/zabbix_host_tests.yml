@@ -1,0 +1,748 @@
+---
+
+- name: "test: create host with many options set"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: ExampleName
+    description: My ExampleHost Description
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+    status: enabled
+    state: present
+    inventory_mode: manual
+    inventory_zabbix:
+      tag: test-tag
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 10050
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 12345
+    proxy: ExampleProxy
+    tls_psk_identity: test
+    tls_connect: 2
+    tls_psk: 123456789abcdef123456789abcdef12
+  register: zabbix_host1
+
+- name: expect to succeed and that things changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: try to create the same host with the same settings"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: ExampleName
+    description: My ExampleHost Description
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+    status: enabled
+    state: present
+    inventory_mode: manual
+    inventory_zabbix:
+      tag: test-tag
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 10050
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 12345
+    proxy: ExampleProxy
+    tls_psk_identity: test
+    tls_connect: 2
+    tls_psk: 123456789abcdef123456789abcdef12
+  register: zabbix_host1
+
+- name: updating with same values should be idempotent
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change visible_name"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: "ExampleName Changed"
+  register: zabbix_host1
+
+- name: expect to succeed and that things changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change visible_name (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: "ExampleName Changed"
+  register: zabbix_host1
+
+- name: updating with same values should be idempotent
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change description"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    description: "My ExampleHost Description Changed"
+  register: zabbix_host1
+
+- name: expect to succeed and that things changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change description (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    description: "My ExampleHost Description Changed"
+  register: zabbix_host1
+
+- name: updating with same values should be idempotent
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change host groups (adding one group)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+      - Virtual machines
+  register: zabbix_host1
+
+- name: expect to succeed and that things changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host groups (remove one group)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+  register: zabbix_host1
+
+- name: expect to succeed and that things changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host groups (add one group using force=no)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    host_groups:
+      - Virtual machines
+    force: no
+  register: zabbix_host1
+
+- name: expect to succeed and that things changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+
+- name: "test: change host groups (check whether we are at three groups)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+      - Virtual machines
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change host groups (attempt to remove all host groups)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    host_groups:
+        -
+  register: zabbix_host1
+  ignore_errors: yes
+
+- name: expect to fail
+  assert:
+      that:
+          - "zabbix_host1 is failed"
+
+- name: "test: change host linked templates (same as before)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change host linked templates (add one template)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+      - Template App HTTP Service
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host linked templates (add one template, using force=no)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    link_templates:
+      - Template App LDAP Service
+    force: no
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host linked templates (make sure we are at 4 templates)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+      - Template App HTTP Service
+      - Template App LDAP Service
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change host linked templates (remove all templates)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    link_templates:
+      -
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host linked templates (check we have no templates left)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    link_templates:
+      -
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change host status"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    status: disabled
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host status (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    status: disabled
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change host inventory mode"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_mode: automatic
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host inventory mode"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_mode: automatic
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change host inventory data (one field)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_zabbix:
+      tag: test-tag-two
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host inventory data (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_zabbix:
+      tag: test-tag-two
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: remove host proxy"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    proxy: ''
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add host proxy"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    proxy: ExampleProxy
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add host proxy (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    proxy: ExampleProxy
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change tls settings"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tls_psk_identity: test2
+    tls_connect: 4
+    tls_accept: 7
+    tls_psk: 123456789abcdef123456789abcdef13
+    tls_issuer: AcmeCorp
+    tls_subject: AcmeCorpServer
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change tls settings (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    tls_psk_identity: test2
+    tls_connect: 4
+    tls_accept: 7
+    tls_psk: 123456789abcdef123456789abcdef13
+    tls_issuer: AcmeCorp
+    tls_subject: AcmeCorpServer
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change interface settings (remove one)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 10050
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change interface settings (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 10050
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: change interface settings (add one interface using force=no)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    interfaces:
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 12345
+    force: no
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change interface settings (verify that we are at two interfaces)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 10050
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: 12345
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: add IPMI settings"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: add IPMI settings again"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: verify that an empty change is idempotent"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: IPMI set default values"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: -1
+    ipmi_privilege: 2
+    ipmi_username: ""
+    ipmi_password: ""
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: IPMI set default values (again)"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    ipmi_authtype: -1
+    ipmi_privilege: 2
+    ipmi_username: ""
+    ipmi_password: ""
+  register: zabbix_host1
+
+- name: expect to succeed and that things have not changed
+  assert:
+      that:
+          - "zabbix_host1 is not changed"
+
+- name: "test: attempt to delete host created earlier"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    state: absent
+  register: zabbix_host1
+
+- name: deleting a host is a change, right?
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: attempt deleting a non-existant host"
+  local_action:
+    module: zabbix_host
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    state: absent
+  register: zabbix_host1
+
+- name: deleting a non-existant host is not a change, right?
+  assert:
+      that:
+          - "not zabbix_host1 is changed"

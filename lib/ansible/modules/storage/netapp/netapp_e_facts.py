@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: netapp_e_facts
 version_added: '2.2'
-short_description: Get facts about NetApp E-Series arrays
+short_description: NetApp E-Series retrieve facts about NetApp E-Series storage arrays
 options:
   api_username:
     required: true

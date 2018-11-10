@@ -33,12 +33,11 @@ DOCUMENTATION = '''
             default: '/etc/hiera.yaml'
             env:
                 - name: ANSIBLE_HIERA_CFG
-      FIXME:
-        description: incomplete options .. _terms? environment/fqdn?  ANSIBLE_HIERA_CFG, ANSIBLE_HIERA_BIN
+# FIXME: incomplete options .. _terms? environment/fqdn?
 '''
 
 EXAMPLES = """
-# All this examples depends on hiera.yml  that describes the hierarchy
+# All this examples depends on hiera.yml that describes the hierarchy
 
 - name: "a value from Hiera 'DB'"
   debug: msg={{ lookup('hiera', 'foo') }}
@@ -73,7 +72,7 @@ class Hiera(object):
 
         pargs.extend(hiera_key)
 
-        rc, output, err = run_cmd("{} -c {} {}".format(
+        rc, output, err = run_cmd("{0} -c {1} {2}".format(
             ANSIBLE_HIERA_BIN, ANSIBLE_HIERA_CFG, hiera_key[0]))
 
         return output.strip()

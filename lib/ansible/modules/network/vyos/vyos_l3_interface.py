@@ -52,6 +52,7 @@ options:
       - State of the L3 interface configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -87,12 +88,37 @@ commands:
   sample:
     - set interfaces ethernet eth0 address '192.168.0.1/24'
 """
+
+import socket
+import re
+
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.vyos import load_config, run_commands
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.common.utils import is_masklen, validate_ip_address
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.vyos.vyos import load_config, run_commands
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
+
+
+def is_ipv4(value):
+    if value:
+        address = value.split('/')
+        if is_masklen(address[1]) and validate_ip_address(address[0]):
+            return True
+    return False
+
+
+def is_ipv6(value):
+    if value:
+        address = value.split('/')
+        if 0 <= int(address[1]) <= 128:
+            try:
+                socket.inet_pton(socket.AF_INET6, address[0])
+            except socket.error:
+                return False
+            return True
+    return False
 
 
 def search_obj_in_list(name, lst):
@@ -114,52 +140,69 @@ def map_obj_to_commands(updates, module):
         state = w['state']
 
         obj_in_have = search_obj_in_list(name, have)
+
         if state == 'absent' and obj_in_have:
             if not ipv4 and not ipv6 and (obj_in_have['ipv4'] or obj_in_have['ipv6']):
-                commands.append('delete interfaces ethernet ' + name + ' address')
+                if name == "lo":
+                    commands.append('delete interfaces loopback lo address')
+                else:
+                    commands.append('delete interfaces ethernet ' + name + ' address')
             else:
-                if ipv4 and obj_in_have['ipv4']:
-                    commands.append('delete interfaces ethernet ' + name + ' address ' + ipv4)
-                if ipv6 and obj_in_have['ipv6']:
-                    commands.append('delete interfaces ethernet ' + name + ' address ' + ipv6)
+                if ipv4 and ipv4 in obj_in_have['ipv4']:
+                    if name == "lo":
+                        commands.append('delete interfaces loopback lo address ' + ipv4)
+                    else:
+                        commands.append('delete interfaces ethernet ' + name + ' address ' + ipv4)
+                if ipv6 and ipv6 in obj_in_have['ipv6']:
+                    if name == "lo":
+                        commands.append('delete interfaces loopback lo address ' + ipv6)
+                    else:
+                        commands.append('delete interfaces ethernet ' + name + ' address ' + ipv6)
         elif (state == 'present' and obj_in_have):
-            if ipv4 and ipv4 != obj_in_have['ipv4']:
-                commands.append('set interfaces ethernet ' + name + ' address ' +
-                                ipv4)
+            if ipv4 and ipv4 not in obj_in_have['ipv4']:
+                if name == "lo":
+                    commands.append('set interfaces loopback lo address ' + ipv4)
+                else:
+                    commands.append('set interfaces ethernet ' + name + ' address ' + ipv4)
 
-            if ipv6 and ipv6 != obj_in_have['ipv6']:
-                commands.append('set interfaces ethernet ' + name + ' address ' +
-                                ipv6)
+            if ipv6 and ipv6 not in obj_in_have['ipv6']:
+                if name == "lo":
+                    commands.append('set interfaces loopback lo address ' + ipv6)
+                else:
+                    commands.append('set interfaces ethernet ' + name + ' address ' + ipv6)
 
     return commands
 
 
 def map_config_to_obj(module):
     obj = []
-    output = run_commands(module, ['show interfaces ethernet'])
-    lines = output[0].splitlines()
+    output = run_commands(module, ['show interfaces'])
+    lines = re.split(r'\n[e|l]', output[0])[1:]
 
-    if len(lines) > 3:
-        for line in lines[3:]:
+    if len(lines) > 0:
+        for line in lines:
             splitted_line = line.split()
 
-            if len(splitted_line) > 1:
-                name = splitted_line[0]
-                address = splitted_line[1]
+            if len(splitted_line) > 0:
+                ipv4 = []
+                ipv6 = []
 
-                if address == '-':
-                    address = None
+                if splitted_line[0].lower().startswith('th'):
+                    name = 'e' + splitted_line[0].lower()
+                elif splitted_line[0].lower().startswith('o'):
+                    name = 'l' + splitted_line[0].lower()
 
-                if address is not None and ':' not in address:
-                    obj.append({'name': name,
-                                'ipv4': address,
-                                'ipv6': None})
-                else:
-                    obj.append({'name': name,
-                                'ipv6': address,
-                                'ipv4': None})
-            else:
-                obj[-1]['ipv6'] = splitted_line[0]
+                for i in splitted_line[1:]:
+                    if (('.' in i or ':' in i) and '/' in i):
+                        value = i.split(r'\n')[0]
+                        if is_ipv4(value):
+                            ipv4.append(value)
+                        elif is_ipv6(value):
+                            ipv6.append(value)
+
+                obj.append({'name': name,
+                            'ipv4': ipv4,
+                            'ipv6': ipv6})
 
     return obj
 
@@ -236,6 +279,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

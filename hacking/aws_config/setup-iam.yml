@@ -25,22 +25,22 @@
       when: iam_group is not defined
 
     - name: Get aws account ID
-      command: aws sts get-caller-identity --output text --query 'Account' "{{ '--profile=' ~ profile if profile else '' }}"
-      changed_when: False
-      register: aws_account_command
+      aws_caller_facts:
+        profile: "{{ profile|default(omit) }}"
+      register: aws_caller_facts
 
     - name: Set aws_account_fact
       set_fact:
-        aws_account: "{{ aws_account_command.stdout }}"
+        aws_account: "{{ aws_caller_facts.account }}"
 
 
     - name: Ensure Managed IAM policies exist
       iam_managed_policy:
-        policy_name: "AnsibleTest{{ item|basename|regex_replace('-.*', '')|upper }}Policy"
+        policy_name: "AnsibleTest{{ item|basename|regex_replace('-.*', '')|capitalize }}Policy"
         policy: "{{ lookup('template', item) }}"
         state: present
         profile: "{{ profile|default(omit) }}"
-      with_fileglob: "testing_policies/*"
+      with_fileglob: "testing_policies/*.json"
       register: iam_managed_policies
 
     - debug:

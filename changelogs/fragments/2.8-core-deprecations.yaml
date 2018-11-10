@@ -1,0 +1,4 @@
+minor_changes:
+- ansible.vars.unsafe_proxy - Removed deprecated file (https://github.com/ansible/ansible/issues/45040)
+- fetch - Removed deprecated validate_md5 alias (https://github.com/ansible/ansible/issues/45039)
+- include_role/import_role - Removed deprecated private argument (https://github.com/ansible/ansible/issues/45038)

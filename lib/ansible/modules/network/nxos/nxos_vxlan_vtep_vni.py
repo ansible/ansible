@@ -49,39 +49,34 @@ options:
         that are associated with a VRF and used for routing. The VRF
         and VNI specified with this command must match the configuration
         of the VNI under the VRF.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   ingress_replication:
     description:
       - Specifies mechanism for host reachability advertisement.
-    required: false
-    choices: ['bgp','static']
-    default: null
+    choices: ['bgp','static', 'default']
   multicast_group:
     description:
       - The multicast group (range) of the VNI. Valid values are
         string and keyword 'default'.
-    required: false
-    default: null
   peer_list:
     description:
       - Set the ingress-replication static peer list. Valid values
         are an array, a space-separated string of ip addresses,
         or the keyword 'default'.
-    required: false
-    default: null
   suppress_arp:
     description:
       - Suppress arp under layer 2 VNI.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
+  suppress_arp_disable:
+    description:
+      - Overrides the global ARP suppression config.
+        This is available on NX-OS 9K series running 9.2.x or higher.
+    type: bool
+    version_added: "2.8"
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -101,15 +96,21 @@ commands:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 BOOL_PARAMS = [
     'assoc_vrf',
     'suppress_arp',
+    'suppress_arp_disable',
 ]
+PARAM_TO_DEFAULT_KEYMAP = {
+    'multicast_group': '',
+    'peer_list': [],
+    'ingress_replication': '',
+}
 PARAM_TO_COMMAND_KEYMAP = {
     'assoc_vrf': 'associate-vrf',
     'interface': 'interface',
@@ -117,7 +118,8 @@ PARAM_TO_COMMAND_KEYMAP = {
     'ingress_replication': 'ingress-replication protocol',
     'multicast_group': 'mcast-group',
     'peer_list': 'peer-ip',
-    'suppress_arp': 'suppress-arp'
+    'suppress_arp': 'suppress-arp',
+    'suppress_arp_disable': 'suppress-arp disable',
 }
 
 
@@ -203,19 +205,34 @@ def state_present(module, existing, proposed, candidate):
                 command = 'no {0}'.format(command)
             commands.append(command)
 
-        elif key == 'peer-ip' and value != 'default':
+        elif key == 'peer-ip' and value != []:
             for peer in value:
                 commands.append('{0} {1}'.format(key, peer))
 
         elif key == 'mcast-group' and value != existing_commands.get(key):
             commands.append('no {0}'.format(key))
-            commands.append('{0} {1}'.format(key, value))
+            vni_command = 'member vni {0}'.format(module.params['vni'])
+            if vni_command not in commands:
+                commands.append('member vni {0}'.format(module.params['vni']))
+            if value != PARAM_TO_DEFAULT_KEYMAP.get('multicast_group', 'default'):
+                commands.append('{0} {1}'.format(key, value))
+
+        elif key == 'ingress-replication protocol' and value != existing_commands.get(key):
+            evalue = existing_commands.get(key)
+            dvalue = PARAM_TO_DEFAULT_KEYMAP.get('ingress_replication', 'default')
+            if value != dvalue:
+                if evalue and evalue != dvalue:
+                    commands.append('no {0} {1}'.format(key, evalue))
+                commands.append('{0} {1}'.format(key, value))
+            else:
+                if evalue:
+                    commands.append('no {0} {1}'.format(key, evalue))
 
         elif value is True:
             commands.append(key)
         elif value is False:
             commands.append('no {0}'.format(key))
-        elif value == 'default':
+        elif value == 'default' or value == []:
             if existing_commands.get(key):
                 existing_value = existing_commands.get(key)
                 if key == 'peer-ip':
@@ -232,14 +249,25 @@ def state_present(module, existing, proposed, candidate):
 
     if commands:
         vni_command = 'member vni {0}'.format(module.params['vni'])
-        ingress_replication_command = 'ingress-replication protocol static'
+        ingress_replications_command = 'ingress-replication protocol static'
+        ingress_replicationb_command = 'ingress-replication protocol bgp'
+        ingress_replicationns_command = 'no ingress-replication protocol static'
+        ingress_replicationnb_command = 'no ingress-replication protocol bgp'
         interface_command = 'interface {0}'.format(module.params['interface'])
 
-        if ingress_replication_command in commands:
+        if any(c in commands for c in (ingress_replications_command, ingress_replicationb_command,
+               ingress_replicationnb_command, ingress_replicationns_command)):
             static_level_cmds = [cmd for cmd in commands if 'peer' in cmd]
-            parents = [interface_command, vni_command, ingress_replication_command]
+            parents = [interface_command, vni_command]
+            for cmd in commands:
+                parents.append(cmd)
             candidate.add(static_level_cmds, parents=parents)
             commands = [cmd for cmd in commands if 'peer' not in cmd]
+
+        elif 'peer-ip' in commands[0]:
+            static_level_cmds = [cmd for cmd in commands]
+            parents = [interface_command, vni_command, ingress_replications_command]
+            candidate.add(static_level_cmds, parents=parents)
 
         if vni_command in commands:
             parents = [interface_command]
@@ -267,28 +295,30 @@ def main():
         multicast_group=dict(required=False, type='str'),
         peer_list=dict(required=False, type='list'),
         suppress_arp=dict(required=False, type='bool'),
+        suppress_arp_disable=dict(required=False, type='bool'),
         ingress_replication=dict(required=False, type='str', choices=['bgp', 'static', 'default']),
         state=dict(choices=['present', 'absent'], default='present', required=False),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    mutually_exclusive = [('suppress_arp', 'suppress_arp_disable'),
+                          ('assoc_vrf', 'multicast_group'),
+                          ('assoc_vrf', 'suppress_arp'),
+                          ('assoc_vrf', 'suppress_arp_disable'),
+                          ('assoc_vrf', 'ingress_replication')]
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True,
+    )
 
     warnings = list()
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
 
-    if module.params['assoc_vrf']:
-        mutually_exclusive_params = ['multicast_group',
-                                     'suppress_arp',
-                                     'ingress_replication']
-        for param in mutually_exclusive_params:
-            if module.params[param]:
-                module.fail_json(msg='assoc_vrf cannot be used with '
-                                     '{0} param'.format(param))
     if module.params['peer_list']:
-        if module.params['ingress_replication'] != 'static':
+        if module.params['peer_list'][0] != 'default' and module.params['ingress_replication'] != 'static':
             module.fail_json(msg='ingress_replication=static is required '
                                  'when using peer_list param')
         else:
@@ -322,6 +352,9 @@ def main():
 
     proposed = {}
     for key, value in proposed_args.items():
+        if key in ['multicast_group', 'peer_list', 'ingress_replication']:
+            if str(value).lower() == 'default':
+                value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
         if key != 'interface' and existing.get(key) != value:
             proposed[key] = value
 

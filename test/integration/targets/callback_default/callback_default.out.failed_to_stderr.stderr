@@ -1,0 +1,3 @@
++ ansible-playbook -i ../../inventory test.yml
+++ set +x
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}

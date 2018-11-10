@@ -1,0 +1,129 @@
+- hosts: localhost
+  connection: local
+  vars:
+     resource_prefix: 'ansible-testing'
+
+  tasks:
+    - block:
+        - name: set up aws connection info
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: "{{ aws_access_key }}"
+              aws_secret_key: "{{ aws_secret_key }}"
+              security_token: "{{ security_token }}"
+              region: "{{ aws_region }}"
+          no_log: True
+
+        - name: create ecs cluster
+          ecs_cluster:
+            name: "{{ resource_prefix }}"
+            state: present
+            <<: *aws_connection_info
+
+        - name: create ecs_taskdefinition with bridged network
+          ecs_taskdefinition:
+            containers:
+              - name: my_container
+                image: ubuntu
+                memory: 128
+            family: "{{ resource_prefix }}"
+            state: present
+            network_mode: bridge
+            <<: *aws_connection_info
+          register: ecs_taskdefinition_creation
+
+        - name: create ecs_taskdefinition with awsvpc network
+          ecs_taskdefinition:
+            containers:
+              - name: my_container
+                image: ubuntu
+                memory: 128
+            family: "{{ resource_prefix }}-vpc"
+            state: present
+            network_mode: awsvpc
+            <<: *aws_connection_info
+          register: ecs_taskdefinition_creation_vpc
+
+        - name: ecs_taskdefinition works fine even when older botocore is used
+          assert:
+            that:
+              - ecs_taskdefinition_creation_vpc.changed
+
+        - name: create ecs_service using awsvpc network_configuration
+          ecs_service:
+            name: "{{ resource_prefix }}-vpc"
+            cluster: "{{ resource_prefix }}"
+            task_definition: "{{ resource_prefix }}-vpc"
+            desired_count: 1
+            network_configuration:
+              subnets:
+                - subnet-abcd1234
+              security_groups:
+                - sg-abcd1234
+              assign_public_ip: true
+            state: present
+            <<: *aws_connection_info
+          register: ecs_service_creation_vpc
+          ignore_errors: yes
+
+        - name: check that graceful failure message is returned from ecs_service
+          assert:
+            that:
+              - ecs_service_creation_vpc.failed
+              - 'ecs_service_creation_vpc.msg == "botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration"'
+
+      always:
+        - name: scale down ecs service
+          ecs_service:
+            name: "{{ resource_prefix }}"
+            cluster: "{{ resource_prefix }}"
+            task_definition: "{{ resource_prefix }}"
+            desired_count: 0
+            state: present
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: pause to wait for scale down
+          pause:
+            seconds: 30
+
+        - name: remove ecs service
+          ecs_service:
+            name: "{{ resource_prefix }}"
+            cluster: "{{ resource_prefix }}"
+            task_definition: "{{ resource_prefix }}"
+            desired_count: 1
+            state: absent
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove ecs task definition
+          ecs_taskdefinition:
+            containers:
+              - name: my_container
+                image: ubuntu
+                memory: 128
+            family: "{{ resource_prefix }}"
+            revision: "{{ ecs_taskdefinition_creation.taskdefinition.revision }}"
+            state: absent
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove ecs task definition vpc
+          ecs_taskdefinition:
+            containers:
+              - name: my_container
+                image: ubuntu
+                memory: 128
+            family: "{{ resource_prefix }}-vpc"
+            revision: "{{ ecs_taskdefinition_creation_vpc.taskdefinition.revision }}"
+            state: absent
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove ecs cluster
+          ecs_cluster:
+            name: "{{ resource_prefix }}"
+            state: absent
+            <<: *aws_connection_info
+          ignore_errors: yes

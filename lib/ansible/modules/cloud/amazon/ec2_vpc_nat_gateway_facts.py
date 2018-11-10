@@ -22,16 +22,12 @@ options:
   nat_gateway_ids:
     description:
       - Get details of specific nat gateway IDs
-    required: false
-    default: None
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNatGateways.html)
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNatGateways.html)
         for possible filters.
-    required: false
-    default: None
-author: Karen Cheng(@Etherdaemon)
+author: Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
   - ec2
@@ -89,7 +85,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
-                                      camel_dict_to_snake_dict, ansible_dict_to_boto3_filter_list, HAS_BOTO3)
+                                      camel_dict_to_snake_dict, ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, HAS_BOTO3)
 
 
 def date_handler(obj):
@@ -98,6 +94,7 @@ def date_handler(obj):
 
 def get_nat_gateways(client, module, nat_gateway_id=None):
     params = dict()
+    nat_gateways = list()
 
     params['Filter'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
     params['NatGatewayIds'] = module.params.get('nat_gateway_ids')
@@ -107,7 +104,16 @@ def get_nat_gateways(client, module, nat_gateway_id=None):
     except Exception as e:
         module.fail_json(msg=str(e.message))
 
-    return [camel_dict_to_snake_dict(gateway) for gateway in result['NatGateways']]
+    for gateway in result['NatGateways']:
+        # Turn the boto3 result into ansible_friendly_snaked_names
+        converted_gateway = camel_dict_to_snake_dict(gateway)
+        if 'tags' in converted_gateway:
+            # Turn the boto3 result into ansible friendly tag dictionary
+            converted_gateway['tags'] = boto3_tag_list_to_ansible_dict(converted_gateway['tags'])
+
+        nat_gateways.append(converted_gateway)
+
+    return nat_gateways
 
 
 def main():

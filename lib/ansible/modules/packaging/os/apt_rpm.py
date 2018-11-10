@@ -1,20 +1,18 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Evgenii Terechkov
+# Copyright: (c) 2013, Evgenii Terechkov
 # Written by Evgenii Terechkov <evg@altlinux.org>
 # Based on urpmi module written by Philippe Makowski <philippem@mageia.org>
-#
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -28,79 +26,78 @@ options:
     description:
       - name of package to install, upgrade or remove.
     required: true
-    default: null
   state:
     description:
-      - Indicates the desired package state
-    required: false
+      - Indicates the desired package state.
+    choices: [ absent, present ]
     default: present
-    choices: [ "absent", "present" ]
   update_cache:
     description:
       - update the package database first C(apt-get update).
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
-author: "Evgenii Terechkov (@evgkrsk)"
-notes:  []
+    type: bool
+    default: 'no'
+author:
+- Evgenii Terechkov (@evgkrsk)
 '''
 
 EXAMPLES = '''
-# install package foo
-- apt_rpm:
+- name: Install package foo
+  apt_rpm:
     pkg: foo
     state: present
 
-# remove package foo
-- apt_rpm:
+- name: Remove package foo
+  apt_rpm:
     pkg: foo
     state: absent
 
-# description: remove packages foo and bar
-- apt_rpm:
+- name: Remove packages foo and bar
+  apt_rpm:
     pkg: foo,bar
     state: absent
 
-# description: update the package database and install bar (bar will be the updated if a newer version exists)
-- apt_rpm:
+# bar will be the updated if a newer version exists
+- name: Update the package database and install bar
+  apt_rpm:
     name: bar
     state: present
     update_cache: yes
 '''
 
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-import shlex
+import json
 import os
+import shlex
 import sys
 
-APT_PATH="/usr/bin/apt-get"
-RPM_PATH="/usr/bin/rpm"
+from ansible.module_utils.basic import AnsibleModule
+
+APT_PATH = "/usr/bin/apt-get"
+RPM_PATH = "/usr/bin/rpm"
+
 
 def query_package(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    rc, out, err = module.run_command("%s -q %s" % (RPM_PATH,name))
+    rc, out, err = module.run_command("%s -q %s" % (RPM_PATH, name))
     if rc == 0:
         return True
     else:
         return False
 
+
 def query_package_provides(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    rc, out, err = module.run_command("%s -q --provides %s" % (RPM_PATH,name))
+    rc, out, err = module.run_command("%s -q --provides %s" % (RPM_PATH, name))
     return rc == 0
+
 
 def update_package_db(module):
     rc, out, err = module.run_command("%s update" % APT_PATH)
 
     if rc != 0:
         module.fail_json(msg="could not update package db: %s" % err)
+
 
 def remove_packages(module, packages):
 
@@ -111,7 +108,7 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s -y remove %s" % (APT_PATH,package))
+        rc, out, err = module.run_command("%s -y remove %s" % (APT_PATH, package))
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s: %s" % (package, err))
@@ -151,11 +148,12 @@ def install_packages(module, pkgspec):
 
 def main():
     module = AnsibleModule(
-        argument_spec    = dict(
-            state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
-            update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-            package      = dict(aliases=['pkg', 'name'], required=True)))
-
+        argument_spec=dict(
+            state=dict(type='str', default='installed', choices=['absent', 'installed', 'present', 'removed']),
+            update_cache=dict(type='bool', default=False, aliases=['update-cache']),
+            package=dict(type='str', required=True, aliases=['name', 'pkg']),
+        ),
+    )
 
     if not os.path.exists(APT_PATH) or not os.path.exists(RPM_PATH):
         module.fail_json(msg="cannot find /usr/bin/apt-get and/or /usr/bin/rpm")
@@ -167,14 +165,12 @@ def main():
 
     packages = p['package'].split(',')
 
-    if p['state'] in [ 'installed', 'present' ]:
+    if p['state'] in ['installed', 'present']:
         install_packages(module, packages)
 
-    elif p['state'] in [ 'removed', 'absent' ]:
+    elif p['state'] in ['absent', 'removed']:
         remove_packages(module, packages)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

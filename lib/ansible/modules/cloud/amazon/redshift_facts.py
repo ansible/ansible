@@ -19,6 +19,7 @@ short_description: Gather facts about Redshift cluster(s)
 description:
   - Gather facts about Redshift cluster(s)
 version_added: "2.4"
+requirements: [ boto3 ]
 options:
   cluster_identifier:
     description:
@@ -163,7 +164,7 @@ vpc_id:
     returned: success
     type: string
     sample: "vpc-1234567"
-availibility_zone:
+availability_zone:
     description: The name of the Availability Zone in which the cluster is located.
     returned: success
     type: string

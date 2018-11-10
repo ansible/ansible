@@ -1,85 +1,67 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: ovirt_affinity_group
 short_description: Module to manage affinity groups in oVirt/RHV
 version_added: "2.3"
-author: "Ondra Machacek (@machacekondra)"
+author:
+- Ondra Machacek (@machacekondra)
 description:
     - "This module manage affinity groups in oVirt/RHV. It can also manage assignments
        of those groups to VMs."
 options:
     name:
         description:
-            - "Name of the affinity group to manage."
+            - Name of the affinity group to manage.
         required: true
     state:
         description:
-            - "Should the affinity group be present or absent."
-        choices: ['present', 'absent']
+            - Should the affinity group be present or absent.
+        choices: [ absent, present ]
         default: present
     cluster:
         description:
-            - "Name of the cluster of the affinity group."
+            - Name of the cluster of the affinity group.
     description:
         description:
-            - "Description of the affinity group."
+            - Description of the affinity group.
     host_enforcing:
         description:
-            - "If I(true) VM cannot start on host if it does not satisfy the C(host_rule)."
-            - "C(This parameter is support since oVirt/RHV 4.1 version.)"
+            - If I(yes) VM cannot start on host if it does not satisfy the C(host_rule).
+            - This parameter is support since oVirt/RHV 4.1 version.
+        type: bool
     host_rule:
         description:
-            - "If I(positive) I(all) VMs in this group should run on the this host."
-            - "If I(negative) I(no) VMs in this group should run on the this host."
-            - "C(This parameter is support since oVirt/RHV 4.1 version.)"
-        choices:
-          - positive
-          - negative
+            - If I(positive) I(all) VMs in this group should run on the this host.
+            - If I(negative) I(no) VMs in this group should run on the this host.
+            - This parameter is support since oVirt/RHV 4.1 version.
+        choices: [ negative, positive ]
     vm_enforcing:
         description:
-            - "If I(true) VM cannot start if it does not satisfy the C(vm_rule)."
+            - If I(yes) VM cannot start if it does not satisfy the C(vm_rule).
+        type: bool
     vm_rule:
         description:
-            - "If I(positive) I(all) VMs in this group should run on the host defined by C(host_rule)."
-            - "If I(negative) I(no) VMs in this group should run on the host defined by C(host_rule)."
-            - "If I(disabled) this affinity group doesn't take effect."
-        choices:
-          - positive
-          - negative
-          - disabled
+            - If I(positive) I(all) VMs in this group should run on the host defined by C(host_rule).
+            - If I(negative) I(no) VMs in this group should run on the host defined by C(host_rule).
+            - If I(disabled) this affinity group doesn't take effect.
+        choices: [ disabled, negative, positive ]
     vms:
         description:
-            - "List of the VMs names, which should have assigned this affinity group."
+            - List of the VMs names, which should have assigned this affinity group.
     hosts:
         description:
-            - "List of the hosts names, which should have assigned this affinity group."
-            - "C(This parameter is support since oVirt/RHV 4.1 version.)"
+            - List of the hosts names, which should have assigned this affinity group.
+            - This parameter is support since oVirt/RHV 4.1 version.
 extends_documentation_fragment: ovirt
 '''
 
@@ -87,8 +69,8 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Create(if not exists) and assign affinity group to VMs vm1 and vm2 and host host1
-- ovirt_affinity_group:
+- name: Create(if not exists) and assign affinity group to VMs vm1 and vm2 and host host1
+  ovirt_affinity_group:
     name: mygroup
     cluster: mycluster
     vm_enforcing: true
@@ -101,8 +83,8 @@ EXAMPLES = '''
     hosts:
       - host1
 
-# Detach VMs from affinity group and disable VM rule:
-- ovirt_affinity_group:
+- name: Detach VMs from affinity group and disable VM rule
+  ovirt_affinity_group:
     name: mygroup
     cluster: mycluster
     vm_enforcing: false
@@ -114,8 +96,8 @@ EXAMPLES = '''
       - host1
       - host2
 
-# Remove affinity group
-- ovirt_affinity_group:
+- name: Remove affinity group
+  ovirt_affinity_group:
     state: absent
     cluster: mycluster
     name: mygroup
@@ -245,13 +227,10 @@ class AffinityGroupsModule(BaseModule):
     def update_check(self, entity):
         assigned_vms = self.assigned_vms(entity)
         do_update = (
-            equal(self.param('description'), entity.description)
-            and equal(self.param('vm_enforcing'), entity.enforcing)
-            and equal(
+            equal(self.param('description'), entity.description) and equal(self.param('vm_enforcing'), entity.enforcing) and equal(
                 self.param('vm_rule') == 'positive' if self.param('vm_rule') else None,
                 entity.positive
-            )
-            and equal(self._vm_ids, assigned_vms)
+            ) and equal(self._vm_ids, assigned_vms)
         )
         # Following attributes is supported since 4.1,
         # so return if it doesn't exist:
@@ -262,40 +241,29 @@ class AffinityGroupsModule(BaseModule):
         return do_update and (
             equal(
                 self.param('host_rule') == 'positive' if self.param('host_rule') else None,
-                entity.hosts_rule.positive
-            )
-            and equal(self.param('host_enforcing'), entity.hosts_rule.enforcing)
-            and equal(
+                entity.hosts_rule.positive) and equal(self.param('host_enforcing'), entity.hosts_rule.enforcing) and equal(
                 self.param('vm_rule') in ['negative', 'positive'] if self.param('vm_rule') else None,
-                entity.vms_rule.enabled
-            )
-            and equal(self._host_ids, sorted([host.id for host in entity.hosts]))
+                entity.vms_rule.enabled) and equal(self._host_ids, sorted([host.id for host in entity.hosts]))
         )
 
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(
-            choices=['present', 'absent'],
-            default='present',
-        ),
-        cluster=dict(default=None, required=True),
-        name=dict(default=None, required=True),
-        description=dict(default=None),
-        vm_enforcing=dict(default=None, type='bool'),
-        vm_rule=dict(default=None, choices=['positive', 'negative', 'disabled']),
-        host_enforcing=dict(default=None, type='bool'),
-        host_rule=dict(default=None, choices=['positive', 'negative']),
-        vms=dict(default=None, type='list'),
-        hosts=dict(default=None, type='list'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        cluster=dict(type='str', required=True),
+        name=dict(type='str', required=True),
+        description=dict(type='str'),
+        vm_enforcing=dict(type='bool'),
+        vm_rule=dict(type='str', choices=['disabled', 'negative', 'positive']),
+        host_enforcing=dict(type='bool'),
+        host_rule=dict(type='str', choices=['negative', 'positive']),
+        vms=dict(type='list'),
+        hosts=dict(type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_affinity_groups':
-        module.deprecate("The 'ovirt_affinity_groups' module is being renamed 'ovirt_affinity_group'", version=2.8)
 
     check_sdk(module)
     try:

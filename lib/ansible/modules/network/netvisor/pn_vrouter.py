@@ -149,6 +149,9 @@ changed:
 
 import shlex
 
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
+
 VROUTER_EXISTS = None
 VROUTER_NAME_EXISTS = None
 
@@ -289,8 +292,8 @@ def main():
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state =dict(required=True, type='str',
-                        choices=['present', 'absent', 'update']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent', 'update']),
             pn_name=dict(required=True, type='str'),
             pn_vnet=dict(type='str'),
             pn_service_type=dict(type='str', choices=['dedicated', 'shared']),
@@ -410,8 +413,6 @@ def main():
 
     run_cli(module, cli)
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

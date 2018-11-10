@@ -1,0 +1,2 @@
+bugfixes:
+- ssh connection - Support empty files with piped transfer_method (https://github.com/ansible/ansible/issues/45426)

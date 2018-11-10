@@ -5,7 +5,7 @@
 # Written by Kim Nørgaard <jasen@jasen.dk>
 # Based on pkgng module written by bleader <bleader@ratonland.org>
 # that was based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn>
+# that was based on pacman module written by Afterburn <https://github.com/afterburn>
 # that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -45,7 +45,7 @@ options:
             - update the package database first
         required: false
         default: false
-        choices: [ true, false ]
+        type: bool
 
 author: Kim Nørgaard (@KimNorgaard)
 requirements: [ "Slackware >= 12.2" ]
@@ -67,6 +67,8 @@ EXAMPLES = '''
     name: foo
     state: latest
 '''
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def query_package(module, slackpkg_path, name):
@@ -96,7 +98,7 @@ def remove_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               remove %s" % (slackpkg_path,
-                                              package))
+                                                            package))
 
         if not module.check_mode and query_package(module, slackpkg_path,
                                                    package):
@@ -122,7 +124,7 @@ def install_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               install %s" % (slackpkg_path,
-                                              package))
+                                                             package))
 
         if not module.check_mode and not query_package(module, slackpkg_path,
                                                        package):
@@ -145,7 +147,7 @@ def upgrade_packages(module, slackpkg_path, packages):
         if not module.check_mode:
             rc, out, err = module.run_command("%s -default_answer=y -batch=on \
                                               upgrade %s" % (slackpkg_path,
-                                              package))
+                                                             package))
 
         if not module.check_mode and not query_package(module, slackpkg_path,
                                                        package):
@@ -195,8 +197,6 @@ def main():
     elif p["state"] in ['removed', 'absent']:
         remove_packages(module, slackpkg_path, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

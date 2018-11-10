@@ -5,12 +5,14 @@
     text: |
       Junk login banner
       over multiple lines
+    provider: "{{ cli }}"
     state: present
 
 - name: remove login
   iosxr_banner:
     banner: login
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - debug:
@@ -25,6 +27,7 @@
   iosxr_banner:
     banner: login
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - assert:

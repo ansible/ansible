@@ -23,33 +23,25 @@ options:
   state:
     description:
       - Ensure NAT Gateway is present or absent.
-    required: false
     default: "present"
     choices: ["present", "absent"]
   nat_gateway_id:
     description:
       - The id AWS dynamically allocates to the NAT Gateway on creation.
         This is required when the absent option is present.
-    required: false
-    default: None
   subnet_id:
     description:
       - The id of the subnet to create the NAT Gateway in. This is required
         with the present option.
-    required: false
-    default: None
   allocation_id:
     description:
       - The id of the elastic IP allocation. If this is not passed and the
         eip_address is not passed. An EIP is generated for this NAT Gateway.
-    required: false
-    default: None
   eip_address:
     description:
       - The elastic IP address of the EIP you want attached to this NAT Gateway.
         If this is not passed and the allocation_id is not passed,
         an EIP is generated for this NAT Gateway.
-    required: false
   if_exist_do_not_create:
     description:
       - if a NAT Gateway exists already in the subnet_id, then do not create a new one.
@@ -60,29 +52,24 @@ options:
       - Deallocate the EIP from the VPC.
       - Option is only valid with the absent state.
       - You should use this with the wait option. Since you can not release an address while a delete operation is happening.
-    required: false
-    default: true
+    default: 'yes'
   wait:
     description:
       - Wait for operation to complete before returning.
-    required: false
-    default: false
+    default: 'no'
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
-    required: false
     default: 300
   client_token:
     description:
       - Optional unique token to be used during create to ensure idempotency.
         When specifying this option, ensure you specify the eip_address parameter
         as well otherwise any subsequent runs will fail.
-    required: false
-
 author:
-  - "Allen Sanabria (@linuxdynasty)"
-  - "Jon Hadfield (@jonhadfield)"
-  - "Karen Cheng(@Etherdaemon)"
+  - Allen Sanabria (@linuxdynasty)
+  - Jon Hadfield (@jonhadfield)
+  - Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
   - ec2
@@ -142,7 +129,7 @@ EXAMPLES = '''
     nat_gateway_id: "{{ item.NatGatewayId }}"
     release_eip: yes
   register: delete_nat_gateway_result
-  with_items: "{{ gateways_to_remove.result }}"
+  loop: "{{ gateways_to_remove.result }}"
 
 - name: Delete nat gateway and wait for deleted status.
   ec2_vpc_nat_gateway:
@@ -164,7 +151,7 @@ EXAMPLES = '''
 
 RETURN = '''
 create_time:
-  description: The ISO 8601 date time formatin UTC.
+  description: The ISO 8601 date time format in UTC.
   returned: In all cases.
   type: string
   sample: "2016-03-05T05:19:20.282000+00:00'"
@@ -684,7 +671,7 @@ def create(client, subnet_id, allocation_id, client_token=None,
         else:
             result = DRY_RUN_GATEWAYS[0]
             result['create_time'] = datetime.datetime.utcnow()
-            result['nat_gateway_addresses'][0]['Allocation_id'] = allocation_id
+            result['nat_gateway_addresses'][0]['allocation_id'] = allocation_id
             result['subnet_id'] = subnet_id
 
         success = True

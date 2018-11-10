@@ -1,0 +1,23 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowSTSAnsibleTests",
+            "Action": [
+                "iam:Get*",
+                "iam:List*",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:DetachRolePolicy",
+                "sts:AssumeRole",
+                "iam:AttachRolePolicy",
+                "iam:CreateInstanceProfile"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:iam::{{aws_account}}:role/ansible-test-sts-*",
+                "arn:aws:iam::{{aws_account}}:instance-profile/ansible-test-sts-*"
+            ]
+        }
+    ]
+}

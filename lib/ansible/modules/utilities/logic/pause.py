@@ -28,22 +28,24 @@ options:
   minutes:
     description:
       - A positive number of minutes to pause for.
-    required: false
-    default: null
   seconds:
     description:
       - A positive number of seconds to pause for.
-    required: false
-    default: null
   prompt:
     description:
       - Optional text to use for the prompt message.
-    required: false
-    default: null
+  echo:
+    description:
+      - Controls whether or not keyboard input is shown when typing.
+      - Has no effect if 'seconds' or 'minutes' is set.
+    type: bool
+    default: 'yes'
+    version_added: 2.5
 author: "Tim Bielawa (@tbielawa)"
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
       - This module is also supported for Windows targets.
+      - User input is not captured or echoed, regardless of echo setting, when minutes or seconds is specified.
 '''
 
 EXAMPLES = '''
@@ -57,6 +59,11 @@ EXAMPLES = '''
 # A helpful reminder of what to look out for post-update.
 - pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
+
+# Pause to get some sensitive input.
+- pause:
+    prompt: "Enter a secret"
+    echo: no
 '''
 
 RETURN = '''
@@ -85,4 +92,9 @@ stdout:
   returned: always
   type: string
   sample: Paused for 0.04 minutes
+echo:
+  description: Value of echo setting
+  returned: always
+  type: bool
+  sample: true
 '''

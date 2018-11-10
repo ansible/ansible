@@ -8,13 +8,12 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'metadata_version': '1.1'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_remote_syslog
 short_description: Manipulate remote syslog settings on a BIG-IP
 description:
@@ -37,14 +36,16 @@ options:
         provide no local IP, specify the value C(none). When creating a
         remote syslog, if this parameter is not specified, the default value
         C(none) is used.
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-  - Requires the netaddr Python package on the host. This is as easy as pip
-    install netaddr.
+  state:
+    description:
+      - When C(present), guarantees that the remote syslog exists with the provided
+        attributes.
+      - When C(absent), removes the remote syslog from the system.
+    default: present
+    choices:
+      - absent
+      - present
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk >= 2.2.0
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -83,30 +84,38 @@ local_ip:
   sample: 10.10.10.10
 '''
 
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+import re
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from collections import defaultdict
 
 try:
-    from ansible.module_utils.f5_utils import HAS_F5SDK
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
-    api_map = {
-        'remotePort': 'remote_port'
-    }
-
     updatables = [
         'remote_port', 'local_ip', 'remoteServers'
     ]
@@ -119,36 +128,6 @@ class Parameters(AnsibleF5Parameters):
         'remoteServers'
     ]
 
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        self._values['__warnings'] = []
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
     def to_return(self):
         result = {}
         for returnable in self.returnables:
@@ -156,25 +135,38 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
     @property
     def remote_host(self):
-        try:
-            ip = netaddr.IPAddress(self._values['remote_host'])
-            return str(ip)
-        except netaddr.core.AddrFormatError:
-            raise F5ModuleError(
-                "The provided 'remote_host' is not a valid IP address"
-            )
+        if is_valid_ip(self._values['remote_host']):
+            return self._values['remote_host']
+        elif self.is_valid_hostname(self._values['remote_host']):
+            return str(self._values['remote_host'])
+        raise F5ModuleError(
+            "The provided 'remote_host' is not a valid IP or hostname"
+        )
+
+    def is_valid_hostname(self, host):
+        """Reasonable attempt at validating a hostname
+
+        Compiled from various paragraphs outlined here
+        https://tools.ietf.org/html/rfc3696#section-2
+        https://tools.ietf.org/html/rfc1123
+
+        Notably,
+        * Host software MUST handle host names of up to 63 characters and
+          SHOULD handle host names of up to 255 characters.
+        * The "LDH rule", after the characters that it permits. (letters, digits, hyphen)
+        * If the hyphen is used, it is not permitted to appear at
+          either the beginning or end of a label
+
+        :param host:
+        :return:
+        """
+        if len(host) > 255:
+            return False
+        host = host.rstrip(".")
+        allowed = re.compile(r'(?!-)[A-Z0-9-]{1,63}(?<!-)$', re.IGNORECASE)
+        return all(allowed.match(x) for x in host.split("."))
 
     @property
     def remote_port(self):
@@ -190,19 +182,30 @@ class Parameters(AnsibleF5Parameters):
     def local_ip(self):
         if self._values['local_ip'] in [None, 'none']:
             return None
-        try:
-            ip = netaddr.IPAddress(self._values['local_ip'])
-            return str(ip)
-        except netaddr.core.AddrFormatError:
+        if is_valid_ip(self._values['local_ip']):
+            return self._values['local_ip']
+        else:
             raise F5ModuleError(
                 "The provided 'local_ip' is not a valid IP address"
             )
+
+
+class Changes(Parameters):
+    @property
+    def remote_port(self):
+        return self._values['remote_port']
+
+    @property
+    def local_ip(self):
+        return self._values['local_ip']
 
 
 class Difference(object):
     def __init__(self, want, have=None):
         self.want = want
         self.have = have
+        self._local_ip = None
+        self._remote_port = None
 
     def compare(self, param):
         try:
@@ -231,9 +234,13 @@ class Difference(object):
         """
 
         changed = False
-        if self.have.remoteServers is None:
+        if self.want.remote_host is None:
             return None
-        current_hosts = dict((d['host'], d) for (i, d) in enumerate(self.have.remoteServers))
+        if self.have.remoteServers is None:
+            remote = dict()
+        else:
+            remote = self.have.remoteServers
+        current_hosts = dict((d['host'], d) for (i, d) in enumerate(remote))
 
         if self.want.state == 'absent':
             del current_hosts[self.want.remote_host]
@@ -243,12 +250,14 @@ class Difference(object):
         if self.want.remote_host in current_hosts:
             item = current_hosts[self.want.remote_host]
             if self.want.remote_port is not None:
-                if item['remotePort'] != self.want.remote_port:
+                if int(item['remotePort']) != self.want.remote_port:
                     item['remotePort'] = self.want.remote_port
+                    self._remote_port = self.want.remote_port
                     changed = True
             if self.want.local_ip is not None:
                 if item['localIp'] != self.want.local_ip:
                     item['localIp'] = self.want.local_ip
+                    self._local_ip = self.want.local_ip
                     changed = True
         else:
             changed = True
@@ -260,19 +269,35 @@ class Difference(object):
             )
             if self.want.remote_port is not None:
                 current_hosts[host]['remotePort'] = self.want.remote_port
+                self._remote_port = self.want.remote_port
             if self.want.local_ip is not None:
                 current_hosts[host]['localIp'] = self.want.local_ip
+                self._local_ip = self.want.local_ip
         if changed:
             result = [v for (k, v) in iteritems(current_hosts)]
             return result
+        return None
+
+    @property
+    def remote_port(self):
+        _ = self.remoteServers
+        if self._remote_port:
+            return self._remote_port
+
+    @property
+    def local_ip(self):
+        _ = self.remoteServers
+        if self._local_ip:
+            return self._local_ip
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.want = Parameters(params=self.module.params)
+        self.changes = Changes()
 
     def _set_changed_options(self):
         changed = {}
@@ -280,7 +305,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(params=changed)
             self.changes.update({'remote_host': self.want.remote_host})
 
     def _update_changed_options(self):
@@ -292,9 +317,12 @@ class ModuleManager(object):
             if change is None:
                 continue
             else:
-                changed[k] = change
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(params=changed)
             self.changes.update({'remote_host': self.want.remote_host})
             return True
         return False
@@ -326,7 +354,7 @@ class ModuleManager(object):
     def create(self):
         self._set_valid_defaults()
         self._update_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         # This is an unnamed resource, so we only need to update
@@ -358,7 +386,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -380,7 +408,7 @@ class ModuleManager(object):
     def read_current_from_device(self):
         resource = self.client.api.tm.sys.syslog.load()
         attrs = resource.attrs
-        result = Parameters(attrs)
+        result = Parameters(params=attrs)
         return result
 
     def absent(self):
@@ -389,7 +417,7 @@ class ModuleManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -406,7 +434,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             remote_host=dict(
                 required=True
             ),
@@ -417,30 +445,30 @@ class ArgumentSpec(object):
                 choices=['absent', 'present']
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
+    spec = ArgumentSpec()
+
+    module = AnsibleModule(
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode
+    )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
+
     try:
-        spec = ArgumentSpec()
-
-        client = AnsibleF5Client(
-            argument_spec=spec.argument_spec,
-            supports_check_mode=spec.supports_check_mode,
-            f5_product_name=spec.f5_product_name
-        )
-
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        if not HAS_NETADDR:
-            raise F5ModuleError("The python netaddr module is required")
-
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

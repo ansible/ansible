@@ -8,7 +8,7 @@
 - name: Test msg_result when can_toast is true (normal mode, users)
   assert:
     that:
-    - not msg_result|failed
+    - msg_result is not failed
     - msg_result.time_taken > 10
   when: 
     - can_toast == True
@@ -18,7 +18,7 @@
 - name: Test msg_result when can_toast is true (normal mode, no users)
   assert:
     that:
-    - not msg_result|failed
+    - msg_result is not failed
     - msg_result.time_taken > 0.1
     - msg_result.toast_sent == False
   when: 
@@ -29,7 +29,7 @@
 - name: Test msg_result when can_toast is true (check mode, users)
   assert:
     that:
-    - not msg_result|failed
+    - msg_result is not failed
     - msg_result.time_taken > 0.1
   when: 
     - can_toast == True
@@ -38,7 +38,7 @@
 - name: Test msg_result when can_toast is true (check mode, no users)
   assert:
     that:
-    - not msg_result|failed
+    - msg_result is not failed
     - msg_result.time_taken > 0.1
     - msg_result.toast_sent == False
   when: 
@@ -49,7 +49,7 @@
 - name: Test msg_result when can_toast is false
   assert:
     that:
-    - msg_result|failed
+    - msg_result is failed
   when: can_toast == False
 
 - name: Warn user again
@@ -62,7 +62,7 @@
 - name: Test msg_result2 when can_toast is true (normal mode, users)
   assert:
     that:
-    - not msg_result2|failed
+    - msg_result2 is not failed
     - msg_result2.time_taken > 10
   when: 
     - can_toast == True
@@ -72,7 +72,7 @@
 - name: Test msg_result2 when can_toast is true (normal mode, no users)
   assert:
     that:
-    - not msg_result2|failed
+    - msg_result2 is not failed
     - msg_result2.time_taken > 0.1
   when: 
     - can_toast == True
@@ -82,7 +82,7 @@
 - name: Test msg_result2 when can_toast is true (check mode, users)
   assert:
     that:
-    - not msg_result2|failed
+    - msg_result2 is not failed
     - msg_result2.time_taken > 0.1
   when: 
     - can_toast == True
@@ -92,7 +92,7 @@
 - name: Test msg_result2 when can_toast is true (check mode, no users)
   assert:
     that:
-    - not msg_result2|failed
+    - msg_result2 is not failed
     - msg_result2.time_taken > 0.1
   when: 
     - can_toast == True
@@ -102,5 +102,5 @@
 - name: Test msg_result2 when can_toast is false
   assert:
     that:
-    - msg_result2|failed
+    - msg_result2 is failed
   when: can_toast == False

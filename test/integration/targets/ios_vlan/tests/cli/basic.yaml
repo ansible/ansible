@@ -1,0 +1,239 @@
+---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
+- set_fact: switch_type="{{ switch_type }}"
+
+- block:
+
+  - name: setup - remove vlan used in test
+    ios_config:
+      lines:
+        - no vlan 100
+        - no vlan 200
+        - no vlan 300
+      provider: "{{ cli }}"
+
+  - name: setup - remove switchport settings on interfaces used in test
+    ios_config:
+      lines:
+        - switchport mode access
+        - no switchport access vlan 100
+      provider: "{{ cli }}"
+      parents: "{{ item }}"
+    loop:
+      - interface GigabitEthernet0/1
+      - interface GigabitEthernet0/2
+
+  - name: create vlan
+    ios_vlan: &create
+      vlan_id: 100
+      name: test-vlan
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'vlan 100' in result.commands"
+        - "'name test-vlan' in result.commands"
+
+  - name: create vlan(idempotence)
+    ios_vlan: *create
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: Add interfaces to vlan
+    ios_vlan: &interfaces
+      vlan_id: 100
+      interfaces:
+        - GigabitEthernet0/1
+        - GigabitEthernet0/2
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface GigabitEthernet0/1' in result.commands"
+        - "'switchport mode access' in result.commands"
+        - "'switchport access vlan 100' in result.commands"
+        - "'interface GigabitEthernet0/2' in result.commands"
+        - "'switchport mode access' in result.commands"
+        - "'switchport access vlan 100' in result.commands"
+
+  - name: Add interfaces to vlan(idempotence)
+    ios_vlan: *interfaces
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: Check interface assigned to vrf (intent)
+    ios_vlan:
+      vlan_id: 100
+      associated_interfaces:
+        - GigabitEthernet0/1
+        - GigabitEthernet0/2
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == false"
+
+  - name: Check interface assigned to vrf (fail)
+    ios_vlan:
+      vlan_id: 100
+      associated_interfaces:
+        - test
+      provider: "{{ cli }}"
+    ignore_errors: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == True"
+
+  - name: Remove interface from vlan
+    ios_vlan: &single_int
+      vlan_id: 100
+      interfaces:
+        - GigabitEthernet0/1
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'vlan 100' in result.commands"
+        - "'interface GigabitEthernet0/2' in result.commands"
+        - "'switchport mode access' in result.commands"
+        - "'no switchport access vlan 100' in result.commands"
+
+  - name: Remove interface from vlan(idempotence)
+    ios_vlan: *single_int
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: Suspend vlan
+    ios_vlan:
+      vlan_id: 100
+      state: suspend
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'vlan 100' in result.commands"
+        - "'state suspend' in result.commands"
+
+  - name: Unsuspend vlan
+    ios_vlan:
+      vlan_id: 100
+      state: active
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'vlan 100' in result.commands"
+        - "'state active' in result.commands"
+
+  - name: delete vlan
+    ios_vlan: &delete
+      vlan_id: 100
+      provider: "{{ cli }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no vlan 100' in result.commands"
+
+  - name: delete vlan(idempotence)
+    ios_vlan: *delete
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: create vlans using aggregate
+    ios_vlan: &create_aggregate
+      aggregate:
+        - { vlan_id: 200, name: vlan-200 }
+        - { vlan_id: 300, name: vlan-300 }
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'vlan 200' in result.commands"
+        - "'name vlan-200' in result.commands"
+        - "'vlan 300' in result.commands"
+        - "'name vlan-300' in result.commands"
+
+  - name: create vlans using aggregate(idempotence)
+    ios_vlan: *create_aggregate
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: delete vlans using aggregate
+    ios_vlan: &delete_aggregate
+      aggregate:
+        - { vlan_id: 200, name: vlan-200 }
+        - { vlan_id: 300, name: vlan-300 }
+      state: absent
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no vlan 200' in result.commands"
+        - "'no vlan 300' in result.commands"
+
+  - name: delete vlans using aggregate(idempotence)
+    ios_vlan: *delete_aggregate
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: teardown(part1)
+    ios_config:
+      lines:
+        - no vlan 100
+        - no vlan 200
+        - no vlan 300
+      provider: "{{ cli }}"
+
+  - name: teardown(part2)
+    ios_config:
+      lines:
+        - switchport mode access
+        - no switchport access vlan 100
+      provider: "{{ cli }}"
+      parents: "{{ item }}"
+    loop:
+      - interface GigabitEthernet0/1
+      - interface GigabitEthernet0/2
+
+  when: switch_type == 'L2'
+
+- debug: msg="END cli/basic.yaml on connection={{ ansible_connection }}"

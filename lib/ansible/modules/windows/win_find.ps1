@@ -1,43 +1,31 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2016, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $paths = Get-AnsibleParam -obj $params -name 'paths' -failifempty $true
 
-$age = Get-AnsibleParam -obj $params -name 'age' -failifempty $false -default $null
-$age_stamp = Get-AnsibleParam -obj $params -name 'age_stamp' -failifempty $false -default 'mtime' -ValidateSet 'mtime','ctime','atime'
-$file_type = Get-AnsibleParam -obj $params -name 'file_type' -failifempty $false -default 'file' -ValidateSet 'file','directory'
-$follow = Get-AnsibleParam -obj $params -name 'follow' -type "bool" -failifempty $false -default $false
-$hidden = Get-AnsibleParam -obj $params -name 'hidden' -type "bool" -failifempty $false -default $false
-$patterns = Get-AnsibleParam -obj $params -name 'patterns' -failifempty $false -default $null
-$recurse = Get-AnsibleParam -obj $params -name 'recurse' -type "bool" -failifempty $false -default $false
-$size = Get-AnsibleParam -obj $params -name 'size' -failifempty $false -default $null
-$use_regex = Get-AnsibleParam -obj $params -name 'use_regex' -type "bool" -failifempty $false -default $false
-$get_checksum = Get-AnsibleParam -obj $params -name 'get_checksum' -type "bool" -failifempty $false -default $true
-$checksum_algorithm = Get-AnsibleParam -obj $params -name 'checksum_algorithm' -failifempty $false -default 'sha1' -ValidateSet 'md5', 'sha1', 'sha256', 'sha384', 'sha512'
+$age = Get-AnsibleParam -obj $params -name 'age'
+$age_stamp = Get-AnsibleParam -obj $params -name 'age_stamp' -default 'mtime' -ValidateSet 'mtime','ctime','atime'
+$file_type = Get-AnsibleParam -obj $params -name 'file_type' -default 'file' -ValidateSet 'file','directory'
+$follow = Get-AnsibleParam -obj $params -name 'follow' -type "bool" -default $false
+$hidden = Get-AnsibleParam -obj $params -name 'hidden' -type "bool" -default $false
+$patterns = Get-AnsibleParam -obj $params -name 'patterns'
+$recurse = Get-AnsibleParam -obj $params -name 'recurse' -type "bool" -default $false
+$size = Get-AnsibleParam -obj $params -name 'size'
+$use_regex = Get-AnsibleParam -obj $params -name 'use_regex' -type "bool" -default $false
+$get_checksum = Get-AnsibleParam -obj $params -name 'get_checksum' -type "bool" -default $true
+$checksum_algorithm = Get-AnsibleParam -obj $params -name 'checksum_algorithm' -default 'sha1' -ValidateSet 'md5', 'sha1', 'sha256', 'sha384', 'sha512'
 
 $result = @{
     files = @()
-    warnings = @()
     examined = 0
     matched = 0
     changed = $false
@@ -82,7 +70,10 @@ namespace Ansible.Command {
     }
 }
 "@
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
+$env:TMP = $original_tmp
 
 Function Assert-Age($info) {
     $valid_match = $true
@@ -121,7 +112,7 @@ Function Assert-Age($info) {
                 }
             }
         } else {
-            Fail-Json $result "failed to process age"
+            throw "failed to process age for file $($info.FullName)"
         }
     }
 
@@ -204,7 +195,7 @@ Function Assert-Size($info) {
                 }
             }
         } else {
-            Fail-Json $result "failed to process size"
+            throw "failed to process size for file $($info.FullName)"
         }
     }
 
@@ -282,8 +273,12 @@ Function Get-FileStat($file) {
         $file_stat.extension = $file.Extension
 
         if ($get_checksum) {
-            $checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
-            $file_stat.checksum = $checksum
+            try {
+                $checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+                $file_stat.checksum = $checksum
+            } catch {
+                throw "failed to get checksum for file $($file.FullName)"
+            }
         }
     }
 
@@ -329,8 +324,14 @@ foreach ($path in $paths) {
 $paths_to_check = $paths_to_check | Select-Object -Unique
 
 foreach ($path in $paths_to_check) {
-    $file = Get-Item -Force -Path $path
-    $info = Get-FileStat -file $file
+    try {
+        $file = Get-Item -Force -Path $path
+        $info = Get-FileStat -file $file
+    } catch {
+        Add-Warning -obj $result -message "win_find failed to check some files, these files were ignored and will not be part of the result output"
+        break
+    }
+
     $new_examined = $result.examined + 1
     $result.examined = $new_examined
 

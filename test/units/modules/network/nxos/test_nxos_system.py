@@ -19,9 +19,8 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_system
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -31,6 +30,8 @@ class TestNxosSystemModule(TestNxosModule):
     module = nxos_system
 
     def setUp(self):
+        super(TestNxosSystemModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_system.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -38,6 +39,7 @@ class TestNxosSystemModule(TestNxosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestNxosSystemModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

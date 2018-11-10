@@ -46,13 +46,10 @@ options:
   enable_cdn:
     description:
        - If true, enable Cloud CDN for this Backend Service.
-    required: false
   port_name:
     description:
       - Name of the port on the managed instance group (MIG) that backend
         services can forward data to. Required for external load balancing.
-    required: false
-    default: null
   protocol:
     description:
        - The protocol this Backend Service uses to communicate with backends.
@@ -66,22 +63,15 @@ options:
   service_account_email:
     description:
       - Service account email
-    required: false
-    default: null
   credentials_file:
     description:
       - Path to the JSON file associated with the service account email.
-    default: null
-    required: false
   project_id:
     description:
       - GCE project ID.
-    required: false
-    default: null
   state:
     description:
       - Desired state of the resource
-    required: false
     default: "present"
     choices: ["absent", "present"]
 '''
@@ -96,7 +86,7 @@ EXAMPLES = '''
     backends:
     - instance_group: managed_instance_group_1
     healthchecks:
-    - name: healthcheck_name_for_backend_service
+    - healthcheck_name_for_backend_service
     port_name: myhttpport
     state: present
 
@@ -114,7 +104,7 @@ EXAMPLES = '''
       max_utilization: 0.5
       max_rate: 4
     healthchecks:
-    - name: healthcheck_name_for_backend_service
+    - healthcheck_name_for_backend_service
     port_name: myhttpport
     state: present
     timeout: 60

@@ -55,7 +55,7 @@ class Connection(Jail):
 
         jail_uuid = self.get_jail_uuid()
 
-        kwargs[Jail.modified_jailname_key] = 'ioc-{}'.format(jail_uuid)
+        kwargs[Jail.modified_jailname_key] = 'ioc-{0}'.format(jail_uuid)
 
         display.vvv(u"Jail {iocjail} has been translated to {rawjail}".format(
             iocjail=self.ioc_jail, rawjail=kwargs[Jail.modified_jailname_key]),
@@ -74,6 +74,6 @@ class Connection(Jail):
         p.wait()
 
         if p.returncode != 0:
-            raise AnsibleError(u"iocage returned an error: {}".format(stdout))
+            raise AnsibleError(u"iocage returned an error: {0}".format(stdout))
 
         return stdout.strip('\n')

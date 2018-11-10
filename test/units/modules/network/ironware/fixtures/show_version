@@ -1,27 +1,30 @@
 System Mode: MLX
-Chassis: NetIron 16-slot (Serial #: H70529F00X,  Part #: 35568-001)
-NI-X-HSF Switch Fabric Module 1 (Serial #: BEU3243L04H,  Part #: 60-1003266-01)
+Chassis: MLXe 4-slot (Serial #: BGD2503J01F,  Part #: 40-1000363-04)
+NI-X-HSF Switch Fabric Module 1 (Serial #: BEW0444H01V,  Part #: 60-1001512-10)
 FE 1: Type fe600,  Version 1
-FE 2: Type fe600,  Version 1
-FE 3: Type fe600,  Version 1
-Switch Fabric Module 1 Up Time is 154 days 15 hours 27 minutes 52 seconds 
-NI-X-HSF Switch Fabric Module 2 (Serial #: BEU3243L03N,  Part #: 60-1003266-01)
+Switch Fabric Module 1 Up Time is 203 days 4 hours 44 minutes 54 seconds 
+NI-X-HSF Switch Fabric Module 2 (Serial #: BEW0432H06S,  Part #: 60-1001512-10)
 FE 1: Type fe600,  Version 1
-FE 2: Type fe600,  Version 1
-FE 3: Type fe600,  Version 1
-Switch Fabric Module 2 Up Time is 154 days 15 hours 27 minutes 52 seconds 
-NI-X-HSF Switch Fabric Module 3 (Serial #: BEU3243L03X,  Part #: 60-1003266-01)
-FE 1: Type fe600,  Version 1
-FE 2: Type fe600,  Version 1
-FE 3: Type fe600,  Version 1
-Switch Fabric Module 3 Up Time is 154 days 15 hours 27 minutes 52 seconds 
-NI-X-HSF Switch Fabric Module 4 (Serial #: BEU3243L041,  Part #: 60-1003266-01)
-FE 1: Type fe600,  Version 1
-FE 2: Type fe600,  Version 1
-FE 3: Type fe600,  Version 1
-Switch Fabric Module 4 Up Time is 154 days 15 hours 27 minutes 52 seconds 
+Switch Fabric Module 2 Up Time is 203 days 4 hours 44 minutes 54 seconds 
 ==========================================================================
-SL M1: BR-MLX-MR2-M Management Module Active (Serial #: BVP3248L00T, Part #: 60-1003268-01):
+SL M1: BR-MLX-MR2-M Management Module Active (Serial #: BVP0425L02W, Part #: 60-1002374-07):
+Boot     : Version 5.8.0T165 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
+Compiled on May 18 2015 at 13:02:10 labeled as xmprm05800
+ (521590 bytes) from boot flash
+Monitor  : Version 5.8.0T165 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
+Compiled on May 18 2015 at 13:01:40 labeled as xmb05800
+ (539721 bytes) from code flash
+IronWare : Version 5.8.0fT163 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
+Compiled on Feb 24 2017 at 02:54:38 labeled as xmr05800fb
+ (9983317 bytes) from Primary
+Board ID : 00 MBRIDGE Revision : 37
+1666 MHz Power PC processor 7448 (version 8004/0202) 166 MHz bus
+512 KB Boot Flash (MX29LV040C), 128 MB Code Flash (MT28F256J3)
+4096 MB DRAM INSTALLED
+4096 MB DRAM ADDRESSABLE                                          
+Active Management uptime is 203 days 4 hours 44 minutes 54 seconds 
+==========================================================================
+SL M2: BR-MLX-MR2-M Management Module Standby (Serial #: BVP0407L00D, Part #: 60-1002374-07):
 Boot     : Version 5.8.0T165 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
 Compiled on May 18 2015 at 13:02:10 labeled as xmprm05800
  (521590 bytes) from boot flash
@@ -36,29 +39,12 @@ Board ID : 00 MBRIDGE Revision : 37
 512 KB Boot Flash (MX29LV040C), 128 MB Code Flash (MT28F256J3)
 4096 MB DRAM INSTALLED
 4096 MB DRAM ADDRESSABLE
-Active Management uptime is 154 days 15 hours 27 minutes 52 seconds 
+Standby Management uptime is 203 days 4 hours 44 minutes 15 seconds 
 ==========================================================================
-SL M2: BR-MLX-MR2-M Management Module Standby (Serial #: BVP3248L00N, Part #: 60-1003268-01):
-Boot     : Version 5.8.0T165 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:10 labeled as xmprm05800
- (521590 bytes) from boot flash
-Monitor  : Version 5.8.0T165 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:01:40 labeled as xmb05800
- (539721 bytes) from code flash                                   
-IronWare : Version 5.8.0fT163 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 02:54:38 labeled as xmr05800fb
- (9983317 bytes) from Primary
-Board ID : 00 MBRIDGE Revision : 37
-1666 MHz Power PC processor 7448 (version 8004/0202) 166 MHz bus
-512 KB Boot Flash (MX29LV040C), 128 MB Code Flash (MT28F256J3)
-4096 MB DRAM INSTALLED
-4096 MB DRAM ADDRESSABLE
-Standby Management uptime is 154 days 15 hours 26 minutes 13 seconds 
-==========================================================================
-SL 1: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0401H034, Part #: 60-1001892-10)
-License:  (LID: dpfFJFGjFIJ)
+SL 1: NI-MLX-10Gx8-M 8-port 10GbE (M) Module (Serial #: BEQ0403G05E, Part #: 60-1001587-13)
+(LID: dgsFJFIiFKg)
 Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
+Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800        
  (449481 bytes) from boot flash
 Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
 Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
@@ -67,306 +53,6 @@ IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Sys
 Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
  (9304807 bytes) from Primary
 FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00       
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 1 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 2: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0401H030, Part #: 60-1001892-10)
-License:  (LID: dpfFJFGjFIF)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary                                     
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 2 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 3: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0415H00E, Part #: 60-1001892-11)
-License:  (LID: dpfFJGKjFFg)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 3 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 4: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0415H02C, Part #: 60-1001892-11)
-License:  (LID: dpfFJGKjFHe)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800          
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 4 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 5: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0422H01T, Part #: 60-1001892-11)
-License:  (LID: dpfFJHHjFGv)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash                                   
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 5 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 6: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0430H01S, Part #: 60-1001892-11)
-License:  (LID: dpfFJIFjFGu)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 6 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 7: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0428H024, Part #: 60-1001892-11)
-License: MLX-1Gx24-X-Upgrade (LID: dpfFJHNjFHJ)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 7 uptime is 154 days 15 hours 26 minutes 17 seconds       
-==========================================================================
-SL 8: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0427H00A, Part #: 60-1001892-11)
-License: MLX-1Gx24-X-Upgrade (LID: dpfFJHMjFFc)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)     
-1024 MB DRAM, 8 KB SRAM
-LP Slot 8 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 9: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0428J029, Part #: 60-1001892-12)
-License: MLX-1Gx24-X-Upgrade (LID: dpfFJHNlFHO)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1                                                    
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 9 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 10: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0418J00E, Part #: 60-1001892-12)
-License:  (LID: dpfFJGNlFFg)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-                                                                  
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 10 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 11: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0437J012, Part #: 60-1001892-12)
-License: MLX-1Gx24-X-Upgrade (LID: dpfFJIMlFGH)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-                                                                  
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 11 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 12: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0401H05A, Part #: 60-1001892-10)
-License:  (LID: dpfFJFGjFKc)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions: 
-Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
-                                                                  
-Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
-
-Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
-
-BCM56512GMAC 0
-BCM56512GMAC 1
-666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
-512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 12 uptime is 154 days 15 hours 26 minutes 17 seconds 
-==========================================================================
-SL 13: NI-MLX-10Gx8-M 8-port 10GbE (M) Module (Serial #: BEQ3219M01V, Part #: 60-1003263-01)
-(LID: dgsIHGOoFGx)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions:                                                    
 Valid PBIF Version = 2.24, Build Time = 4/7/2016 14:16:00
 
 Valid XPP Version = 0.08, Build Time = 6/27/2016 10:36:00
@@ -376,12 +62,12 @@ MACXPP40G 1
 1333 MHz MPC MPC8548 (version 8021/0022) 533 MHz bus
 512 KB Boot Flash (MX29LV040C), 64 MB Code Flash (MT28F256J3)
 1024 MB DRAM, 8 KB SRAM
-LP Slot 13 uptime is 154 days 15 hours 26 minutes 20 seconds 
+LP Slot 1 uptime is 203 days 4 hours 44 minutes 12 seconds 
 ==========================================================================
-SL 14: NI-MLX-10Gx8-M 8-port 10GbE (M) Module (Serial #: BEQ3219M01Z, Part #: 60-1003263-01)
-(LID: dgsIHGOoFGb)
+SL 2: BR-MLX-1GFx24-X 24-port 1GbE SFP Module (Serial #: BND0415H003, Part #: 60-1001892-11)
+License:  (LID: dpfFJGKjFFI)
 Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
+Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800        
  (449481 bytes) from boot flash
 Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
 Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
@@ -389,62 +75,18 @@ Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
 IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
 Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
  (9304807 bytes) from Primary
-FPGA versions:                                                    
-Valid PBIF Version = 2.24, Build Time = 4/7/2016 14:16:00
+FPGA versions: 
+Valid PBIF Version = 4.04, Build Time = 11/10/2014 22:10:00
 
-Valid XPP Version = 0.08, Build Time = 6/27/2016 10:36:00
+Valid XPP Version = 1.03, Build Time = 6/30/2016 10:37:00
 
-MACXPP40G 0
-MACXPP40G 1
-1333 MHz MPC MPC8548 (version 8021/0022) 533 MHz bus
-512 KB Boot Flash (MX29LV040C), 64 MB Code Flash (MT28F256J3)
+Valid STATS Version = 0.09, Build Time = 11/21/2010 14:52:00
+
+BCM56512GMAC 0
+BCM56512GMAC 1
+666 MHz MPC MPC8541E (version 8020/0020) 333 MHz bus
+512 KB Boot Flash (MX29LV040C), 16 MB Code Flash (MT28F128J3)
 1024 MB DRAM, 8 KB SRAM
-LP Slot 14 uptime is 154 days 15 hours 26 minutes 21 seconds 
-==========================================================================
-SL 15: NI-MLX-10Gx8-M 8-port 10GbE (M) Module (Serial #: BEQ0428J001, Part #: 60-1001587-16)
-(LID: dgsFJHNlFFG)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions:                                                    
-Valid PBIF Version = 2.24, Build Time = 4/7/2016 14:16:00
-
-Valid XPP Version = 0.08, Build Time = 6/27/2016 10:36:00
-
-MACXPP40G 0
-MACXPP40G 1
-1333 MHz MPC MPC8548 (version 8021/0022) 533 MHz bus
-512 KB Boot Flash (MX29LV040C), 64 MB Code Flash (MT28F256J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 15 uptime is 154 days 15 hours 26 minutes 21 seconds 
-==========================================================================
-SL 16: NI-MLX-10Gx8-M 8-port 10GbE (M) Module (Serial #: BEQ0443G098, Part #: 60-1001587-14)
-(LID: dgsFJJIiFON)
-Boot     : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:24 labeled as xmlprm05800
- (449481 bytes) from boot flash
-Monitor  : Version 5.8.0T175 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on May 18 2015 at 13:02:40 labeled as xmlb05800
- (568745 bytes) from code flash
-IronWare : Version 5.8.0fT177 Copyright (c) 1996-2014 Brocade Communications Systems, Inc.
-Compiled on Feb 24 2017 at 03:02:10 labeled as xmlp05800fb
- (9304807 bytes) from Primary
-FPGA versions:                                                    
-Valid PBIF Version = 2.24, Build Time = 4/7/2016 14:16:00
-
-Valid XPP Version = 0.08, Build Time = 6/27/2016 10:36:00
-
-MACXPP40G 0
-MACXPP40G 1
-1333 MHz MPC MPC8548 (version 8021/0022) 533 MHz bus
-512 KB Boot Flash (MX29LV040C), 64 MB Code Flash (MT28F256J3)
-1024 MB DRAM, 8 KB SRAM
-LP Slot 16 uptime is 154 days 15 hours 26 minutes 20 seconds 
+LP Slot 2 uptime is 21 days 20 hours 23 minutes 19 seconds 
 ==========================================================================
 All show version done

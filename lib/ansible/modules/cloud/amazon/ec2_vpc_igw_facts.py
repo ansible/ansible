@@ -18,19 +18,16 @@ short_description: Gather facts about internet gateways in AWS
 description:
     - Gather facts about internet gateways in AWS.
 version_added: "2.3"
+requirements: [ boto3 ]
 author: "Nick Aslanidis (@naslanidis)"
 options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInternetGateways.html) for possible filters.
-    required: false
-    default: null
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInternetGateways.html) for possible filters.
   internet_gateway_ids:
     description:
       - Get details of specific Internet Gateway ID. Provide this value as a list.
-    required: false
-    default: None
 extends_documentation_fragment:
     - aws
     - ec2
@@ -121,10 +118,8 @@ def list_internet_gateways(client, module):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
-    snaked_internet_gateways = [camel_dict_to_snake_dict(get_internet_gateway_info(igw))
-                                for igw in all_internet_gateways['InternetGateways']]
-
-    module.exit_json(internet_gateways=snaked_internet_gateways)
+    return [camel_dict_to_snake_dict(get_internet_gateway_info(igw))
+            for igw in all_internet_gateways['InternetGateways']]
 
 
 def main():
@@ -151,7 +146,7 @@ def main():
     # call your function here
     results = list_internet_gateways(connection, module)
 
-    module.exit_json(result=results)
+    module.exit_json(internet_gateways=results)
 
 
 if __name__ == '__main__':

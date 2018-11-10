@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_vlan
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -31,6 +31,8 @@ class TestNxosVlanModule(TestNxosModule):
     module = nxos_vlan
 
     def setUp(self):
+        super(TestNxosVlanModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_vlan.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
@@ -41,8 +43,10 @@ class TestNxosVlanModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosVlanModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
+        self.mock_get_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
@@ -61,11 +65,11 @@ class TestNxosVlanModule(TestNxosModule):
 
         self.run_commands.side_effect = load_from_file
         self.load_config.return_value = None
+        self.get_config.return_value = load_fixture('nxos_vlan', 'config.cfg')
 
     def test_nxos_vlan_range(self):
         set_module_args(dict(vlan_range='6-10'))
-        result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 6', 'vlan 7', 'vlan 8', 'vlan 9', 'vlan 10'])
+        self.execute_module(changed=True, commands=['vlan 6', 'vlan 7', 'vlan 8', 'vlan 9', 'vlan 10'])
 
     def test_nxos_vlan_range_absent(self):
         set_module_args(dict(vlan_range='1-5', state='absent'))
@@ -75,7 +79,7 @@ class TestNxosVlanModule(TestNxosModule):
     def test_nxos_vlan_id(self):
         set_module_args(dict(vlan_id='15', state='present'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 15', 'exit'])
+        self.assertEqual(result['commands'], ['vlan 15', 'state active', 'no shutdown', 'exit'])
 
     def test_nxos_vlan_id_absent(self):
         set_module_args(dict(vlan_id='1', state='absent'))
@@ -85,7 +89,7 @@ class TestNxosVlanModule(TestNxosModule):
     def test_nxos_vlan_named_vlan(self):
         set_module_args(dict(vlan_id='15', name='WEB'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 15', 'name WEB', 'exit'])
+        self.assertEqual(result['commands'], ['vlan 15', 'name WEB', 'state active', 'no shutdown', 'exit'])
 
     def test_nxos_vlan_shut_down(self):
         set_module_args(dict(vlan_id='1', admin_state='down'))

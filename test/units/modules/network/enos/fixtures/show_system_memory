@@ -1,0 +1,166 @@
+------------------------------------------------------------------
+
+Memory utilization:
+MemTotal:        4088580 kB
+MemFree:         3464304 kB
+MemAvailable:    3586864 kB
+Buffers:            2016 kB
+Cached:           173236 kB
+SwapCached:            0 kB
+Active:           504316 kB
+Inactive:          38056 kB
+Active(anon):     376332 kB
+Inactive(anon):    27460 kB
+Active(file):     127984 kB
+Inactive(file):    10596 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+HighTotal:       3407860 kB
+HighFree:        2952904 kB
+LowTotal:         680720 kB
+LowFree:          511400 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:        367120 kB
+Mapped:            20664 kB
+Shmem:             36672 kB
+Slab:               8240 kB
+SReclaimable:       3492 kB
+SUnreclaim:         4748 kB
+KernelStack:         760 kB
+PageTables:         1592 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     2044288 kB
+Committed_AS:    1128364 kB
+VmallocTotal:     241652 kB
+VmallocUsed:       17116 kB
+VmallocChunk:     223920 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePagesPercentage used            15
+
+Memory tracing:                enabled
+Extended Memory tracing:      disabled
+High-water monitoring:         enabled
+
+Memory high-water:  20 percent (at 1818 seconds from boot)
+
+Memory stats:
+ allocs:        16484474
+ frees:         16481108
+ current:           3378
+ alloc fails:          0
+
+STEM thread memory stats:
+  thid  name      allocs       frees        diff     current *     largest
+    0   INIT        2655         933        1722    69381079    31982881
+    1   STEM           0           0           0           0           0
+    2   STP           13           6           7    41165721    16673868
+    3   MFDB           1           0           1           6           6
+    4   TND        41745       42134        -389      847441         336
+    5   CONS        3867        3866           1    26622356     6291456
+    6   TNET     3806775     3809157       -2382  1032303745    12582912
+    7   TNET      126519      127060        -541   269598653    12582912
+    8   TNET           1           0           1        6131        6131
+    9   TNET           1           0           1        6131        6131
+   10   TNET           1           0           1        6131        6131
+   11   TNET           1           0           1        6131        6131
+   12   LOG          441         441           0       61437         272
+   13   TRAP       16911       16911           0     1416745         544
+   14   NTP            0           0           0           0           0
+   15   RMON           0           0           0           0           0
+   18   IP            40           7          33       26152        4248
+   19   RIP            0           0           0           0           0
+   20   AGR        24643       23177        1466     8949189        6131
+   21   EPI            0           0           0           0           0
+   22   PORT          56           0          56       60032       16384
+   23   BGP            0          10         -10           0           0
+   27   MGMT         335         162         173    48883648      524436
+   28   SCAN           0           0           0           0           0
+   29   OSPF           0          20         -20           0           0
+   30   VRRP           1           0           1          16          16
+   31   SNMP     4670978     4670164         814  2315549793    12582912
+   32   SNMP        1108        1068          40   208175203    12582912
+   34   SSHD      800286      796910        3376   271976834        2017
+   36   DT1X           0           0           0           0           0
+   37   NCFD           1           0           1        6131        6131
+   38   NCFD           1           0           1        6131        6131
+   39   NCFD           1           0           1        6131        6131
+   40   NCFD           1           0           1        6131        6131
+   41   SWR            0           0           0           0           0
+   42   SWRH           0           0           0           0           0
+   43   OBS            0           0           0           0           0
+   44   TEAM           0           0           0           0           0
+   45   I2C            0           0           0           0           0
+   46   LACP          72           0          72        1152          16
+   47   SFP            0           0           0           0           0
+   48   SWKY           0           0           0           0           0
+   49   HLNK           0           0           0           0           0
+   50   LLDP     5794454     5794373          81   598072737       14336
+   51   IPV6           0           0           0           0           0
+   52   RTM6           0           0           0           0           0
+   53   PNG6           0           0           0           0           0
+   55   OSP3           0           0           0           0           0
+   56   VMAC           0           0           0           0           0
+   57   MEMM           0           0           0           0           0
+   58   UDLD           0           0           0           0           0
+   59   FCOE           0           0           0           0           0
+   60   SFLO           0           0           0           0           0
+   61   PROX           0           0           0           0           0
+   62   OAM            0           0           0           0           0
+   63   PIM            0           0           0           0           0
+   64   DCBX           1           1           0         126         126
+   65   NBOO           1           0           1        6131        6131
+   66   VLAG           0           0           0           0           0
+   67   MLD6           0           0           0           0           0
+   68   DHCP           0           0           0           0           0
+   69   ETMR           0           0           0           0           0
+   70   IKE2           0           0           0           0           0
+   71   ACLG           1           0           1        5120        5120
+   72   HWRT           0           0           0           0           0
+   73   OFLO          17           0          17       32244        8048
+   74   SFM            0           0           0           0           0
+   75   UPTM           0           0           0           0           0
+   76   VSDB           0           2          -2           0           0
+   77   ECPT           3           0           3      168532      168000
+   78   ECPR           0           0           0           0           0
+   79   VDPT           5           0           5        5260        1460
+   80   VFDB           0           1          -1           0           0
+   81   PTP            0           0           0           0           0
+   82   PBR            0           0           0           0           0
+   83   HIST           0           0           0           0           0
+   84   SLP       699757      701435       -1678   254297215      262140
+   85   UFP          217          73         144       12908         132
+   86   CDCP           0           0           0           0           0
+   87   IGMP           0           0           0           0           0
+   88   ICMP           0           0           0           0           0
+   89   HCM            0           0           0           0           0
+   90   CFCF           0           0           0           0           0
+   91   FDF@           0           0           0           0           0
+   92   NAT            0           0           0           0           0
+   93   OCM1          11           0          11          44           4
+   94   OCM2           0           0           0           0           0
+   95   OFDT           0           0           0           0           0
+   96   OSFM           5           0           5        2636        1024
+   97   OBSC           0           0           0           0           0
+   98   STPM           0           0           0           0           0
+   99   ARP            0           0           0           0           0
+  100   VXLN           0           0           0           0           0
+  101   OVSD           0           0           0           0           0
+  102   OVSC           0           0           0           0           0
+  103   VTEP           0           0           0           0           0
+  104   BFD           18           0          18         440          44
+  105   STPR           0           0           0           0           0
+  106   VMFD           0           0           0           0           0
+  107   NORM           0           0           0           0           0
+  108   DONE      494136      493788         348   280129530     6291456
+   Total        16485149    16481768        3381  1132837544
+
+   Non-STEM allocs             0
+   Non-STEM frees              2
+   Overhead                 1780
+

@@ -1,0 +1,25 @@
+---
+- debug: msg="START vyos cli/net_lldp.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Make sure LLDP is not running - setup
+  vyos_config:
+    lines: delete service lldp
+
+- name: Enable LLDP service using platform agnostic module
+  net_lldp:
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set service lldp" in result.commands'
+
+- name: Make sure LLDP is not running - teardown
+  vyos_config:
+    lines: delete service lldp
+
+- debug: msg="END vyos cli/net_lldp.yaml on connection={{ ansible_connection }}"

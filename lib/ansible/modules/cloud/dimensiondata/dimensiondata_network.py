@@ -110,16 +110,13 @@ network:
 '''
 import traceback
 
-try:
-    from libcloud.compute.base import NodeLocation
-
-    HAS_LIBCLOUD = True
-except ImportError:
-    HAS_LIBCLOUD = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dimensiondata import DimensionDataModule, DimensionDataAPIException
+from ansible.module_utils.dimensiondata import HAS_LIBCLOUD, DimensionDataModule
 from ansible.module_utils._text import to_native
+
+if HAS_LIBCLOUD:
+    from libcloud.compute.base import NodeLocation
+    from libcloud.common.dimensiondata import DimensionDataAPIException
 
 
 class DimensionDataNetworkModule(DimensionDataModule):
@@ -159,8 +156,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
                 network=self._network_to_dict(network)
             )
 
-            return
-
         network = self._create_network()
 
         self.module.exit_json(
@@ -178,8 +173,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
                 msg='Network "%s" does not exist' % self.name,
                 network=self._network_to_dict(network)
             )
-
-            return
 
         self._delete_network(network)
 
@@ -226,8 +219,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
                 msg='service_plan required when creating network and location is MCP 2.0'
             )
 
-            return None
-
         # Create network
         try:
             if self.mcp_version == '1.0':
@@ -248,8 +239,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
             self.module.fail_json(
                 msg="Failed to create new network: %s" % to_native(e), exception=traceback.format_exc()
             )
-
-            return None
 
         if self.module.params['wait'] is True:
             network = self._wait_for_network_state(network.id, 'NORMAL')
@@ -300,6 +289,7 @@ def main():
         module.state_present()
     elif module.state == 'absent':
         module.state_absent()
+
 
 if __name__ == '__main__':
     main()

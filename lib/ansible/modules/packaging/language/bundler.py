@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: bundler
 short_description: Manage Ruby Gem dependencies with Bundler
@@ -24,19 +24,15 @@ options:
   executable:
     description:
       - The path to the bundler executable
-    required: false
-    default: null
   state:
     description:
       - The desired state of the Gem bundle. C(latest) updates gems to the most recent, acceptable version
-    required: false
     choices: [present, latest]
     default: present
   chdir:
     description:
       - The directory to execute the bundler commands from. This directoy
         needs to contain a valid Gemfile or .bundle/ directory
-    required: false
     default: temporary working directory
   exclude_groups:
     description:
@@ -44,46 +40,38 @@ options:
         applies when state is C(present). Bundler considers this
         a 'remembered' property for the Gemfile and will automatically exclude
         groups in future operations even if C(exclude_groups) is not set
-    required: false
-    default: null
   clean:
     description:
       - Only applies if state is C(present). If set removes any gems on the
         target host that are not in the gemfile
-    required: false
-    choices: [yes, no]
-    default: "no"
+    type: bool
+    default: 'no'
   gemfile:
     description:
       - Only applies if state is C(present). The path to the gemfile to use to install gems.
-    required: false
     default: Gemfile in current directory
   local:
     description:
       - If set only installs gems from the cache on the target host
-    required: false
-    choices: [yes, no]
-    default: "no"
+    type: bool
+    default: 'no'
   deployment_mode:
     description:
-      - Only applies if state is C(present). If set it will only install gems
-        that are in the default or production groups. Requires a Gemfile.lock
+      - Only applies if state is C(present). If set it will install gems in
+        ./vendor/bundle instead of the default location. Requires a Gemfile.lock
         file to have been created prior
-    required: false
-    choices: [yes, no]
-    default: "no"
+    type: bool
+    default: 'no'
   user_install:
     description:
       - Only applies if state is C(present). Installs gems in the local user's cache or for all users
-    required: false
-    choices: [yes, no]
-    default: "yes"
+    type: bool
+    default: 'yes'
   gem_path:
     description:
       - Only applies if state is C(present). Specifies the directory to
         install the gems into. If C(chdir) is set then this path is relative to
         C(chdir)
-    required: false
     default: RubyGems gem paths
   binstub_directory:
     description:
@@ -92,19 +80,15 @@ options:
         within the context of the Gemfile and fail if any required gem
         dependencies are not installed. If C(chdir) is set then this path is
         relative to C(chdir)
-    required: false
-    default: null
   extra_args:
     description:
       - A space separated string of additional commands that can be applied to
         the Bundler command. Refer to the Bundler documentation for more
         information
-    required: false
-    default: null
 author: "Tim Hoiberg (@thoiberg)"
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # Installs gems from a Gemfile in the current directory
 - bundler:
     state: present
@@ -115,7 +99,7 @@ EXAMPLES='''
     state: present
     exclude_groups: production
 
-# Only install gems from the default and production groups
+# Install gems into ./vendor/bundle
 - bundler:
     state: present
     deployment_mode: yes
@@ -159,7 +143,7 @@ def main():
             extra_args=dict(default=None, required=False),
         ),
         supports_check_mode=True
-        )
+    )
 
     state = module.params.get('state')
     chdir = module.params.get('chdir')

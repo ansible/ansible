@@ -55,7 +55,9 @@ class DistributionFiles:
     #  - allowempty == True
     #  - be listed in SEARCH_STRING
     #  - have a function get_distribution_DISTNAME implemented
+    # keep names in sync with Conditionals page of docs
     OSDIST_LIST = (
+        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
         {'path': '/etc/redhat-release', 'name': 'RedHat'},
@@ -71,7 +73,6 @@ class DistributionFiles:
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
-        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
@@ -81,13 +82,13 @@ class DistributionFiles:
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
-        'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'Altlinux': 'ALT',
+        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
     # We can't include this in SEARCH_STRING because a name match on its keys
-    # causes a fallback to using the first whitespace seperated item from the file content
+    # causes a fallback to using the first whitespace separated item from the file content
     # as the name. For os-release, that is in form 'NAME=Arch'
     OS_RELEASE_ALIAS = {
         'Archlinux': 'Arch Linux'
@@ -115,6 +116,7 @@ class DistributionFiles:
             if self.SEARCH_STRING[name] in dist_file_content:
                 # this sets distribution=RedHat if 'Red Hat' shows up in data
                 dist_file_dict['distribution'] = name
+                dist_file_dict['distribution_file_search_string'] = self.SEARCH_STRING[name]
             else:
                 # this sets distribution to what's in the data, e.g. CentOS, Scientific, ...
                 dist_file_dict['distribution'] = dist_file_content.split()[0]
@@ -208,7 +210,7 @@ class DistributionFiles:
         if 'Slackware' not in data:
             return False, slackware_facts  # TODO: remove
         slackware_facts['distribution'] = name
-        version = re.findall('\w+[.]\w+', data)
+        version = re.findall(r'\w+[.]\w+', data)
         if version:
             slackware_facts['distribution_version'] = version[0]
         return True, slackware_facts
@@ -251,21 +253,26 @@ class DistributionFiles:
                 if distribution:
                     suse_facts['distribution'] = distribution.group(1).strip('"')
                 # example pattern are 13.04 13.0 13
-                distribution_version = re.search('^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
+                distribution_version = re.search(r'^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
                 if distribution_version:
                     suse_facts['distribution_version'] = distribution_version.group(1)
+                    suse_facts['distribution_major_version'] = distribution_version.group(1).split('.')[0]
                 if 'open' in data.lower():
-                    release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
+                    release = re.search(r'^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release:
                         suse_facts['distribution_release'] = release.groups()[0]
                 elif 'enterprise' in data.lower() and 'VERSION_ID' in line:
                     # SLES doesn't got funny release names
-                    release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
+                    release = re.search(r'^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release.group(1):
                         release = release.group(1)
                     else:
                         release = "0"  # no minor number, so it is the first release
                     suse_facts['distribution_release'] = release
+                # Starting with SLES4SAP12 SP3 NAME reports 'SLES' instead of 'SLES_SAP'
+                # According to SuSe Support (SR101182877871) we should use the CPE_NAME to detect SLES4SAP
+                if re.search("^CPE_NAME=.*sles_sap.*$", line):
+                    suse_facts['distribution'] = 'SLES_SAP'
         elif path == '/etc/SuSE-release':
             if 'open' in data.lower():
                 data = data.splitlines()
@@ -294,7 +301,7 @@ class DistributionFiles:
         debian_facts = {}
         if 'Debian' in data or 'Raspbian' in data:
             debian_facts['distribution'] = 'Debian'
-            release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
 
@@ -309,6 +316,18 @@ class DistributionFiles:
         elif 'Ubuntu' in data:
             debian_facts['distribution'] = 'Ubuntu'
             # nothing else to do, Ubuntu gets correct info from python functions
+        elif 'SteamOS' in data:
+            debian_facts['distribution'] = 'SteamOS'
+            # nothing else to do, SteamOS gets correct info from python functions
+        elif 'Devuan' in data:
+            debian_facts['distribution'] = 'Devuan'
+            release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1)
         else:
             return False, debian_facts
 
@@ -403,11 +422,12 @@ class Distribution(object):
         'SMGL': 'Source Mage GNU/Linux',
     }
 
+    # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
-                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer'],
+                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint'],
+                                'Linux Mint', 'SteamOS', 'Devuan'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
@@ -421,7 +441,7 @@ class Distribution(object):
                      'AIX': ['AIX'],
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
-                     'FreeBSD': ['FreeBSD']}
+                     'FreeBSD': ['FreeBSD', 'TrueOS']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -469,14 +489,15 @@ class Distribution(object):
         aix_facts = {}
         rc, out, err = self.module.run_command("/usr/bin/oslevel")
         data = out.split('.')
+        aix_facts['distribution_major_version'] = data[0]
         aix_facts['distribution_version'] = data[0]
         aix_facts['distribution_release'] = data[1]
         return aix_facts
 
     def get_distribution_HPUX(self):
         hpux_facts = {}
-        rc, out, err = self.module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
-        data = re.search('HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
+        rc, out, err = self.module.run_command(r"/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
+        data = re.search(r'HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
         if data:
             hpux_facts['distribution_version'] = data.groups()[0]
             hpux_facts['distribution_release'] = data.groups()[1]
@@ -487,13 +508,17 @@ class Distribution(object):
         darwin_facts['distribution'] = 'MacOSX'
         rc, out, err = self.module.run_command("/usr/bin/sw_vers -productVersion")
         data = out.split()[-1]
-        darwin_facts['distribution_version'] = data
+        if data:
+            darwin_facts['distribution_major_version'] = data.split('.')[0]
+            darwin_facts['distribution_version'] = data
         return darwin_facts
 
     def get_distribution_FreeBSD(self):
         freebsd_facts = {}
         freebsd_facts['distribution_release'] = platform.release()
-        data = re.search('(\d+)\.(\d+)-RELEASE.*', freebsd_facts['distribution_release'])
+        data = re.search(r'(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', freebsd_facts['distribution_release'])
+        if 'trueos' in platform.version():
+            freebsd_facts['distribution'] = 'TrueOS'
         if data:
             freebsd_facts['distribution_major_version'] = data.group(1)
             freebsd_facts['distribution_version'] = '%s.%s' % (data.group(1), data.group(2))
@@ -503,7 +528,7 @@ class Distribution(object):
         openbsd_facts = {}
         openbsd_facts['distribution_version'] = platform.release()
         rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
-        match = re.match('OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
+        match = re.match(r'OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
         if match:
             openbsd_facts['distribution_release'] = match.groups()[0]
         else:
@@ -573,7 +598,8 @@ class DistributionFactCollector(BaseFactCollector):
     name = 'distribution'
     _fact_ids = set(['distribution_version',
                      'distribution_release',
-                     'distribution_major_version'])
+                     'distribution_major_version',
+                     'os_family'])
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

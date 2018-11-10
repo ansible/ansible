@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -12,10 +12,13 @@
 # CLEAN ENVIRONMENT
 - name: Remove tenant
   aci_tenant: &tenant_absent
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     state: absent
 
@@ -23,10 +26,13 @@
 # ADD TENANT
 - name: Add tenant (check_mode)
   aci_tenant: &tenant_present
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: ansible_test
     state: present
   check_mode: yes
@@ -48,8 +54,10 @@
 - name: Verify add_tenant
   assert:
     that:
-    - cm_add_tenant.changed == nm_add_tenant.changed == true
-    - cm_add_tenant_again.changed == nm_add_tenant_again.changed == false
+    - cm_add_tenant is changed
+    - nm_add_tenant is changed
+    - cm_add_tenant_again is not changed
+    - nm_add_tenant_again is not changed
 
 
 # CHANGE TENANT
@@ -82,8 +90,10 @@
 - name: Verify add_tenant_descr
   assert:
     that:
-    - cm_add_tenant_descr.changed == nm_add_tenant_descr.changed == true
-    - cm_add_tenant_descr_again.changed == nm_add_tenant_descr_again.changed == false
+    - cm_add_tenant_descr is changed
+    - nm_add_tenant_descr is changed
+    - cm_add_tenant_descr_again is not changed
+    - nm_add_tenant_descr_again is not changed
 
 
 # ADD TENANT AGAIN
@@ -99,16 +109,20 @@
 - name: Verify add_tenant_again_no_descr
   assert:
     that:
-    - cm_add_tenant_again_no_descr.changed == nm_add_tenant_again_no_descr.changed == false
+    - cm_add_tenant_again_no_descr is not changed
+    - nm_add_tenant_again_no_descr is not changed
 
 
 # QUERY ALL TENANTS
 - name: Query all tenants (check_mode)
   aci_tenant: &tenant_query
-    hostname: '{{ aci_hostname }}'
+    host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_tenants
@@ -120,7 +134,8 @@
 - name: Verify query_all_tenants
   assert:
     that:
-    - cm_query_all_tenants.changed == nm_query_all_tenants.changed == false
+    - cm_query_all_tenants is not changed
+    - nm_query_all_tenants is not changed
     # NOTE: Order of tenants is not stable between calls
     #- cm_query_all_tenants == nm_query_all_tenants
 
@@ -142,7 +157,8 @@
 - name: Verify query_tenant
   assert:
     that:
-    - cm_query_tenant.changed == nm_query_tenant.changed == false
+    - cm_query_tenant is not changed
+    - nm_query_tenant is not changed
     - cm_query_tenant == nm_query_tenant
 
 
@@ -168,8 +184,10 @@
 - name: Verify remove_tenant
   assert:
     that:
-    - cm_remove_tenant.changed == nm_remove_tenant.changed == true
-    - cm_remove_tenant_again.changed == nm_remove_tenant_again.changed == false
+    - cm_remove_tenant is changed
+    - nm_remove_tenant is changed
+    - cm_remove_tenant_again is not changed
+    - nm_remove_tenant_again is not changed
 
 
 # QUERY NON-EXISTING TENANT
@@ -190,5 +208,6 @@
 - name: Verify query_non_tenant
   assert:
     that:
-    - cm_query_non_tenant.changed == nm_query_non_tenant.changed == false
+    - cm_query_non_tenant is not changed
+    - nm_query_non_tenant is not changed
     - cm_query_non_tenant == nm_query_non_tenant

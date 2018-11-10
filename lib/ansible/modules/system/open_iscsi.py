@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -42,7 +41,7 @@ options:
         - the iscsi target name
     login:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the target node should be connected
     node_auth:
@@ -61,12 +60,12 @@ options:
     auto_node_startup:
         aliases: [automatic]
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the target node should be automatically connected at startup
     discover:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the list of target nodes on the portal should be
           (re)discovered and added to the persistent iscsi database.
@@ -75,7 +74,7 @@ options:
           a changed state.
     show_nodes:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the list of nodes in the persistent iscsi database should be
           returned by the module
@@ -113,19 +112,16 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
-
 ISCSIADM = 'iscsiadm'
 
 
 def compare_nodelists(l1, l2):
-
     l1.sort()
     l2.sort()
     return l1 == l2
 
 
 def iscsi_get_cached_nodes(module, portal=None):
-
     cmd = '%s --mode node' % iscsiadm_cmd
     (rc, out, err) = module.run_command(cmd)
 
@@ -156,7 +152,6 @@ def iscsi_get_cached_nodes(module, portal=None):
 
 
 def iscsi_discover(module, portal, port):
-
     cmd = '%s --mode discovery --type sendtargets --portal %s:%s' % (iscsiadm_cmd, portal, port)
     (rc, out, err) = module.run_command(cmd)
 
@@ -165,7 +160,6 @@ def iscsi_discover(module, portal, port):
 
 
 def target_loggedon(module, target):
-
     cmd = '%s --mode session' % iscsiadm_cmd
     (rc, out, err) = module.run_command(cmd)
 
@@ -177,8 +171,7 @@ def target_loggedon(module, target):
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
 
-def target_login(module, target):
-
+def target_login(module, target, portal=None, port=None):
     node_auth = module.params['node_auth']
     node_user = module.params['node_user']
     node_pass = module.params['node_pass']
@@ -194,6 +187,9 @@ def target_login(module, target):
                 module.fail_json(cmd=cmd, rc=rc, msg=err)
 
     cmd = '%s --mode node --targetname %s --login' % (iscsiadm_cmd, target)
+    if portal is not None and port is not None:
+        cmd += ' --portal %s:%s' % (portal, port)
+
     (rc, out, err) = module.run_command(cmd)
 
     if rc > 0:
@@ -201,7 +197,6 @@ def target_login(module, target):
 
 
 def target_logout(module, target):
-
     cmd = '%s --mode node --targetname %s --logout' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -210,7 +205,6 @@ def target_logout(module, target):
 
 
 def target_device_node(module, target):
-
     # if anyone know a better way to find out which devicenodes get created for
     # a given target...
 
@@ -227,7 +221,6 @@ def target_device_node(module, target):
 
 
 def target_isauto(module, target):
-
     cmd = '%s --mode node --targetname %s' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -242,7 +235,6 @@ def target_isauto(module, target):
 
 
 def target_setauto(module, target):
-
     cmd = '%s --mode node --targetname %s --op=update --name node.startup --value automatic' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -251,7 +243,6 @@ def target_setauto(module, target):
 
 
 def target_setmanual(module, target):
-
     cmd = '%s --mode node --targetname %s --op=update --name node.startup --value manual' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -260,24 +251,23 @@ def target_setmanual(module, target):
 
 
 def main():
-
     # load ansible module object
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
 
             # target
-            portal = dict(required=False, aliases=['ip']),
-            port = dict(required=False, default=3260),
-            target = dict(required=False, aliases=['name', 'targetname']),
-            node_auth = dict(required=False, default='CHAP'),
-            node_user = dict(required=False),
-            node_pass = dict(required=False, no_log=True),
+            portal=dict(required=False, aliases=['ip']),
+            port=dict(required=False, default=3260),
+            target=dict(required=False, aliases=['name', 'targetname']),
+            node_auth=dict(required=False, default='CHAP'),
+            node_user=dict(required=False),
+            node_pass=dict(required=False, no_log=True),
 
             # actions
-            login = dict(type='bool', aliases=['state']),
-            auto_node_startup = dict(type='bool', aliases=['automatic']),
-            discover = dict(type='bool', default=False),
-            show_nodes = dict(type='bool', default=False)
+            login=dict(type='bool', aliases=['state']),
+            auto_node_startup=dict(type='bool', aliases=['automatic']),
+            discover=dict(type='bool', default=False),
+            show_nodes=dict(type='bool', default=False)
         ),
 
         required_together=[['discover_user', 'discover_pass'],
@@ -307,7 +297,7 @@ def main():
 
     if discover:
         if portal is None:
-            module.fail_json(msg = "Need to specify at least the portal (ip) to discover")
+            module.fail_json(msg="Need to specify at least the portal (ip) to discover")
         elif check:
             nodes = cached
         else:
@@ -322,7 +312,7 @@ def main():
     if login is not None or automatic is not None:
         if target is None:
             if len(nodes) > 1:
-                module.fail_json(msg = "Need to specify a target")
+                module.fail_json(msg="Need to specify a target")
             else:
                 target = nodes[0]
         else:
@@ -333,7 +323,7 @@ def main():
                     check_target = True
                     break
             if not check_target:
-                module.fail_json(msg = "Specified target not found")
+                module.fail_json(msg="Specified target not found")
 
     if show_nodes:
         result['nodes'] = nodes
@@ -346,7 +336,7 @@ def main():
                 result['devicenodes'] = target_device_node(module, target)
         elif not check:
             if login:
-                target_login(module, target)
+                target_login(module, target, portal, port)
                 # give udev some time
                 time.sleep(1)
                 result['devicenodes'] = target_device_node(module, target)

@@ -10,7 +10,8 @@
   hosts: testhost
   gather_facts: True
   roles:
-    - { role: test_includes, tags: test_includes }
+    - role: test_includes
+      tags: test_includes
   tasks:
     - include: roles/test_includes/tasks/not_a_role_task.yml
     - include: roles/test_includes/tasks/empty.yml

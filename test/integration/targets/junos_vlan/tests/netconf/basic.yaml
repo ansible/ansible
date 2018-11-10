@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_vlan netconf/basic.yaml"
+- debug: msg="START junos_vlan netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove vlan
   junos_vlan:
@@ -124,10 +124,10 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\+ *test_vlan_1")
-      - result.diff.prepared | search("\+ *vlan-id 159")
-      - result.diff.prepared | search("\+ *vlan-id 161")
-      - result.diff.prepared | search("\+ *description \"test vlan\"")
+      - result.diff.prepared is search("\+ *test_vlan_1")
+      - result.diff.prepared is search("\+ *vlan-id 159")
+      - result.diff.prepared is search("\+ *vlan-id 161")
+      - result.diff.prepared is search("\+ *description \"test vlan\"")
 
 - name: Deactivate vlan configuration using aggregate
   junos_vlan:
@@ -141,8 +141,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *inactive[:] test_vlan_1")
-      - result.diff.prepared | search("! *inactive[:] test_vlan_2")
+      - result.diff.prepared is search("! *inactive[:] test_vlan_1")
+      - result.diff.prepared is search("! *inactive[:] test_vlan_2")
 
 - name: activate vlan configuration using aggregate
   junos_vlan:
@@ -156,8 +156,8 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("! *active[:] test_vlan_1")
-      - result.diff.prepared | search("! *active[:] test_vlan_2")
+      - result.diff.prepared is search("! *active[:] test_vlan_1")
+      - result.diff.prepared is search("! *active[:] test_vlan_2")
 
 - name: Delete vlan configuration using aggregate
   junos_vlan:
@@ -172,9 +172,9 @@
 - assert:
     that:
       - 'result.changed == true'
-      - result.diff.prepared | search("\- *test_vlan_1")
-      - result.diff.prepared | search("\- *vlan-id 159")
-      - result.diff.prepared | search("\- *test_vlan_2")
+      - result.diff.prepared is search("\- *test_vlan_1")
+      - result.diff.prepared is search("\- *vlan-id 159")
+      - result.diff.prepared is search("\- *test_vlan_2")
 
 - name: Delete vlan configuration using aggregate (idempotent)
   junos_vlan:
@@ -188,3 +188,5 @@
 - assert:
     that:
       - 'result.changed == false'
+
+- debug: msg="END junos_vlan netconf/basic.yaml on connection={{ ansible_connection }}"

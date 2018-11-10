@@ -1,0 +1,104 @@
+{
+    "status_code": 200,
+    "data": {
+        "StackEvents": [
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "MyBucket-CREATE_COMPLETE-2017-10-20T19:51:33.200Z",
+                "ResourceStatus": "CREATE_COMPLETE",
+                "ResourceType": "AWS::S3::Bucket",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 33,
+                    "microsecond": 200000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "StackName": "ansible-test-client-request-token-yaml",
+                "ResourceProperties": "{}\n",
+                "PhysicalResourceId": "ansible-test-client-request-token-yaml-mybucket-13m2y4v8bptj4",
+                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
+                "LogicalResourceId": "MyBucket"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "MyBucket-CREATE_IN_PROGRESS-2017-10-20T19:51:12.754Z",
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceType": "AWS::S3::Bucket",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 12,
+                    "microsecond": 754000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "ResourceStatusReason": "Resource creation Initiated",
+                "StackName": "ansible-test-client-request-token-yaml",
+                "ResourceProperties": "{}\n",
+                "PhysicalResourceId": "ansible-test-client-request-token-yaml-mybucket-13m2y4v8bptj4",
+                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
+                "LogicalResourceId": "MyBucket"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "MyBucket-CREATE_IN_PROGRESS-2017-10-20T19:51:11.159Z",
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceType": "AWS::S3::Bucket",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 11,
+                    "microsecond": 159000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "StackName": "ansible-test-client-request-token-yaml",
+                "ResourceProperties": "{}\n",
+                "PhysicalResourceId": "",
+                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
+                "LogicalResourceId": "MyBucket"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "EventId": "04032730-b5d0-11e7-86b8-503ac93168c5",
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceType": "AWS::CloudFormation::Stack",
+                "Timestamp": {
+                    "hour": 19,
+                    "__class__": "datetime",
+                    "month": 10,
+                    "second": 8,
+                    "microsecond": 324000,
+                    "year": 2017,
+                    "day": 20,
+                    "minute": 51
+                },
+                "ResourceStatusReason": "User Initiated",
+                "StackName": "ansible-test-client-request-token-yaml",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-client-request-token-yaml/04023cd0-b5d0-11e7-86b8-503ac93168c5",
+                "ClientRequestToken": "3faf3fb5-b289-41fc-b940-44151828f6cf",
+                "LogicalResourceId": "ansible-test-client-request-token-yaml"
+            }
+        ],
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "RequestId": "13dbb3fd-b5d0-11e7-ae09-550cfe4b2358",
+            "HTTPHeaders": {
+                "x-amzn-requestid": "13dbb3fd-b5d0-11e7-ae09-550cfe4b2358",
+                "vary": "Accept-Encoding",
+                "content-length": "3490",
+                "content-type": "text/xml",
+                "date": "Fri, 20 Oct 2017 19:51:34 GMT"
+            }
+        }
+    }
+}

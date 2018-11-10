@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -33,13 +18,17 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage clusters in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the cluster to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the cluster to manage."
         required: true
     state:
         description:
-            - "Should the cluster be present or absent"
+            - "Should the cluster be present or absent."
         choices: ['present', 'absent']
         default: present
     data_center:
@@ -78,22 +67,22 @@ options:
                outweighs its CPU cost."
     ksm_numa:
         description:
-            - "If I(True) enables KSM C(ksm) for best berformance inside NUMA nodes."
+            - "If I(True) enables KSM C(ksm) for best performance inside NUMA nodes."
     ha_reservation:
         description:
-            - "If I(True) enable the oVirt/RHV to monitor cluster capacity for highly
+            - "If I(True) enables the oVirt/RHV to monitor cluster capacity for highly
                available virtual machines."
     trusted_service:
         description:
-            - "If (True) enable integration with an OpenAttestation server."
+            - "If I(True) enables integration with an OpenAttestation server."
     vm_reason:
         description:
-            - "If I(True) enable an optional reason field when a virtual machine
+            - "If I(True) enables an optional reason field when a virtual machine
                is shut down from the Manager, allowing the administrator to
                provide an explanation for the maintenance."
     host_reason:
         description:
-            - "If I(True) enable an optional reason field when a host is placed
+            - "If I(True) enables an optional reason field when a host is placed
                into maintenance mode from the Manager, allowing the administrator
                to provide an explanation for the maintenance."
     memory_policy:
@@ -191,6 +180,12 @@ options:
     scheduling_policy:
         description:
             - "Name of the scheduling policy to be used for cluster."
+    scheduling_policy_properties:
+        description:
+            - "Custom scheduling policy properties of the cluster."
+            - "These optional properties override the properties of the
+               scheduling policy specified by the C(scheduling_policy) parameter."
+        version_added: "2.6"
     cpu_arch:
         description:
             - "CPU architecture of cluster."
@@ -201,7 +196,7 @@ options:
     switch_type:
         description:
             - "Type of switch to be used by all networks in given cluster.
-               Either I(legacy) which is using linux brigde or I(ovs) using
+               Either I(legacy) which is using linux bridge or I(ovs) using
                Open vSwitch."
         choices: ['legacy', 'ovs']
     compatibility_version:
@@ -214,6 +209,19 @@ options:
             - "C(Note:)"
             - "This is supported since oVirt version 4.1."
         version_added: 2.4
+    external_network_providers:
+        description:
+            - "List of references to the external network providers available
+               in the cluster. If the automatic deployment of the external
+               network provider is supported, the networks of the referenced
+               network provider are available on every host in the cluster."
+            - "External network provider is described by following dictionary:"
+            - "C(name) - Name of the external network provider. Either C(name)
+               or C(id) is required."
+            - "C(id) - ID of the external network provider. Either C(name) or
+               C(id) is required."
+            - "This is supported since oVirt version 4.2."
+        version_added: 2.5
 extends_documentation_fragment: ovirt
 '''
 
@@ -250,10 +258,23 @@ EXAMPLES = '''
       - hwrng
       - random
 
+# Create cluster with default network provider
+- ovirt_cluster:
+    name: mycluster
+    data_center: Default
+    cpu_type: Intel SandyBridge Family
+    external_network_providers:
+      - name: ovirt-provider-ovn
+
 # Remove cluster
 - ovirt_cluster:
     state: absent
     name: mycluster
+
+# Change cluster Name
+- ovirt_cluster:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_cluster_name"
 '''
 
 RETURN = '''
@@ -352,9 +373,24 @@ class ClustersModule(BaseModule):
 
         return mac_pool
 
+    def _get_external_network_providers(self):
+        return self.param('external_network_providers') or []
+
+    def _get_external_network_provider_id(self, external_provider):
+        return external_provider.get('id') or get_id_by_name(
+            self._connection.system_service().openstack_network_providers_service(),
+            external_provider.get('name')
+        )
+
+    def _get_external_network_providers_entity(self):
+        if self.param('external_network_providers') is not None:
+            return [otypes.ExternalProvider(id=self._get_external_network_provider_id(external_provider))
+                    for external_provider in self.param('external_network_providers')]
+
     def build_entity(self):
         sched_policy = self._get_sched_policy()
         return otypes.Cluster(
+            id=self.param('id'),
             name=self.param('name'),
             comment=self.param('comment'),
             description=self.param('description'),
@@ -450,7 +486,9 @@ class ClustersModule(BaseModule):
                 name=self.param('network'),
             ) if self.param('network') else None,
             cpu=otypes.Cpu(
-                architecture=self.param('cpu_arch'),
+                architecture=otypes.Architecture(
+                    self.param('cpu_arch')
+                ) if self.param('cpu_arch') else None,
                 type=self.param('cpu_type'),
             ) if (
                 self.param('cpu_arch') or self.param('cpu_type')
@@ -465,17 +503,62 @@ class ClustersModule(BaseModule):
             mac_pool=otypes.MacPool(
                 id=get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'))
             ) if self.param('mac_pool') else None,
+            external_network_providers=self._get_external_network_providers_entity(),
+            custom_scheduling_policy_properties=[
+                otypes.Property(
+                    name=sp.get('name'),
+                    value=str(sp.get('value')),
+                ) for sp in self.param('scheduling_policy_properties') if sp
+            ] if self.param('scheduling_policy_properties') is not None else None,
         )
+
+    def _matches_entity(self, item, entity):
+        return equal(item.get('id'), entity.id) and equal(item.get('name'), entity.name)
+
+    def _update_check_external_network_providers(self, entity):
+        if self.param('external_network_providers') is None:
+            return True
+        if entity.external_network_providers is None:
+            return not self.param('external_network_providers')
+        entity_providers = self._connection.follow_link(entity.external_network_providers)
+        entity_provider_ids = [provider.id for provider in entity_providers]
+        entity_provider_names = [provider.name for provider in entity_providers]
+        for provider in self._get_external_network_providers():
+            if provider.get('id'):
+                if provider.get('id') not in entity_provider_ids:
+                    return False
+            elif provider.get('name') and provider.get('name') not in entity_provider_names:
+                return False
+        for entity_provider in entity_providers:
+            if not any([self._matches_entity(provider, entity_provider)
+                        for provider in self._get_external_network_providers()]):
+                return False
+        return True
 
     def update_check(self, entity):
         sched_policy = self._get_sched_policy()
         migration_policy = getattr(entity.migration, 'policy', None)
+        cluster_cpu = getattr(entity, 'cpu', dict())
+
+        def check_custom_scheduling_policy_properties():
+            if self.param('scheduling_policy_properties'):
+                current = []
+                if entity.custom_scheduling_policy_properties:
+                    current = [(sp.name, str(sp.value)) for sp in entity.custom_scheduling_policy_properties]
+                passed = [(sp.get('name'), str(sp.get('value'))) for sp in self.param('scheduling_policy_properties') if sp]
+                for p in passed:
+                    if p not in current:
+                        return False
+            return True
+
         return (
+            check_custom_scheduling_policy_properties() and
+            equal(self.param('name'), entity.name) and
             equal(self.param('comment'), entity.comment) and
             equal(self.param('description'), entity.description) and
             equal(self.param('switch_type'), str(entity.switch_type)) and
-            equal(self.param('cpu_arch'), str(entity.cpu.architecture)) and
-            equal(self.param('cpu_type'), entity.cpu.type) and
+            equal(self.param('cpu_arch'), str(getattr(cluster_cpu, 'architecture', None))) and
+            equal(self.param('cpu_type'), getattr(cluster_cpu, 'type', None)) and
             equal(self.param('ballooning'), entity.ballooning_enabled) and
             equal(self.param('gluster'), entity.gluster_service) and
             equal(self.param('virt'), entity.virt_service) and
@@ -515,7 +598,8 @@ class ClustersModule(BaseModule):
             equal(
                 get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'), raise_error=False),
                 entity.mac_pool.id
-            )
+            ) and
+            self._update_check_external_network_providers(entity)
         )
 
 
@@ -526,6 +610,7 @@ def main():
             default='present',
         ),
         name=dict(default=None, required=True),
+        id=dict(default=None),
         ballooning=dict(default=None, type='bool', aliases=['balloon']),
         gluster=dict(default=None, type='bool'),
         virt=dict(default=None, type='bool'),
@@ -564,14 +649,13 @@ def main():
         switch_type=dict(default=None, choices=['legacy', 'ovs']),
         compatibility_version=dict(default=None),
         mac_pool=dict(default=None),
+        external_network_providers=dict(default=None, type='list'),
+        scheduling_policy_properties=dict(type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_clusters':
-        module.deprecate("The 'ovirt_clusters' module is being renamed 'ovirt_cluster'", version=2.8)
 
     check_sdk(module)
 

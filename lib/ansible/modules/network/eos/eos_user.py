@@ -42,7 +42,8 @@ options:
       - The set of username objects to be configured on the remote
         Arista EOS device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
-        exclusive with the C(username) argument. alias C(users).
+        exclusive with the C(username) argument.
+    aliases: ['users', 'collection']
     version_added: "2.4"
   name:
     description:
@@ -155,10 +156,10 @@ from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import get_config, load_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import get_config, load_config
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.eos import eos_argument_spec, check_args
 
 
 def validate_privilege(value, module):
@@ -174,22 +175,25 @@ def map_obj_to_commands(updates, module):
     for update in updates:
         want, have = update
 
-        needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-        add = lambda x: commands.append('username %s %s' % (want['name'], x))
+        def needs_update(x):
+            return want.get(x) and (want.get(x) != have.get(x))
+
+        def add(x):
+            return commands.append('username %s %s' % (want['name'], x))
 
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])
             continue
+
+        if needs_update('configured_password'):
+            if update_password == 'always' or not have:
+                add('secret %s' % want['configured_password'])
 
         if needs_update('role'):
             add('role %s' % want['role'])
 
         if needs_update('privilege'):
             add('privilege %s' % want['privilege'])
-
-        if needs_update('configured_password'):
-            if update_password == 'always' or not have:
-                add('secret %s' % want['configured_password'])
 
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
@@ -398,6 +402,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

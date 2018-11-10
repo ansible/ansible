@@ -34,13 +34,20 @@ try:
 except ImportError:
     HAS_PURESTORAGE = False
 
+HAS_PURITY_FB = True
+try:
+    from purity_fb import PurityFb, FileSystem, FileSystemSnapshot, SnapshotSuffix, rest
+except ImportError:
+    HAS_PURITY_FB = False
+
 from functools import wraps
 from os import environ
 from os import path
 import platform
 
-VERSION = 1.0
+VERSION = 1.2
 USER_AGENT_BASE = 'Ansible'
+API_AGENT_VERSION = 1.5
 
 
 def get_system(module):
@@ -60,7 +67,6 @@ def get_system(module):
         system = purestorage.FlashArray(environ.get('PUREFA_URL'), api_token=(environ.get('PUREFA_API')), user_agent=user_agent)
     else:
         module.fail_json(msg="You must set PUREFA_URL and PUREFA_API environment variables or the fa_url and api_token module arguments")
-
     try:
         system.get()
     except Exception:
@@ -68,10 +74,53 @@ def get_system(module):
     return system
 
 
+def get_blade(module):
+    """Return System Object or Fail"""
+    user_agent = '%(base)s %(class)s/%(version)s (%(platform)s)' % {
+        'base': USER_AGENT_BASE,
+        'class': __name__,
+        'version': VERSION,
+        'platform': platform.platform()
+    }
+    blade_name = module.params['fb_url']
+    api = module.params['api_token']
+
+    if blade_name and api:
+        blade = PurityFb(blade_name)
+        blade.disable_verify_ssl()
+        try:
+            blade.login(api)
+            if API_AGENT_VERSION in blade.api_version.list_versions().versions:
+                blade._api_client.user_agent = user_agent
+        except rest.ApiException as e:
+            module.fail_json(msg="Pure Storage FlashBlade authentication failed. Check your credentials")
+    elif environ.get('PUREFB_URL') and environ.get('PUREFB_API'):
+        blade = PurityFb(environ.get('PUREFB_URL'))
+        blade.disable_verify_ssl()
+        try:
+            blade.login(environ.get('PUREFB_API'))
+            if API_AGENT_VERSION in blade.api_version.list_versions().versions:
+                blade._api_client.user_agent = user_agent
+        except rest.ApiException as e:
+            module.fail_json(msg="Pure Storage FlashBlade authentication failed. Check your credentials")
+    else:
+        module.fail_json(msg="You must set PUREFB_URL and PUREFB_API environment variables or the fb_url and api_token module arguments")
+    return blade
+
+
 def purefa_argument_spec():
     """Return standard base dictionary used for the argument_spec argument in AnsibleModule"""
 
     return dict(
         fa_url=dict(),
+        api_token=dict(no_log=True),
+    )
+
+
+def purefb_argument_spec():
+    """Return standard base dictionary used for the argument_spec argument in AnsibleModule"""
+
+    return dict(
+        fb_url=dict(),
         api_token=dict(no_log=True),
     )

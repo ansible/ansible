@@ -109,7 +109,7 @@ class GenericBsdIfconfigNetwork(Network):
             all_ipv4_addresses=[],
             all_ipv6_addresses=[],
         )
-        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and OS X all implicitly add '-a'
+        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and macOS all implicitly add '-a'
         # when running the command 'ifconfig'.
         # Solaris must explicitly run the command 'ifconfig -a'.
         rc, out, err = self.module.run_command([ifconfig_path, ifconfig_options])
@@ -121,7 +121,7 @@ class GenericBsdIfconfigNetwork(Network):
 
                 if words[0] == 'pass':
                     continue
-                elif re.match('^\S', line) and len(words) > 3:
+                elif re.match(r'^\S', line) and len(words) > 3:
                     current_if = self.parse_interface_line(words)
                     interfaces[current_if['device']] = current_if
                 elif words[0].startswith('options='):

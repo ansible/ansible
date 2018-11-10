@@ -1,3 +1,7 @@
+:orphan:
+
+.. _testing_sanity:
+
 ************
 Sanity Tests
 ************

@@ -5,6 +5,7 @@ Description=Ansible Test Service
 ExecStart=/usr/sbin/ansible_test_service "Test\nthat newlines in scripts\nwork"
 ExecReload=/bin/true
 Type=forking
+PIDFile=/var/run/ansible_test_service.pid
 
 [Install]
 WantedBy=multi-user.target

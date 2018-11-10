@@ -14,7 +14,7 @@
 - name: verify setup network
   assert:
     that:
-    - net|success
+    - net is successful
     - net.name == "net_router"
 
 - name: setup instance
@@ -29,7 +29,7 @@
 - name: verify setup instance
   assert:
     that:
-    - instance|success
+    - instance is successful
     - instance.name == "instance-vm"
     - instance.state == "Running"
 
@@ -45,16 +45,12 @@
 - name: verify setup instance
   assert:
     that:
-    - instance|success
+    - instance is successful
     - instance.name == "instance-vm"
     - instance.state == "Running"
 
-- name: install jq
-  package:
-    name: jq
-
 - name: setup find the routers name
-  shell: cs listRouters listall=true networkid="{{ net.id }}" zone="{{ cs_common_zone_adv }}" | jq ".router[].name" | tr -d '"'
+  shell: cs listRouters listall=true networkid="{{ net.id }}" zone="{{ cs_common_zone_adv }}"
   args:
     chdir: "{{ playbook_dir }}"
   register: router
@@ -63,7 +59,10 @@
     var: router.stdout
 
 - set_fact:
-    router_name: "{{ router.stdout }}"
+    router_json: "{{ router.stdout | from_json }}"
+
+- set_fact:
+    router_name: "{{ router_json.router[0].name }}"
 
 - name: test router started
   cs_router:
@@ -74,7 +73,7 @@
 - name: verify test router started
   assert:
     that:
-    - router|success
+    - router is successful
 
 - name: test stop router in check mode
   cs_router:
@@ -86,7 +85,7 @@
 - name: verify test stop router in check mode
   assert:
     that:
-    - router|changed
+    - router is changed
     - router.state == "Running"
     - router.service_offering == "System Offering For Software Router"
 
@@ -99,7 +98,7 @@
 - name: verify test stop router
   assert:
     that:
-    - router|changed
+    - router is changed
     - router.state == "Stopped"
     - router.service_offering == "System Offering For Software Router"
 
@@ -112,7 +111,7 @@
 - name: verify test stop router idempotence
   assert:
     that:
-    - not router|changed
+    - router is not changed
     - router.state == "Stopped"
     - router.service_offering == "System Offering For Software Router"
 
@@ -126,7 +125,7 @@
 - name: verify test start router in check mode
   assert:
     that:
-    - router|changed
+    - router is changed
     - router.state == "Stopped"
     - router.service_offering == "System Offering For Software Router"
 
@@ -139,7 +138,7 @@
 - name: verify test start router
   assert:
     that:
-    - router|changed
+    - router is changed
     - router.state == "Running"
     - router.service_offering == "System Offering For Software Router"
 
@@ -152,7 +151,7 @@
 - name: verify test start router idempotence
   assert:
     that:
-    - not router|changed
+    - router is not changed
     - router.state == "Running"
     - router.service_offering == "System Offering For Software Router"
 
@@ -166,7 +165,7 @@
 - name: verify test restart router in check mode
   assert:
     that:
-    - router|changed
+    - router is changed
     - router.state == "Running"
     - router.service_offering == "System Offering For Software Router"
 
@@ -179,6 +178,6 @@
 - name: verify test restart router
   assert:
     that:
-    - router|changed
+    - router is changed
     - router.state == "Running"
     - router.service_offering == "System Offering For Software Router"

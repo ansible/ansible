@@ -1,11 +1,11 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
-#Requires -Module Ansible.ModuleUtils.CommandUtil.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # TODO: add check mode support
 
@@ -46,6 +46,7 @@ $chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $executable = Get-AnsibleParam -obj $params -name "executable" -type "path"
 $creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
 $removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
+$stdin = Get-AnsibleParam -obj $params -name "stdin" -type "str"
 
 $raw_command_line = $raw_command_line.Trim()
 
@@ -54,11 +55,11 @@ $result = @{
     cmd = $raw_command_line
 }
 
-If($creates -and $(Test-Path $creates)) {
+if ($creates -and $(Test-AnsiblePath -Path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-If($removes -and -not $(Test-Path $removes)) {
+if ($removes -and -not $(Test-AnsiblePath -Path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
@@ -72,7 +73,11 @@ If(-not $executable -or $executable -eq "powershell") {
     # Base64 encode the command so we don't have to worry about the various levels of escaping
     $encoded_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($raw_command_line))
 
-    $exec_args = "-noninteractive -encodedcommand $encoded_command"
+    if ($stdin) {
+        $exec_args = "-encodedcommand $encoded_command"
+    } else {
+        $exec_args = "-noninteractive -encodedcommand $encoded_command"
+    }
 }
 Else {
     # FUTURE: support arg translation from executable (or executable_args?) to process arguments for arbitrary interpreter?
@@ -84,9 +89,19 @@ Else {
 }
 
 $command = "$exec_application $exec_args"
+$run_command_arg = @{
+    command = $command
+}
+if ($chdir) {
+    $run_command_arg['working_directory'] = $chdir
+}
+if ($stdin) {
+    $run_command_arg['stdin'] = $stdin
+}
+
 $start_datetime = [DateTime]::UtcNow
 try {
-    $command_result = Run-Command -command $command -working_directory $chdir
+    $command_result = Run-Command @run_command_arg
 } catch {
     $result.changed = $false
     try {

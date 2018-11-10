@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
+# Copyright: (c) 2017, Sébastien DA ROCHA <sebastien@da-rocha.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,12 +15,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: iptables
-short_description: Modify the systems iptables
+short_description: Modify iptables rules
 version_added: "2.0"
 author:
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
+- Sébastien DA ROCHA (@sebastiendarocha)
 description:
-  - Iptables is used to set up, maintain, and inspect the tables of IP packet
+  - C(iptables) is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
   - This module does not handle the saving and/or loading of rules, but rather
     only manipulates the current rules that are present in memory. This is the
@@ -50,6 +52,11 @@ options:
     choices: [ append, insert ]
     default: append
     version_added: "2.2"
+  rule_num:
+    description:
+      - Insert the rule as the given rule number. This works only with
+        action = 'insert'.
+    version_added: "2.5"
   ip_version:
     description:
       - Which version of the IP protocol this rule should apply to.
@@ -57,10 +64,14 @@ options:
     default: ipv4
   chain:
     description:
-      - Chain to operate on.
-      - "This option can either be the name of a user defined chain or any of
-        the builtin chains: 'INPUT', 'FORWARD', 'OUTPUT', 'PREROUTING',
-        'POSTROUTING', 'SECMARK', 'CONNSECMARK'."
+      - "Specify the iptables chain to modify. This could be a user-defined chain or one of the standard iptables chains:"
+      - C(INPUT)
+      - C(FORWARD)
+      - C(OUTPUT)
+      - C(PREROUTING)
+      - C(POSTROUTING)
+      - C(SECMARK)
+      - C(CONNSECMARK)
   protocol:
     description:
       - The protocol of the rule or of the packet to check.
@@ -99,11 +110,15 @@ options:
     description:
       - TCP flags specification.
       - C(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
-        - The C(flags) list is the mask, a list of flags you want to examine.
-        - The C(flags_set) list tells which one(s) should be set.
-        If one of the two values is missing, the --tcp-flags option will be ignored.
     default: {}
     version_added: "2.4"
+    suboptions:
+        flags:
+            description:
+                - List of flags you want to examine.
+        flags_set:
+            description:
+                - Flags to be set.
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -167,11 +182,13 @@ options:
         greater than the second one they will be swapped.
   destination_port:
     description:
-      - Destination port or port range specification. This can either be
+      - "Destination port or port range specification. This can either be
         a service name or a port number. An inclusive range can also be
         specified, using the format first:last. If the first port is omitted,
         '0' is assumed; if the last is omitted, '65535' is assumed. If the
         first port is greater than the second one they will be swapped.
+        This is only valid if the rule also specifies one of the following
+        protocols: tcp, udp, dccp or sctp."
   to_ports:
     description:
       - "This specifies a destination port or range of ports to use: without
@@ -214,9 +231,14 @@ options:
   ctstate:
     description:
       - "C(ctstate) is a list of the connection states to match in the conntrack
-        module.
-        Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED',
-        'UNTRACKED', 'SNAT', 'DNAT'"
+        module. Possible states are:"
+      - C(INVALID)
+      - C(NEW)
+      - C(ESTABLISHED)
+      - C(RELATED)
+      - C(UNTRACKED)
+      - C(SNAT)
+      - C(DNAT)
     choices: [ DNAT, ESTABLISHED, INVALID, NEW, RELATED, SNAT, UNTRACKED ]
     default: []
   limit:
@@ -231,11 +253,14 @@ options:
     version_added: "2.1"
   uid_owner:
     description:
-      - Specifies the UID or username to use in match by owner rule.
+      - Specifies the UID or username to use in match by owner rule. From
+        Ansible 2.6 when the C(!) argument is prepended then the it inverts
+        the rule to apply instead to all users except that one specified.
     version_added: "2.1"
   reject_with:
     description:
-      - Specifies the error packet type to return while rejecting.
+      - 'Specifies the error packet type to return while rejecting. It implies
+        "jump: REJECT"'
     version_added: "2.1"
   icmp_type:
     description:
@@ -313,10 +338,38 @@ EXAMPLES = '''
     set_dscp_mark_class: CS1
     protocol: tcp
 
+# Insert a rule on line 5
+- iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 8080
+    jump: ACCEPT
+    rule_num: 5
+
 # Set the policy for the INPUT chain to DROP
 - iptables:
     chain: INPUT
     policy: DROP
+
+# Reject tcp with tcp-reset
+- iptables:
+    chain: INPUT
+    protocol: tcp
+    reject_with: tcp-reset
+    ip_version: ipv4
+
+# Set tcp flags
+- iptables:
+    chain: OUTPUT
+    jump: DROP
+    protocol: tcp
+    tcp_flags:
+      flags: ALL
+      flags_set:
+        - ACK
+        - RST
+        - SYN
+        - FIN
 '''
 
 import re
@@ -346,10 +399,12 @@ def append_param(rule, param, flag, is_list):
             else:
                 rule.extend([flag, param])
 
+
 def append_tcp_flags(rule, param, flag):
     if param:
         if 'flags' in param and 'flags_set' in param:
             rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+
 
 def append_match_flag(rule, param, flag, negatable):
     if param == 'match':
@@ -412,8 +467,10 @@ def construct_rule(params):
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
     append_match(rule, params['uid_owner'], 'owner')
+    append_match_flag(rule, params['uid_owner'], '--uid-owner', True)
     append_param(rule, params['uid_owner'], '--uid-owner', False)
-    append_jump(rule, params['reject_with'], 'REJECT')
+    if params['jump'] is None:
+        append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
     append_param(
         rule,
@@ -427,6 +484,8 @@ def push_arguments(iptables_path, action, params, make_rule=True):
     cmd = [iptables_path]
     cmd.extend(['-t', params['table']])
     cmd.extend([action, params['chain']])
+    if action == '-I' and params['rule_num']:
+        cmd.extend([params['rule_num']])
     if make_rule:
         cmd.extend(construct_rule(params))
     return cmd
@@ -483,13 +542,18 @@ def main():
             action=dict(type='str', default='append', choices=['append', 'insert']),
             ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
             chain=dict(type='str'),
+            rule_num=dict(type='str'),
             protocol=dict(type='str'),
             source=dict(type='str'),
             to_source=dict(type='str'),
             destination=dict(type='str'),
             to_destination=dict(type='str'),
             match=dict(type='list', default=[]),
-            tcp_flags=dict(type='dict', default={}),
+            tcp_flags=dict(type='dict',
+                           options=dict(
+                                flags=dict(type='list'),
+                                flags_set=dict(type='list'))
+                           ),
             jump=dict(type='str'),
             log_prefix=dict(type='str'),
             goto=dict(type='str'),
@@ -534,7 +598,7 @@ def main():
 
     # Check if chain option is required
     if args['flush'] is False and args['chain'] is None:
-        module.fail_json( msg="Either chain or flush parameter must be specified.")
+        module.fail_json(msg="Either chain or flush parameter must be specified.")
 
     # Flush the table
     if args['flush'] is True:
@@ -572,23 +636,10 @@ def main():
                 else:
                     append_rule(iptables_path, module, module.params)
             else:
-                insert = (module.params['action'] == 'insert')
-                rule_is_present = check_present(iptables_path, module, module.params)
-                should_be_present = (args['state'] == 'present')
-
-                # Check if target is up to date
-                args['changed'] = (rule_is_present != should_be_present)
-
-                if args['changed'] and not module.check_mode:
-                    if should_be_present:
-                        if insert:
-                            insert_rule(iptables_path, module, module.params)
-                        else:
-                            append_rule(iptables_path, module, module.params)
-                    else:
-                        remove_rule(iptables_path, module, module.params)
+                remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
+
 
 if __name__ == '__main__':
     main()

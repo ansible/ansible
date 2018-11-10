@@ -2,7 +2,7 @@
 
 set -eu
 
-# Using set -x for this test causes the Shippable console to stop receiving updates and the job to time out for OS X.
+# Using set -x for this test causes the Shippable console to stop receiving updates and the job to time out for macOS.
 # Once that issue is resolved the set -x option can be added above.
 
 # Run these using en_US.UTF-8 because list-tasks is a user output function and so it tailors its output to the
@@ -35,3 +35,7 @@ export LC_ALL=en_US.UTF-8
 # Run a tag from a list of tags and always
 [ "$("${COMMAND[@]}" --tags café | grep -F Task_with | xargs)" = \
 "Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press]" ]
+
+# Run tag with never
+[ "$("${COMMAND[@]}" --tags donever | grep -F Task_with | xargs)" = \
+"Task_with_always_tag TAGS: [always] Task_with_never_tag TAGS: [donever, never]" ]

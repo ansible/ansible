@@ -1,5 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }}/set_state_absent.yaml"
+- debug: msg="START connection={{ ansible_connection }}/set_state_absent.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: setup
   nxos_config:
@@ -10,8 +12,8 @@
 - name: set state=absent
   nxos_interface:
     interface: Loopback1
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:
@@ -21,12 +23,12 @@
 - name: verify state=absent
   nxos_interface:
     interface: Loopback1
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- debug: msg="END {{ connection.transport }}/set_state_absent.yaml"
+- debug: msg="END connection={{ ansible_connection }}/set_state_absent.yaml"

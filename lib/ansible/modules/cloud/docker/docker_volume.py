@@ -68,6 +68,14 @@ author:
 requirements:
     - "python >= 2.6"
     - "docker-py >= 1.10.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
     - "The docker server >= 1.9.0"
 '''
 
@@ -100,7 +108,7 @@ facts:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
 from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
@@ -148,6 +156,9 @@ class DockerVolumeManager(object):
             volumes = self.client.volumes()
         except APIError as e:
             self.client.fail(text_type(e))
+
+        if volumes[u'Volumes'] is None:
+            return None
 
         for volume in volumes[u'Volumes']:
             if volume['Name'] == self.parameters.volume_name:
@@ -212,7 +223,7 @@ class DockerVolumeManager(object):
         if self.existing_volume:
             differences = self.has_different_config()
 
-        if differences and self.parameters.force:
+        if differences or self.parameters.force:
             self.remove_volume()
             self.existing_volume = None
 
@@ -243,7 +254,9 @@ def main():
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_version='1.10.0',
+        # "The docker server >= 1.9.0"
     )
 
     cm = DockerVolumeManager(client)

@@ -1,0 +1,7 @@
+- name: create the provider credentials from the cloud script
+  set_fact:
+    nios_provider:
+        host: "{{ lookup('env', 'NIOS_HOST') }}"
+        username: admin
+        password: infoblox
+- debug: var=nios_provider
