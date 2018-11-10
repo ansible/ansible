@@ -1,0 +1,2 @@
+minor_changes:
+  - k8s - updated module documentation to mention how to avoid SSL validation errors
