@@ -142,59 +142,115 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
-- name: Create a ...
+- name: Create a GTM pool member
   bigip_gtm_pool_member:
-    name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    pool: pool1
+    server_name: server1
+    virtual_server: vs1
+    type: a
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
 RETURN = r'''
-param1:
-  description: The new param1 value of the resource.
+bits_enabled:
+  description: Whether the bits limit is enabled.
   returned: changed
   type: bool
-  sample: true
-param2:
-  description: The new param2 value of the resource.
+  sample: yes
+bits_limit:
+  description: The new bits_enabled limit.
+  returned: changed
+  type: int
+  sample: 100
+connections_enabled:
+  description: Whether the connections limit is enabled.
+  returned: changed
+  type: bool
+  sample: yes
+connections_limit:
+  description: The new connections_limit limit.
+  returned: changed
+  type: int
+  sample: 100
+disabled:
+  description: Whether the pool member is disabled or not.
+  returned: changed
+  type: bool
+  sample: yes
+enabled:
+  description: Whether the pool member is enabled or not.
+  returned: changed
+  type: bool
+  sample: yes
+member_order:
+  description: The new order in which the member appears in the pool.
+  returned: changed
+  type: int
+  sample: 2
+monitor:
+  description: The new monitor assigned to the pool member.
   returned: changed
   type: string
-  sample: Foo is bar
+  sample: /Common/monitor1
+packets_enabled:
+  description: Whether the packets limit is enabled.
+  returned: changed
+  type: bool
+  sample: yes
+packets_limit:
+  description: The new packets_limit limit.
+  returned: changed
+  type: int
+  sample: 100
+ratio:
+  description: The new weight of the member for load balancing.
+  returned: changed
+  type: int
+  sample: 10
+description:
+  description: The new description of the member.
+  returned: changed
+  type: string
+  sample: My description
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.compat.ipaddress import ip_address
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.compat.ipaddress import ip_address
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
 class Parameters(AnsibleF5Parameters):
@@ -205,7 +261,7 @@ class Parameters(AnsibleF5Parameters):
         'limitMaxConnectionsStatus': 'connections_enabled',
         'limitMaxPps': 'packets_limit',
         'limitMaxPpsStatus': 'packets_enabled',
-        'memberOrder': 'member_order'
+        'memberOrder': 'member_order',
     }
 
     api_attributes = [
@@ -310,21 +366,6 @@ class ModuleParameters(Parameters):
         return str(self._values['type'])
 
     @property
-    def collection(self):
-        type_map = dict(
-            a='a_s',
-            aaaa='aaaas',
-            cname='cnames',
-            mx='mxs',
-            naptr='naptrs',
-            srv='srvs'
-        )
-        if self._values['type'] is None:
-            return None
-        wideip_type = self._values['type']
-        return type_map[wideip_type]
-
-    @property
     def enabled(self):
         if self._values['state'] == 'enabled':
             return True
@@ -392,7 +433,13 @@ class UsableChanges(Changes):
 
 
 class ReportableChanges(Changes):
-    pass
+    @property
+    def disabled(self):
+        return flatten_boolean(self._values['disabled'])
+
+    @property
+    def enabled(self):
+        return flatten_boolean(self._values['enabled'])
 
 
 class Difference(object):
@@ -480,17 +527,18 @@ class ModuleManager(object):
         return False
 
     def exec_module(self):
+        if not module_provisioned(self.client, 'gtm'):
+            raise F5ModuleError(
+                "GTM must be provisioned to use this module."
+            )
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state in ['present', 'enabled', 'disabled']:
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state in ['present', 'enabled', 'disabled']:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -514,18 +562,21 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        resource = resource.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/{4}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.name),
         )
-        result = resource.members_s.member.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -557,33 +608,47 @@ class ModuleManager(object):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        resource = resource.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.pool),
         )
-        resource.members_s.member.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
-        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        resource = resource.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/{4}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.name),
         )
-        resource = resource.members_s.member.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def absent(self):
         if self.exists():
@@ -591,34 +656,38 @@ class ModuleManager(object):
         return False
 
     def remove_from_device(self):
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        resource = resource.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/{4}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.name),
         )
-        resource = resource.members_s.member.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        resource = resource.load(
-            name=self.want.pool,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/{4}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.pool),
+            transform_name(self.want.partition, self.want.name),
         )
-        resource = resource.members_s.member.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -669,20 +738,19 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
