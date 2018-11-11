@@ -1091,8 +1091,6 @@ class TaskParameters(DockerBaseClass):
 
         if self.networks:
             for network in self.networks:
-                if not network.get('name'):
-                    self.fail("Parameter error: network must have a name attribute.")
                 network['id'] = self._get_network_id(network['name'])
                 if not network['id']:
                     self.fail("Parameter error: network named %s could not be found. Does it exist?" % network['name'])
