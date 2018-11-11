@@ -1517,6 +1517,10 @@ class TaskParameters(DockerBaseClass):
 
         for (key, value) in options.items():
             if value in self.healthcheck:
+                if self.healthcheck.get(value) is None:
+                    # due to recursive argument_spec, all keys are always present
+                    # (but have default value None if not specified)
+                    continue
                 if value in duration_options:
                     time = self._convert_duration_to_nanosecond(self.healthcheck.get(value))
                     if time:
