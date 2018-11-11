@@ -28,6 +28,9 @@ options:
     description:
       - name of the database to add or remove the extension to/from
     required: true
+  schema:
+    description:
+      - name of the schema to install the extension objects
   login_user:
     description:
       - The username used to authenticate with
@@ -100,9 +103,11 @@ def ext_delete(cursor, ext):
         return False
 
 
-def ext_create(cursor, ext):
+def ext_create(cursor, ext, schema):
     if not ext_exists(cursor, ext):
         query = 'CREATE EXTENSION "%s"' % ext
+        if schema:
+            query += ' WITH SCHEMA "%s"' % schema
         cursor.execute(query)
         return True
     else:
@@ -121,6 +126,7 @@ def main():
             login_host=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=True),
+            schema=dict(default=""),
             ext=dict(required=True, aliases=['name']),
             state=dict(default="present", choices=["absent", "present"]),
         ),
@@ -131,6 +137,7 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
+    schema = module.params["schema"]
     ext = module.params["ext"]
     state = module.params["state"]
     changed = False
@@ -171,7 +178,7 @@ def main():
                 changed = ext_delete(cursor, ext)
 
             elif state == "present":
-                changed = ext_create(cursor, ext)
+                changed = ext_create(cursor, ext, schema)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:
