@@ -201,48 +201,28 @@ class Parameters(AnsibleF5Parameters):
             )
         return timeout
 
+    @property
+    def match_across_pools(self):
+        return flatten_boolean(self._values['match_across_pools'])
+
+    @property
+    def match_across_services(self):
+        return flatten_boolean(self._values['match_across_services'])
+
+    @property
+    def match_across_virtuals(self):
+        return flatten_boolean(self._values['match_across_virtuals'])
+
+    @property
+    def override_connection_limit(self):
+        return flatten_boolean(self._values['override_connection_limit'])
+
 
 class ApiParameters(Parameters):
     pass
 
 
 class ModuleParameters(Parameters):
-    @property
-    def match_across_pools(self):
-        result = flatten_boolean(self._values['match_across_pools'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
-    @property
-    def match_across_services(self):
-        result = flatten_boolean(self._values['match_across_services'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
-    @property
-    def match_across_virtuals(self):
-        result = flatten_boolean(self._values['match_across_virtuals'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
-    @property
-    def override_connection_limit(self):
-        result = flatten_boolean(self._values['override_connection_limit'])
-        if result is None:
-            return None
-        if result == 'yes':
-            return 'enabled'
-        return 'disabled'
-
     @property
     def parent(self):
         if self._values['parent'] is None:
@@ -264,41 +244,55 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    pass
+    @property
+    def match_across_pools(self):
+        if self._values['match_across_pools'] is None:
+            return None
+        elif self._values['match_across_pools'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-
-class ReportableChanges(Changes):
     @property
     def match_across_services(self):
         if self._values['match_across_services'] is None:
             return None
-        elif self._values['match_across_services'] == 'enabled':
-            return 'yes'
-        return 'no'
+        elif self._values['match_across_services'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
     @property
     def match_across_virtuals(self):
         if self._values['match_across_virtuals'] is None:
             return None
-        elif self._values['match_across_virtuals'] == 'enabled':
-            return 'yes'
-        return 'no'
-
-    @property
-    def match_across_pools(self):
-        if self._values['match_across_pools'] is None:
-            return None
-        elif self._values['match_across_pools'] == 'enabled':
-            return 'yes'
-        return 'no'
+        elif self._values['match_across_virtuals'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
     @property
     def override_connection_limit(self):
         if self._values['override_connection_limit'] is None:
             return None
-        elif self._values['override_connection_limit'] == 'enabled':
-            return 'yes'
-        return 'no'
+        elif self._values['override_connection_limit'] == 'yes':
+            return 'enabled'
+        return 'disabled'
+
+
+class ReportableChanges(Changes):
+    @property
+    def match_across_pools(self):
+        return flatten_boolean(self._values['match_across_pools'])
+
+    @property
+    def match_across_services(self):
+        return flatten_boolean(self._values['match_across_services'])
+
+    @property
+    def match_across_virtuals(self):
+        return flatten_boolean(self._values['match_across_virtuals'])
+
+    @property
+    def override_connection_limit(self):
+        return flatten_boolean(self._values['override_connection_limit'])
 
 
 class Difference(object):
@@ -326,7 +320,7 @@ class Difference(object):
     def parent(self):
         if self.want.parent != self.have.parent:
             raise F5ModuleError(
-                "The parent monitor cannot be changed"
+                "The parent profile cannot be changed"
             )
 
 
@@ -459,7 +453,6 @@ class ModuleManager(object):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
@@ -479,7 +472,6 @@ class ModuleManager(object):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
 
     def absent(self):
         if self.exists():
@@ -497,7 +489,7 @@ class ModuleManager(object):
             return True
         raise F5ModuleError(resp.content)
 
-    def read_current_from_device(self):
+    def read_current_from_device(self):  # lgtm [py/similar-function]
         uri = "https://{0}:{1}/mgmt/tm/ltm/persistence/source-addr/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
@@ -551,8 +543,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
