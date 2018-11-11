@@ -1940,21 +1940,15 @@ class Container(DockerBaseClass):
                     diff = True
                 if network.get('ipv6_address') and network['ipv6_address'] != connected_networks[network['name']].get('GlobalIPv6Address'):
                     diff = True
-                if network.get('aliases') and not connected_networks[network['name']].get('Aliases'):
-                    diff = True
-                if network.get('aliases') and connected_networks[network['name']].get('Aliases'):
-                    for alias in network.get('aliases'):
-                        if alias not in connected_networks[network['name']].get('Aliases', []):
-                            diff = True
-                if network.get('links') and not connected_networks[network['name']].get('Links'):
-                    diff = True
-                if network.get('links') and connected_networks[network['name']].get('Links'):
+                if network.get('aliases'):
+                    if not compare_generic(network['aliases'], connected_networks[network['name']].get('Aliases'), 'allow_more_present', 'set'):
+                        diff = True
+                if network.get('links'):
                     expected_links = []
                     for link, alias in network['links']:
                         expected_links.append("%s:%s" % (link, alias))
-                    for link in expected_links:
-                        if link not in connected_networks[network['name']].get('Links', []):
-                            diff = True
+                    if not compare_generic(expected_links, connected_networks[network['name']].get('Links'), 'allow_more_present', 'set'):
+                        diff = True
                 if diff:
                     different = True
                     differences.append(dict(
