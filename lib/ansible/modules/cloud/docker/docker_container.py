@@ -1720,8 +1720,7 @@ class Container(DockerBaseClass):
             read_only=host_config.get('ReadonlyRootfs'),
             restart_policy=restart_policy.get('Name'),
             runtime=host_config.get('Runtime'),
-            # Cannot test shm_size, as shm_size is not included in container inspection results.
-            # shm_size=host_config.get('ShmSize'),
+            shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
             tmpfs=host_config.get('Tmpfs'),
