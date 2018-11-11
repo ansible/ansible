@@ -99,31 +99,31 @@
   docker_volume:
     name: "{{ vname }}"
     labels:
-    - label1
-    - label2
+      ansible.test.1: hello
+      ansible.test.2: world
   register: driver_labels_1
 
 - name: Create a volume with labels (idempotency)
   docker_volume:
     name: "{{ vname }}"
     labels:
-    - label2
-    - label1
+      ansible.test.2: world
+      ansible.test.1: hello
   register: driver_labels_2
 
 - name: Create a volume with labels (less)
   docker_volume:
     name: "{{ vname }}"
     labels:
-    - label2
+      ansible.test.1: hello
   register: driver_labels_3
 
 - name: Create a volume with labels (more)
   docker_volume:
     name: "{{ vname }}"
     labels:
-    - label2
-    - label3
+      ansible.test.1: hello
+      ansible.test.3: ansible
   register: driver_labels_4
 
 - name: Cleanup
