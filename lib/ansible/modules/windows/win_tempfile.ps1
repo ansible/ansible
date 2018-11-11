@@ -28,7 +28,7 @@ Function New-TempFile {
         $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($error.Exception.Message)", $error)
     }
 
-    return $temppath
+    return $temppath.ToString()
 }
 
 $spec = @{
