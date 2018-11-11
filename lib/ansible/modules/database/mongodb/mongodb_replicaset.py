@@ -19,7 +19,7 @@ description:
     - Validation takes the form of replicaset name validation only at present.
     - This may change in the future to involve adding  and removing members.
 author: Rhys Campbell (@rhysmeister)
-version_added: "2.7.1"
+version_added: "2.8"
 options:
     login_user:
         description:
