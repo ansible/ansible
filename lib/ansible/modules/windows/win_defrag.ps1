@@ -90,7 +90,7 @@ $module.Result.rc = $command_result.rc
 
 $module.Result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $module.Result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
-$result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
+$module.Result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
 
 $module.Result.changed = $true
 
