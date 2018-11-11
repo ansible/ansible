@@ -1861,7 +1861,22 @@ class Container(DockerBaseClass):
 
                 if not match:
                     # no match. record the differences
-                    differences.add(key, parameter=getattr(self.parameters, key), container=value)
+                    p = getattr(self.parameters, key)
+                    c = value
+                    if compare['type'] == 'set':
+                        # Since the order does not matter, sort so that the diff output is better.
+                        if p is not None:
+                            p = sorted(p)
+                        if c is not None:
+                            c = sorted(c)
+                    elif compare['type'] == 'set(dict)':
+                        # Since the order does not matter, sort so that the diff output is better.
+                        # We sort the list of dictionaries by using the sorted items of a dict as its key.
+                        if p is not None:
+                            p = sorted(p, key=lambda x: sorted(x.items()))
+                        if c is not None:
+                            c = sorted(c, key=lambda x: sorted(x.items()))
+                    differences.add(key, parameter=p, container=c)
 
         has_differences = not differences.empty
         return has_differences, differences
