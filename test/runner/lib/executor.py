@@ -1254,6 +1254,7 @@ def command_units(args):
         env = ansible_environment(args)
 
         cmd = [
+            args.python_executable, '-m',
             'pytest',
             '--boxed',
             '-r', 'a',
