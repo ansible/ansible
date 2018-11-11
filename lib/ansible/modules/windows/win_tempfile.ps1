@@ -19,13 +19,13 @@ Function New-TempFile {
             New-Item -Path $temppath -ItemType $type -WhatIf:$checkmode | Out-Null
         } Catch {
             $temppath = $null
-            $error = $_.Exception.Message
+            $error = $_
         }
     } until (($null -ne $temppath) -or ($attempt -ge 5))
 
     # If it fails 5 times, something is wrong and we have to report the details
-    if ($null -ne $temppath) {
-        $module.FailJson("No random temporary file worked in $attempt attempts. Error: $error")
+    if ($null -eq $temppath) {
+        $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($error.Exception.Message)", $error)
     }
 
     return $temppath
