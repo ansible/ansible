@@ -24,6 +24,9 @@ options:
     description:
       - Specifies the name of the IKE peer.
     required: True
+  description:
+    description:
+      - Description of the IKE peer.
   version:
     description:
       - Specifies which version of IKE is used.
@@ -174,6 +177,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -269,6 +273,7 @@ try:
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -280,6 +285,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -315,6 +321,7 @@ class Parameters(AnsibleF5Parameters):
         'verifyCert',
         'peersIdValue',
         'myIdValue',
+        'description',
     ]
 
     returnables = [
@@ -332,6 +339,7 @@ class Parameters(AnsibleF5Parameters):
         'phase1_verify_peer_cert',
         'verified_id_value',
         'presented_id_value',
+        'description',
     ]
 
     updatables = [
@@ -349,6 +357,7 @@ class Parameters(AnsibleF5Parameters):
         'phase1_verify_peer_cert',
         'verified_id_value',
         'presented_id_value',
+        'description',
     ]
 
     @property
@@ -357,7 +366,11 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
@@ -376,6 +389,14 @@ class ModuleParameters(Parameters):
         if self._values['phase1_key'] in ['', 'none']:
             return ''
         return fq_name(self.partition, self._values['phase1_key'])
+
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -431,6 +452,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -695,6 +720,7 @@ class ArgumentSpec(object):
                 default='always',
                 choices=['always', 'on_create']
             ),
+            description=dict(),
             state=dict(default='present', choices=['absent', 'present']),
             partition=dict(
                 default='Common',
@@ -730,8 +756,9 @@ def main():
         required_together=spec.required_together,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
