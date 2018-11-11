@@ -319,7 +319,7 @@ class DockerNetworkManager(object):
             self.parameters.connected = container_names_in_network(self.existing_network)
 
         if (self.parameters.ipam_options['subnet'] or self.parameters.ipam_options['iprange'] or
-            self.parameters.ipam_options['gateway'] or self.parameters.ipam_options['aux_addresses']):
+                self.parameters.ipam_options['gateway'] or self.parameters.ipam_options['aux_addresses']):
             self.parameters.ipam_config = [self.parameters.ipam_options]
 
         if self.parameters.driver_options:
