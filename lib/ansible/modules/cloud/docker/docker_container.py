@@ -1615,7 +1615,7 @@ class TaskParameters(DockerBaseClass):
         devices_list = []
         for v in getattr(self, option):
             device_dict = dict((x.title(), y) for x, y in v.items())
-            device_dict['Rate'] = human_to_bytes(device_dict.get('Rate', 0))
+            device_dict['Rate'] = human_to_bytes(device_dict['Rate'])
             devices_list.append(device_dict)
 
         setattr(self, option, devices_list)
@@ -1626,12 +1626,8 @@ class TaskParameters(DockerBaseClass):
         """
         devices_list = []
         for v in getattr(self, option):
-            try:
-                device_dict = dict((x.title(), y) for x, y in v.items())
-                device_dict['Rate'] = int(device_dict.get('Rate', 0))
-                devices_list.append(device_dict)
-            except ValueError:
-                self.fail("Invalid device iops value: '{0}'. Must be a positive integer.".format(device_dict.get('Rate')))
+            device_dict = dict((x.title(), y) for x, y in v.items())
+            devices_list.append(device_dict)
 
         setattr(self, option, devices_list)
 
