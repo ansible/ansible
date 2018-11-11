@@ -67,6 +67,7 @@ options:
    project:
      description:
         - Project name or ID containing the flavor (name admin-only)
+     version_added: "2.8"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
