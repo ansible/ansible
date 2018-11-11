@@ -17,7 +17,7 @@ short_description: Add and remove shards from a MongoDB Cluster
 description:
     -  Add and remove shards from a MongoDB Cluster
 author: Rhys Campbell (@rhysmeister)
-version_added: "2.7"
+version_added: "2.8"
 options:
     login_user:
         description:
