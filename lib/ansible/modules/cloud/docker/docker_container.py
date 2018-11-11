@@ -1692,6 +1692,7 @@ class Container(DockerBaseClass):
             hostname=config.get('Hostname'),
             user=config.get('User'),
             detach=detach,
+            init=host_config.get('Init'),
             interactive=config.get('OpenStdin'),
             capabilities=host_config.get('CapAdd'),
             cap_drop=host_config.get('CapDrop'),
