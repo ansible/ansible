@@ -152,6 +152,7 @@ def main():
             login_unix_socket=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=True),
+            schema=dict(default=""),
             ext=dict(required=True, aliases=['name']),
             schema=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
@@ -166,6 +167,7 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
+    schema = module.params["schema"]
     ext = module.params["ext"]
     schema = module.params["schema"]
     state = module.params["state"]
