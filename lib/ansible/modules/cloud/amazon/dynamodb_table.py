@@ -133,24 +133,16 @@ table_status:
 '''
 
 import time
+import json
 import traceback
+import itertools
 
 try:
-    import boto
-    import boto.dynamodb2
-    from boto.dynamodb2.table import Table
-    from boto.dynamodb2.fields import HashKey, RangeKey, AllIndex, GlobalAllIndex, GlobalIncludeIndex, GlobalKeysOnlyIndex, IncludeIndex, KeysOnlyIndex
-    from boto.dynamodb2.types import STRING, NUMBER, BINARY
-    from boto.exception import BotoServerError, NoAuthHandlerFound, JSONResponseError
-    from boto.dynamodb2.exceptions import ValidationException
+
+    from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+    import boto3.dynamodb
+    from boto3.dynamodb.table import Table
     HAS_BOTO = True
-
-    DYNAMO_TYPE_MAP = {
-        'STRING': STRING,
-        'NUMBER': NUMBER,
-        'BINARY': BINARY
-    }
-
 except ImportError:
     HAS_BOTO = False
 
@@ -164,6 +156,10 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
+try:
+    from botocore.exceptions import BotoCoreError, ClientError
+except ImportError:
+    pass  # caught by AnsibleAWSModule
 
 DYNAMO_TYPE_DEFAULT = 'STRING'
 INDEX_REQUIRED_OPTIONS = ['name', 'type', 'hash_key_name']
@@ -171,7 +167,7 @@ INDEX_OPTIONS = INDEX_REQUIRED_OPTIONS + ['hash_key_type', 'range_key_name', 'ra
 INDEX_TYPE_OPTIONS = ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
 
 
-def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None, region=None):
+def create_or_update_dynamo_table(resource, module):
     table_name = module.params.get('name')
     hash_key_name = module.params.get('hash_key_name')
     hash_key_type = module.params.get('hash_key_type')
@@ -182,21 +178,18 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
     all_indexes = module.params.get('indexes')
     tags = module.params.get('tags')
     wait_for_active_timeout = module.params.get('wait_for_active_timeout')
+    key_type_mapping = {'STRING': 'S', 'BOOLEAN': 'B', 'NUMBER': 'B'}
 
     for index in all_indexes:
         validate_index(index, module)
-
-    schema = get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type)
 
     throughput = {
         'read': read_capacity,
         'write': write_capacity
     }
 
-    indexes, global_indexes = get_indexes(all_indexes)
-
+    indexes, global_indexes, attr_definitions = get_indexes(all_indexes)
     result = dict(
-        region=region,
         table_name=table_name,
         hash_key_name=hash_key_name,
         hash_key_type=hash_key_type,
@@ -208,64 +201,101 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
     )
 
     try:
-        table = Table(table_name, connection=connection)
-
-        if dynamo_table_exists(table):
-            result['changed'] = update_dynamo_table(table, throughput=throughput, check_mode=module.check_mode, global_indexes=global_indexes)
+        client = module.client('dynamodb')
+        table = resource.Table(table_name)
+        try:
+            table_status = table.table_status
+        except is_boto3_error_code('ResourceNotFoundException'):
+            # table doesn't exist
+            table_status = 'TABLE_NOT_FOUND'
+        if table_status in ['ACTIVE', 'CREATING', 'UPDATING']:
+            table.wait_until_exists()
+            if table_status == 'CREATING':
+                table.wait_until_exists()
+            result['changed'], result['global_index_updates'] = update_dynamo_table(module,
+                                                                                    client,
+                                                                                    table,
+                                                                                    throughput=throughput,
+                                                                                    check_mode=module.check_mode,
+                                                                                    global_indexes=global_indexes,
+                                                                                    global_attr_definitions=attr_definitions)
+            # result['changed'] = 'update the table'
         else:
             if not module.check_mode:
-                Table.create(table_name, connection=connection, schema=schema, throughput=throughput, indexes=indexes, global_indexes=global_indexes)
+                kwargs = {}
+                key_schema = []
+                prov_throughput = {
+                    'ReadCapacityUnits': read_capacity,
+                    'WriteCapacityUnits': write_capacity
+                }
+
+                if range_key_name:
+                    key_schema.append({'AttributeName': hash_key_name, 'KeyType': "HASH"}, {'AttributeName': range_key_name, 'KeyType': "RANGE"})
+                    attr_definitions.append({'AttributeName': hash_key_name, 'AttributeType': key_type_mapping[hash_key_type.upper()]}, {
+                                            'AttributeName': range_key_name, 'AttributeType': key_type_mapping[range_key_type.upper()]})
+                else:
+                    key_schema.append({'AttributeName': hash_key_name, 'KeyType': "HASH"})
+                    attr_definitions.append({'AttributeName': hash_key_name, 'AttributeType': key_type_mapping[hash_key_type.upper()]})
+
+                kwargs.update({"AttributeDefinitions": remove_duplicates(attr_definitions), "TableName": table_name,
+                               "KeySchema": key_schema, "ProvisionedThroughput": prov_throughput})
+                if indexes:
+                    kwargs.update({"LocalSecondaryIndexes": indexes})
+                if global_indexes:
+                    kwargs.update({"GlobalSecondaryIndexes": global_indexes})
+                resource.create_table(**kwargs)
             result['changed'] = True
 
         if not module.check_mode:
-            result['table_status'] = table.describe()['Table']['TableStatus']
+            result['table_status'] = table.table_status
+            result['global_secondary_indexes'] = table.global_secondary_indexes
+            result['local_secondary_indexes'] = table.local_secondary_indexes
 
         if tags:
             # only tables which are active can be tagged
-            wait_until_table_active(module, table, wait_for_active_timeout)
-            account_id = get_account_id(boto3_sts)
-            boto3_dynamodb.tag_resource(
-                ResourceArn='arn:aws:dynamodb:' +
-                region +
-                ':' +
-                account_id +
-                ':table/' +
-                table_name,
-                Tags=ansible_dict_to_boto3_tag_list(tags))
-            result['tags'] = tags
+            if table.table_status != 'ACTIVE':
+                try:
+                    table.wait_until_exists()
+                except Exception as e:
+                    module.fail_json(msg="timed out waiting for table to exist")
+                client.tag_resource(
+                    ResourceArn=table.table_arn,
+                    Tags=ansible_dict_to_boto3_tag_list(tags))
+                result['tags'] = tags
 
-    except BotoServerError:
-        result['msg'] = 'Failed to create/update dynamo table due to error: ' + traceback.format_exc()
-        module.fail_json(**result)
+    except is_boto3_error_code('ResourceNotFoundException') as resource_not_found_exc:
+        module.fail_json_aws(resource_not_found_exc, 'Requested resource not found' + traceback.format_exc())
+    except is_boto3_error_code('UnrecognizedClientException') as unrecognized_client_exc:
+        module.fail_json_aws(unrecognized_client_exc, 'Authentication failure' + traceback.format_exc())
+    except is_boto3_error_code('ValidationException') as validation_exc:
+        module.fail_json_aws(validation_exc, 'Validation Exception' + traceback.format_exc())
+    except botocore.exceptions.NoCredentialsError as e:
+        module.fail_json_aws(e, 'Unable to locate credential' + traceback.format_exc())
+    except ClientError as e:
+        module.fail_json_aws(e, 'Failed to create/update dynamo table due to error: ' + traceback.format_exc())
+    except Exception as exc:
+        module.fail_json_aws(exc, 'Ansible dynamodb operation failed: ' + traceback.format_exc())
     else:
         module.exit_json(**result)
 
 
-def get_account_id(boto3_sts):
-    return boto3_sts.get_caller_identity()["Account"]
-
-
-def wait_until_table_active(module, table, wait_timeout):
-    max_wait_time = time.time() + wait_timeout
-    while (max_wait_time > time.time()) and (table.describe()['Table']['TableStatus'] != 'ACTIVE'):
-        time.sleep(5)
-    if max_wait_time <= time.time():
-        # waiting took too long
-        module.fail_json(msg="timed out waiting for table to exist")
-
-
-def delete_dynamo_table(connection, module):
+def delete_dynamo_table(resource, module):
     table_name = module.params.get('name')
 
     result = dict(
-        region=module.params.get('region'),
         table_name=table_name,
     )
 
     try:
-        table = Table(table_name, connection=connection)
+        table = resource.Table(table_name)
+        table.wait_until_exists()
+        try:
+            table_status = table.table_status
+        except is_boto3_error_code('ResourceNotFoundException'):
+            # table doesn't exist
+            table_status = 'TABLE_NOT_FOUND'
 
-        if dynamo_table_exists(table):
+        if table_status == 'ACTIVE':
             if not module.check_mode:
                 table.delete()
             result['changed'] = True
@@ -273,104 +303,92 @@ def delete_dynamo_table(connection, module):
         else:
             result['changed'] = False
 
-    except BotoServerError:
-        result['msg'] = 'Failed to delete dynamo table due to error: ' + traceback.format_exc()
-        module.fail_json(**result)
+    except ClientError as e:
+        module.fail_json_aws(e, 'Failed to delete dynamo table due to error: ' + traceback.format_exc())
     else:
         module.exit_json(**result)
 
 
-def dynamo_table_exists(table):
-    try:
-        table.describe()
-        return True
-
-    except JSONResponseError as e:
-        if e.message and e.message.startswith('Requested resource not found'):
-            return False
-        else:
-            raise e
+def update_dynamodb_table_args(table_name, prov_throughput=None, throughput_updates=None, global_indexes_updates=None, global_attr_definitions=None):
+    kwargs = {}
+    if throughput_updates:
+        kwargs.update({"TableName": table_name, "ProvisionedThroughput": prov_throughput})
+    if global_indexes_updates:
+        kwargs.update({"TableName": table_name, "AttributeDefinitions": global_attr_definitions, "GlobalSecondaryIndexUpdates": global_indexes_updates})
+    return kwargs
 
 
-def update_dynamo_table(table, throughput=None, check_mode=False, global_indexes=None):
-    table.describe()  # populate table details
-    throughput_changed = False
-    global_indexes_changed = False
-    if has_throughput_changed(table, throughput):
-        if not check_mode:
-            throughput_changed = table.update(throughput=throughput)
-        else:
-            throughput_changed = True
+def update_dynamo_table(module, client, table, throughput=None, check_mode=False, global_indexes=None, global_attr_definitions=None):
+    table_updated = False
+    table_name = table.table_name
+    kwargs = {}
+    prov_throughput = {
+        'ReadCapacityUnits': throughput['read'],
+        'WriteCapacityUnits': throughput['write']
+    }
+    throughput_updates = has_throughput_changed(table, throughput)
+    global_indexes_updates = get_changed_global_indexes(table, global_indexes)
+    kwargs = update_dynamodb_table_args(table_name, prov_throughput, throughput_updates, global_indexes_updates, global_attr_definitions)
+    if not check_mode and (global_indexes_updates or throughput_updates):
+        client.update_table(**kwargs)
+        table_updated = True
 
-    removed_indexes, added_indexes, index_throughput_changes = get_changed_global_indexes(table, global_indexes)
-    if removed_indexes:
-        if not check_mode:
-            for name, index in removed_indexes.items():
-                global_indexes_changed = table.delete_global_secondary_index(name) or global_indexes_changed
-        else:
-            global_indexes_changed = True
-
-    if added_indexes:
-        if not check_mode:
-            for name, index in added_indexes.items():
-                global_indexes_changed = table.create_global_secondary_index(global_index=index) or global_indexes_changed
-        else:
-            global_indexes_changed = True
-
-    if index_throughput_changes:
-        if not check_mode:
-            # todo: remove try once boto has https://github.com/boto/boto/pull/3447 fixed
-            try:
-                global_indexes_changed = table.update_global_secondary_index(global_indexes=index_throughput_changes) or global_indexes_changed
-            except ValidationException:
-                pass
-        else:
-            global_indexes_changed = True
-
-    return throughput_changed or global_indexes_changed
+    return table_updated, global_indexes_updates
 
 
 def has_throughput_changed(table, new_throughput):
     if not new_throughput:
         return False
 
-    return new_throughput['read'] != table.throughput['read'] or \
-        new_throughput['write'] != table.throughput['write']
+    return new_throughput['read'] != table.provisioned_throughput['ReadCapacityUnits'] or \
+        new_throughput['write'] != table.provisioned_throughput['WriteCapacityUnits']
+
+
+def remove_duplicates(attr_definitions):
+    return [dict(t) for t in {tuple(d.items()) for d in attr_definitions}]
 
 
 def get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type):
     if range_key_name:
         schema = [
-            HashKey(hash_key_name, DYNAMO_TYPE_MAP.get(hash_key_type, DYNAMO_TYPE_MAP[DYNAMO_TYPE_DEFAULT])),
-            RangeKey(range_key_name, DYNAMO_TYPE_MAP.get(range_key_type, DYNAMO_TYPE_MAP[DYNAMO_TYPE_DEFAULT]))
+            {'AttributeName': hash_key_name, 'KeyType': 'HASH'}, {'AttributeName': range_key_name, 'KeyType': 'RANGE'}
         ]
     else:
         schema = [
-            HashKey(hash_key_name, DYNAMO_TYPE_MAP.get(hash_key_type, DYNAMO_TYPE_MAP[DYNAMO_TYPE_DEFAULT]))
+            {'AttributeName': hash_key_name, 'KeyType': 'HASH'}
         ]
     return schema
 
 
 def get_changed_global_indexes(table, global_indexes):
-    table.describe()
+    global_indexes_updates = []
+    table_gsi_indexes = table.global_secondary_indexes
+    if global_indexes:
+        param_global_indexes = map(lambda index: index['IndexName'], global_indexes)
+        param_global_indexes_prov_throughput = map(lambda index: (index['IndexName'], index['ProvisionedThroughput']), global_indexes)
+        set_table_indexes = []
+        set_table_indexes_prov_throughput = []
 
-    table_index_info = dict((index.name, index.schema()) for index in table.global_indexes)
-    table_index_objects = dict((index.name, index) for index in table.global_indexes)
-    set_index_info = dict((index.name, index.schema()) for index in global_indexes)
-    set_index_objects = dict((index.name, index) for index in global_indexes)
+        if table_gsi_indexes:
+            set_table_indexes = map(lambda index: index['IndexName'], table_gsi_indexes)
+            set_table_indexes_prov_throughput = map(lambda index: (index['IndexName'], index['ProvisionedThroughput']), table_gsi_indexes)
 
-    removed_indexes = dict((name, index) for name, index in table_index_info.items() if name not in set_index_info)
-    added_indexes = dict((name, set_index_objects[name]) for name, index in set_index_info.items() if name not in table_index_info)
-    # todo: uncomment once boto has https://github.com/boto/boto/pull/3447 fixed
-    # for name, index in set_index_objects.items():
-    #      if (name not in added_indexes and
-    #             (index.throughput['read'] != str(table_index_objects[name].throughput['read']) or
-    #              index.throughput['write'] != str(table_index_objects[name].throughput['write']))):
-    #         index_throughput_changes[name] = index.throughput
-    # todo: remove once boto has https://github.com/boto/boto/pull/3447 fixed
-    index_throughput_changes = dict((name, index.throughput) for name, index in set_index_objects.items() if name not in added_indexes)
+        for index in set_table_indexes:
+            if index not in param_global_indexes:
+                global_indexes_updates.append({'Delete': {'IndexName': index}})
 
-    return removed_indexes, added_indexes, index_throughput_changes
+        for index in global_indexes:
+            if index['IndexName'] not in set_table_indexes or not set_table_indexes:
+                global_indexes_updates.append({'Create': index})
+
+        for set_index in set_table_indexes_prov_throughput:
+            for param_index in param_global_indexes_prov_throughput:
+                if (set_index[0] == param_index[0] and
+                   (set_index[1]['ReadCapacityUnits'] != param_index[1]['ReadCapacityUnits'] or
+                   set_index[1]['WriteCapacityUnits'] != param_index[1]['WriteCapacityUnits'])):
+                    global_indexes_updates.append({'Update': {'IndexName': set_index[0], 'ProvisionedThroughput': param_index[1]}})
+
+    return global_indexes_updates
 
 
 def validate_index(index, module):
@@ -387,33 +405,43 @@ def validate_index(index, module):
 def get_indexes(all_indexes):
     indexes = []
     global_indexes = []
+    global_indexes_attr_definitions = []
+    global_indexes_attr_definition = {}
     for index in all_indexes:
         name = index['name']
-        schema = get_schema_param(index.get('hash_key_name'), index.get('hash_key_type'), index.get('range_key_name'), index.get('range_key_type'))
-        throughput = {
-            'read': index.get('read_capacity', 1),
-            'write': index.get('write_capacity', 1)
-        }
+        index_type = index.get('type')
+        hash_key_name = index.get('hash_key_name')
+        hash_key_type = 'S'
+        if 'hash_key_type' in index:
+            hash_key_type = index.get('hash_key_type')
+        range_key_name = None
+        range_key_type = None
+        if 'range_key_name' in index:
+            range_key_name = index.get('range_key_name')
+            range_key_type = 'S'
+            if 'range_key_type' in index:
+                range_key_type = index.get('range_key_type')
 
-        if index['type'] == 'all':
-            indexes.append(AllIndex(name, parts=schema))
+        schema = get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type)
+        projection_type = index_type.replace('global_', '')
+        projection = {'ProjectionType': projection_type.upper()}
+        index_throughput = {'ReadCapacityUnits': index.get('read_capacity', 1), 'WriteCapacityUnits': index.get('write_capacity', 1)}
+        if projection_type == 'include':
 
-        elif index['type'] == 'global_all':
-            global_indexes.append(GlobalAllIndex(name, parts=schema, throughput=throughput))
+            projection.update({'NonKeyAttributes': index['includes']})
 
-        elif index['type'] == 'global_include':
-            global_indexes.append(GlobalIncludeIndex(name, parts=schema, throughput=throughput, includes=index['includes']))
+        if index_type in ['all', 'include', 'keys_only']:
+            # local secondary all_indexes
+            indexes.append({'IndexName': name, 'KeySchema': schema, 'Projection': projection})
+        elif index_type in ['global_all', 'global_include', 'global_keys_only']:
+            # global secondary indexes
+            global_indexes.append({'IndexName': name, 'KeySchema': schema, 'Projection': projection, 'ProvisionedThroughput': index_throughput})
+            global_indexes_attr_definitions.append({'AttributeName': hash_key_name, 'AttributeType': hash_key_type})
 
-        elif index['type'] == 'global_keys_only':
-            global_indexes.append(GlobalKeysOnlyIndex(name, parts=schema, throughput=throughput))
+            if range_key_name:
+                global_indexes_attr_definitions.append({'AttributeName': range_key_name, 'AttributeType': range_key_type})
 
-        elif index['type'] == 'include':
-            indexes.append(IncludeIndex(name, parts=schema, includes=index['includes']))
-
-        elif index['type'] == 'keys_only':
-            indexes.append(KeysOnlyIndex(name, parts=schema))
-
-    return indexes, global_indexes
+    return indexes, global_indexes, remove_duplicates(global_indexes_attr_definitions)
 
 
 def main():
@@ -432,43 +460,18 @@ def main():
         wait_for_active_timeout=dict(default=60, type='int'),
     ))
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        supports_check_mode=True)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
-
-    if not HAS_BOTO3 and module.params.get('tags'):
-        module.fail_json(msg='boto3 required when using tags for this module')
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    if not region:
-        module.fail_json(msg='region must be specified')
-
-    try:
-        connection = connect_to_aws(boto.dynamodb2, region, **aws_connect_params)
-    except (NoAuthHandlerFound, AnsibleAWSError) as e:
-        module.fail_json(msg=str(e))
-
-    if module.params.get('tags'):
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            boto3_dynamodb = boto3_conn(module, conn_type='client', resource='dynamodb', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            if not hasattr(boto3_dynamodb, 'tag_resource'):
-                module.fail_json(msg='boto3 connection does not have tag_resource(), likely due to using an old version')
-            boto3_sts = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except botocore.exceptions.NoCredentialsError as e:
-            module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
-    else:
-        boto3_dynamodb = None
-        boto3_sts = None
-
+        supports_check_mode=True,
+        required_one_of=[['name']],
+        required_if=[['state', 'present', ['name', 'hash_key_name']]],
+    )
+    resource = module.resource('dynamodb')
     state = module.params.get('state')
     if state == 'present':
-        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts, region)
+        create_or_update_dynamo_table(resource, module)
     elif state == 'absent':
-        delete_dynamo_table(connection, module)
+        delete_dynamo_table(resource, module)
 
 
 if __name__ == '__main__':
