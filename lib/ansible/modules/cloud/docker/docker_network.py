@@ -318,7 +318,8 @@ class DockerNetworkManager(object):
         if not self.parameters.connected and self.existing_network:
             self.parameters.connected = container_names_in_network(self.existing_network)
 
-        if self.parameters.ipam_options:
+        if (self.parameters.ipam_options['subnet'] or self.parameters.ipam_options['iprange'] or
+            self.parameters.ipam_options['gateway'] or self.parameters.ipam_options['aux_addresses']):
             self.parameters.ipam_config = [self.parameters.ipam_options]
 
         if self.parameters.driver_options:
@@ -380,6 +381,10 @@ class DockerNetworkManager(object):
                         self.client.fail(str(e))
 
                     for key, value in ipam_config.items():
+                        if value is None:
+                            # due to recursive argument_spec, all keys are always present
+                            # (but have default value None if not specified)
+                            continue
                         camelkey = None
                         for net_key in net_config:
                             if key == net_key.lower():
