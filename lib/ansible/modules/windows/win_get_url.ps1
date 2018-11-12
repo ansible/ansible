@@ -64,7 +64,7 @@ Add-Type -TypeDefinition $webclient_util
 $env:TMP = $original_tmp
 
 
-Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
+Function CheckModified-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
 
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
     $webLastMod = $null
@@ -111,7 +111,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
         $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)", $_)
     }
     $module.Result.status_code = [int] $webResponse.StatusCode
-    $module.Result.msg = $webResponse.StatusDescription
+    $module.Result.msg = [string] $webResponse.StatusDescription
     $webResponse.Close()
 
     if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -lt $fileLastMod)) {
@@ -122,7 +122,7 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
 }
 
 
-Function Download-File($url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
+Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
 
     $module_start = Get-Date
 
@@ -239,18 +239,18 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 
 if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
-    Download-File -url $url -dest $dest -credentials $credentials -headers $headers `
-                  -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    Download-File -module $module -url $url -dest $dest -credentials $credentials `
+                  -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
 } else {
 
-    $is_modified = CheckModified-File -url $url -dest $dest -credentials $credentials -headers $headers `
-                                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials `
+                                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
     if ($is_modified) {
 
-        Download-File -url $url -dest $dest -credentials $credentials -headers $headers `
-                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        Download-File -module $module -url $url -dest $dest -credentials $credentials `
+                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
     }
 }
