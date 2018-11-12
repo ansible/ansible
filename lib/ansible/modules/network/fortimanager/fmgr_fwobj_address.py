@@ -96,7 +96,7 @@ options:
   ipv4:
     description:
       - Type of IPv4 Object.
-      - Must not be specified with either multicast or ipv6 parameters
+      - Must not be specified with either multicast or IPv6 parameters.
     choices: ['ipmask', 'iprange', 'fqdn', 'wildcard', 'geography', 'wildcard-fqdn', 'group']
 
   ipv4addr:
@@ -105,7 +105,7 @@ options:
       - Can also define subnets (i.e. 10.7.220.0/255.255.255.0)
       - Also accepts CIDR (i.e. 10.7.220.0/24)
       - If Netmask is omitted after IP address, /32 is assumed.
-      - When multicast is set to Broadcast Subnet the ipv4addr parameter is used to specify the subnet
+      - When multicast is set to Broadcast Subnet the ipv4addr parameter is used to specify the subnet.
 
   ipv6:
     description:
