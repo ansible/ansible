@@ -398,14 +398,16 @@ class Interfaces(FactsBase):
 
         data = self.run('show lldp neighbors')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(data)
+            self.facts['neighbors'].update(self.populate_neighbors(data))
 
         data = self.run('show cdp neighbors detail', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['neighbors'] = self.populate_structured_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_structured_neighbors_cdp(data))
             else:
-                self.facts['neighbors'] = self.populate_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_neighbors_cdp(data))
+
+        self.facts['neighbors'].pop(None, None)  # Remove null key
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
@@ -449,6 +451,23 @@ class Interfaces(FactsBase):
                 return ""
         except TypeError:
             return ""
+
+    def populate_structured_neighbors_lldp(self, data):
+        objects = dict()
+        data = data['TABLE_nbor']['ROW_nbor']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
+            local_intf = item['l_port_id']
+            objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['port_id']
+            nbor['sysname'] = item['chassis_id']
+            objects[local_intf].append(nbor)
+
+        return objects
 
     def populate_structured_neighbors_cdp(self, data):
         objects = dict()
