@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Chatham Financial <oss@chathamfinancial.com>
-# (c) 2017, Juergen Kirschbaum <jk@jk-itc.de>
+# Copyright: (c) 2013, Chatham Financial <oss@chathamfinancial.com>
+# Copyright: (c) 2017, Juergen Kirschbaum <jk@jk-itc.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
@@ -17,12 +17,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_global_parameter
-author: "Juergen Kirschbaum (@jgkirschbaum)"
-version_added: "2.8"
-
-short_description: Adds or removes global parameters to RabbitMQ
+short_description: Manage RabbitMQ global parameters
 description:
   - Manage dynamic, cluster-wide global parameters for RabbitMQ
+version_added: "2.8"
+author: "Juergen Kirschbaum (@jgkirschbaum)"
 options:
   name:
     description:
