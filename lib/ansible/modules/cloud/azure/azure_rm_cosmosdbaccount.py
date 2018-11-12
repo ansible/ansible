@@ -439,9 +439,8 @@ def compare(a, b, t):
             return True
         elif isinstance(a, dict) and isinstance(b, dict):
             for k in t.keys():
-                if not k == '__sort__':
-                    if not compare(a.get(k, None), b.get(k, None), t[k]):
-                        return False
+                if not compare(a.get(k, None), b.get(k, None), t[k]):
+                    return False
             return True
         else:
             return a is None
