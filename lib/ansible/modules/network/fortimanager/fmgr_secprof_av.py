@@ -45,7 +45,7 @@ options:
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
@@ -61,7 +61,7 @@ options:
   mode:
     description:
       - Sets one of three modes for managing the object.
-      - Allows use of soft-adds instead of overwriting existing values
+      - Allows use of soft-adds instead of overwriting existing values.
     choices: ['add', 'set', 'delete', 'update']
     required: false
     default: add
@@ -69,8 +69,8 @@ options:
   scan_mode:
     description:
       - Choose between full scan mode and quick scan mode.
-      - choice | quick | Use quick mode scanning. Quick mode uses a smaller database and may be less accurate. Full
-      - choice | full | Full mode virus scanning. Recommended scanning mode. More accurate than quick mode with si
+      - choice | quick | Quick mode uses a smaller database and may be less accurate.
+      - choice | full | Recommended scanning mode. More accurate than quick mode.
     required: false
     choices: ["quick", "full"]
 
@@ -104,7 +104,7 @@ options:
     description:
       - Settings to control which files are uploaded to FortiSandbox.
       - choice | disable | Do not upload files to FortiSandbox.
-      - choice | suspicious | Submit files supported by FortiSandbox if heuristics or other methods determine they are s
+      - choice | suspicious | Submit files supported by FortiSandbox if determined they are suspicious.
       - choice | everything | Submit all files scanned by AntiVirus to FortiSandbox. AntiVirus may not scan all files.
     required: false
     choices: ["disable", "suspicious", "everything"]
@@ -169,7 +169,7 @@ options:
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   content_disarm_cover_page:
@@ -305,11 +305,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   ftp_archive_block:
@@ -393,11 +393,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   http_archive_block:
@@ -489,11 +489,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   imap_archive_block:
@@ -593,11 +593,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   mapi_archive_block:
@@ -689,11 +689,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   nac_quar_expiry:
@@ -721,11 +721,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   nntp_archive_block:
@@ -809,11 +809,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   pop3_archive_block:
@@ -913,11 +913,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   smb_archive_block:
@@ -1001,11 +1001,11 @@ options:
     description:
       - EXPERTS ONLY! KNOWLEDGE OF FMGR JSON API IS REQUIRED!
       - List of multiple child objects to be added. Expects a list of dictionaries.
-      - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
+      - Dictionaries must use FortiManager API parameters, not the Ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   smtp_archive_block:
