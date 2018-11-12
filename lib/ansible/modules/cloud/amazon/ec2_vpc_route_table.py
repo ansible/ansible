@@ -56,8 +56,9 @@ options:
     description: The ID of the route table to update or delete.
   routes:
     description: List of routes in the route table.
-        Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
-        'instance_id', 'network_interface_id', or 'vpc_peering_connection_id'.
+        Routes are specified as dicts containing the the following keys: either 'dest' or 'dest6',
+        and one of 'gateway_id', 'instance_id', 'network_interface_id', or
+        'vpc_peering_connection_id'.
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
   state:
@@ -97,6 +98,8 @@ EXAMPLES = '''
     routes:
       - dest: 0.0.0.0/0
         gateway_id: "{{ igw.gateway_id }}"
+      - dest6: ::/0
+        gateway_id: "{{ egress_gw.gateway_id }}"
   register: public_route_table
 
 - name: Set up NAT-protected route table
@@ -176,9 +179,14 @@ route_table:
       contains:
         destination_cidr_block:
           description: CIDR block of destination
-          returned: always
+          returned: when the route is IPv4
           type: string
           sample: 10.228.228.0/22
+        destination_ipv6_cidr_block:
+          description: IPv6 CIDR block of destination
+          returned: when the route is IPv6
+          type: string
+          sample: 2001:db8:abcd:ef00::/56
         gateway_id:
           description: ID of the gateway
           returned: when gateway is local or internet gateway
