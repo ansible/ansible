@@ -97,10 +97,10 @@ Write-AnsibleLog "INFO - start module exec with Invoke() - $ModuleName" "module_
 # temporarily override the stdout stream and create our own in a StringBuilder
 # we use this to ensure there's always an Out pipe and that we capture the
 # output for things like async or psrp
+$orig_out = [System.Console]::Out
 $sb = New-Object -TypeName System.Text.StringBuilder
 $new_out = New-Object -TypeName System.IO.StringWriter -ArgumentList $sb
 try {
-    $orig_out = [System.Console]::Out
     [System.Console]::SetOut($new_out)
     $module_output = $ps.Invoke()
 } catch {
