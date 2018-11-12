@@ -33,6 +33,7 @@ options:
     location:
         description:
             - The location of the resource group to which the resource belongs.
+            - Required when C(state) is I(present).
     kind:
         description:
             - Indicates the type of database account. This can only be set at database account creation.
@@ -47,7 +48,7 @@ options:
             default_consistency_level:
                 description:
                     - The default consistency level and configuration settings of the Cosmos DB account.
-                required: True
+                    - Required when C(state) is I(present).
                 choices:
                     - 'eventual'
                     - 'session'
@@ -65,6 +66,7 @@ options:
     locations:
         description:
             - An array that contains the georeplication locations enabled for the Cosmos DB account.
+            - Required when C(state) is I(present).
         type: list
         suboptions:
             location_name:
@@ -76,7 +78,7 @@ options:
                        (total number of regions - 1). Failover priority values must be unique for each of the regions in which the database account exists."
     database_account_offer_type:
         description:
-            - TBD
+            - Required when C(state) is I(present).
     ip_range_filter:
         description:
             - "Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list
@@ -136,7 +138,7 @@ EXAMPLES = '''
       name: ddb1
       location: westus
       locations:
-        - location_name: eastus
+        - location_name: southcentralus
           failover_priority: 0
       database_account_offer_type: Standard
 '''
@@ -320,8 +322,16 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                         'location_name': 'location',
                         'failover_priority': 'index'
                     },
+                    'database_account_offer_type': 'default',
                     'ip_range_filter': 'default',
+                    'is_virtual_network_filter_enabled': 'default',
                     'enable_automatic_failover': 'default',
+                    'capabilities': {
+                        'name': 'index'
+                    },
+                    'virtual_network_rules': {
+                        'id': 'index'
+                    },
                     'enable_multiple_write_locations': 'default'
                 })):
                     self.to_do = Actions.Update
@@ -334,6 +344,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 return self.results
 
             response = self.create_update_databaseaccount()
+
             self.results['changed'] = True
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
