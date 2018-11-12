@@ -90,3 +90,50 @@
     - driver_options_1 is changed
     - driver_options_2 is not changed
     - driver_options_3 is changed
+
+####################################################################
+## labels ##########################################################
+####################################################################
+
+- name: Create a volume with labels
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.2: world
+  register: driver_labels_1
+
+- name: Create a volume with labels (idempotency)
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.2: world
+      ansible.test.1: hello
+  register: driver_labels_2
+
+- name: Create a volume with labels (less)
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.1: hello
+  register: driver_labels_3
+
+- name: Create a volume with labels (more)
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.3: ansible
+  register: driver_labels_4
+
+- name: Cleanup
+  docker_volume:
+    name: "{{ vname }}"
+    state: absent
+
+- assert:
+    that:
+    - driver_labels_1 is changed
+    - driver_labels_2 is not changed
+    - driver_labels_3 is not changed
+    - driver_labels_4 is changed
