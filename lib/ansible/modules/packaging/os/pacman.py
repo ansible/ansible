@@ -194,7 +194,7 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile(r'([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        regex = re.compile(r'([\w+\-.@]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))
