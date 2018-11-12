@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_volume - ``labels`` now work (and are a ``dict`` and no longer a ``list``)."
