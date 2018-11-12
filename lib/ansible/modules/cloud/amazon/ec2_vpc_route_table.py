@@ -56,11 +56,11 @@ options:
     description: The ID of the route table to update or delete.
   routes:
     description: List of routes in the route table.
-        Routes are specified as dicts containing the the following keys: either 'dest' or 'dest6',
-        and one of 'gateway_id', 'instance_id', 'network_interface_id', or
-        'vpc_peering_connection_id'.
-        If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
-        Routes are required for present states.
+      Routes are specified as dicts containing the the following keys: either 'dest' or 'dest6',
+      and one of 'gateway_id', 'instance_id', 'network_interface_id', or
+      'vpc_peering_connection_id'.
+      If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
+      Routes are required for present states.
   state:
     description: Create or destroy the VPC route table
     default: present
