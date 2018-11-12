@@ -100,15 +100,15 @@ Function CheckModified-File($url, $dest, $headers, $credentials, $timeout, $use_
         $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
     }
 
+    # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
     Try {
         $webResponse = $webRequest.GetResponse()
-
         $webLastMod = $webResponse.LastModified
     } Catch [System.Net.WebException] {
-        $module.Result.status_code = $_.Exception.Response.StatusCode
-        $module.FailJson("Error requesting '$url'. $($_.Exception.Message)")
+        $module.Result.status_code = [int] $_.Exception.Response.StatusCode
+        $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
     } Catch {
-        $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)")
+        $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)", $_)
     }
     $module.Result.status_code = [int] $webResponse.StatusCode
     $module.Result.msg = $webResponse.StatusDescription
@@ -159,15 +159,16 @@ Function Download-File($url, $dest, $headers, $credentials, $timeout, $use_proxy
     }
 
     if (-not $module.CheckMode) {
+        # FIXME: Single-out catched exceptions with more specific error messages
         Try {
             $extWebClient.DownloadFile($url, $dest)
         } Catch [System.Net.WebException] {
             $module.Result.status_code = [int] $_.Exception.Response.StatusCode
             $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-            $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)")
+            $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
         } Catch {
             $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-            $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)")
+            $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
         }
     }
 
