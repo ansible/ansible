@@ -1,0 +1,143 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+# - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
+
+- block:
+    # ============================================================
+    - debug:
+        msg: "{{ aws_access_key }}"
+    - name: test failure with no parameters
+      dynamodb_table:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "missing required arguments: name"'
+
+    - name: test credentials from environment
+      dynamodb_table:
+        name: '{{ table_name }}'
+        hash_key_name: "myhashkey"
+      environment:
+        EC2_REGION: '{{ec2_region}}'
+        EC2_ACCESS_KEY: bogus_access_key
+        EC2_SECRET_KEY: bogus_secret_key
+      register: result
+      ignore_errors: true
+
+    - name: assert dynamodb_table with valid ec2_url
+      assert:
+        that:
+           - 'result.failed'
+           - '"Authentication failure" in result.msg'
+
+    # ============================================================
+    - name: test credential parameters
+      dynamodb_table:
+        name: '{{ table_name }}'
+        hash_key_name: "myhashkey"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: 'bogus_access_key'
+        ec2_secret_key: 'bogus_secret_key'
+        security_token: "{{ security_token }}"
+      register: result
+      ignore_errors: true
+    - debug:
+        msg: "{{ result }}"
+    - name: assert credential parameters
+      assert:
+        that:
+           - 'result.failed'
+           - '"Authentication failure" in result.msg'
+
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+      security_token: "{{ security_token }}"
+  block:
+    # ============================================================
+    - debug:
+        msg: "{{ aws_region }}"
+    - name: test create a table
+      dynamodb_table:
+        name: '{{ table_name }}'
+        hash_key_name: "myhashkey"
+        state: present
+        region: "{{ aws_region }}"
+        indexes:
+          - name: NamedIndex
+            type: global_all
+            hash_key_name: myhashkey
+          - name: NamedIndexV2
+            type: global_all
+            hash_key_name: myhashkey
+            range_key_name: myrangekey
+        tags:
+          newtag: "hellotag"
+          ntak: "helovdg"
+      register: result
+      ignore_errors: true
+      until:
+        - result| json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].IndexStatus') == ['ACTIVE']
+        - result| json_query('global_secondary_indexes[?IndexName==`NamedIndex`].IndexStatus') == ['ACTIVE']
+      retries: 10
+      delay: 30
+
+    - debug:
+        msg: "{{ result| json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].IndexStatus')}}"
+
+    - name: update index on the existing table
+      dynamodb_table:
+        name: '{{ table_name }}'
+        hash_key_name: "myhashkey"
+        indexes:
+          - name: NamedIndex
+            type: global_all
+            hash_key_name: myhashkey
+          - name: NamedIndexV2
+            type: global_all
+            hash_key_name: myhashkey
+            range_key_name: myrangekey
+            read_capacity: 10
+            write_capacity: 10
+      register: result
+      ignore_errors: true
+      until:
+        - result|json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].ProvisionedThroughput.ReadCapacityUnits') == [10]
+        - result|json_query('global_secondary_indexes[?IndexName==`NamedIndexV2`].ProvisionedThroughput.WriteCapacityUnits') == [10]
+      retries: 10
+      delay: 30
+
+    - name: delete index on the existing table
+      dynamodb_table:
+        name: '{{ table_name }}'
+        hash_key_name: "myhashkey"
+        indexes:
+          - name: NamedIndex
+            type: global_all
+            hash_key_name: myhashkey
+      register: result
+      until:
+        result|json_query('global_secondary_indexes') | length == 1
+      retries: 10
+      delay: 30
+
+  always:
+    - name: delete the table
+      dynamodb_table:
+        name: "{{ table_name }}"
+        state: absent
+      register: result
+    - debug:
+        msg: "{{ result }}"
