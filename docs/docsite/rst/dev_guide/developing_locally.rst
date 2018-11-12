@@ -27,7 +27,7 @@ Modules and plugins: what's the difference?
 If you're looking to add local functionality to Ansible, you may be wondering whether you need a module or a plugin. Here's a quick overview of the differences:
 
 * Modules are reusable, standalone scripts that can be used by the Ansible API, the :command:`ansible` command, or the :command:`ansible-playbook` command. Modules provide a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting.
-* Plugins are shared code that can be used by any module. They provide abilities like cacheing information or copying files that are useful for many modules.
+* Plugins are shared code that can be used by any module. They provide abilities like caching information or copying files that are useful for many modules.
 
 .. _local_modules:
 
