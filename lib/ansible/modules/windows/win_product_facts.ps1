@@ -5,14 +5,12 @@
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
 
+# This modules does not accept any options
 $spec = @{
-    options = @{}
     supports_check_mode = $true
 }
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
-
-$module.Result.changed = $false
 
 # First try to find the product key from ACPI
 try {
