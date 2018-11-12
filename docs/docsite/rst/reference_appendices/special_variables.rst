@@ -76,8 +76,14 @@ omit
 play_hosts
     Deprecated, the same as ansbile_play_batch
 
+ansible_play_name
+    The name of the currently executed play. Added in ``2.8``.
+
 playbook_dir
     The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
+
+role_name:
+    The name of the currently executed role
 
 role_names
     The names of the rules currently imported into the current play.
