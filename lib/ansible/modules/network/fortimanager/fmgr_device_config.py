@@ -30,12 +30,12 @@ DOCUMENTATION = '''
 module: fmgr_device_config
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
+    - Luke Weighall - lweighall
+    - Andrew Welsh - Ghilli3
+    - Jim Huber - p4r4n0y1ng
 short_description: Edit device configurations
 description:
-  - Edit device configurations from FortiManager Device Manager using jsonrpc API.
+  - Edit device configurations from FortiManager Device Manager using JSON RPC API.
 
 options:
   adom:
@@ -45,7 +45,7 @@ options:
     default: root
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
   username:
     description:
@@ -58,11 +58,11 @@ options:
 
   device_unique_name:
     description:
-      - The unique device's name that you are editing. A.K.A. Friendly name of device in FortiManager
+      - The unique device's name that you are editing. A.K.A. Friendly name of the device in FortiManager.
     required: True
   device_hostname:
     description:
-      - The device's new hostname
+      - The device's new hostname.
     required: false
 
   install_config:
@@ -72,15 +72,15 @@ options:
     default: disable
   interface:
     description:
-      - The interface/port number you are editing
+      - The interface/port number you are editing.
     required: false
   interface_ip:
     description:
-      - The IP and subnet of the interface/port you are editing
+      - The IP and subnet of the interface/port you are editing.
     required: false
   interface_allow_access:
     description:
-      - Specify what protocols are allowed on the interface, comma-sepeareted list (see examples)
+      - Specify what protocols are allowed on the interface, comma-sepeareted list (see examples).
     required: false
 
 '''
