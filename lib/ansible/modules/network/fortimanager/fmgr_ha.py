@@ -30,20 +30,20 @@ DOCUMENTATION = '''
 module: fmgr_ha
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
-short_description: Manages the High-Availability State of FortiManager Clusters and Nodes
-description: Change HA state or settings of FortiManager nodes (Standalone/Master/Slave)
+    - Luke Weighall - lweighall
+    - Andrew Welsh - Ghilli3
+    - Jim Huber - p4r4n0y1ng
+short_description: Manages the High-Availability State of FortiManager Clusters and Nodes.
+description: Change HA state or settings of FortiManager nodes (Standalone/Master/Slave).
 
 options:
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
   username:
     description:
-      - The username to log into the FortiManager
+      - The username to log into the FortiManager.
     required: true
   password:
     description:
@@ -51,48 +51,54 @@ options:
     required: false
   fmgr_ha_mode:
     description:
-      - Sets the role of the FortiManager host for HA
+      - Sets the role of the FortiManager host for HA.
     required: false
+    default: False
     choices: ["standalone", "master", "slave"]
   fmgr_ha_peer_ipv4:
     description:
       - Sets the IPv4 address of a HA peer.
     required: false
+    default: False
   fmgr_ha_peer_ipv6:
     description:
       - Sets the IPv6 address of a HA peer.
     required: false
+    default: False
   fmgr_ha_peer_sn:
     description:
-      - Sets the HA Peer Serial Number
+      - Sets the HA Peer Serial Number.
     required: false
+    default: False
   fmgr_ha_peer_status:
     description:
-      - Sets the peer status enable or disable
+      - Sets the peer status to enable or disable.
     required: false
+    default: False
     choices: ["enable", "disable"]
   fmgr_ha_cluster_pw:
     description:
       - Sets the password for the HA cluster. Only required once. System remembers between HA mode switches.
     required: false
+    default: False
   fmgr_ha_cluster_id:
     description:
-      - Sets the ID number of the HA cluster. Defaults to 1
+      - Sets the ID number of the HA cluster. Defaults to 1.
     required: false
     default: 1
   fmgr_ha_hb_threshold:
     description:
-      - Sets heartbeat lost threshold (1-255)
+      - Sets heartbeat lost threshold (1-255).
     required: false
     default: 3
   fmgr_ha_hb_interval:
     description:
-      - Sets the heartbeat interval (1-255)
+      - Sets the heartbeat interval (1-255).
     required: false
     default: 5
   fmgr_ha_file_quota:
     description:
-      - Sets the File quota in MB (2048-20480)
+      - Sets the File quota in MB (2048-20480).
     required: false
     default: 4096
 '''
@@ -125,8 +131,8 @@ EXAMPLES = '''
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    fmgr_ha_peer_ipv4: "10.7.220.36"
-    fmgr_ha_peer_sn: "FMG-VM0A17002010"
+    fmgr_ha_peer_ipv4: "192.168.1.254"
+    fmgr_ha_peer_sn: "FMG-VM1234567890"
     fmgr_ha_peer_status: "enable"
 
 - name: CREATE CLUSTER ON MASTER
@@ -261,9 +267,9 @@ def main():
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
-        fmgr_ha_mode=dict(required=False, type="str", choices=["standalone", "master", "slave"]),
+        fmgr_ha_mode=dict(required=False, type="str"),
         fmgr_ha_cluster_pw=dict(required=False, type="str", no_log=True),
-        fmgr_ha_peer_status=dict(required=False, type="str", choices=["enable", "disable"]),
+        fmgr_ha_peer_status=dict(required=False, type="str"),
         fmgr_ha_peer_sn=dict(required=False, type="str"),
         fmgr_ha_peer_ipv4=dict(required=False, type="str"),
         fmgr_ha_peer_ipv6=dict(required=False, type="str"),
