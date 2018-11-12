@@ -265,7 +265,7 @@ def main():
         if paramgram["state"] == "present":
             # add device
             results = discover_device(fmg, paramgram)
-            if not results[0] == 0:
+            if results[0] != 0:
                 if results[0] == -20042:
                     fmgr_logout(fmg, module, msg="Couldn't contact device on network", results=results, good_codes=[0])
                 else:
@@ -273,13 +273,13 @@ def main():
 
             if results[0] == 0:
                 results = add_device(fmg, paramgram)
-                if not results[0] == 0 and not results[0] == -20010:
+                if results[0] != 0 and results[0] != -20010:
                     fmgr_logout(fmg, module, msg="Adding Device Failed", results=results, good_codes=[0])
 
         if paramgram["state"] == "absent":
             # remove device
             results = delete_device(fmg, paramgram)
-            if not results[0] == 0:
+            if results[0] != 0:
                 fmgr_logout(fmg, module, msg="Deleting Device Failed", results=results, good_codes=[0])
 
     fmg.logout()
