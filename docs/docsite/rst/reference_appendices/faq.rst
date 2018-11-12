@@ -596,6 +596,19 @@ Several reasons, in most cases it has to do with maintainability, there are tons
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
 
 
+.. _ansible_host_delegated:
+
+How do I get the original ansible_host when I delegate a task?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overritten,
+but you can still access the orignal via ``hostvars``::
+
+   oringal_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+
+This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+
+
 .. _i_dont_see_my_question:
 
 I don't see my question here
