@@ -83,7 +83,7 @@ options:
 
   end_ip:
     description:
-      - End IP. Only used when ipv4 = range.
+      - End IP. Only used when ipv4 = iprange.
 
   group_members:
     description:
@@ -110,12 +110,12 @@ options:
   ipv6:
     description:
       - Puts module into IPv6 mode.
-      - Must not be specified with either ipv4 or multicast parameters
+      - Must not be specified with either ipv4 or multicast parameters.
     choices: ['ip', 'iprange', 'group']
 
   ipv6addr:
     description:
-      - IPv6 Address in Full
+      - IPv6 address in full. (i.e. 2001:0db8:85a3:0000:0000:8a2e:0370:7334)
 
   fqdn:
     description:
