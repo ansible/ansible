@@ -518,7 +518,7 @@ class PlayContext(Base):
             elif self.become_method == 'pfexec':
 
                 # No user as it uses it's own exec_attr to figure it out
-                becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
+                becomecmd = '%s %s %s' % (exe, flags, command)
 
             elif self.become_method == 'runas':
                 # become is handled inside the WinRM connection plugin
