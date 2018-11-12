@@ -843,13 +843,13 @@ def main():
         if paramgram["ipv4"] is None and paramgram["ipv6"] is not None and paramgram["multicast"] is None:
             # PROCESS IPv6
             results = fmgr_fwobj_ipv6(fmg, paramgram)
-            if not results[0] in [0, -2, -3]:
+            if results[0] not in [0, -2, -3]:
                 module.fail_json(msg="Failed to process IPv6 Object", **results[1])
 
         if paramgram["ipv4"] is None and paramgram["ipv6"] is None and paramgram["multicast"] is not None:
             # PROCESS MULTICAST
             results = fmgr_fwobj_multicast(fmg, paramgram)
-            if not results[0] in [0, -2, -3]:
+            if results[0] not in [0, -2, -3]:
                 module.fail_json(msg="Failed to process Multicast Object", **results[1])
 
     fmg.logout()
