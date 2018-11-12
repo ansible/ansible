@@ -71,7 +71,7 @@ options:
     required: false
   device_ip:
     description:
-      - The IP of the device being added to FortiManager.
+      - The IP of the device being added to FortiManager. Supports both IPv4 and IPv6.
     required: false
   device_unique_name:
     description:
