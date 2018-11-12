@@ -322,7 +322,7 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                                  },
                                  'ip_range_filter': 'default',
                                  'enable_automatic_failover': 'default',
-                                 'enable_multiple_write_locations': 'default',
+                                 'enable_multiple_write_locations': 'default'
                                 })):
                     self.to_do = Actions.Update
 
