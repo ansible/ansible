@@ -308,8 +308,8 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 old_response['locations'] = old_response['failover_policies']
-                if (not compare(self.parameters, old_response,
-                                {'location': 'location',
+                if (not compare(self.parameters, old_response, {
+                                 'location': 'location',
                                  'kind': 'default',
                                  'consistency_policy': {
                                      'default_consistency_level': 'default',
