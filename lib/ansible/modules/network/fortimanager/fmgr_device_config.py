@@ -265,18 +265,18 @@ def main():
         if paramgram["device_hostname"] is not None:
             # add device
             results = update_device_hostname(fmg, paramgram)
-            if not results[0] == 0:
+            if results[0] != 0:
                 fmgr_logout(fmg, module, msg="Failed to set Hostname", results=results, good_codes=[0])
 
         if paramgram["interface_ip"] is not None or paramgram["interface_allow_access"] is not None:
             results = update_device_interface(fmg, paramgram)
-            if not results[0] == 0:
+            if results[0] != 0:
                 fmgr_logout(fmg, module, msg="Failed to Update Device Interface", results=results, good_codes=[0])
 
         if paramgram["install_config"] == "enable":
             # attempt to install the config
             results = exec_config(fmg, paramgram)
-            if not results[0] == 0:
+            if results[0] != 0:
                 fmgr_logout(fmg, module, msg="Failed to Update Device Interface", results=results, good_codes=[0])
 
     # logout, build in check for future logging capabilities
