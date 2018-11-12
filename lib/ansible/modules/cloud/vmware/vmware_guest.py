@@ -1830,6 +1830,12 @@ class PyVmomiHelper(PyVmomi):
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
 
+            # increment index for next disk search
+            disk_index += 1
+            # index 7 is reserved to SCSI controller
+            if disk_index == 7:
+                disk_index += 1
+
             if 'disk_mode' in expected_disk_spec:
                 disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
                 valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
@@ -1863,12 +1869,6 @@ class PyVmomiHelper(PyVmomi):
                 # but it needs to eventually be handled for all the
                 # other disks defined
                 pass
-
-            # increment index for next disk search
-            disk_index += 1
-            # index 7 is reserved to SCSI controller
-            if disk_index == 7:
-                disk_index += 1
 
             kb = self.get_configured_disk_size(expected_disk_spec)
             # VMWare doesn't allow to reduce disk sizes
