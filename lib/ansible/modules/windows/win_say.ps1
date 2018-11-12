@@ -14,6 +14,12 @@ $spec = @{
       voice = @{ type = "str"  }
       speech_speed = @{ type = "int"; default = 0  }
    }
+   mutually_exclusive = @(
+     ,@('msg', 'msg_file')
+   )
+   required_one_of = @(
+     ,@('msg', 'msg_file', 'start_sound_path', 'end_sound_path')
+   )
    supports_check_mode = $true
 }
 
@@ -33,14 +39,6 @@ $words = $null
 
 if ($speech_speed -lt -10 -or $speech_speed -gt 10) {
    $module.FailJson("speech_speed needs to be an integer in the range -10 to 10.  The value $speech_speed is outside this range.")
-}
-
-if ($msg_file -and $msg) {
-   $module.FailJson("Please specify either msg_file or msg parameters, not both")
-}
-
-if (-not $msg_file -and -not $msg -and -not $start_sound_path -and -not $end_sound_path) {
-   $module.FailJson("No msg_file, msg, start_sound_path, or end_sound_path parameters have been specified.  Please specify at least one so the module has something to do")
 }
 
 if ($msg_file) {
