@@ -17,7 +17,6 @@ DOCUMENTATION = '''
 author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
   - "Rafael Driutti (@rafaeldriutti)"
-
 module: redshift
 version_added: "2.2"
 short_description: create, delete, or modify an Amazon Redshift instance
