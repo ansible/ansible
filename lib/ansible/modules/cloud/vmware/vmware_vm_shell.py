@@ -291,14 +291,13 @@ class VMwareShellManager(PyVmomi):
     def process_exists_in_guest(self, vm, pid, creds):
         res = self.pm.ListProcessesInGuest(vm, creds, pids=[pid])
         if not res:
-            return False, ''
+            self.module.fail_json(
+                changed=False, msg='ListProcessesInGuest: None (unexpected)')
         res = res[0]
         if res.exitCode is None:
-            return True, ''
-        elif res.exitCode >= 0:
-            return False, res
+            return True, None
         else:
-            return True, res
+            return False, res
 
     def wait_for_process(self, vm, pid, creds):
         start_time = time.time()
@@ -308,7 +307,13 @@ class VMwareShellManager(PyVmomi):
             if not process_status:
                 return res_data
             elif current_time - start_time >= self.timeout:
-                break
+                self.module.fail_json(
+                    msg="Timeout waiting for process to complete.",
+                    vm=vm._moId,
+                    pid=pid,
+                    start_time=start_time,
+                    current_time=current_time,
+                    timeout=self.timeout)
             else:
                 time.sleep(5)
 
