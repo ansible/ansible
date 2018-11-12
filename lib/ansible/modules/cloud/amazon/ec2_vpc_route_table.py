@@ -447,12 +447,16 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
         if match is None:
             if route_spec.get('DestinationCidrBlock'):
                 route_specs_to_create.append(route_spec)
+            elif route_spec.get('DestinationIpv6CidrBlock'):
+                route_specs_to_create.append(route_spec)
             else:
                 module.warn("Skipping creating {0} because it has no destination cidr block. "
                             "To add VPC endpoints to route tables use the ec2_vpc_endpoint module.".format(route_spec))
         else:
             if match[0] == "replace":
                 if route_spec.get('DestinationCidrBlock'):
+                    route_specs_to_recreate.append(route_spec)
+                elif route_spec.get('DestinationIpv6CidrBlock'):
                     route_specs_to_recreate.append(route_spec)
                 else:
                     module.warn("Skipping recreating route {0} because it has no destination cidr block.".format(route_spec))
@@ -461,7 +465,7 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
     routes_to_delete = []
     if purge_routes:
         for r in routes_to_match:
-            if not r.get('DestinationCidrBlock'):
+            if not (r.get('DestinationCidrBlock') or r.get('DestinationIpv6CidrBlock')):
                 module.warn("Skipping purging route {0} because it has no destination cidr block. "
                             "To remove VPC endpoints from route tables use the ec2_vpc_endpoint module.".format(r))
                 continue
@@ -472,7 +476,11 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
     if changed and not check_mode:
         for route in routes_to_delete:
             try:
-                connection.delete_route(RouteTableId=route_table['RouteTableId'], DestinationCidrBlock=route['DestinationCidrBlock'])
+                try:
+                    connection.delete_route(RouteTableId=route_table['RouteTableId'], DestinationCidrBlock=route['DestinationCidrBlock'])
+                except KeyError:
+                    # IPv6 route manipulation support appeared in Boto3
+                    connection.delete_route(RouteTableId=route_table['RouteTableId'], DestinationIpv6CidrBlock=route['DestinationIpv6CidrBlock'])
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Couldn't delete route")
 
@@ -617,7 +625,10 @@ def create_route_spec(connection, module, vpc_id):
     routes = module.params.get('routes')
 
     for route_spec in routes:
-        rename_key(route_spec, 'dest', 'destination_cidr_block')
+        try:
+            rename_key(route_spec, 'dest', 'destination_cidr_block')
+        except KeyError:
+            rename_key(route_spec, 'dest6', 'destination_ipv6_cidr_block')
 
         if route_spec.get('gateway_id') and route_spec['gateway_id'].lower() == 'igw':
             igw = find_igw(connection, module, vpc_id)
