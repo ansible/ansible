@@ -11302,7 +11302,15 @@ class SoftwareImagesParameters(BaseParameters):
         """
         if self._values['build_date'] is None:
             return None
-        result = datetime.datetime.strptime(self._values['build_date'], '%a %b %d %H %M %S PDT %Y').isoformat()
+
+        d = self._values['build_date'].split(' ')
+
+        # This removes the timezone portion from the string. This is done
+        # because Python has awfule tz parsing and strptime doesnt work with
+        # all timezones in %Z; it only uses the timezones found in time.tzname
+        d.pop(6)
+
+        result = datetime.datetime.strptime(' '.join(d), '%a %b %d %H %M %S %Y').isoformat()
         return result
 
     @property
