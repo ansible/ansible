@@ -191,6 +191,7 @@ options:
     - List of dictionaries describing the service published ports.
     - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp'), mode <ingress|host>, default to ingress.
     - Only used with api_version >= 1.25
+    - If api_version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
   replicas:
     required: false
     default: -1
@@ -458,6 +459,7 @@ EXAMPLES = '''
 import time
 from ansible.module_utils.docker_common import DockerBaseClass
 from ansible.module_utils.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker_common import docker_version
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
 
@@ -1031,10 +1033,11 @@ class DockerServiceManager():
                          % (pv['param'], pv['min_version'])))
 
         for publish_def in self.client.module.params.get('publish', []):
-            if ('mode' in publish_def.keys() and
-                    (LooseVersion(self.client.version()['ApiVersion']) <
-                     LooseVersion('1.25'))):
-                self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
+            if 'mode' in publish_def.keys():
+                if LooseVersion(self.client.version()['ApiVersion']) < LooseVersion('1.25'):
+                    self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
+                if LooseVersion(docker_version) < LooseVersion('3.0.0'):
+                    self.client.module.fail_json(msg='publish.mode parameter requires docker python library>=3.0.0')
 
     def run(self):
         self.test_parameter_versions()
