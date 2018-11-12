@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_fwobj_address
-version_added: "2.6"
+version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
@@ -760,7 +760,6 @@ def main():
         name=dict(required=False, type="str"),
         start_ip=dict(required=False, type="str"),
         end_ip=dict(required=False, type="str"),
-        tags=dict(required=False, type="str"),
         ipv4=dict(required=False, type="str", choices=['ipmask', 'iprange', 'fqdn', 'wildcard',
                                                        'geography', 'wildcard-fqdn', 'group']),
         visibility=dict(required=False, type="str", choices=['enable', 'disable']),
@@ -809,7 +808,6 @@ def main():
             "fqdn": module.params["fqdn"],
             "name": module.params["name"],
             "start-ip": module.params["start_ip"],
-            "tags": module.params["tags"],
             "visibility": module.params["visibility"],
             "wildcard": module.params["wildcard"],
             "wildcard-fqdn": module.params["wildcard_fqdn"],
@@ -836,22 +834,6 @@ def main():
             paramgram["allow-routing"] = "disable"
         if paramgram["visibility"] is None:
             paramgram["visibility"] = "enable"
-
-        # IF ANY TAGS ARE DEFINED AND MODE IS ADD OR SET LETS ADD THOSE
-        # THIS IS A "BLIND ADD" AND THE EXIT CODE FOR OBJECT ALREADY EXISTS IS TREATED AS A PASS
-        # if paramgram["tags"] is not None and paramgram["mode"] in ['add', 'set']:
-        #
-        #     # SPLIT THE TAGS VARIABLE UP
-        #     tag_list = []
-        #     for tag in paramgram["tags"].split(","):
-        #         tag_list.append(tag)
-        #     # FOR EACH TAG RUN THE METHOD TO ADD A TAG
-        #     i = 0
-        #     while i < len(tag_list):
-        #         results = fmgr_fwobj_tags(fmg, paramgram["adom"], tag_list[i])
-        #         if not results[0] in [0, -2, -3]:
-        #             module.fail_json(msg="Failed to add/remove tag", **results[1])
-        #         i += 1
 
         if paramgram["ipv4"] is not None and paramgram["ipv6"] is None and paramgram["multicast"] is None:
             # PROCESS IPv4
