@@ -422,8 +422,18 @@ def route_spec_matches_route(route_spec, route):
     if route_spec.get('GatewayId') and 'nat-' in route_spec['GatewayId']:
         route_spec['NatGatewayId'] = route_spec.pop('GatewayId')
     if route_spec.get('GatewayId') and 'vpce-' in route_spec['GatewayId']:
-        if route_spec.get('DestinationCidrBlock', '').startswith('pl-'):
-            route_spec['DestinationPrefixListId'] = route_spec.pop('DestinationCidrBlock')
+        try:
+            dest_block = route_spec.get('DestinationIpv6CidrBlock')
+        except KeyError:
+            dest_block = route_spec.get('DestinationCidrBlock', '')
+
+        if dest_block.startswith('pl-'):
+            try:
+                spec = route_spec.pop('DestinationCidrBlock')
+            except KeyError:
+                spec = route_spec.pop('DestinationIpv6CidrBlock')
+
+            route_spec['DestinationPrefixListId'] = spec
 
     return set(route_spec.items()).issubset(route.items())
 
