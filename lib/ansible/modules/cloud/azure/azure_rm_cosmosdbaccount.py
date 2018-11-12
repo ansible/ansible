@@ -309,21 +309,21 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
             elif self.state == 'present':
                 old_response['locations'] = old_response['failover_policies']
                 if (not compare(self.parameters, old_response, {
-                                 'location': 'location',
-                                 'kind': 'default',
-                                 'consistency_policy': {
-                                     'default_consistency_level': 'default',
-                                     'max_staleness_prefix': 'default',
-                                     'max_interval_in_seconds': 'default'
-                                 },
-                                 'locations': {
-                                     'location_name': 'location',
-                                     'failover_priority': 'index'
-                                 },
-                                 'ip_range_filter': 'default',
-                                 'enable_automatic_failover': 'default',
-                                 'enable_multiple_write_locations': 'default'
-                                })):
+                    'location': 'location',
+                    'kind': 'default',
+                    'consistency_policy': {
+                        'default_consistency_level': 'default',
+                        'max_staleness_prefix': 'default',
+                        'max_interval_in_seconds': 'default'
+                    },
+                    'locations': {
+                        'location_name': 'location',
+                        'failover_priority': 'index'
+                    },
+                    'ip_range_filter': 'default',
+                    'enable_automatic_failover': 'default',
+                    'enable_multiple_write_locations': 'default'
+                })):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
