@@ -310,12 +310,6 @@ def create_or_update_dynamo_table(resource, module):
                     Tags=ansible_dict_to_boto3_tag_list(tags))
                 result['tags'] = tags
 
-    except is_boto3_error_code('ResourceNotFoundException') as resource_not_found_exc:
-        module.fail_json_aws(resource_not_found_exc, 'Requested resource not found' + traceback.format_exc())
-    except is_boto3_error_code('UnrecognizedClientException') as unrecognized_client_exc:
-        module.fail_json_aws(unrecognized_client_exc, 'Authentication failure' + traceback.format_exc())
-    except is_boto3_error_code('ValidationException') as validation_exc:
-        module.fail_json_aws(validation_exc, 'Validation Exception' + traceback.format_exc())
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json_aws(e, 'Unable to locate credential' + traceback.format_exc())
     except ClientError as e:
@@ -392,7 +386,14 @@ def has_throughput_changed(table, new_throughput):
 
 
 def remove_duplicates(attr_definitions):
-    return [dict(t) for t in {tuple(d.items()) for d in attr_definitions}]
+    seen = set()
+    new_l = []
+    for d in attr_definitions:
+        t = tuple(d.items())
+        if t not in seen:
+            seen.add(t)
+            new_l.append(d)
+    return new_l
 
 
 def get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type):
@@ -510,7 +511,6 @@ def main():
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_one_of=[['name']],
         required_if=[['state', 'present', ['name', 'hash_key_name']]],
     )
     resource = module.resource('dynamodb')
