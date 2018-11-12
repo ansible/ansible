@@ -32,7 +32,7 @@ version_added: "2.8"
 author: Andrew Welsh, Luke Weighall
 short_description: Add or remove device
 description:
-  - Add or remove a device or list of devices from FortiManager Device Manager using jsonrpc API
+  - Add or remove a device or list of devices from FortiManager Device Manager using JSON RPC API.
 
 options:
   adom:
@@ -42,7 +42,7 @@ options:
     default: root
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
   username:
     description:
