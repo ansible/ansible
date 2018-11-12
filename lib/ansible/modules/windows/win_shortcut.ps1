@@ -5,33 +5,48 @@
 
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
-$ErrorActionPreference = "Stop"
+$spec = @{
+    options = @{
+        src = @{ type='str' }
+        dest = @{ type='path'; required=$true }
+        state = @{ type='str'; default='present'; choices=@( 'absent', 'present' ) }
+        arguments = @{ type='str'; aliases=@( 'args' ) }
+        directory = @{ type='path' }
+        hotkey = @{ type='str' }
+        icon = @{ type='path' }
+        description = @{ type='str' }
+        windowstyle = @{ type='str'; choices=@( 'maximized', 'minimized', 'normal' ) }
+    }
+    supports_check_mode = $true
+}
 
-$params = Parse-Args -arguments $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-$orig_src = Get-AnsibleParam -obj $params -name "src"
-$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
-$orig_args = Get-AnsibleParam -obj $params -name "args" -type "str"
-$directory = Get-AnsibleParam -obj $params -name "directory" -type "path"
-$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "str"
-$icon = Get-AnsibleParam -obj $params -name "icon" -type "path"
-$orig_description = Get-AnsibleParam -obj $params -name "description" -type "str"
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "str" -validateset "maximized","minimized","normal"
+$src = $module.Params.src
+$dest = $module.Params.dest
+$state = $module.Params.state
+$arguments = $module.Params.arguments  # NOTE: Variable $args is a special variable
+$directory = $module.Params.directory
+$hotkey = $module.Params.hotkey
+$icon = $module.Params.icon
+$description = $module.Params.description
+$windowstyle = $module.Params.windowstyle
 
 # Expand environment variables on non-path types
-$args = Expand-Environment($orig_args)
-$description = Expand-Environment($orig_description)
-$src = Expand-Environment($orig_src)
-
-$result = @{
-    changed = $false
-    dest = $dest
-    state = $state
+if ($null -ne $src) {
+    $src = [System.Environment]::ExpandEnvironmentVariables($src)
 }
+if ($null -ne $arguments) {
+    $arguments = [System.Environment]::ExpandEnvironmentVariables($arguments)
+}
+if ($null -ne $description) {
+    $description = [System.Environment]::ExpandEnvironmentVariables($description)
+}
+
+$module.Result.dest = $dest
+$module.Result.state = $state
 
 # Convert from window style name to window style id
 $windowstyles = @{
@@ -47,13 +62,13 @@ If ($state -eq "absent") {
     If (Test-Path -Path $dest) {
         # If the shortcut exists, try to remove it
         Try {
-            Remove-Item -Path $dest -WhatIf:$check_mode
+            Remove-Item -Path $dest -WhatIf:$module.CheckMode
         } Catch {
             # Report removal failure
-            Fail-Json -obj $result -message "Failed to remove shortcut '$dest'. ($($_.Exception.Message))"
+            $module.FailJson("Failed to remove shortcut '$dest'. ($($_.Exception.Message))", $_)
         }
         # Report removal success
-        $result.changed = $true
+        $module.Result.changed = $true
     } Else {
         # Nothing to report, everything is fine already
     }
@@ -64,23 +79,23 @@ If ($state -eq "absent") {
 
     # Compare existing values with new values, report as changed if required
 
-    If ($src -ne $null) {
+    If ($null -ne $src) {
         # Windows translates executables to absolute path, so do we
         If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
             $src = (Get-Command -Name $src -Type Application).Definition
         }
         If (-not (Test-Path -Path $src -IsValid)) {
             If (-not (Split-Path -Path $src -IsAbsolute)) {
-                Fail-Json -obj $result -message "Source '$src' is not found in PATH and not a valid or absolute path."
+                $module.FailJson("Source '$src' is not found in PATH and not a valid or absolute path.")
             }
         }
     }
 
-    If ($src -ne $null -and $ShortCut.TargetPath -ne $src) {
-        $result.changed = $true
+    If (($null -ne $src) -and ($ShortCut.TargetPath -ne $src)) {
+        $module.Result.changed = $true
         $ShortCut.TargetPath = $src
     }
-    $result.src = $ShortCut.TargetPath
+    $module.Result.src = $ShortCut.TargetPath
 
     # Determine if we have a WshShortcut or WshUrlShortcut by checking the Arguments property
     # A WshUrlShortcut objects only consists of a TargetPath property
@@ -88,51 +103,51 @@ If ($state -eq "absent") {
     If (Get-Member -InputObject $ShortCut -Name Arguments) {
 
         # This is a full-featured application shortcut !
-        If ($orig_args -ne $null -and $ShortCut.Arguments -ne $args) {
-            $result.changed = $true
-            $ShortCut.Arguments = $args
+        If (($null -ne $arguments) -and ($ShortCut.Arguments -ne $arguments)) {
+            $module.Result.changed = $true
+            $ShortCut.Arguments = $arguments
         }
-        $result.args = $ShortCut.Arguments
+        $module.Result.args = $ShortCut.Arguments
 
-        If ($directory -ne $null -and $ShortCut.WorkingDirectory -ne $directory) {
-            $result.changed = $true
+        If (($null -ne $directory) -and ($ShortCut.WorkingDirectory -ne $directory)) {
+            $module.Result.changed = $true
             $ShortCut.WorkingDirectory = $directory
         }
-        $result.directory = $ShortCut.WorkingDirectory
+        $module.Result.directory = $ShortCut.WorkingDirectory
 
         # FIXME: Not all values are accepted here ! Improve docs too.
-        If ($hotkey -ne $null -and $ShortCut.Hotkey -ne $hotkey) {
-            $result.changed = $true
+        If (($null -ne $hotkey) -and ($ShortCut.Hotkey -ne $hotkey)) {
+            $module.Result.changed = $true
             $ShortCut.Hotkey = $hotkey
         }
-        $result.hotkey = $ShortCut.Hotkey
+        $module.Result.hotkey = $ShortCut.Hotkey
 
-        If ($icon -ne $null -and $ShortCut.IconLocation -ne $icon) {
-            $result.changed = $true
+        If (($null -ne $icon) -and ($ShortCut.IconLocation -ne $icon)) {
+            $module.Result.changed = $true
             $ShortCut.IconLocation = $icon
         }
-        $result.icon = $ShortCut.IconLocation
+        $module.Result.icon = $ShortCut.IconLocation
 
-        If ($orig_description -ne $null -and $ShortCut.Description -ne $description) {
-            $result.changed = $true
+        If (($null -ne $description) -and ($ShortCut.Description -ne $description)) {
+            $module.Result.changed = $true
             $ShortCut.Description = $description
         }
-        $result.description = $ShortCut.Description
+        $module.Result.description = $ShortCut.Description
 
-        If ($windowstyle -ne $null -and $ShortCut.WindowStyle -ne $windowstyles.$windowstyle) {
-            $result.changed = $true
+        If (($null -ne $windowstyle) -and ($ShortCut.WindowStyle -ne $windowstyles.$windowstyle)) {
+            $module.Result.changed = $true
             $ShortCut.WindowStyle = $windowstyles.$windowstyle
         }
-        $result.windowstyle = $windowstyleids[$ShortCut.WindowStyle]
+        $module.Result.windowstyle = $windowstyleids[$ShortCut.WindowStyle]
     }
 
-    If ($result.changed -eq $true -and $check_mode -ne $true) {
+    If (($module.Result.changed -eq $true) -and ($module.CheckMode -ne $true)) {
         Try {
             $ShortCut.Save()
         } Catch {
-            Fail-Json -obj $result -message "Failed to create shortcut '$dest'. ($($_.Exception.Message))"
+            $module.FailJson("Failed to create shortcut '$dest'. ($($_.Exception.Message))", $_)
         }
     }
 }
 
-Exit-Json -obj $result
+$module.ExitJson()
