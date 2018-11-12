@@ -31,9 +31,10 @@ options:
     - File name should have a C(.lnk) or C(.url) extension.
     required: yes
     type: path
-  args:
+  arguments:
     description:
     - Additional arguments for the executable defined in C(src).
+    aliases: [ args ]
   directory:
     description:
     - Working directory for executable defined in C(src).
@@ -92,7 +93,7 @@ EXAMPLES = r'''
   win_shortcut:
     src: '%ProgramFiles%\Google\Chrome\Application\chrome.exe'
     dest: '%UserProfile%\Desktop\Ansible website.lnk'
-    args: --new-window https://ansible.com/
+    arguments: --new-window https://ansible.com/
     directory: '%ProgramFiles%\Google\Chrome\Application'
     icon: '%ProgramFiles%\Google\Chrome\Application\chrome.exe,0'
     hotkey: Ctrl+Alt+A

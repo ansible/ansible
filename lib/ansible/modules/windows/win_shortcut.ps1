@@ -12,7 +12,7 @@ $spec = @{
         src = @{ type='str' }
         dest = @{ type='path'; required=$true }
         state = @{ type='str'; default='present'; choices=@( 'absent', 'present' ) }
-        args = @{ type='str' }
+        arguments = @{ type='str'; aliases=@( 'args' ) }
         directory = @{ type='path' }
         hotkey = @{ type='str' }
         icon = @{ type='path' }
@@ -27,7 +27,7 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $src = $module.Params.src
 $dest = $module.Params.dest
 $state = $module.Params.state
-$arguments = $module.Params.args  # Variable $args is a special variable
+$arguments = $module.Params.arguments  # NOTE: Variable $args is a special variable
 $directory = $module.Params.directory
 $hotkey = $module.Params.hotkey
 $icon = $module.Params.icon
@@ -45,7 +45,6 @@ if ($null -ne $description) {
     $description = [System.Environment]::ExpandEnvironmentVariables($description)
 }
 
-$module.Result.changed = $false
 $module.Result.dest = $dest
 $module.Result.state = $state
 
@@ -66,7 +65,7 @@ If ($state -eq "absent") {
             Remove-Item -Path $dest -WhatIf:$module.CheckMode
         } Catch {
             # Report removal failure
-            $module.FailJson("Failed to remove shortcut '$dest'. ($($_.Exception.Message))")
+            $module.FailJson("Failed to remove shortcut '$dest'. ($($_.Exception.Message))", $_)
         }
         # Report removal success
         $module.Result.changed = $true
@@ -146,7 +145,7 @@ If ($state -eq "absent") {
         Try {
             $ShortCut.Save()
         } Catch {
-            $module.FailJson("Failed to create shortcut '$dest'. ($($_.Exception.Message))")
+            $module.FailJson("Failed to create shortcut '$dest'. ($($_.Exception.Message))", $_)
         }
     }
 }
