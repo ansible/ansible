@@ -34,6 +34,7 @@ options:
   arguments:
     description:
     - Additional arguments for the executable defined in C(src).
+    - Was originally just C(args) but renamed in Ansible 2.8.
     aliases: [ args ]
   directory:
     description:
