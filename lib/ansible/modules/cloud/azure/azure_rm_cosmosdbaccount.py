@@ -310,19 +310,19 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
                 old_response['locations'] = old_response['failover_policies']
                 if (not compare(self.parameters, old_response,
                                 {'location': 'location',
-                                 'kind': None,
+                                 'kind': 'default',
                                  'consistency_policy': {
-                                     'default_consistency_level': None,
-                                     'max_staleness_prefix': None,
-                                     'max_interval_in_seconds': None
+                                     'default_consistency_level': 'default',
+                                     'max_staleness_prefix': 'default',
+                                     'max_interval_in_seconds': 'default'
                                  },
-                                 'ip_range_filter': None,
-                                 'enable_automatic_failover': None,
-                                 'enable_multiple_write_locations': None,
                                  'locations': {
                                      'location_name': 'location',
-                                     '__sort__': 'failover_priority'
-                                 }
+                                     'failover_priority': 'index'
+                                 },
+                                 'ip_range_filter': 'default',
+                                 'enable_automatic_failover': 'default',
+                                 'enable_multiple_write_locations': 'default',
                                 })):
                     self.to_do = Actions.Update
 
@@ -424,7 +424,10 @@ class AzureRMDatabaseAccounts(AzureRMModuleBase):
 def compare(a, b, t):
     if isinstance(t, dict):
         if isinstance(a, list) and isinstance(b, list):
-            s = t.get('__sort__', None)
+            s = None
+            for k in t.keys():
+                if t.get(k, None) == "index":
+                    s = k
             if s is not None:
                 a = sorted(a, key=lambda x: x[s])
                 b = sorted(b, key=lambda x: x[s])
