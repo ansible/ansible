@@ -28,19 +28,19 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_fwobj_address
-version_added: "2.8"
+version_added: "2.6"
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
 short_description: Allows the management of firewall objects in FortiManager
 description:
-  -  Allows for the management of ipv4, ipv6, and multicast address objects within FortiManager
+  -  Allows for the management of IPv4, IPv6, and multicast address objects within FortiManager.
 
 options:
   host:
     description:
-      - The FortiManager Address.
+      - The FortiManager address.
     required: true
   username:
     description:
@@ -66,20 +66,20 @@ options:
 
   cache_ttl:
     description:
-      - Minimal TTL of individual IP addresses in FQDN cache. Only applies when type = wildcard-fqdn
+      - Minimal TTL of individual IP addresses in FQDN cache. Only applies when type = wildcard-fqdn.
 
   color:
     description:
-      - Color of the object in FortiManager GUI
+      - Color of the object in FortiManager GUI.
       - Takes integers 1-32
 
   comment:
     description:
-      - Comment for the object in FortiManager
+      - Comment for the object in FortiManager.
 
   country:
     description:
-      - Country name. Required if type = geographic
+      - Country name. Required if type = geographic.
 
   end_ip:
     description:
@@ -123,17 +123,17 @@ options:
 
   mode:
     description:
-      - Sets one of three modes for managing the object
+      - Sets one of three modes for managing the object.
     choices: ['add', 'set', 'delete']
     default: add
 
   multicast:
     description:
       - Manages Multicast Address Objects.
-      - Sets either a Multicast IP Range or a Broadcast Subnet
-      - Must not be specified with either ipv4 or ipv6 parameters
-      - When set to Broadcast Subnet the ipv4addr parameter is used to specify the subnet
-      - Can create IPv4 Multicast Objects (multicastrange and broadcastmask options -- uses start/end-ip and ipv4addr)
+      - Sets either a Multicast IP Range or a Broadcast Subnet.
+      - Must not be specified with either ipv4 or ipv6 parameters.
+      - When set to Broadcast Subnet the ipv4addr parameter is used to specify the subnet.
+      - Can create IPv4 Multicast Objects (multicastrange and broadcastmask options -- uses start/end-ip and ipv4addr).
     choices: ['multicastrange', 'broadcastmask', 'ip6']
 
   name:
@@ -146,7 +146,7 @@ options:
 
   start_ip:
     description:
-      - Start IP. Only used when ipv4 = range.
+      - Start IP. Only used when ipv4 = iprange.
 
   visibility:
     description:
@@ -155,11 +155,11 @@ options:
 
   wildcard:
     description:
-      - IP address and wildcard netmask. Required if ipv4 = wildcard
+      - IP address and wildcard netmask. Required if ipv4 = wildcard.
 
   wildcard_fqdn:
     description:
-      - Wildcard FQDN. Required if ipv4 = wildcard-fqdn
+      - Wildcard FQDN. Required if ipv4 = wildcard-fqdn.
 '''
 
 EXAMPLES = '''
@@ -256,7 +256,7 @@ EXAMPLES = '''
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    ipv6: "ipprefix"
+    ipv6: "ip"
     ipv6addr: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
     name: "ansible_v6Obj"
     comment: "Created by Ansible"
@@ -760,7 +760,7 @@ def main():
         name=dict(required=False, type="str"),
         start_ip=dict(required=False, type="str"),
         end_ip=dict(required=False, type="str"),
-        # tags=dict(required=False, type="str"),
+        tags=dict(required=False, type="str"),
         ipv4=dict(required=False, type="str", choices=['ipmask', 'iprange', 'fqdn', 'wildcard',
                                                        'geography', 'wildcard-fqdn', 'group']),
         visibility=dict(required=False, type="str", choices=['enable', 'disable']),
@@ -857,10 +857,6 @@ def main():
             # PROCESS IPv4
             results = fmgr_fwobj_ipv4(fmg, paramgram)
             fmgr_logout(fmg, module, results=results, good_codes=[0, -2, -3])
-            # if results[0] in [-10131]:
-            #     module.fail_json(msg="associated_interface specified doesn't exist", **results[1])
-            # if not results[0] in [0, -2, -3]:
-            #     module.fail_json(msg="Failed to process IPv4 Object", **results[1])
 
         if paramgram["ipv4"] is None and paramgram["ipv6"] is not None and paramgram["multicast"] is None:
             # PROCESS IPv6
