@@ -660,6 +660,8 @@ def create_route_spec(connection, module, vpc_id):
             route_spec['gateway_id'] = igw
         if route_spec.get('gateway_id') and route_spec['gateway_id'].startswith('nat-'):
             rename_key(route_spec, 'gateway_id', 'nat_gateway_id')
+        if route_spec.get('gateway_id') and route_spec['gateway_id'].startswith('eigw-'):
+            rename_key(route_spec, 'gateway_id', 'egress_only_internet_gateway_id')
 
     return snake_dict_to_camel_dict(routes, capitalize_first=True)
 
