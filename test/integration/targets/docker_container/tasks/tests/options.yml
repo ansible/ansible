@@ -709,7 +709,7 @@
     state: started
     device_read_iops:
       - path: /dev/urandom
-        rate: 20
+        rate: "20"
       - path: /dev/random
         rate: 10
   register: device_read_iops_2

@@ -1033,7 +1033,7 @@ def main():
     argument_spec = dict(
         project_src=dict(type='path'),
         project_name=dict(type='str',),
-        files=dict(type='list'),
+        files=dict(type='list', elements='path'),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
         definition=dict(type='dict'),
         hostname_check=dict(type='bool', default=False),
@@ -1045,7 +1045,7 @@ def main():
         stopped=dict(type='bool', default=False),
         restarted=dict(type='bool', default=False),
         scale=dict(type='dict'),
-        services=dict(type='list'),
+        services=dict(type='list', elements='str'),
         dependencies=dict(type='bool', default=True),
         pull=dict(type='bool', default=False),
         nocache=dict(type='bool', default=False),
