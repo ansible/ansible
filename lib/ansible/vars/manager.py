@@ -452,6 +452,7 @@ class VariableManager:
 
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
+            variables['ansible_play_name'] = play.get_name()
 
         if task:
             if task._role:
