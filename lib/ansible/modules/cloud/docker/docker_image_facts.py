@@ -227,7 +227,7 @@ class ImageManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
-        name=dict(type='list'),
+        name=dict(type='list', elements='str'),
     )
 
     client = AnsibleDockerClient(
