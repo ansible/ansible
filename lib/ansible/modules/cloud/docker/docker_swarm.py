@@ -475,7 +475,7 @@ def main():
         state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
-        remote_addrs=dict(type='list'),
+        remote_addrs=dict(type='list', elements='str'),
         join_token=dict(type='str'),
         snapshot_interval=dict(type='int'),
         task_history_retention_limit=dict(type='int'),

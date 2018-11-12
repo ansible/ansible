@@ -583,7 +583,12 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         archive_path=dict(type='path'),
-        container_limits=dict(type='dict'),
+        container_limits=dict(type='dict', options=dict(
+            memory=dict(type='int'),
+            memswap=dict(type='int'),
+            cpushares=dict(type='int'),
+            cpusetcpus=dict(type='str'),
+        )),
         dockerfile=dict(type='str'),
         force=dict(type='bool', default=False),
         http_timeout=dict(type='int'),

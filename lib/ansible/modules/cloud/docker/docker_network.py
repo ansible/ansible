@@ -77,7 +77,7 @@ options:
   ipam_options:
     description:
       - Dictionary of IPAM options.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter ``ipam_config`` instead. In Docker 1.10.0, IPAM
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(ipam_config) instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options.
 
@@ -86,9 +86,27 @@ options:
     description:
       - List of IPAM config blocks. Consult
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
+        Note that I(iprange) is spelled differently here (we use the notation from the Docker Python SDK).
     type: list
     default: null
     required: false
+    suboptions:
+      subnet:
+        description:
+          - IP subset in CIDR notation.
+        type: str
+      iprange:
+        description:
+          - IP address range in CIDR notation.
+        type: str
+      gateway:
+        description:
+          - IP gateway address.
+        type: str
+      aux_addresses:
+        description:
+          - Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
+        type: dict
 
   state:
     description:
@@ -300,7 +318,8 @@ class DockerNetworkManager(object):
         if not self.parameters.connected and self.existing_network:
             self.parameters.connected = container_names_in_network(self.existing_network)
 
-        if self.parameters.ipam_options:
+        if (self.parameters.ipam_options['subnet'] or self.parameters.ipam_options['iprange'] or
+                self.parameters.ipam_options['gateway'] or self.parameters.ipam_options['aux_addresses']):
             self.parameters.ipam_config = [self.parameters.ipam_options]
 
         if self.parameters.driver_options:
@@ -362,6 +381,10 @@ class DockerNetworkManager(object):
                         self.client.fail(str(e))
 
                     for key, value in ipam_config.items():
+                        if value is None:
+                            # due to recursive argument_spec, all keys are always present
+                            # (but have default value None if not specified)
+                            continue
                         camelkey = None
                         for net_key in net_config:
                             if key == net_key.lower():
@@ -493,15 +516,25 @@ class DockerNetworkManager(object):
 def main():
     argument_spec = dict(
         network_name=dict(type='str', required=True, aliases=['name']),
-        connected=dict(type='list', default=[], aliases=['containers']),
+        connected=dict(type='list', default=[], aliases=['containers'], elements='str'),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='bridge'),
         driver_options=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str'),
-        ipam_options=dict(type='dict', default={}, removed_in_version='2.12'),
-        ipam_config=dict(type='list', elements='dict'),
+        ipam_options=dict(type='dict', default={}, removed_in_version='2.12', options=dict(
+            subnet=dict(type='str'),
+            iprange=dict(type='str'),
+            gateway=dict(type='str'),
+            aux_addresses=dict(type='dict'),
+        )),
+        ipam_config=dict(type='list', elements='dict', options=dict(
+            subnet=dict(type='str'),
+            iprange=dict(type='str'),
+            gateway=dict(type='str'),
+            aux_addresses=dict(type='dict'),
+        )),
         enable_ipv6=dict(type='bool'),
         internal=dict(type='bool'),
         debug=dict(type='bool', default=False)
