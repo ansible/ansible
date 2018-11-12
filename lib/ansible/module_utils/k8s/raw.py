@@ -20,6 +20,7 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 from datetime import datetime
+from distutils.version import LooseVersion
 import time
 import sys
 
@@ -80,8 +81,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         self.namespace = self.params.get('namespace')
         resource_definition = self.params.get('resource_definition')
         if self.params['validate']:
-            if LooseVersion(self.openshift_version) < LooseVersion("0.7.2"):
-                self.fail_json(msg="openshift >= 0.7.2 is required for validate")
+            if LooseVersion(self.openshift_version) < LooseVersion("0.8.0"):
+                self.fail_json(msg="openshift >= 0.8.0 is required for validate")
         if self.params['merge_type']:
             if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
                 self.fail_json(msg="openshift >= 0.6.2 is required for merge_type")
@@ -278,13 +279,9 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if self.check_mode:
                 k8s_obj = dict_merge(existing.to_dict(), definition)
             else:
-                from distutils.version import LooseVersion
                 if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
-                    if self.params['merge_type']:
-                        self.fail_json(msg="openshift >= 0.6.2 is required for merge_type")
-                    else:
-                        k8s_obj, error = self.patch_resource(resource, definition, existing, name,
-                                                             namespace)
+                    k8s_obj, error = self.patch_resource(resource, definition, existing, name,
+                                                         namespace)
                 else:
                     for merge_type in self.params['merge_type'] or ['strategic-merge', 'merge']:
                         k8s_obj, error = self.patch_resource(resource, definition, existing, name,
