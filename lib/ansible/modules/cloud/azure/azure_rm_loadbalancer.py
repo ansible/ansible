@@ -755,47 +755,42 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                         self.sku != load_balancer['sku']['name'] or
                         not compare(new_dict, load_balancer, {
                             'frontend_ip_configurations': {
-                                '__sort__': 'name',
-                                'name': None,
-                                'public_ip_address': None,
-                                'private_ip_address': None,
-                                'private_ip_allocation_method': None,
-                                'subnet': None
+                                'name': 'index',
+                                'public_ip_address': 'default',
+                                'private_ip_address': 'default',
+                                'private_ip_allocation_method': 'default',
+                                'subnet': 'default'
                             },
                             'inbound_nat_pools': {
-                                '__sort__': 'name',
-                                'name': None,
-                                'frontend_ip_configuration_name': None,
-                                'protocol': None,
-                                'frontend_port_range_start': None,
-                                'frontend_port_range_end': None,
-                                'backend_port': None
+                                'name': 'index',
+                                'frontend_ip_configuration_name': 'default',
+                                'protocol': 'default',
+                                'frontend_port_range_start': 'default',
+                                'frontend_port_range_end': 'default',
+                                'backend_port': 'default'
                             },
                             'load_balancing_rules': {
-                                '__sort__': 'name',
-                                'name': None,
-                                'frontend_ip_configuration': None,
-                                'backend_address_pool': None,
-                                'probe': None,
-                                'protocol': None,
-                                'load_distribution': None,
-                                'frontend_port': None,
-                                'backend_port': None,
-                                'idle_timeout': None,
-                                'enable_floating_ip': None
+                                'name': 'index',
+                                'frontend_ip_configuration': 'default',
+                                'backend_address_pool': 'default',
+                                'probe': 'default',
+                                'protocol': 'default',
+                                'load_distribution': 'default',
+                                'frontend_port': 'default',
+                                'backend_port': 'default',
+                                'idle_timeout': 'default',
+                                'enable_floating_ip': 'default'
                             },
                             'backend_address_pools': {
-                                '__sort__': 'name',
-                                'name': None
+                                'name': 'index'
                             },
                             'probes': {
-                                '__sort__': 'name',
-                                'name': None,
-                                'port': None,
-                                'protocol': None,
-                                'interval': None,
-                                'fail_count': None,
-                                'request_path': None
+                                'name': 'index',
+                                'port': 'default',
+                                'protocol': 'default',
+                                'interval': 'default',
+                                'fail_count': 'default',
+                                'request_path': 'default'
                             }
                         })):
                     changed = True
@@ -859,7 +854,10 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 def compare(a, b, t):
     if isinstance(t, dict):
         if isinstance(a, list) and isinstance(b, list):
-            s = t.get('__sort__', None)
+            s = None
+            for k in t.keys():
+                if t.get(k, None) == "index":
+                    s = k
             if s is not None:
                 a = sorted(a, key=lambda x: x[s])
                 b = sorted(b, key=lambda x: x[s])
@@ -871,9 +869,8 @@ def compare(a, b, t):
             return True
         elif isinstance(a, dict) and isinstance(b, dict):
             for k in t.keys():
-                if not k == '__sort__':
-                    if not compare(a.get(k, None), b.get(k, None), t[k]):
-                        return False
+                if not compare(a.get(k, None), b.get(k, None), t[k]):
+                    return False
             return True
         else:
             return a is None
