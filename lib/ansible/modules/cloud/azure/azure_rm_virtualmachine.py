@@ -1194,7 +1194,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     vm_resource = self.compute_models.VirtualMachine(
                         location=vm_dict['location'],
-                        os_profile=self.compute_models.OSProfile(
+                        os_profile=None if not vm_dict['properties'].get('osProfile')
+                        else self.compute_models.OSProfile(
                             admin_username=vm_dict['properties'].get('osProfile', {}).get('adminUsername'),
                             computer_name=vm_dict['properties'].get('osProfile', {}).get('computerName')
                         ),
@@ -1211,13 +1212,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 caching=vm_dict['properties']['storageProfile']['osDisk'].get('caching'),
                                 disk_size_gb=vm_dict['properties']['storageProfile']['osDisk'].get('diskSizeGB')
                             ),
-                            image_reference=self.compute_models.ImageReference(
-                                id=vm_dict['properties']['storageProfile']['imageReference']['id'],
-                            ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
-                                publisher=vm_dict['properties']['storageProfile']['imageReference'].get('publisher'),
-                                offer=vm_dict['properties']['storageProfile']['imageReference'].get('offer'),
-                                sku=vm_dict['properties']['storageProfile']['imageReference'].get('sku'),
-                                version=vm_dict['properties']['storageProfile']['imageReference'].get('version')
+                            image_reference=None if not vm_dict['properties']['storageProfile'].get('imageReference')
+                            else self.compute_models.ImageReference(
+                                id=vm_dict['properties']['storageProfile'].get('imageReference', {}).get('id'),
+                            ) if 'id' in vm_dict['properties']['storageProfile'].get('imageReference', {}).keys()
+                            else self.compute_models.ImageReference(
+                                publisher=vm_dict['properties']['storageProfile'].get('imageReference', {}).get('publisher'),
+                                offer=vm_dict['properties']['storageProfile'].get('imageReference', {}).get('offer'),
+                                sku=vm_dict['properties']['storageProfile'].get('imageReference', {}).get('sku'),
+                                version=vm_dict['properties']['storageProfile'].get('imageReference', {}).get('version')
                             ),
                         ),
                         availability_set=availability_set_resource,
@@ -1230,17 +1233,17 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_resource.tags = vm_dict['tags']
 
                     # Add custom_data, if provided
-                    if vm_dict['properties']['osProfile'].get('customData'):
+                    if vm_dict['properties'].get('osProfile', {}).get('customData'):
                         custom_data = vm_dict['properties']['osProfile']['customData']
                         # Azure SDK (erroneously?) wants native string type for this
                         vm_resource.os_profile.custom_data = to_native(base64.b64encode(to_bytes(custom_data)))
 
                     # Add admin password, if one provided
-                    if vm_dict['properties']['osProfile'].get('adminPassword'):
+                    if vm_dict['properties'].get('osProfile', {}).get('adminPassword'):
                         vm_resource.os_profile.admin_password = vm_dict['properties']['osProfile']['adminPassword']
 
                     # Add linux configuration, if applicable
-                    linux_config = vm_dict['properties']['osProfile'].get('linuxConfiguration')
+                    linux_config = vm_dict['properties'].get('osProfile', {}).get('linuxConfiguration')
                     if linux_config:
                         ssh_config = linux_config.get('ssh', None)
                         vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
