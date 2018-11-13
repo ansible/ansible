@@ -244,7 +244,7 @@ class JsonRpc(object):
             raise NsoException(
                 'NSO returned HTTP code {0}, expected 200'.format(resp.status), {})
 
-        resp_body = resp.read()
+        resp_body = resp.read().decode('utf8')
         resp_json = json.loads(resp_body)
 
         if 'error' in resp_json:
