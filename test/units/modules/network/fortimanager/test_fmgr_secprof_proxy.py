@@ -145,4 +145,3 @@ def test_fmgr_web_proxy_profile_addsetdelete(fixture_data, mocker):
     # Test using fixture 5 #
     output = fmgr_secprof_proxy.fmgr_web_proxy_profile_addsetdelete(fmg_instance, fixture_data[4]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
-
