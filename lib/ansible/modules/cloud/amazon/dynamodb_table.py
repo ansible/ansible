@@ -312,8 +312,8 @@ def create_or_update_dynamo_table(resource, module):
 
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json_aws(e, 'Unable to locate credential' + traceback.format_exc())
-    except ClientError as e:
-        module.fail_json_aws(e, 'Failed to create/update dynamo table due to error: ' + traceback.format_exc())
+    except is_boto3_error_code('UnrecognizedClientException') as unrecognized_client_exc:
+        module.fail_json_aws(unrecognized_client_exc, 'Authentication failure' + traceback.format_exc())
     except Exception as exc:
         module.fail_json_aws(exc, 'Ansible dynamodb operation failed: ' + traceback.format_exc())
     else:
@@ -431,9 +431,8 @@ def get_changed_global_indexes(table, global_indexes):
 
         for set_index in set_table_indexes_prov_throughput:
             for param_index in param_global_indexes_prov_throughput:
-                if (set_index[0] == param_index[0] and
-                   (set_index[1]['ReadCapacityUnits'] != param_index[1]['ReadCapacityUnits'] or
-                   set_index[1]['WriteCapacityUnits'] != param_index[1]['WriteCapacityUnits'])):
+                if (set_index[0] == param_index[0] and (set_index[1]['ReadCapacityUnits'] != param_index[1]
+                                                        ['ReadCapacityUnits'] or set_index[1]['WriteCapacityUnits'] != param_index[1]['WriteCapacityUnits'])):
                     global_indexes_updates.append({'Update': {'IndexName': set_index[0], 'ProvisionedThroughput': param_index[1]}})
 
     return global_indexes_updates
