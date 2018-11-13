@@ -356,7 +356,7 @@ COMMAND_WARNINGS:
   default: True
   description:
     - By default Ansible will issue a warning when the shell or command module is used and the command appears to be similar to an existing Ansible module.
-    - These warnings Can be silenced by adjusting this setting to False. You can also control this at the task level with the module option ``warn``.
+    - These warnings can be silenced by adjusting this setting to False. You can also control this at the task level with the module option ``warn``.
   env: [{name: ANSIBLE_COMMAND_WARNINGS}]
   ini:
   - {key: command_warnings, section: defaults}

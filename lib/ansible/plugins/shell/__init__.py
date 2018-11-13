@@ -80,7 +80,7 @@ class ShellBase(AnsiblePlugin):
         # shell_common documentation fragment (and so do not have system_tmpdirs) will fail
         try:
             self._normalize_system_tmpdirs()
-        except AnsibleError:
+        except KeyError:
             pass
 
     def env_prefix(self, **kwargs):

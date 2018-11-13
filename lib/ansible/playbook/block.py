@@ -364,8 +364,7 @@ class Block(Base, Become, Conditional, Taggable):
 
     def filter_tagged_tasks(self, all_vars):
         '''
-        Creates a new block, with task lists filtered based on the tags contained
-        within the play object. play_context is not in use anymore
+        Creates a new block, with task lists filtered based on the tags.
         '''
 
         def evaluate_and_append_task(target):

@@ -960,11 +960,16 @@ class TaskExecutor:
         self._connection.set_options(task_keys=task_keys, var_options=options)
         self._set_plugin_options('shell', final_vars, templar, task_keys)
         if self._connection._become is not None:
+            # FIXME: find alternate route to provide passwords, keep out of play objects to avoid accidental disclosure
+            task_keys['become_pass'] = self._play_context.become_pass
             self._set_plugin_options('become', final_vars, templar, task_keys)
 
             # FOR BACKWARDS COMPAT:
-            for option in ('become_user', 'become_flags', 'become_exe', 'become_pass'):
-                setattr(self._play_context, option, self._connection._become.get_option(option))
+            for option in ('become_user', 'become_flags', 'become_exe'):
+                try:
+                    setattr(self._play_context, option, self._connection._become.get_option(option))
+                except KeyError:
+                    pass  # some plugins don't support all base flags
             self._play_context.prompt = self._connection._become.prompt
 
     def _get_action_handler(self, connection, templar):
