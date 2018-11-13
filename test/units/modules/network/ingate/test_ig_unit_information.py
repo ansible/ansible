@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018, Ingate Systems AB
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2018, Ingate Systems AB
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -38,25 +24,33 @@ class TestUnitInformationModule(TestIngateModule):
         self.mock_make_request = patch('ansible.modules.network.ingate.'
                                        'ig_unit_information.make_request')
         self.make_request = self.mock_make_request.start()
-        # ATM the Ingate Python SDK is not needed in this unit test.
-        self.module.HAS_INGATESDK = True
+
+        self.mock_is_ingatesdk_installed = patch('ansible.modules.network.ingate.'
+                                                 'ig_unit_information.is_ingatesdk_installed')
+        self.is_ingatesdk_installed = self.mock_is_ingatesdk_installed.start()
 
     def tearDown(self):
         super(TestUnitInformationModule, self).tearDown()
         self.mock_make_request.stop()
+        self.mock_is_ingatesdk_installed.stop()
 
     def load_fixtures(self, fixture=None):
         self.make_request.side_effect = [load_fixture(fixture)]
+        self.is_ingatesdk_installed.return_value = True
 
     def test_ig_unit_information(self):
-        set_module_args(dict(
-            client=dict(
-                version='v1',
-                address='127.0.0.1',
-                scheme='http',
-                username='alice',
-                password='foobar'
-            )))
+        set_module_args(
+            dict(
+                client=dict(
+                    version='v1',
+                    address='127.0.0.1',
+                    scheme='http',
+                    username='alice',
+                    password='foobar'
+                )
+            )
+        )
+
         fixture = '%s.%s' % (os.path.basename(__file__).split('.')[0], 'json')
         result = self.execute_module(fixture=fixture)
         self.assertTrue('unit-information' in result)
