@@ -78,10 +78,15 @@ options:
         required: True
     directory:
         description:
-            - Create or delete directory.
+            - Create or delete a directory.
+            - Can be used to create temp directory inside guest using mktemp operation.
+            - mktemp sets variable C(dir) in the result with the name of the new directory.
+            - mktemp operation option is added in version 2.8
             - 'Valid attributes are:'
-            - '  path: directory path to create or remove'
-            - '  operation: Valid values are create, delete'
+            - '  operation (str): Valid values are: create, delete, mktemp'
+            - '  path (str): directory path (required for create or remove)'
+            - '  prefix (str): temporary directory prefix (required for mktemp)'
+            - '  suffix (str): temporary directory suffix (required for mktemp)'
             - '  recurse (boolean): Not required, default (false)'
         required: False
     copy:
@@ -218,16 +223,23 @@ class VmwareGuestFileManager(PyVmomi):
         vm_password = self.module.params['vm_password']
 
         recurse = bool(self.module.params['directory']['recurse'])
-        operation = self.module.params["directory"]['operation']
-        path = self.module.params["directory"]['path']
+        operation = self.module.params['directory']['operation']
+        path = self.module.params['directory']['path']
+        prefix = self.module.params['directory']['prefix']
+        suffix = self.module.params['directory']['suffix']
         creds = vim.vm.guest.NamePasswordAuthentication(username=vm_username, password=vm_password)
         file_manager = self.content.guestOperationsManager.fileManager
-        if operation == "create":
+        if operation in ("create", "mktemp"):
             try:
-                file_manager.MakeDirectoryInGuest(vm=self.vm,
-                                                  auth=creds,
-                                                  directoryPath=path,
-                                                  createParentDirectories=recurse)
+                if operation == "create":
+                    file_manager.MakeDirectoryInGuest(vm=self.vm,
+                                                      auth=creds,
+                                                      directoryPath=path,
+                                                      createParentDirectories=recurse)
+                else:
+                    newdir = file_manager.CreateTemporaryDirectoryInGuest(vm=self.vm, auth=creds,
+                                                                          prefix=prefix, suffix=suffix)
+                    result['dir'] = newdir
             except vim.fault.FileAlreadyExists as file_already_exists:
                 result['changed'] = False
                 result['msg'] = "Guest directory %s already exist: %s" % (path,
@@ -386,8 +398,10 @@ def main():
             type='dict',
             default=None,
             options=dict(
-                path=dict(required=True, type='str'),
-                operation=dict(required=True, type='str', choices=['create', 'delete']),
+                operation=dict(required=True, type='str', choices=['create', 'delete', 'mktemp']),
+                path=dict(required=False, type='str'),
+                prefix=dict(required=False, type='str'),
+                suffix=dict(required=False, type='str'),
                 recurse=dict(required=False, type='bool', default=False)
             )
         ),
@@ -415,6 +429,12 @@ def main():
                            mutually_exclusive=[['directory', 'copy', 'fetch']],
                            required_one_of=[['directory', 'copy', 'fetch']],
                            )
+
+    if module.params['directory']:
+        if module.params['directory']['operation'] in ('create', 'delete') and not module.params['directory']['path']:
+            module.fail_json(msg='directory.path is required when operation is "create" or "delete"')
+        if module.params['directory']['operation'] == 'mktemp' and not (module.params['directory']['prefix'] and module.params['directory']['suffix']):
+            module.fail_json(msg='directory.prefix and directory.suffix are required when operation is "mktemp"')
 
     if module.params['vm_id_type'] == 'inventory_path' and not module.params['folder']:
         module.fail_json(msg='Folder is required parameter when vm_id_type is inventory_path')
