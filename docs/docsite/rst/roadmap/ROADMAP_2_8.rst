@@ -10,7 +10,13 @@ Release Schedule
 Expected
 ========
 
-- 2019Q1 General Availability
+- Alpha1/Core freeze      3/14/2019
+- Beta1/Community freeze  3/21/2019
+- Rc1 (Note: 2w after b1) 4/4/2019
+- Rc2 (if needed)         4/11/2019
+- Rc3 (if needed)         4/18/2019
+- Rc4 (if needed)         4/25/2019
+- Release Date            5/2/2019
 
 Release Manager
 ---------------
