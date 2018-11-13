@@ -2,7 +2,8 @@
 
 set -eux
 
-export ANSIBLE_ROLES_PATH=./roles
+_ANSIBLE_ROLES_PATH=./roles
+export ANSIBLE_ROLES_PATH=${_ANSIBLE_ROLES_PATH}
 
 function gen_task_files() {
     for i in $(seq -f '%03g' 1 39); do
@@ -90,3 +91,11 @@ ansible-playbook run_once/playbook.yml "$@"
 # https://github.com/ansible/ansible/issues/48936
 ansible-playbook -v handler_addressing/playbook.yml 2>&1 | tee test_handler_addressing.out
 test "$(egrep -c 'include handler task|ERROR! The requested handler '"'"'do_import'"'"' was not found' test_handler_addressing.out)" = 2
+
+# Test we warn when overriding a role
+export ANSIBLE_ROLES_PATH=./override_role:./to_override
+ansible-playbook test_role_override.yml -i ../../inventory "$@" 2>&1 | tee test_override.out
+# note the warning output is variously split across different lines on
+# different platforms, this seems reliable and unique
+test "$(grep -c '(override_role preceeds it)' test_override.out)" = 1
+export ANSIBLE_ROLES_PATH=${_ANSIBLE_ROLES_PATH}

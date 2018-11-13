@@ -168,12 +168,22 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         templar = Templar(loader=self._loader, variables=all_vars)
         role_name = templar.template(role_name)
 
-        # now iterate through the possible paths and return the first one we find
+        # now iterate through the possible paths and return the first
+        # one we find; we make a note of ignored roles for the user's
+        # benefit.
+        first_found = None
         for path in role_search_paths:
+            display.v("searching %s" % path)
             path = templar.template(path)
             role_path = unfrackpath(os.path.join(path, role_name))
             if self._loader.path_exists(role_path):
-                return (role_name, role_path)
+                if first_found is None:
+                    first_found = (role_name, role_path)
+                else:
+                    display.warning("Role %s ignored (%s preceeds it)" %
+                                    (role_path, first_found[0]))
+        if first_found is not None:
+            return first_found
 
         # if not found elsewhere try to extract path from name
         role_path = unfrackpath(role_name)

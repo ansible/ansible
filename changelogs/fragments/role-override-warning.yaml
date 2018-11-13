@@ -1,0 +1,2 @@
+minor_changes:
+- A warning is emitted when roles are ignored due to preceeding roles in the path with the same name.

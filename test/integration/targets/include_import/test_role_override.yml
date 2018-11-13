@@ -1,0 +1,5 @@
+- name: >-
+    verify we override roles from earlier in path
+  hosts: testhost
+  roles:
+    - override_role

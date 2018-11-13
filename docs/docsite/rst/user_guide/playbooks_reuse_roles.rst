@@ -392,6 +392,8 @@ Ansible will search for roles in the following way:
 
 In Ansible 1.4 and later you can configure an additional roles_path to search for roles.  Use this to check all of your common roles out to one location, and share them easily between multiple playbook projects.  See :ref:`intro_configuration` for details about how to set this up in ansible.cfg.
 
+Note that when roles have the same name, the first role that matches it in the search path will be used and the later occurences will be ignored.  This can lead to confusion over which role is in use during a task, and it is suggested to use appropriate naming to avoid this.
+
 Ansible Galaxy
 ``````````````
 
