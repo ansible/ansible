@@ -28,9 +28,9 @@ DOCUMENTATION = '''
 module: fmgr_secprof_proxy
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
+    - Luke Weighall (lweighall)
+    - Andrew Welsh (Ghilli3)
+    - Jim Huber (p4r4n0y1ng)
 short_description: Manage proxy security profiles in FortiManager
 description:
   -  Manage proxy security profiles for FortiGates via FortiManager using the FMG API with playbooks
@@ -44,7 +44,7 @@ options:
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
@@ -108,8 +108,7 @@ options:
 
   header_x_authenticated_groups:
     description:
-      - Action to take on the HTTP x-authenticated-groups header in forwarded requests| forwards (pass), adds, or remo
-      - ves the HTTP header.
+      - Action to take on the HTTP x-authenticated-groups header in forwarded requests
       - choice | pass | Forward the same HTTP header.
       - choice | add | Add the HTTP header.
       - choice | remove | Remove the HTTP header.
@@ -128,8 +127,7 @@ options:
 
   header_via_request:
     description:
-      - Action to take on the HTTP via header in forwarded requests| forwards (pass), adds, or removes the HTTP header
-      - .
+      - Action to take on the HTTP via header in forwarded requests
       - choice | pass | Forward the same HTTP header.
       - choice | add | Add the HTTP header.
       - choice | remove | Remove the HTTP header.
@@ -138,8 +136,7 @@ options:
 
   header_front_end_https:
     description:
-      - Action to take on the HTTP front-end-HTTPS header in forwarded requests| forwards (pass), adds, or removes the
-      -  HTTP header.
+      - Action to take on the HTTP front-end-HTTPS header in forwarded requests
       - choice | pass | Forward the same HTTP header.
       - choice | add | Add the HTTP header.
       - choice | remove | Remove the HTTP header.
@@ -148,8 +145,7 @@ options:
 
   header_client_ip:
     description:
-      - Actions to take on the HTTP client-IP header in forwarded requests| forwards (pass), adds, or removes the HTTP
-      -  header.
+      - Actions to take on the HTTP client-IP header in forwarded requests
       - choice | pass | Forward the same HTTP header.
       - choice | add | Add the HTTP header.
       - choice | remove | Remove the HTTP header.
@@ -164,7 +160,7 @@ options:
       - If submitted, all other prefixed sub-parameters ARE IGNORED.
       - This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
+      - WHEN IN DOUBT, USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS.
     required: false
 
   headers_action:
@@ -196,28 +192,28 @@ EXAMPLES = '''
       host: "{{inventory_hostname}}"
       username: "{{ username }}"
       password: "{{ password }}"
-      name: "Ansible_Web_Proxy_Profile"
-      mode: "delete"
+      name: Ansible_Web_Proxy_Profile
+      mode: delete
 
   - name: CREATE Profile
     fmgr_secprof_proxy:
       host: "{{inventory_hostname}}"
       username: "{{ username }}"
       password: "{{ password }}"
-      name: "Ansible_Web_Proxy_Profile"
-      mode: "set"
-      header_client_ip: "pass"
-      header_front_end_https: "add"
-      header_via_request: "remove"
-      header_via_response: "pass"
-      header_x_authenticated_groups: "add"
-      header_x_authenticated_user: "remove"
-      strip_encoding: "enable"
-      log_header_change: "enable"
-      header_x_forwarded_for: "pass"
-      headers_action: "add-to-request"
-      headers_content: "test"
-      headers_name: "test_header"
+      name: Ansible_Web_Proxy_Profile
+      mode: set
+      header_client_ip: pass
+      header_front_end_https: add
+      header_via_request: remove
+      header_via_response: pass
+      header_x_authenticated_groups: add
+      header_x_authenticated_user: remove
+      strip_encoding: enable
+      log_header_change: enable
+      header_x_forwarded_for: pass
+      headers_action: add-to-request
+      headers_content: test
+      headers_name: test_header
 '''
 
 RETURN = """
