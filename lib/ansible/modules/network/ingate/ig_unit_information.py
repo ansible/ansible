@@ -1,30 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018, Ingate Systems AB
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2018, Ingate Systems AB
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.1'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'metadata_version': '1.1'
+}
 
 DOCUMENTATION = '''
 ---
@@ -133,14 +121,15 @@ unit-information:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.ingate.common import (ingate_argument_spec,
-                                                        ingate_create_client)
+                                                        ingate_create_client,
+                                                        is_ingatesdk_installed)
 
 try:
     from ingate import ingatesdk
-    HAS_INGATESDK = True
 except ImportError:
-    HAS_INGATESDK = False
+    pass
 
 
 def make_request(module):
@@ -156,15 +145,15 @@ def main():
     argument_spec = ingate_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
-    if not HAS_INGATESDK:
-        module.fail_json(msg='The Ingate Python SDK module is required')
+
+    is_ingatesdk_installed(module)
 
     result = dict(changed=False)
     try:
         response = make_request(module)
         result.update(response[0])
     except ingatesdk.SdkError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_native(e))
     module.exit_json(**result)
 
 
