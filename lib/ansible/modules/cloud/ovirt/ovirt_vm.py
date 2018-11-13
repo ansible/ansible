@@ -359,11 +359,12 @@ options:
         version_added: "2.3"
     cloud_init_persist:
         description:
-            - "If I(true) the C(cloud_init) or C(sysprep) parameters will be saved for the virtual machine
-               and won't be virtual machine won't be started as run-once."
+            - "If I(yes) the C(cloud_init) or C(sysprep) parameters will be saved for the virtual machine
+               and the virtual machine won't be started as run-once."
         type: bool
         version_added: "2.5"
         aliases: [ 'sysprep_persist' ]
+        default: 'no'
     kernel_params_persist:
         description:
             - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
