@@ -15,21 +15,21 @@ DOCUMENTATION = '''
 module: mongodb_shard
 short_description: Add and remove shards from a MongoDB Cluster
 description:
-    -  Add and remove shards from a MongoDB Cluster
+    -  Add and remove shards from a MongoDB Cluster.
 author: Rhys Campbell (@rhysmeister)
 version_added: "2.8"
 options:
     login_user:
         description:
-            - The user to login with
+            - The user to login with.
         required: false
     login_password:
         description:
-            - The password used to authenticate with
+            - The password used to authenticate with.
         required: false
     login_database:
         description:
-            - The database where login credentials are stored
+            - The database where login credentials are stored.
         required: false
         default: "admin"
     login_host:
@@ -45,14 +45,14 @@ options:
         default: 27017
     shard:
         description:
-            - The shard connection string
-            - Should be supplied in the form <replicaset name>/host:port as detailed in https://docs.mongodb.com/manual/tutorial/add-shards-to-shard-cluster/
-            - For example rs0/example1.mongodb.com:27017
+            - The shard connection string.
+            - Should be supplied in the form <replicaset name>/host:port as detailed in U(https://docs.mongodb.com/manual/tutorial/add-shards-to-shard-cluster/).
+            - For example rs0/example1.mongodb.com:27017.
         required: true
         default: null
     ssl:
         description:
-            - Whether to use an SSL connection when connecting to the database
+            - Whether to use an SSL connection when connecting to the database.
         default: False
         type: bool
     ssl_cert_reqs:
@@ -63,14 +63,14 @@ options:
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     state:
         description:
-            - Whether the shard should be present or absent from the Cluster
+            - Whether the shard should be present or absent from the Cluster.
         required: false
         default: present
         choices: ["present", "absent"]
 
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
-      can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
+      can be installed using pip or the OS package manager. @see U(http://api.mongodb.org/python/current/installation.html)
 requirements: [ "pymongo" ]
 '''
 
