@@ -336,7 +336,7 @@ class WapiModule(WapiBase):
         ''' this function gets the reference object of pre-existing nios objects '''
 
         update = False
-        old_name = new_name = test_obj_filter = None
+        old_name = new_name = None
         if ('name' in obj_filter):
             # gets and returns the current object based on name/old_name passed
             try:
@@ -369,7 +369,7 @@ class WapiModule(WapiBase):
                 else:
                     test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
             # check if test_obj_filter is empty copy passed obj_filter
-            if not test_obj_filter:
+            else:
                 test_obj_filter = obj_filter
             ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
         elif (ib_obj_type == NIOS_ZONE):
