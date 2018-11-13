@@ -953,6 +953,7 @@ class TaskParameters(DockerBaseClass):
 
     def __init__(self, client):
         super(TaskParameters, self).__init__()
+
         self.client = client
 
         self.auto_remove = None
