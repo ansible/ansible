@@ -10,13 +10,23 @@ Release Schedule
 Expected
 ========
 
-- Alpha1/Core freeze      3/14/2019
-- Beta1/Community freeze  3/21/2019
-- Rc1 (Note: 2w after b1) 4/4/2019
-- Rc2 (if needed)         4/11/2019
-- Rc3 (if needed)         4/18/2019
-- Rc4 (if needed)         4/25/2019
-- Release                 5/2/2019
+- 2019-03-14 Alpha 1 **Core freeze**
+
+  No new features to ``support:core`` code.
+  Includes no new module options to Core modules
+- 2019-03-21 Beta 1 **Community freeze**
+
+  No new functionality (including modules/plugins) after this point
+- 2019-04-04 Release Candidate 1
+ 
+  Note: 2 weeks after Beta 1
+- 2019-04-11 Release Candidate 2 (if needed)
+- 2019-04-18 Release Candidate 3 (if needed)
+- 2019-04-25 Release Candidate 4 (if needed)
+- 2019-05-02 Release
+
+
+PRs must be raised well in advance of the above dates to have a chance of being included in this Ansible release.
 
 Release Manager
 ---------------
