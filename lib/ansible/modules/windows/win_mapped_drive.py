@@ -20,12 +20,19 @@ short_description: Map network drives for users
 description:
 - Allows you to modify mapped network drives for individual users.
 notes:
-- This can only map a network drive for the current executing user and does not
-  allow you to set a default drive for all users of a system. Use other
-  Microsoft tools like GPOs to achieve this goal.
 - You cannot use this module to access a mapped drive in another Ansible task,
   drives mapped with this module are only accessible when logging in
   interactively with the user through the console or RDP.
+- To create a mapped drive with saved credentials, use become to access the
+  current user's credential store when creating the drive. Any credentials
+  should be added to the store with C(cmdkey.exe).
+- Using the I(username) and I(password) options will allow a module to create
+  a mapped drive that requires authentication but the drive will not accessible
+  on the next interactive logon as the password is not saved.
+- This module will only map a drive for the current user, to map a drive for
+  all users of a system, use become with the U(SYSTEM) account. This will not
+  allow you to save the credentials as C(cmdkey.exe) is user specific, use
+  other Microsoft tools like GPOs to achieve this goal.
 options:
   letter:
     description:
@@ -35,14 +42,16 @@ options:
   password:
     description:
     - The password for C(username).
+    - This is never saved with a mapped drive, use the C(cmdkey) executable
+      with become to persist a username and password.
   path:
     description:
     - The UNC path to map the drive to.
     - This is required if C(state=present).
-    - If C(state=absent) and path is not set, the module will delete the mapped
-      drive regardless of the target.
-    - If C(state=absent) and the path is set, the module will throw an error if
-      path does not match the target of the mapped drive.
+    - If C(state=absent) and I(path) is not set, the module will delete the
+      mapped drive regardless of the target.
+    - If C(state=absent) and the I(path) is set, the module will throw an error
+      if path does not match the target of the mapped drive.
     type: path
   state:
     description:
@@ -52,9 +61,17 @@ options:
     default: present
   username:
     description:
-    - Credentials to map the drive with.
-    - The username MUST include the domain or servername like SERVER\user, see
-      the example for more information.
+    - The username to store with the mapped drive configuration.
+    - This is used with I(password) when attempting to map the drive in the
+      module.
+    - Unlike I(password), this value is saved and is used for subsequent
+      authentication attempts. This will override any saved Windows credentials
+      stored by C(cmdkey) and will result in a failed network connection on the
+      next interactive logon as no password is saved.
+    - When creating a mapped drive that requires credentials, it is recommended
+      to use C(cmdkey) to create the saved Windows credentials then run this
+      module with become and to not define this key, see the examples for more
+      details.
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -76,19 +93,23 @@ EXAMPLES = r'''
     path: \\domain\appdata\accounting
     state: absent
 
-- name: Create mapped drive with local credentials
-  win_mapped_drive:
-    letter: M
-    path: \\SERVER\c$
-    username: SERVER\Administrator
-    password: Password
+- name: Create mapped drive with credentials and save the username and password
+  block:
+  - name: Save the network credentials required for the mapped drive
+    win_command: cmdkey.exe /add:server /user:username@DOMAIN /pass:Password01
+    no_log: True
 
-- name: Create mapped drive with domain credentials
-  win_mapped_drive:
-    letter: M
-    path: \\domain\appdata\it
-    username: DOMAIN\IT
-    password: Password
+  - name: Create a mapped drive that requires authentication
+    win_mapped_drive:
+      letter: M
+      path: \\SERVER\C$
+      state: present
+  vars:
+    # become is required to save and retrieve the credentials in the tasks
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: '{{ ansible_user }}'
+    ansible_become_pass: '{{ ansible_password }}'
 '''
 
 RETURN = r'''
