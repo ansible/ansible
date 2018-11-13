@@ -224,6 +224,7 @@ files:
     maintainers: caphrim007
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
+  $modules/network/fortimanager/: $team_fortimanager
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
   $modules/network/ios/: rcarrillocruz
@@ -536,6 +537,11 @@ files:
       - f5
   $module_utils/network/fortios:
     maintainers: bjolivot
+  $module_utils/network/fortimanager:
+    maintainers: $team_fortimanager
+    labels:
+      - fortimanager
+      - networking
   $module_utils/network/ios:
     support: network
     maintainers: $team_networking
@@ -1147,3 +1153,4 @@ macros:
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
+  team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
