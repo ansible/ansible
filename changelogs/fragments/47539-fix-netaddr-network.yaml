@@ -1,0 +1,2 @@
+bugfixes:
+  - ipaddr - fix issue where network address was blank for 0-size networks (https://github.com/ansible/ansible/issues/17872)

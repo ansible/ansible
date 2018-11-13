@@ -18,13 +18,21 @@
 
 # ============================================================
 
+- name: remove database if it exists
+  command: >
+    mysql -sse "drop database {{db_name}};"
+  ignore_errors: True
+
 - name: make sure the test database is not there
   command: mysql {{db_name}}
   register: mysql_db_check
   failed_when: "'1049' not in mysql_db_check.stderr"
 
 - name: test state=present for a database name (expect changed=true)
-  mysql_db: name={{ db_name }} state=present
+  mysql_db:
+    name: '{{ db_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message that database exist
@@ -42,7 +50,10 @@
 
 # ============================================================
 - name: test state=absent for a database name (expect changed=true)
-  mysql_db: name={{ db_name }} state=absent
+  mysql_db:
+    name: '{{ db_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message that database does not exist
@@ -60,7 +71,11 @@
 
 # ============================================================
 - name: test mysql_db encoding param not valid - issue 8075
-  mysql_db: name=datanotvalid state=present encoding=notvalid
+  mysql_db:
+    name: datanotvalid
+    state: present
+    encoding: notvalid
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
   ignore_errors: true
 
@@ -73,7 +88,11 @@
 
 # ============================================================
 - name: test mysql_db using a valid encoding utf8 (expect changed=true)
-  mysql_db: name=en{{ db_name }}  state=present encoding=utf8
+  mysql_db:
+    name: 'en{{ db_name }}'
+    state: present
+    encoding: utf8
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message created a database
@@ -87,11 +106,18 @@
   assert: { that: "'utf8' in result.stdout" }
 
 - name: remove database
-  mysql_db: name=en{{ db_name }} state=absent
+  mysql_db:
+    name: 'en{{ db_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
 
 # ============================================================
 - name: test mysql_db using valid encoding binary (expect changed=true)
-  mysql_db: name=en{{ db_name }}  state=present encoding=binary
+  mysql_db:
+    name: 'en{{ db_name }}'
+    state: present
+    encoding: binary
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message that database was created
@@ -105,14 +131,26 @@
   assert: { that: "'binary' in result.stdout" }
 
 - name: remove database
-  mysql_db: name=en{{ db_name }}  state=absent
+  mysql_db:
+    name: 'en{{ db_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
 
 # ============================================================
 - name: create user1 to access database dbuser1
-  mysql_user: name=user1 password=Hfd6fds^dfA8Ga priv=*.*:ALL state=present
+  mysql_user:
+    name: user1
+    password: 'Hfd6fds^dfA8Ga'
+    priv: '*.*:ALL'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: create database dbuser1 using user1
-  mysql_db: name={{ db_user1 }} state=present login_user=user1 login_password=Hfd6fds^dfA8Ga
+  mysql_db:
+    name: '{{ db_user1 }}'
+    state: present
+    login_user: user1
+    login_password: 'Hfd6fds^dfA8Ga'
   register: result
 
 - name: assert output message that database was created
@@ -127,10 +165,19 @@
 
 # ============================================================
 - name: create user2 to access database with privilege select only
-  mysql_user: name=user2 password=kjsfd&F7safjad priv=*.*:SELECT state=present
+  mysql_user:
+    name: user2
+    password: 'kjsfd&F7safjad'
+    priv: '*.*:SELECT'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: create database dbuser2 using user2 with no privilege to create (expect failed=true)
-  mysql_db: name={{ db_user2 }} state=present login_user=user2 login_password=kjsfd&F7safjad
+  mysql_db:
+    name: '{{ db_user2 }}'
+    state: present
+    login_user: user2
+    login_password: 'kjsfd&F7safjad'
   register: result
   ignore_errors: true
 
@@ -149,7 +196,11 @@
 
 # ============================================================
 - name: delete database using user2 with no privilege to delete (expect failed=true)
-  mysql_db: name={{ db_user1 }} state=absent login_user=user2 login_password=kjsfd&F7safjad
+  mysql_db:
+    name: '{{ db_user1 }}'
+    state: absent
+    login_user: user2
+    login_password: 'kjsfd&F7safjad'
   register: result
   ignore_errors: true
 
@@ -168,7 +219,11 @@
 
 # ============================================================
 - name: delete database using user1 with all privilege to delete a database (expect changed=true)
-  mysql_db: name={{ db_user1 }} state=absent login_user=user1 login_password=Hfd6fds^dfA8Ga
+  mysql_db:
+    name: '{{ db_user1 }}'
+    state: absent
+    login_user: user1
+    login_password: 'Hfd6fds^dfA8Ga'
   register: result
   ignore_errors: true
 

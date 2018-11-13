@@ -201,7 +201,7 @@ class Vultr:
             return {}
 
         try:
-            return self.module.from_json(to_text(res))
+            return self.module.from_json(to_native(res)) or {}
         except ValueError as e:
             self.module.fail_json(msg="Could not process response into json: %s" % e)
 

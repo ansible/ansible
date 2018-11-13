@@ -144,7 +144,7 @@ In addition, the following Ansible Core modules/action-plugins work with Windows
 * set_stats
 * setup
 * slurp
-* template (also: win_tempate)
+* template (also: win_template)
 * wait_for_connection
 
 Can I run Python modules?

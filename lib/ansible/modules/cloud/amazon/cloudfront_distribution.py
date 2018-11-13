@@ -194,7 +194,7 @@ options:
           error messages returned to the user.
           Each custom error response object comprises the attributes
             I(error_code)
-            I(reponse_page_path)
+            I(response_page_path)
             I(response_code)
             I(error_caching_min_ttl)
 

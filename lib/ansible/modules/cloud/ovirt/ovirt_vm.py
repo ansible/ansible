@@ -576,6 +576,17 @@ options:
             - C(directory) - The name of the directory where the OVA has to be exported.
             - C(filename) - The name of the exported OVA file.
         version_added: "2.8"
+    force_migrate:
+        description:
+            - "If I(true), the VM will migrate even if it is defined as non-migratable."
+        version_added: "2.8"
+        type: bool
+    next_run:
+        description:
+            - "If I(true), the update will not be applied to the VM immediately and will be only applied when virtual machine is restarted."
+            - NOTE - If there are multiple next run configuration changes on the VM, the first change may get reverted if this option is not passed.
+        version_added: "2.8"
+        type: bool
 
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -1374,7 +1385,7 @@ class VmsModule(BaseModule):
                 current_vm_host = hosts_service.host_service(entity.host.id).get().name
                 if vm_host != current_vm_host:
                     if not self._module.check_mode:
-                        vm_service.migrate(host=otypes.Host(name=vm_host))
+                        vm_service.migrate(host=otypes.Host(name=vm_host), force=self.param('force_migrate'))
                         self._wait_for_UP(vm_service)
                     self.changed = True
 
@@ -2043,11 +2054,16 @@ def main():
         exclusive=dict(type='bool'),
         export_domain=dict(default=None),
         export_ova=dict(type='dict'),
+        force_migrate=dict(type='bool'),
+        next_run=dict(type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_one_of=[['id', 'name']],
+        required_if=[
+            ('state', 'registered', ['storage_domain']),
+        ]
     )
 
     check_sdk(module)
@@ -2075,6 +2091,7 @@ def main():
             ret = vms_module.create(
                 entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
+                update_params={'next_run': module.params['next_run']} if module.params['next_run'] is not None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )

@@ -23,6 +23,7 @@ import time
 import uuid
 import hashlib
 import sys
+import re
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection
@@ -148,7 +149,11 @@ class ActionModule(ActionBase):
                 proto=proto, timeout=timeout
             )
         except Exception as exc:
-            if (to_text(exc)).find("No such file or directory") > 0:
+            pattern = to_text(exc)
+            not_found_exc = "No such file or directory"
+            if re.search(not_found_exc, pattern, re.I):
+                if os.path.exists(source_file):
+                    os.remove(source_file)
                 return True
             else:
                 try:
@@ -162,6 +167,7 @@ class ActionModule(ActionBase):
             with open(source_file, 'r') as f:
                 old_content = f.read()
         except (IOError, OSError) as ioexc:
+            os.remove(source_file)
             raise IOError(ioexc)
 
         sha1 = hashlib.sha1()

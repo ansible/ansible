@@ -1,0 +1,12 @@
+# AWS_ACCESS_KEY='XXX' AWS_SECRET_KEY='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_s3
+
+# use a fact instead of a variable, otherwise template is evaluate each time variable is used
+- set_fact:
+    bucket_name: "ansible-s3-test-{{ 99999999 | random | to_uuid }}"
+
+- name: Show bucket name
+  debug:
+    var: bucket_name
+
+- import_tasks: s3_bucket.yml
+- import_tasks: aws_s3.yml

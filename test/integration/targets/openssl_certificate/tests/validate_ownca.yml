@@ -47,3 +47,21 @@
   assert:
     that:
       - ownca_cert2_modulus.stdout == privatekey2_modulus.stdout
+
+- name: Validate owncal certificate3 (test - notBefore)
+  shell: 'openssl x509 -noout -in {{ output_dir }}/ownca_cert3.pem -text | grep "Not Before" | sed "s/.*: \(.*\) .*/\1/g"'
+  register: ownca_cert3_notBefore
+
+- name: Validate ownca certificate3 (test - notAfter)
+  shell: 'openssl x509 -noout -in {{ output_dir }}/ownca_cert3.pem -text | grep "Not After" | sed "s/.*: \(.*\) .*/\1/g"'
+  register: ownca_cert3_notAfter
+
+- name: Validate ownca certificate3 (assert - notBefore)
+  assert:
+    that:
+      - ownca_cert3_notBefore.stdout == 'Oct 23 13:37:42 2018'
+
+- name: Validate ownca certificate3 (assert - notAfter)
+  assert:
+    that:
+      - ownca_cert3_notAfter.stdout == 'Oct 23 13:37:42 2019'

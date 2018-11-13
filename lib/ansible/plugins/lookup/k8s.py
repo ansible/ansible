@@ -105,7 +105,7 @@ DOCUMENTATION = """
           variable.
       key_file:
         description:
-        - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_HOST environment
+        - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE environment
           variable.
       ssl_ca_cert:
         description:

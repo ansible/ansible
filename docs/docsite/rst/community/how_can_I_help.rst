@@ -28,6 +28,11 @@ There are many forums online where Ansible users ask and answer questions. Reach
 
 You can find the official :ref:`Ansible communication channels <communication>`.
 
+Review, fix, and maintain the documentation
+===========================================
+
+Typos are everywhere, even in the Ansible documentation. We work hard to keep the documentation up-to-date, but you may also find out-dated examples. We offer easy ways to :ref:`report and/or fix documentation errors <community_documentation_contributions>`.
+
 Participate in your local meetup
 ================================
 

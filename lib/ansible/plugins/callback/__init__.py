@@ -49,6 +49,9 @@ except ImportError:
 __all__ = ["CallbackBase"]
 
 
+_DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+
+
 class CallbackBase(AnsiblePlugin):
 
     '''
@@ -234,11 +237,11 @@ class CallbackBase(AnsiblePlugin):
         ''' removes data from results for display '''
 
         # mostly controls that debug only outputs what it was meant to
-        if task_name in ['debug']:
+        if task_name == 'debug':
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):
-                    if key != 'msg' and not key.startswith('_'):
+                    if key not in _DEBUG_ALLOWED_KEYS and not key.startswith('_'):
                         result.pop(key)
             else:
                 # 'var' value as field, so eliminate others and what is left should be varname
@@ -411,4 +414,11 @@ class CallbackBase(AnsiblePlugin):
         pass
 
     def v2_runner_retry(self, result):
+        pass
+
+    def v2_runner_on_start(self, host, task):
+        """Event used when host begins execution of a task
+
+        .. versionadded:: 2.8
+        """
         pass

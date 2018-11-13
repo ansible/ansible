@@ -88,6 +88,9 @@ RETURN = """
       routing_key:
         description: The routing_key on the message in the queue.
         type: str
+      headers:
+        description: The headers for the message returned from the queue.
+        type: dict
       json:
         description: If application/json is specified in content_type, json will be loaded into variables.
         type: dict
@@ -161,7 +164,8 @@ class LookupModule(LookupBase):
                                    'redelivered': method_frame.redelivered,
                                    'exchange': method_frame.exchange,
                                    'delivery_mode': properties.delivery_mode,
-                                   'content_type': properties.content_type
+                                   'content_type': properties.content_type,
+                                   'headers': properties.headers
                                    })
                 if properties.content_type == 'application/json':
                     try:
