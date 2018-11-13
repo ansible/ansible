@@ -1,21 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018, Ingate Systems AB
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2018, Ingate Systems AB
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -48,24 +34,7 @@ def ingate_argument_spec(**kwargs):
 
 
 def ingate_create_client(**kwargs):
-    if not HAS_INGATESDK:
-        raise ImportError("The Ingate Python SDK module is required")
-
-    client_params = kwargs['client']
-
-    # Create API client.
-    api_client = ingatesdk.Client(client_params['version'],
-                                  client_params['scheme'],
-                                  client_params['address'],
-                                  client_params['username'],
-                                  client_params['password'],
-                                  port=client_params['port'],
-                                  timeout=client_params['timeout'])
-
-    # Check if we should skip SSL Certificate verification.
-    verify_ssl = client_params.get('verify_ssl')
-    if verify_ssl is not None and not verify_ssl:
-        api_client.skip_verify_certificate()
+    api_client = ingate_create_client_noauth(**kwargs)
 
     # Authenticate and get hold of a security token.
     api_client.authenticate()
@@ -75,9 +44,6 @@ def ingate_create_client(**kwargs):
 
 
 def ingate_create_client_noauth(**kwargs):
-    if not HAS_INGATESDK:
-        raise ImportError("The Ingate Python SDK module is required")
-
     client_params = kwargs['client']
 
     # Create API client.
@@ -91,8 +57,13 @@ def ingate_create_client_noauth(**kwargs):
 
     # Check if we should skip SSL Certificate verification.
     verify_ssl = client_params.get('verify_ssl')
-    if verify_ssl and not verify_ssl:
+    if not verify_ssl:
         api_client.skip_verify_certificate()
 
     # Return the client.
     return api_client
+
+
+def is_ingatesdk_installed(module):
+    if not HAS_INGATESDK:
+        module.fail_json(msg="The Ingate Python SDK module is required for this module.")
