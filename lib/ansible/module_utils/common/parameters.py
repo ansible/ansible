@@ -36,34 +36,30 @@ PASS_VARS = {
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
 SEQUENCETYPE = frozenset, KeysView, Sequence
+DEFAULT_LEGAL_PARAMS = ['_ansible_%s' % k for k in PASS_VARS]
 
 
-def handle_aliases(params, argument_spec, legal_inputs=None, spec=None, param=None):
+def handle_aliases(argument_spec, params, legal_inputs=None):
     if legal_inputs is None:
-        legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
-    # this uses exceptions as it happens before we can safely call fail_json
+        legal_inputs = DEFAULT_LEGAL_PARAMS[:]
     aliases_results = {}  # alias:canon
-    if param is None:
-        param = params
 
-    if spec is None:
-        spec = argument_spec
-    for (k, v) in spec.items():
+    for (k, v) in argument_spec.items():
         legal_inputs.append(k)
         aliases = v.get('aliases', None)
         default = v.get('default', None)
         required = v.get('required', False)
         if default is not None and required:
             # not alias specific but this is a good place to check this
-            raise Exception("internal error: required and default are mutually exclusive for %s" % k)
+            raise ValueError("internal error: required and default are mutually exclusive for %s" % k)
         if aliases is None:
             continue
         if not isinstance(aliases, SEQUENCETYPE) or isinstance(aliases, (binary_type, text_type)):
-            raise Exception('internal error: aliases must be a list or tuple')
+            raise TypeError('internal error: aliases must be a list or tuple')
         for alias in aliases:
             legal_inputs.append(alias)
             aliases_results[alias] = k
-            if alias in param:
-                param[k] = param[alias]
+            if alias in params:
+                params[k] = params[alias]
 
-    return aliases_results
+    return aliases_results, legal_inputs

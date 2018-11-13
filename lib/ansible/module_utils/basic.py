@@ -792,7 +792,7 @@ class AnsibleModule(object):
         # append to legal_inputs and then possibly check against them
         try:
             self.aliases = self._handle_aliases()
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             # Use exceptions here because it isn't safe to call fail_json until no_log is processed
             print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
             sys.exit(1)
@@ -1566,7 +1566,14 @@ class AnsibleModule(object):
                            to_native(e), exception=traceback.format_exc())
 
     def _handle_aliases(self, spec=None, param=None):
-        return handle_aliases(self.params, self.argument_spec, self._legal_inputs, spec, param)
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        # this uses exceptions as it happens before we can safely call fail_json
+        alias_results, legal_inputs = handle_aliases(spec, param, self._legal_inputs)
+        self._legal_inputs = legal_inputs
+        return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
         if spec is None:
