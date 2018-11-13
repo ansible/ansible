@@ -19,6 +19,10 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+from datetime import datetime
+import time
+import sys
+
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
 from ansible.module_utils.six import string_types
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
@@ -40,6 +44,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
         argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
         argument_spec['merge_type'] = dict(type='list', choices=['json', 'merge', 'strategic-merge'])
+        argument_spec['wait'] = dict(type='bool', default=False)
+        argument_spec['wait_timeout'] = dict(type='int', default=120)
         return argument_spec
 
     def __init__(self, *args, **kwargs):
@@ -127,6 +133,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         name = definition['metadata'].get('name')
         namespace = definition['metadata'].get('namespace')
         existing = None
+        wait = self.params['wait']
+        wait_timeout = self.params['wait_timeout']
 
         self.remove_aliases()
 
@@ -139,7 +147,12 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         try:
             existing = resource.get(name=name, namespace=namespace)
         except NotFoundError:
-            pass
+            # Remove traceback so that it doesn't show up in later failures
+            try:
+                sys.exc_clear()
+            except AttributeError:
+                # no sys.exc_clear on python3
+                pass
         except ForbiddenError as exc:
             if definition['kind'] in ['Project', 'ProjectRequest'] and state != 'absent':
                 return self.create_project_request(definition)
@@ -164,6 +177,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         self.fail_json(msg="Failed to delete object: {0}".format(exc.body),
                                        error=exc.status, status=exc.status, reason=exc.reason)
                 result['changed'] = True
+                if wait:
+                    success, resource, duration = self.wait(resource, definition, wait_timeout, 'absent')
+                    result['duration'] = duration
+                    if not success:
+                        self.fail_json(msg="Resource deletion timed out", **result)
                 return result
         else:
             if not existing:
@@ -181,10 +199,15 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         return result
                     except DynamicApiError as exc:
                         self.fail_json(msg="Failed to create object: {0}".format(exc.body),
-                                       error=exc.status, status=exc.status, reason=exc.reason)
+                                       error=exc.status, status=exc.status, reason=exc.reason, definition=definition)
+                success = True
                 result['result'] = k8s_obj
+                if wait:
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
                 result['changed'] = True
                 result['method'] = 'create'
+                if not success:
+                    self.fail_json(msg="Resource creation timed out", **result)
                 return result
 
             match = False
@@ -199,11 +222,16 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     except DynamicApiError as exc:
                         self.fail_json(msg="Failed to replace object: {0}".format(exc.body),
                                        error=exc.status, status=exc.status, reason=exc.reason)
-                match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
+                success = True
                 result['result'] = k8s_obj
+                if wait:
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
+                match, diffs = self.diff_objects(existing.to_dict(), result['result'].to_dict())
                 result['changed'] = not match
                 result['method'] = 'replace'
                 result['diff'] = diffs
+                if not success:
+                    self.fail_json(msg="Resource replacement timed out", **result)
                 return result
 
             # Differences exist between the existing obj and requested params
@@ -226,11 +254,18 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 if error:
                     self.fail_json(**error)
 
-            match, diffs = self.diff_objects(existing.to_dict(), k8s_obj)
+            success = True
+            result['result'] = k8s_obj
+            if wait:
+                success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
+            match, diffs = self.diff_objects(existing.to_dict(), result['result'])
             result['result'] = k8s_obj
             result['changed'] = not match
             result['method'] = 'patch'
             result['diff'] = diffs
+
+            if not success:
+                self.fail_json(msg="Resource update timed out", **result)
             return result
 
     def patch_resource(self, resource, definition, existing, name, namespace, merge_type=None):
@@ -261,3 +296,56 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         result['changed'] = True
         result['method'] = 'create'
         return result
+
+    def _wait_for(self, resource, name, namespace, predicate, timeout, state):
+        start = datetime.now()
+
+        def _wait_for_elapsed():
+            return (datetime.now() - start).seconds
+
+        response = None
+        while _wait_for_elapsed() < timeout:
+            try:
+                response = resource.get(name=name, namespace=namespace)
+                if predicate(response):
+                    return True, response.to_dict(), _wait_for_elapsed()
+                time.sleep(timeout // 20)
+            except NotFoundError:
+                if state == 'absent':
+                    return True, response.to_dict(), _wait_for_elapsed()
+        if response:
+            response = response.to_dict()
+        return False, response, _wait_for_elapsed()
+
+    def wait(self, resource, definition, timeout, state='present'):
+
+        def _deployment_ready(deployment):
+            # FIXME: frustratingly bool(deployment.status) is True even if status is empty
+            # Furthermore deployment.status.availableReplicas == deployment.status.replicas == None if status is empty
+            return (deployment.status and deployment.status.replicas is not None and
+                    deployment.status.availableReplicas == deployment.status.replicas and
+                    deployment.status.observedGeneration == deployment.metadata.generation)
+
+        def _pod_ready(pod):
+            return (pod.status and pod.status.containerStatuses is not None and
+                    all([container.ready for container in pod.status.containerStatuses]))
+
+        def _daemonset_ready(daemonset):
+            return (daemonset.status and daemonset.status.desiredNumberScheduled is not None and
+                    daemonset.status.numberReady == daemonset.status.desiredNumberScheduled and
+                    daemonset.status.observedGeneration == daemonset.metadata.generation)
+
+        def _resource_absent(resource):
+            return not resource
+
+        waiter = dict(
+            Deployment=_deployment_ready,
+            DaemonSet=_daemonset_ready,
+            Pod=_pod_ready
+        )
+        kind = definition['kind']
+        if state == 'present':
+            predicate = waiter.get(kind, lambda x: True)
+        else:
+            predicate = _resource_absent
+        return self._wait_for(resource, definition['metadata']['name'], definition['metadata']['namespace'], predicate, timeout, state)
