@@ -282,6 +282,7 @@ class Connection(ConnectionBase):
             # starting a new interpreter to save on time
             b_command = base64.b64decode(cmd.split(" ")[-1])
             script = to_text(b_command, 'utf-16-le')
+            in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
             display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
         else:
             # in other cases we want to execute the cmd as the script
