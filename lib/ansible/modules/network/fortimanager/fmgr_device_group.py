@@ -30,32 +30,31 @@ DOCUMENTATION = '''
 module: fmgr_device_group
 version_added: "2.8"
 author: Luke Weighall, Andrew Welsh
-short_description: Alter FortiManager device groups
+short_description: Alter FortiManager device groups.
 description:
-  - Add or edit device groups and assign devices to device groups FortiManager Device Manager using jsonrpc API
+  - Add or edit device groups and assign devices to device groups FortiManager Device Manager using JSON RPC API.
 
 options:
   adom:
     description:
       - The ADOM the configuration should belong to.
-    required: false
-    default: root
+    required: true
 
   vdom:
     description:
-      - The VDOM of on the Fortigate you want to add, must match the device in FMGR. Usually root.
-    required: false
-    default: root
+      - The VDOM of the Fortigate you want to add, must match the device in FMGR. Usually root.
+    required: true
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
     description:
-      - The username to log into the FortiManager
+      - The username to log into the FortiManager.
     required: true
+
   password:
     description:
       - The password associated with the username account.
@@ -66,11 +65,11 @@ options:
       - The desired state of the specified object.
       - absent will delete the object if it exists. If grp_members is defined, only members are deleted.
       - present will create the configuration if needed.
-      - To delete a grp_name, you must omit the grp_members field in the playbook task while setting to absent
+      - To delete a grp_name, you must omit the grp_members field in the playbook task while setting to absent.
     required: true
     default: present
-
     choices: ["absent", "present"]
+
   grp_name:
     description:
       - The name of the device group.
@@ -85,8 +84,7 @@ options:
     description:
       - A comma separated list of device names or device groups to be added as members to the device group.
       - If Group Members are defined, and state="absent", only group members will be removed.
-      - If you want to delete a group itself, you must omit this parameter from the task in playbook
-      - Otherwise module assumes
+      - If you want to delete a group itself, you must omit this parameter from the task in playbook.
     required: false
 
 '''
@@ -324,28 +322,28 @@ def main():
         if paramgram["grp_name"] is not None and paramgram["state"] == "present":
             # add device group
             results = add_device_group(fmg, paramgram)
-            if not results[0] == 0 and not results[0] == -2:
+            if results[0] != 0 and results[0] != -2:
                 fmgr_logout(fmg, module, msg="Failed to Add Device Group", results=results, good_codes=[0])
 
         # PROCESS THE GROUP MEMBER ADDS
         if paramgram["grp_members"] is not None and paramgram["state"] == "present":
             # assign devices to device group
             results = add_group_member(fmg, paramgram)
-            if not results[0] == 0 and not results[0] == -2:
+            if results[0] != 0 and results[0] != -2:
                 fmgr_logout(fmg, module, msg="Failed to Add Group Member(s)", results=results, good_codes=[0])
 
         # PROCESS THE GROUP MEMBER DELETES
         if paramgram["grp_members"] is not None and paramgram["state"] == "absent":
             # remove devices grom a group
             results = delete_group_member(fmg, paramgram)
-            if not results[0] == 0:
+            if results[0] != 0:
                 fmgr_logout(fmg, module, msg="Failed to Delete Group Member(s)", results=results, good_codes=[0])
 
         # PROCESS THE GROUP DELETES, ONLY IF GRP_MEMBERS IS NOT NULL TOO
         if paramgram["grp_name"] is not None and paramgram["state"] == "absent" and paramgram["grp_members"] is None:
             # delete device group
             results = delete_device_group(fmg, paramgram)
-            if not results[0] == 0:
+            if results[0] != 0:
                 fmgr_logout(fmg, module, msg="Failed to Delete Device Group", results=results, good_codes=[0])
 
     # RETURN THE RESULTS
