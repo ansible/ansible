@@ -156,10 +156,8 @@ class Connection(NetworkConnectionBase):
 
     def _connect(self):
         if not HAS_NAPALM:
-            raise AnsibleError(
-                'Napalm is required to use the napalm connection type.\n'
-                'Please run pip install napalm'
-            )
+            raise AnsibleError('The "napalm" python library is required to use the napalm connection type.\n')
+
         super(Connection, self)._connect()
 
         if not self.connected:

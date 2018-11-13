@@ -39,7 +39,7 @@ class ActionModule(ActionBase):
             # module args
             try:
                 async_dir = self._connection._shell.get_option('async_dir')
-            except KeyError:
+            except AttributeError:
                 # here for 3rd party shell plugin compatibility in case they do
                 # not define the async_dir option
                 async_dir = "~/.ansible_async"
