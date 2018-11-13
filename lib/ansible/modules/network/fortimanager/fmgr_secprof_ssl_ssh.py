@@ -28,9 +28,9 @@ DOCUMENTATION = '''
 module: fmgr_secprof_ssl_ssh
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
+    - Luke Weighall (lweighall)
+    - Andrew Welsh (Ghilli3)
+    - Jim Huber (p4r4n0y1ng)
 short_description: Manage SSL and SSH security profiles in FortiManager
 description:
   -  Manage SSL and SSH security profiles in FortiManager via the FMG API
@@ -44,7 +44,7 @@ options:
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
@@ -687,24 +687,24 @@ EXAMPLES = '''
       host: "{{inventory_hostname}}"
       username: "{{ username }}"
       password: "{{ password }}"
-      name: "Ansible_SSL_SSH_Profile"
-      mode: "delete"
+      name: Ansible_SSL_SSH_Profile
+      mode: delete
 
   - name: CREATE Profile
     fmgr_secprof_ssl_ssh:
       host: "{{inventory_hostname}}"
       username: "{{ username }}"
       password: "{{ password }}"
-      name: "Ansible_SSL_SSH_Profile"
+      name: Ansible_SSL_SSH_Profile
       comment: "Created by Ansible Module TEST"
-      mode: "set"
-      mapi_over_https: "enable"
-      rpc_over_https: "enable"
-      server_cert_mode: "replace"
-      ssl_anomalies_log: "enable"
-      ssl_exemptions_log: "enable"
-      use_ssl_server: "enable"
-      whitelist: "enable"
+      mode: set
+      mapi_over_https: enable
+      rpc_over_https: enable
+      server_cert_mode: replace
+      ssl_anomalies_log: enable
+      ssl_exemptions_log: enable
+      use_ssl_server: enable
+      whitelist: enable
 '''
 
 RETURN = """
