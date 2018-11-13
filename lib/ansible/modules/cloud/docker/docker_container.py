@@ -2505,22 +2505,34 @@ class ContainerManager(DockerBaseClass):
         self.results['changed'] = True
         response = None
         if not self.check_mode:
-            try:
-                # New docker versions do not allow containers to be removed if they are paused
-                self.client.unpause(container=container_id)
-            except Exception as exc:
-                pass
-            try:
-                response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
-            except NotFound as exc:
-                pass
-            except APIError as exc:
-                if 'removal of container ' in exc.explanation and ' is already in progress' in exc.explanation:
+            count = 0
+            while True:
+                try:
+                    response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
+                except NotFound as exc:
                     pass
-                else:
+                except APIError as exc:
+                    if 'Unpause the container before stopping or killing' in exc.explanation:
+                        # New docker versions do not allow containers to be removed if they are paused
+                        # Make sure we don't end up in an infinite loop
+                        if count == 3:
+                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
+                        count += 1
+                        # Unpause
+                        try:
+                            self.client.unpause(container=container_id)
+                        except Exception as exc2:
+                            self.fail("Error unpausing container %s for removal: %s" % (container_id, str(exc2)))
+                        # Now try again
+                        continue
+                    if 'removal of container ' in exc.explanation and ' is already in progress' in exc.explanation:
+                        pass
+                    else:
+                        self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+                except Exception as exc:
                     self.fail("Error removing container %s: %s" % (container_id, str(exc)))
-            except Exception as exc:
-                self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+                # We only loop when explicitly requested by 'continue'
+                break
         return response
 
     def container_update(self, container_id, update_parameters):
