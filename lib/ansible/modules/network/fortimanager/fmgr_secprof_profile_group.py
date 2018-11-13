@@ -28,12 +28,12 @@ DOCUMENTATION = '''
 module: fmgr_secprof_profile_group
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
+    - Luke Weighall (lweighall)
+    - Andrew Welsh (Ghilli3)
+    - Jim Huber (p4r4n0y1ng)
 short_description: Manage security profiles within FortiManager
 description:
-  - Manage security profile group which allows you to create a group of security profiles and apply that to a policy
+  - Manage security profile group which allows you to create a group of security profiles and apply that to a policy.
 
 options:
   adom:
@@ -44,7 +44,7 @@ options:
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
@@ -60,7 +60,7 @@ options:
   mode:
     description:
       - Sets one of three modes for managing the object.
-      - Allows use of soft-adds instead of overwriting existing values
+      - Allows use of soft-adds instead of overwriting existing values.
     choices: ['add', 'set', 'delete', 'update']
     required: false
     default: add
