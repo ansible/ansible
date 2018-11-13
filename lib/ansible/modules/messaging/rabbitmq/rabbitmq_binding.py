@@ -117,7 +117,7 @@ class RabbitMqBinding(object):
                                                       urllib_parse.quote(self.name, safe=''),
                                                       self.destination_type,
                                                       urllib_parse.quote(self.destination, safe=''),
-                                                      urllib_parse.quote(self.routing_key))
+                                                      urllib_parse.quote(self.routing_key) if self.routing_key != '' else '~')
         self.result = {
             'changed': False,
             'name': self.module.params['name'],
