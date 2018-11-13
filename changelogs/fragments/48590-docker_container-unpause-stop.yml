@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_container - some docker versions require containers to be unpaused before stopping or removing.
+   Adds check to do this when docker returns a corresponding error on stopping or removing."
