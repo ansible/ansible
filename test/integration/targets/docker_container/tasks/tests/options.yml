@@ -216,7 +216,7 @@
 - name: cpu_period
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_period: 90000
     state: started
@@ -225,7 +225,7 @@
 - name: cpu_period (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_period: 90000
     state: started
@@ -260,7 +260,7 @@
 - name: cpu_quota
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_quota: 150000
     state: started
@@ -269,7 +269,7 @@
 - name: cpu_quota (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_quota: 150000
     state: started
@@ -304,7 +304,7 @@
 - name: cpu_shares
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_shares: 900
     state: started
@@ -313,7 +313,7 @@
 - name: cpu_shares (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpu_shares: 900
     state: started
@@ -348,7 +348,7 @@
 - name: cpuset_cpus
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_cpus: 0
     state: started
@@ -357,7 +357,7 @@
 - name: cpuset_cpus (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_cpus: 0
     state: started
@@ -395,7 +395,7 @@
 - name: cpuset_mems
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_mems: 0
     state: started
@@ -404,7 +404,7 @@
 - name: cpuset_mems (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     cpuset_mems: 0
     state: started
@@ -807,7 +807,7 @@
 - name: domainname
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     domainname: example.com
     state: started
@@ -816,7 +816,7 @@
 - name: domainname (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     domainname: example.com
     state: started
@@ -1212,7 +1212,7 @@
 - name: hostname
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     hostname: me.example.com
     state: started
@@ -1221,7 +1221,7 @@
 - name: hostname (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     hostname: me.example.com
     state: started
@@ -1256,7 +1256,7 @@
 - name: init
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     init: yes
     state: started
@@ -1266,7 +1266,7 @@
 - name: init (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     init: yes
     state: started
@@ -1309,7 +1309,7 @@
 - name: interactive
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     interactive: yes
     state: started
@@ -1318,7 +1318,7 @@
 - name: interactive (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     interactive: yes
     state: started
@@ -1408,7 +1408,7 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
   loop:
@@ -1470,7 +1470,7 @@
 - name: kernel_memory
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     kernel_memory: 8M
     state: started
@@ -1479,7 +1479,7 @@
 - name: kernel_memory (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     kernel_memory: 8M
     state: started
@@ -1581,7 +1581,7 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
   loop:
@@ -1771,7 +1771,7 @@
 - name: mac_address
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:33
     state: started
@@ -1780,7 +1780,7 @@
 - name: mac_address (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     mac_address: 92:d0:c6:0a:29:33
     state: started
@@ -1815,7 +1815,7 @@
 - name: memory
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory: 64M
     state: started
@@ -1824,7 +1824,7 @@
 - name: memory (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory: 64M
     state: started
@@ -1859,7 +1859,7 @@
 - name: memory_reservation
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_reservation: 64M
     state: started
@@ -1868,7 +1868,7 @@
 - name: memory_reservation (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_reservation: 64M
     state: started
@@ -1903,7 +1903,7 @@
 - name: memory_swap
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     # Docker daemon does not accept memory_swap if memory is not specified
     memory: 32M
@@ -1915,7 +1915,7 @@
 - name: memory_swap (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     # Docker daemon does not accept memory_swap if memory is not specified
     memory: 32M
@@ -1965,7 +1965,7 @@
 - name: memory_swappiness
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_swappiness: 40
     state: started
@@ -1974,7 +1974,7 @@
 - name: memory_swappiness (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     memory_swappiness: 40
     state: started
@@ -2132,7 +2132,7 @@
 - name: oom_killer
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_killer: yes
     state: started
@@ -2142,7 +2142,7 @@
 - name: oom_killer (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_killer: yes
     state: started
@@ -2185,7 +2185,7 @@
 - name: oom_score_adj
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_score_adj: 5
     state: started
@@ -2195,7 +2195,7 @@
 - name: oom_score_adj (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     oom_score_adj: 5
     state: started
@@ -2268,7 +2268,7 @@
 - name: paused (continue)
   docker_container:
     image: alpine:3.8
-    command: "/bin/sh -c 'sleep 1s ; yes'"
+    command: "/bin/sh -c 'sleep 10m'"
     name: "{{ cname }}"
     state: started
     paused: no
@@ -2300,7 +2300,7 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname_h1 }}"
     state: started
   register: pid_mode_helper
@@ -2368,7 +2368,7 @@
 - name: privileged
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     privileged: yes
     state: started
@@ -2377,7 +2377,7 @@
 - name: privileged (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     privileged: yes
     state: started
@@ -2479,7 +2479,7 @@
 - name: read_only
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     read_only: yes
     state: started
@@ -2488,7 +2488,7 @@
 - name: read_only (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     read_only: yes
     state: started
@@ -2523,7 +2523,7 @@
 - name: recreate (created)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: present
     stop_timeout: 1
@@ -2532,7 +2532,7 @@
 - name: recreate (created, recreate)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     recreate: yes
     state: present
@@ -2542,7 +2542,7 @@
 - name: recreate (started)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
     stop_timeout: 1
@@ -2551,7 +2551,7 @@
 - name: recreate (started, recreate)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     recreate: yes
     state: started
@@ -2586,7 +2586,7 @@
 - name: restart
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
     stop_timeout: 1
@@ -2595,7 +2595,7 @@
 - name: restart (restart)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart: yes
     state: started
@@ -2624,7 +2624,7 @@
 - name: restart_policy
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: always
     state: started
@@ -2633,7 +2633,7 @@
 - name: restart_policy (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: always
     state: started
@@ -2668,7 +2668,7 @@
 - name: restart_retries
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: on-failure
     restart_retries: 5
@@ -2678,7 +2678,7 @@
 - name: restart_retries (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     restart_policy: on-failure
     restart_retries: 5
@@ -2792,7 +2792,7 @@
 - name: shm_size
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     shm_size: 96M
     state: started
@@ -2801,7 +2801,7 @@
 - name: shm_size (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     shm_size: 96M
     state: started
@@ -2836,7 +2836,7 @@
 - name: stop_signal
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_signal: 30
     state: started
@@ -2845,7 +2845,7 @@
 - name: stop_signal (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     stop_signal: 30
     state: started
@@ -3034,7 +3034,7 @@
 - name: tty
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     tty: yes
     state: started
@@ -3043,7 +3043,7 @@
 - name: tty (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     tty: yes
     state: started
@@ -3139,7 +3139,7 @@
 - name: user
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     user: nobody
     state: started
@@ -3148,7 +3148,7 @@
 - name: user (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     user: nobody
     state: started
@@ -3183,7 +3183,7 @@
 - name: userns_mode
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     userns_mode: host
     state: started
@@ -3193,7 +3193,7 @@
 - name: userns_mode (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     userns_mode: host
     state: started
@@ -3236,7 +3236,7 @@
 - name: uts
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     uts: host
     state: started
@@ -3246,7 +3246,7 @@
 - name: uts (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     uts: host
     state: started
@@ -3295,7 +3295,7 @@
 - name: volume_driver
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     volume_driver: local
     state: started
@@ -3304,7 +3304,7 @@
 - name: volume_driver (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     volume_driver: local
     state: started
@@ -3400,7 +3400,7 @@
 - name: start helpers
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
     volumes:
@@ -3464,7 +3464,7 @@
 - name: working_dir
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     working_dir: /tmp
     state: started
@@ -3473,7 +3473,7 @@
 - name: working_dir (idempotency)
   docker_container:
     image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
+    command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     working_dir: /tmp
     state: started

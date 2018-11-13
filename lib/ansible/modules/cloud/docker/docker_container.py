@@ -1345,6 +1345,7 @@ class Container(DockerBaseClass):
             hostname=config.get('Hostname'),
             user=config.get('User'),
             detach=detach,
+            init=host_config.get('Init'),
             interactive=config.get('OpenStdin'),
             capabilities=host_config.get('CapAdd'),
             cap_drop=host_config.get('CapDrop'),
@@ -1371,8 +1372,7 @@ class Container(DockerBaseClass):
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
             restart_policy=restart_policy.get('Name'),
-            # Cannot test shm_size, as shm_size is not included in container inspection results.
-            # shm_size=host_config.get('ShmSize'),
+            shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
             tmpfs=host_config.get('Tmpfs'),
