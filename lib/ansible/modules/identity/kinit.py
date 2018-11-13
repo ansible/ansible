@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: kinit
-version_added: "2.6"
+version_added: "2.8"
 author: "Ali (@bincyber)"
 short_description: Obtain a Kerberos ticket-granting ticket.
 description:
@@ -56,19 +56,19 @@ notes:
 '''
 
 EXAMPLES = '''
-# obtain a Kerberos ticket with a lifetime of 30 seconds
-- kinit:
+- name: obtain a Kerberos ticket with a lifetime of 30 seconds
+  kinit:
     principal: johndoe
     password: 'supersecretpassword'
     lifetime: 30
 
-# obtain a Kerberos ticket for a principal that includes the realm
-- kinit:
+- name: obtain a Kerberos ticket for a principal that includes the realm
+  kinit:
     principal: johndoe@REALM.EXAMPLE.COM
     password: 'supersecretpassword'
 
-# destroy all existing Kerberos tickets for the principal
-- kinit:
+- name: destroy all existing Kerberos tickets for the principal
+  kinit:
     principal: johndoe
     state: absent
 '''
