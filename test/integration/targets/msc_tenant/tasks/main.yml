@@ -40,6 +40,7 @@
     use_proxy: '{{ msc_use_proxy | default(true) }}'
     output_level: '{{ msc_output_level | default("info") }}'
     tenant: ansible_test
+    display_name: Ansible test title
     description: Ansible test tenant
     state: present
   check_mode: yes
@@ -51,7 +52,7 @@
     - cm_add_tenant is changed
     - cm_add_tenant.previous == {}
     - cm_add_tenant.current.id is not defined
-    - cm_add_tenant.current.displayName == 'ansible_test'
+    - cm_add_tenant.current.name == 'ansible_test'
     - cm_add_tenant.current.description == 'Ansible test tenant'
 
 - name: Add tenant (normal mode)
@@ -64,7 +65,7 @@
     - nm_add_tenant is changed
     - nm_add_tenant.previous == {}
     - nm_add_tenant.current.id is defined
-    - nm_add_tenant.current.displayName == 'ansible_test'
+    - nm_add_tenant.current.name == 'ansible_test'
     - nm_add_tenant.current.description == 'Ansible test tenant'
 
 - name: Add tenant again (check_mode)
@@ -76,10 +77,10 @@
   assert:
     that:
     - cm_add_tenant_again is not changed
-    - cm_add_tenant_again.previous.displayName == 'ansible_test'
+    - cm_add_tenant_again.previous.name == 'ansible_test'
     - cm_add_tenant_again.previous.description == 'Ansible test tenant'
     - cm_add_tenant_again.current.id == nm_add_tenant.current.id
-    - cm_add_tenant_again.current.displayName == 'ansible_test'
+    - cm_add_tenant_again.current.name == 'ansible_test'
     - cm_add_tenant_again.current.description == 'Ansible test tenant'
 
 - name: Add tenant again (normal mode)
@@ -90,10 +91,10 @@
   assert:
     that:
     - nm_add_tenant_again is not changed
-    - nm_add_tenant_again.previous.displayName == 'ansible_test'
+    - nm_add_tenant_again.previous.name == 'ansible_test'
     - nm_add_tenant_again.previous.description == 'Ansible test tenant'
     - nm_add_tenant_again.current.id == nm_add_tenant.current.id
-    - nm_add_tenant_again.current.displayName == 'ansible_test'
+    - nm_add_tenant_again.current.name == 'ansible_test'
     - nm_add_tenant_again.current.description == 'Ansible test tenant'
 
 
@@ -112,7 +113,7 @@
     that:
     - cm_change_tenant is changed
     - cm_change_tenant.current.id == nm_add_tenant.current.id
-    - cm_change_tenant.current.displayName == 'ansible_test2'
+    - cm_change_tenant.current.name == 'ansible_test2'
     - cm_change_tenant.current.description == 'Ansible test tenant 2'
 
 - name: Change tenant (normal mode)
@@ -129,7 +130,7 @@
     that:
     - nm_change_tenant is changed
     - nm_change_tenant.current.id == nm_add_tenant.current.id
-    - nm_change_tenant.current.displayName == 'ansible_test2'
+    - nm_change_tenant.current.name == 'ansible_test2'
     - nm_change_tenant.current.description == 'Ansible test tenant 2'
 
 - name: Change tenant again (check_mode)
@@ -146,7 +147,7 @@
     that:
     - cm_change_tenant_again is not changed
     - cm_change_tenant_again.current.id == nm_add_tenant.current.id
-    - cm_change_tenant_again.current.displayName == 'ansible_test2'
+    - cm_change_tenant_again.current.name == 'ansible_test2'
     - cm_change_tenant_again.current.description == 'Ansible test tenant 2'
 
 - name: Change tenant again (normal mode)
@@ -162,7 +163,7 @@
     that:
     - nm_change_tenant_again is not changed
     - nm_change_tenant_again.current.id == nm_add_tenant.current.id
-    - nm_change_tenant_again.current.displayName == 'ansible_test2'
+    - nm_change_tenant_again.current.name == 'ansible_test2'
     - nm_change_tenant_again.current.description == 'Ansible test tenant 2'
 
 
@@ -212,11 +213,11 @@
     that:
     - cm_query_tenant is not changed
     - cm_query_tenant.current.id == nm_add_tenant.current.id
-    - cm_query_tenant.current.displayName == 'ansible_test2'
+    - cm_query_tenant.current.name == 'ansible_test2'
     - cm_query_tenant.current.description == 'Ansible test tenant 2'
     - nm_query_tenant is not changed
     - nm_query_tenant.current.id == nm_add_tenant.current.id
-    - nm_query_tenant.current.displayName == 'ansible_test2'
+    - nm_query_tenant.current.name == 'ansible_test2'
     - nm_query_tenant.current.description == 'Ansible test tenant 2'
     - cm_query_tenant == nm_query_tenant
 
