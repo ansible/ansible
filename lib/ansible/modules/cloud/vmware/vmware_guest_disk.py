@@ -75,6 +75,9 @@ options:
      - '     - C(thick) thick disk'
      - '     Default: C(thick) thick disk, no eagerzero.'
      - ' - C(datastore) (string): Name of datastore or datastore cluster to be used for the disk.'
+     - ' - C(filename) (string): Existing disk image to use. Must already exist on the datastore.'
+     - '   Value is of form C(path/to/file.vmdk).'
+     - '   When C(filename) is specified, C(datastore) is required, and C(autoselect_datastore) is ignored.'
      - ' - C(autoselect_datastore) (bool): Select the less used datastore. Specify only if C(datastore) is not specified.'
      - ' - C(scsi_controller) (integer): SCSI controller number. Valid value range from 0 to 3.'
      - '   Only 4 SCSI controllers are allowed per VM.'
@@ -124,6 +127,8 @@ EXAMPLES = '''
         scsi_controller: 2
         scsi_type: 'buslogic'
         unit_number: 1
+      - filename: 'My VM Folder/mydisk.vmdk'
+        datastore: datacluster0
   delegate_to: localhost
   register: disk_facts
 
@@ -149,6 +154,11 @@ disk_status:
     returned: always
     type: dict
     sample: {
+      "disk_changes": {
+        "0": "Disk created.",
+        "1": "Disk already exists.",
+      },
+      "disk_data": {
         "0": {
             "backing_datastore": "datastore2",
             "backing_disk_mode": "persistent",
@@ -164,18 +174,37 @@ disk_status:
             "summary": "10,240 KB",
             "unit_number": 0
         },
+        "1": {
+            "backing_datastore": "datastore2",
+            "backing_disk_mode": "persistent",
+            "backing_eagerlyscrub": false,
+            "backing_filename": "[datastore2] VM_225/VM_225_2.vmdk",
+            "backing_thinprovisioned": false,
+            "backing_writethrough": false,
+            "capacity_in_bytes": 10485760,
+            "capacity_in_kb": 10240,
+            "controller_key": 1000,
+            "key": 2001,
+            "label": "Hard disk 2",
+            "summary": "10,240 KB",
+            "unit_number": 1
+        }
+      }
     }
 """
 
+import os.path
 import re
+import sys
 try:
-    from pyVmomi import vim
+    from pyVmomi import vim, VmomiSupport
 except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, find_obj, get_all_objs
+from ansible.module_utils.six import PY3
 
 
 class PyVmomiHelper(PyVmomi):
@@ -224,7 +253,6 @@ class PyVmomiHelper(PyVmomi):
         """
         disk_spec = vim.vm.device.VirtualDeviceSpec()
         disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         disk_spec.device = vim.vm.device.VirtualDisk()
         disk_spec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
         disk_spec.device.backing.diskMode = 'persistent'
@@ -307,27 +335,45 @@ class PyVmomiHelper(PyVmomi):
             disk_change = False
             scsi_controller = disk['scsi_controller'] + 1000  # VMware auto assign 1000 + SCSI Controller
             if disk['disk_unit_number'] not in current_scsi_info[scsi_controller]['disks'] and disk['state'] == 'present':
-                # Add new disk
+                # Adding a disk
                 disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'])
-                disk_spec.device.capacityInKB = disk['size']
-                if disk['disk_type'] == 'thin':
-                    disk_spec.device.backing.thinProvisioned = True
-                elif disk['disk_type'] == 'eagerzeroedthick':
-                    disk_spec.device.backing.eagerlyScrub = True
-                disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
-                                                                               vm_name, vm_name,
-                                                                               str(scsi_controller),
-                                                                               str(disk['disk_unit_number']))
-                disk_spec.device.backing.datastore = disk['datastore']
+                if disk['filename']:
+                    # Add existing disk from VMDK file on datastore
+                    disk_spec.device.backing.fileName = disk['filename']
+                    disk_spec.device.backing.diskMode = 'persistent'
+                    if PY3:
+                        disk_spec.device.capacityInKB = VmomiSupport.vmodlTypes['int'](disk['size'] / 1024)
+                    else:
+                        disk_spec.device.capacityInKB = VmomiSupport.vmodlTypes['long'](disk['size'] / 1024)
+                    disk_spec.device.key = -1
+                    results['disk_changes'][disk['disk_index']] = "Disk attached ({0}).".format(disk['filename'])
+                else:
+                    # Add new disk
+                    disk_spec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+                    disk_spec.device.capacityInKB = disk['size']
+                    if disk['disk_type'] == 'thin':
+                        disk_spec.device.backing.thinProvisioned = True
+                    elif disk['disk_type'] == 'eagerzeroedthick':
+                        disk_spec.device.backing.eagerlyScrub = True
+                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
+                                                                                   vm_name, vm_name,
+                                                                                   str(scsi_controller),
+                                                                                   str(disk['disk_unit_number']))
+                    disk_spec.device.backing.datastore = disk['datastore']
+                    results['disk_changes'][disk['disk_index']] = "Disk created."
+                current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']] = disk_spec.device
                 self.config_spec.deviceChange.append(disk_spec)
                 disk_change = True
-                current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']] = disk_spec.device
-                results['disk_changes'][disk['disk_index']] = "Disk created."
             elif disk['disk_unit_number'] in current_scsi_info[scsi_controller]['disks']:
                 if disk['state'] == 'present':
                     disk_spec = vim.vm.device.VirtualDeviceSpec()
                     # set the operation to edit so that it knows to keep other settings
                     disk_spec.device = current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']]
+                    # Edit and no changing backing filename allowed
+                    if disk['filename'] and disk['filename'] != disk_spec.device.backing.fileName:
+                        self.module.fail_json(msg="Existing disk at disk index [{0}] has a different filename: '{1}'."
+                                                  " Changing backing filename is not allowed.".format(disk['disk_index'],
+                                                                                                      disk_spec.device.backing.fileName))
                     # Edit and no resizing allowed
                     if disk['size'] < disk_spec.device.capacityInKB:
                         self.module.fail_json(msg="Given disk size at disk index [%s] is smaller than found (%d < %d)."
@@ -384,7 +430,8 @@ class PyVmomiHelper(PyVmomi):
                                 datastore=None,
                                 autoselect_datastore=True,
                                 disk_unit_number=0,
-                                scsi_controller=0)
+                                scsi_controller=0,
+                                filename=None)
             # Check state
             if 'state' in disk:
                 if disk['state'] not in ['absent', 'present']:
@@ -395,8 +442,34 @@ class PyVmomiHelper(PyVmomi):
                     current_disk['state'] = disk['state']
 
             if current_disk['state'] == 'present':
+                # Existing disk
+                if 'filename' in disk:
+                    datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder \
+                        = self.vmdk_disk_path_split(disk['filename'])
+                    # if they specified filename and datastore, if they match, it is okay
+                    if 'datastore' in disk and datastore_name != disk['datastore']:
+                        self.module.fail_json(
+                            msg="The datastore name in 'filename' does not match 'datastore' for disk index [{0}]"
+                                .format(disk_index))
+                    # if they specified a size, fail
+                    if [x for x in disk.keys() if x.startswith('size_') or x == 'size']:
+                        self.module.fail_json(
+                            msg="Cannot specify 'size' with 'filename for disk index [{0}]"
+                                .format(disk_index))
+                    vmdk_file = self.find_vmdk(disk['filename'])
+                    if not vmdk_file:
+                        self.module.fail_json(
+                            msg="Existing virtual disk filename '{0}' cannot be found".format(disk['filename']))
+                    datastore = find_obj(self.content, [vim.Datastore], datastore_name)
+                    if datastore is None:
+                        self.module.fail_json(msg="Failed to find datastore named '%s' "
+                                                  "in given configuration." % disk['datastore'])
+                    current_disk['autoselect_datastore'] = False
+                    current_disk['datastore'] = datastore
+                    current_disk['filename'] = disk['filename']
+                    current_disk['size'] = vmdk_file.fileSize
                 # Select datastore or datastore cluster
-                if 'datastore' in disk:
+                elif 'datastore' in disk:
                     if 'autoselect_datastore' in disk:
                         self.module.fail_json(msg="Please specify either 'datastore' "
                                                   "or 'autoselect_datastore' for disk index [%s]" % disk_index)
@@ -429,9 +502,9 @@ class PyVmomiHelper(PyVmomi):
                             datastore_freespace = ds.summary.freeSpace
                     current_disk['datastore'] = datastore
 
-                if 'datastore' not in disk and 'autoselect_datastore' not in disk:
-                    self.module.fail_json(msg="Either 'datastore' or 'autoselect_datastore' is"
-                                              " required parameter while creating disk for "
+                else:
+                    self.module.fail_json(msg="At least one of 'filename', 'datastore' or 'autoselect_datastore' "
+                                              "are required while creating disk for "
                                               "disk index [%s]." % disk_index)
 
                 if [x for x in disk.keys() if x.startswith('size_') or x == 'size']:
@@ -489,10 +562,10 @@ class PyVmomiHelper(PyVmomi):
                                                                                     disk_index,
                                                                                     "', '".join(disk_units.keys())))
 
-                else:
+                if 'size' not in current_disk:
                     # No size found but disk, fail
                     self.module.fail_json(msg="No size, size_kb, size_mb, size_gb or size_tb"
-                                              " attribute found into disk index [%s] configuration." % disk_index)
+                                              " attribute found in disk index [%s] configuration." % disk_index)
             # Check SCSI controller key
             if 'scsi_controller' in disk:
                 try:
@@ -519,7 +592,6 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="Invalid Disk unit number ID specified for disk [%s] at index [%s],"
                                               " please specify value between 0 to 15"
                                               " only (excluding 7)." % (temp_disk_unit_number, disk_index))
-
                 if temp_disk_unit_number == 7:
                     self.module.fail_json(msg="Invalid Disk unit number ID specified for disk at index [%s],"
                                               " please specify value other than 7 as it is reserved"

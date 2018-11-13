@@ -1220,6 +1220,7 @@ class PyVmomi(object):
         2. vmdk_fullpath: The "path/to/vm_name.vmdk" portion
         3. vmdk_filename: The "vm_name.vmdk" portion of the string (os.path.basename equivalent)
         4. vmdk_folder: The "path/to/" portion of the string (os.path.dirname equivalent)
+
         """
         try:
             datastore_name = re.match(r'^\[(.*?)\]', vmdk_path, re.DOTALL).groups()[0]
