@@ -233,10 +233,10 @@ options:
 
   syslog_mode:
     description:
-      -  Remote syslog logging over UDP/Reliable TCP.
-      -  choice | udp | Enable syslogging over UDP.
-      -  choice | legacy-reliable | Enable legacy reliable syslogging by RFC3195 (Reliable Delivery for Syslog).
-      -  choice | reliable | Enable reliable syslogging by RFC6587 (Transmission of Syslog Messages over TCP).
+     - Remote syslog logging over UDP/Reliable TCP.
+     - choice | udp | Enable syslogging over UDP.
+     - choice | legacy-reliable | Enable legacy reliable syslogging by RFC3195 (Reliable Delivery for Syslog).
+     - choice | reliable | Enable reliable syslogging by RFC6587 (Transmission of Syslog Messages over TCP).
     required: false
     choices: ["udp", "legacy-reliable", "reliable"]
     default: "udp"
@@ -249,51 +249,51 @@ options:
 
   syslog_facility:
     description:
-      -  Remote syslog facility.
-      -  choice | kernel | Kernel messages.
-      -  choice | user | Random user-level messages.
-      -  choice | mail | Mail system.
-      -  choice | daemon | System daemons.
-      -  choice | auth | Security/authorization messages.
-      -  choice | syslog | Messages generated internally by syslog.
-      -  choice | lpr | Line printer subsystem.
-      -  choice | news | Network news subsystem.
-      -  choice | uucp | Network news subsystem.
-      -  choice | cron | Clock daemon.
-      -  choice | authpriv | Security/authorization messages (private).
-      -  choice | ftp | FTP daemon.
-      -  choice | ntp | NTP daemon.
-      -  choice | audit | Log audit.
-      -  choice | alert | Log alert.
-      -  choice | clock | Clock daemon.
-      -  choice | local0 | Reserved for local use.
-      -  choice | local1 | Reserved for local use.
-      -  choice | local2 | Reserved for local use.
-      -  choice | local3 | Reserved for local use.
-      -  choice | local4 | Reserved for local use.
-      -  choice | local5 | Reserved for local use.
-      -  choice | local6 | Reserved for local use.
-      -  choice | local7 | Reserved for local use.
+     - Remote syslog facility.
+     - choice | kernel | Kernel messages.
+     - choice | user | Random user-level messages.
+     - choice | mail | Mail system.
+     - choice | daemon | System daemons.
+     - choice | auth | Security/authorization messages.
+     - choice | syslog | Messages generated internally by syslog.
+     - choice | lpr | Line printer subsystem.
+     - choice | news | Network news subsystem.
+     - choice | uucp | Network news subsystem.
+     - choice | cron | Clock daemon.
+     - choice | authpriv | Security/authorization messages (private).
+     - choice | ftp | FTP daemon.
+     - choice | ntp | NTP daemon.
+     - choice | audit | Log audit.
+     - choice | alert | Log alert.
+     - choice | clock | Clock daemon.
+     - choice | local0 | Reserved for local use.
+     - choice | local1 | Reserved for local use.
+     - choice | local2 | Reserved for local use.
+     - choice | local3 | Reserved for local use.
+     - choice | local4 | Reserved for local use.
+     - choice | local5 | Reserved for local use.
+     - choice | local6 | Reserved for local use.
+     - choice | local7 | Reserved for local use.
     required: false
     choices: ["kernel", "user", "mail", "daemon", "auth", "syslog",
-    "lpr", "news", "uucp", "cron", "authpriv", "ftp", "ntp", "audit",
-    "alert", "clock", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
+        "lpr", "news", "uucp", "cron", "authpriv", "ftp", "ntp", "audit",
+        "alert", "clock", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
     default: "syslog"
 
   syslog_enc_algorithm:
     description:
-      -  Enable/disable reliable syslogging with TLS encryption.
-      -  choice | high | SSL communication with high encryption algorithms.
-      -  choice | low | SSL communication with low encryption algorithms.
-      -  choice | disable | Disable SSL communication.
-      -  choice | high-medium | SSL communication with high and medium encryption algorithms.
+     - Enable/disable reliable syslogging with TLS encryption.
+     - choice | high | SSL communication with high encryption algorithms.
+     - choice | low | SSL communication with low encryption algorithms.
+     - choice | disable | Disable SSL communication.
+     - choice | high-medium | SSL communication with high and medium encryption algorithms.
     required: false
     choices: ["high", "low", "disable", "high-medium"]
     default: "disable"
 
   syslog_certificate:
     description:
-      -  Certificate used to communicate with Syslog server if encryption on.
+     - Certificate used to communicate with Syslog server if encryption on.
     required: false
 
   ntp_status:
@@ -387,8 +387,8 @@ options:
 
   admin_fortiguard_target:
     description:
-     -  Configures fortiguard target.
-     -  "admin_enable_fortiguard" must be set to "direct".
+     - Configures fortiguard target.
+     - admin_enable_fortiguard must be set to "direct".
     required: False
 
   smtp_username:
