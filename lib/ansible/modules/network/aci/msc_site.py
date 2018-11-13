@@ -23,20 +23,28 @@ options:
   apic_password:
     description:
     - The password for the APICs.
+    type: str
+    required: yes
   apic_site_id:
     description:
     - The site ID of the APICs.
+    type: str
+    required: yes
   apic_username:
     description:
     - The username for the APICs.
+    type: str
+    required: yes
     default: admin
   site_id:
     description:
     - The ID of the site.
+    type: str
     required: yes
   site:
     description:
     - The name of the site.
+    type: str
     required: yes
     aliases: [ name, site_name ]
   labels:
@@ -51,6 +59,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: msc
@@ -122,7 +131,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['site']],
-            ['state', 'present', ['site']],
+            ['state', 'present', ['apic_site_id', 'site']],
         ],
     )
 
@@ -178,7 +187,7 @@ def main():
             urls=urls,
             username=apic_username,
             password=apic_password,
-        ))
+        ), collate=True)
 
         if msc.existing:
             if not issubset(msc.sent, msc.existing):
