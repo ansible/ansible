@@ -378,7 +378,7 @@ class PlayContext(Base):
 
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
-        # DEPRECATED
+        display.deprecated("PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead", version="2.13")
 
         if cmd and self.become:
 
