@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "s3_bucket - Walrus users: ``s3_url`` must be a FQDN without scheme not path."

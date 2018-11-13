@@ -319,8 +319,10 @@ EXAMPLES = '''
 
 
 import os
+import errno
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six.moves import shlex_quote
 
 
@@ -365,6 +367,7 @@ def main():
             private_key=dict(type='path'),
             rsync_path=dict(type='str'),
             _local_rsync_path=dict(type='path', default='rsync'),
+            _local_rsync_password=dict(default=None, no_log=True),
             _substitute_controller=dict(type='bool', default=False),
             archive=dict(type='bool', default=True),
             checksum=dict(type='bool', default=False),
@@ -404,6 +407,7 @@ def main():
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
     rsync = module.params.get('_local_rsync_path', 'rsync')
+    rsync_password = module.params.get('_local_rsync_password')
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
     checksum = module.params['checksum']
@@ -428,6 +432,16 @@ def main():
         rsync = module.get_bin_path(rsync, required=True)
 
     cmd = [rsync, '--delay-updates', '-F']
+    _sshpass_pipe = None
+    if rsync_password:
+        try:
+            module.run_command(["sshpass"])
+        except OSError:
+            module.fail_json(
+                msg="to use rsync connection with passwords, you must install the sshpass program"
+            )
+        _sshpass_pipe = os.pipe()
+        cmd = ['sshpass', '-d' + to_native(_sshpass_pipe[0], errors='surrogate_or_strict')] + cmd
     if compress:
         cmd.append('--compress')
     if rsync_timeout:
@@ -534,7 +548,24 @@ def main():
     cmd.append(source)
     cmd.append(dest)
     cmdstr = ' '.join(cmd)
-    (rc, out, err) = module.run_command(cmd)
+
+    # If we are using password authentication, write the password into the pipe
+    if rsync_password:
+        def _write_password_to_pipe(proc):
+            os.close(_sshpass_pipe[0])
+            try:
+                os.write(_sshpass_pipe[1], to_bytes(rsync_password) + b'\n')
+            except OSError as exc:
+                # Ignore broken pipe errors if the sshpass process has exited.
+                if exc.errno != errno.EPIPE or proc.poll() is None:
+                    raise
+        (rc, out, err) = module.run_command(
+            cmd, pass_fds=_sshpass_pipe,
+            before_communicate_callback=_write_password_to_pipe
+        )
+    else:
+        (rc, out, err) = module.run_command(cmd)
+
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
 

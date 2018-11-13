@@ -401,14 +401,14 @@ For environment variables on the TARGET machines, they are available via facts i
 
    {{ ansible_env.SOME_VARIABLE }}
 
-If you need to set environment variables for TASK execution, see the Advanced Playbooks section about environments.
-There is no set way to set environment variables on your target machines, you can use template/replace/other modules to do so,
-but the exact files to edit vary depending on your OS and distribution and local configuration.
+If you need to set environment variables for TASK execution, see :ref:`playbooks_environment` in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
+There are several ways to set environment variables on your target machines. You can use the :ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>` modules to introduce environment variables into files.
+The exact files to edit vary depending on your OS and distribution and local configuration.
 
 .. _user_passwords:
 
-How do I generate crypted passwords for the user module?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How do I generate encrypted passwords for the user module?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Ansible ad-hoc command is the easiest option:
 
@@ -594,6 +594,19 @@ Why don't you ship in X format?
 
 Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
+
+
+.. _ansible_host_delegated:
+
+How do I get the original ansible_host when I delegate a task?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overritten,
+but you can still access the orignal via ``hostvars``::
+
+   oringal_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+
+This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
 .. _i_dont_see_my_question:

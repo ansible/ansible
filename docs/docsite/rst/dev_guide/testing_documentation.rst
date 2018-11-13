@@ -1,12 +1,12 @@
 :orphan:
 
-.. _testing_documentation:
+.. _testing_module_documentation:
 
-*********************
-Testing documentation
-*********************
+****************************
+Testing module documentation
+****************************
 
-Before you submit a module for inclusion in the main Ansible repo, you must test your documentation for correct HTML rendering and to ensure that the argspec matches the documentation.
+Before you submit a module for inclusion in the main Ansible repo, you must test your module documentation for correct HTML rendering and to ensure that the argspec matches the documentation in your Python file. The community pages offer more information on :ref:`testing reStructuredText documentation <testing_documentation_locally>`.
 
 To check the HTML output of your module documentation:
 

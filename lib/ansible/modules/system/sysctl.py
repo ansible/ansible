@@ -282,7 +282,7 @@ class SysctlModule(object):
             rc, out, err = self.module.run_command(sysctl_args)
 
         if rc != 0:
-            self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
+            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
@@ -297,7 +297,7 @@ class SysctlModule(object):
                 with open(self.sysctl_file, "r") as read_file:
                     lines = read_file.readlines()
             except IOError as e:
-                self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, to_native(e)))
+                self.module.fail_json(msg="Failed to open %s: %s" % (to_native(self.sysctl_file), to_native(e)))
 
         for line in lines:
             line = line.strip()

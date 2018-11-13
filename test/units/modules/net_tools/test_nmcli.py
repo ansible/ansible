@@ -52,6 +52,12 @@ TESTCASE_CONNECTION = [
         'state': 'absent',
         '_ansible_check_mode': True,
     },
+    {
+        'type': 'vxlan',
+        'conn_name': 'non_existent_nw_device',
+        'state': 'absent',
+        '_ansible_check_mode': True,
+    },
 ]
 
 TESTCASE_GENERIC = [
@@ -131,6 +137,18 @@ TESTCASE_VLAN = [
     }
 ]
 
+TESTCASE_VXLAN = [
+    {
+        'type': 'vxlan',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'vxlan-existent_nw_device',
+        'vxlan_id': '11',
+        'vxlan_local': '192.168.225.5',
+        'vxlan_remote': '192.168.225.6',
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
 
 TESTCASE_ETHERNET_DHCP = [
     {
@@ -433,6 +451,52 @@ def test_mod_vlan_conn(mocked_generic_connection_modify):
     assert args[0][3] == 'non_existent_nw_device'
 
     for param in ['ipv4.address', '10.10.10.10', 'ipv4.gateway', '10.10.10.1']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_VXLAN, indirect=['patch_ansible_module'])
+def test_create_vxlan(mocked_generic_connection_create):
+    """
+    Test if vxlan created
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'add'
+    assert args[0][3] == 'type'
+    assert args[0][4] == 'vxlan'
+    assert args[0][5] == 'con-name'
+    assert args[0][6] == 'non_existent_nw_device'
+    assert args[0][7] == 'ifname'
+
+    for param in ['vxlan.local', '192.168.225.5', 'vxlan.remote', '192.168.225.6', 'vxlan.id', '11']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_VXLAN, indirect=['patch_ansible_module'])
+def test_vxlan_mod(mocked_generic_connection_modify):
+    """
+    Test if vxlan modified
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'mod'
+    assert args[0][3] == 'non_existent_nw_device'
+
+    for param in ['vxlan.local', '192.168.225.5', 'vxlan.remote', '192.168.225.6', 'vxlan.id', '11']:
         assert param in args[0]
 
 

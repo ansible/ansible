@@ -29,11 +29,11 @@ used, but you may experience issues trying to use them together.
 
 While the community GCP modules are not going away, Google is investing effort
 into the new "gcp_*" modules. Google is committed to ensuring the Ansible
-community has a great experience with GCP and therefore recommends that begin
-adopting these new modules if possible.
+community has a great experience with GCP and therefore recommends adopting 
+these new modules if possible.
 
 
-Introduction
+Requisites
 ---------------
 The Google Cloud Platform (GCP) modules require both the ``requests`` and the
 ``google-auth`` libraries to be installed.
@@ -42,6 +42,12 @@ The Google Cloud Platform (GCP) modules require both the ``requests`` and the
 
     $ pip install requests google-auth
 
+Alternatively for RHEL / CentOS, the ``python-requests`` package is also 
+available to satisfy ``requests`` libraries.
+
+.. code-block:: bash
+
+    $ yum install python-requests
 
 Credentials
 -----------

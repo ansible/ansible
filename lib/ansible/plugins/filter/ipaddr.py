@@ -249,8 +249,7 @@ def _netmask_query(v):
 
 def _network_query(v):
     '''Return the network of a given IP or subnet'''
-    if v.size > 1:
-        return str(v.network)
+    return str(v.network)
 
 
 def _network_id_query(v):

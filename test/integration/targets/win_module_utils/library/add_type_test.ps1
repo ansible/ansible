@@ -183,5 +183,26 @@ Add-CSharpType -References $reference_1, $reference_2
 $actual = [Namespace6.Class6]::GetString()
 Assert-Equals -actual $actual -expected "Hello World"
 
+$ignored_warning = @'
+using System;
+
+//NoWarn -Name CS0219
+
+namespace Namespace7
+{
+    public class Class7
+    {
+        public static string GetString()
+        {
+            string a = "";
+            return "abc";
+        }
+    }
+}
+'@
+Add-CSharpType -References $ignored_warning
+$actual = [Namespace7.Class7]::GetString()
+Assert-Equals -actual $actual -expected "abc"
+
 $result.res = "success"
 Exit-Json -obj $result
