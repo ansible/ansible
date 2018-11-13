@@ -243,10 +243,25 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         try:
             admin_users = self._connection._shell.get_option('admin_users')
-        except AnsibleError:
+        except (AttributeError, KeyError):
             # fallback for old custom plugins w/o get_option
             admin_users = ['root']
         return admin_users
+
+    def _get_remote_user(self):
+        ''' consistently get the 'remote_user' for the action plugin '''
+        # TODO: use 'current user runnign ansible' as fallback when moving away from play_context
+        # pwd.getpwuid(os.getuid()).pw_name
+        remote_user = None
+        try:
+            remote_user = self._connection.get_option('remote_user')
+        except KeyError:
+            # plugin does not have remote_user option, fallback to default and/play_context
+            remote_user = getattr(self._connection, 'default_user', None) or self._play_context.remote_user
+        except AttributeError:
+            # plugin does not use config system, fallback to old play_context
+            remote_user = self._play_context.remote_user
+        return remote_user
 
     def _is_become_unprivileged(self):
         '''
@@ -261,10 +276,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # if we use become and the user is not an admin (or same user) then
         # we need to return become_unprivileged as True
         admin_users = self._get_admin_users()
-        try:
-            remote_user = self._connection.get_option('remote_user')
-        except AnsibleError:
-            remote_user = self._play_context.remote_user
+        remote_user = self._get_remote_user()
         return bool(self._connection._become.get_option('become_user') not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
@@ -275,7 +287,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         become_unprivileged = self._is_become_unprivileged()
         try:
             remote_tmp = self._connection._shell.get_option('remote_tmp')
-        except AnsibleError:
+        except AttributeError:
             remote_tmp = '~/.ansible/tmp'
 
         # deal with tmpdir creation
@@ -409,7 +421,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if remote_user is None:
-            remote_user = self._play_context.remote_user
+            remote_user = self._get_remote_user()
 
         if self._connection._shell.SHELL_FAMILY == 'powershell':
             # This won't work on Powershell as-is, so we'll just completely skip until
@@ -585,7 +597,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 expand_path = '~%s' % self._connection._become.get_option('become_user')
             else:
                 # use remote user instead, if none set default to current user
-                expand_path = '~%s' % (self._play_context.remote_user or self._connection.default_user or '')
+                expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
@@ -675,7 +687,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         try:
             module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
-        except KeyError:
+        except AttributeError:
             # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
             module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
 
@@ -735,7 +747,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # list for async_wrapper to pick up
                 try:
                     async_dir = self._connection._shell.get_option('async_dir')
-                except KeyError:
+                except (AttributeError, KeyError):
                     # in case 3rd party plugin has not set this, use the default
                     async_dir = "~/.ansible_async"
                 remove_async_dir = len(self._task.environment)
@@ -846,7 +858,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_files:
             # remove none/empty
             remote_files = [x for x in remote_files if x]
-            self._fixup_perms2(remote_files, self._play_context.remote_user)
+            self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
@@ -947,7 +959,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
         if sudoable and getattr(self._connection, '_become') and (C.BECOME_ALLOW_SAME_USER or
-           not self._connection._become.get_option('become_user') == self._play_context.remote_user):
+           not self._connection._become.get_option('become_user') == self._get_remote_user()):
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection._become.build_become_command(cmd, self._connection._shell)
 
