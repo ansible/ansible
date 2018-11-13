@@ -23,40 +23,39 @@ version_added: "2.8"
 options:
     login_user:
         description:
-            - The username used to authenticate with
+            - The username used to authenticate with.
         required: false
     login_password:
         description:
-            - The password used to authenticate with
+            - The password used to authenticate with.
         required: false
     login_database:
         description:
-            - The database where login credentials are stored
+            - The database where login credentials are stored.
         required: false
         default: "admin"
     login_host:
         description:
-            - The MongoDB hostname to login to
+            - The MongoDB hostname to login to.
         required: false
         default: "localhost"
     login_port:
         description:
-            - The MongoDB port to login to
+            - The MongoDB port to login to.
         required: false
         default: 27017
     replica_set:
         description:
-            - Replicaset name
+            - Replicaset name.
         required: false
         default: rs0
     members:
         description:
-            - An comma sepaeated list consisting of the replicaset members.
-            - Supply as a simple csv string
-                mongodb1:27017,mongodb2:27017,mongodb3:27017
+            - A comma-separated consisting of the replicaset members.
+            - Supply as a simple csv string, i.e. mongodb1:27017,mongodb2:27017,mongodb3:27017.
     validate:
         description:
-            - Performs some basic validation on the provided replicaset config
+            - Performs some basic validation on the provided replicaset config.
         required: false
         default: True
         type: bool
@@ -72,35 +71,36 @@ options:
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     arbiter_at_index:
-        description: Identifies the position of the member in the array that is an arbiter.
+        description:
+            - Identifies the position of the member in the array that is an arbiter.
         required: false
     chainingAllowed:
         description: >
-            When settings.chainingAllowed is true, the replica set allows secondary members to replicate from other
-            secondary members. When settings.chainingAllowed is false, secondaries can replicate only from the primary.
+            When I(settings.chainingAllowed=true), the replicaset allows secondary members to replicate from other
+            secondary members. When I(settings.chainingAllowed=false), secondaries can replicate only from the primary.
         default: true
         required: false
         type: bool
     heartbeatTimeoutSecs:
         description: >
-            Number of seconds that the replica set members wait for a successful heartbeat from each other.
+            Number of seconds that the replicaset members wait for a successful heartbeat from each other.
             If a member does not respond in time, other members mark the delinquent member as inaccessible.
-            The setting only applies when using protocolVersion 0. When using protocolVersion 1 the relevant
-            setting is settings.electionTimeoutMillis.
+            The setting only applies when using I(protocolVersion=0). When using I(protocolVersion=1) the relevant
+            setting is I(settings.electionTimeoutMillis).
         default: 10
         required: false
     electionTimeoutMillis:
-        description: The time limit in milliseconds for detecting when a replica set's primary is unreachable.
+        description: The time limit in milliseconds for detecting when a replicaset's primary is unreachable.
         default: 10000
         required: false
     protocolVersion:
-        description: Version of the replica set election protocol.
+        description: Version of the replicaset election protocol.
         default: 1
         required: false
         choices: [0,1]
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
-      can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
+      can be installed using pip or the OS package manager. @see U(http://api.mongodb.org/python/current/installation.html)
 requirements: [ "pymongo" ]
 '''
 
