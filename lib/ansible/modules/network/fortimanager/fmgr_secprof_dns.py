@@ -29,9 +29,9 @@ DOCUMENTATION = '''
 module: fmgr_secprof_dns
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
+    - Luke Weighall (lweighall)
+    - Andrew Welsh (Ghilli3)
+    - Jim Huber (p4r4n0y1ng)
 short_description: Manage DNS security profiles in FortiManager
 description:
   -  Manage DNS security profiles in FortiManager
@@ -45,7 +45,7 @@ options:
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
@@ -61,7 +61,7 @@ options:
   mode:
     description:
       - Sets one of three modes for managing the object.
-      - Allows use of soft-adds instead of overwriting existing values
+      - Allows use of soft-adds instead of overwriting existing values.
     choices: ['add', 'set', 'delete', 'update']
     required: false
     default: add
@@ -132,7 +132,7 @@ options:
   comment:
     type: str
     description:
-      - Comment.
+      - Comment for the security profile to show in the FortiManager GUI.
     required: false
 
   block_botnet:
