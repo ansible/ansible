@@ -31,9 +31,8 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- secret_name: use list directly with a socket
-  debug: msg="{{ lookup('redis', 'key1', 'key2', socket='/var/tmp/redis.sock') }}"
-
+- secret_name: lookup netbox secret
+  debug: mag={{ lookup("netbox_secrets", netbox_host="http://localhost:8000", private_key_file=".netbox-private-key.pem", token="[token]", device=[inventory_hostname], secret_name="[username]") }}
 """
 
 RETURN = """
@@ -70,11 +69,10 @@ class LookupModule(LookupBase):
         device = self.get_option('device')
 
         nb = pynetbox.api(
-          netbox_host,
-          private_key_file=private_key_file,
-          token=token
+            netbox_host,
+            private_key_file=private_key_file,
+            token=token
         )
+        conn = nb.secrets.secrets.get(device=device, name=secret_name).plaintext
 
-        conn = nb.secrets.secrets.get(device=device,name=secret_name).plaintext
-
-    return conn
+        return conn
