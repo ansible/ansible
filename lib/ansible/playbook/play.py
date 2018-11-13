@@ -84,8 +84,6 @@ class Play(Base, Taggable, Become):
     _only_tags = FieldAttribute(isa='set', default=set, private=True)
     _skip_tags = FieldAttribute(isa='set', default=set, private=True)
     _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT, private=True)
-    _password = FieldAttribute(isa='string', private=True)
-    _become_pass = FieldAttribute(isa='string', private=True)
 
     # =================================================================================
 

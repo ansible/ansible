@@ -26,20 +26,6 @@ DOCUMENTATION = """
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_RUNAS_USER
             required: True
-        become_exe:
-            description: Sudo executable
-            default: runas
-            ini:
-              - section: privilege_escalation
-                key: become_exe
-              - section: runas_become_plugin
-                key: executable
-            vars:
-              - name: ansible_become_exe
-              - name: ansible_runas_exe
-            env:
-              - name: ANSIBLE_BECOME_EXE
-              - name: ANSIBLE_RUNAS_EXE
         become_flags:
             description: Options to pass to runas, a space delimited list of k=v pairs
             default: ''
@@ -68,6 +54,7 @@ DOCUMENTATION = """
               - name: ANSIBLE_RUNAS_PASS
     notes:
         - runas is really implemented in the powershell module handler and as such can only be used with winrm connections.
+        - This plugin ignores the 'become_exe' setting as it uses an API and not an executable.
 """
 
 from ansible.plugins.become import BecomeBase
