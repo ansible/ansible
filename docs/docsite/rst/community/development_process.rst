@@ -97,7 +97,7 @@ Workflow labels
 -  **shipit**: Waiting for final review by the core team for potential merge.
 
 Information labels
-""""""""""""""""""""
+""""""""""""""""""
 
 -  **backport**: this is applied automatically if the PR is requested against any branch that is not devel. The bot immediately assigns the labels backport and ``core_review``.
 -  **bugfix_pull_request**: applied by the bot based on the templatized description of the PR.
