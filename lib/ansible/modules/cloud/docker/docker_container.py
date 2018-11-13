@@ -2570,13 +2570,32 @@ class ContainerManager(DockerBaseClass):
         self.results['changed'] = True
         response = None
         if not self.check_mode:
-            try:
-                if self.parameters.stop_timeout:
-                    response = self.client.stop(container_id, timeout=self.parameters.stop_timeout)
-                else:
-                    response = self.client.stop(container_id)
-            except Exception as exc:
-                self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+            count = 0
+            while True:
+                try:
+                    if self.parameters.stop_timeout:
+                        response = self.client.stop(container_id, timeout=self.parameters.stop_timeout)
+                    else:
+                        response = self.client.stop(container_id)
+                except APIError as exc:
+                    if 'Unpause the container before stopping or killing' in exc.explanation:
+                        # New docker versions do not allow containers to be removed if they are paused
+                        # Make sure we don't end up in an infinite loop
+                        if count == 3:
+                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
+                        count += 1
+                        # Unpause
+                        try:
+                            self.client.unpause(container=container_id)
+                        except Exception as exc2:
+                            self.fail("Error unpausing container %s for removal: %s" % (container_id, str(exc2)))
+                        # Now try again
+                        continue
+                    self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+                except Exception as exc:
+                    self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+                # We only loop when explicitly requested by 'continue'
+                break
         return response
 
 
