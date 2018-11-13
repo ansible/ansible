@@ -30,7 +30,7 @@ If for any reason you need or want to have it in your inventory you should do so
 .. code-block:: ini
 
     [localhost]
-    localhost ansible_connection=local ansilbe_python_interpreter=/usr/local/bin/python2
+    localhost ansible_connection=local ansible_python_interpreter=/usr/local/bin/python2
 
 For more information see :ref:`Implicit Localhost <implicit_localhost>`
 
