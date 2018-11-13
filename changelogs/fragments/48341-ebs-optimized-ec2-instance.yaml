@@ -1,0 +1,2 @@
+bugfixes:
+  - "ec2_instance: - Fixed issue where ebs_optimized was considered sub-option of the network parameter. (https://github.com/ansible/ansible/issues/48159)"
