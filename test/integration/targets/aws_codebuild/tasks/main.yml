@@ -27,7 +27,11 @@
 
     - name: Wait until IAM role is available
       pause:
-        seconds: 3
+        seconds: 6
+
+    - name: Set variable with aws account id
+      set_fact:
+        aws_account_id: "{{ iam_return.iam_role.arn.split(':')[4] }}"
 
     # ================== integration test ==========================================
 
@@ -52,7 +56,6 @@
           type: LINUX_CONTAINER
           environment_variables:
             - { name: 'FOO_ENV', value: 'other' }
-        region: "{{ aws_region }}"
         tags:
           - { key: 'purpose', value: 'ansible-test' }
         state: present
@@ -85,7 +88,6 @@
           type: LINUX_CONTAINER
           environment_variables:
             - { name: 'FOO_ENV', value: 'other' }
-        region: "{{ aws_region }}"
         tags:
           - { key: 'purpose', value: 'ansible-test' }
         state: present

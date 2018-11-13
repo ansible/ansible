@@ -285,7 +285,7 @@ project:
 
 import traceback
 from ansible.module_utils._text import to_native
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, get_boto3_client_method_parameters
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
 
 
@@ -298,12 +298,13 @@ except ImportError:
 def create_or_update_project(client, params, module):
     resp = {}
     name = params['name']
-    # cleanup params not needed for boto methods:
-    clean_params = dict((k, v) for k, v in params.items() if v is not None)
-    clean_params.pop('region', None)
-    clean_params.pop('state', None)
-    clean_params.pop('validate_certs', None)
-    formatted_params = snake_dict_to_camel_dict(clean_params)
+    # clean up params
+    formatted_params = snake_dict_to_camel_dict(dict((k, v) for k, v in params.items() if v is not None))
+    permitted_create_params = get_boto3_client_method_parameters(client, 'create_project')
+    permitted_update_params = get_boto3_client_method_parameters(client, 'update_project')
+
+    formatted_create_params = dict((k, v) for k, v in formatted_params.items() if k in permitted_create_params)
+    formatted_update_params = dict((k, v) for k, v in formatted_params.items() if k in permitted_update_params)
 
     # Check if project with that name aleady exists and if so update existing:
     found = describe_project(client=client, name=name, module=module)
@@ -311,7 +312,7 @@ def create_or_update_project(client, params, module):
 
     if 'name' in found:
         found_project = found
-        resp = update_project(client=client, params=formatted_params, module=module)
+        resp = update_project(client=client, params=formatted_update_params, module=module)
         updated_project = resp['project']
 
         # Prep both dicts for sensible change comparison:
@@ -325,7 +326,7 @@ def create_or_update_project(client, params, module):
         return resp, changed
     # Or create new project:
     try:
-        resp = client.create_project(**formatted_params)
+        resp = client.create_project(**formatted_create_params)
         changed = True
         return resp, changed
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
