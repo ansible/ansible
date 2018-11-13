@@ -2506,6 +2506,11 @@ class ContainerManager(DockerBaseClass):
         response = None
         if not self.check_mode:
             try:
+                # New docker versions do not allow containers to be removed if they are paused
+                self.client.unpause(container=container_id)
+            except Exception as exc:
+                pass
+            try:
                 response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
             except NotFound as exc:
                 pass
