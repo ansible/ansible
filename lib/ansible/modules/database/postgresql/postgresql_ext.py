@@ -31,6 +31,7 @@ options:
   schema:
     description:
       - name of the schema to install the extension objects
+    version_added: '2.8'
   login_user:
     description:
       - The username used to authenticate with
