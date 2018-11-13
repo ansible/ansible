@@ -2510,8 +2510,7 @@ class ContainerManager(DockerBaseClass):
             except NotFound as exc:
                 pass
             except APIError as exc:
-                if exc.response.status_code == 409 and ('removal of container ' in exc.explanation and
-                                                        ' is already in progress' in exc.explanation):
+                if 'removal of container ' in exc.explanation and ' is already in progress' in exc.explanation:
                     pass
                 else:
                     self.fail("Error removing container %s: %s" % (container_id, str(exc)))
