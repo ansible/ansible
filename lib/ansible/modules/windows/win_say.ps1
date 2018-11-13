@@ -33,34 +33,30 @@ $end_sound_path = $module.Params.end_sound_path
 $voice = $module.Params.voice
 $speech_speed = $module.Params.speech_speed
 
-$module.Result.changed = $false
-
-$words = $null
-
 if ($speech_speed -lt -10 -or $speech_speed -gt 10) {
    $module.FailJson("speech_speed needs to be an integer in the range -10 to 10.  The value $speech_speed is outside this range.")
 }
 
-if ($msg_file) {
-   if (Test-Path -Path $msg_file) {
-      $words = Get-Content $msg_file | Out-String
-   } else {
-      $module.FailJson("Message file $msg_file could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
-   }
-}
+$words = $null
 
-if ($start_sound_path) {
-   if (Test-Path -Path $start_sound_path) {
-      if (-not $module.CheckMode) {
-         (new-object Media.SoundPlayer $start_sound_path).playSync()
-      }
-   } else {
-      $module.FailJson("Start sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
-   }
+if ($msg_file) {
+   if (-not (Test-Path -Path $msg_file)) {
+      $module.FailJson("Message file $msg_file could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
+   } 
+   $words = Get-Content $msg_file | Out-String
 }
 
 if ($msg) {
    $words = $msg
+}
+
+if ($start_sound_path) {
+   if (-not (Test-Path -Path $start_sound_path)) {
+      $module.FailJson("Start sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
+   } 
+   if (-not $module.CheckMode) {
+      (new-object Media.SoundPlayer $start_sound_path).playSync()
+   }
 }
 
 if ($words) {
@@ -80,18 +76,17 @@ if ($words) {
       $tts.Rate = $speech_speed
    }
    if (-not $module.CheckMode) {
-       $tts.Speak($words)
+      $tts.Speak($words)
    }
    $tts.Dispose()
 }
 
 if ($end_sound_path) {
-   if (Test-Path -Path $end_sound_path) {
-      if (-not $module.CheckMode) {
-         (new-object Media.SoundPlayer $end_sound_path).playSync()
-      }
-   } else {
+   if (-not (Test-Path -Path $end_sound_path)) {
       $module.FailJson("End sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
+   } 
+   if (-not $module.CheckMode) {
+      (new-object Media.SoundPlayer $end_sound_path).playSync()
    }
 }
 
