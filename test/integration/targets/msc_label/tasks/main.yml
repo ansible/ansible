@@ -49,8 +49,8 @@
     that:
     - cm_add_label is changed
     - cm_add_label.previous == {}
-    - cm_add_label.current.id is not defined
     - cm_add_label.current.displayName == 'ansible_test'
+    - cm_add_label.current.id is not defined
     - cm_add_label.current.type == 'site'
 
 - name: Add label (normal mode)
@@ -62,8 +62,8 @@
     that:
     - nm_add_label is changed
     - nm_add_label.previous == {}
-    - nm_add_label.current.id is defined
     - nm_add_label.current.displayName == 'ansible_test'
+    - nm_add_label.current.id is defined
     - nm_add_label.current.type == 'site'
 
 - name: Add label again (check_mode)
@@ -77,8 +77,8 @@
     - cm_add_label_again is not changed
     - cm_add_label_again.previous.displayName == 'ansible_test'
     - cm_add_label_again.previous.type == 'site'
-    - cm_add_label_again.current.id == nm_add_label.current.id
     - cm_add_label_again.current.displayName == 'ansible_test'
+    - cm_add_label_again.current.id == nm_add_label.current.id
     - cm_add_label_again.current.type == 'site'
 
 - name: Add label again (normal mode)
@@ -91,8 +91,8 @@
     - nm_add_label_again is not changed
     - nm_add_label_again.previous.displayName == 'ansible_test'
     - nm_add_label_again.previous.type == 'site'
-    - nm_add_label_again.current.id == nm_add_label.current.id
     - nm_add_label_again.current.displayName == 'ansible_test'
+    - nm_add_label_again.current.id == nm_add_label.current.id
     - nm_add_label_again.current.type == 'site'
 
 
@@ -109,8 +109,8 @@
   assert:
     that:
     - cm_change_label is changed
-    - cm_change_label.current.id == nm_add_label.current.id
     - cm_change_label.current.displayName == 'ansible_test2'
+    - cm_change_label.current.id == nm_add_label.current.id
     - cm_change_label.current.type == 'site'
 
 - name: Change label (normal mode)
@@ -125,8 +125,8 @@
   assert:
     that:
     - nm_change_label is changed
+    - cm_change_label.current.displayName == 'ansible_test2'
     - nm_change_label.current.id == nm_add_label.current.id
-    - nm_change_label.current.displayName == 'ansible_test2'
     - nm_change_label.current.type == 'site'
 
 - name: Change label again (check_mode)
@@ -141,8 +141,8 @@
   assert:
     that:
     - cm_change_label_again is not changed
-    - cm_change_label_again.current.id == nm_add_label.current.id
     - cm_change_label_again.current.displayName == 'ansible_test2'
+    - cm_change_label_again.current.id == nm_add_label.current.id
     - cm_change_label_again.current.type == 'site'
 
 - name: Change label again (normal mode)
@@ -156,8 +156,8 @@
   assert:
     that:
     - nm_change_label_again is not changed
-    - nm_change_label_again.current.id == nm_add_label.current.id
     - nm_change_label_again.current.displayName == 'ansible_test2'
+    - nm_change_label_again.current.id == nm_add_label.current.id
     - nm_change_label_again.current.type == 'site'
 
 
@@ -206,12 +206,12 @@
   assert:
     that:
     - cm_query_label is not changed
-    - cm_query_label.current.id == nm_add_label.current.id
     - cm_query_label.current.displayName == 'ansible_test2'
+    - cm_query_label.current.id == nm_add_label.current.id
     - cm_query_label.current.type == 'site'
     - nm_query_label is not changed
-    - nm_query_label.current.id == nm_add_label.current.id
     - nm_query_label.current.displayName == 'ansible_test2'
+    - nm_query_label.current.id == nm_add_label.current.id
     - nm_query_label.current.type == 'site'
     - cm_query_label == nm_query_label
 
