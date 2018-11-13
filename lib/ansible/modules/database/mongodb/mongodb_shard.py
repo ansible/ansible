@@ -46,7 +46,7 @@ options:
     shard:
         description:
             - The shard connection string.
-            - Should be supplied in the form <replicaset name>/host:port as detailed in U(https://docs.mongodb.com/manual/tutorial/add-shards-to-shard-cluster/).
+            - Should be supplied in the form <replicaset>/host:port as detailed in U(https://docs.mongodb.com/manual/tutorial/add-shards-to-shard-cluster/).
             - For example rs0/example1.mongodb.com:27017.
         required: true
         default: null
@@ -69,7 +69,8 @@ options:
         choices: ["present", "absent"]
 
 notes:
-    - Requires the pymongo Python package on the remote host, version 2.4.2+. This can be installed using pip or the OS package manager. @see U(http://api.mongodb.org/python/current/installation.html).
+    - Requires the pymongo Python package on the remote host, version 2.4.2+.
+    - This can be installed using pip or the OS package manager. @see U(http://api.mongodb.org/python/current/installation.html).
 requirements: [ "pymongo" ]
 '''
 
