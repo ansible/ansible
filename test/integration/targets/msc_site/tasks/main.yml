@@ -42,6 +42,7 @@
     site: ansible_test
     apic_username: admin
     apic_password: '{{ apic_password }}'
+    apic_site_id: 101
     urls:
     - https://{{ apic_hostname }}/
     state: present

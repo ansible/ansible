@@ -186,9 +186,9 @@ class MSCModule(object):
             except:
                 payload = json.loads(info['body'])
             if 'code' in payload:
-                self.fail_json(msg='MSC Error {code}: {message} [{info}]'.format(**payload), payload=data)
+                self.fail_json(msg='MSC Error {code}: {message}'.format(**payload), data=data, info=info, payload=payload)
             else:
-                self.fail_json(msg='MSC Error:'.format(**payload), info=info, output=output)
+                self.fail_json(msg='MSC Error:'.format(**payload), data=data, info=info, payload=payload)
 
         return {}
 
@@ -213,18 +213,20 @@ class MSCModule(object):
             self.fail_json(msg='More than one object matches unique filter: {0}'.format(kwargs))
         return objs[0]
 
-    def sanitize(self, updates, collate=False):
+    def sanitize(self, updates, collate=False, required_keys=None):
+        if required_keys is None:
+            required_keys = []
         self.proposed = deepcopy(self.existing)
         self.sent = deepcopy(self.existing)
 
         # Clean up self.sent
         for key in updates:
             # Always retain 'id'
-            if key in ('id'):
+            if key in required_keys:
                 pass
 
             # Remove unspecified values
-            elif updates[key] is None:
+            elif not collate and updates[key] is None:
                 if key in self.existing:
                     del(self.sent[key])
                 continue
@@ -265,8 +267,8 @@ class MSCModule(object):
 
         if self.module._diff:
             self.result['diff'] = dict(
-                before=self.existing,
-                after=self.sent,
+                before=self.previous,
+                after=self.existing,
             )
 
         self.result.update(**kwargs)
