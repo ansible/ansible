@@ -29,9 +29,9 @@ DOCUMENTATION = '''
 module: fmgr_secprof_waf
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
+    - Luke Weighall (lweighall)
+    - Andrew Welsh (Ghilli3)
+    - Jim Huber (p4r4n0y1ng)
 short_description: FortiManager web application firewall security profile
 description:
   -  Manage web application firewall security profiles for FGTs via FMG
@@ -349,7 +349,7 @@ options:
 
   constraint_hostname_action:
     description:
-      - Action.
+      - Action for a hostname constraint.
       - choice | allow | Allow.
       - choice | block | Block.
     required: false
@@ -1087,9 +1087,6 @@ except ImportError:
 
 
 def fmgr_waf_profile_addsetdelete(fmg, paramgram):
-    """
-    fmgr_waf_profile -- Your Description here, bruh
-    """
 
     mode = paramgram["mode"]
     adom = paramgram["adom"]
