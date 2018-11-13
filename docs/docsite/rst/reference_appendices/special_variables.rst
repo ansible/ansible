@@ -90,10 +90,6 @@ play_hosts
 ansible_play_name
     The name of the currently executed play. Added in ``2.8``.
 
-play_role_names
-    The names of the roles currently imported into the current play. This list does **not** contain the role names that are
-    implicitly included via dependencies.
-
 playbook_dir
     The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
 
