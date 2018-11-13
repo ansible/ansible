@@ -1,2 +1,4 @@
 - include_tasks: test_secrets.yml
-  when: ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6'
+  # Maximum of 2.1.0 (docker-py version for docker_secrets) and 2.6.0 (docker-py version for docker_swarm) is 2.6.0
+  # Maximum of 1.25 (docker API version for docker_secrets) and 1.35 (docker API version for docker_swarm) is 1.35
+  when: docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.35', '>=')

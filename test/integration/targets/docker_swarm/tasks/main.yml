@@ -1,2 +1,2 @@
 - include_tasks: test_swarm.yml
-  when: ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6'
+  when: docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.35', '>=')
