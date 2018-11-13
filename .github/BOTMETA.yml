@@ -614,7 +614,6 @@ files:
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
   $module_utils/vmware:
-    support: core
     maintainers: $team_vmware
   $module_utils/memset.py:
     maintainers: analbeard
