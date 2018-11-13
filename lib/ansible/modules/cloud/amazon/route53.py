@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright: Ansible Project
+
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -128,8 +129,8 @@ options:
     default: 300
     version_added: "2.1"
 author:
-  - "Bruce Pennypacker (@bpennypacker)"
-  - "Mike Buzzetti <mike.buzzetti@gmail.com>"
+- Bruce Pennypacker (@bpennypacker)
+- Mike Buzzetti (@jimbydamonk)
 extends_documentation_fragment: aws
 '''
 
