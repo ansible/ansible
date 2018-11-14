@@ -657,11 +657,11 @@ class DifferenceTracker(object):
     def __init__(self):
         self._diff = []
 
-    def add(self, name, parameter=None, container=None):
+    def add(self, name, parameter=None, active=None):
         self._diff.append(dict(
             name=name,
             parameter=parameter,
-            container=container,
+            active=active,
         ))
 
     def merge(self, other_tracker):
@@ -678,7 +678,7 @@ class DifferenceTracker(object):
         before = dict()
         after = dict()
         for item in self._diff:
-            before[item['name']] = item['container']
+            before[item['name']] = item['active']
             after[item['name']] = item['parameter']
         return (
             jsonify(before, sort_keys=True, indent=2),
@@ -694,7 +694,7 @@ class DifferenceTracker(object):
             item = dict()
             item[entry['name']] = dict(
                 parameter=entry['parameter'],
-                container=entry['container'],
+                container=entry['active'],
             )
             result.append(item)
         return result

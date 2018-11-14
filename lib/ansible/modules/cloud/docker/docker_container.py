@@ -1876,7 +1876,7 @@ class Container(DockerBaseClass):
                             p = sorted(p, key=lambda x: sorted(x.items()))
                         if c is not None:
                             c = sorted(c, key=lambda x: sorted(x.items()))
-                    differences.add(key, parameter=p, container=c)
+                    differences.add(key, parameter=p, active=c)
 
         has_differences = not differences.empty
         return has_differences, differences
@@ -1914,7 +1914,7 @@ class Container(DockerBaseClass):
 
                 if not match:
                     # no match. record the differences
-                    differences.add(key, parameter=getattr(self.parameters, key), container=value)
+                    differences.add(key, parameter=getattr(self.parameters, key), active=value)
         different = not differences.empty
         return different, differences
 
@@ -2274,7 +2274,7 @@ class ContainerManager(DockerBaseClass):
             self.log('No container found')
             if not self.parameters.image:
                 self.fail('Cannot create container when image is not specified!')
-            self.diff_tracker.add('exists', parameter=True, container=False)
+            self.diff_tracker.add('exists', parameter=True, active=False)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -2308,19 +2308,19 @@ class ContainerManager(DockerBaseClass):
             container = self.update_networks(container)
 
             if state == 'started' and not container.running:
-                self.diff_tracker.add('running', parameter=True, container=was_running)
+                self.diff_tracker.add('running', parameter=True, active=was_running)
                 container = self.container_start(container.Id)
             elif state == 'started' and self.parameters.restart:
-                self.diff_tracker.add('running', parameter=True, container=was_running)
+                self.diff_tracker.add('running', parameter=True, active=was_running)
                 self.container_stop(container.Id)
                 container = self.container_start(container.Id)
             elif state == 'stopped' and container.running:
-                self.diff_tracker.add('running', parameter=False, container=was_running)
+                self.diff_tracker.add('running', parameter=False, active=was_running)
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
 
             if state == 'started' and container.paused != self.parameters.paused:
-                self.diff_tracker.add('paused', parameter=self.parameters.paused, container=was_paused)
+                self.diff_tracker.add('paused', parameter=self.parameters.paused, active=was_paused)
                 if not self.check_mode:
                     try:
                         if self.parameters.paused:
@@ -2341,9 +2341,9 @@ class ContainerManager(DockerBaseClass):
         container = self._get_container(self.parameters.name)
         if container.exists:
             if container.running:
-                self.diff_tracker.add('running', parameter=False, container=True)
+                self.diff_tracker.add('running', parameter=False, active=True)
                 self.container_stop(container.Id)
-            self.diff_tracker.add('exists', parameter=False, container=True)
+            self.diff_tracker.add('exists', parameter=False, active=True)
             self.container_remove(container.Id)
 
     def fail(self, msg, **kwargs):
@@ -2386,7 +2386,7 @@ class ContainerManager(DockerBaseClass):
         if image and image.get('Id'):
             if container and container.Image:
                 if image.get('Id') != container.Image:
-                    self.diff_tracker.add('image', parameter=image.get('Id'), container=container.Image)
+                    self.diff_tracker.add('image', parameter=image.get('Id'), active=container.Image)
                     return True
         return False
 
@@ -2413,7 +2413,7 @@ class ContainerManager(DockerBaseClass):
                 self.diff_tracker.add(
                     'network.{0}'.format(netdiff['parameter']['name']),
                     parameter=netdiff['parameter'],
-                    container=netdiff['container']
+                    active=netdiff['container']
                 )
             self.results['changed'] = True
             updated_container = self._add_networks(container, network_differences)
@@ -2428,7 +2428,7 @@ class ContainerManager(DockerBaseClass):
                 for extra_network in extra_networks:
                     self.diff_tracker.add(
                         'network.{0}'.format(extra_network['name']),
-                        container=extra_network
+                        active=extra_network
                     )
                 self.results['changed'] = True
                 updated_container = self._purge_networks(container, extra_networks)
