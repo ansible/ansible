@@ -53,6 +53,7 @@ options:
             port:
                 description:
                 - Port number Syslog server is listening on.
+                default: 514
             roles:
                 description:
                 - List of applicable Syslog server roles.
@@ -94,7 +95,7 @@ data:
       port:
         description: Port number for Syslog communication.
         returned: success
-        type: int
+        type: string
         sample: 443
       roles:
         description: Organization ID which owns the network.
@@ -139,10 +140,10 @@ def validate_roles(meraki, data):
                    'URLS',
                    'IDS ALERTS',
                    'SECURITY EVENTS']
-    for server in data:
-        for role in server:
+    for server in data['servers']:
+        for role in server['roles']:
             if role.upper() not in valid_roles:
-                meraki.fail_json(msg='{role} is not a valid Syslog role.'.format(role=role))
+                meraki.fail_json(msg='{0} is not a valid Syslog role.'.format(role))
 
 def main():
 
@@ -150,15 +151,16 @@ def main():
     # the module
 
     server_arg_spec = dict(host=dict(type='str'),
-                           port=dict(type='int'),
+                           port=dict(type='str', default="514"),
                            roles=dict(type='list'),
                            )
 
     argument_spec = meraki_argument_spec()
-    argument_spec.update(
-        net_id=dict(type='str'),
-        servers=dict(type='list', element='dict', options=server_arg_spec)
-    )
+    argument_spec.update(net_id=dict(type='str'),
+                         servers=dict(type='list', element='dict', options=server_arg_spec),
+                         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
+                         net_name=dict(type='str', aliases=['name', 'network']),
+                         )
 
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
@@ -197,11 +199,11 @@ def main():
     if not org_id:
         org_id = meraki.get_org_id(meraki.params['org_name'])
     nets = meraki.get_nets(org_id=org_id)
-    net_id = meraki.get_netid(net_name=meraki.params['net_name'], data=nets)
+    net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
 
     if meraki.params['state'] == 'query':
         path = meraki.construct_path('query_update', net_id=net_id)
-        r = meraki.request(path, METHOD='GET')
+        r = meraki.request(path, method='GET')
         if meraki.status == 200:
             meraki.result['data'] = r
     elif meraki.params['state'] == 'present':
@@ -209,15 +211,22 @@ def main():
         payload = dict()
         payload['servers'] = meraki.params['servers']
 
+        # Convert port numbers to string for idempotency checks
+        for server in payload['servers']:
+            if server['port']:
+                server['port'] = str(server['port'])
+
         path = meraki.construct_path('query_update', net_id=net_id)
-        r = meraki.request(path, METHOD='GET')
+        r = meraki.request(path, method='GET')
         if meraki.status == 200:
-            original = r
+            original = dict()
+            original['servers'] = r
 
         validate_roles(meraki, payload)
+        # meraki.fail_json(msg="Payload comparison", original=original, proposed=payload)
         if meraki.is_update_required(original, payload):
             path = meraki.construct_path('query_update', net_id=net_id)
-            r = meraki.request(path, METHOD='PUT', payload=payload)
+            r = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
                 meraki.result['data'] = r
                 meraki.result['changed'] = True
@@ -226,13 +235,13 @@ def main():
         payload = dict()
 
         path = meraki.construct_path('query_update', net_id=net_id)
-        r = meraki.request(path, METHOD='GET')
+        r = meraki.request(path, method='GET')
         if meraki.status == 200:
             original = r
 
         if meraki.is_update_required(original, payload):
             path = meraki.construct_path('query_update', net_id=net_id)
-            r = meraki.request(path, METHOD='PUT', payload=payload)
+            r = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
                 meraki.result['data'] = r
                 meraki.result['changed'] = True        
