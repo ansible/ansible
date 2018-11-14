@@ -46,6 +46,12 @@ EXAMPLES = '''
     pattern: name=host* and datacenter=west
 - debug:
     var: ovirt_hosts
+# All hosts with cluster version 4.2:
+- ovirt_host_facts:
+    pattern: name=host*
+    cluster_version: 4.2
+- debug:
+    var: ovirt_hosts
 '''
 
 RETURN = '''
@@ -67,10 +73,21 @@ from ansible.module_utils.ovirt import (
 )
 
 
+def get_filtered_hosts(module, hosts):
+    # Filtering by cluster version returns only those which have same cluster version as input
+    filtered_hosts = []
+    for host in hosts:
+        cluster = host.cluster
+        if(str(cluster.version.major) + '.' + str(cluster.version.minor) == module.params.get('cluster_version')):
+            filtered_hosts.append(host)
+    return filtered_hosts
+
+
 def main():
     argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
         all_content=dict(default=False, type='bool'),
+        cluster_version=dict(default=None, type='str'),
     )
     module = AnsibleModule(argument_spec)
 
@@ -83,7 +100,10 @@ def main():
         hosts = hosts_service.list(
             search=module.params['pattern'],
             all_content=module.params['all_content'],
+            follow='cluster'
         )
+        if(module.params.get('cluster_version')):
+            hosts = get_filtered_hosts(module, hosts)
         module.exit_json(
             changed=False,
             ansible_facts=dict(
