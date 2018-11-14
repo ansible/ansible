@@ -33,6 +33,12 @@ options:
       default: False
       version_added: "2.7"
       type: bool
+    cluster_version:
+      description:
+        - "Filters all your hosts which you got and returns only those with correct version of cluster."
+      type: dict
+      version_added: "2.8"
+
 extends_documentation_fragment: ovirt_facts
 '''
 
@@ -49,7 +55,9 @@ EXAMPLES = '''
 # All hosts with cluster version 4.2:
 - ovirt_host_facts:
     pattern: name=host*
-    cluster_version: 4.2
+    cluster_version:
+        major: 4
+        minor: 2
 - debug:
     var: ovirt_hosts
 '''
@@ -73,12 +81,12 @@ from ansible.module_utils.ovirt import (
 )
 
 
-def get_filtered_hosts(module, hosts):
+def get_filtered_hosts(cluster_version, hosts):
     # Filtering by cluster version returns only those which have same cluster version as input
     filtered_hosts = []
     for host in hosts:
         cluster = host.cluster
-        if(str(cluster.version.major) + '.' + str(cluster.version.minor) == module.params.get('cluster_version')):
+        if cluster.version.major == cluster_version.get("major") and cluster.version.minor == cluster_version.get("minor"):
             filtered_hosts.append(host)
     return filtered_hosts
 
@@ -87,7 +95,7 @@ def main():
     argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
         all_content=dict(default=False, type='bool'),
-        cluster_version=dict(default=None, type='str'),
+        cluster_version=dict(default=None, type='dict'),
     )
     module = AnsibleModule(argument_spec)
 
@@ -100,10 +108,11 @@ def main():
         hosts = hosts_service.list(
             search=module.params['pattern'],
             all_content=module.params['all_content'],
-            follow='cluster'
+            follow='cluster',
         )
-        if(module.params.get('cluster_version')):
-            hosts = get_filtered_hosts(module, hosts)
+        cluster_version = module.params.get('cluster_version')
+        if cluster_version is not None and cluster_version.get("major") is not None and cluster_version.get("minor") is not None:
+            hosts = get_filtered_hosts(cluster_version, hosts)
         module.exit_json(
             changed=False,
             ansible_facts=dict(
