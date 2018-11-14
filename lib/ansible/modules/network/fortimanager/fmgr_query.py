@@ -173,7 +173,7 @@ api_result:
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
 
-# check for pyFMG lib
+# Check for pyFMG lib
 try:
     from pyFMG.fortimgr import FortiManager
     HAS_PYFMGR = True
