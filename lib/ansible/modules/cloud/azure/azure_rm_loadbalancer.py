@@ -692,7 +692,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
             inbound_nat_pools_param = [self.network_models.InboundNatPool(
                 name=item.get('name'),
-                frontend_ip_configuration=self.network_models.SubResource(
+                frontend_ip_configuration=self.network_models.SubResource(id=
                     frontend_ip_configuration_id(
                         self.subscription_id,
                         self.resource_group,
@@ -706,7 +706,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
             load_balancing_rules_param = [self.network_models.LoadBalancingRule(
                 name=item.get('name'),
-                frontend_ip_configuration=self.network_models.SubResource(
+                frontend_ip_configuration=self.network_models.SubResource(id=
                     frontend_ip_configuration_id(
                         self.subscription_id,
                         self.resource_group,
@@ -714,7 +714,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                         item.get('frontend_ip_configuration')
                     )
                 ),
-                backend_address_pool=self.network_models.SubResource(
+                backend_address_pool=self.network_models.SubResource(id=
                     backend_address_pool_id(
                         self.subscription_id,
                         self.resource_group,
@@ -722,7 +722,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                         item.get('backend_address_pool')
                     )
                 ),
-                probe=self.network_models.SubResource(
+                probe=self.network_models.SubResource(id=
                     probe_id(
                         self.subscription_id,
                         self.resource_group,
