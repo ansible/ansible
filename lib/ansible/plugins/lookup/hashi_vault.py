@@ -9,7 +9,7 @@ DOCUMENTATION = """
   lookup: hashi_vault
   author: Jonathan Davila <jdavila(at)ansible.com>
   contributors: Drew Mullen <mullen.drew@gmail.com>
-  version_added: "2.0"
+  version_added: "2.1"
   short_description: retrieve secrets from HashiCorp's vault
   requirements:
     - hvac (python library)
@@ -54,8 +54,8 @@ DOCUMENTATION = """
       type: boolean
       default: True
     namespace:
-        description: namespace where secrets reside
-        default: ''
+      description: namespace where secrets reside
+      default: ''
 """
 
 EXAMPLES = """
@@ -165,9 +165,9 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-	    if self.namespace is None:
+        if self.namespace is None:
                 self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
-	    else:
+        else:
                 self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
 
         if not self.client.is_authenticated():
