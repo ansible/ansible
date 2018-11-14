@@ -30,12 +30,12 @@ DOCUMENTATION = '''
 module: fmgr_fwpol_package
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
-short_description: Manages FortiManager Firewall Policies Packages
+    - Luke Weighall - lweighall
+    - Andrew Welsh - Ghilli3
+    - Jim Huber - p4r4n0y1ng
+short_description: Manages FortiManager Firewall Policies Packages.
 description:
-  -  Manages FortiManager Firewall Policies Packages
+  -  Manages FortiManager Firewall Policies Packages.
 
 options:
   adom:
@@ -46,12 +46,12 @@ options:
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
     description:
-      - The username to log into the FortiManager
+      - The username to log into the FortiManager.
     required: true
 
   password:
@@ -61,13 +61,13 @@ options:
 
   mode:
     description:
-      - Sets one of three modes for managing the object
+      - Sets one of three modes for managing the object.
     choices: ['add', 'set', 'delete']
     default: add
 
   name:
     description:
-      - Name of the FortiManager package or folder
+      - Name of the FortiManager package or folder.
     required: True
 
   type:
@@ -78,47 +78,47 @@ options:
 
   package_folder:
     description:
-      - Name of the folder you want to put the package into
+      - Name of the folder you want to put the package into.
     required: false
 
   central_nat:
     description:
-      - Central NAT setting
+      - Central NAT setting.
     required: false
     choices: ['enable', 'disable']
     default: disable
 
   fwpolicy_implicit_log:
     description:
-      - Implicit Log setting for all IPv4 policies in package
+      - Implicit Log setting for all IPv4 policies in package.
     required: false
     choices: ['enable', 'disable']
     default: disable
 
   fwpolicy6_implicit_log:
     description:
-      - Implicit Log setting for all IPv6 policies in package
+      - Implicit Log setting for all IPv6 policies in package.
     required: false
     choices: ['enable', 'disable']
     default: disable
 
   inspection_mode:
     description:
-      - Inspection mode setting for the policies flow or proxy
+      - Inspection mode setting for the policies flow or proxy.
     required: false
     choices: ['flow', 'proxy']
     default: flow
 
   ngfw_mode:
     description:
-      - NGFW mode setting for the policies flow or proxy
+      - NGFW mode setting for the policies flow or proxy.
     required: false
     choices: ['profile-based', 'policy-based']
     default: profile-based
 
   ssl_ssh_profile:
     description:
-      - if policy-based ngfw-mode, refer to firewall ssl-ssh-profile
+      - if policy-based ngfw-mode, refer to firewall ssl-ssh-profile.
     required: false
 
   scope_members:
@@ -128,13 +128,13 @@ options:
 
   scope_members_vdom:
     description:
-      - The members VDOM you want to assign the package to
+      - The members VDOM you want to assign the package to.
     required: false
     default: root
 
   parent_folder:
     description:
-      - The parent folder name you want to add this object under
+      - The parent folder name you want to add this object under.
     required: false
 
 '''
