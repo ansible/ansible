@@ -139,7 +139,7 @@ To make this a global setting, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    log_messages = True
 
-or enable :envvar:`ANSIBLE_PERSISTENT_LOG_MESSAGES`
+or enable environment variable `ANSIBLE_PERSISTENT_LOG_MESSAGES`
 
    # Enable device interaction logging
    export ANSIBLE_PERSISTENT_LOG_MESSAGES=True
