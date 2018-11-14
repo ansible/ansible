@@ -1,0 +1,3 @@
+minor_changes:
+- win_chocolatey - added the allow_multiple module option to allow side by side installs of the same package
+- win_chocolatey - support bootstrapping Chocolatey from other URLs with any PS script that ends with ``.ps1``, originally this script had to be ``install.ps1``
