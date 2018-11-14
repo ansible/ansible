@@ -739,7 +739,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             ) for item in self.load_balancing_rules] if self.load_balancing_rules else None
 
             self.new_load_balancer = self.network_models.LoadBalancer(
-                sku=self.network_models.LoadBalancerSku(name=self.sku.name) if self.sku else None,
+                sku=self.network_models.LoadBalancerSku(name=self.sku) if self.sku else None,
                 location=self.location,
                 tags=self.tags,
                 frontend_ip_configurations=frontend_ip_configurations_param,
