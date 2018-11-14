@@ -58,7 +58,7 @@ DOCUMENTATION = '''
         default: true
       file_name_format:
         description: Format of filename. Accepts C(%(counter)s), C(%(task_uuid)s),
-                     C(%(feature)s), C(%(ext)s). Defaults to C(%(feature)s.%(ext)s) when C(per_task_files) is C(False)
+                     C(%(feature)s), C(%(ext)s). Defaults to C(%(feature)s.%(ext)s) when C(file_per_task) is C(False)
                      and C(%(counter)s-%(task_uuid)s-%(feature)s.%(ext)s) when C(True)
         env:
           - name: CGROUP_FILE_NAME_FORMAT
@@ -90,14 +90,14 @@ DOCUMENTATION = '''
         choices:
           - csv
           - json
-      per_task_files:
+      file_per_task:
         description: When set as C(True) along with C(write_files), this callback will write 1 file per task
                      instead of 1 file for the entire playbook run
         env:
-          - name: CGROUP_PER_TASK_FILES
+          - name: CGROUP_FILE_PER_TASK
         ini:
           - section: callback_cgroup_perf_recap
-            key: per_task_files
+            key: file_per_task
         type: bool
         default: False
       write_files:
@@ -247,7 +247,7 @@ class CallbackModule(CallbackBase):
         self._files = dict.fromkeys(self._features)
         self._writers = dict.fromkeys(self._features)
 
-        self._per_task_files = False
+        self._file_per_task = False
         self._counter = 0
 
     def _open_files(self, task_uuid=None):
@@ -326,7 +326,7 @@ class CallbackModule(CallbackBase):
         }
 
         write_files = self.get_option('write_files')
-        per_task_files = self.get_option('per_task_files')
+        file_per_task = self.get_option('file_per_task')
         self._output_format = to_bytes(self.get_option('output_format'))
         output_dir = to_bytes(self.get_option('output_dir'), errors='surrogate_or_strict')
         try:
@@ -339,8 +339,8 @@ class CallbackModule(CallbackBase):
         file_name_format = to_bytes(self.get_option('file_name_format'))
 
         if write_files:
-            if per_task_files:
-                self._per_task_files = True
+            if file_per_task:
+                self._file_per_task = True
                 if file_name_format == b'%(feature)s.%(ext)s':
                     file_name_format = b'%(counter)s-%(task_uuid)s-%(feature)s.%(ext)s'
             else:
@@ -358,7 +358,7 @@ class CallbackModule(CallbackBase):
                     self.disabled = True
                     return
 
-            if not self._per_task_files:
+            if not self._file_per_task:
                 self._open_files()
 
     def _profile(self, obj=None):
@@ -382,7 +382,7 @@ class CallbackModule(CallbackBase):
                     pass
 
         if obj is not None:
-            if self._per_task_files:
+            if self._file_per_task:
                 self._open_files(task_uuid=obj._uuid)
 
             for feature in self._features:
