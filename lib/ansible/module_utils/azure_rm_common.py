@@ -796,7 +796,7 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-11-01')
+                                                            api_version='2018-08-01')
         return self._network_client
 
     @property
