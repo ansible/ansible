@@ -198,6 +198,10 @@ options:
        description:
             - This is only used with IPIP - IPIP local IP address.
        version_added: "2.8"
+    zone:
+        description:
+            - This will modify the connection zone.
+        version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -611,6 +615,7 @@ class Nmcli(object):
         self.ip_tunnel_remote = module.params['ip_tunnel_remote']
         self.nmcli_bin = self.module.get_bin_path('nmcli', True)
         self.dhcp_client_id = module.params['dhcp_client_id']
+        self.zone = module.params['zone']
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None):
         return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
@@ -764,6 +769,7 @@ class Nmcli(object):
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'connection.zone': self.zone,
         }
 
         for key, value in options.items():
@@ -852,6 +858,7 @@ class Nmcli(object):
             'arp-interval': self.arp_interval,
             'arp-ip-target': self.arp_ip_target,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'connection.zone': self.zone,
         }
 
         for key, value in options.items():
@@ -938,6 +945,7 @@ class Nmcli(object):
             'ipv6.dns-search': self.dns6_search,
             '802-3-ethernet.mtu': self.mtu,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'connection.zone': self.zone,
         }
 
         for key, value in options.items():
@@ -1004,7 +1012,8 @@ class Nmcli(object):
             'bridge.mac-address': self.mac,
             'bridge.max-age': self.maxage,
             'bridge.priority': self.priority,
-            'bridge.stp': self.bool_to_string(self.stp)
+            'bridge.stp': self.bool_to_string(self.stp),
+            'connection.zone': self.zone,
         }
 
         for key, value in options.items():
@@ -1111,7 +1120,8 @@ class Nmcli(object):
                   'ipv6.address': self.ip6 or '',
                   'ipv6.gateway': self.gw6 or '',
                   'ipv6.dns': self.dns6 or '',
-                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  'autoconnect': self.bool_to_string(self.autoconnect),
+                  'connection.zone': self.zone,
                   }
 
         for k, v in params.items():
@@ -1332,6 +1342,7 @@ def main():
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
             dns6_search=dict(type='list'),
+            zone=dict(required=False, default=None, type='str'),
             # Bond Specific vars
             mode=dict(require=False, default="balance-rr", type='str', choices=["balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad",
                                                                                 "balance-tlb", "balance-alb"]),

@@ -79,6 +79,15 @@ TESTCASE_GENERIC = [
     },
 ]
 
+TESTCASE_GENERIC_CON_MOD_ZONE = [
+    {
+        'type': 'generic',
+        'conn_name': 'non_existent_nw_device',
+        'zone': 'WORK',
+        'state': 'present',
+    },
+]
+
 TESTCASE_GENERIC_DNS4_SEARCH = [
     {
         'type': 'generic',
@@ -107,6 +116,15 @@ TESTCASE_BOND = [
     }
 ]
 
+TESTCASE_BOND_CON_MOD_ZONE = [
+    {
+        'type': 'bond',
+        'conn_name': 'non_existent_nw_device',
+        'zone': 'WORK',
+        'state': 'present',
+    },
+]
+
 TESTCASE_BRIDGE = [
     {
         'type': 'bridge',
@@ -119,6 +137,15 @@ TESTCASE_BRIDGE = [
         'state': 'present',
         '_ansible_check_mode': False,
     }
+]
+
+TESTCASE_BRIDGE_CON_MOD_ZONE = [
+    {
+        'type': 'bridge',
+        'conn_name': 'non_existent_nw_device',
+        'zone': 'WORK',
+        'state': 'present',
+    },
 ]
 
 TESTCASE_BRIDGE_SLAVE = [
@@ -167,6 +194,15 @@ TESTCASE_IPIP = [
         'ip_tunnel_remote': '192.168.225.6',
         'state': 'present',
         '_ansible_check_mode': False,
+    }
+]
+
+TESTCASE_VLAN_CON_MOD_ZONE = [
+    {
+        'type': 'vlan',
+        'conn_name': 'non_existent_nw_device',
+        'zone': 'WORK',
+        'state': 'present',
     }
 ]
 
@@ -245,6 +281,22 @@ def test_bond_connection_create(mocked_generic_connection_create):
         assert param in args[0]
 
 
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_BOND_CON_MOD_ZONE, indirect=['patch_ansible_module'])
+def test_mod_bond_conn_with_zone(mocked_generic_connection_modify):
+    """
+    Modify VLAN with connection.zone parameter
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['connection.zone']:
+        assert param in args[0]
+
+
 @pytest.mark.parametrize('patch_ansible_module', TESTCASE_GENERIC, indirect=['patch_ansible_module'])
 def test_generic_connection_create(mocked_generic_connection_create):
     """
@@ -287,6 +339,22 @@ def test_generic_connection_modify(mocked_generic_connection_modify):
     assert args[0][3] == 'non_existent_nw_device'
 
     for param in ['ipv4.gateway', 'ipv4.address']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_GENERIC_CON_MOD_ZONE, indirect=['patch_ansible_module'])
+def test_mod_bond_conn_with_zone(mocked_generic_connection_modify):
+    """
+    Modify GENERIC connection with connection.zone parameter
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['connection.zone']:
         assert param in args[0]
 
 
@@ -356,6 +424,22 @@ def test_create_bridge(mocked_generic_connection_create):
     assert args[0][6] == 'non_existent_nw_device'
 
     for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', '100', 'bridge.stp', 'yes']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_BRIDGE_CON_MOD_ZONE, indirect=['patch_ansible_module'])
+def test_mod_bridge_conn_with_zone(mocked_generic_connection_modify):
+    """
+    Modify BRIDGE with connection.zone parameter
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['connection.zone']:
         assert param in args[0]
 
 
@@ -471,6 +555,22 @@ def test_mod_vlan_conn(mocked_generic_connection_modify):
     assert args[0][3] == 'non_existent_nw_device'
 
     for param in ['ipv4.address', '10.10.10.10', 'ipv4.gateway', '10.10.10.1']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_VLAN_CON_MOD_ZONE, indirect=['patch_ansible_module'])
+def test_mod_bridge_conn_with_zone(mocked_generic_connection_modify):
+    """
+    Modify VLAN with connection.zone parameter
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['connection.zone']:
         assert param in args[0]
 
 
