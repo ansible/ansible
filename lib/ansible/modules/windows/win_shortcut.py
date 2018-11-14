@@ -62,6 +62,12 @@ options:
     - When C(present), creates or updates the shortcut.
     choices: [ absent, present ]
     default: present
+  run_as_admin:
+    description:
+    - When C(src) is an executable, this can control whether the shortcut will be opened as an administrator or not.
+    type: bool
+    default: no
+    version_added: '2.8'
 author:
 - Dag Wieers (@dagwieers)
 notes:
