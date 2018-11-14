@@ -141,6 +141,11 @@ def get_web_acl_with_backoff(client, web_acl_id):
     return client.get_web_acl(WebACLId=web_acl_id)['WebACL']
 
 
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def get_regional_web_acl_with_backoff(client, web_acl_id):
+    return client.get_web_acl(WebACLId=web_acl_id)['WebACL']
+
+
 def get_web_acl(client, module, web_acl_id):
     try:
         web_acl = get_web_acl_with_backoff(client, web_acl_id)
@@ -174,11 +179,24 @@ def list_web_acls_with_backoff(client):
     return paginator.paginate().build_full_result()['WebACLs']
 
 
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_regional_web_acls_with_backoff(client):
+    # TODO: Implement manual pagination. This only returns the first 100 ACLs
+    return client.list_web_acls()['WebACLs']
+
+
 def list_web_acls(client, module):
     try:
         return list_web_acls_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't obtain web acls")
+
+
+# def list_regional_web_acls(client, module):
+#    try:
+#        return list_regional_web_acls_with_backoff(client)
+#    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+#        module.fail_json_aws(e, msg="Couldn't obtain web acls")
 
 
 def get_change_token(client, module):
