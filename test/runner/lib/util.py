@@ -39,8 +39,7 @@ except ImportError:
     from configparser import ConfigParser
 
 DOCKER_COMPLETION = {}
-
-coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+COVERAGE_PATHS = {}  # type: dict[str, str]
 
 
 def get_docker_completion():
@@ -196,10 +195,10 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
         env = common_environment()
 
     cmd = list(cmd)
-    inject_path = get_coverage_path(args)
-    config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
     interpreter = find_python(version, path)
+    inject_path = get_coverage_path(args, version, interpreter)
+    config_path = os.path.join(inject_path, 'injector.json')
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
@@ -223,17 +222,19 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
 
-def get_coverage_path(args):
+def get_coverage_path(args, version, interpreter):
     """
     :type args: TestConfig
+    :type version: str
+    :type interpreter: str
     :rtype: str
     """
-    global coverage_path  # pylint: disable=locally-disabled, global-statement, invalid-name
+    coverage_path = COVERAGE_PATHS.get(version)
 
     if coverage_path:
         return os.path.join(coverage_path, 'coverage')
 
-    prefix = 'ansible-test-coverage-'
+    prefix = 'ansible-test-coverage-python-%s-' % version
     tmp_dir = '/tmp'
 
     if args.explain:
@@ -247,6 +248,15 @@ def get_coverage_path(args):
     shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
     shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
 
+    injector = os.path.join(coverage_path, 'coverage', 'injector.py')
+
+    with open(injector, 'r+') as injector_fd:
+        code = injector_fd.read()
+        code = re.sub(r'^#!.*', '#!%s' % interpreter, code, count=1)
+        injector_fd.seek(0)
+        injector_fd.write(code)
+        injector_fd.truncate()
+
     for root, dir_names, file_names in os.walk(coverage_path):
         for name in dir_names + file_names:
             os.chmod(os.path.join(root, name), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
@@ -255,13 +265,25 @@ def get_coverage_path(args):
         os.mkdir(os.path.join(coverage_path, directory))
         os.chmod(os.path.join(coverage_path, directory), stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
-    atexit.register(cleanup_coverage_dir)
+    if not COVERAGE_PATHS:
+        atexit.register(cleanup_coverage_dirs)
+
+    COVERAGE_PATHS[version] = coverage_path
 
     return os.path.join(coverage_path, 'coverage')
 
 
-def cleanup_coverage_dir():
-    """Copy over coverage data from temporary directory and purge temporary directory."""
+def cleanup_coverage_dirs():
+    """Clean up all coverage directories."""
+    for version, path in COVERAGE_PATHS.items():
+        display.info('Cleaning up coverage directory for Python %s: %s' % (version, path), verbosity=2)
+        cleanup_coverage_dir(path)
+
+
+def cleanup_coverage_dir(coverage_path):
+    """Copy over coverage data from temporary directory and purge temporary directory.
+    :type coverage_path: str
+    """
     output_dir = os.path.join(coverage_path, 'output')
 
     for filename in os.listdir(output_dir):
