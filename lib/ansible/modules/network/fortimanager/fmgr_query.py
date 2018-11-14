@@ -60,7 +60,11 @@ options:
     description:
       - The data object we wish to query (device, package, rule, etc). Will expand choices as improves.
     required: true
-    choices: ['device', 'cluster_nodes', 'task', 'custom']
+    choices: 
+    - device
+    - cluster_nodes
+    - task
+    - custom
 
   custom_endpoint:
     description:
