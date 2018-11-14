@@ -15,18 +15,19 @@ DOCUMENTATION = r'''
 ---
 module: dellpmax_createsg
 
-contributors: Paul Martin @rawstorage
+Author: Paul Martin @rawstorage
+
+Contributors: Rob Mortell @robmortell
 
 software versions=ansible 2.6.2
                   python version = 2.7.15rc1 (default, Apr 15 2018,
-                  PyU4V v3.0.5 or higher
 
 short_description: 
     -Module to create a Masking view to provision storage to a host.  
     
 requirements:
-    -Storage Group, Host or Host Group and Port Group must already exist for 
-    this to run sucessfully.
+    -Masking View Name must be unique, Storage Group, Port Group and 
+    Hostgroup/Cluster must already be created.
 
 notes:
     - This module has been tested against UNI 9.0.  Every effort has been 
@@ -38,9 +39,8 @@ notes:
 
 Requirements:
     - Ansible, Python 2.7, Unisphere for PowerMax version 9.0 or higher. 
-    VMAX All Flash, VMAX3, or PowerMAX storage Array
-
-
+    VMAX All Flash, VMAX3, or PowerMAX storage Array. Python module PyU4V 
+    also needs to be installed from pip or PyPi
 
 playbook options:
     unispherehost:
@@ -120,8 +120,8 @@ EXAMPLES = r'''
              array_id: "{{array_id}}"
              host_or_cluster: "AnsibleCluster"
              sgname: "{{sgname}}"
-             pg_id: "Ansible_PG"
-             maskingview_id: "MyMaskingView"
+             portgroup_id: "Ansible_PG"
+             maskingview_name: "MyMaskingView"
 '''
 RETURN = r'''
 '''
@@ -138,10 +138,10 @@ def main():
             user=dict(type='str', required=True),
             password=dict(type='str', required=True),
             array_id=dict(type='str', required=True),
-            sgname = dict(type='str', required=True),
+            sgname=dict(type='str', required=True),
             host_or_cluster=dict(type='str', required=True),
-            pg_id=dict(type='str', required=True),
-            maskingview_id=dict(type='str', required=True),
+            portgroup_id=dict(type='str', required=True),
+            maskingview_name=dict(type='str', required=True),
             compliancealterts=dict(type='bool',required=False)
 
         )
@@ -170,11 +170,12 @@ def main():
 
     # Check if Storage Group already exists
 
-    if module.params['maskingview_id'] not in mvlist:
-        dellemc.create_masking_view_existing_components(port_group_name=module.params['pg_id'],
-                                                        masking_view_name=module.params['maskingview_id'],
-                                                        storage_group_name=module.params['sgname'],
-                                                        host_name= module.params['host_or_cluster')
+    if module.params['maskingview_name'] not in mvlist:
+        dellemc.create_masking_view_existing_components(
+            port_group_name=module.params['portgroup_id'],
+            masking_view_name=module.params['maskingview_name'],
+            host_name=module.params['host_or_cluster'],
+            storage_group_name=module.params['sgname'])
         changed = True
 
     else:

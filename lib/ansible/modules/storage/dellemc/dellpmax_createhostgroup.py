@@ -15,16 +15,19 @@ DOCUMENTATION = r'''
 ---
 module: dellpmax_createsg
 
-contributors: Paul Martin @rawstorage
-             
+Author: Paul Martin @rawstorage
+
+Contributors: Rob Mortell @robmortell
 
 software versions=ansible 2.6.2
                   python version = 2.7.15rc1 (default, Apr 15 2018,
-                  PyU4V v3.0.5 or higher
+                  PyU4V v3.0.15
+                  
 short_description: 
     Module to Create Host Group for Masking Storage to a Cluster, 
     host groups are collections of hosts.  This module requires that hosts 
-    have already 
+    have already been created to be added.  Use dellpmax_createhost task in 
+    your playbook to create hosts in advance. 
 
 notes:
     - This module has been tested against UNI 9.0.  Every effort has been 
@@ -36,7 +39,9 @@ notes:
 
 Requirements:
     - Ansible, Python 2.7, Unisphere for PowerMax version 9.0 or higher. 
-    VMAX All Flash, VMAX3, or PowerMAX storage Array
+    VMAX All Flash, VMAX3, or PowerMAX storage Array. Python module PyU4V 
+    also needs to be installed from pip or PyPi
+    
 
 
 
@@ -158,18 +163,23 @@ def main():
     # module.
 
     configuredhostlist = dellemc.get_host_list()
+    hostgrouplist=dellemc.get_hostgroup_list()
 
-    for host in configuredhostlist:
-        if host in configuredhostlist:
-            dellemc.create_hostgroup(hostgroup_id=module.params['cluster_name']
-                                     ,host_list=module.params['host_list'])
-        else:
-            module.fail_json(msg='Host %s does not exist, failing task' % (
-                host))
+    host_exists = True
 
+    if module.params['cluster_name'] not in hostgrouplist:
+        for host in configuredhostlist:
+            if host not in configuredhostlist:
+                module.fail_json(msg='Host %s does not exist, failing task' % (
+                    host))
+                host_exists = False
 
-    module.exit_json(changed=changed)
-
+    if host_exists:
+        dellemc.create_hostgroup(hostgroup_id=module.params['cluster_name']
+                             ,host_list=module.params['host_list'])
+        module.exit_json(changed=changed)
+    else:
+        module.exit_json(changed=changed)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *

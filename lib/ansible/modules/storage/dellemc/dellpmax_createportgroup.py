@@ -14,15 +14,19 @@ DOCUMENTATION = r'''
 ---
 module: dellpmax_createsg
 
-contributors: Paul Martin @rawstorage
+Author: Paul Martin @rawstorage
+
+Contributors: Rob Mortell @robmortell
 
 software versions=ansible 2.6.2
                   python version = 2.7.15rc1 (default, Apr 15 2018,
-                  PyU4V v3.0.5 or higher
 
 short_description: 
-    module to create a port portgroup, Port Groups are sets of Front End 
-    ports on VMAX and PowerMAX arrays where Host HBAs are zoned.   
+    module to create a portgroup, Port Groups are sets of Front End 
+    ports on VMAX and PowerMAX arrays where Host HBAs are zoned.   Port 
+    Group name needs to be unique and not already exist.  You can't mix 
+    emulations in a port group, transport protocol must me same on all ports 
+    added 
     
 notes:
     - This module has been tested against UNI 9.0.  Every effort has been 
@@ -30,18 +34,12 @@ notes:
     are a tech preview.  Additional error handling will be added at a later 
     date, base functionality only right now.
 
-Additional Notes:
-    - It is not a requirement to create a PortGroup each time storage is 
-    being provisioned, in many organisations PortGroups are created in 
-    advance by the storage administrator for simplified design.  In these 
-    instances the administrator will simply use an existing portgroup when 
-    creating the masking view.   
 
 
 Requirements:
     - Ansible, Python 2.7, Unisphere for PowerMax version 9.0 or higher. 
-    VMAX All Flash, VMAX3, or PowerMAX storage Array
-
+    VMAX All Flash, VMAX3, or PowerMax storage Array
+    Python module PyU4V also needs to be installed from pip or PyPi
 
 
 playbook options:
@@ -67,7 +65,7 @@ playbook options:
         description:
             - Integer 12 Digit Serial Number of PowerMAX or VMAX array.
         required:True
-    pg_id:
+    portgroup_id:
          description:
             -  String value to denote name of portgroup, No  Special Character 
             support except for _.  Case sensistive for REST Calls.
@@ -126,7 +124,7 @@ EXAMPLES = r'''
                      -
                       directorId: "FA-2D"
                       portId: "4"
-             pg_id: "Ansible_PG"
+             portgroup_id: "Ansible_PG"
 '''
 RETURN = r'''
 '''
@@ -143,7 +141,7 @@ def main():
             user=dict(type='str', required=True),
             password=dict(type='str', required=True),
             array_id=dict(type='str', required=True),
-            pg_id=dict(type='str', required=True),
+            portgroup_id=dict(type='str', required=True),
             port_list=dict(type='list', required=True),
 
         )
@@ -152,7 +150,7 @@ def main():
 
     payload = (
         {
-            "portGroupId": module.params['pg_id'],
+            "portGroupId": module.params['portgroup_id'],
             "symmetrixPortKey": module.params['port_list']
         }
     )
@@ -175,17 +173,15 @@ def main():
     dellemc = conn.provisioning
 
     changed = False
-    # Check for each host in the host list that it exists, otherwise fail
-    # module.
+
 
     pglist = dellemc.get_portgroup_list()
 
-    if module.params['pg_id'] in pglist:
-        module.fail_json(msg='Portgroup %s already exists, failing task', \
-        % (portgroup))
+    if module.params['portgroup_id'] in pglist:
+        module.fail_json(msg='Portgroup already exists, failing task')
 
     else:
-        dellemc.create_multiport_portgroup(portgroup_id=module.params['pg_id'],
+        dellemc.create_multiport_portgroup(portgroup_id=module.params['portgroup_id'],
                                            ports=module.params['port_list'])
         changed = True
 

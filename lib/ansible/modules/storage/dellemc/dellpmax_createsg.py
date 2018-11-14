@@ -13,11 +13,12 @@ DOCUMENTATION = r'''
 ---
 module: dellpmax_createsg
 
-contributors: Paul Martin @rawstorage
+Author: Paul Martin @rawstorage
+
+Contributors: Rob Mortell @robmortell
 
 software versions=ansible 2.6.2
                   python version = 2.7.15rc1 (default, Apr 15 2018,
-                  PyU4V v3.0.5 or higher
                   
 short_description: module to create storage group on Dell EMC PowerMax VMAX 
 All Flash or VMAX3 storage arrays.
@@ -185,7 +186,7 @@ def main():
     # Make REST call to Unisphere Server and execute create storage group
 
     changed = False
-    # Compile a list of existing stroage groups.
+    # Compile a list of existing storage groups.
 
     sglist = dellemc.get_storage_group_list()
 

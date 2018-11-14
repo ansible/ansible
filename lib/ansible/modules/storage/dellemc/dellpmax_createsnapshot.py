@@ -16,12 +16,13 @@ module: dellpmax_createsnapshot
 
 contributors: Paul Martin, Rob Mortell
 
-software versions=ansible 2.6.2
+software versions=ansible 2.6.3
                   python version = 2.7.15rc1 (default, Apr 15 2018,
-                  PyU4V v3.0.5 or higher,
 
-short_description: module to create a snapvx snapshot, of an existing storage group on Dell EMC PowerMax VMAX
-All Flash or VMAX3 storage array.
+short_description: module to create a snapvx snapshot, of an existing storage
+group on Dell EMC PowerMax VMAX All Flash or VMAX3 storage array. Once 
+snapshot is created you can use dellpmax_manage_snap module to link relink 
+or unlink snapshots for host access.
 
 
 notes:
@@ -98,8 +99,6 @@ EXAMPLES = r'''
 RETURN = r'''
 '''
 
-
-
 def main():
     changed = False
     module = AnsibleModule(
@@ -116,7 +115,7 @@ def main():
             timeinhours=dict(type='bool', required=True),
         )
     )
-    # Make REST call to Unisphere Server and execute create snapshot/
+    # Make REST call to Unisphere Server and execute create snapshot
 
     conn = PyU4V.U4VConn(server_ip=module.params['unispherehost'], port=8443,
                          array_id=module.params['array_id'],
@@ -125,9 +124,15 @@ def main():
                          password=module.params['password'],
                          u4v_version=module.params['universion'])
 
-    dellemc=conn.replication
+    prov=conn.provisioning
+    rep=conn.replication
+    sglist=prov.get_storage_group_list()
 
-    dellemc.create_storagegroup_snap(sg_name=module.params['sgname'],
+    if module.params['sgname'] not in sglist:
+        module.fail_json(msg='Storage Group Does Not Exist')
+
+    else:
+        rep.create_storagegroup_snap(sg_name=module.params['sgname'],
                                      snap_name=module.params[
                                          'snapshotname'],ttl=module.params[
             'ttl'],hours=module.params['timeinhours'])
