@@ -31,6 +31,28 @@
             "Action": "waf:*",
             "Effect": "Allow",
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowListingCloudwatchLogs",
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogGroups"
+            ],
+            "Resource": [
+                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:*"
+            ]
+        },
+        {
+            "Sid": "AllowModifyingCloudwatchLogs",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:PutRetentionPolicy",
+                "logs:DeleteLogGroup"
+            ],
+            "Resource": [
+                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-testing*"
+            ]
         }
     ]
 }
