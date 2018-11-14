@@ -55,7 +55,7 @@ DOCUMENTATION = """
       default: True
     namespace:
       description: namespace where secrets reside
-      default: ''
+      default: None
 """
 
 EXAMPLES = """
