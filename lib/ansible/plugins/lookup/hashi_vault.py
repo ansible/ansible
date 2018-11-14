@@ -142,7 +142,11 @@ class HashiVault:
         self.auth_method = kwargs.get('auth_method')
         if self.auth_method and self.auth_method != 'token':
             try:
-                self.client = hvac.Client(url=self.url, verify=self.verify)
+                if self.namespace is None:
+                    self.client = hvac.Client(url=self.url, verify=self.verify)
+                else:
+                    self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
+
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
