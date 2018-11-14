@@ -32,7 +32,9 @@ import re
 from ansible.module_utils.ansible_release import __version__
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
-from ansible.module_utils.six import string_types, binary_type, text_type
+from ansible.module_utils.six import (
+    string_types, binary_type, text_type, integer_types
+)
 from ansible.module_utils.common.dict_transformations import (
     camel_dict_to_snake_dict, snake_dict_to_camel_dict,
     _camel_to_snake, _snake_to_camel,
@@ -387,7 +389,11 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     filters_list = []
     for k, v in filters_dict.items():
         filter_dict = {'Name': k}
-        if isinstance(v, string_types):
+        if isinstance(v, bool):
+            filter_dict['Values'] = [str(v).lower()]
+        elif isinstance(v, integer_types):
+            filter_dict['Values'] = [str(v)]
+        elif isinstance(v, string_types):
             filter_dict['Values'] = [v]
         else:
             filter_dict['Values'] = v
