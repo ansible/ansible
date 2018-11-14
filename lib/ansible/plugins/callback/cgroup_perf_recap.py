@@ -36,6 +36,16 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cgroup_perf_recap
             key: control_group
+      cpu_poll_interval:
+        description: Interval between CPU polling for determining CPU usage. A lower value may produce inaccurate
+                     results, a higher value may not be short enough to collect results for short tasks.
+        default: 0.25
+        type: float
+        env:
+          - name: CGROUP_CPU_POLL_INTERVAL
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: cpu_poll_interval
       display_recap:
         description: Controls whether the recap is printed at the end, useful if you will automatically
                      process the output files
@@ -46,15 +56,28 @@ DOCUMENTATION = '''
             key: display_recap
         type: bool
         default: true
-      write_files:
-        description: Dictates whether files will be written containing performance readings
+      file_name_format:
+        description: Format of filename. Accepts C(%(counter)s), C(%(task_uuid)s),
+                     C(%(feature)s), C(%(ext)s). Defaults to C(%(feature)s.%(ext)s) when C(per_task_files) is C(False)
+                     and C(%(counter)s-%(task_uuid)s-%(feature)s.%(ext)s) when C(True)
         env:
-          - name: CGROUP_WRITE_FILES
+          - name: CGROUP_FILE_NAME_FORMAT
         ini:
           - section: callback_cgroup_perf_recap
-            key: write_files
-        type: bool
-        default: false
+            key: file_name_format
+        type: str
+        default: '%(feature)s.%(ext)s'
+      output_dir:
+        description: Output directory for files containing recorded performance readings. If the value contains a
+                     single %s, the start time of the playbook run will be inserted in that space. Only the deepest
+                     level directory will be created if it does not exist, parent directories will not be created.
+        type: path
+        default: /tmp/ansible-perf-%s
+        env:
+          - name: CGROUP_OUTPUT_DIR
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: output_dir
       output_format:
         description: Output format, either CSV or JSON-seq
         env:
@@ -67,27 +90,25 @@ DOCUMENTATION = '''
         choices:
           - csv
           - json
-      output_dir:
-        description: Output directory for files containing recorded performance readings. If the value contains a
-                     single %s, the start time of the playbook run will be inserted in that space. Only the deepest
-                     level directory will be created if it does not exist, parent directories will not be created.
-        type: path
-        default: /tmp/ansible-perf-%s
+      per_task_files:
+        description: When set as C(True) along with C(write_files), this callback will write 1 file per task
+                     instead of 1 file for the entire playbook run
         env:
-          - name: CGROUP_OUTPUT_DIR
+          - name: CGROUP_PER_TASK_FILES
         ini:
           - section: callback_cgroup_perf_recap
-            key: output_dir
-      cpu_poll_interval:
-        description: Interval between CPU polling for determining CPU usage. A lower value may produce inaccurate
-                     results, a higher value may not be short enough to collect results for short tasks.
-        default: 0.25
-        type: float
+            key: per_task_files
+        type: bool
+        default: False
+      write_files:
+        description: Dictates whether files will be written containing performance readings
         env:
-          - name: CGROUP_CPU_POLL_INTERVAL
+          - name: CGROUP_WRITE_FILES
         ini:
           - section: callback_cgroup_perf_recap
-            key: cpu_poll_interval
+            key: write_files
+        type: bool
+        default: false
 '''
 
 import csv
@@ -226,6 +247,35 @@ class CallbackModule(CallbackBase):
         self._files = dict.fromkeys(self._features)
         self._writers = dict.fromkeys(self._features)
 
+        self._per_task_files = False
+        self._counter = 0
+
+    def _open_files(self, task_uuid=None):
+        output_format = self._output_format
+        output_dir = self._output_dir
+
+        for feature in self._features:
+            data = {
+                'counter': to_bytes(self._counter),
+                'task_uuid': to_bytes(task_uuid),
+                'feature': to_bytes(feature),
+                'ext': to_bytes(output_format)
+            }
+
+            if self._files.get(feature):
+                try:
+                    self._files[feature].close()
+                except Exception:
+                    pass
+
+            filename = self._file_name_format % data
+
+            self._files[feature] = open(os.path.join(output_dir, filename), 'w+')
+            if output_format == b'csv':
+                self._writers[feature] = partial(csv_writer, csv.writer(self._files[feature]))
+            elif output_format == b'json':
+                self._writers[feature] = partial(json_writer, self._files[feature])
+
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
@@ -276,14 +326,28 @@ class CallbackModule(CallbackBase):
         }
 
         write_files = self.get_option('write_files')
-        output_format = to_bytes(self.get_option('output_format'))
+        per_task_files = self.get_option('per_task_files')
+        self._output_format = to_bytes(self.get_option('output_format'))
         output_dir = to_bytes(self.get_option('output_dir'), errors='surrogate_or_strict')
         try:
             output_dir %= to_bytes(datetime.datetime.now().isoformat())
         except TypeError:
             pass
 
+        self._output_dir = output_dir
+
+        file_name_format = to_bytes(self.get_option('file_name_format'))
+
         if write_files:
+            if per_task_files:
+                self._per_task_files = True
+                if file_name_format == b'%(feature)s.%(ext)s':
+                    file_name_format = b'%(counter)s-%(task_uuid)s-%(feature)s.%(ext)s'
+            else:
+                file_name_format = to_bytes(self.get_option('file_name_format'))
+
+            self._file_name_format = file_name_format
+
             if not os.path.exists(output_dir):
                 try:
                     os.mkdir(output_dir)
@@ -294,15 +358,8 @@ class CallbackModule(CallbackBase):
                     self.disabled = True
                     return
 
-            for feature in self._features:
-                self._files[feature] = open(
-                    os.path.join(output_dir, b'%s.%s' % (to_bytes(feature), output_format)),
-                    'w+'
-                )
-                if output_format == b'csv':
-                    self._writers[feature] = partial(csv_writer, csv.writer(self._files[feature]))
-                elif output_format == b'json':
-                    self._writers[feature] = partial(json_writer, self._files[feature])
+            if not self._per_task_files:
+                self._open_files()
 
     def _profile(self, obj=None):
         prev_task = None
@@ -325,9 +382,14 @@ class CallbackModule(CallbackBase):
                     pass
 
         if obj is not None:
+            if self._per_task_files:
+                self._open_files(task_uuid=obj._uuid)
+
             for feature in self._features:
                 self._profilers[feature] = self._profiler_map[feature](obj=obj, writer=self._writers[feature])
                 self._profilers[feature].start()
+
+            self._counter += 1
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._profile(task)
