@@ -144,7 +144,8 @@ import re
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
-from ansible.module_utils.aws.waf import list_rules_with_backoff, list_web_acls_with_backoff, list_regional_web_acls_with_backoff, run_func_with_change_token_backoff, list_regional_rules_with_backoff
+from ansible.module_utils.aws.waf import list_rules_with_backoff, list_web_acls_with_backoff, list_regional_web_acls_with_backoff, \
+    run_func_with_change_token_backoff, list_regional_rules_with_backoff
 
 
 def get_web_acl_by_name(client, module, name):
@@ -156,7 +157,6 @@ def get_web_acl_by_name(client, module, name):
 
 
 def create_rule_lookup(client, module):
-    import ipdb; ipdb.set_trace()
     if type(client).__name__ == 'WAF':
         try:
             rules = list_rules_with_backoff(client)
