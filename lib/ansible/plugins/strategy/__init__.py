@@ -1067,6 +1067,13 @@ class StrategyBase:
                     if host.name not in self._tqm._unreachable_hosts:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
+        elif meta_action == 'end_host':
+            if _evaluate_conditional(target_host):
+                iterator._host_states[target_host.name].run_state = iterator.ITERATING_COMPLETE
+                msg = "ending play for %s" % target_host.name
+            else:
+                skipped = True
+                msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task)
             templar = Templar(loader=self._loader, variables=all_vars)
