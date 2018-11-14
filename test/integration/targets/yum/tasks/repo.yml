@@ -641,5 +641,3 @@
       yum:
         name: foo,foo-bar,bar
         state: absent
-
-  when: ansible_pkg_mgr == 'yum'
