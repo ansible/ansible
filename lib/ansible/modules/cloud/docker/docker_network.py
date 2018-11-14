@@ -228,12 +228,18 @@ facts:
 
 import re
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3
+from distutils.version import LooseVersion
+
+from ansible.module_utils.docker_common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    docker_version,
+)
 
 try:
     from docker import utils
     from docker.errors import NotFound
-    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker_common
@@ -419,7 +425,7 @@ class DockerNetworkManager(object):
             ipam_pools = []
             if self.parameters.ipam_config:
                 for ipam_pool in self.parameters.ipam_config:
-                    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+                    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
                         ipam_pools.append(IPAMPool(**ipam_pool))
                     else:
                         ipam_pools.append(utils.create_ipam_pool(**ipam_pool))
@@ -429,7 +435,7 @@ class DockerNetworkManager(object):
                 # were specified. Leaving this parameter away can significantly speed up
                 # creation; on my machine creation with this option needs ~15 seconds,
                 # and without just a few seconds.
-                if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+                if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
                     params['ipam'] = IPAMConfig(driver=self.parameters.ipam_driver,
                                                 pool_configs=ipam_pools)
                 else:

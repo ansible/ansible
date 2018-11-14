@@ -115,7 +115,10 @@ except ImportError:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
-from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
+from ansible.module_utils.docker_common import (
+    DockerBaseClass,
+    AnsibleDockerClient,
+)
 from ansible.module_utils.six import iteritems, text_type
 
 
