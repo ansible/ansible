@@ -39,8 +39,8 @@ options:
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."
         - "C(end_play) (added in 2.2) causes the play to end without failing the host(s). Note that this affects all hosts."
         - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
-        - "C(skip_host) (added in 2.8) is a per-host variation of C(end_play). Causes the host to skip the rest of the play without failing the host."
-    choices: ['flush_handlers', 'refresh_inventory', 'noop', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection', 'skip_host']
+        - "C(end_host) (added in 2.8) is a per-host variation of C(end_play). Causes the play to end for the current host without failing it."
+    choices: ['flush_handlers', 'refresh_inventory', 'noop', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection', 'end_host']
     required: true
 notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
@@ -79,8 +79,8 @@ EXAMPLES = '''
 - name: reset ssh connection to allow user changes to affect 'current login user'
   meta: reset_connection
 
-- name: Skip the rest of the play on hosts that run CentOS 6
-  meta: skip_host
+- name: End the play for hosts that run CentOS 6
+  meta: end_host
   when:
     - ansible_distribution == 'CentOS'
     - ansible_distribution_major_version == '6'
