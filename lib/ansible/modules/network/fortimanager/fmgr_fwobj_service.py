@@ -31,12 +31,12 @@ DOCUMENTATION = '''
 module: fmgr_fwobj_service
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
-short_description: Manages FortiManager Firewall Service Objects
+    - Luke Weighall - lweighall
+    - Andrew Welsh - Ghilli3
+    - Jim Huber - p4r4n0y1ng
+short_description: Manages FortiManager Firewall Service Objects.
 description:
-  -  Manages FortiManager Firewall Service Objects
+  -  Manages FortiManager Firewall Service Objects.
 
 options:
   adom:
@@ -46,7 +46,7 @@ options:
     default: root
   host:
     description:
-     -The FortiManager's Address.
+     -The FortiManager's address.
     required: true
   username:
     description:
@@ -95,7 +95,7 @@ options:
 
   custom_type:
     description:
-      - Tells module what kind of custom service to be added
+      - Tells module what kind of custom service to be added.
     choices: ['tcp_udp_sctp', 'icmp', 'icmp6', 'ip', 'http', 'ftp', 'connect', 'socks_tcp', 'socks_udp', 'all']
     default: all
     required: false
@@ -120,7 +120,7 @@ options:
 
   group_member:
     description:
-      - Comma Seperated list of members' names.
+      - Comma-Seperated list of members' names.
     required: false
 
   icmp_code:
@@ -146,14 +146,14 @@ options:
 
   mode:
     description:
-      - Sets one of three modes for managing the object
+      - Sets one of three modes for managing the object.
     choices: ['add', 'set', 'delete']
     default: add
     required: false
 
   object_type:
     description:
-      - Tells module if we are adding a custom service, category, or group
+      - Tells module if we are adding a custom service, category, or group.
     choices: ['custom', 'group', 'category']
     required: false
 
@@ -169,12 +169,12 @@ options:
 
   sctp_portrange:
     description:
-      - Multiple SCTP port ranges. Comma separated list of destination ports to add (i.e. '443,80')
+      - Multiple SCTP port ranges. Comma separated list of destination ports to add (i.e. '443,80').
       - Syntax is <destPort:sourcePort>
       - If no sourcePort is defined, it assumes all of them.
       - Ranges can be defined with a hyphen -
-      - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000)
-      - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000')
+      - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000).
+      - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000').
     required: false
 
   session_ttl:
@@ -197,12 +197,12 @@ options:
 
   tcp_portrange:
     description:
-      - Comma separated list of destination ports to add (i.e. '443,80')
+      - Comma separated list of destination ports to add (i.e. '443,80').
       - Syntax is <destPort:sourcePort>
       - If no sourcePort is defined, it assumes all of them.
       - Ranges can be defined with a hyphen -
-      - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000)
-      - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000')
+      - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000).
+      - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000').
     required: false
 
   tcp_timewait_timer:
@@ -219,12 +219,12 @@ options:
 
   udp_portrange:
     description:
-      - Comma separated list of destination ports to add (i.e. '443,80')
+      - Comma separated list of destination ports to add (i.e. '443,80').
       - Syntax is <destPort:sourcePort>
       - If no sourcePort is defined, it assumes all of them.
       - Ranges can be defined with a hyphen -
-      - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000)
-      - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000')
+      - Examples -- '443' (destPort 443 only)  '443:1000-2000' (destPort 443 from source ports 1000-2000).
+      - String multiple together in same quotes, comma separated. ('443:1000-2000, 80:1000-2000').
     required: false
 
   visibility:
