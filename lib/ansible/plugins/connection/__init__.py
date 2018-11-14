@@ -374,3 +374,7 @@ class NetworkConnectionBase(ConnectionBase):
         if os.path.exists(socket_path):
             self._connected = True
             self._socket_path = socket_path
+
+    def _log_messages(self, message):
+        if self.get_option('persistent_log_messages'):
+            display.display("%s" % message, log_only=True)

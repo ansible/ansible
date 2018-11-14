@@ -170,6 +170,22 @@ options:
     vars:
       - name: ansible_netconf_ssh_config
         version_added: '2.7'
+  persistent_log_messages:
+    type: boolean
+    description:
+      - This flag will enable logging the command executed and response received from
+        target device in the ansible log file. For this option to work 'log_path' ansible
+        configuration option is required to be set to a file path with write access.
+      - Be sure to fully understand the security implications of enabling this
+        option as it could create a security vulnerability by logging sensitive information in log file.
+    default: False
+    ini:
+      - section: persistent_connection
+        key: log_messages
+    env:
+      - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
+    vars:
+      - name: ansible_persistent_log_messages
 """
 
 import os

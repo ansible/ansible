@@ -119,6 +119,10 @@ class ConnectionProcess(object):
             self.fd.close()
 
     def run(self):
+        invoke_log_message = False
+        if hasattr(self.connection, '_log_messages') and self.connection.get_option('persistent_log_messages'):
+            invoke_log_message = True
+
         try:
             while self.connection.connected:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
@@ -128,17 +132,20 @@ class ConnectionProcess(object):
                 self.exception = None
                 (s, addr) = self.sock.accept()
                 signal.alarm(0)
-
                 signal.signal(signal.SIGALRM, self.command_timeout)
                 while True:
                     data = recv_data(s)
                     if not data:
                         break
+                    if invoke_log_message:
+                        self.connection._log_messages("jsonrpc request: %s" % data)
 
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
+                    if invoke_log_message:
+                        self.connection._log_messages("jsonrpc response: %s" % resp)
                     send_data(s, to_bytes(resp))
 
                 s.close()
