@@ -338,6 +338,17 @@ class PathMapper(object):
         if path.startswith('hacking/'):
             return minimal
 
+        if path.startswith('lib/ansible/executor/powershell/'):
+            units_path = 'test/units/executor/powershell/'
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            return {
+                'windows-integration': self.integration_all_target,
+                'units': units_path,
+            }
+
         if path.startswith('lib/ansible/modules/'):
             module_name = self.module_names_by_path.get(path)
 
