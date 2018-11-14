@@ -42,8 +42,10 @@ options:
     vlan_id:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
-            - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
+            - 'If C(vlan_trunk) is configured to be I(true), this can be a range, example: 1-4094.'
+            - Since version 2.8, it can be a list of multiple ranges and numbers also represented by the alias C(vlan_ids).
         required: True
+        aliases: [ vlan_ids ]
     num_ports:
         description:
             - The number of ports the portgroup should contain.
@@ -159,7 +161,10 @@ EXAMPLES = '''
     password: '{{ vcenter_password }}'
     portgroup_name: vlan-trunk-portrgoup
     switch_name: dvSwitch
-    vlan_id: 1-1000, 1005, 1100-1200
+    vlan_ids:
+        - 1-1000
+        - 1005
+        - 1100-1200
     vlan_trunk: True
     num_ports: 120
     portgroup_type: earlyBinding
@@ -258,7 +263,7 @@ class VMwareDvsPortgroup(PyVmomi):
         if self.module.params['vlan_trunk']:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec()
             vlan_id_list = []
-            for vlan_id_splitted in self.module.params['vlan_id'].split(','):
+            for vlan_id_splitted in self.module.params['vlan_id']:
                 try:
                     vlan_id_start, vlan_id_end = vlan_id_splitted.split('-')
                     vlan_id_list.append(vim.NumericRange(start=int(vlan_id_start.strip()), end=int(vlan_id_end.strip())))
@@ -345,7 +350,7 @@ def main():
         dict(
             portgroup_name=dict(required=True, type='str'),
             switch_name=dict(required=True, type='str'),
-            vlan_id=dict(required=True, type='str'),
+            vlan_id=dict(required=True, type='list', aliases=['vlan_ids']),
             num_ports=dict(required=True, type='int'),
             portgroup_type=dict(required=True, choices=['earlyBinding', 'lateBinding', 'ephemeral'], type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
