@@ -692,8 +692,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
             inbound_nat_pools_param = [self.network_models.InboundNatPool(
                 name=item.get('name'),
-                frontend_ip_configuration=self.network_models.SubResource(id=
-                    frontend_ip_configuration_id(
+                frontend_ip_configuration=self.network_models.SubResource(
+                    id=frontend_ip_configuration_id(
                         self.subscription_id,
                         self.resource_group,
                         self.name,
@@ -706,24 +706,24 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
             load_balancing_rules_param = [self.network_models.LoadBalancingRule(
                 name=item.get('name'),
-                frontend_ip_configuration=self.network_models.SubResource(id=
-                    frontend_ip_configuration_id(
+                frontend_ip_configuration=self.network_models.SubResource(
+                    id=frontend_ip_configuration_id(
                         self.subscription_id,
                         self.resource_group,
                         self.name,
                         item.get('frontend_ip_configuration')
                     )
                 ),
-                backend_address_pool=self.network_models.SubResource(id=
-                    backend_address_pool_id(
+                backend_address_pool=self.network_models.SubResource(
+                    id=backend_address_pool_id(
                         self.subscription_id,
                         self.resource_group,
                         self.name,
                         item.get('backend_address_pool')
                     )
                 ),
-                probe=self.network_models.SubResource(id=
-                    probe_id(
+                probe=self.network_models.SubResource(
+                    id=probe_id(
                         self.subscription_id,
                         self.resource_group,
                         self.name,
@@ -739,7 +739,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             ) for item in self.load_balancing_rules] if self.load_balancing_rules else None
 
             self.new_load_balancer = self.network_models.LoadBalancer(
-                sku=self.network_models.LoadBalancerSku(self.sku) if self.sku else None,
+                sku=self.network_models.LoadBalancerSku(name=self.sku.name) if self.sku else None,
                 location=self.location,
                 tags=self.tags,
                 frontend_ip_configurations=frontend_ip_configurations_param,
