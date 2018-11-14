@@ -19,21 +19,55 @@ You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' a
 
 Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
 
+
 .. _rolling_update_batch_size:
 
 Rolling Update Batch Size
 `````````````````````````
-
 
 By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ``serial`` keyword::
 
 
     - name: test play
       hosts: webservers
-      serial: 3
+      serial: 2
+      gather_facts: False
+      tasks:
+      - name: task one
+        comand: hostname
+      - name: task two
+        command: hostname
 
-In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
-would complete the play completely before moving on to the next 3 hosts.
+In the above example, if we had 4 hosts in the group 'webservers', 2
+would complete the play completely before moving on to the next 2 hosts::
+
+
+    PLAY [webservers] ****************************************
+
+    TASK [task one] ******************************************
+    changed: [web2]
+    changed: [web1]
+
+    TASK [task two] ******************************************
+    changed: [web1]
+    changed: [web2]
+
+    PLAY [webservers] ****************************************
+
+    TASK [task one] ******************************************
+    changed: [web3]
+    changed: [web4]
+
+    TASK [task two] ******************************************
+    changed: [web3]
+    changed: [web4]
+
+    PLAY RECAP ***********************************************
+    web1      : ok=2    changed=2    unreachable=0    failed=0
+    web2      : ok=2    changed=2    unreachable=0    failed=0
+    web3      : ok=2    changed=2    unreachable=0    failed=0
+    web4      : ok=2    changed=2    unreachable=0    failed=0
+
 
 The ``serial`` keyword can also be specified as a percentage, which will be applied to the total number of hosts in a
 play, in order to determine the number of hosts per pass::
@@ -76,6 +110,7 @@ You can also mix and match the values::
 
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
+
 
 .. _maximum_failure_percentage:
 
