@@ -90,6 +90,6 @@ if ($end_sound_path) {
    }
 }
 
-$module.Result.message_text = $words
+$module.Result.message_text = $words.ToString()
 
 $module.ExitJson()
