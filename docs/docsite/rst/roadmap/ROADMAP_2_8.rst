@@ -2,7 +2,8 @@
 Ansible 2.8
 ===========
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Release Schedule
 ----------------
@@ -10,13 +11,15 @@ Release Schedule
 Expected
 ========
 
+PRs must be raised well in advance of the dates below to have a chance of being included in this Ansible release.
+
 - 2019-03-14 Alpha 1 **Core freeze**
 
   No new features to ``support:core`` code.
   Includes no new module options to Core modules
 - 2019-03-21 Beta 1 **Community freeze**
 
-  No new functionality (including modules/plugins) after this point
+  No new functionality (including modules/plugins) to any code
 - 2019-04-04 Release Candidate 1
  
   Note: 2 weeks after Beta 1
@@ -26,7 +29,6 @@ Expected
 - 2019-05-02 Release
 
 
-PRs must be raised well in advance of the above dates to have a chance of being included in this Ansible release.
 
 Release Manager
 ---------------
