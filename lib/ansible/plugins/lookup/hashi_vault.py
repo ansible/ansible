@@ -8,6 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = """
   lookup: hashi_vault
   author: Jonathan Davila <jdavila(at)ansible.com>
+  contributors: Drew Mullen <mullen.drew@gmail.com>
   version_added: "2.0"
   short_description: retrieve secrets from HashiCorp's vault
   requirements:
@@ -52,6 +53,9 @@ DOCUMENTATION = """
       description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
       type: boolean
       default: True
+    namespace:
+        description: namespace where secrets reside
+        default: ''
 """
 
 EXAMPLES = """
@@ -61,6 +65,10 @@ EXAMPLES = """
 - name: Return all secrets from a path
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Return all secrets from a path in a namespace
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
 - name: Vault that requires authentication via LDAP
   debug:
@@ -109,6 +117,7 @@ class HashiVault:
     def __init__(self, **kwargs):
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
+        self.namespace = kwargs.get('namespace', None)
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -152,7 +161,10 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-            self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
+	    if self.namespace is None:
+                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
+	    else:
+                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
 
         if not self.client.is_authenticated():
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
