@@ -234,6 +234,7 @@ from ansible.module_utils.docker_common import (
     AnsibleDockerClient,
     DockerBaseClass,
     docker_version,
+    DifferenceTracker,
 )
 
 try:
@@ -318,6 +319,8 @@ class DockerNetworkManager(object):
             u'actions': []
         }
         self.diff = self.client.module._diff
+        self.diff_tracker = DifferenceTracker()
+        self.diff_result = dict()
 
         self.existing_network = self.get_existing_network()
 
@@ -337,6 +340,11 @@ class DockerNetworkManager(object):
         elif state == 'absent':
             self.absent()
 
+        if self.diff or self.check_mode or self.parameters.debug:
+            if self.diff:
+                self.diff_result['before'], self.diff_result['after'] = self.diff_tracker.get_before_after()
+            self.results['diff'] = self.diff_result
+
     def get_existing_network(self):
         try:
             return self.client.inspect_network(self.parameters.network_name)
@@ -351,30 +359,34 @@ class DockerNetworkManager(object):
         :param net: the inspection output for an existing network
         :return: (bool, list)
         '''
-        different = False
-        differences = []
+        differences = DifferenceTracker()
         if self.parameters.driver and self.parameters.driver != net['Driver']:
-            different = True
-            differences.append('driver')
+            differences.add('driver',
+                            parameter=self.parameters.driver,
+                            active=net['Driver'])
         if self.parameters.driver_options:
             if not net.get('Options'):
-                different = True
-                differences.append('driver_options')
+                differences.add('driver_options',
+                                parameter=self.parameters.driver_options,
+                                active=net.get('Options'))
             else:
                 for key, value in self.parameters.driver_options.items():
                     if not (key in net['Options']) or value != net['Options'][key]:
-                        different = True
-                        differences.append('driver_options.%s' % key)
+                        differences.add('driver_options.%s' % key,
+                                        parameter=value,
+                                        active=net['Options'].get(key))
 
         if self.parameters.ipam_driver:
             if not net.get('IPAM') or net['IPAM']['Driver'] != self.parameters.ipam_driver:
-                different = True
-                differences.append('ipam_driver')
+                differences.add('ipam_driver',
+                                parameter=self.parameters.ipam_driver,
+                                active=net.get('IPAM'))
 
         if self.parameters.ipam_config is not None and self.parameters.ipam_config:
             if not net.get('IPAM') or not net['IPAM']['Config']:
-                different = True
-                differences.append('ipam_config')
+                differences.add('ipam_config',
+                                parameter=self.parameters.ipam_config,
+                                active=net.get('IPAM', {}).get('Config'))
             else:
                 for idx, ipam_config in enumerate(self.parameters.ipam_config):
                     net_config = dict()
@@ -397,23 +409,27 @@ class DockerNetworkManager(object):
                                 camelkey = net_key
                                 break
                         if not camelkey or net_config.get(camelkey) != value:
-                            different = True
-                            differences.append('ipam_config[%s].%s' % (idx, key))
+                            differences.add('ipam_config[%s].%s' % (idx, key),
+                                            parameter=value,
+                                            active=net_config.get(camelkey) if camelkey else None)
 
         if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net.get('EnableIPv6', False):
-            different = True
-            differences.append('enable_ipv6')
+            differences.add('enable_ipv6',
+                            parameter=self.parameters.enable_ipv6,
+                            active=net.get('EnableIPv6', False))
 
         if self.parameters.internal is not None:
             if self.parameters.internal:
                 if not net.get('Internal'):
-                    different = True
-                    differences.append('internal')
+                    differences.add('internal',
+                                    parameter=self.parameters.internal,
+                                    active=net.get('Internal'))
             else:
                 if net.get('Internal'):
-                    different = True
-                    differences.append('internal')
-        return different, differences
+                    differences.add('internal',
+                                    parameter=self.parameters.internal,
+                                    active=net.get('Internal'))
+        return not differences.empty, differences
 
     def create_network(self):
         if not self.existing_network:
@@ -472,6 +488,9 @@ class DockerNetworkManager(object):
                     self.client.connect_container_to_network(name, self.parameters.network_name)
                 self.results['actions'].append("Connected container %s" % (name,))
                 self.results['changed'] = True
+                self.diff_tracker.add('connected.{0}'.format(name),
+                                      parameter=True,
+                                      active=False)
 
     def disconnect_missing(self):
         if not self.existing_network:
@@ -496,13 +515,17 @@ class DockerNetworkManager(object):
             self.client.disconnect_container_from_network(container_name, self.parameters.network_name)
         self.results['actions'].append("Disconnected container %s" % (container_name,))
         self.results['changed'] = True
+        self.diff_tracker.add('connected.{0}'.format(container_name),
+                              parameter=False,
+                              active=True)
 
     def present(self):
         different = False
-        differences = []
+        differences = DifferenceTracker()
         if self.existing_network:
             different, differences = self.has_different_config(self.existing_network)
 
+        self.diff_tracker.add('exists', parameter=True, active=self.existing_network is not None)
         if self.parameters.force or different:
             self.remove_network()
             self.existing_network = None
@@ -513,7 +536,8 @@ class DockerNetworkManager(object):
             self.disconnect_missing()
 
         if self.diff or self.check_mode or self.parameters.debug:
-            self.results['diff'] = differences
+            self.diff_result['differences'] = differences.get_legacy_docker_diffs()
+            self.diff_tracker.merge(differences)
 
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
@@ -521,6 +545,7 @@ class DockerNetworkManager(object):
         self.results['ansible_facts'] = {u'docker_network': self.get_existing_network()}
 
     def absent(self):
+        self.diff_tracker.add('exists', parameter=False, active=self.existing_network is not None)
         self.remove_network()
 
 
