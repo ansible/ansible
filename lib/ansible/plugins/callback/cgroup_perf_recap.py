@@ -69,7 +69,8 @@ DOCUMENTATION = '''
           - json
       output_dir:
         description: Output directory for files containing recorded performance readings. If the value contains a
-                     single %s, the start time of the playbook run will be inserted in that space
+                     single %s, the start time of the playbook run will be inserted in that space. Only the deepest
+                     level directory will be created if it does not exist, parent directories will not be created.
         type: path
         default: /tmp/ansible-perf-%s
         env:
@@ -284,7 +285,15 @@ class CallbackModule(CallbackBase):
 
         if write_files:
             if not os.path.exists(output_dir):
-                os.mkdir(output_dir)
+                try:
+                    os.mkdir(output_dir)
+                except Exception as e:
+                    self._display.warning(
+                        u'Could not create the output directory at %s: %s' % (to_text(output_dir), to_text(e))
+                    )
+                    self.disabled = True
+                    return
+
             for feature in self._features:
                 self._files[feature] = open(
                     os.path.join(output_dir, b'%s.%s' % (to_bytes(feature), output_format)),
