@@ -106,17 +106,10 @@ class ShippableChanges(object):
             display.warning('Unable to find project. Cannot determine changes. All tests will be executed.')
             return None
 
-        merge_runs = sorted(merge_runs, key=lambda r: r['createdAt'])
-        known_commits = set()
-        last_successful_commit = None
-
-        for merge_run in merge_runs:
-            commit_sha = merge_run['commitSha']
-            if commit_sha not in known_commits:
-                known_commits.add(commit_sha)
-                if merge_run['statusCode'] == 30:
-                    if git.is_valid_ref(commit_sha):
-                        last_successful_commit = commit_sha
+        successful_commits = set(run['commitSha'] for run in merge_runs if run['statusCode'] == 30)
+        commit_history = git.get_rev_list(max_count=100)
+        ordered_successful_commits = [commit for commit in commit_history if commit in successful_commits]
+        last_successful_commit = ordered_successful_commits[0] if ordered_successful_commits else None
 
         if last_successful_commit is None:
             display.warning('No successful commit found. All tests will be executed.')
