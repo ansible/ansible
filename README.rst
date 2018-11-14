@@ -111,10 +111,10 @@ See `COPYING <COPYING>`_ to see the full text.
    :target: https://app.shippable.com/projects/573f79d02a8192902e20e34b
 .. |Chat badge| image:: https://img.shields.io/badge/chat-IRC-brightgreen.svg
    :target: https://docs.ansible.com/ansible/latest/community/communication.html
-.. |Code Of Conduct| image:: https://img.shields.io/badge/Code%20of%20Conduct-Ansible-silver.svg
+.. |Code Of Conduct| image:: https://img.shields.io/badge/code%20of%20conduct-Ansible-silver.svg
    :target: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html
    :alt: Ansible Code of Conduct
-.. |Mailing Lists| image:: https://img.shields.io/badge/Mailing%20lists-Ansible-orange.svg
+.. |Mailing Lists| image:: https://img.shields.io/badge/mailing%20lists-Ansible-orange.svg
    :target: https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information
    :alt: Ansible mailing lists
 .. |License| image:: https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg
