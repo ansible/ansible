@@ -10,15 +10,20 @@
            region: "{{ aws_region }}"
       no_log: yes
     # ============================================================
+    - name: Create a temporary folder for the policies
+      tempfile:
+        state: directory
+      register: tmpdir
+    # ============================================================
     - name: Copy over policy
       copy:
         src: no_access.json
-        dest: "/var/tmp/"
+        dest: "{{ tmpdir.path }}"
     # ============================================================
     - name: Copy over other policy
       copy:
         src: no_access_with_id.json
-        dest: "/var/tmp/"
+        dest: "{{ tmpdir.path }}"
     # ============================================================
     - name: Create user for tests
       iam_user:
@@ -45,7 +50,7 @@
         iam_name: "{{ iam_user_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access.json"
+        policy_document: "{{ tmpdir.path }}/no_access.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -62,7 +67,7 @@
         iam_name: "{{ iam_user_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access_with_id.json"
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -77,7 +82,7 @@
         iam_name: "{{ iam_user_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access_with_id.json"
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -92,7 +97,7 @@
         iam_name: "{{ iam_user_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_json: "{{ lookup('file', '/var/tmp/no_access.json') }}"
+        policy_json: "{{ lookup('file', '{{ tmpdir.path }}/no_access.json') }}"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -109,7 +114,7 @@
         iam_name: "{{ iam_role_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access.json"
+        policy_document: "{{ tmpdir.path }}/no_access.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -126,7 +131,7 @@
         iam_name: "{{ iam_role_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access_with_id.json"
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -141,7 +146,7 @@
         iam_name: "{{ iam_role_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access_with_id.json"
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -156,7 +161,7 @@
         iam_name: "{{ iam_role_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_json: "{{ lookup('file', '/var/tmp/no_access.json') }}"
+        policy_json: "{{ lookup('file', '{{ tmpdir.path }}/no_access.json') }}"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -173,7 +178,7 @@
         iam_name: "{{ iam_group_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access.json"
+        policy_document: "{{ tmpdir.path }}/no_access.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -190,7 +195,7 @@
         iam_name: "{{ iam_group_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access_with_id.json"
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -205,7 +210,7 @@
         iam_name: "{{ iam_group_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_document: "/var/tmp/no_access_with_id.json"
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -220,7 +225,7 @@
         iam_name: "{{ iam_group_name }}"
         policy_name: "{{ iam_policy_name }}"
         state: present
-        policy_json: "{{ lookup('file', '/var/tmp/no_access.json') }}"
+        policy_json: "{{ lookup('file', '{{ tmpdir.path }}/no_access.json') }}"
         <<: *aws_connection_info
       register: result 
     # ============================================================
@@ -229,7 +234,41 @@
         that:
           - result.changed == True
           - result.policies == ["{{ iam_policy_name }}"]
-          - result.group_name == "{{ iam_group_name }}" 
+          - result.group_name == "{{ iam_group_name }}"
+    # ============================================================
+    - name: Delete policy for user
+      iam_policy:
+        iam_type: user
+        iam_name: "{{ iam_user_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+    - assert:
+        that:
+          - result.changed == True
+    # ============================================================
+    - name: Delete policy for role
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ iam_role_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+    - assert:
+        that:
+          - result.changed == True
+    # ============================================================
+    - name: Delete policy for group
+      iam_policy:
+        iam_type: group
+        iam_name: "{{ iam_group_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+    - assert:
+        that:
+          - result.changed == True
+    # ============================================================
   always:
     # ============================================================
     - name: Delete policy for user
@@ -279,3 +318,8 @@
         state: absent
         <<: *aws_connection_info
       ignore_errors: yes
+    # ============================================================
+    - name: Delete temporary folder containing the policies
+      file:
+        state: absent
+        path: "{{ tmpdir.path }}/"
