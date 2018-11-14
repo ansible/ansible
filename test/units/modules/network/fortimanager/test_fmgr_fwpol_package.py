@@ -63,7 +63,7 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
     # mode: add
     # parent_folder: None
     # scope_members_vdom: root
-    # type: pkg
+    # # type: pkg
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -79,7 +79,7 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
     # mode: set
     # parent_folder: ansibleTestFolder1
     # scope_members_vdom: root
-    # type: pkg
+    # # type: pkg
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -95,7 +95,7 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
     # mode: add
     # parent_folder: None
     # scope_members_vdom: root
-    # type: pkg
+    # # type: pkg
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -111,7 +111,7 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
     # mode: add
     # parent_folder: None
     # scope_members_vdom: ansible1
-    # type: pkg
+    # # type: pkg
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -127,7 +127,7 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
     # mode: delete
     # parent_folder: None
     # scope_members_vdom: root
-    # type: pkg
+    # # type: pkg
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -143,7 +143,7 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
     # mode: delete
     # parent_folder: ansibleTestFolder1
     # scope_members_vdom: root
-    # type: pkg
+    # # type: pkg
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -184,7 +184,7 @@ def test_fmgr_fwpol_package_folder(fixture_data, mocker):
     # mode: add
     # parent_folder: None
     # scope_members_vdom: root
-    # type: folder
+    # # type: folder
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -200,7 +200,7 @@ def test_fmgr_fwpol_package_folder(fixture_data, mocker):
     # mode: set
     # parent_folder: ansibleTestFolder1
     # scope_members_vdom: root
-    # type: folder
+    # # type: folder
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -217,7 +217,7 @@ def test_fmgr_fwpol_package_folder(fixture_data, mocker):
     # mode: delete
     # parent_folder: ansibleTestFolder1
     # package-folder: None
-    # type: folder
+    # # type: folder
     # ngfw-mode: profile-based
     ##################################################
     ##################################################
@@ -234,7 +234,7 @@ def test_fmgr_fwpol_package_folder(fixture_data, mocker):
     # scope_members: None
     # mode: delete
     # scope_members_vdom: root
-    # type: folder
+    # # type: folder
     ##################################################
 
     # Test using fixture 1 #
@@ -267,7 +267,7 @@ def test_fmgr_fwpol_package_install(fixture_data, mocker):
     # mode: execute
     # parent_folder: None
     # scope_members_vdom: root
-    # type: install
+    # # type: install
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
@@ -283,7 +283,7 @@ def test_fmgr_fwpol_package_install(fixture_data, mocker):
     # mode: execute
     # parent_folder: None
     # scope_members_vdom: root
-    # type: install
+    # # type: install
     # central-nat: disable
     # ngfw-mode: profile-based
     ##################################################
