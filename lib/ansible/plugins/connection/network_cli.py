@@ -400,7 +400,7 @@ class Connection(NetworkConnectionBase):
                     signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
                     data = self._ssh_shell.recv(256)
                     signal.alarm(0)
-                    self._log_messages("response-%s: %s" % (window_count+1, data))
+                    self._log_messages("response-%s: %s" % (window_count + 1, data))
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
                     # remaining response.
@@ -414,7 +414,7 @@ class Connection(NetworkConnectionBase):
                     return self._command_response
             else:
                 data = self._ssh_shell.recv(256)
-                self._log_messages("response-%s: %s" % (window_count+1, data))
+                self._log_messages("response-%s: %s" % (window_count + 1, data))
             # when a channel stream is closed, received data will be empty
             if not data:
                 break
