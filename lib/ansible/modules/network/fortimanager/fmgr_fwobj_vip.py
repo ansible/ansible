@@ -339,7 +339,7 @@ options:
 
   src_filter:
     description:
-      - Source address filter. Each address must be either an IP/subnet (x.x.x.x/n) or a range (x.x.x.x-y.y.y.y). 
+      - Source address filter. Each address must be either an IP/subnet (x.x.x.x/n) or a range (x.x.x.x-y.y.y.y).
       - Separate addresses with spaces.
     required: false
 
@@ -408,7 +408,7 @@ options:
 
   nat_source_vip:
     description:
-      - Enable to prevent unintended servers from using a virtual IP. 
+      - Enable to prevent unintended servers from using a virtual IP.
       - Disable to use the actual IP address of the server as the source address.
       - choice | disable | Do not force to NAT as VIP.
       - choice | enable | Force to NAT as VIP.
@@ -490,7 +490,7 @@ options:
 
   http_cookie_share:
     description:
-      - Control sharing of cookies across virtual servers. 
+      - Control sharing of cookies across virtual servers.
       - Same-ip means a cookie from one virtual server can be used by another. Disable stops cookie sharing.
       - choice | disable | Only allow HTTP cookie to match this virtual server.
       - choice | same-ip | Allow HTTP cookie to match any virtual server with same IP.
@@ -1138,7 +1138,7 @@ options:
 
   realservers_max_connections:
     description:
-      - Max number of active connections that can be directed to the real server. 
+      - Max number of active connections that can be directed to the real server.
     required: false
 
   realservers_monitor:
