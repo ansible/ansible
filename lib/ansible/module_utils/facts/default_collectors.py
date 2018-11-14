@@ -43,6 +43,7 @@ from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
+from ansible.module_utils.facts.system.lsmod import LsmodFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import OpenBSDPkgMgrFactCollector
 from ansible.module_utils.facts.system.platform import PlatformFactCollector
@@ -112,7 +113,8 @@ _general = [
     DateTimeFactCollector,
     EnvFactCollector,
     SshPubKeyFactCollector,
-    UserFactCollector
+    UserFactCollector,
+    LsmodFactCollector
 ]
 
 # virtual, this might also limit hardware/networking
