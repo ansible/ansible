@@ -817,7 +817,7 @@ def default_compare(new, old, path):
         return True
     elif isinstance(new, dict):
         if not isinstance(old, dict):
-            return false
+            return False
         for k in new.keys():
             if not default_compare(new.get(k), old.get(k, None), path + '/' + k):
                 return False
@@ -827,9 +827,9 @@ def default_compare(new, old, path):
             return False
         if isinstance(old[0], dict):
             key = None
-            if 'id' in old[0]:
+            if 'id' in old[0] and 'id' in new[0]:
                 key = 'id'
-            elif 'name' in old[0]:
+            elif 'name' in old[0] and 'id' in new[0]:
                 key = 'name'
             new = sorted(new, key=lambda x: x[key])
             old = sorted(old, key=lambda x: x[key])
@@ -841,7 +841,7 @@ def default_compare(new, old, path):
                 return False
         return True
     else:
-        return new == old    
+        return new == old
 
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
