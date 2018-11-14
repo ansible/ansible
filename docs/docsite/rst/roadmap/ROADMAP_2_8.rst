@@ -16,13 +16,11 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 - 2019-03-14 Alpha 1 **Core freeze**
 
   No new features to ``support:core`` code.
-  Includes no new module options to Core modules
-- 2019-03-21 Beta 1 **Community freeze**
+  Includes no new options to existing Core modules
+- 2019-03-21 Beta 1 **Feature freeze**
 
   No new functionality (including modules/plugins) to any code
 - 2019-04-04 Release Candidate 1
- 
-  Note: 2 weeks after Beta 1
 - 2019-04-11 Release Candidate 2 (if needed)
 - 2019-04-18 Release Candidate 3 (if needed)
 - 2019-04-25 Release Candidate 4 (if needed)
