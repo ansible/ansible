@@ -149,14 +149,15 @@ def remove_route_command(prefix, w):
 
 
 def get_configured_track(module, ctrack):
-    check_track = 'Track {0}'.format(ctrack)
+    check_track = '{0}'.format(ctrack)
     track_exists = False
-    command = 'show track | awk "/Track/" | no-more'
+    command = 'show track'
     try:
         body = run_commands(module, [command])
+        match = re.findall(r'Track\s+(\d+)', body[0])
     except IndexError:
         return None
-    if check_track in body[0].split('\n'):
+    if check_track in match:
         track_exists = True
     return track_exists
 
