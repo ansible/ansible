@@ -113,7 +113,7 @@ def _fetch_information(token, url):
         except KeyError:
             raise AnsibleError("Incorrect format from the Scaleway API response")
 
-        link = response.getheader('Link')
+        link = response.headers['Link']
         if not link:
             return results
         relations = parse_pagination_link(link)
