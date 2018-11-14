@@ -60,7 +60,7 @@ options:
     description:
       - The data object we wish to query (device, package, rule, etc). Will expand choices as improves.
     required: true
-    choices: 
+    choices:
     - device
     - cluster_nodes
     - task
