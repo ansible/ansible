@@ -29,7 +29,7 @@ class ActionModule(RebootActionModule, ActionBase):
         'reboot_timeout', 'reboot_timeout_sec', 'shutdown_timeout', 'shutdown_timeout_sec', 'test_command',
     ))
 
-    DEFAULT_BOOT_TIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
+    DEFAULT_BOOT_TIME_COMMAND = "wmic os get lastbootuptime"
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_PRE_REBOOT_DELAY = 2
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '/r /t %d /c "%s"'
