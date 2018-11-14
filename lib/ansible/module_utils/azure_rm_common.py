@@ -802,7 +802,7 @@ class AzureRMModuleBase(object):
     @property
     def network_models(self):
         self.log("Getting network models...")
-        return NetworkManagementClient.models("2018-08-01")
+        return NetworkManagementClient.models("2019-08-01")
 
     @property
     def rm_client(self):
