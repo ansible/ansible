@@ -9,7 +9,8 @@ DOCUMENTATION = r'''
     plugin_type: inventory
     short_description: Azure Resource Manager inventory plugin
     extends_documentation_fragment:
-      - azure
+        - azure
+        - inventory_cache
     description:
         - Query VM details from Azure Resource Manager
         - Requires a YAML configuration file whose name ends with 'azure_rm.(yml|yaml)'
@@ -176,7 +177,7 @@ except ImportError:
 
 from collections import namedtuple
 from ansible import release
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.azure_rm_common import AzureRMAuth
 from ansible.errors import AnsibleParserError, AnsibleError
@@ -211,7 +212,7 @@ UrlAction = namedtuple('UrlAction', ['url', 'api_version', 'handler', 'handler_a
 
 
 # FUTURE: add Cacheable support once we have a sane serialization format
-class InventoryModule(BaseInventoryPlugin, Constructable):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'azure_rm'
 
@@ -261,11 +262,55 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._filters = self.get_option('exclude_host_filters') + self.get_option('default_host_filters')
 
-        try:
-            self._credential_setup()
-            self._get_hosts()
-        except Exception:
-            raise
+        # Cache logic
+        if cache:
+            cache = self.get_option('cache')
+            cache_key = self.get_cache_key(path)
+        else:
+            cache_key = None
+
+        cache_needs_update = False
+        if cache:
+            try:
+                results = self._cache[cache_key]
+            except KeyError:
+                cache_needs_update = True
+            else:
+                self._hosts = [AzureHost(h, self) for h in results]
+
+        if not cache or cache_needs_update:
+            try:
+                self._credential_setup()
+                self._get_hosts()
+            except Exception as ex:
+                raise
+
+        constructable_config_strict = boolean(self.get_option('fail_on_template_errors'))
+        constructable_config_compose = self.get_option('hostvar_expressions')
+        constructable_config_groups = self.get_option('conditional_groups')
+        constructable_config_keyed_groups = self.get_option('keyed_groups')
+
+        for h in self._hosts:
+            inventory_hostname = self._get_hostname(h)
+            if self._filter_host(inventory_hostname, h.hostvars):
+                continue
+            self.inventory.add_host(inventory_hostname)
+            # FUTURE: configurable default IP list? can already do this via hostvar_expressions
+            self.inventory.set_variable(inventory_hostname, "ansible_host",
+                                        next(chain(h.hostvars['public_ipv4_addresses'], h.hostvars['private_ipv4_addresses']), None))
+            for k, v in iteritems(h.hostvars):
+                # FUTURE: configurable hostvar prefix? Makes docs harder...
+                self.inventory.set_variable(inventory_hostname, k, v)
+
+            # constructable delegation
+            self._set_composite_vars(constructable_config_compose, h.hostvars, inventory_hostname, strict=constructable_config_strict)
+            self._add_host_to_composed_groups(constructable_config_groups, h.hostvars, inventory_hostname, strict=constructable_config_strict)
+            self._add_host_to_keyed_groups(constructable_config_keyed_groups, h.hostvars, inventory_hostname, strict=constructable_config_strict)
+
+        # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
+        # when the user is using caching, update the cached inventory
+        if cache_needs_update or (not cache and self.get_option('cache')):
+            self._cache[cache_key] = [h.cachable_json for h in self._hosts]
 
     def _credential_setup(self):
         auth_options = dict(
@@ -323,28 +368,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self._process_queue_batch()
         else:
             self._process_queue_serial()
-
-        constructable_config_strict = boolean(self.get_option('fail_on_template_errors'))
-        constructable_config_compose = self.get_option('hostvar_expressions')
-        constructable_config_groups = self.get_option('conditional_groups')
-        constructable_config_keyed_groups = self.get_option('keyed_groups')
-
-        for h in self._hosts:
-            inventory_hostname = self._get_hostname(h)
-            if self._filter_host(inventory_hostname, h.hostvars):
-                continue
-            self.inventory.add_host(inventory_hostname)
-            # FUTURE: configurable default IP list? can already do this via hostvar_expressions
-            self.inventory.set_variable(inventory_hostname, "ansible_host",
-                                        next(chain(h.hostvars['public_ipv4_addresses'], h.hostvars['private_ipv4_addresses']), None))
-            for k, v in iteritems(h.hostvars):
-                # FUTURE: configurable hostvar prefix? Makes docs harder...
-                self.inventory.set_variable(inventory_hostname, k, v)
-
-            # constructable delegation
-            self._set_composite_vars(constructable_config_compose, h.hostvars, inventory_hostname, strict=constructable_config_strict)
-            self._add_host_to_composed_groups(constructable_config_groups, h.hostvars, inventory_hostname, strict=constructable_config_strict)
-            self._add_host_to_keyed_groups(constructable_config_keyed_groups, h.hostvars, inventory_hostname, strict=constructable_config_strict)
 
     # FUTURE: fix underlying inventory stuff to allow us to quickly access known groupvars from reconciled host
     def _filter_host(self, inventory_hostname, hostvars):
@@ -509,17 +532,40 @@ class AzureHost(object):
 
         self._hostvars = {}
 
-        inventory_client._enqueue_get(url="{0}/instanceView".format(vm_model['id']),
-                                      api_version=self._inventory_client._compute_api_version,
-                                      handler=self._on_instanceview_response)
+        if "_instanceview" in vm_model:
+            self._on_instanceview_response(vm_model["_instanceview"])
+        else:
+            inventory_client._enqueue_get(url="{0}/instanceView".format(vm_model['id']),
+                                          api_version=self._inventory_client._compute_api_version,
+                                          handler=self._on_instanceview_response)
 
-        nic_refs = vm_model['properties']['networkProfile']['networkInterfaces']
-        for nic in nic_refs:
-            # single-nic instances don't set primary, so figure it out...
-            is_primary = nic.get('properties', {}).get('primary', len(nic_refs) == 1)
-            inventory_client._enqueue_get(url=nic['id'], api_version=self._inventory_client._network_api_version,
-                                          handler=self._on_nic_response,
-                                          handler_args=dict(is_primary=is_primary))
+        if "_nics" in vm_model:
+            for nic in vm_model["_nics"]:
+                self._on_nic_response(nic)
+        else:
+            nic_refs = vm_model['properties']['networkProfile']['networkInterfaces']
+            # TODO: missing primary
+            for nic in nic_refs:
+                # single-nic instances don't set primary, so figure it out...
+                is_primary = nic.get('properties', {}).get('primary', len(nic_refs) == 1)
+                inventory_client._enqueue_get(url=nic['id'], api_version=self._inventory_client._network_api_version,
+                                              handler=self._on_nic_response,
+                                              handler_args=dict(is_primary=is_primary))
+
+    @property
+    def cachable_json(self):
+        host = self._vm_model
+        nics = []
+        for nic in self.nics:
+            pips = {}
+            for pip in nic.public_ips:
+                pips[pip] = nic.public_ips[pip]._pip_model
+            nic = nic._nic_model
+            nic["_publicips"] = pips
+            nics.append(nic)
+        host["_nics"] = nics
+        host["_instanceview"] = self._instanceview
+        return host
 
     @property
     def hostvars(self):
@@ -629,6 +675,12 @@ class AzureNic(object):
         self._inventory_client = inventory_client
 
         self.public_ips = {}
+
+        if "_publicips" in nic_model:
+            # TODO: Iterate dictionary...
+            for pip in nic_model["_publicips"]:
+                self._on_pip_response(nic_model["_publicips"][pip])
+            return
 
         if nic_model.get('properties', {}).get('ipConfigurations'):
             for ipc in nic_model['properties']['ipConfigurations']:
