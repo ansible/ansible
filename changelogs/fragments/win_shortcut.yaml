@@ -1,0 +1,5 @@
+bugfixes:
+- win_shortcut - Added idempotency checks when ``src`` is a special shell folder like ``shell:RecycleBinFolder``
+
+minor_changes:
+- win_shortcut - Added support for setting the ``Run as administrator`` flag on a shortcut pointing to an executable
