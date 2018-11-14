@@ -197,7 +197,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     cmd = list(cmd)
     version = python_version or args.python_version
     interpreter = find_python(version, path)
-    inject_path = get_coverage_path(args, version, interpreter)
+    inject_path = get_coverage_path(args, interpreter)
     config_path = os.path.join(inject_path, 'injector.json')
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
@@ -222,19 +222,18 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
 
-def get_coverage_path(args, version, interpreter):
+def get_coverage_path(args, interpreter):
     """
     :type args: TestConfig
-    :type version: str
     :type interpreter: str
     :rtype: str
     """
-    coverage_path = COVERAGE_PATHS.get(version)
+    coverage_path = COVERAGE_PATHS.get(interpreter)
 
     if coverage_path:
         return os.path.join(coverage_path, 'coverage')
 
-    prefix = 'ansible-test-coverage-python-%s-' % version
+    prefix = 'ansible-test-coverage-'
     tmp_dir = '/tmp'
 
     if args.explain:
@@ -261,15 +260,15 @@ def get_coverage_path(args, version, interpreter):
     if not COVERAGE_PATHS:
         atexit.register(cleanup_coverage_dirs)
 
-    COVERAGE_PATHS[version] = coverage_path
+    COVERAGE_PATHS[interpreter] = coverage_path
 
     return os.path.join(coverage_path, 'coverage')
 
 
 def cleanup_coverage_dirs():
     """Clean up all coverage directories."""
-    for version, path in COVERAGE_PATHS.items():
-        display.info('Cleaning up coverage directory for Python %s: %s' % (version, path), verbosity=2)
+    for path in COVERAGE_PATHS.values():
+        display.info('Cleaning up coverage directory: %s' % path, verbosity=2)
         cleanup_coverage_dir(path)
 
 
