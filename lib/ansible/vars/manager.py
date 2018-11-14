@@ -625,8 +625,7 @@ class VariableManager:
         '''
         Clears the facts for a host
         '''
-        if hostname in self._fact_cache:
-            del self._fact_cache[hostname]
+        self._fact_cache.pop(hostname, None)
 
     def set_host_facts(self, host, facts):
         '''
@@ -636,13 +635,16 @@ class VariableManager:
         if not isinstance(facts, dict):
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts))
 
-        if host.name not in self._fact_cache:
-            self._fact_cache[host.name] = facts
-        else:
+        try:
             try:
+                # this is a cache plugin, not a dictionary
+                self._fact_cache.update({host.name: facts})
+            except TypeError:
+                # this is here for backwards compatibilty for the time cache plugins were not 'dict compatible'
                 self._fact_cache.update(host.name, facts)
-            except KeyError:
-                self._fact_cache[host.name] = facts
+                display.deprecated("Your configured fact cache plugin is using a deprecated form of the 'update' method", version="2.12")
+        except KeyError:
+            self._fact_cache[host.name] = facts
 
     def set_nonpersistent_facts(self, host, facts):
         '''
@@ -652,13 +654,10 @@ class VariableManager:
         if not isinstance(facts, dict):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts))
 
-        if host.name not in self._nonpersistent_fact_cache:
+        try:
+            self._nonpersistent_fact_cache[host.name].update(facts)
+        except KeyError:
             self._nonpersistent_fact_cache[host.name] = facts
-        else:
-            try:
-                self._nonpersistent_fact_cache[host.name].update(facts)
-            except KeyError:
-                self._nonpersistent_fact_cache[host.name] = facts
 
     def set_host_variable(self, host, varname, value):
         '''
