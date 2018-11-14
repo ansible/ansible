@@ -7,44 +7,63 @@
 
 #Requires -Module Ansible.ModuleUtils.ArgvParser
 #Requires -Module Ansible.ModuleUtils.CommandUtil
-#Requires -Module Ansible.ModuleUtils.Legacy
-
-$ErrorActionPreference = 'Stop'
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
 # As of chocolatey 0.9.10, non-zero success exit codes can be returned
 # See https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
 $successexitcodes = (0, 1605, 1614, 1641, 3010)
 
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$verbosity = Get-AnsibleParam -obj $params -name "_ansible_verbosity" -type "int" -default 0
-
-$name = Get-AnsibleParam -obj $params -name "name" -type "list" -failifempty $true
-
-$allow_empty_checksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
-$allow_prerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
-$architecture = Get-AnsibleParam -obj $params -name "architecture" -type "str" -default "default" -validateset "default", "x86"
-$install_args = Get-AnsibleParam -obj $params -name "install_args" -type "str"
-$ignore_checksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
-$ignore_dependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
-$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
-$package_params = Get-AnsibleParam -obj $params -name "package_params" -type "str" -aliases "params"
-$proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
-$proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
-$proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($null -ne $proxy_username)
-$skip_scripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
-$source = Get-AnsibleParam -obj $params -name "source" -type "str"
-$source_username = Get-AnsibleParam -obj $params -name "source_username" -type "str"
-$source_password = Get-AnsibleParam -obj $params -name "source_password" -type "str" -failifempty ($null -ne $source_username)
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
-$timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
-$validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
-$version = Get-AnsibleParam -obj $params -name "version" -type "str"
-
-$result = @{
-    changed = $false
-    rc = 0
+$spec = @{
+    options = @{
+        allow_empty_checksums = @{ type = "bool"; default = $false }
+        allow_multiple = @{ type = "bool"; default = $false }
+        allow_prerelease = @{ type = "bool"; default = $false }
+        architecture = @{ type = "str"; default = "default"; choices = "default", "x86" }
+        install_args = @{ type = "str" }
+        ignore_checksums = @{ type = "bool"; default = $false }
+        ignore_dependencies = @{ type = "bool"; default = $false }
+        force = @{ type = "bool"; default = $false }
+        name = @{ type = "list"; elements = "str"; required = $true }
+        package_params = @{ type = "str"; aliases = "params" }
+        proxy_url = @{ type = "str" }
+        proxy_username = @{ type = "str" }
+        proxy_password = @{ type = "str"; no_log = $true }
+        skip_scripts = @{  type = "bool"; default = $false }
+        source = @{ type = "str" }
+        source_username = @{ type = "str" }
+        source_password = @{ type = "str"; no_log = $true }
+        state = @{ type = "str"; default = "present"; choices = "absent", "downgrade", "latest", "present", "reinstalled" }
+        timeout = @{ type = "int"; default = 2700; aliases = "execution_timeout" }
+        validate_certs = @{ type = "bool"; default = $false }
+        version = @{ type = "str" }
+    }
+    supports_check_mode = $true
 }
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$allow_empty_checksums = $module.Params.allow_empty_checksums
+$allow_multiple = $module.Params.allow_multiple
+$allow_prerelease = $module.Params.allow_prerelease
+$architecture = $module.Params.architecture
+$install_args = $module.Params.install_args
+$ignore_checksums = $module.Params.ignore_checksums
+$ignore_dependencies = $module.Params.ignore_dependencies
+$force = $module.Params.force
+$name = $module.Params.name
+$package_params = $module.Params.package_params
+$proxy_url = $module.Params.proxy_url
+$proxy_username = $module.Params.proxy_username
+$proxy_password = $module.Params.proxy_password
+$skip_scripts = $module.Params.skip_scripts
+$source = $module.Params.source
+$source_username = $module.Params.source_username
+$source_password = $module.Params.source_password
+$state = $module.Params.state
+$timeout = $module.Params.timeout
+$validate_certs = $module.Params.validate_certs
+$version = $module.Params.version
+
+$module.Result.rc = 0
 
 if (-not $validate_certs) {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
@@ -55,13 +74,13 @@ Function Get-CommonChocolateyArguments {
     # run with Chocolatey
     $arguments = [System.Collections.ArrayList]@("--yes", "--no-progress")
     # global vars that control the arguments
-    if ($check_mode) {
+    if ($module.CheckMode) {
         $arguments.Add("--what-if") > $null
     }
-    if ($verbosity -gt 4) {
+    if ($module.Verbosity -gt 4) {
         $arguments.Add("--debug") > $null
         $arguments.Add("--verbose") > $null
-    } elseif ($verbosity -gt 3) {
+    } elseif ($module.Verbosity -gt 3) {
         $arguments.Add("--verbose") > $null
     } else {
         $arguments.Add("--limit-output") > $null
@@ -74,6 +93,7 @@ Function Get-InstallChocolateyArguments {
     param(
         [bool]$allow_downgrade,
         [bool]$allow_empty_checksums,
+        [bool]$allow_multiple,
         [bool]$allow_prerelease,
         [String]$architecture,
         [bool]$force,
@@ -101,6 +121,9 @@ Function Get-InstallChocolateyArguments {
     }
     if ($allow_empty_checksums) {
         $arguments.Add("--allow-empty-checksums") > $null
+    }
+    if ($allow_multiple) {
+        $arguments.Add("--allow-multiple") > $null
     }
     if ($allow_prerelease) {
         $arguments.Add("--prerelease") > $null
@@ -202,8 +225,8 @@ Function Install-Chocolatey {
         }
 
         if ($source) {
-            # check if the URL already contains the path to install.ps1
-            if ($source.EndsWith("install.ps1")) {
+            # check if the URL already contains the path to PS script
+            if ($source.EndsWith(".ps1")) {
                 $script_url = $source
             } else {
                 # chocolatey server automatically serves a script at
@@ -230,19 +253,19 @@ Function Install-Chocolatey {
         try {
             $install_script = $client.DownloadString($script_url)
         } catch {
-            Fail-Json -obj $result -message "Failed to download Chocolatey script from '$script_url': $($_.Exception.Message)"
+            $module.FailJson("Failed to download Chocolatey script from '$script_url'; $($_.Exception.Message)", $_)
         }
-        if (-not $check_mode) {
+        if (-not $module.CheckMode) {
             $res = Run-Command -command "powershell.exe -" -stdin $install_script -environment $environment
             if ($res.rc -ne 0) {
-                $result.rc = $res.rc
-                $result.stdout = $res.stdout
-                $result.stderr = $res.stderr
-                Fail-Json -obj $result -message "Chocolatey bootstrap installation failed."
+                $module.Result.rc = $res.rc
+                $module.Result.stdout = $res.stdout
+                $module.Result.stderr = $res.stderr
+                $module.FailJson("Chocolatey bootstrap installation failed.")
             }
-            Add-Warning -obj $result -message "Chocolatey was missing from this system, so it was installed during this task run."
+            $module.Warn("Chocolatey was missing from this system, so it was installed during this task run.")
         }
-        $result.changed = $true
+        $module.Result.changed = $true
 
         # locate the newly installed choco.exe
         $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
@@ -257,24 +280,24 @@ Function Install-Chocolatey {
             $choco_app = Get-Command -Name $choco_path -CommandType Application -ErrorAction SilentlyContinue
         }
     }
-    if ($check_mode -and $null -eq $choco_app) {
-        $result.skipped = $true
-        $result.msg = "Skipped check mode run on win_chocolatey as choco.exe cannot be found on the system"
-        Exit-Json -obj $result
+    if ($module.CheckMode -and $null -eq $choco_app) {
+        $module.Result.skipped = $true
+        $module.Result.msg = "Skipped check mode run on win_chocolatey as choco.exe cannot be found on the system"
+        $module.ExitJson()
     }
 
     if (-not (Test-Path -Path $choco_app.Path)) {
-        Fail-Json -obj $result -message "Failed to find choco.exe, make sure it is added to the PATH or the env var 'ChocolateyInstall' is set"
+        $module.FailJson("Failed to find choco.exe, make sure it is added to the PATH or the env var 'ChocolateyInstall' is set")
     }
 
-    $actual_version = Get-ChocolateyPackageVersion -choco_path $choco_app.Path -name chocolatey
+    $actual_version = (Get-ChocolateyPackageVersion -choco_path $choco_app.Path -name chocolatey)[0]
     if ([Version]$actual_version -lt [Version]"0.10.5") {
-        if ($check_mode) {
-            $result.skipped = $true
-            $result.msg = "Skipped check mode run on win_chocolatey as choco.exe is too old, a real run would have upgraded the executable. Actual: '$actual_version', Minimum Version: '0.10.5'"
-            Exit-Json -obj $result
+        if ($module.CheckMode) {
+            $module.Result.skipped = $true
+            $module.Result.msg = "Skipped check mode run on win_chocolatey as choco.exe is too old, a real run would have upgraded the executable. Actual: '$actual_version', Minimum Version: '0.10.5'"
+            $module.ExitJson()
         }
-        Add-Warning -obj $result -message "Chocolatey was older than v0.10.5 so it was upgraded during this task run."
+        $module.Warn("Chocolatey was older than v0.10.5 so it was upgraded during this task run.")
         Update-ChocolateyPackage -choco_path $choco_app.Path -packages @("chocolatey") `
             -proxy_url $proxy_url -proxy_username $proxy_username `
             -proxy_password $proxy_password -source $source `
@@ -290,25 +313,24 @@ Function Get-ChocolateyPackageVersion {
         [Parameter(Mandatory=$true)][String]$name
     )
 
-    $command = Argv-ToString -arguments @($choco_path, "list", "--local-only", "--exact", "--limit-output", $name)
+    $command = Argv-ToString -arguments @($choco_path, "list", "--local-only", "--exact", "--limit-output", "--all-versions", $name)
     $res = Run-Command -command $command
     if ($res.rc -ne 0) {
-        $result.command = $command
-        $result.rc = $res.rc
-        $result.stdout = $res.stdout
-        $result.stderr = $res.stderr
-        Fail-Json -obj $result -message "Error checking installation status for the package '$name'"
+        $module.Result.command = $command
+        $module.Result.rc = $res.rc
+        $module.Result.stdout = $res.stdout
+        $module.Result.stderr = $res.stderr
+        $module.FailJson("Error checking installation status for the package '$name'")
     }
     $stdout = $res.stdout.Trim()
-    $version = $null
+    $versions = $null
     if ($stdout) {
         # if a match occurs it is in the format of "package|version" we split
         # by the last | to get the version in case package contains a pipe char
-        $pipe_index = $stdout.LastIndexOf("|")
-        $version = $stdout.Substring($pipe_index + 1)
+        $versions = @($stdout.Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { $_.Substring($_.LastIndexOf("|") + 1) })
     }
 
-    return $version
+    return ,$versions
 }
 
 Function Update-ChocolateyPackage {
@@ -317,6 +339,7 @@ Function Update-ChocolateyPackage {
         [Parameter(Mandatory=$true)][String[]]$packages,
         [bool]$allow_downgrade,
         [bool]$allow_empty_checksums,
+        [bool]$allow_multiple,
         [bool]$allow_prerelease,
         [String]$architecture,
         [bool]$force,
@@ -337,37 +360,52 @@ Function Update-ChocolateyPackage {
 
     $arguments = [System.Collections.ArrayList]@($choco_path, "upgrade")
     $arguments.AddRange($packages)
-    $common_args = Get-InstallChocolateyArguments -allow_downgrade $allow_downgrade `
-        -allow_empty_checksums $allow_empty_checksums -allow_prerelease $allow_prerelease `
-        -architecture $architecture -force $force -ignore_checksums $ignore_checksums `
-        -ignore_dependencies $ignore_dependencies -install_args $install_args `
-        -package_params $package_params -proxy_url $proxy_url -proxy_username $proxy_username `
-        -proxy_password $proxy_password -skip_scripts $skip_scripts -source $source `
-        -source_username $source_username -source_password $source_password -timeout $timeout `
-        -version $version
+
+    $common_params = @{
+        allow_downgrade = $allow_downgrade
+        allow_empty_checksums = $allow_empty_checksums
+        allow_multiple = $allow_multiple
+        allow_prerelease = $allow_prerelease
+        architecture = $architecture
+        force = $force
+        ignore_checksums = $ignore_checksums
+        ignore_dependencies = $ignore_dependencies
+        install_args = $install_args
+        package_params = $package_params
+        proxy_url = $proxy_url
+        proxy_username = $proxy_username
+        proxy_password = $proxy_password
+        skip_scripts = $skip_scripts
+        source = $source
+        source_username = $source_username
+        source_password = $source_password
+        timeout = $timeout
+        version = $version
+    }
+    $common_args = Get-InstallChocolateyArguments @common_params
     $arguments.AddRange($common_args)
 
     $command = Argv-ToString -arguments $arguments
     $res = Run-Command -command $command
-    $result.rc = $res.rc
+    $module.Result.rc = $res.rc
     if ($res.rc -notin $successexitcodes) {
-        $result.command = $command
-        $result.stdout = $res.stdout
-        $result.stderr = $res.stderr
-        Fail-Json -obj $result -message "Error updating package(s) '$($packages -join ", ")'"
+        $module.Result.command = $command
+        $module.Result.stdout = $res.stdout
+        $module.Result.stderr = $res.stderr
+        $module.FailJson("Error updating package(s) '$($packages -join ", ")'")
     }
 
-    if ($verbosity -gt 1) {
-        $result.stdout = $res.stdout
+    if ($module.Verbosity -gt 1) {
+        $module.Result.stdout = $res.stdout
     }
 
     if ($res.stdout -match ' upgraded (\d+)/\d+ package') {
         if ($Matches[1] -gt 0) {
-            $result.changed = $true
+            $module.Result.changed = $true
         }
     }
     # need to set to false in case the rc is not 0 and a failure didn't actually occur
-    $result.failed = $false
+    $module.Result.failed = $false
 }
 
 Function Install-ChocolateyPackage {
@@ -376,6 +414,7 @@ Function Install-ChocolateyPackage {
         [Parameter(Mandatory=$true)][String[]]$packages,
         [bool]$allow_downgrade,
         [bool]$allow_empty_checksums,
+        [bool]$allow_multiple,
         [bool]$allow_prerelease,
         [String]$architecture,
         [bool]$force,
@@ -396,33 +435,47 @@ Function Install-ChocolateyPackage {
 
     $arguments = [System.Collections.ArrayList]@($choco_path, "install")
     $arguments.AddRange($packages)
-    $common_args = Get-InstallChocolateyArguments -allow_downgrade $allow_downgrade `
-        -allow_empty_checksums $allow_empty_checksums -allow_prerelease $allow_prerelease `
-        -architecture $architecture -force $force -ignore_checksums $ignore_checksums `
-        -ignore_dependencies $ignore_dependencies -install_args $install_args `
-        -package_params $package_params -proxy_url $proxy_url -proxy_username $proxy_username `
-        -proxy_password $proxy_password -skip_scripts $skip_scripts -source $source `
-        -source_username $source_username -source_password $source_password -timeout $timeout `
-        -version $version
+    $common_params = @{
+        allow_downgrade = $allow_downgrade
+        allow_empty_checksums = $allow_empty_checksums
+        allow_multiple = $allow_multiple
+        allow_prerelease = $allow_prerelease
+        architecture = $architecture
+        force = $force
+        ignore_checksums = $ignore_checksums
+        ignore_dependencies = $ignore_dependencies
+        install_args = $install_args
+        package_params = $package_params
+        proxy_url = $proxy_url
+        proxy_username = $proxy_username
+        proxy_password = $proxy_password
+        skip_scripts = $skip_scripts
+        source = $source
+        source_username = $source_username
+        source_password = $source_password
+        timeout = $timeout
+        version = $version
+    }
+    $common_args = Get-InstallChocolateyArguments @common_params
     $arguments.AddRange($common_args)
 
     $command = Argv-ToString -arguments $arguments
     $res = Run-Command -command $command
-    $result.rc = $res.rc
+    $module.Result.rc = $res.rc
     if ($res.rc -notin $successexitcodes) {
-        $result.command = $command
-        $result.stdout = $res.stdout
-        $result.stderr = $res.stderr
-        Fail-Json -obj $result -message "Error installing package(s) '$($packages -join ', ')'"
+        $module.Result.command = $command
+        $module.Result.stdout = $res.stdout
+        $module.Result.stderr = $res.stderr
+        $module.FailJson("Error installing package(s) '$($packages -join ', ')'")
     }
 
-    if ($verbosity -gt 1) {
-        $result.stdout = $res.stdout
+    if ($module.Verbosity -gt 1) {
+        $module.Result.stdout = $res.stdout
     }
 
-    $result.changed = $true
+    $module.Result.changed = $true
     # need to set to false in case the rc is not 0 and a failure didn't actually occur
-    $result.failed = $false
+    $module.Result.failed = $false
 }
 
 Function Uninstall-ChocolateyPackage {
@@ -456,26 +509,30 @@ Function Uninstall-ChocolateyPackage {
         $arguments.Add($timeout) > $null
     }
     if ($version) {
+        # Need to set allow-multiple to make sure choco doesn't uninstall all versions
+        $arguments.Add("--allow-multiple") > $null
         $arguments.Add("--version") > $null
         $arguments.Add($version) > $null
+    } else {
+        $arguments.Add("--all-versions") > $null
     }
 
     $command = Argv-ToString -arguments $arguments
     $res = Run-Command -command $command
-    $result.rc = $res.rc
+    $module.Result.rc = $res.rc
     if ($res.rc -notin $successexitcodes) {
-        $result.command = $command
-        $result.stdout = $res.stdout
-        $result.stderr = $res.stderr
-        Fail-Json -obj $result -message "Error uninstalling package(s) '$($packages -join ", ")'"
+        $module.Result.command = $command
+        $module.Result.stdout = $res.stdout
+        $module.Result.stderr = $res.stderr
+        $module.FailJson("Error uninstalling package(s) '$($packages -join ", ")'")
     }
 
-    if ($verbosity -gt 1) {
-        $result.stdout = $res.stdout
+    if ($module.Verbosity -gt 1) {
+        $module.Result.stdout = $res.stdout
     }
-    $result.changed = $true
+    $module.Result.changed = $true
     # need to set to false in case the rc is not 0 and a failure didn't actually occur
-    $result.failed = $false
+    $module.Result.failed = $false
 }
 
 # get the full path to choco.exe, otherwise install/upgrade to at least 0.10.5
@@ -490,13 +547,13 @@ foreach ($package in $name) {
     # a dummy version so absent, latest, and downgrade will run with all
     if ($package -eq "all") {
         if ($state -in @("present", "reinstalled")) {
-            Fail-Json -obj $result -message "Cannot specify the package name as 'all' when state=$state"
+            $module.FailJson("Cannot specify the package name as 'all' when state=$state")
         }
-        $package_version = "0.0.0"
+        $package_versions = @("0.0.0")
     } else {
-        $package_version = Get-ChocolateyPackageVersion -choco_path $choco_path -name $package
+        $package_versions = Get-ChocolateyPackageVersion -choco_path $choco_path -name $package
     }
-    $package_info.$package = $package_version
+    $package_info.$package = $package_versions
 }
 
 if ($state -in "absent", "reinstalled") {
@@ -520,16 +577,26 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         $missing_packages = $name
     } else {
         # otherwise only install the packages that are not installed
-        $missing_packages = ($package_info.GetEnumerator() | Where-Object { $null -eq $_.Value }).Key
+        $missing_packages = [System.Collections.ArrayList]@()
+        foreach ($package in $package_info.GetEnumerator()) {
+            if ($null -eq $package.Value) {
+                $missing_packages.Add($package.Key) > $null
+            }
+        }
     }
 
-    # if version is specified and installed version does not match, throw error
-    # ignore this if force or is set
+    # if version is specified and installed version does not match or not
+    # allow_multiple, throw error ignore this if force is set
     if ($state -eq "present" -and $null -ne $version -and -not $force) {
         foreach ($package in $name) {
-            $package_version = ($package_info.GetEnumerator() | Where-Object { $name -eq $_.Key -and $null -ne $_.Value }).Value
-            if ($null -ne $package_version -and $package_version -ne $version) {
-                Fail-Json -obj $result -message "Chocolatey package '$package' is already installed at version '$package_version' but was expecting '$version'. Either change the expected version, set state=latest, or set force=yes to continue"
+            $package_versions = [System.Collections.ArrayList]$package_info.$package
+            if ($package_versions.Count -gt 0) {
+                if (-not $package_versions.Contains($version) -and -not $allow_multiple) {
+                    $module.FailJson("Chocolatey package '$package' is already installed with version(s) '$($package_versions -join "', '")' but was expecting '$version'. Either change the expected version, set state=latest, set allow_multiple=yes, or set force=yes to continue")
+                } elseif ($version -notin $package_versions -and $allow_multiple) {
+                    # add the package back into the list of missing packages if installing multiple
+                    $missing_packages.Add($package) > $null
+                }
             }
         }
     }
@@ -537,6 +604,7 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         choco_path = $choco_path
         allow_downgrade = ($state -eq "downgrade")
         allow_empty_checksums = $allow_empty_checksums
+        allow_multiple = $allow_multiple
         allow_prerelease = $allow_prerelease
         architecture = $architecture
         force = $force
@@ -555,7 +623,7 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         version = $version
     }
 
-    if ($null -ne $missing_packages) {
+    if ($missing_packages) {
         Install-ChocolateyPackage -packages $missing_packages @common_args
     }
 
@@ -571,4 +639,5 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
     }
 }
 
-Exit-Json -obj $result
+$module.ExitJson()
+
