@@ -204,13 +204,14 @@ class VMwareDVSwitchNIOCResource(PyVmomi):
     def _update_version2_resources(self, resources):
         allocations = list()
 
-        for resoucre in resources:
+        for resource in resources:
+            resource_cfg = self.find_netioc_by_key(resource['name'])
             allocation = vim.DVSNetworkResourcePoolConfigSpec()
             allocation.allocationInfo = vim.DVSNetworkResourcePoolAllocationInfo()
-            allocation.key = self.resource_name
-            allocation.configVersion = self.dvs.config.configVersion
+            allocation.key = resource['name']
+            allocation.configVersion = resource_cfg.configVersion
             if 'limit' in resource:
-                allocation.allocationInfo.limit = self.limit
+                allocation.allocationInfo.limit = resource['limit']
             if 'shares_level' in resource:
                 allocation.allocationInfo.shares = vim.SharesInfo()
                 allocation.allocationInfo.shares.level = resource['shares_level']
