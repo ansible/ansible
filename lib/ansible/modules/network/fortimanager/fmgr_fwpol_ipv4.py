@@ -29,12 +29,12 @@ DOCUMENTATION = '''
 module: fmgr_fwpol_ipv4
 version_added: "2.8"
 author:
-    - Luke Weighall (@lweighall)
-    - Andrew Welsh (@Ghilli3)
-    - Jim Huber (@p4r4n0y1ng)
-short_description: Allows the add/delete of Firewall Policies on Packages in FortiManager
+    - Luke Weighall - lweighall
+    - Andrew Welsh - Ghilli3
+    - Jim Huber - p4r4n0y1ng
+short_description: Allows the add/delete of Firewall Policies on Packages in FortiManager.
 description:
-  -  Allows the add/delete of Firewall Policies on Packages in FortiManager
+  -  Allows the add/delete of Firewall Policies on Packages in FortiManager.
 
 options:
   adom:
@@ -45,7 +45,7 @@ options:
 
   host:
     description:
-      - The FortiManager's Address.
+      - The FortiManager's address.
     required: true
 
   username:
@@ -871,17 +871,17 @@ options:
 
   vpn_dst_node_host:
     description:
-      - NO DESCRIPTION PARSED ENTER MANUALLY
+      - VPN Destination Node Host.
     required: false
 
   vpn_dst_node_seq:
     description:
-      - NO DESCRIPTION PARSED ENTER MANUALLY
+      - VPN Destination Node Seq.
     required: false
 
   vpn_dst_node_subnet:
     description:
-      - NO DESCRIPTION PARSED ENTER MANUALLY
+      - VPN Destination Node Seq.
     required: false
 
   vpn_src_node:
@@ -896,17 +896,17 @@ options:
 
   vpn_src_node_host:
     description:
-      - NO DESCRIPTION PARSED ENTER MANUALLY
+      - VPN Source Node Host.
     required: false
 
   vpn_src_node_seq:
     description:
-      - NO DESCRIPTION PARSED ENTER MANUALLY
+      - VPN Source Node Seq.
     required: false
 
   vpn_src_node_subnet:
     description:
-      - NO DESCRIPTION PARSED ENTER MANUALLY
+      - VPN Source Node.
     required: false
 
 
