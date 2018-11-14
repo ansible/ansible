@@ -52,7 +52,7 @@ DOCUMENTATION = '''
           - name: CGROUP_WRITE_FILES
         ini:
           - section: callback_cgroup_perf_recap
-            key: write_csv
+            key: write_files
         type: bool
         default: false
       output_format:
@@ -68,7 +68,7 @@ DOCUMENTATION = '''
           - csv
           - json
       output_dir:
-        description: Output director for files containing recorded performance readings. If the value contains a
+        description: Output directory for files containing recorded performance readings. If the value contains a
                      single %s, the start time of the playbook run will be inserted in that space
         type: path
         default: /tmp/ansible-perf-%s
