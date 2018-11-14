@@ -1,5 +1,5 @@
 ---
-# tasks file for Route53
+# tasks file for Route53 integration tests
 
 - set_fact:
     zone_one: '{{ resource_prefix | replace("-", "") }}.one.fakeansible.com.'
@@ -49,6 +49,68 @@
       that:
         - non_qdn is not failed
         - non_qdn is not changed
+
+  - name: Create a multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      type: A
+      value:
+        - 4.5.6.7
+        - 1.2.3.4
+    register: mv_a_record
+  - assert:
+      that:
+        - mv_a_record is not failed
+        - mv_a_record is changed
+
+  - name: Create same multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      type: A
+      value:
+        - 4.5.6.7
+        - 1.2.3.4
+    register: mv_a_record
+  - assert:
+      that:
+        - mv_a_record is not failed
+        - mv_a_record is not changed
+
+  - name: Remove a member from multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      type: A
+      value:
+        - 4.5.6.7
+    register: del_a_record
+    ignore_errors: true
+  - name: This should fail, because `overwrite` is false
+    assert:
+      that:
+        - del_a_record is failed
+
+  - name: Remove a member from multi-value A record with values in different order
+    route53:
+      state: present
+      zone: '{{ zone_one }}'
+      record: 'order_test.{{ zone_one }}'
+      overwrite: true
+      type: A
+      value:
+        - 4.5.6.7
+    register: del_a_record
+    ignore_errors: true
+  - name: This should fail, because `overwrite` is false
+    assert:
+      that:
+        - del_a_record is not failed
+        - del_a_record is changed
 
   - name: Create a LetsEncrypt CAA record
     route53:
@@ -129,7 +191,3 @@
     retries: 10
     until: delete_two is not failed
     when: false
-
-
-#TODO(ryansb) build internal-vpc integration tests
-#- include_tasks: internal_zone.yml
