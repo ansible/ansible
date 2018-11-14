@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 def pn_cli(module, switch=None, username=None, password=None, switch_local=None):
     """
     Method to generate the cli portion to launch the Netvisor cli.

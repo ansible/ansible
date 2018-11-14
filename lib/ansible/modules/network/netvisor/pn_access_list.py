@@ -40,6 +40,7 @@ options:
       - State the action to perform. Use 'present' to create access-list and
         'absent' to delete access-list.
     required: True
+    choices: [ "present", "absent"]
   pn_name:
     description:
       - Access List Name
@@ -78,6 +79,8 @@ EXAMPLES = """
 RETURN = """
 command:
   description: the CLI command run on the target node.
+  returned: always
+  type: string
 stdout:
   description: set of responses from the access-list command.
   returned: always
@@ -181,7 +184,7 @@ def main():
         required_if=(
             ["state", "present", ["pn_name", "pn_scope"]],
             ["state", "absent", ["pn_name"]],
-            ),
+        ),
     )
 
     # Accessing the arguments
@@ -209,8 +212,8 @@ def main():
             check_cli(module, cli)
             if ACC_LIST_EXISTS is True:
                 module.exit_json(
-                     skipped=True,
-                     msg='access list with name %s already exists' % list_name
+                    skipped=True,
+                    msg='access list with name %s already exists' % list_name
                 )
         cli += ' scope %s ' % scope
 
