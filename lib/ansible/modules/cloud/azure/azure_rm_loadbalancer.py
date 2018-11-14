@@ -813,9 +813,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
 
 def default_compare(new, old, path):
-    if new is None:
-        return True
-    elif isinstance(new, dict):
+    if isinstance(new, dict):
         if not isinstance(old, dict):
             return False
         for k in new.keys():
