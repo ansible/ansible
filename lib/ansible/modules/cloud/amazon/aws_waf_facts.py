@@ -17,6 +17,10 @@ options:
   name:
     description:
       - The name of a Web Application Firewall
+    cloudfront:
+        description: Wether to use CloudFront WAF. Defaults to true
+        default: true
+        required: no
 
 author:
   - Mike Mochan (@mmochan)
@@ -113,13 +117,16 @@ def main():
     argument_spec.update(
         dict(
             name=dict(required=False),
+            cloudfront=dict(type='bool', default=True),
         )
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
+    if module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    elif not module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf-regional', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     web_acls = list_web_acls(client, module)
     name = module.params['name']
     if name:

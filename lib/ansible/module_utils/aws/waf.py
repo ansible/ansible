@@ -163,6 +163,12 @@ def list_rules_with_backoff(client):
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_regional_rules_with_backoff(client):
+    # TODO: Implement manual pagination. This only returns the first 100 results
+    return client.list_rules()['Rules']
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_web_acls_with_backoff(client):
     paginator = client.get_paginator('list_web_acls')
     return paginator.paginate().build_full_result()['WebACLs']

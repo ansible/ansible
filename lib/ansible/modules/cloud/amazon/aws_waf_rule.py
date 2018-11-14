@@ -47,8 +47,12 @@ options:
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.
-        default: False
+        default: false
         type: bool
+    cloudfront:
+        description: Wether to use CloudFront WAF. Defaults to true
+        default: true
+        required: no
 '''
 
 EXAMPLES = '''
@@ -127,7 +131,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, MATCH_LOOKUP
+from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, list_regional_rules_with_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff
 
 
@@ -145,8 +149,21 @@ def get_rule(client, module, rule_id):
 
 
 def list_rules(client, module):
+    if type(client).__name__ == 'WAF':
+        try:
+            return list_rules_with_backoff(client)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Could not list WAF rules')
+    elif type(client).__name__ == 'WAFRegional':
+        try:
+            return list_regional_rules_with_backoff(client)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Could not list WAF rules')
+
+
+def list_regional_rules(client, module):
     try:
-        return list_rules_with_backoff(client)
+        return list_regional_rules_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg='Could not list WAF rules')
 
@@ -297,15 +314,18 @@ def main():
             metric_name=dict(),
             state=dict(default='present', choices=['present', 'absent']),
             conditions=dict(type='list'),
-            purge_conditions=dict(type='bool', default=False)
+            purge_conditions=dict(type='bool', default=False),
+            cloudfront=dict(type='bool', default=True),
         ),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec)
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
+    if module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    elif not module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf-regional', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     if state == 'present':
         (changed, results) = ensure_rule_present(client, module)
     else:

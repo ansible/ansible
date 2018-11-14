@@ -53,10 +53,16 @@ options:
         - I(target_string) is a maximum of 50 bytes.
         - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
     purge_filters:
+<<<<<<< HEAD
         description:
         - Whether to remove existing filters from a condition if not passed in I(filters).
         default: False
         type: bool
+        description: Whether to remove existing filters from a condition if not passed in I(filters). Defaults to false.
+    cloudfront:
+        description: Wether to use CloudFront WAF. Defaults to true
+        default: true
+        required: no
     state:
         description: Whether the condition should be C(present) or C(absent).
         choices:
@@ -636,6 +642,7 @@ def main():
             type=dict(required=True, choices=['byte', 'geo', 'ip', 'regex', 'size', 'sql', 'xss']),
             filters=dict(type='list'),
             purge_filters=dict(type='bool', default=False),
+            cloudfront=dict(type='bool', default=True),
             state=dict(default='present', choices=['present', 'absent']),
         ),
     )
@@ -644,7 +651,10 @@ def main():
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    if module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    elif not module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf-regional', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     condition = Condition(client, module)
 

@@ -49,12 +49,16 @@ options:
         - Each rule must contain I(name), I(action), I(priority) keys.
         - Priorities must be unique, but not necessarily consecutive. Lower numbered priorities are evalauted first.
         - The I(type) key can be passed as C(rate_based), it defaults to C(regular)
-
     purge_rules:
         description:
         - Whether to remove rules that aren't passed with C(rules).
         default: False
         type: bool
+        description: Whether to remove rules that aren't passed with C(rules). Defaults to false
+    cloudfront:
+        description: Wether to use CloudFront WAF. Defaults to true
+        default: true
+        required: no
 '''
 
 EXAMPLES = '''
@@ -296,7 +300,8 @@ def main():
             metric_name=dict(),
             state=dict(default='present', choices=['present', 'absent']),
             rules=dict(type='list'),
-            purge_rules=dict(type='bool', default=False)
+            purge_rules=dict(type='bool', default=False),
+            cloudfront=dict(type='bool', default=True),
         ),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -304,8 +309,10 @@ def main():
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
+    if module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    elif not module.params.get('cloudfront'):
+        client = boto3_conn(module, conn_type='client', resource='waf-regional', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     if state == 'present':
         (changed, results) = ensure_web_acl_present(client, module)
     else:
