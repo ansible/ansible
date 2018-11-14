@@ -7,14 +7,15 @@ Testing Ansible
 .. contents:: Topics
    :local:
 
-Introduction
-============
 
-This document describes:
+Why test your Ansible contributions?
+====================================
 
-* how Ansible is tested
-* how to test Ansible locally
-* how to extend the testing capabilities
+If you’re a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs, since we almost always prioritize bug fixing over feature development.
+Even for non-developers, helping to test pull requests for bug fixes and features is still immensely valuable.
+
+Ansible users who understand writing playbooks and roles should be able to test their work.  GitHub pull requests with various types of tests that show bugs in action will help ensure that your contributions will be on track to be reviewed.  Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend those testing capabilities.
+
 
 Types of tests
 ==============
@@ -212,4 +213,3 @@ Want to know more about testing?
 
 If you'd like to know more about the plans for improving testing Ansible then why not join the
 `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
-
