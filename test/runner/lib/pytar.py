@@ -77,6 +77,8 @@ class DefaultTarFilter(TarFilter):
         if any(d in self.ignore_dirs for d in dirs):
             return None
 
+        display.info('path=%s, size=%d' % (item.path, item.size))
+
         return item
 
 
