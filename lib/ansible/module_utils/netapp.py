@@ -28,6 +28,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import os
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
@@ -37,24 +38,11 @@ try:
 except ImportError:
     ansible_version = 'unknown'
 
-# Ugly patch to bypass relative import issue with Python 3
-# TODO: redo this once netapp-lib is fixed in pypi
-import inspect
-import os
-import sys
-sys_path_len = len(sys.path)
 try:
-    import netapp_lib.api.zapi
-    sys.path.insert(0, os.path.dirname(inspect.getfile(netapp_lib.api.zapi)))
     from netapp_lib.api.zapi import zapi
     HAS_NETAPP_LIB = True
 except ImportError:
     HAS_NETAPP_LIB = False
-if sys_path_len < len(sys.path):
-    # restore original path
-    sys.path.pop(0)
-del sys_path_len
-# end of patch
 
 import ssl
 
