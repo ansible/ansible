@@ -219,9 +219,10 @@ def main():
     )
 
     # Version checks
-    if client.module.params['builder_cache'] and LooseVersion(docker_version) < LooseVersion('3.3.0'):
+    cache_min_version = '3.3.0'
+    if client.module.params['builder_cache'] and LooseVersion(docker_version) < LooseVersion(cache_min_version):
         msg = "Error: docker version is %s. Minimum version required for builds option is %s. Use `pip install --upgrade docker` to upgrade."
-        client.module.fail(msg=(msg % (docker_version, )))
+        client.module.fail(msg=(msg % (docker_version, cache_min_version)))
 
     result = dict()
 
