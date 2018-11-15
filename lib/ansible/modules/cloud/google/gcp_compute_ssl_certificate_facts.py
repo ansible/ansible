@@ -32,21 +32,20 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_ssl_certificate_facts
 description:
-  - Gather facts for GCP SslCertificate
+- Gather facts for GCP SslCertificate
 short_description: Gather facts for GCP SslCertificate
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    filters:
-       description:
-           A list of filter value pairs. Available filters are listed here
-           U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
-           Each additional filter in the list will act be added as an AND condition
-           (filter1 and filter2)
+  filters:
+    description:
+    - A list of filter value pairs. Available filters are listed here U(U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).)
+    - Each additional filter in the list will act be added as an AND condition (filter1
+      and filter2) .
 extends_documentation_fragment: gcp
 '''
 
@@ -62,47 +61,47 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
-    returned: always
-    type: complex
-    contains:
-        certificate:
-            description:
-                - The certificate in PEM format.
-                - The certificate chain must be no greater than 5 certs long.
-                - The chain must include at least one intermediate cert.
-            returned: success
-            type: str
-        creationTimestamp:
-            description:
-                - Creation timestamp in RFC3339 text format.
-            returned: success
-            type: str
-        description:
-            description:
-                - An optional description of this resource.
-            returned: success
-            type: str
-        id:
-            description:
-                - The unique identifier for the resource.
-            returned: success
-            type: int
-        name:
-            description:
-                - Name of the resource. Provided by the client when the resource is created. The name
-                  must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-                  be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-                  which means the first character must be a lowercase letter, and all following characters
-                  must be a dash, lowercase letter, or digit, except the last character, which cannot
-                  be a dash.
-            returned: success
-            type: str
-        privateKey:
-            description:
-                - The write-only private key in PEM format.
-            returned: success
-            type: str
+  description: List of items
+  returned: always
+  type: complex
+  contains:
+    certificate:
+      description:
+      - The certificate in PEM format.
+      - The certificate chain must be no greater than 5 certs long.
+      - The chain must include at least one intermediate cert.
+      returned: success
+      type: str
+    creationTimestamp:
+      description:
+      - Creation timestamp in RFC3339 text format.
+      returned: success
+      type: str
+    description:
+      description:
+      - An optional description of this resource.
+      returned: success
+      type: str
+    id:
+      description:
+      - The unique identifier for the resource.
+      returned: success
+      type: int
+    name:
+      description:
+      - Name of the resource. Provided by the client when the resource is created.
+        The name must be 1-63 characters long, and comply with RFC1035. Specifically,
+        the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+        which means the first character must be a lowercase letter, and all following
+        characters must be a dash, lowercase letter, or digit, except the last character,
+        which cannot be a dash.
+      returned: success
+      type: str
+    privateKey:
+      description:
+      - The write-only private key in PEM format.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -123,7 +122,7 @@ def main():
         )
     )
 
-    if 'scopes' not in module.params:
+    if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     items = fetch_list(module, collection(module), query_options(module.params['filters']))

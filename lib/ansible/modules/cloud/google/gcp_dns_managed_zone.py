@@ -32,41 +32,43 @@ DOCUMENTATION = '''
 ---
 module: gcp_dns_managed_zone
 description:
-    - A zone is a subtree of the DNS namespace under one administrative responsibility.
-      A ManagedZone is a resource that represents a DNS zone hosted by the Cloud DNS service.
+- A zone is a subtree of the DNS namespace under one administrative responsibility.
+  A ManagedZone is a resource that represents a DNS zone hosted by the Cloud DNS service.
 short_description: Creates a GCP ManagedZone
 version_added: 2.5
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - A mutable string of at most 1024 characters associated with this resource for the
-              user's convenience. Has no effect on the managed zone's function.
-        required: false
-    dns_name:
-        description:
-            - The DNS name of this managed zone, for instance "example.com.".
-        required: false
-    name:
-        description:
-            - User assigned name for this resource.
-            - Must be unique within the project.
-        required: true
-    name_server_set:
-        description:
-            - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
-              a set of DNS name servers that all host the same ManagedZones. Most users will leave
-              this field unset.
-        required: false
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - A mutable string of at most 1024 characters associated with this resource for
+      the user's convenience. Has no effect on the managed zone's function.
+    required: false
+  dns_name:
+    description:
+    - The DNS name of this managed zone, for instance "example.com.".
+    required: false
+  name:
+    description:
+    - User assigned name for this resource.
+    - Must be unique within the project.
+    required: true
+  name_server_set:
+    description:
+    - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet
+      is a set of DNS name servers that all host the same ManagedZones. Most users
+      will leave this field unset.
+    required: false
 extends_documentation_fragment: gcp
 '''
 
@@ -83,47 +85,47 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    description:
-        description:
-            - A mutable string of at most 1024 characters associated with this resource for the
-              user's convenience. Has no effect on the managed zone's function.
-        returned: success
-        type: str
-    dnsName:
-        description:
-            - The DNS name of this managed zone, for instance "example.com.".
-        returned: success
-        type: str
-    id:
-        description:
-            - Unique identifier for the resource; defined by the server.
-        returned: success
-        type: int
-    name:
-        description:
-            - User assigned name for this resource.
-            - Must be unique within the project.
-        returned: success
-        type: str
-    nameServers:
-        description:
-            - Delegate your managed_zone to these virtual name servers; defined by the server
-              .
-        returned: success
-        type: list
-    nameServerSet:
-        description:
-            - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
-              a set of DNS name servers that all host the same ManagedZones. Most users will leave
-              this field unset.
-        returned: success
-        type: list
-    creationTime:
-        description:
-            - The time that this resource was created on the server.
-            - This is in RFC3339 text format.
-        returned: success
-        type: str
+description:
+  description:
+  - A mutable string of at most 1024 characters associated with this resource for
+    the user's convenience. Has no effect on the managed zone's function.
+  returned: success
+  type: str
+dnsName:
+  description:
+  - The DNS name of this managed zone, for instance "example.com.".
+  returned: success
+  type: str
+id:
+  description:
+  - Unique identifier for the resource; defined by the server.
+  returned: success
+  type: int
+name:
+  description:
+  - User assigned name for this resource.
+  - Must be unique within the project.
+  returned: success
+  type: str
+nameServers:
+  description:
+  - Delegate your managed_zone to these virtual name servers; defined by the server
+    .
+  returned: success
+  type: list
+nameServerSet:
+  description:
+  - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
+    a set of DNS name servers that all host the same ManagedZones. Most users will
+    leave this field unset.
+  returned: success
+  type: list
+creationTime:
+  description:
+  - The time that this resource was created on the server.
+  - This is in RFC3339 text format.
+  returned: success
+  type: str
 '''
 
 ################################################################################
