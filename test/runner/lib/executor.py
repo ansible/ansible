@@ -346,7 +346,7 @@ def command_network_integration(args):
     instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
-        get_coverage_path(args)  # initialize before starting threads
+        get_coverage_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
@@ -514,7 +514,7 @@ def command_windows_integration(args):
     httptester_id = None
 
     if args.windows:
-        get_coverage_path(args)  # initialize before starting threads
+        get_coverage_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
