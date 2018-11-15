@@ -5,7 +5,7 @@ Special Variables
 
 Magic
 -----
-These variables are directly not settable by the user, Ansible will always override them to reflect internal state.
+These variables cannot be set directly by the user; Ansible will always override them to reflect internal state.
 
 ansible_check_mode
     Boolean that indicates if we are in check mode or not
@@ -82,10 +82,10 @@ inventory_file
     The file name of the inventory source in which the `inventory_hostname` was first defined
 
 omit
-    Special variable that allows you to 'omit' an option in a task, i.e ``- user: name=bob home={{ bobs_home|default(omit)}}``
+    Special variable that allows you to 'omit' an option in a task, i.e ``- user: name=bob home={{ bobs_home|default(omit) }}``
 
 play_hosts
-    Deprecated, the same as ansbile_play_batch
+    Deprecated, the same as ansible_play_batch
 
 ansible_play_name
     The name of the currently executed play. Added in ``2.8``.
@@ -93,7 +93,7 @@ ansible_play_name
 playbook_dir
     The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
 
-role_name:
+role_name
     The name of the currently executed role
 
 role_names
@@ -104,25 +104,24 @@ role_path
 
 Facts
 -----
-These are variables that contain information pertinent to the current host (`inventory_hostname`), they are only available if gathered first.
+These are variables that contain information pertinent to the current host (`inventory_hostname`). They are only available if gathered first.
 
 ansible_facts
     Contains any facts gathered or cached for the `inventory_hostname`
-    Facts are normally gathered by the M(setup) module automatically in a play, but any module can return facts.
+    Facts are normally gathered by the :ref:`setup <setup_module>` module automatically in a play, but any module can return facts.
 
 ansible_local
-    Contains any 'local facts' gathred or cached for the `inventory_hostname`.
+    Contains any 'local facts' gathered or cached for the `inventory_hostname`.
     The keys available depend on the custom facts created.
-    See the M(setup) module for more details.
+    See the :ref:`setup <setup_module>` module for more details.
 
 Connection variables
 ---------------------
-These are variables are normally used to set the specifics on how to execute actions on a target,
-most of them correspond to connection plugins but not all are specific to them, other plugins like shell, terminal and become are normally involved.
-Only the common ones are described as each connection/become/shell/etc plugin can define it's own overrides and specific variables.
+Connection variables are normally used to set the specifics on how to execute actions on a target. Most of them correspond to connection plugins, but not all are specific to them; other plugins like shell, terminal and become are normally involved.
+Only the common ones are described as each connection/become/shell/etc plugin can define its own overrides and specific variables.
 
 ansible_become_user
-    The user Ansible 'becomes' after using privilege escalation, this must be available to the 'login user'.
+    The user Ansible 'becomes' after using privilege escalation. This must be available to the 'login user'.
 
 ansible_connecion
     The connection plugin actually used for the task on the target host.
@@ -135,4 +134,3 @@ ansible_python_interpreter
 
 ansible_user
     The user Ansible 'logs in' as.
-
