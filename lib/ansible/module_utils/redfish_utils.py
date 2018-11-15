@@ -379,7 +379,13 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
-        action_uri = data[key]["#ComputerSystem.Reset"]["target"]
+        power_state = data["PowerState"]
+        reset_action = data[key]["#ComputerSystem.Reset"]
+        action_uri = reset_action["target"]
+        allowable_vals = reset_action.get("ResetType@Redfish.AllowableValues", [])
+        restart_cmd = "GracefulRestart"
+        if "ForceRestart" in allowable_vals and "GracefulRestart" not in allowable_vals:
+            restart_cmd = "ForceRestart"
 
         # Define payload accordingly
         if command == "PowerOn":
@@ -390,6 +396,11 @@ class RedfishUtils(object):
             payload = {'ResetType': 'GracefulRestart'}
         elif command == "PowerGracefulShutdown":
             payload = {'ResetType': 'GracefulShutdown'}
+        elif command == "PowerReboot":
+            if power_state == "On":
+                payload = {'ResetType': restart_cmd}
+            else:
+                payload = {'ResetType': "On"}
         else:
             return {'ret': False, 'msg': 'Invalid Command'}
 
@@ -719,42 +730,6 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
-
-    def create_bios_config_job(self):
-        result = {}
-        key = "Bios"
-        jobs = "Jobs"
-
-        # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-
-        if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
-
-        bios_uri = data[key]["@odata.id"]
-
-        # Extract proper URI
-        response = self.get_request(self.root_uri + bios_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-        set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
-
-        payload = {"TargetSettingsURI": set_bios_attr_uri}
-        response = self.post_request(self.root_uri + self.manager_uri + "/" + jobs, payload, HEADERS)
-        if response['ret'] is False:
-            return response
-
-        response_output = response['resp'].__dict__
-        job_id = response_output["headers"]["Location"]
-        job_id = re.search("JID_.+", job_id).group()
-        # Currently not passing job_id back to user but patch is coming
-        return {'ret': True, 'msg': "Config job %s created" % job_id}
 
     def get_fan_inventory(self):
         result = {}
