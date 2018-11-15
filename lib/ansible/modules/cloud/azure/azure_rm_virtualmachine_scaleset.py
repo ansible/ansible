@@ -630,7 +630,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             self.security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
 
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
-                        self.location,
+                        location=self.location,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
