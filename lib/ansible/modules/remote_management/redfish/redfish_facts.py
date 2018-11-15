@@ -38,6 +38,7 @@ options:
     required: true
     description:
       - User for authentication with OOB controller
+    version_added: "2.8"
   password:
     required: true
     description:

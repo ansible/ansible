@@ -39,6 +39,7 @@ options:
     required: true
     description:
       - User for authentication with OOB controller
+    version_added: "2.8"
   password:
     required: true
     description:
@@ -47,18 +48,22 @@ options:
     required: false
     description:
       - ID of user to add/delete/modify
+    version_added: "2.8"
   new_username:
     required: false
     description:
       - name of user to add/delete/modify
+    version_added: "2.8"
   new_password:
     required: false
     description:
       - password of user to add/delete/modify
+    version_added: "2.8"
   roleid:
     required: false
     description:
       - role of user to add/delete/modify
+    version_added: "2.8"
   bootdevice:
     required: false
     description:

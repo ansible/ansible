@@ -38,6 +38,7 @@ options:
     required: true
     description:
       - User for authentication with OOB controller
+    version_added: "2.8"
   password:
     required: true
     description:
@@ -47,21 +48,25 @@ options:
     description:
       - name of BIOS attribute to update
     default: 'null'
+    version_added: "2.8"
   bios_attribute_value:
     required: false
     description:
       - value of BIOS attribute to update
     default: 'null'
+    version_added: "2.8"
   manager_attribute_name:
     required: false
     description:
       - name of Manager attribute to update
     default: 'null'
+    version_added: "2.8"
   manager_attribute_value:
     required: false
     description:
       - value of Manager attribute to update
     default: 'null'
+    version_added: "2.8"
 
 author: "Jose Delarosa (github: jose-delarosa)"
 '''
