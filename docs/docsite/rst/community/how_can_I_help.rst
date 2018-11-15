@@ -69,7 +69,7 @@ To learn more about the responsibilities of being an Ansible module maintainer, 
 Join a working group
 ====================
 
-Working groups are a way for Ansible community members to self-organize around particular topics of interest. We have working groups around various topics. To join or create a working group, please read the `Ansible Working Groups<working_group_list>`_.
+Working groups are a way for Ansible community members to self-organize around particular topics of interest. We have working groups around various topics. To join or create a working group, please read the :ref:`Ansible Working Groups<working_group_list>`.
 
 
 Teach Ansible to others

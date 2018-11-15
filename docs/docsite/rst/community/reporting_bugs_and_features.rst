@@ -27,7 +27,7 @@ When sharing YAML in playbooks, formatting can be preserved by using `code block
 
 For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire, so it's nice to have things around for a longer term if they are referenced in a ticket.
 
-If you are not sure if something is a bug yet,i you are welcome to ask about something on the :ref:`mailing list or IRC first <communication>`_.
+If you are not sure if something is a bug yet,i you are welcome to ask about something on the :ref:`mailing list or IRC first <communication>`.
 
 As we are a very high volume project, if you determine that you do have a bug, please be sure to open the issue yourself to ensure we have a record of it. Don't rely on someone else in the community to file the bug report for you.
 
