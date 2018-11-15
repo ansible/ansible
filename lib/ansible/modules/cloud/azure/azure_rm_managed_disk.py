@@ -290,7 +290,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
         # prepare the data disk
         params = self.compute_models.ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
-        data_disk = self.compute_models.DataDisk(lun, self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
+        data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
 
