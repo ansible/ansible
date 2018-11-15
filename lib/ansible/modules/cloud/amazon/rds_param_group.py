@@ -103,7 +103,7 @@ EXAMPLES = '''
 # Add or change a parameter group, in this case setting auto_increment_increment to 42 * 1024
 - rds_param_group:
       state: present
-      name: norwegian_blue
+      name: norwegian-blue
       description: 'My Fancy Ex Parrot Group'
       engine: 'mysql5.6'
       params:
@@ -115,7 +115,7 @@ EXAMPLES = '''
 # Remove a parameter group
 - rds_param_group:
       state: absent
-      name: norwegian_blue
+      name: norwegian-blue
 '''
 
 RETURN = '''
