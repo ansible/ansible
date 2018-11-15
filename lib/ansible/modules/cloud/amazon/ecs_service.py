@@ -115,6 +115,11 @@ options:
               - Whether the task's elastic network interface receives a public IP address. This option requires botocore >= 1.8.4.
             type: bool
             version_added: 2.7
+    service_registries:
+        description:
+          - The details of the service discovery registries to assign to this service
+        required: false
+        version_added: 2.8
     launch_type:
         description:
           - The launch type on which to run your service
@@ -177,6 +182,23 @@ EXAMPLES = '''
     placement_strategy:
       - type: binpack
         field: memory
+
+# create ECS service on VPC network with and assign a service discovery registry
+- ecs_service:
+    state: present
+    name: test-service
+    desired_count: 1
+    task_definition: test-task-definition
+    cluster: test-cluster
+    network_configuration:
+      subnets:
+        - subnet-abcd1234
+      security_groups:
+        - sg-aaaa1111
+        - my_security_group
+      assign_public_ip: no
+    service_registries:
+      - registryArn: arn:aws:servicediscovery:us-west-2:123456789123:service/srv-mqolbh3y3jzjj22y
 '''
 
 RETURN = '''
@@ -253,6 +275,33 @@ service:
                     description: minimumHealthyPercent param
                     returned: always
                     type: int
+        serviceRegistries:
+            description: list of service registries that are assigned to the service
+            returned: always
+            type: list of complex
+            contains:
+                registryArn:
+                    description: The Amazon Resource Name (ARN) of the service registry
+                    returned: when state present and a service discovery registry is assigned
+                    type: string
+                    sample: "arn:aws:servicediscovery:us-west-2:123456789123:service/srv-mqolbh3y3jzjj22y"
+                port:
+                    description: The port value used if your service discovery service specified an SRV record
+                    returned: when state present and a service discovery registry specified an SRV record
+                    type: int
+                    sample: 80
+                containerName:
+                    description: The container name value that is used for your service discovery service
+                    returned: when state present, service discovery registry is assigned and the network mode
+                              used in the task definition requires containerName specification
+                    type: string
+                    sample: test-container
+                containerPort:
+                    description: The port value, already specified in the task definition
+                    returned: when state present, service discovery registry is assigned and the network mode
+                              used in the task definition requires containerPort specification
+                    type: int
+                    sample: 80
         events:
             description: list of service events
             returned: always
@@ -384,7 +433,7 @@ class EcsServiceManager:
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
                        placement_constraints, placement_strategy, network_configuration,
-                       launch_type):
+                       service_registries, launch_type):
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
@@ -401,6 +450,8 @@ class EcsServiceManager:
             params['networkConfiguration'] = network_configuration
         if launch_type:
             params['launchType'] = launch_type
+        if service_registries:
+            params['serviceRegistries'] = service_registries
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
@@ -466,6 +517,7 @@ def main():
             security_groups=dict(type='list'),
             assign_public_ip=dict(type='bool'),
         )),
+        service_registries=dict(required=False, default=[], type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
     ))
 
@@ -550,6 +602,7 @@ def main():
                                                               module.params['placement_constraints'],
                                                               module.params['placement_strategy'],
                                                               network_configuration,
+                                                              module.params['service_registries'],
                                                               module.params['launch_type'])
                     except botocore.exceptions.ClientError as e:
                         module.fail_json_aws(e, msg="Couldn't create service")
