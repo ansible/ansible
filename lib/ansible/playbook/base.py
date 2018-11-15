@@ -436,24 +436,30 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         self._finalized = True
 
-    def _load_vars(self, attr, ds):
+    def _post_validate_vars(self, attr, value, templar):
         '''
         Vars in a play can be specified either as a dictionary directly, or
         as a list of dictionaries. If the later, this method will turn the
         list into a single dictionary.
         '''
-
         def _validate_variable_keys(ds):
             for key in ds:
                 if not isidentifier(key):
                     raise TypeError("'%s' is not a valid variable name" % key)
 
+        ds = templar.template(value)
+
         try:
             if isinstance(ds, dict):
                 _validate_variable_keys(ds)
-                return combine_vars(self.vars, ds)
+                if isinstance(self.vars, dict):
+                    return combine_vars(self.vars, ds)
+                return ds
             elif isinstance(ds, list):
-                all_vars = self.vars
+                if isinstance(self.vars, dict):
+                    all_vars = self.vars
+                else:
+                    all_vars = {}
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
@@ -567,7 +573,7 @@ class Base(FieldAttributeBase):
     _remote_user = FieldAttribute(isa='string')
 
     # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
+    _vars = FieldAttribute(priority=100, inherit=False, default=dict, always_post_validate=True)
 
     # module default params
     _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)

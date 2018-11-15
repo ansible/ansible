@@ -533,6 +533,7 @@ class TaskExecutor:
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
+        variables.update(self._task.get_vars())
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):

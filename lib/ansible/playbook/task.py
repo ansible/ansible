@@ -212,12 +212,12 @@ class Task(Base, Conditional, Taggable, Become):
         # we handle any 'vars' specified in the ds here, as we may
         # be adding things to them below (special handling for includes).
         # When that deprecated feature is removed, this can be too.
-        if 'vars' in ds:
-            # _load_vars is defined in Base, and is used to load a dictionary
-            # or list of dictionaries in a standard way
-            new_ds['vars'] = self._load_vars(None, ds.get('vars'))
-        else:
-            new_ds['vars'] = dict()
+        # if 'vars' in ds:
+        #     # _load_vars is defined in Base, and is used to load a dictionary
+        #     # or list of dictionaries in a standard way
+        #     new_ds['vars'] = self._load_vars(None, ds.get('vars'))
+        # else:
+        new_ds['vars'] = dict()
 
         for (k, v) in iteritems(ds):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
@@ -344,7 +344,10 @@ class Task(Base, Conditional, Taggable, Become):
         if self._parent:
             all_vars.update(self._parent.get_vars())
 
-        all_vars.update(self.vars)
+        try:
+            all_vars.update(self.vars)
+        except ValueError:
+            pass
 
         if 'tags' in all_vars:
             del all_vars['tags']
