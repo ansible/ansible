@@ -65,6 +65,7 @@ options:
     description:
       - The direct connect gateway ID mutually exclusive with the virtual_gateway_id for creating a private virtual interface.
         We must specify either a virtual gateway ID or a direct connect gateway ID.
+    version_added: "2.5"
   virtual_interface_id:
     description:
       - The virtual interface ID.
