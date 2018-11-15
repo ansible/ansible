@@ -32,14 +32,15 @@ DOCUMENTATION = '''
 ---
 module: gcp_pubsub_topic_facts
 description:
-  - Gather facts for GCP Topic
+- Gather facts for GCP Topic
 short_description: Gather facts for GCP Topic
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
+options: {}
 extends_documentation_fragment: gcp
 '''
 
@@ -53,15 +54,15 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
-    returned: always
-    type: complex
-    contains:
-        name:
-            description:
-                - Name of the topic.
-            returned: success
-            type: str
+  description: List of items
+  returned: always
+  type: complex
+  contains:
+    name:
+      description:
+      - Name of the topic.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -81,7 +82,7 @@ def main():
         )
     )
 
-    if 'scopes' not in module.params:
+    if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
 
     items = fetch_list(module, collection(module))

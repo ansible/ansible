@@ -32,182 +32,187 @@ DOCUMENTATION = '''
 ---
 module: gcp_container_node_pool
 description:
-    - NodePool contains the name and configuration for a cluster's node pool.
-    - Node pools are a set of nodes (i.e. VM's), with a common configuration and specification,
-      under the control of the cluster master. They may have a set of Kubernetes labels
-      applied to them, which may be used to reference them during pod scheduling. They
-      may also be resized up or down, to accommodate the workload.
+- NodePool contains the name and configuration for a cluster's node pool.
+- Node pools are a set of nodes (i.e. VM's), with a common configuration and specification,
+  under the control of the cluster master. They may have a set of Kubernetes labels
+  applied to them, which may be used to reference them during pod scheduling. They
+  may also be resized up or down, to accommodate the workload.
 short_description: Creates a GCP NodePool
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  name:
+    description:
+    - The name of the node pool.
+    required: false
+  config:
+    description:
+    - The node configuration of the pool.
+    required: false
+    suboptions:
+      machine_type:
         description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    name:
-        description:
-            - The name of the node pool.
+        - The name of a Google Compute Engine machine type (e.g.
+        - n1-standard-1). If unspecified, the default machine type is n1-standard-1.
         required: false
-    config:
+      disk_size_gb:
         description:
-            - The node configuration of the pool.
+        - Size of the disk attached to each node, specified in GB. The smallest allowed
+          disk size is 10GB. If unspecified, the default disk size is 100GB.
+        required: false
+      oauth_scopes:
+        description:
+        - The set of Google API scopes to be made available on all of the node VMs
+          under the "default" service account.
+        - 'The following scopes are recommended, but not required, and by default
+          are not included: U(https://www.googleapis.com/auth/compute) is required
+          for mounting persistent storage on your nodes.'
+        - U(https://www.googleapis.com/auth/devstorage.read_only) is required for
+          communicating with gcr.io (the Google Container Registry).
+        - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring
+          are enabled, in which case their required scopes will be added.
+        required: false
+      service_account:
+        description:
+        - The Google Cloud Platform Service Account to be used by the node VMs. If
+          no Service Account is specified, the "default" service account is used.
+        required: false
+      metadata:
+        description:
+        - The metadata key/value pairs assigned to instances in the cluster.
+        - 'Keys must conform to the regexp [a-zA-Z0-9-_]+ and be less than 128 bytes
+          in length. These are reflected as part of a URL in the metadata server.
+          Additionally, to avoid ambiguity, keys must not conflict with any other
+          metadata keys for the project or be one of the four reserved keys: "instance-template",
+          "kube-env", "startup-script", and "user-data" Values are free-form strings,
+          and only have meaning as interpreted by the image running in the instance.
+          The only restriction placed on them is that each value''s size must be less
+          than or equal to 32 KB.'
+        - The total size of all keys and values must be less than 512 KB.
+        - 'An object containing a list of "key": value pairs.'
+        - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
+        required: false
+      image_type:
+        description:
+        - The image type to use for this node. Note that for a given image type, the
+          latest version of it will be used.
+        required: false
+      labels:
+        description:
+        - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
+          These will added in addition to any default label(s) that Kubernetes may
+          apply to the node. In case of conflict in label keys, the applied set may
+          differ depending on the Kubernetes version -- it''s best to assume the behavior
+          is undefined and conflicts should be avoided. For more information, including
+          usage and the valid values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html)
+          An object containing a list of "key": value pairs.'
+        - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
+        required: false
+      local_ssd_count:
+        description:
+        - The number of local SSD disks to be attached to the node.
+        - 'The limit for this value is dependant upon the maximum number of disks
+          available on a machine per zone. See: U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)
+          for more information.'
+        required: false
+      tags:
+        description:
+        - The list of instance tags applied to all nodes. Tags are used to identify
+          valid sources or targets for network firewalls and are specified by the
+          client during cluster or node pool creation. Each tag within the list must
+          comply with RFC1035.
+        required: false
+      preemptible:
+        description:
+        - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
+          for more inforamtion about preemptible VM instances.'
+        required: false
+        type: bool
+  initial_node_count:
+    description:
+    - The initial node count for the pool. You must ensure that your Compute Engine
+      resource quota is sufficient for this number of instances. You must also have
+      available firewall and routes quota.
+    required: true
+  autoscaling:
+    description:
+    - Autoscaler configuration for this NodePool. Autoscaler is enabled only if a
+      valid configuration is present.
+    required: false
+    suboptions:
+      enabled:
+        description:
+        - Is autoscaling enabled for this node pool.
+        required: false
+        type: bool
+      min_node_count:
+        description:
+        - Minimum number of nodes in the NodePool. Must be >= 1 and <= maxNodeCount.
+        required: false
+      max_node_count:
+        description:
+        - Maximum number of nodes in the NodePool. Must be >= minNodeCount.
+        - There has to enough quota to scale up the cluster.
+        required: false
+  management:
+    description:
+    - Management configuration for this NodePool.
+    required: false
+    suboptions:
+      auto_upgrade:
+        description:
+        - A flag that specifies whether node auto-upgrade is enabled for the node
+          pool. If enabled, node auto-upgrade helps keep the nodes in your node pool
+          up to date with the latest release version of Kubernetes.
+        required: false
+        type: bool
+      auto_repair:
+        description:
+        - A flag that specifies whether the node auto-repair is enabled for the node
+          pool. If enabled, the nodes in this node pool will be monitored and, if
+          they fail health checks too many times, an automatic repair action will
+          be triggered.
+        required: false
+        type: bool
+      upgrade_options:
+        description:
+        - Specifies the Auto Upgrade knobs for the node pool.
         required: false
         suboptions:
-            machine_type:
-                description:
-                    - The name of a Google Compute Engine machine type (e.g.
-                    - n1-standard-1).  If unspecified, the default machine type is n1-standard-1.
-                required: false
-            disk_size_gb:
-                description:
-                    - Size of the disk attached to each node, specified in GB. The smallest allowed disk
-                      size is 10GB. If unspecified, the default disk size is 100GB.
-                required: false
-            oauth_scopes:
-                description:
-                    - The set of Google API scopes to be made available on all of the node VMs under the
-                      "default" service account.
-                    - 'The following scopes are recommended, but not required, and by default are not
-                      included:  U(https://www.googleapis.com/auth/compute) is required for mounting persistent
-                      storage on your nodes.'
-                    - U(https://www.googleapis.com/auth/devstorage.read_only) is required for communicating
-                      with gcr.io (the Google Container Registry).
-                    - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring are
-                      enabled, in which case their required scopes will be added.
-                required: false
-            service_account:
-                description:
-                    - The Google Cloud Platform Service Account to be used by the node VMs.  If no Service
-                      Account is specified, the "default" service account is used.
-                required: false
-            metadata:
-                description:
-                    - The metadata key/value pairs assigned to instances in the cluster.
-                    - 'Keys must conform to the regexp [a-zA-Z0-9-_]+ and be less than 128 bytes in length.
-                      These are reflected as part of a URL in the metadata server. Additionally, to avoid
-                      ambiguity, keys must not conflict with any other metadata keys for the project or
-                      be one of the four reserved keys: "instance-template", "kube-env", "startup-script",
-                      and "user-data"  Values are free-form strings, and only have meaning as interpreted
-                      by the image running in the instance. The only restriction placed on them is that
-                      each value''s size must be less than or equal to 32 KB.'
-                    - The total size of all keys and values must be less than 512 KB.
-                    - 'An object containing a list of "key": value pairs.'
-                    - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
-                required: false
-            image_type:
-                description:
-                    - The image type to use for this node.  Note that for a given image type, the latest
-                      version of it will be used.
-                required: false
-            labels:
-                description:
-                    - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
-                      These will added in addition to any default label(s) that Kubernetes may apply to
-                      the node. In case of conflict in label keys, the applied set may differ depending
-                      on the Kubernetes version -- it''s best to assume the behavior is undefined and
-                      conflicts should be avoided. For more information, including usage and the valid
-                      values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An object
-                      containing a list of "key": value pairs.'
-                    - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
-                required: false
-            local_ssd_count:
-                description:
-                    - The number of local SSD disks to be attached to the node.
-                    - 'The limit for this value is dependant upon the maximum number of disks available
-                      on a machine per zone. See:  U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)  for
-                      more information.'
-                required: false
-            tags:
-                description:
-                    - The list of instance tags applied to all nodes. Tags are used to identify valid
-                      sources or targets for network firewalls and are specified by the client during
-                      cluster or node pool creation. Each tag within the list must comply with RFC1035.
-                required: false
-            preemptible:
-                description:
-                    - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-                      for more inforamtion about preemptible VM instances.'
-                required: false
-                type: bool
-    initial_node_count:
-        description:
-            - The initial node count for the pool. You must ensure that your Compute Engine resource
-              quota is sufficient for this number of instances. You must also have available firewall
-              and routes quota.
-        required: true
-    autoscaling:
-        description:
-            - Autoscaler configuration for this NodePool. Autoscaler is enabled only if a valid
-              configuration is present.
-        required: false
-        suboptions:
-            enabled:
-                description:
-                    - Is autoscaling enabled for this node pool.
-                required: false
-                type: bool
-            min_node_count:
-                description:
-                    - Minimum number of nodes in the NodePool. Must be >= 1 and <= maxNodeCount.
-                required: false
-            max_node_count:
-                description:
-                    - Maximum number of nodes in the NodePool. Must be >= minNodeCount.
-                    - There has to enough quota to scale up the cluster.
-                required: false
-    management:
-        description:
-            - Management configuration for this NodePool.
-        required: false
-        suboptions:
-            auto_upgrade:
-                description:
-                    - A flag that specifies whether node auto-upgrade is enabled for the node pool. If
-                      enabled, node auto-upgrade helps keep the nodes in your node pool up to date with
-                      the latest release version of Kubernetes.
-                required: false
-                type: bool
-            auto_repair:
-                description:
-                    - A flag that specifies whether the node auto-repair is enabled for the node pool.
-                      If enabled, the nodes in this node pool will be monitored and, if they fail health
-                      checks too many times, an automatic repair action will be triggered.
-                required: false
-                type: bool
-            upgrade_options:
-                description:
-                    - Specifies the Auto Upgrade knobs for the node pool.
-                required: false
-                suboptions:
-                    auto_upgrade_start_time:
-                        description:
-                            - This field is set when upgrades are about to commence with the approximate start
-                              time for the upgrades, in RFC3339 text format.
-                        required: false
-                    description:
-                        description:
-                            - This field is set when upgrades are about to commence with the description of the
-                              upgrade.
-                        required: false
-    cluster:
-        description:
-            - The cluster this node pool belongs to.
-            - 'This field represents a link to a Cluster resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
-              task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
-              you can set this cluster to a dictionary with the name key where the value is the
-              name of your Cluster.'
-        required: true
-    zone:
-        description:
-            - The zone where the node pool is deployed.
-        required: true
+          auto_upgrade_start_time:
+            description:
+            - This field is set when upgrades are about to commence with the approximate
+              start time for the upgrades, in RFC3339 text format.
+            required: false
+          description:
+            description:
+            - This field is set when upgrades are about to commence with the description
+              of the upgrade.
+            required: false
+  cluster:
+    description:
+    - The cluster this node pool belongs to.
+    - 'This field represents a link to a Cluster resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
+      task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
+      you can set this cluster to a dictionary with the name key where the value is
+      the name of your Cluster'
+    required: true
+  zone:
+    description:
+    - The zone where the node pool is deployed.
+    required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -225,7 +230,7 @@ EXAMPLES = '''
 
 - name: create a node pool
   gcp_container_node_pool:
-      name: "test_object"
+      name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
       zone: us-central1-a
@@ -236,185 +241,187 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    name:
+name:
+  description:
+  - The name of the node pool.
+  returned: success
+  type: str
+config:
+  description:
+  - The node configuration of the pool.
+  returned: success
+  type: complex
+  contains:
+    machineType:
+      description:
+      - The name of a Google Compute Engine machine type (e.g.
+      - n1-standard-1). If unspecified, the default machine type is n1-standard-1.
+      returned: success
+      type: str
+    diskSizeGb:
+      description:
+      - Size of the disk attached to each node, specified in GB. The smallest allowed
+        disk size is 10GB. If unspecified, the default disk size is 100GB.
+      returned: success
+      type: int
+    oauthScopes:
+      description:
+      - The set of Google API scopes to be made available on all of the node VMs under
+        the "default" service account.
+      - 'The following scopes are recommended, but not required, and by default are
+        not included: U(https://www.googleapis.com/auth/compute) is required for mounting
+        persistent storage on your nodes.'
+      - U(https://www.googleapis.com/auth/devstorage.read_only) is required for communicating
+        with gcr.io (the Google Container Registry).
+      - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring
+        are enabled, in which case their required scopes will be added.
+      returned: success
+      type: list
+    serviceAccount:
+      description:
+      - The Google Cloud Platform Service Account to be used by the node VMs. If no
+        Service Account is specified, the "default" service account is used.
+      returned: success
+      type: str
+    metadata:
+      description:
+      - The metadata key/value pairs assigned to instances in the cluster.
+      - 'Keys must conform to the regexp [a-zA-Z0-9-_]+ and be less than 128 bytes
+        in length. These are reflected as part of a URL in the metadata server. Additionally,
+        to avoid ambiguity, keys must not conflict with any other metadata keys for
+        the project or be one of the four reserved keys: "instance-template", "kube-env",
+        "startup-script", and "user-data" Values are free-form strings, and only have
+        meaning as interpreted by the image running in the instance. The only restriction
+        placed on them is that each value''s size must be less than or equal to 32
+        KB.'
+      - The total size of all keys and values must be less than 512 KB.
+      - 'An object containing a list of "key": value pairs.'
+      - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
+      returned: success
+      type: dict
+    imageType:
+      description:
+      - The image type to use for this node. Note that for a given image type, the
+        latest version of it will be used.
+      returned: success
+      type: str
+    labels:
+      description:
+      - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
+        These will added in addition to any default label(s) that Kubernetes may apply
+        to the node. In case of conflict in label keys, the applied set may differ
+        depending on the Kubernetes version -- it''s best to assume the behavior is
+        undefined and conflicts should be avoided. For more information, including
+        usage and the valid values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html)
+        An object containing a list of "key": value pairs.'
+      - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
+      returned: success
+      type: dict
+    localSsdCount:
+      description:
+      - The number of local SSD disks to be attached to the node.
+      - 'The limit for this value is dependant upon the maximum number of disks available
+        on a machine per zone. See: U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)
+        for more information.'
+      returned: success
+      type: int
+    tags:
+      description:
+      - The list of instance tags applied to all nodes. Tags are used to identify
+        valid sources or targets for network firewalls and are specified by the client
+        during cluster or node pool creation. Each tag within the list must comply
+        with RFC1035.
+      returned: success
+      type: list
+    preemptible:
+      description:
+      - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
+        for more inforamtion about preemptible VM instances.'
+      returned: success
+      type: bool
+initialNodeCount:
+  description:
+  - The initial node count for the pool. You must ensure that your Compute Engine
+    resource quota is sufficient for this number of instances. You must also have
+    available firewall and routes quota.
+  returned: success
+  type: int
+version:
+  description:
+  - The version of the Kubernetes of this node.
+  returned: success
+  type: str
+autoscaling:
+  description:
+  - Autoscaler configuration for this NodePool. Autoscaler is enabled only if a valid
+    configuration is present.
+  returned: success
+  type: complex
+  contains:
+    enabled:
+      description:
+      - Is autoscaling enabled for this node pool.
+      returned: success
+      type: bool
+    minNodeCount:
+      description:
+      - Minimum number of nodes in the NodePool. Must be >= 1 and <= maxNodeCount.
+      returned: success
+      type: int
+    maxNodeCount:
+      description:
+      - Maximum number of nodes in the NodePool. Must be >= minNodeCount.
+      - There has to enough quota to scale up the cluster.
+      returned: success
+      type: int
+management:
+  description:
+  - Management configuration for this NodePool.
+  returned: success
+  type: complex
+  contains:
+    autoUpgrade:
+      description:
+      - A flag that specifies whether node auto-upgrade is enabled for the node pool.
+        If enabled, node auto-upgrade helps keep the nodes in your node pool up to
+        date with the latest release version of Kubernetes.
+      returned: success
+      type: bool
+    autoRepair:
+      description:
+      - A flag that specifies whether the node auto-repair is enabled for the node
+        pool. If enabled, the nodes in this node pool will be monitored and, if they
+        fail health checks too many times, an automatic repair action will be triggered.
+      returned: success
+      type: bool
+    upgradeOptions:
+      description:
+      - Specifies the Auto Upgrade knobs for the node pool.
+      returned: success
+      type: complex
+      contains:
+        autoUpgradeStartTime:
+          description:
+          - This field is set when upgrades are about to commence with the approximate
+            start time for the upgrades, in RFC3339 text format.
+          returned: success
+          type: str
         description:
-            - The name of the node pool.
-        returned: success
-        type: str
-    config:
-        description:
-            - The node configuration of the pool.
-        returned: success
-        type: complex
-        contains:
-            machineType:
-                description:
-                    - The name of a Google Compute Engine machine type (e.g.
-                    - n1-standard-1).  If unspecified, the default machine type is n1-standard-1.
-                returned: success
-                type: str
-            diskSizeGb:
-                description:
-                    - Size of the disk attached to each node, specified in GB. The smallest allowed disk
-                      size is 10GB. If unspecified, the default disk size is 100GB.
-                returned: success
-                type: int
-            oauthScopes:
-                description:
-                    - The set of Google API scopes to be made available on all of the node VMs under the
-                      "default" service account.
-                    - 'The following scopes are recommended, but not required, and by default are not
-                      included:  U(https://www.googleapis.com/auth/compute) is required for mounting persistent
-                      storage on your nodes.'
-                    - U(https://www.googleapis.com/auth/devstorage.read_only) is required for communicating
-                      with gcr.io (the Google Container Registry).
-                    - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring are
-                      enabled, in which case their required scopes will be added.
-                returned: success
-                type: list
-            serviceAccount:
-                description:
-                    - The Google Cloud Platform Service Account to be used by the node VMs.  If no Service
-                      Account is specified, the "default" service account is used.
-                returned: success
-                type: str
-            metadata:
-                description:
-                    - The metadata key/value pairs assigned to instances in the cluster.
-                    - 'Keys must conform to the regexp [a-zA-Z0-9-_]+ and be less than 128 bytes in length.
-                      These are reflected as part of a URL in the metadata server. Additionally, to avoid
-                      ambiguity, keys must not conflict with any other metadata keys for the project or
-                      be one of the four reserved keys: "instance-template", "kube-env", "startup-script",
-                      and "user-data"  Values are free-form strings, and only have meaning as interpreted
-                      by the image running in the instance. The only restriction placed on them is that
-                      each value''s size must be less than or equal to 32 KB.'
-                    - The total size of all keys and values must be less than 512 KB.
-                    - 'An object containing a list of "key": value pairs.'
-                    - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
-                returned: success
-                type: dict
-            imageType:
-                description:
-                    - The image type to use for this node.  Note that for a given image type, the latest
-                      version of it will be used.
-                returned: success
-                type: str
-            labels:
-                description:
-                    - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
-                      These will added in addition to any default label(s) that Kubernetes may apply to
-                      the node. In case of conflict in label keys, the applied set may differ depending
-                      on the Kubernetes version -- it''s best to assume the behavior is undefined and
-                      conflicts should be avoided. For more information, including usage and the valid
-                      values, see: U(http://kubernetes.io/v1.1/docs/user-guide/labels.html) An object
-                      containing a list of "key": value pairs.'
-                    - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
-                returned: success
-                type: dict
-            localSsdCount:
-                description:
-                    - The number of local SSD disks to be attached to the node.
-                    - 'The limit for this value is dependant upon the maximum number of disks available
-                      on a machine per zone. See:  U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)  for
-                      more information.'
-                returned: success
-                type: int
-            tags:
-                description:
-                    - The list of instance tags applied to all nodes. Tags are used to identify valid
-                      sources or targets for network firewalls and are specified by the client during
-                      cluster or node pool creation. Each tag within the list must comply with RFC1035.
-                returned: success
-                type: list
-            preemptible:
-                description:
-                    - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-                      for more inforamtion about preemptible VM instances.'
-                returned: success
-                type: bool
-    initialNodeCount:
-        description:
-            - The initial node count for the pool. You must ensure that your Compute Engine resource
-              quota is sufficient for this number of instances. You must also have available firewall
-              and routes quota.
-        returned: success
-        type: int
-    version:
-        description:
-            - The version of the Kubernetes of this node.
-        returned: success
-        type: str
-    autoscaling:
-        description:
-            - Autoscaler configuration for this NodePool. Autoscaler is enabled only if a valid
-              configuration is present.
-        returned: success
-        type: complex
-        contains:
-            enabled:
-                description:
-                    - Is autoscaling enabled for this node pool.
-                returned: success
-                type: bool
-            minNodeCount:
-                description:
-                    - Minimum number of nodes in the NodePool. Must be >= 1 and <= maxNodeCount.
-                returned: success
-                type: int
-            maxNodeCount:
-                description:
-                    - Maximum number of nodes in the NodePool. Must be >= minNodeCount.
-                    - There has to enough quota to scale up the cluster.
-                returned: success
-                type: int
-    management:
-        description:
-            - Management configuration for this NodePool.
-        returned: success
-        type: complex
-        contains:
-            autoUpgrade:
-                description:
-                    - A flag that specifies whether node auto-upgrade is enabled for the node pool. If
-                      enabled, node auto-upgrade helps keep the nodes in your node pool up to date with
-                      the latest release version of Kubernetes.
-                returned: success
-                type: bool
-            autoRepair:
-                description:
-                    - A flag that specifies whether the node auto-repair is enabled for the node pool.
-                      If enabled, the nodes in this node pool will be monitored and, if they fail health
-                      checks too many times, an automatic repair action will be triggered.
-                returned: success
-                type: bool
-            upgradeOptions:
-                description:
-                    - Specifies the Auto Upgrade knobs for the node pool.
-                returned: success
-                type: complex
-                contains:
-                    autoUpgradeStartTime:
-                        description:
-                            - This field is set when upgrades are about to commence with the approximate start
-                              time for the upgrades, in RFC3339 text format.
-                        returned: success
-                        type: str
-                    description:
-                        description:
-                            - This field is set when upgrades are about to commence with the description of the
-                              upgrade.
-                        returned: success
-                        type: str
-    cluster:
-        description:
-            - The cluster this node pool belongs to.
-        returned: success
-        type: dict
-    zone:
-        description:
-            - The zone where the node pool is deployed.
-        returned: success
-        type: str
+          description:
+          - This field is set when upgrades are about to commence with the description
+            of the upgrade.
+          returned: success
+          type: str
+cluster:
+  description:
+  - The cluster this node pool belongs to.
+  returned: success
+  type: dict
+zone:
+  description:
+  - The zone where the node pool is deployed.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -630,8 +637,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE', 'ABORTING']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri)
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -731,18 +736,18 @@ class NodePoolManagement(object):
         return remove_nones_from_dict({
             u'autoUpgrade': self.request.get('auto_upgrade'),
             u'autoRepair': self.request.get('auto_repair'),
-            u'upgradeOptions': NodePoolUpgradeOptions(self.request.get('upgrade_options', {}), self.module).to_request()
+            u'upgradeOptions': NodePoolUpgradeoptions(self.request.get('upgrade_options', {}), self.module).to_request()
         })
 
     def from_response(self):
         return remove_nones_from_dict({
             u'autoUpgrade': self.request.get(u'autoUpgrade'),
             u'autoRepair': self.request.get(u'autoRepair'),
-            u'upgradeOptions': NodePoolUpgradeOptions(self.request.get(u'upgradeOptions', {}), self.module).from_response()
+            u'upgradeOptions': NodePoolUpgradeoptions(self.request.get(u'upgradeOptions', {}), self.module).from_response()
         })
 
 
-class NodePoolUpgradeOptions(object):
+class NodePoolUpgradeoptions(object):
     def __init__(self, request, module):
         self.module = module
         if request:

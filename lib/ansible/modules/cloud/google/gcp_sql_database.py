@@ -32,42 +32,44 @@ DOCUMENTATION = '''
 ---
 module: gcp_sql_database
 description:
-    - Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
+- Represents a SQL database inside the Cloud SQL instance, hosted in Google's cloud.
 short_description: Creates a GCP Database
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    charset:
-        description:
-            - The MySQL charset value.
-        required: false
-    collation:
-        description:
-            - The MySQL collation value.
-        required: false
-    name:
-        description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
-        required: false
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-            - 'This field represents a link to a Instance resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_sql_instance task
-              and then set this instance field to "{{ name-of-resource }}" Alternatively, you
-              can set this instance to a dictionary with the name key where the value is the name
-              of your Instance.'
-        required: true
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  charset:
+    description:
+    - The MySQL charset value.
+    required: false
+  collation:
+    description:
+    - The MySQL collation value.
+    required: false
+  name:
+    description:
+    - The name of the database in the Cloud SQL instance.
+    - This does not include the project ID or instance name.
+    required: false
+  instance:
+    description:
+    - The name of the Cloud SQL instance. This does not include the project ID.
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_sql_instance
+      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
+      you can set this instance to a dictionary with the name key where the value
+      is the name of your Instance'
+    required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -100,27 +102,27 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    charset:
-        description:
-            - The MySQL charset value.
-        returned: success
-        type: str
-    collation:
-        description:
-            - The MySQL collation value.
-        returned: success
-        type: str
-    name:
-        description:
-            - The name of the database in the Cloud SQL instance.
-            - This does not include the project ID or instance name.
-        returned: success
-        type: str
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-        returned: success
-        type: dict
+charset:
+  description:
+  - The MySQL charset value.
+  returned: success
+  type: str
+collation:
+  description:
+  - The MySQL collation value.
+  returned: success
+  type: str
+name:
+  description:
+  - The name of the database in the Cloud SQL instance.
+  - This does not include the project ID or instance name.
+  returned: success
+  type: str
+instance:
+  description:
+  - The name of the Cloud SQL instance. This does not include the project ID.
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -234,7 +236,7 @@ def collection(module):
 
 def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -242,7 +244,7 @@ def return_if_object(module, response, kind, allow_not_found=False):
         return None
 
     # SQL only: return on 403 if not exist
-    if response.status_code == 403:
+    if allow_not_found and response.status_code == 403:
         return None
 
     try:
@@ -252,8 +254,6 @@ def return_if_object(module, response, kind, allow_not_found=False):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -310,8 +310,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'sql#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result

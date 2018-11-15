@@ -32,82 +32,86 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_instance_group_manager
 description:
-    - Creates a managed instance group using the information that you specify in the request.
-      After the group is created, it schedules an action to create instances in the group
-      using the specified instance template. This operation is marked as DONE when the
-      group is created even if the instances in the group have not yet been created. You
-      must separately verify the status of the individual instances.
-    - A managed instance group can have up to 1000 VM instances per group.
+- Creates a managed instance group using the information that you specify in the request.
+  After the group is created, it schedules an action to create instances in the group
+  using the specified instance template. This operation is marked as DONE when the
+  group is created even if the instances in the group have not yet been created. You
+  must separately verify the status of the individual instances.
+- A managed instance group can have up to 1000 VM instances per group.
 short_description: Creates a GCP InstanceGroupManager
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    base_instance_name:
-        description:
-            - The base instance name to use for instances in this group. The value must be 1-58
-              characters long. Instances are named by appending a hyphen and a random four-character
-              string to the base instance name.
-            - The base instance name must comply with RFC1035.
-        required: true
+  state:
     description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  base_instance_name:
+    description:
+    - The base instance name to use for instances in this group. The value must be
+      1-58 characters long. Instances are named by appending a hyphen and a random
+      four-character string to the base instance name.
+    - The base instance name must comply with RFC1035.
+    required: true
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource.
+    required: false
+  instance_template:
+    description:
+    - The instance template that is specified for this managed instance group. The
+      group uses this template to create all new instances in the managed instance
+      group.
+    - 'This field represents a link to a InstanceTemplate resource in GCP. It can
+      be specified in two ways. You can add `register: name-of-resource` to a gcp_compute_instance_template
+      task and then set this instance_template field to "{{ name-of-resource }}" Alternatively,
+      you can set this instance_template to a dictionary with the selfLink key where
+      the value is the selfLink of your InstanceTemplate'
+    required: true
+  name:
+    description:
+    - The name of the managed instance group. The name must be 1-63 characters long,
+      and comply with RFC1035.
+    required: true
+  named_ports:
+    description:
+    - Named ports configured for the Instance Groups complementary to this Instance
+      Group Manager.
+    required: false
+    suboptions:
+      name:
         description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
+        - The name for this named port. The name must be 1-63 characters long, and
+          comply with RFC1035.
         required: false
-    instance_template:
+      port:
         description:
-            - The instance template that is specified for this managed instance group. The group
-              uses this template to create all new instances in the managed instance group.
-            - 'This field represents a link to a InstanceTemplate resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_compute_instance_template
-              task and then set this instance_template field to "{{ name-of-resource }}" Alternatively,
-              you can set this instance_template to a dictionary with the selfLink key where the
-              value is the selfLink of your InstanceTemplate.'
-        required: true
-    name:
-        description:
-            - The name of the managed instance group. The name must be 1-63 characters long, and
-              comply with RFC1035.
-        required: true
-    named_ports:
-        description:
-            - Named ports configured for the Instance Groups complementary to this Instance Group
-              Manager.
+        - The port number, which can be a value between 1 and 65535.
         required: false
-        suboptions:
-            name:
-                description:
-                    - The name for this named port. The name must be 1-63 characters long, and comply
-                      with RFC1035.
-                required: false
-            port:
-                description:
-                    - The port number, which can be a value between 1 and 65535.
-                required: false
-    target_pools:
-        description:
-            - TargetPool resources to which instances in the instanceGroup field are added. The
-              target pools automatically apply to all of the instances in the managed instance
-              group.
-        required: false
-    target_size:
-        description:
-            - The target number of running instances for this managed instance group. Deleting
-              or abandoning instances reduces this number. Resizing the group changes this number.
-        required: false
-    zone:
-        description:
-            - The zone the managed instance group resides.
-        required: true
+  target_pools:
+    description:
+    - TargetPool resources to which instances in the instanceGroup field are added.
+      The target pools automatically apply to all of the instances in the managed
+      instance group.
+    required: false
+  target_size:
+    description:
+    - The target number of running instances for this managed instance group. Deleting
+      or abandoning instances reduces this number. Resizing the group changes this
+      number.
+    required: false
+  zone:
+    description:
+    - The zone the managed instance group resides.
+    required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -167,151 +171,151 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    baseInstanceName:
-        description:
-            - The base instance name to use for instances in this group. The value must be 1-58
-              characters long. Instances are named by appending a hyphen and a random four-character
-              string to the base instance name.
-            - The base instance name must comply with RFC1035.
-        returned: success
-        type: str
-    creationTimestamp:
-        description:
-            - The creation timestamp for this managed instance group in RFC3339 text format.
-        returned: success
-        type: str
-    currentActions:
-        description:
-            - The list of instance actions and the number of instances in this managed instance
-              group that are scheduled for each of those actions.
-        returned: success
-        type: complex
-        contains:
-            abandoning:
-                description:
-                    - The total number of instances in the managed instance group that are scheduled to
-                      be abandoned. Abandoning an instance removes it from the managed instance group
-                      without deleting it.
-                returned: success
-                type: int
-            creating:
-                description:
-                    - The number of instances in the managed instance group that are scheduled to be created
-                      or are currently being created. If the group fails to create any of these instances,
-                      it tries again until it creates the instance successfully.
-                    - If you have disabled creation retries, this field will not be populated; instead,
-                      the creatingWithoutRetries field will be populated.
-                returned: success
-                type: int
-            creatingWithoutRetries:
-                description:
-                    - The number of instances that the managed instance group will attempt to create.
-                      The group attempts to create each instance only once. If the group fails to create
-                      any of these instances, it decreases the group's targetSize value accordingly.
-                returned: success
-                type: int
-            deleting:
-                description:
-                    - The number of instances in the managed instance group that are scheduled to be deleted
-                      or are currently being deleted.
-                returned: success
-                type: int
-            none:
-                description:
-                    - The number of instances in the managed instance group that are running and have
-                      no scheduled actions.
-                returned: success
-                type: int
-            recreating:
-                description:
-                    - The number of instances in the managed instance group that are scheduled to be recreated
-                      or are currently being being recreated.
-                    - Recreating an instance deletes the existing root persistent disk and creates a new
-                      disk from the image that is defined in the instance template.
-                returned: success
-                type: int
-            refreshing:
-                description:
-                    - The number of instances in the managed instance group that are being reconfigured
-                      with properties that do not require a restart or a recreate action. For example,
-                      setting or removing target pools for the instance.
-                returned: success
-                type: int
-            restarting:
-                description:
-                    - The number of instances in the managed instance group that are scheduled to be restarted
-                      or are currently being restarted.
-                returned: success
-                type: int
-    description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - A unique identifier for this resource.
-        returned: success
-        type: int
-    instanceGroup:
-        description:
-            - The instance group being managed.
-        returned: success
-        type: dict
-    instanceTemplate:
-        description:
-            - The instance template that is specified for this managed instance group. The group
-              uses this template to create all new instances in the managed instance group.
-        returned: success
-        type: dict
+baseInstanceName:
+  description:
+  - The base instance name to use for instances in this group. The value must be 1-58
+    characters long. Instances are named by appending a hyphen and a random four-character
+    string to the base instance name.
+  - The base instance name must comply with RFC1035.
+  returned: success
+  type: str
+creationTimestamp:
+  description:
+  - The creation timestamp for this managed instance group in RFC3339 text format.
+  returned: success
+  type: str
+currentActions:
+  description:
+  - The list of instance actions and the number of instances in this managed instance
+    group that are scheduled for each of those actions.
+  returned: success
+  type: complex
+  contains:
+    abandoning:
+      description:
+      - The total number of instances in the managed instance group that are scheduled
+        to be abandoned. Abandoning an instance removes it from the managed instance
+        group without deleting it.
+      returned: success
+      type: int
+    creating:
+      description:
+      - The number of instances in the managed instance group that are scheduled to
+        be created or are currently being created. If the group fails to create any
+        of these instances, it tries again until it creates the instance successfully.
+      - If you have disabled creation retries, this field will not be populated; instead,
+        the creatingWithoutRetries field will be populated.
+      returned: success
+      type: int
+    creatingWithoutRetries:
+      description:
+      - The number of instances that the managed instance group will attempt to create.
+        The group attempts to create each instance only once. If the group fails to
+        create any of these instances, it decreases the group's targetSize value accordingly.
+      returned: success
+      type: int
+    deleting:
+      description:
+      - The number of instances in the managed instance group that are scheduled to
+        be deleted or are currently being deleted.
+      returned: success
+      type: int
+    none:
+      description:
+      - The number of instances in the managed instance group that are running and
+        have no scheduled actions.
+      returned: success
+      type: int
+    recreating:
+      description:
+      - The number of instances in the managed instance group that are scheduled to
+        be recreated or are currently being being recreated.
+      - Recreating an instance deletes the existing root persistent disk and creates
+        a new disk from the image that is defined in the instance template.
+      returned: success
+      type: int
+    refreshing:
+      description:
+      - The number of instances in the managed instance group that are being reconfigured
+        with properties that do not require a restart or a recreate action. For example,
+        setting or removing target pools for the instance.
+      returned: success
+      type: int
+    restarting:
+      description:
+      - The number of instances in the managed instance group that are scheduled to
+        be restarted or are currently being restarted.
+      returned: success
+      type: int
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource.
+  returned: success
+  type: str
+id:
+  description:
+  - A unique identifier for this resource.
+  returned: success
+  type: int
+instanceGroup:
+  description:
+  - The instance group being managed.
+  returned: success
+  type: dict
+instanceTemplate:
+  description:
+  - The instance template that is specified for this managed instance group. The group
+    uses this template to create all new instances in the managed instance group.
+  returned: success
+  type: dict
+name:
+  description:
+  - The name of the managed instance group. The name must be 1-63 characters long,
+    and comply with RFC1035.
+  returned: success
+  type: str
+namedPorts:
+  description:
+  - Named ports configured for the Instance Groups complementary to this Instance
+    Group Manager.
+  returned: success
+  type: complex
+  contains:
     name:
-        description:
-            - The name of the managed instance group. The name must be 1-63 characters long, and
-              comply with RFC1035.
-        returned: success
-        type: str
-    namedPorts:
-        description:
-            - Named ports configured for the Instance Groups complementary to this Instance Group
-              Manager.
-        returned: success
-        type: complex
-        contains:
-            name:
-                description:
-                    - The name for this named port. The name must be 1-63 characters long, and comply
-                      with RFC1035.
-                returned: success
-                type: str
-            port:
-                description:
-                    - The port number, which can be a value between 1 and 65535.
-                returned: success
-                type: int
-    region:
-        description:
-            - The region this managed instance group resides (for regional resources).
-        returned: success
-        type: str
-    targetPools:
-        description:
-            - TargetPool resources to which instances in the instanceGroup field are added. The
-              target pools automatically apply to all of the instances in the managed instance
-              group.
-        returned: success
-        type: list
-    targetSize:
-        description:
-            - The target number of running instances for this managed instance group. Deleting
-              or abandoning instances reduces this number. Resizing the group changes this number.
-        returned: success
-        type: int
-    zone:
-        description:
-            - The zone the managed instance group resides.
-        returned: success
-        type: str
+      description:
+      - The name for this named port. The name must be 1-63 characters long, and comply
+        with RFC1035.
+      returned: success
+      type: str
+    port:
+      description:
+      - The port number, which can be a value between 1 and 65535.
+      returned: success
+      type: int
+region:
+  description:
+  - The region this managed instance group resides (for regional resources).
+  returned: success
+  type: str
+targetPools:
+  description:
+  - TargetPool resources to which instances in the instanceGroup field are added.
+    The target pools automatically apply to all of the instances in the managed instance
+    group.
+  returned: success
+  type: list
+targetSize:
+  description:
+  - The target number of running instances for this managed instance group. Deleting
+    or abandoning instances reduces this number. Resizing the group changes this number.
+  returned: success
+  type: int
+zone:
+  description:
+  - The zone the managed instance group resides.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -401,7 +405,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'instanceTemplate': replace_resource_dict(module.params.get(u'instance_template', {}), 'selfLink'),
         u'name': module.params.get('name'),
-        u'namedPorts': InstanceGroupManagerNamedPortsArray(module.params.get('named_ports', []), module).to_request(),
+        u'namedPorts': InstanceGroupManagerNamedportsArray(module.params.get('named_ports', []), module).to_request(),
         u'targetPools': replace_resource_dict(module.params.get('target_pools', []), 'selfLink'),
         u'targetSize': module.params.get('target_size')
     }
@@ -471,13 +475,13 @@ def response_to_hash(module, response):
     return {
         u'baseInstanceName': response.get(u'baseInstanceName'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'currentActions': InstanceGroupManagerCurrentActions(response.get(u'currentActions', {}), module).from_response(),
+        u'currentActions': InstanceGroupManagerCurrentactions(response.get(u'currentActions', {}), module).from_response(),
         u'description': module.params.get('description'),
         u'id': response.get(u'id'),
         u'instanceGroup': response.get(u'instanceGroup'),
         u'instanceTemplate': response.get(u'instanceTemplate'),
         u'name': response.get(u'name'),
-        u'namedPorts': InstanceGroupManagerNamedPortsArray(response.get(u'namedPorts', []), module).from_response(),
+        u'namedPorts': InstanceGroupManagerNamedportsArray(response.get(u'namedPorts', []), module).from_response(),
         u'region': response.get(u'region'),
         u'targetPools': response.get(u'targetPools'),
         u'targetSize': response.get(u'targetSize')
@@ -517,8 +521,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -530,7 +532,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class InstanceGroupManagerCurrentActions(object):
+class InstanceGroupManagerCurrentactions(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -563,7 +565,7 @@ class InstanceGroupManagerCurrentActions(object):
         })
 
 
-class InstanceGroupManagerNamedPortsArray(object):
+class InstanceGroupManagerNamedportsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
