@@ -32,135 +32,141 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_url_map
 description:
-    - UrlMaps are used to route requests to a backend service based on rules that you
-      define for the host and path of an incoming URL.
+- UrlMaps are used to route requests to a backend service based on rules that you
+  define for the host and path of an incoming URL.
 short_description: Creates a GCP UrlMap
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    default_service:
-        description:
-            - A reference to BackendService resource if none of the hostRules match.
-            - 'This field represents a link to a BackendService resource in GCP. It can be specified
-              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-              task and then set this default_service field to "{{ name-of-resource }}" Alternatively,
-              you can set this default_service to a dictionary with the selfLink key where the
-              value is the selfLink of your BackendService.'
-        required: true
+  state:
     description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  default_service:
+    description:
+    - A reference to BackendService resource if none of the hostRules match.
+    - 'This field represents a link to a BackendService resource in GCP. It can be
+      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+      task and then set this default_service field to "{{ name-of-resource }}" Alternatively,
+      you can set this default_service to a dictionary with the selfLink key where
+      the value is the selfLink of your BackendService'
+    required: true
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource.
+    required: false
+  host_rules:
+    description:
+    - The list of HostRules to use against the URL.
+    required: false
+    suboptions:
+      description:
         description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
+        - An optional description of this HostRule. Provide this property when you
+          create the resource.
         required: false
-    host_rules:
+      hosts:
         description:
-            - The list of HostRules to use against the URL.
-        required: false
-        suboptions:
-            description:
-                description:
-                    - An optional description of this resource. Provide this property when you create
-                      the resource.
-                required: false
-            hosts:
-                description:
-                    - The list of host patterns to match. They must be valid hostnames, except * will
-                      match any string of ([a-z0-9-.]*). In that case, * must be the first character and
-                      must be followed in the pattern by either - or .
-                required: true
-            path_matcher:
-                description:
-                    - The name of the PathMatcher to use to match the path portion of the URL if the hostRule
-                      matches the URL's host portion.
-                required: true
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
+        - The list of host patterns to match. They must be valid hostnames, except
+          * will match any string of ([a-z0-9-.]*). In that case, * must be the first
+          character and must be followed in the pattern by either - or .
         required: true
-    path_matchers:
+      path_matcher:
         description:
-            - The list of named PathMatchers to use against the URL.
+        - The name of the PathMatcher to use to match the path portion of the URL
+          if the hostRule matches the URL's host portion.
+        required: true
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  path_matchers:
+    description:
+    - The list of named PathMatchers to use against the URL.
+    required: false
+    suboptions:
+      default_service:
+        description:
+        - A reference to a BackendService resource. This will be used if none of the
+          pathRules defined by this PathMatcher is matched by the URL's path portion.
+        - 'This field represents a link to a BackendService resource in GCP. It can
+          be specified in two ways. You can add `register: name-of-resource` to a
+          gcp_compute_backend_service task and then set this default_service field
+          to "{{ name-of-resource }}" Alternatively, you can set this default_service
+          to a dictionary with the selfLink key where the value is the selfLink of
+          your BackendService'
+        required: true
+      description:
+        description:
+        - An optional description of this resource.
+        required: false
+      name:
+        description:
+        - The name to which this PathMatcher is referred by the HostRule.
+        required: true
+      path_rules:
+        description:
+        - The list of path rules.
         required: false
         suboptions:
-            default_service:
-                description:
-                    - A reference to a BackendService resource. This will be used if none of the pathRules
-                      defined by this PathMatcher is matched by the URL's path portion.
-                    - 'This field represents a link to a BackendService resource in GCP. It can be specified
-                      in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-                      task and then set this default_service field to "{{ name-of-resource }}" Alternatively,
-                      you can set this default_service to a dictionary with the selfLink key where the
-                      value is the selfLink of your BackendService.'
-                required: true
+          paths:
             description:
-                description:
-                    - An optional description of this resource.
-                required: false
-            name:
-                description:
-                    - The name to which this PathMatcher is referred by the HostRule.
-                required: true
-            path_rules:
-                description:
-                    - The list of path rules.
-                required: false
-                suboptions:
-                    paths:
-                        description:
-                            - 'The list of path patterns to match. Each must start with / and the only place a
-                              * is allowed is at the end following a /. The string fed to the path matcher does
-                              not include any text after the first ? or #, and those chars are not allowed here.'
-                        required: false
-                    service:
-                        description:
-                            - A reference to the BackendService resource if this rule is matched.
-                            - 'This field represents a link to a BackendService resource in GCP. It can be specified
-                              in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-                              task and then set this service field to "{{ name-of-resource }}" Alternatively,
-                              you can set this service to a dictionary with the selfLink key where the value is
-                              the selfLink of your BackendService.'
-                        required: true
-    tests:
+            - 'The list of path patterns to match. Each must start with / and the
+              only place a * is allowed is at the end following a /. The string fed
+              to the path matcher does not include any text after the first ? or #,
+              and those chars are not allowed here.'
+            required: true
+          service:
+            description:
+            - A reference to the BackendService resource if this rule is matched.
+            - 'This field represents a link to a BackendService resource in GCP. It
+              can be specified in two ways. You can add `register: name-of-resource`
+              to a gcp_compute_backend_service task and then set this service field
+              to "{{ name-of-resource }}" Alternatively, you can set this service
+              to a dictionary with the selfLink key where the value is the selfLink
+              of your BackendService'
+            required: true
+  tests:
+    description:
+    - The list of expected URL mappings. Requests to update this UrlMap will succeed
+      only if all of the test cases pass.
+    required: false
+    suboptions:
+      description:
         description:
-            - The list of expected URL mappings. Request to update this UrlMap will succeed only
-              if all of the test cases pass.
+        - Description of this test case.
         required: false
-        suboptions:
-            description:
-                description:
-                    - Description of this test case.
-                required: false
-            host:
-                description:
-                    - Host portion of the URL.
-                required: true
-            path:
-                description:
-                    - Path portion of the URL.
-                required: true
-            service:
-                description:
-                    - A reference to expected BackendService resource the given URL should be mapped to.
-                    - 'This field represents a link to a BackendService resource in GCP. It can be specified
-                      in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-                      task and then set this service field to "{{ name-of-resource }}" Alternatively,
-                      you can set this service to a dictionary with the selfLink key where the value is
-                      the selfLink of your BackendService.'
-                required: true
+      host:
+        description:
+        - Host portion of the URL.
+        required: true
+      path:
+        description:
+        - Path portion of the URL.
+        required: true
+      service:
+        description:
+        - A reference to expected BackendService resource the given URL should be
+          mapped to.
+        - 'This field represents a link to a BackendService resource in GCP. It can
+          be specified in two ways. You can add `register: name-of-resource` to a
+          gcp_compute_backend_service task and then set this service field to "{{
+          name-of-resource }}" Alternatively, you can set this service to a dictionary
+          with the selfLink key where the value is the selfLink of your BackendService'
+        required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -213,135 +219,137 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    defaultService:
-        description:
-            - A reference to BackendService resource if none of the hostRules match.
-        returned: success
-        type: dict
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+defaultService:
+  description:
+  - A reference to BackendService resource if none of the hostRules match.
+  returned: success
+  type: dict
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource.
+  returned: success
+  type: str
+hostRules:
+  description:
+  - The list of HostRules to use against the URL.
+  returned: success
+  type: complex
+  contains:
     description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        returned: success
-        type: str
-    hostRules:
-        description:
-            - The list of HostRules to use against the URL.
-        returned: success
-        type: complex
-        contains:
-            description:
-                description:
-                    - An optional description of this resource. Provide this property when you create
-                      the resource.
-                returned: success
-                type: str
-            hosts:
-                description:
-                    - The list of host patterns to match. They must be valid hostnames, except * will
-                      match any string of ([a-z0-9-.]*). In that case, * must be the first character and
-                      must be followed in the pattern by either - or .
-                returned: success
-                type: list
-            pathMatcher:
-                description:
-                    - The name of the PathMatcher to use to match the path portion of the URL if the hostRule
-                      matches the URL's host portion.
-                returned: success
-                type: str
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    fingerprint:
-        description:
-            - Fingerprint of this resource. This field is used internally during updates of this
-              resource.
-        returned: success
-        type: str
+      description:
+      - An optional description of this HostRule. Provide this property when you create
+        the resource.
+      returned: success
+      type: str
+    hosts:
+      description:
+      - The list of host patterns to match. They must be valid hostnames, except *
+        will match any string of ([a-z0-9-.]*). In that case, * must be the first
+        character and must be followed in the pattern by either - or .
+      returned: success
+      type: list
+    pathMatcher:
+      description:
+      - The name of the PathMatcher to use to match the path portion of the URL if
+        the hostRule matches the URL's host portion.
+      returned: success
+      type: str
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+fingerprint:
+  description:
+  - Fingerprint of this resource. This field is used internally during updates of
+    this resource.
+  returned: success
+  type: str
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+pathMatchers:
+  description:
+  - The list of named PathMatchers to use against the URL.
+  returned: success
+  type: complex
+  contains:
+    defaultService:
+      description:
+      - A reference to a BackendService resource. This will be used if none of the
+        pathRules defined by this PathMatcher is matched by the URL's path portion.
+      returned: success
+      type: dict
+    description:
+      description:
+      - An optional description of this resource.
+      returned: success
+      type: str
     name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    pathMatchers:
-        description:
-            - The list of named PathMatchers to use against the URL.
-        returned: success
-        type: complex
-        contains:
-            defaultService:
-                description:
-                    - A reference to a BackendService resource. This will be used if none of the pathRules
-                      defined by this PathMatcher is matched by the URL's path portion.
-                returned: success
-                type: dict
-            description:
-                description:
-                    - An optional description of this resource.
-                returned: success
-                type: str
-            name:
-                description:
-                    - The name to which this PathMatcher is referred by the HostRule.
-                returned: success
-                type: str
-            pathRules:
-                description:
-                    - The list of path rules.
-                returned: success
-                type: complex
-                contains:
-                    paths:
-                        description:
-                            - 'The list of path patterns to match. Each must start with / and the only place a
-                              * is allowed is at the end following a /. The string fed to the path matcher does
-                              not include any text after the first ? or #, and those chars are not allowed here.'
-                        returned: success
-                        type: list
-                    service:
-                        description:
-                            - A reference to the BackendService resource if this rule is matched.
-                        returned: success
-                        type: dict
-    tests:
-        description:
-            - The list of expected URL mappings. Request to update this UrlMap will succeed only
-              if all of the test cases pass.
-        returned: success
-        type: complex
-        contains:
-            description:
-                description:
-                    - Description of this test case.
-                returned: success
-                type: str
-            host:
-                description:
-                    - Host portion of the URL.
-                returned: success
-                type: str
-            path:
-                description:
-                    - Path portion of the URL.
-                returned: success
-                type: str
-            service:
-                description:
-                    - A reference to expected BackendService resource the given URL should be mapped to.
-                returned: success
-                type: dict
+      description:
+      - The name to which this PathMatcher is referred by the HostRule.
+      returned: success
+      type: str
+    pathRules:
+      description:
+      - The list of path rules.
+      returned: success
+      type: complex
+      contains:
+        paths:
+          description:
+          - 'The list of path patterns to match. Each must start with / and the only
+            place a * is allowed is at the end following a /. The string fed to the
+            path matcher does not include any text after the first ? or #, and those
+            chars are not allowed here.'
+          returned: success
+          type: list
+        service:
+          description:
+          - A reference to the BackendService resource if this rule is matched.
+          returned: success
+          type: dict
+tests:
+  description:
+  - The list of expected URL mappings. Requests to update this UrlMap will succeed
+    only if all of the test cases pass.
+  returned: success
+  type: complex
+  contains:
+    description:
+      description:
+      - Description of this test case.
+      returned: success
+      type: str
+    host:
+      description:
+      - Host portion of the URL.
+      returned: success
+      type: str
+    path:
+      description:
+      - Path portion of the URL.
+      returned: success
+      type: str
+    service:
+      description:
+      - A reference to expected BackendService resource the given URL should be mapped
+        to.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
@@ -376,7 +384,7 @@ def main():
                 description=dict(type='str'),
                 name=dict(required=True, type='str'),
                 path_rules=dict(type='list', elements='dict', options=dict(
-                    paths=dict(type='list', elements='str'),
+                    paths=dict(required=True, type='list', elements='str'),
                     service=dict(required=True, type='dict')
                 ))
             )),
@@ -440,9 +448,9 @@ def resource_to_request(module):
         u'kind': 'compute#urlMap',
         u'defaultService': replace_resource_dict(module.params.get(u'default_service', {}), 'selfLink'),
         u'description': module.params.get('description'),
-        u'hostRules': UrlMapHostRulesArray(module.params.get('host_rules', []), module).to_request(),
+        u'hostRules': UrlMapHostrulesArray(module.params.get('host_rules', []), module).to_request(),
         u'name': module.params.get('name'),
-        u'pathMatchers': UrlMapPathMatchersArray(module.params.get('path_matchers', []), module).to_request(),
+        u'pathMatchers': UrlMapPathmatchersArray(module.params.get('path_matchers', []), module).to_request(),
         u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request()
     }
     return_vals = {}
@@ -512,11 +520,11 @@ def response_to_hash(module, response):
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'defaultService': response.get(u'defaultService'),
         u'description': response.get(u'description'),
-        u'hostRules': UrlMapHostRulesArray(response.get(u'hostRules', []), module).from_response(),
+        u'hostRules': UrlMapHostrulesArray(response.get(u'hostRules', []), module).from_response(),
         u'id': response.get(u'id'),
         u'fingerprint': response.get(u'fingerprint'),
         u'name': module.params.get('name'),
-        u'pathMatchers': UrlMapPathMatchersArray(response.get(u'pathMatchers', []), module).from_response(),
+        u'pathMatchers': UrlMapPathmatchersArray(response.get(u'pathMatchers', []), module).from_response(),
         u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response()
     }
 
@@ -545,8 +553,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -558,7 +564,7 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class UrlMapHostRulesArray(object):
+class UrlMapHostrulesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -593,7 +599,7 @@ class UrlMapHostRulesArray(object):
         })
 
 
-class UrlMapPathMatchersArray(object):
+class UrlMapPathmatchersArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -618,7 +624,7 @@ class UrlMapPathMatchersArray(object):
             u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
             u'description': item.get('description'),
             u'name': item.get('name'),
-            u'pathRules': UrlMapPathRulesArray(item.get('path_rules', []), self.module).to_request()
+            u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request()
         })
 
     def _response_from_item(self, item):
@@ -626,11 +632,11 @@ class UrlMapPathMatchersArray(object):
             u'defaultService': item.get(u'defaultService'),
             u'description': item.get(u'description'),
             u'name': item.get(u'name'),
-            u'pathRules': UrlMapPathRulesArray(item.get(u'pathRules', []), self.module).from_response()
+            u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response()
         })
 
 
-class UrlMapPathRulesArray(object):
+class UrlMapPathrulesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
