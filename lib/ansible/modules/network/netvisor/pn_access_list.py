@@ -1,20 +1,10 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2018, Pluribus Networks
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -26,9 +16,9 @@ DOCUMENTATION = """
 module: pn_access_list
 author: "Pluribus Networks (devops@pluribusnetworks.com)"
 version_added: "2.8"
-short_description: CLI command to create/delete access-list.
+short_description: CLI command to create/delete access-list
 description:
-  - create and delete an access list
+  - This module can be used to create and delete an access list.
 options:
   pn_cliswitch:
     description:
@@ -43,12 +33,12 @@ options:
     choices: [ "present", "absent"]
   pn_name:
     description:
-      - Access List Name
+      - Access List Name.
     required: false
     type: str
   pn_scope:
     description:
-      - scope - local or fabric
+      - 'scope. Available valid values - local or fabric.'
     required: false
     choices: ['local', 'fabric']
 """
@@ -115,6 +105,11 @@ def run_cli(module, cli):
 
     remove_cmd = '/usr/bin/cli --quiet -e --no-login-prompt'
 
+    results = dict(
+        command=' '.join(cmd).replace(remove_cmd, ''),
+        msg="%s operation completed" % command,
+        changed=True
+    )
     # Response in JSON format
     if result != 0:
         module.exit_json(
@@ -125,19 +120,8 @@ def run_cli(module, cli):
         )
 
     if out:
-        module.exit_json(
-            command=' '.join(cmd).replace(remove_cmd, ''),
-            stdout=out.strip(),
-            msg="%s operation completed" % command,
-            changed=True
-        )
-
-    else:
-        module.exit_json(
-            command=' '.join(cmd).replace(remove_cmd, ''),
-            msg="%s operation completed" % command,
-            changed=True
-        )
+        results['stdout'] = out.strip()
+    module.exit_json(**results)
 
 
 def check_cli(module, cli):
@@ -209,7 +193,6 @@ def main():
             )
     else:
         if command == 'access-list-create':
-            check_cli(module, cli)
             if ACC_LIST_EXISTS is True:
                 module.exit_json(
                     skipped=True,
