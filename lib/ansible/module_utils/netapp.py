@@ -27,10 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
@@ -40,17 +37,26 @@ try:
 except ImportError:
     ansible_version = 'unknown'
 
+# Ugly patch to bypass relative import issue with Python 3
+# TODO: redo this once netapp-lib is fixed in pypi
+import inspect
 import os
-import ssl
-
-HAS_NETAPP_LIB = False
+import sys
+sys_path_len = len(sys.path)
 try:
+    import netapp_lib.api.zapi
+    sys.path.insert(0, os.path.dirname(inspect.getfile(netapp_lib.api.zapi)))
     from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
     HAS_NETAPP_LIB = True
-except:
+except ImportError:
     HAS_NETAPP_LIB = False
+if sys_path_len < len(sys.path):
+    # restore original path
+    sys.path.pop(0)
+del sys_path_len
+# end of patch
 
+import ssl
 
 HAS_SF_SDK = False
 SF_BYTE_MAP = dict(
@@ -65,6 +71,20 @@ SF_BYTE_MAP = dict(
     eb=1000 ** 6,
     zb=1000 ** 7,
     yb=1000 ** 8
+)
+
+POW2_BYTE_MAP = dict(
+    # Here, 1 kb = 1024
+    bytes=1,
+    b=1,
+    kb=1024,
+    mb=1024 ** 2,
+    gb=1024 ** 3,
+    tb=1024 ** 4,
+    pb=1024 ** 5,
+    eb=1024 ** 6,
+    zb=1024 ** 7,
+    yb=1024 ** 8
 )
 
 try:
@@ -93,7 +113,8 @@ def na_ontap_host_argument_spec():
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
         https=dict(required=False, type='bool', default=False),
         validate_certs=dict(required=False, type='bool', default=True),
-        http_port=dict(required=False, type='int')
+        http_port=dict(required=False, type='int'),
+        ontapi=dict(required=False, type='int')
     )
 
 
@@ -128,6 +149,7 @@ def setup_na_ontap_zapi(module, vserver=None):
     https = module.params['https']
     validate_certs = module.params['validate_certs']
     port = module.params['http_port']
+    version = module.params['ontapi']
 
     if HAS_NETAPP_LIB:
         # set up zapi
@@ -136,8 +158,11 @@ def setup_na_ontap_zapi(module, vserver=None):
         server.set_password(password)
         if vserver:
             server.set_vserver(vserver)
-        # Todo : Replace hard-coded values with configurable parameters.
-        server.set_api_version(major=1, minor=110)
+        if version:
+            minor = version
+        else:
+            minor = 110
+        server.set_api_version(major=1, minor=minor)
         # default is HTTP
         if https:
             if port is None:
