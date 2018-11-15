@@ -53,7 +53,7 @@ options:
         default: false
     use_remote_gateways:
         description:
-            - Name of the remote virtual network to be peered.
+            - If remote gateways can be used on this virtual network.
         type: bool
         default: false
     allow_gateway_transit:
@@ -262,13 +262,13 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                 # check if vnet exists
                 virtual_network = self.get_vnet(self.virtual_network['resource_group'], self.virtual_network['name'])
                 if not virtual_network:
-                    self.fail("Virtual network {0} in resource group {1} not exits!".format(self.virtual_network['name'],
+                    self.fail("Virtual network {0} in resource group {1} does not exist!".format(self.virtual_network['name'],
                                                                                             self.virtual_network['resource_group']))
 
                 # check if remote vnet exists
                 remote_virtual_network = self.get_vnet(self.remote_virtual_network['resource_group'], self.remote_virtual_network['name'])
                 if not remote_virtual_network:
-                    self.fail("Virtual network {0} in resource group {1} not exits!".format(
+                    self.fail("Virtual network {0} in resource group {1} does not exist!".format(
                         self.remote_virtual_network['name'], self.remote_virtual_network['resource_group']))
 
         elif self.state == 'absent':
@@ -283,7 +283,7 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                 response = self.delete_vnet_peering()
 
             else:
-                self.fail("Azure Virtual Network Peering {0} not exists in resource group {1}".format(self.name, self.resource_group))
+                self.fail("Azure Virtual Network Peering {0} does not exist in resource group {1}".format(self.name, self.resource_group))
 
         if to_be_updated:
             self.results['changed'] = True
