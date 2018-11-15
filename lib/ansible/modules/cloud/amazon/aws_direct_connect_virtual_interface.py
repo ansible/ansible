@@ -484,7 +484,7 @@ def main():
                                            ['public', True, ['amazon_address']],
                                            ['public', True, ['customer_address']],
                                            ['public', True, ['cidr']]],
-                              mutually_exclusive=[['virtual_gateway_id','direct_connect_gateway_id']])
+                              mutually_exclusive=[['virtual_gateway_id', 'direct_connect_gateway_id']])
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     connection = boto3_conn(module, conn_type='client', resource='directconnect', region=region, endpoint=ec2_url, **aws_connect_kwargs)
