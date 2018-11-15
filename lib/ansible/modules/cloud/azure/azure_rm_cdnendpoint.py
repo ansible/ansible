@@ -387,8 +387,8 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
 
             else:
                 self.log('Results : {0}'.format(response))
-                self.results['id'] = result['id']
-                self.results['host_name'] = result['host_name']
+                self.results['id'] = response['id']
+                self.results['host_name'] = response['host_name']
 
                 update_tags, response['tags'] = self.update_tags(response['tags'])
 
@@ -415,7 +415,7 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
                         self.results['changed'] = True
 
                     elif self.started is not None:
-                        self.log("Start/Stop not performed due to current resource state")
+                        self.module.warn("Start/Stop not performed due to current resource state {0}".format(response['resource_state']))
                         self.results['changed'] = False
 
                     if self.purge:
@@ -434,14 +434,14 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
 
                         if not self.check_mode:
                             result = self.update_cdnendpoint()
+                            self.results['host_name'] = result['host_name']
                             self.log("Update done")
 
                         self.results['changed'] = True
                 
                 elif self.started is not None:
-                    self.log("Start/Stop not performed due to current provisioning state {0}".format(response['provisioning_state']))
+                    self.module.warn("Start/Stop not performed due to current provisioning state {0}".format(response['provisioning_state']))
                     self.results['changed'] = False
-                    return self.results
 
         elif self.state == 'absent' and response:
             self.log("Need to delete the Azure CDN endpoint")
