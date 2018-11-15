@@ -262,8 +262,8 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                 # check if vnet exists
                 virtual_network = self.get_vnet(self.virtual_network['resource_group'], self.virtual_network['name'])
                 if not virtual_network:
-                    self.fail("Virtual network {0} in resource group {1} does not exist!".format(self.virtual_network['name'],
-                                                                                            self.virtual_network['resource_group']))
+                    self.fail("Virtual network {0} in resource group {1} does not exist!".format(
+                        self.virtual_network['name'], self.virtual_network['resource_group']))
 
                 # check if remote vnet exists
                 remote_virtual_network = self.get_vnet(self.remote_virtual_network['resource_group'], self.remote_virtual_network['name'])
