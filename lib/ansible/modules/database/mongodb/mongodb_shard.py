@@ -75,7 +75,7 @@ requirements: [ "pymongo" ]
 '''
 
 EXAMPLES = '''
-# add a replica set shard named rs1 with a member running on port 27018 on mongodb0.example.net
+# add a replicaset shard named rs1 with a member running on port 27018 on mongodb0.example.net
 - mongodb_shard:
     login_user: admin
     login_password: admin
