@@ -28,6 +28,9 @@ from ansible.template import Templar
 STATIC_VARS = [
     'ansible_version',
     'ansible_play_hosts',
+    'ansible_dependent_role_names',
+    'ansible_play_role_names',
+    'ansible_role_names',
     'inventory_hostname',
     'inventory_hostname_short',
     'inventory_file',

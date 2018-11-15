@@ -451,7 +451,23 @@ class VariableManager:
         variables['ansible_playbook_python'] = sys.executable
 
         if play:
-            variables['role_names'] = [r._role_name for r in play.roles]
+            # This is a list of all role names of all dependencies for all roles for this play
+            dependency_role_names = list(set([d._role_name for r in play.roles for d in r.get_all_dependencies()]))
+            # This is a list of all role names of all roles for this play
+            play_role_names = [r._role_name for r in play.roles]
+
+            # ansible_role_names includes all role names, dependent or directly referenced by the play
+            variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
+            # ansible_play_role_names includes the names of all roles directly referenced by this play
+            # roles that are implicitly referenced via dependencies are not listed.
+            variables['ansible_play_role_names'] = play_role_names
+            # ansible_dependent_role_names includes the names of all roles that are referenced via dependencies
+            # dependencies that are also explicitly named as roles are included in this list
+            variables['ansible_dependent_role_names'] = dependency_role_names
+
+            # DEPRECATED: role_names should be deprecated in favor of ansible_role_names or ansible_play_role_names
+            variables['role_names'] = variables['ansible_play_role_names']
+
             variables['ansible_play_name'] = play.get_name()
 
         if task:
