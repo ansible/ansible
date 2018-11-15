@@ -196,7 +196,7 @@ def normalize_location_name(name):
 
 
 # FUTURE: either get this from the requirements file (if we can be sure it's always available at runtime)
-# or generate the requirements files from this so we only have one source of truth to maintain...
+# or generate the requirements files from this so we only have one source of truth to maintain....
 AZURE_PKG_VERSIONS = {
     'StorageManagementClient': {
         'package_name': 'storage',
