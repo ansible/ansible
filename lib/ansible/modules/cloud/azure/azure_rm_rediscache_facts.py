@@ -291,19 +291,19 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         :return: dict
         '''
         new_result = dict(
-            id=rediscache.id
-            resource_group=re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', rediscache.id))
-            name=rediscache.name
-            location=rediscache.location
-            provisioning_state=rediscache.provisioning_state
-            configuration=rediscache.redis_configuration
-            tenant_settings=rediscache.tenant_settings
-            shard_count=rediscache.shard_count
-            enable_non_ssl_port=rediscache.enable_non_ssl_port
-            static_ip=rediscache.static_ip
-            subnet=rediscache.subnet_id
-            host_name=rediscache.host_name
-            tags=rediscache.tagss            
+            id=rediscache.id,
+            resource_group=re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', rediscache.id)),
+            name=rediscache.name,
+            location=rediscache.location,
+            provisioning_state=rediscache.provisioning_state,
+            configuration=rediscache.redis_configuration,
+            tenant_settings=rediscache.tenant_settings,
+            shard_count=rediscache.shard_count,
+            enable_non_ssl_port=rediscache.enable_non_ssl_port,
+            static_ip=rediscache.static_ip,
+            subnet=rediscache.subnet_id,
+            host_name=rediscache.host_name,
+            tags=rediscache.tags
         )
 
         if rediscache.sku:
