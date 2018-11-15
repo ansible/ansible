@@ -23,16 +23,17 @@ notes:
 - You cannot use this module to access a mapped drive in another Ansible task,
   drives mapped with this module are only accessible when logging in
   interactively with the user through the console or RDP.
-- To create a mapped drive with saved credentials, use become to access the
-  current user's credential store when creating the drive. Any credentials
-  should be added to the store with C(cmdkey.exe).
-- Using the I(username) and I(password) options will allow a module to create
-  a mapped drive that requires authentication but the drive will not accessible
-  on the next interactive logon as the password is not saved.
-- This module will only map a drive for the current user, to map a drive for
-  all users of a system, use become with the U(SYSTEM) account. This will not
-  allow you to save the credentials as C(cmdkey.exe) is user specific, use
-  other Microsoft tools like GPOs to achieve this goal.
+- It is recommend to run this module with become or CredSSP when the remote
+  path requires authentication.
+- When using become or CredSSP, the task will have access to any local
+  credentials stored in the user's vault.
+- If become or CredSSP is not available, the I(username) and I(password)
+  options can be used for the initial authentication but these are not
+  persisted.
+- To create a system wide mount, use become with the U(SYSTEM) account.
+- A system wide mount will always show as disconnected in Windows Explorer and
+  still relies on the user's credentials or credential vault for further
+  authentication if needed.
 options:
   letter:
     description:
@@ -41,9 +42,10 @@ options:
     required: yes
   password:
     description:
-    - The password for C(username).
+    - The password for C(username) that is used when testing the initial
+      connection.
     - This is never saved with a mapped drive, use the C(cmdkey) executable
-      with become to persist a username and password.
+      with become to persist a username and password for a host.
   path:
     description:
     - The UNC path to map the drive to.
@@ -61,17 +63,13 @@ options:
     default: present
   username:
     description:
-    - The username to store with the mapped drive configuration.
-    - This is used with I(password) when attempting to map the drive in the
-      module.
-    - Unlike I(password), this value is saved and is used for subsequent
-      authentication attempts. This will override any saved Windows credentials
-      stored by C(cmdkey) and will result in a failed network connection on the
-      next interactive logon as no password is saved.
-    - When creating a mapped drive that requires credentials, it is recommended
-      to use C(cmdkey) to create the saved Windows credentials then run this
-      module with become and to not define this key, see the examples for more
-      details.
+    - The username that is used when testing the initial connection.
+    - This is never saved with a mapped drive, use the C(cmdkey) executable
+      with become to persist a username and password for a host.
+    - This is required if the mapped drive requires authentication with
+      custom credentials and become, or CredSSP cannot be used.
+    - If become or CredSSP is used, any credentials saved with C(cmdkey) will
+      automatically be used instead.
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -110,6 +108,23 @@ EXAMPLES = r'''
     ansible_become_method: runas
     ansible_become_user: '{{ ansible_user }}'
     ansible_become_pass: '{{ ansible_password }}'
+
+- name: Create mapped drive with credentials that do not persist on the next logon
+  win_mapped_drive:
+    letter: M
+    path: \\SERVER\C$
+    state: present
+    username: '{{ ansible_user }}'
+    password: '{{ ansible_password }}'
+
+- name: Create a system wide mapped drive
+  win_mapped_drive:
+    letter: S
+    path: \\SERVER\C$
+    state: present
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
 '''
 
 RETURN = r'''

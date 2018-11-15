@@ -211,7 +211,7 @@
     that:
     - map_with_credentials is changed
     - map_with_credentials_actual.rc == 0
-    - map_with_credential_actual_username.value == '{{ansible_hostname}}\\{{test_win_mapped_drive_temp_user}}'
+    - map_with_credential_actual_username.value == ''  # we explicitly remove the username part in the module
 
 - name: map drive with current credentials again
   win_mapped_drive:
@@ -337,4 +337,3 @@
   assert:
     that:
     - not map_with_stored_cred_again is changed
-

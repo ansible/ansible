@@ -10,7 +10,7 @@ $spec = @{
     options = @{
         letter = @{ type = "str"; required = $true }
         path = @{ type = "path"; }
-        state = @{ type = "str"; default = "present"; choices = "absent", "present" }
+        state = @{ type = "str"; default = "present"; choices = @("absent", "present") }
         username = @{ type = "str" }
         password = @{ type = "str"; no_log = $true }
     }
@@ -28,20 +28,22 @@ $state = $module.Params.state
 $username = $module.Params.username
 $password = $module.Params.password
 
-$result = @{
-    changed = $false
-}
-
 if ($letter -notmatch "^[a-zA-z]{1}$") {
     $module.FailJson("letter must be a single letter from A-Z, was: $letter")
 }
+$letter_root = "$($letter):"
+
+$module.Diff.before = ""
+$module.Diff.after = ""
 
 Add-CSharpType -AnsibleModule $module -References @'
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
-using System.Text;
+using System.Security.Principal;
 
 namespace Ansible.MappedDrive
 {
@@ -73,17 +75,6 @@ namespace Ansible.MappedDrive
         }
 
         [Flags]
-        public enum ResourceUsage : uint
-        {
-            All = 0x00000000,
-            Connectable = 0x00000001,
-            Container = 0x00000002,
-            NoLocalDevice = 0x00000004,
-            Sibling = 0x00000008,
-            Attached = 0x00000010,
-        }
-
-        [Flags]
         public enum AddFlags : uint
         {
             UpdateProfile = 0x00000001,
@@ -98,22 +89,83 @@ namespace Ansible.MappedDrive
             CredReset = 0x00002000,
         }
 
+        public enum TokenElevationType
+        {
+            TokenElevationTypeDefault = 1,
+            TokenElevationTypeFull,
+            TokenElevationTypeLimited
+        }
+
+        public enum TokenInformationClass
+        {
+            TokenUser = 1,
+            TokenElevationType = 18,
+            TokenLinkedToken = 19,
+        }
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct NETRESOURCEW
         {
             public ResourceScope dwScope;
             public ResourceType dwType;
             public UInt32 dwDisplayType;
-            public ResourceUsage dwUsage;
+            public UInt32 dwUsage;
             [MarshalAs(UnmanagedType.LPWStr)] public string lpLocalName;
             [MarshalAs(UnmanagedType.LPWStr)] public string lpRemoteName;
             [MarshalAs(UnmanagedType.LPWStr)] public string lpComment;
             [MarshalAs(UnmanagedType.LPWStr)] public string lpProvider;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SID_AND_ATTRIBUTES
+        {
+            public IntPtr Sid;
+            public UInt32 Attributes;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TOKEN_USER
+        {
+            public SID_AND_ATTRIBUTES User;
+        }
     }
 
     internal class NativeMethods
     {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(
+            IntPtr hObject);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool GetTokenInformation(
+            SafeNativeHandle TokenHandle,
+            NativeHelpers.TokenInformationClass TokenInformationClass,
+            SafeMemoryBuffer TokenInformation,
+            UInt32 TokenInformationLength,
+            out UInt32 ReturnLength);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool ImpersonateLoggedOnUser(
+            SafeNativeHandle hToken);
+
+        [DllImport("kernel32.dll")]
+        public static extern SafeNativeHandle GetCurrentProcess();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern SafeNativeHandle OpenProcess(
+            UInt32 dwDesiredAccess,
+            bool bInheritHandle,
+            UInt32 dwProcessId);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool OpenProcessToken(
+            SafeNativeHandle ProcessHandle,
+            TokenAccessLevels DesiredAccess,
+            out SafeNativeHandle TokenHandle);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool RevertToSelf();
+
         [DllImport("Mpr.dll", CharSet = CharSet.Unicode)]
         public static extern UInt32 WNetAddConnection2W(
             NativeHelpers.NETRESOURCEW lpNetResource,
@@ -135,16 +187,75 @@ namespace Ansible.MappedDrive
         public static extern UInt32 WNetEnumResourceW(
             IntPtr hEnum,
             ref Int32 lpcCount,
-            IntPtr lpBuffer,
+            SafeMemoryBuffer lpBuffer,
             ref UInt32 lpBufferSize);
 
         [DllImport("Mpr.dll", CharSet = CharSet.Unicode)]
         public static extern UInt32 WNetOpenEnumW(
             NativeHelpers.ResourceScope dwScope,
             NativeHelpers.ResourceType dwType,
-            NativeHelpers.ResourceUsage dwUsage,
+            UInt32 dwUsage,
             IntPtr lpNetResource,
             out IntPtr lphEnum);
+    }
+
+    internal class SafeMemoryBuffer : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        public SafeMemoryBuffer() : base(true) { }
+        public SafeMemoryBuffer(int cb) : base(true)
+        {
+            base.SetHandle(Marshal.AllocHGlobal(cb));
+        }
+        public SafeMemoryBuffer(IntPtr handle) : base(true)
+        {
+            base.SetHandle(handle);
+        }
+
+        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
+        protected override bool ReleaseHandle()
+        {
+            Marshal.FreeHGlobal(handle);
+            return true;
+        }
+    }
+
+    internal class Impersonation : IDisposable
+    {
+        private SafeNativeHandle hToken = null;
+
+        public Impersonation(SafeNativeHandle token)
+        {
+            hToken = token;
+            if (token != null)
+                if (!NativeMethods.ImpersonateLoggedOnUser(hToken))
+                    throw new Win32Exception("Failed to impersonate token with ImpersonateLoggedOnUser()");
+        }
+
+        public void Dispose()
+        {
+            if (hToken != null)
+                NativeMethods.RevertToSelf();
+            GC.SuppressFinalize(this);
+        }
+        ~Impersonation() { Dispose(); }
+    }
+
+    public class DriveInfo
+    {
+        public string Drive;
+        public string Path;
+    }
+
+    public class SafeNativeHandle : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        public SafeNativeHandle() : base(true) { }
+        public SafeNativeHandle(IntPtr handle) : base(true) { this.handle = handle; }
+
+        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
+        protected override bool ReleaseHandle()
+        {
+            return NativeMethods.CloseHandle(handle);
+        }
     }
 
     public class Win32Exception : System.ComponentModel.Win32Exception
@@ -159,19 +270,13 @@ namespace Ansible.MappedDrive
         public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
     }
 
-    public class DriveInfo
-    {
-        public string Drive;
-        public string Path;
-        public string Username;
-    }
-
     public class Utils
     {
+        private const TokenAccessLevels IMPERSONATE_ACCESS = TokenAccessLevels.Query | TokenAccessLevels.Duplicate;
         private const UInt32 ERROR_SUCCESS = 0x00000000;
         private const UInt32 ERROR_NO_MORE_ITEMS = 0x0000103;
 
-        public static void AddMappedDrive(string drive, string path, string username = null, string password = null)
+        public static void AddMappedDrive(string drive, string path, SafeNativeHandle iToken, string username = null, string password = null)
         {
             NativeHelpers.NETRESOURCEW resource = new NativeHelpers.NETRESOURCEW
             {
@@ -180,80 +285,171 @@ namespace Ansible.MappedDrive
                 lpRemoteName = path,
             };
             NativeHelpers.AddFlags dwFlags = NativeHelpers.AddFlags.UpdateProfile;
-            UInt32 res = NativeMethods.WNetAddConnection2W(resource, password, username, dwFlags);
-            if (res != ERROR_SUCCESS)
-                throw new Win32Exception((int)res, String.Format("Failed to map {0} to '{1}' with WNetAddConnection2W()", drive, path));
+            // While WNetAddConnection2W supports user/pass, this is only used for the first connection and the
+            // password is not remembered. We will delete the username mapping afterwards as it interferes with
+            // the implicit credential cache used in Windows
+            using (Impersonation imp = new Impersonation(iToken))
+            {
+                UInt32 res = NativeMethods.WNetAddConnection2W(resource, password, username, dwFlags);
+                if (res != ERROR_SUCCESS)
+                    throw new Win32Exception((int)res, String.Format("Failed to map {0} to '{1}' with WNetAddConnection2W()", drive, path));
+            }
         }
 
-        public static List<DriveInfo> GetMappedDrives()
+        public static List<DriveInfo> GetMappedDrives(SafeNativeHandle iToken)
         {
-            IntPtr enumPtr = IntPtr.Zero;
-            UInt32 res = NativeMethods.WNetOpenEnumW(NativeHelpers.ResourceScope.Remembered, NativeHelpers.ResourceType.Disk,
-                NativeHelpers.ResourceUsage.All, IntPtr.Zero, out enumPtr);
-            if (res != ERROR_SUCCESS)
-                throw new Win32Exception((int)res, "WNetOpenEnumW()");
-
-            List<DriveInfo> resources = new List<DriveInfo>();
-            try
+            using (Impersonation imp = new Impersonation(iToken))
             {
-                // MS recommend a buffer size of 16 KiB
-                UInt32 bufferSize = 16384;
-                int lpcCount = -1;
+                IntPtr enumPtr = IntPtr.Zero;
+                UInt32 res = NativeMethods.WNetOpenEnumW(NativeHelpers.ResourceScope.Remembered, NativeHelpers.ResourceType.Disk,
+                    0, IntPtr.Zero, out enumPtr);
+                if (res != ERROR_SUCCESS)
+                    throw new Win32Exception((int)res, "WNetOpenEnumW()");
 
-                // keep iterating the enum until ERROR_NO_MORE_ITEMS is returned
-                do
+                List<DriveInfo> resources = new List<DriveInfo>();
+                try
                 {
-                    IntPtr buffer = Marshal.AllocHGlobal((int)bufferSize);
-                    try
-                    {
-                        res = NativeMethods.WNetEnumResourceW(enumPtr, ref lpcCount, buffer, ref bufferSize);
-                        if (res != ERROR_SUCCESS && res != ERROR_NO_MORE_ITEMS)
-                            throw new Win32Exception((int)res, "WNetEnumResourceW()");
+                    // MS recommend a buffer size of 16 KiB
+                    UInt32 bufferSize = 16384;
+                    int lpcCount = -1;
 
-                        NativeHelpers.NETRESOURCEW[] rawResources = new NativeHelpers.NETRESOURCEW[lpcCount];
-                        PtrToStructureArray(rawResources, buffer);
-                        foreach (NativeHelpers.NETRESOURCEW resource in rawResources)
+                    // keep iterating the enum until ERROR_NO_MORE_ITEMS is returned
+                    do
+                    {
+                        using (SafeMemoryBuffer buffer = new SafeMemoryBuffer((int)bufferSize))
                         {
-                            DriveInfo currentDrive = new DriveInfo
+                            res = NativeMethods.WNetEnumResourceW(enumPtr, ref lpcCount, buffer, ref bufferSize);
+                            if (res == ERROR_NO_MORE_ITEMS)
+                                continue;
+                            else if (res != ERROR_SUCCESS)
+                                throw new Win32Exception((int)res, "WNetEnumResourceW()");
+                            lpcCount = lpcCount < 0 ? 0 : lpcCount;
+
+                            NativeHelpers.NETRESOURCEW[] rawResources = new NativeHelpers.NETRESOURCEW[lpcCount];
+                            PtrToStructureArray(rawResources, buffer.DangerousGetHandle());
+                            foreach (NativeHelpers.NETRESOURCEW resource in rawResources)
                             {
-                                Drive = resource.lpLocalName,
-                                Path = resource.lpRemoteName,
-                                Username = GetUsernameForDrive(resource.lpLocalName),
-                            };
-                            resources.Add(currentDrive);
+                                DriveInfo currentDrive = new DriveInfo
+                                {
+                                    Drive = resource.lpLocalName,
+                                    Path = resource.lpRemoteName,
+                                };
+                                resources.Add(currentDrive);
+                            }
                         }
                     }
-                    finally
+                    while (res != ERROR_NO_MORE_ITEMS);
+                }
+                finally
+                {
+                    NativeMethods.WNetCloseEnum(enumPtr);
+                }
+
+                return resources;
+            }
+        }
+
+        public static void RemoveMappedDrive(string drive, SafeNativeHandle iToken)
+        {
+            using (Impersonation imp = new Impersonation(iToken))
+            {
+                UInt32 res = NativeMethods.WNetCancelConnection2W(drive, NativeHelpers.CloseFlags.UpdateProfile, true);
+                if (res != ERROR_SUCCESS)
+                    throw new Win32Exception((int)res, String.Format("Failed to remove mapped drive {0} with WNetCancelConnection2W()", drive));
+            }
+        }
+
+        public static SafeNativeHandle GetLimitedToken()
+        {
+            SafeNativeHandle hToken = null;
+            if (!NativeMethods.OpenProcessToken(NativeMethods.GetCurrentProcess(), IMPERSONATE_ACCESS, out hToken))
+                throw new Win32Exception("Failed to open current process token with OpenProcessToken()");
+
+            using (hToken)
+            {
+                // Check the elevation type of the current token, only need to impersonate if it's a Full token
+                UInt32 tokenLength;
+                using (SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer(sizeof(int)))
+                {
+                    if (!NativeMethods.GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenElevationType,
+                        tokenInfo, sizeof(int), out tokenLength))
                     {
-                        Marshal.FreeHGlobal(buffer);
+                        throw new Win32Exception("GetTokenInformation(TokenElevationType) failed");
+                    }
+                    NativeHelpers.TokenElevationType tet = (NativeHelpers.TokenElevationType)Marshal.ReadInt32(tokenInfo.DangerousGetHandle());
+
+                    // If we don't have a Full token, we don't need to get the limited one to set a mapped drive
+                    if (tet != NativeHelpers.TokenElevationType.TokenElevationTypeFull)
+                        return null;
+                }
+
+                // We have a full token, need to get the TokenLinkedToken, this requires the SeTcbPrivilege privilege
+                // and we can get that from impersonating a SYSTEM account token. Without this privilege we only get
+                // an SecurityIdentification token which won't work for what we need
+                using (SafeNativeHandle systemToken = GetSystemToken())
+                {
+                    using (Impersonation systemImpersonation = new Impersonation(systemToken))
+                    {
+                        tokenLength = 0;
+                        NativeHelpers.TokenInformationClass tokenClass = NativeHelpers.TokenInformationClass.TokenLinkedToken;
+                        NativeMethods.GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength);
+                        using (SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength))
+                        {
+                            if (!NativeMethods.GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
+                                throw new Win32Exception("GetTokenInformation(TokenLinkedToken) failed");
+
+                            return new SafeNativeHandle(Marshal.ReadIntPtr(tokenInfo.DangerousGetHandle()));
+                        }
                     }
                 }
-                while (res != ERROR_NO_MORE_ITEMS);
             }
-            finally
-            {
-                NativeMethods.WNetCloseEnum(enumPtr);
-            }
-
-            return resources;
         }
 
-        public static void RemoveMappedDrive(string drive)
+        private static SafeNativeHandle GetSystemToken()
         {
-            UInt32 res = NativeMethods.WNetCancelConnection2W(drive, NativeHelpers.CloseFlags.UpdateProfile, true);
-            if (res != ERROR_SUCCESS)
-                throw new Win32Exception((int)res, String.Format("Failed to remove mapped drive {0} with WNetCancelConnection2W()", drive));
+            foreach (System.Diagnostics.Process process in System.Diagnostics.Process.GetProcesses())
+            {
+                using (process)
+                {
+                    // 0x00000400 == PROCESS_QUERY_INFORMATION
+                    using (SafeNativeHandle hProcess = NativeMethods.OpenProcess(0x00000400, false, (UInt32)process.Id))
+                    {
+                        if (hProcess.IsInvalid)
+                            continue;
+
+                        SafeNativeHandle hToken;
+                        NativeMethods.OpenProcessToken(hProcess, IMPERSONATE_ACCESS, out hToken);
+                        if (hToken.IsInvalid)
+                            continue;
+
+                        if ("S-1-5-18" == GetTokenUserSID(hToken))
+                            return hToken;
+                        hToken.Dispose();
+                    }
+                }
+            }
+            throw new InvalidOperationException("Failed to get a copy of the SYSTEM token required to de-elevate the current user's token");
         }
 
-        private static string GetUsernameForDrive(string drive)
+        private static string GetTokenUserSID(SafeNativeHandle hToken)
         {
-            // WNetGetUser only get's the user the provider will use and not what was configured, we will just
-            // go straight to the source to get the UserName that's configured.
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(String.Format("Network\\{0}", drive.Substring(0, 1))))
+            NativeHelpers.TokenInformationClass tokenClass = NativeHelpers.TokenInformationClass.TokenUser;
+            UInt32 tokenLength;
+            if (!NativeMethods.GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength))
             {
-                string username = (string)key.GetValue("UserName", "");
-                // An empty string means no username is set, return null for PS comparison
-                return username == "" ? null : username;
+                int lastErr = Marshal.GetLastWin32Error();
+                if (lastErr != 122)  // ERROR_INSUFFICIENT_BUFFER
+                    throw new Win32Exception(lastErr, "GetTokenInformation(TokenUser) failed to get buffer length");
+            }
+
+            using (SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength))
+            {
+                if (!NativeMethods.GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
+                    throw new Win32Exception("GetTokenInformation(TokenUser) failed");
+
+                NativeHelpers.TOKEN_USER tokenUser = (NativeHelpers.TOKEN_USER)Marshal.PtrToStructure(tokenInfo.DangerousGetHandle(),
+                    typeof(NativeHelpers.TOKEN_USER));
+                return new SecurityIdentifier(tokenUser.User.Sid).Value;
             }
         }
 
@@ -267,82 +463,103 @@ namespace Ansible.MappedDrive
 }
 '@
 
-$letter_root = "$($letter):"
-$existing_targets = [Ansible.MappedDrive.Utils]::GetMappedDrives()
-$existing_target = $existing_targets | Where-Object { $_.Drive -eq $letter_root }
+<#
+When we run with become and UAC is enabled, the become process will most likely be the Admin/Full token. This is
+an issue with the WNetConnection APIs as the Full token is unable to add/enumerate/remove connections due to
+Windows storing the connection details on each token session ID. Unless EnabledLinkedConnections (reg key) is
+set to 1, the Full token is unable to manage connections in a persisted way whereas the Limited token is. This
+is similar to running 'net use' normally and an admin process is unable to see those and vice versa.
 
-$module.Diff.before = ""
-$module.Diff.after = ""
-if ($existing_target) {
-    $module.Diff.before = @{
-        letter = $letter
-        path = $existing_target.Path
-        username = $existing_target.Username
-    }
-}
+To overcome this problem, we attempt to get a handle on the Limited token for the current logon and impersonate
+that before making any WNetConnection calls. If the token is not split, or we are already running on the Limited
+token then no impersonatoin is used/required. This allows the module to run with become (required to access the
+credential store) but still be able to manage the mapped connections.
 
-if ($state -eq "absent") {
-    if ($existing_target -ne $null) {
-        if ($null -ne $path) {
-            if ($existing_target.Path -eq $path) {
-                if (-not $module.CheckMode) {
-                    [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root)
-                }
-            } else {
-                $module.FailJson("did not delete mapped drive $letter, the target path is pointing to a different location at $($existing_target.Path)")
-            }
-        } else {
-            if (-not $module.CheckMode) {
-                [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root)
-            }
+These are the following scenarios we have to handle;
+
+    1. Run without become
+        A network logon is usually not split so GetLimitedToken() will return $null and no impersonation is needed
+    2. Run with become on admin user with admin priv
+        We will have a Full token, GetLimitedToken() will return the limited token and impersonation is used
+    3. Run with become on admin user without admin priv
+        We are already running with a Limited token, GetLimitedToken() return $nul and no impersonation is needed
+    4. Run with become on standard user
+        There's no split token, GetLimitedToken() will return $null and no impersonation is needed
+#>
+$impersonation_token = [Ansible.MappedDrive.Utils]::GetLimitedToken()
+
+try {
+    $existing_targets = [Ansible.MappedDrive.Utils]::GetMappedDrives($impersonation_token)
+    $existing_target = $existing_targets | Where-Object { $_.Drive -eq $letter_root }
+
+    if ($existing_target) {
+        $module.Diff.before = @{
+            letter = $letter
+            path = $existing_target.Path
         }
-
-        $module.Result.changed = $true
-    }
-} else {
-    $physical_drives = Get-PSDrive -PSProvider "FileSystem"
-    if ($letter -in $physical_drives.Name) {
-        $module.FailJson("failed to create mapped drive $letter, this letter is in use and is pointing to a non UNC path")
     }
 
-    # PowerShell converts a $null value to "" when crossing the .NET marshaler, we need to convert the input
-    # to a missing value so it uses the defaults. We also need to Invoke it with MethodInfo.Invoke so the defaults
-    # are still used
-    $input_username = $username
-    if ($null -eq $username) {
-        $input_username = [Type]::Missing
-    }
-    $input_password = $password
-    if ($null -eq $password) {
-        $input_password = [Type]::Missing
-    }
-    $add_method = [Ansible.MappedDrive.Utils].GetMethod("AddMappedDrive")
-
-    if ($null -ne $existing_target) {
-        if ($existing_target.Path -ne $path) {
-            if (-not $module.CheckMode) {
-                [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root)
+    if ($state -eq "absent") {
+        if ($existing_target -ne $null) {
+            if ($null -ne $path -and $existing_target.Path -ne $path) {
+                $module.FailJson("did not delete mapped drive $letter, the target path is pointing to a different location at $( $existing_target.Path )")
             }
-            $module.Result.changed = $true
-
             if (-not $module.CheckMode) {
-                $add_method.Invoke($null, [Object[]]@($letter_root, $path, $input_username, $input_password) )
+                [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root, $impersonation_token)
             }
-        } elseif ($username -ne $existing_target.Username) {
-            Set-ItemProperty -Path HKCU:\Network\$letter -Name UserName -Value $username -WhatIf:$module.CheckMode
+
             $module.Result.changed = $true
         }
     } else {
-        if (-not $module.CheckMode) {
-            $add_method.Invoke($null, [Object[]]@($letter_root, $path, $input_username, $input_password) )
+        $physical_drives = Get-PSDrive -PSProvider "FileSystem"
+        if ($letter -in $physical_drives.Name) {
+            $module.FailJson("failed to create mapped drive $letter, this letter is in use and is pointing to a non UNC path")
         }
 
-        $module.Result.changed = $true
+        # PowerShell converts a $null value to "" when crossing the .NET marshaler, we need to convert the input
+        # to a missing value so it uses the defaults. We also need to Invoke it with MethodInfo.Invoke so the defaults
+        # are still used
+        $input_username = $username
+        if ($null -eq $username) {
+            $input_username = [Type]::Missing
+        }
+        $input_password = $password
+        if ($null -eq $password) {
+            $input_password = [Type]::Missing
+        }
+        $add_method = [Ansible.MappedDrive.Utils].GetMethod("AddMappedDrive")
+
+        if ($null -ne $existing_target) {
+            if ($existing_target.Path -ne $path) {
+                if (-not $module.CheckMode) {
+                    [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root, $impersonation_token)
+                    $add_method.Invoke($null, [Object[]]@($letter_root, $path, $impersonation_token, $input_username, $input_password))
+                }
+                $module.Result.changed = $true
+            }
+        } else  {
+            if (-not $module.CheckMode)  {
+                $add_method.Invoke($null, [Object[]]@($letter_root, $path, $impersonation_token, $input_username, $input_password))
+            }
+
+            $module.Result.changed = $true
+        }
+
+        # If username was set and we made a change, remove the UserName value so Windows will continue to use the cred
+        # cache. If we don't do this then the drive will fail to map in the future as WNetAddConnection does not cache
+        # the password and relies on the credential store.
+        if ($null -ne $username -and $module.Result.changed -and -not $module.CheckMode) {
+            Set-ItemProperty -Path HKCU:\Network\$letter -Name UserName -Value "" -WhatIf:$module.CheckMode
+        }
+
+        $module.Diff.after = @{
+            letter = $letter
+            path = $path
+        }
     }
-    $module.Diff.after = @{
-        letter = $letter
-        path = $path
-        username = $username
+} finally {
+    if ($null -ne $impersonation_token) {
+        $impersonation_token.Dispose()
     }
 }
 
