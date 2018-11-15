@@ -609,10 +609,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     load_balancer_inbound_nat_pools = None
                     if self.load_balancer:
                         load_balancer = self.get_load_balancer(self.load_balancer)
-                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(resource.id)
+                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
                                                                 for resource in load_balancer.backend_address_pools]
                                                                if load_balancer.backend_address_pools else None)
-                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(resource.id)
+                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
                                                             for resource in load_balancer.inbound_nat_pools]
                                                            if load_balancer.inbound_nat_pools else None)
 
