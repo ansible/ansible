@@ -1,0 +1,11 @@
+minor_changes:
+  - magic variables - added a new ``ansible_role_names`` magic variable to include the names of roles being applied to
+    the host both directly and indirectly (via dependencies).
+  - magic variabels - added a new ``ansible_play_role_names`` magic variable to mimic the old functionality of
+    ``role_names``. This variable only lists the names of roles being applied to the host directly, and does not
+    include those added via dependencies
+  - magic variables - added a new ``ansible_dependent_role_names`` magic variable to contain the names of roles
+    applied to the host indirectly, via dependencies.
+deprecated_features:
+  - magic variables - documented the deprecation of the ``role_names`` magic variable in favor of either
+    ``ansible_role_names`` (including dependency role names) or ``ansible_play_role_names`` (excluding dependencies).
