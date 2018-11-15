@@ -44,7 +44,7 @@
     docker_container:
       name: "{{ item }}"
       state: absent
-      stop_timeout: 1
+      force_kill: yes
     with_items: "{{ cnames }}"
 
   # Skip for CentOS 6
