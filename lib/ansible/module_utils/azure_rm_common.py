@@ -55,11 +55,11 @@ AZURE_API_PROFILES = {
     'latest': {
         'ContainerInstanceManagementClient': '2018-02-01-preview',
         'ComputeManagementClient': dict(
-            default_api_version='2017-12-01',
-            resource_skus='2017-09-01',
-            disks='2017-03-30',
-            snapshots='2017-03-30',
-            virtual_machine_run_commands='2017-03-30'
+            default_api_version='2018-10-01',
+            resource_skus='2018-10-01',
+            disks='2018-10-01',
+            snapshots='2018-10-01',
+            virtual_machine_run_commands='2018-10-01'
         ),
         'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
@@ -204,7 +204,7 @@ AZURE_PKG_VERSIONS = {
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '3.0.0'
+        'expected_version': '4.3.1'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
