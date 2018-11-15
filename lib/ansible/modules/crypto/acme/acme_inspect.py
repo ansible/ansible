@@ -23,9 +23,11 @@ description:
    - "Allows to send direct requests to an ACME server with the
       L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
       which is supported by CAs such as L(Let's Encrypt,https://letsencrypt.org/)."
-   - "This module can be used to debug failed certificate request attempts
-      (for example when M(acme_certificate) fails or encounters a problem which
-      you wish to investigate)."
+   - "This module can be used to debug failed certificate request attempts,
+      for example when M(acme_certificate) fails or encounters a problem which
+      you wish to investigate."
+   - "The module can also be used to directly access features of an ACME servers
+      which are not yet supported by the Ansible ACME modules."
 notes:
    - "The I(account_uri) option must be specified for properly authenticated
       ACME v2 requests (except a C(new-account) request)."
