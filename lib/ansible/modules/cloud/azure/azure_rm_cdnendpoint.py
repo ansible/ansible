@@ -431,14 +431,13 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
 
                     if to_be_updated:
                         self.log("Need to update the Azure CDN endpoint")
+                        self.results['changed'] = True
 
                         if not self.check_mode:
                             result = self.update_cdnendpoint()
                             self.results['host_name'] = result['host_name']
                             self.log("Update done")
 
-                        self.results['changed'] = True
-                
                 elif self.started is not None:
                     self.module.warn("Start/Stop not performed due to current provisioning state {0}".format(response['provisioning_state']))
                     self.results['changed'] = False
