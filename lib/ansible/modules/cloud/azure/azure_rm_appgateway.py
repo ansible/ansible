@@ -434,7 +434,7 @@ from ansible.module_utils.common.dict_transformations import (
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.network import NetworkManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -835,7 +835,7 @@ class AzureRMApplicationGateways(AzureRMModuleBase):
             response = self.mgmt_client.application_gateways.create_or_update(resource_group_name=self.resource_group,
                                                                               application_gateway_name=self.name,
                                                                               parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

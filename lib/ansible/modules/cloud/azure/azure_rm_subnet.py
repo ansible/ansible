@@ -322,7 +322,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                         address_prefix=results['address_prefix']
                     )
                     if results['network_security_group'].get('id'):
-                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(results['network_security_group'].get('id'))
+                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=results['network_security_group'].get('id'))
                     if self.route_table:
                         subnet.route_table = self.network_models.RouteTable(id=self.route_table)
 
