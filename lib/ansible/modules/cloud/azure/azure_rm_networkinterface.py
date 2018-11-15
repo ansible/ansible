@@ -614,7 +614,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         if changed:
             if self.state == 'present':
                 subnet = self.network_models.SubResource(
-                    '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}'.format(
+                    id='/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}'.format(
                         self.virtual_network['subscription_id'],
                         self.virtual_network['resource_group'],
                         self.virtual_network['name'],
