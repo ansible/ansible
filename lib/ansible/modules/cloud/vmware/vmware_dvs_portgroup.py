@@ -43,7 +43,7 @@ options:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
             - 'If C(vlan_trunk) is configured to be I(true), this can be a range, example: 1-4094.'
-            - Since version 2.8, it can be a list of multiple ranges and numbers also represented by the alias C(vlan_ids).
+            - Since version 2.8, it can be a list of multiple ranges and numbers, also represented by the alias C(vlan_ids).
         required: True
         aliases: [ vlan_ids ]
     num_ports:
