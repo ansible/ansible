@@ -257,17 +257,17 @@ EXAMPLES = '''
 
 - name: install a modularity appstream with defined stream and profile
   dnf:
-    name: @postgresql:9.6/client
+    name: '@postgresql:9.6/client'
     state: present
 
 - name: install a modularity appstream with defined stream
   dnf:
-    name: @postgresql:9.6
+    name: '@postgresql:9.6'
     state: present
 
 - name: install a modularity appstream with defined profile
   dnf:
-    name: @postgresql/client
+    name: '@postgresql/client'
     state: present
 '''
 
@@ -764,9 +764,10 @@ class DnfModule(YumDnf):
                 if env:
                     env_specs.append(env.id)
 
-                mdl = self.module_base._get_modules(grp_env_mdl_candidate)
-                if mdl[0]:
-                    module_specs.append(grp_env_mdl_candidate)
+                if self.with_modules:
+                    mdl = self.module_base._get_modules(grp_env_mdl_candidate)
+                    if mdl[0]:
+                        module_specs.append(grp_env_mdl_candidate)
             else:
                 pkg_specs.append(name)
         return pkg_specs, grp_specs, env_specs, module_specs, filenames
@@ -831,7 +832,7 @@ class DnfModule(YumDnf):
             if nsv.stream in self.base._moduleContainer.getEnabledStream(nsv.name):
                 return True
 
-        return False # seems like a sane default
+        return False  # seems like a sane default
 
     def ensure(self):
         allow_erasing = False
