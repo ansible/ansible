@@ -117,14 +117,12 @@ rediscaches:
             type: dict
             contains:
                 name:
-                    description:
-                        - Name of the sku.
+                    description: Name of the sku.
                     returned: always
                     type: str
                     sample: standard
                 size:
-                    description:
-                        - Size of the redis cache.
+                    description: Size of the redis cache.
                     returned: always
                     type: str
                     sample: C1
@@ -163,7 +161,7 @@ rediscaches:
                 - List of tags.
             type: list
             sample: [
-                {"foo": "bar"}
+                {"foo"}
             ]
         access_keys:
             description:
@@ -192,8 +190,6 @@ except:
     pass
 
 import re
-
-AZURE_OBJECT_CLASS = 'endpoints'
 
 
 class AzureRMRedisCacheFacts(AzureRMModuleBase):
