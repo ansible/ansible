@@ -4,10 +4,7 @@
 ''' unit tests for module_utils netapp.py '''
 from __future__ import absolute_import, division, print_function
 
-try:
-    from ansible.module_utils.ansible_release import __version__ as ansible_version
-except ImportError:
-    ansible_version = 'unknown'
+from ansible.module_utils.ansible_release import __version__ as ansible_version
 
 import pytest
 import ansible.module_utils.netapp as netapp_utils
@@ -44,11 +41,14 @@ class MockONTAPConnection(object):
         xml.add_child_elem(attributes)
         return xml
 
+
 @pytest.fixture
 def has_zapi():
-     assert HAS_NETAPP_LIB, HAS_NETAPP_LIB_MSG
+    assert HAS_NETAPP_LIB, HAS_NETAPP_LIB_MSG
+
 
 pytestmark = pytest.mark.usefixtures("has_zapi")
+
 
 def test_ems_log_event_version():
     ''' validate Ansible version is correctly read '''
@@ -59,6 +59,7 @@ def test_ems_log_event_version():
     version = xml.get_child_content('app-version')
     assert version == ansible_version
     print("Ansible version: %s" % ansible_version)
+
 
 def test_get_cserver():
     ''' validate cluster vserser name is correctly retrieved '''
