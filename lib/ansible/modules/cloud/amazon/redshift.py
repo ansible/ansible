@@ -313,6 +313,8 @@ def create_cluster(module, redshift):
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to describe cluster")
     if wait:
         attempts = wait_timeout // 60
         waiter = redshift.get_waiter('cluster_available')
@@ -375,6 +377,8 @@ def delete_cluster(module, redshift):
         )
     except is_boto3_error_code('ClusterNotFound'):
         return(False, {})
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to delete cluster")
 
     if wait:
         attempts = wait_timeout // 60
