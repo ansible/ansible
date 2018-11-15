@@ -10,6 +10,9 @@ These variables are directly not settable by the user, Ansible will always overr
 ansible_check_mode
     Boolean that indicates if we are in check mode or not
 
+ansible_dependent_role_names
+    The names of the roles currently imported into the current play as dependencies of other plays
+
 ansible_diff_mode
     Boolean that indicates if we are in diff mode or not
 
@@ -31,8 +34,16 @@ ansible_play_hosts
 ansible_play_hosts_all
     List of all the hosts that were targeted by the play
 
+ansible_play_role_names
+    The names of the roles currently imported into the current play. This list does **not** contain the role names that are
+    implicitly included via dependencies.
+
 ansible_playbook_python
     The path to the python interpreter being used by Ansible on the controller
+
+ansible_role_names
+    The names of the roles currently imported into the current play, or roles referenced as dependencies of the roles
+    imported into the current play.
 
 ansible_run_tags
     Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run.
@@ -86,7 +97,7 @@ role_name:
     The name of the currently executed role
 
 role_names
-    The names of the rules currently imported into the current play.
+    Deprecated, the same as ansible_play_role_names
 
 role_path
     The path to the dir of the currently running role
