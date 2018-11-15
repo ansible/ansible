@@ -55,17 +55,17 @@ EXAMPLES = '''
         maxmemory-delta: '50'
         maxmemory-reserved: '50'
       enable_non_ssl_port: false
-      host_name: testredis1aa.redis.cache.windows.net
-      id: /subscriptions/2085065b-00f8-4cba-9675-ba15f4d4ab66/resourceGroups/rerdistest1/providers/Microsoft.Cache/Redis/testredis1aa
+      host_name: testredis1.redis.cache.windows.net
+      id: /subscriptions/<subs_id>/resourceGroups/rerdistest1/providers/Microsoft.Cache/Redis/testredis1
       location: East US
-      name: testredis1aa
+      name: testredis1
       provisioning_state: Creating
-      resource_group: ''
+      resource_group: testrg1
       shard_count: null
       sku:
         name: Basic
         size: C1
-      static_ip: 104.211.14.104
+      static_ip: 1.2.3.4
       subnet: null
       tags: {}
       tenant_settings: null
@@ -92,6 +92,7 @@ rediscaches:
         id:
             description
                 - ID of the Azure redis cache.
+            returned: always
             type: str
             sample: /subscriptions/<subs_id>/resourceGroups/<resourcegroup>/providers/Microsoft.Cache/Redis/testredis1
         provisioning_state:
@@ -136,8 +137,8 @@ rediscaches:
             description:
                 - The full resource ID of a subnet in a virtual network to deploy the Redis cache in.
             type: str
-            sample: 
-                - /subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1
+            sample:
+                - /subscriptions/<subid>/resourceGroups/<resourceGroupName>/Microsoft.Network|ClassicNetwork/VirtualNetworks/vnet1/subnets/subnet1
         configuration:
             description:
                 - Dict of redis configuration.
@@ -289,20 +290,21 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         :param cdn: Azure redis cache object
         :return: dict
         '''
-        new_result = {}
-        new_result['id'] = rediscache.id
-        new_result['resource_group'] = re.sub('\\/.*', '', re.sub('.*resourcegroups\\/', '', rediscache.id))
-        new_result['name'] = rediscache.name
-        new_result['location'] = rediscache.location
-        new_result['provisioning_state'] = rediscache.provisioning_state
-        new_result['configuration'] = rediscache.redis_configuration
-        new_result['tenant_settings'] = rediscache.tenant_settings
-        new_result['shard_count'] = rediscache.shard_count
-        new_result['enable_non_ssl_port'] = rediscache.enable_non_ssl_port
-        new_result['static_ip'] = rediscache.static_ip
-        new_result['subnet'] = rediscache.subnet_id
-        new_result['host_name'] = rediscache.host_name
-        new_result['tags'] = rediscache.tags
+        new_result = dict(
+            id=rediscache.id
+            resource_group=re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', rediscache.id))
+            name=rediscache.name
+            location=rediscache.location
+            provisioning_state=rediscache.provisioning_state
+            configuration=rediscache.redis_configuration
+            tenant_settings=rediscache.tenant_settings
+            shard_count=rediscache.shard_count
+            enable_non_ssl_port=rediscache.enable_non_ssl_port
+            static_ip=rediscache.static_ip
+            subnet=rediscache.subnet_id
+            host_name=rediscache.host_name
+            tags=rediscache.tagss            
+        )
 
         if rediscache.sku:
             new_result['sku'] = dict(
