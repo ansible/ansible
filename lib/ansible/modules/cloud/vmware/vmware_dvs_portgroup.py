@@ -271,8 +271,10 @@ class VMwareDvsPortgroup(PyVmomi):
                     vlan_id_list.append(vim.NumericRange(start=int(vlan_id_splitted.strip()), end=int(vlan_id_splitted.strip())))
             config.defaultPortConfig.vlan.vlanId = vlan_id_list
         else:
+            if len(self.module.params['vlan_id']) > 1 or '-' in self.module.params['vlan_id'][0]:
+                self.module.fail_json(msg="Use vlan_trunk=true for VLAN ID ranges or multiple VLAN IDs")
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
-            config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
+            config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'][0])
         config.defaultPortConfig.vlan.inherited = False
         config.defaultPortConfig.securityPolicy = vim.dvs.VmwareDistributedVirtualSwitch.SecurityPolicy()
         config.defaultPortConfig.securityPolicy.allowPromiscuous = vim.BoolPolicy(value=self.module.params['network_policy']['promiscuous'])
