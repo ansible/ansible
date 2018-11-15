@@ -118,5 +118,5 @@ See `COPYING <COPYING>`_ to see the full text.
    :target: https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information
    :alt: Ansible mailing lists
 .. |License| image:: https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg
-   :target: LICENSE
+   :target: COPYING
    :alt: Repository License
