@@ -1,3 +1,5 @@
+.. _developer_guide:
+
 ***************
 Developer Guide
 ***************
@@ -17,6 +19,7 @@ Find the task that best describes what you want to do:
 
 * I'm ready to start developing:
 
+   * What do I need to know before I start coding?
    * I want to :ref:`set up my Python development environment <environment_setup>`.
    * I want to :ref:`get started writing a module <developing_modules_general>`.
    * I want to :ref:`write a Windows module <developing_modules_general_windows>`.
@@ -25,7 +28,7 @@ Find the task that best describes what you want to do:
 * I want to refine my code:
 
    * I want to :ref:`debug my module code <debugging>`.
-   * I want to :ref:`test my module <developing_testing>`.
+   * I want to :ref:`add tests <developing_testing>`.
    * I want to :ref:`document my module <module_documenting>`.
    * I want to :ref:`make sure my code runs on Python 2 and Python 3 <developing_python_3>`.
 
