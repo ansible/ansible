@@ -57,7 +57,7 @@ installed version and then clone the git repo.
     git clone https://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
-    # to enable Ansible on login, run the following
+    # To enable Ansible on login, run the following
     echo ". ~/ansible/hacking/env-setup -q' >> ~/.bashrc
 
 Can I use SSH keys to authenticate?
