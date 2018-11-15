@@ -61,7 +61,7 @@ AZURE_API_PROFILES = {
             snapshots='2017-03-30',
             virtual_machine_run_commands='2017-03-30'
         ),
-        'NetworkManagementClient': '2017-11-01',
+        'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
         'WebsiteManagementClient': '2016-08-01',
@@ -212,7 +212,7 @@ AZURE_PKG_VERSIONS = {
     },
     'NetworkManagementClient': {
         'package_name': 'network',
-        'expected_version': '1.7.1'
+        'expected_version': '2.2.1'
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
@@ -796,13 +796,13 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-11-01')
+                                                            api_version='2018-08-01')
         return self._network_client
 
     @property
     def network_models(self):
         self.log("Getting network models...")
-        return NetworkManagementClient.models("2017-11-01")
+        return NetworkManagementClient.models("2018-08-01")
 
     @property
     def rm_client(self):
