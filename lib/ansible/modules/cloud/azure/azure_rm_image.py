@@ -179,14 +179,14 @@ class AzureRMImage(AzureRMModuleBase):
                 if vm:
                     if self.data_disk_sources:
                         self.fail('data_disk_sources is not allowed when capturing image from vm')
-                    image_instance = self.compute_models.Image(self.location, source_virtual_machine=self.compute_models.SubResource(id=vm.id), tags=self.tags)
+                    image_instance = self.compute_models.Image(location=self.location, source_virtual_machine=self.compute_models.SubResource(id=vm.id), tags=self.tags)
                 else:
                     if not self.os_type:
                         self.fail('os_type is required to create the image')
                     os_disk = self.create_os_disk()
                     data_disks = self.create_data_disks()
                     storage_profile = self.compute_models.ImageStorageProfile(os_disk=os_disk, data_disks=data_disks)
-                    image_instance = self.compute_models.Image(self.location, storage_profile=storage_profile, tags=self.tags)
+                    image_instance = self.compute_models.Image(location=self.location, storage_profile=storage_profile, tags=self.tags)
 
                 # finally make the change if not check mode
                 if not self.check_mode and image_instance:
