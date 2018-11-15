@@ -67,6 +67,15 @@ EXAMPLES = '''
   tower_job_wait:
     job_id: job.id
     timeout: 120
+
+- name: Launch job with extra_vars
+  tower_job_launch:
+    job_template: "My Ping Template"
+    credential: "Management_Key"
+    inventory: "MyInventory"
+    extra_vars:
+      - "vm: myhost.domain.com"
+      - "xyz: myvalue"
 '''
 
 RETURN = '''
