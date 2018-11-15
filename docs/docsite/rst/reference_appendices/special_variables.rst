@@ -5,7 +5,7 @@ Special Variables
 
 Magic
 -----
-These variables are directly not settable by the user; Ansible will always override them to reflect internal state.
+These variables cannot be set directly by the user; Ansible will always override them to reflect internal state.
 
 ansible_check_mode
     Boolean that indicates if we are in check mode or not
@@ -106,8 +106,8 @@ ansible_local
 
 Connection variables
 ---------------------
-These are variables are normally used to set the specifics on how to execute actions on a target. Most of them correspond to connection plugins, but not all are specific to them; other plugins like shell, terminal and become are normally involved.
-Only the common ones are described as each connection/become/shell/etc plugin can define it's own overrides and specific variables.
+Connection variables are normally used to set the specifics on how to execute actions on a target. Most of them correspond to connection plugins, but not all are specific to them; other plugins like shell, terminal and become are normally involved.
+Only the common ones are described as each connection/become/shell/etc plugin can define its own overrides and specific variables.
 
 ansible_become_user
     The user Ansible 'becomes' after using privilege escalation. This must be available to the 'login user'.
@@ -123,4 +123,3 @@ ansible_python_interpreter
 
 ansible_user
     The user Ansible 'logs in' as.
-
