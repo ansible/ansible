@@ -559,3 +559,72 @@ releases:
     - yum_bugfux.yml
     - yum_bugfux_conf_file_none_type.yml
     release_date: '2018-10-25'
+  2.7.2:
+    codename: In the Light
+    fragments:
+    - 44324-ini_file-options-with-no-section-managed.yaml
+    - 44988-acme-post-as-get.yaml
+    - 45151-fix-os-exception.yaml
+    - 45704-fix-redfish_facts-http-redirect.yaml
+    - 46148-provide-redfish_facts-gathering-flexibility.yaml
+    - 46658-plugin_filter-improve_error_handling.yaml
+    - 46665-plugin_filter_doc_fix.yaml
+    - 46700-vmware_doc-standalone_esxi.yaml
+    - 47030-assert-add-success_msg-to-valid-args.yaml
+    - 47117-vmware_doc-http_api_usage.yaml
+    - 47300-ios-check_rc.yaml
+    - 47313-vmware_utils-handle_requests_import_error.yaml
+    - 47459_grafana_dashboard_consistency_fix.yaml
+    - 47462-fix-redfish_config-idempotency.yaml
+    - 47563-vmware_host-refactor_SSL_thumbprint.yaml
+    - 47608-docker_swarm-advertise_addr.yml
+    - 47621-bugfix-for-na-ontap-snapmirror.yaml
+    - 47668-aci_switch_leaf_selector-support_empty_policy_group.yaml
+    - 47689-yum-fix-version-syntax.yaml
+    - 47693-fix-argument-spec-for-netapp-modules.yaml
+    - 47695-pamd-fix-idempotence-and-parsing-issues.yml
+    - 47711-docker_container-minimal-version-checks.yml
+    - 47712-docker_container-detach-auto-remove.yml
+    - 47722-vmware_guest_powerstate-restore_timeout.yaml
+    - 47889-vmware_doc-fix_privilege_names.yaml
+    - 47900-docker_container-paused.yml
+    - 47920-vmware_guest-handle_no_root_snapshot.yaml
+    - 47938-docker_swarm_service-requirements.yaml
+    - 47997-docker_container-ipc-pid-mode.yml
+    - 48009-ldap_attr-list.yml
+    - 48036-vultr-fix-empty-list-handling.yaml
+    - 48061-docker_container-auto_removal.yml
+    - 48148_net_put_cleanup.yaml
+    - 48317-do-not-auto-reboot-with-redfish_config-bios-changes
+    - 48341-ebs-optimized-ec2-instance.yaml
+    - 48342-vultr_server_facts-fix-firewall-group.yml
+    - 48474-k8s-module-docs-update.yaml
+    - 48536-docker_volume-labels.yml
+    - 48551-docker_container-idempotency.yml
+    - 48590-docker_container-unpause-stop.yml
+    - aci_access_port_to_interface_policy_leaf_profile-missing_policy_group.yaml
+    - aci_interface_policy_leaf_policy_group-missing_aep.yaml
+    - django_manage_status.yaml
+    - fix-password-lookup-on-fips.yaml
+    - galaxy-metea-yaml-extension.yaml
+    - loop-cache-include-apply.yml
+    - lvg_fix_47301.yaml
+    - nxos_evpn_vni_check_mode.yaml
+    - nxos_facts_trailing_comma.yaml
+    - nxos_install_os_force_disruptive.yaml
+    - os_router_enable_snat_fix.yaml
+    - ovirt_host_network_fix_type_conversion.yaml
+    - ovirt_host_pm_bug_fixes_for_power_management.yaml
+    - pip-fix-idempotence-in-check-mode.yaml
+    - reboot-change-default-boot-command.yaml
+    - remove_redundant_md5.yml
+    - tls_mail.yml
+    - uri-supports-async.yaml
+    - user-fix-zero-negative-expiration.yaml
+    - user-password_lock-change-fix.yaml
+    - user-restore-disabled-account.yaml
+    - v2.7.2_summary.yaml
+    - win_uri-junk-data.yaml
+    - yum-handle-obsoletes-check-update.yaml
+    - yumdnf-autoremove.yaml
+    release_date: '2018-11-15'
