@@ -10,6 +10,18 @@
         region: "{{ aws_region }}"
     no_log: true
   # ============================================================
+  - name: Create a repository (CHECK MODE)
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      comment: original comment
+      state: present
+      <<: *aws_connection_info
+    register: output
+    check_mode: yes
+  - assert:
+      that:
+        - output is changed
+  # ============================================================
   - name: Create a repository
     aws_codecommit:
       name: "{{ resource_prefix }}_repo"
@@ -20,12 +32,12 @@
   - assert:
       that:
         - output is changed
-        - output['repository_metadata'].repository_name == '{{ resource_prefix }}_repo'
-        - output['repository_metadata'].repository_description == 'original comment'
+        - output.repository_metadata.repository_name == '{{ resource_prefix }}_repo'
+        - output.repository_metadata.repository_description == 'original comment'
   # ============================================================
-  - name: Create a repository (CHECK MODE)
+  - name: Verify a repository exists (CHECK MODE)
     aws_codecommit:
-      name: "{{ resource_prefix }}_check_repo"
+      name: "{{ resource_prefix }}_repo"
       comment: original comment
       state: present
       <<: *aws_connection_info
@@ -33,7 +45,18 @@
     check_mode: yes
   - assert:
       that:
-        - output is changed
+        - not output is changed
+  # ============================================================
+  - name: Verify a repository exists
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      comment: original comment
+      state: present
+      <<: *aws_connection_info
+    register: output
+  - assert:
+      that:
+        - not output is changed
   # ============================================================
   - name: Delete  a repository (CHECK MODE)
     aws_codecommit:
