@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = R'''
 ---
-module: acme_debug
+module: acme_inspect
 author: "Felix Fontein (@felixfontein)"
 version_added: "2.8"
 short_description: Send direct requests to an ACME server
@@ -29,11 +29,11 @@ description:
 notes:
    - "The I(account_uri) option must be specified for properly authenticated
       ACME v2 requests (except a C(new-account) request)."
-   - "Using the C(ansible) tool, M(acme_debug) can be used to directly execute
+   - "Using the C(ansible) tool, M(acme_inspect) can be used to directly execute
       ACME requests without the need of writing a playbook. For example, the
       following command retrieves the ACME account with ID 1 from Let's Encrypt
       (assuming C(/path/to/key) is the correct private account key):
-      C(ansible localhost -m acme_debug -a \"account_key_src=/path/to/key
+      C(ansible localhost -m acme_inspect -a \"account_key_src=/path/to/key
       acme_directory=https://acme-v02.api.letsencrypt.org/directory acme_version=2
       account_uri=https://acme-v02.api.letsencrypt.org/acme/acct/1 method=get
       url=https://acme-v02.api.letsencrypt.org/acme/acct/1\")"
@@ -75,14 +75,14 @@ options:
 
 EXAMPLES = R'''
 - name: Get directory
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     method: directory-only
   register: directory
 
 - name: Create an account
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     account_key_src: /etc/pki/cert/private/account.key
@@ -94,7 +94,7 @@ EXAMPLES = R'''
   # if creation was successful
 
 - name: Get account information
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     account_key_src: /etc/pki/cert/private/account.key
@@ -103,7 +103,7 @@ EXAMPLES = R'''
     method: get
 
 - name: Update account contacts
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     account_key_src: /etc/pki/cert/private/account.key
@@ -133,7 +133,7 @@ EXAMPLES = R'''
 # the order URI.
 
 - name: Get order information
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     account_key_src: /etc/pki/cert/private/account.key
@@ -143,7 +143,7 @@ EXAMPLES = R'''
   register: order
 
 - name: Get first authz for order
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     account_key_src: /etc/pki/cert/private/account.key
@@ -153,7 +153,7 @@ EXAMPLES = R'''
   register: authz
 
 - name: Get HTTP-01 challenge for authz
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     account_key_src: /etc/pki/cert/private/account.key
@@ -163,7 +163,7 @@ EXAMPLES = R'''
   register: http01challenge
 
 - name: Activate HTTP-01 challenge manually
-  acme_debug:
+  acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
     acme_version: 2
     account_key_src: /etc/pki/cert/private/account.key

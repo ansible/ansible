@@ -6,7 +6,7 @@
   command: openssl ec -in {{ output_dir }}/accountkey.pem -noout -text
 
 - name: Get directory
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -15,7 +15,7 @@
 - debug: var=directory
 
 - name: Create an account
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -29,7 +29,7 @@
 - debug: var=account_creation
 
 - name: Get account information
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -41,7 +41,7 @@
 - debug: var=account_get
 
 - name: Update account contacts
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -60,7 +60,7 @@
 - debug: var=account_update
 
 - name: Create certificate order
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -82,7 +82,7 @@
 - debug: var=new_order
 
 - name: Get order information
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -94,7 +94,7 @@
 - debug: var=order
 
 - name: Get authzs for order
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -107,7 +107,7 @@
 - debug: var=authz
 
 - name: Get HTTP-01 challenge for authz
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -120,7 +120,7 @@
 - debug: var=http01challenge
 
 - name: Activate HTTP-01 challenge manually
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
@@ -134,7 +134,7 @@
 - debug: var=activation
 
 - name: Get HTTP-01 challenge results
-  acme_debug:
+  acme_inspect:
     acme_directory: https://{{ acme_host }}:14000/dir
     acme_version: 2
     validate_certs: no
