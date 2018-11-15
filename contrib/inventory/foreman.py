@@ -115,6 +115,11 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
 
+        try:
+            self.want_ansible_ssh_host = config.getboolean('ansible', 'want_ansible_ssh_host')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_ansible_ssh_host = False
+
         # Do we want parameters to be interpreted if possible as JSON? (no by default)
         try:
             self.rich_params = config.getboolean('ansible', 'rich_params')
@@ -434,6 +439,8 @@ class ForemanInventory(object):
                     'foreman': self.cache[hostname],
                     'foreman_params': self.params[hostname],
                 }
+                if self.want_ansible_ssh_host and 'ip' in self.cache[hostname]:
+                    self.inventory['_meta']['hostvars'][hostname]['ansible_ssh_host'] = self.cache[hostname]['ip']
                 if self.want_facts:
                     self.inventory['_meta']['hostvars'][hostname]['foreman_facts'] = self.facts[hostname]
 
