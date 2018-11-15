@@ -363,14 +363,8 @@ class ConfigManager(object):
         # Note: sources that are lists listed in low to high precedence (last one wins)
         value = None
         origin = None
-        defs = {}
-        if plugin_type is None:
-            defs = self._base_defs
-        elif plugin_name is None:
-            defs = self._plugins[plugin_type]
-        else:
-            defs = self._plugins[plugin_type][plugin_name]
 
+        defs = self.get_configuration_definitions(plugin_type, plugin_name)
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
