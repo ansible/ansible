@@ -255,3 +255,22 @@
       assert:
         that:
           - 'result.changed'
+
+  always:
+
+    - name: Remove cluster if tests failed
+      redshift:
+        command: delete
+        identifier: "{{ item }}"
+        skip_final_cluster_snapshot: true
+        wait: yes
+        wait_timeout: 1200
+        <<: *aws_connection_info
+      register: cleanup
+      ignore_errors: yes
+      retries: 10
+      delay: 10
+      until: cleanup is success
+      loop:
+        - "{{ redshift_cluster_name }}"
+        - "{{ redshift_cluster_name }}-modified"
