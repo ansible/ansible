@@ -612,10 +612,6 @@ class AzureRMCdnendpoint(AzureRMModuleBase):
 
     def check_update(self, response):
 
-        if response['tags'] != self.tags:
-            self.log("Tags Diff - Origin {0} / Update {1}".format(response['tags'], self.tags))
-            return True
-
         if self.origin_host_header and response['origin_host_header'] != self.origin_host_header:
             self.log("Origin host header Diff - Origin {0} / Update {1}".format(response['origin_host_header'], self.origin_host_header))
             return True
