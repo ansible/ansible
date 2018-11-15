@@ -321,7 +321,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
         if self.storage_account_type:
-            storage_account_type = self.compute_models.DiskSku(self.storage_account_type)
+            storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
         disk_params['disk_size_gb'] = self.disk_size_gb
         # TODO: Add support for EncryptionSettings
