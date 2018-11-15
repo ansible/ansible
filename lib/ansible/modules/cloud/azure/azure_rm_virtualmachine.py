@@ -1193,7 +1193,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         pass
 
                     vm_resource = self.compute_models.VirtualMachine(
-                        vm_dict['location'],
+                        location=vm_dict['location'],
                         os_profile=self.compute_models.OSProfile(
                             admin_username=vm_dict['properties'].get('osProfile', {}).get('adminUsername'),
                             computer_name=vm_dict['properties'].get('osProfile', {}).get('computerName')
