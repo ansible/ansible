@@ -321,7 +321,7 @@ def main():
     tenant = module.params['tenant']
 
     if (domain_type == 'phys' or domain_type == 'l2dom') and vm_provider is not None:
-        module.fail_json(msg="Domain type 'phys' cannot have a 'vm_provider'")
+        module.fail_json(msg="Domain type 'phys' or 'l2dom' cannot have a 'vm_provider'")
 
     # Compile the full domain for URL building
     if domain_type == 'vmm':
