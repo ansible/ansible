@@ -107,7 +107,7 @@ id:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -352,7 +352,7 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                                                                                      self.virtual_network['name'],
                                                                                      self.name,
                                                                                      peering)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
             return vnetpeering_to_dict(response)
         except CloudError as exc:
