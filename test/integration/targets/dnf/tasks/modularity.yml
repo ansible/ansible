@@ -45,4 +45,3 @@
     that:
         - "not dnf_result.failed"
         - "not dnf_result.changed"
-
