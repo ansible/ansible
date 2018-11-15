@@ -90,8 +90,8 @@ rediscaches:
             type: str
             sample: testRedis
         id:
-            description
-                - ID of the Azure redis cache.
+            description:
+                - Id of the Azure redis cache.
             returned: always
             type: str
             sample: /subscriptions/<subs_id>/resourceGroups/<resourcegroup>/providers/Microsoft.Cache/Redis/testredis1
@@ -160,9 +160,8 @@ rediscaches:
             description:
                 - List of tags.
             type: list
-            sample: [
-                {"foo"}
-            ]
+            sample:
+                - foo
         access_keys:
             description:
                 - Redis cache access keys.
