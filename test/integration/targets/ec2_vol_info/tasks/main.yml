@@ -11,6 +11,7 @@
 
 - block:
     - ec2_ami_info:
+        owners: amazon
         <<: *aws_connection_info
         filters:
           architecture: x86_64
