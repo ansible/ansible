@@ -2,6 +2,52 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.8
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-11-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Update plugin filter documentation.
+
+Bugfixes
+--------
+
+- ACME modules support `POST-as-GET <https://community.letsencrypt.org/t/acme-v2-scheduled-deprecation-of-unauthenticated-resource-gets/74380>`__ and will be able to access Let's Encrypt ACME v2 endpoint after November 1st, 2019.
+- Add force disruptive option nxos_instal_os module (https://github.com/ansible/ansible/pull/47694).
+- Avoid misleading PyVmomi error if requests import fails in vmware module utils.
+- Fix for StrategyModule object has no attribute _cond_not_supported_warn (https://github.com/ansible/ansible/issues/46275)
+- Fix trailing command in net_neighbors nxos_facts (https://github.com/ansible/ansible/pull/47548).
+- Restore timeout in set_vm_power_state operation in vmware_guest_powerstate module.
+- aws_ec2 - fixed issue where cache did not contain the computed groups
+- docker_container - do not fail when removing a container which has ``auto_remove: yes``.
+- docker_container - fail if ``ipv4_address`` or ``ipv6_address`` is used with a too old docker-py version.
+- docker_container - fix ``ipc_mode`` and ``pid_mode`` idempotency if the ``host:<container-name>`` form is used (as opposed to ``host:<container-id>``).
+- docker_container - fix ``memory_swappiness`` documentation.
+- docker_container - fix ``paused`` option (which never worked).
+- docker_container - fix behavior of ``detach: yes`` if ``auto_remove: yes`` is specified.
+- docker_container - fixing race condition when ``detach`` and ``auto_remove`` are both ``true``.
+- docker_network - fixes idempotency issues (https://github.com/ansible/ansible/issues/33045) and name substring issue (https://github.com/ansible/ansible/issues/32926).
+- docker_service - correctly parse string values for the `scale` parameter https://github.com/ansible/ansible/pull/45508
+- docker_volume - fix ``force`` and change detection logic. If not both evaluated to ``True``, the volume was not recreated.
+- junos - fix terminal prompt regex (https://github.com/ansible/ansible/pull/47096)
+- lvg - fixed an idempotency regression in the lvg module (https://github.com/ansible/ansible/issues/47301)
+- nxos_evpn_vni check_mode (https://github.com/ansible/ansible/pull/46612).
+- nxos_file_copy fix for binary files (https://github.com/ansible/ansible/pull/46822).
+- openssl_csr - fix byte encoding issue on Python 3
+- postgresql_user - create pretty error message when creating a user without an encrypted password on newer PostgreSQL versions
+- psexec - Handle socket.error exceptions properly
+- psexec - give proper error message when the psexec requirements are not installed
+- win_uri - stop junk output from being returned to Ansible - https://github.com/ansible/ansible/issues/47998
+- zabbix_host - module was failing when zabbix host was updated with new interface and template depending on that interface at the same time
+
 v2.6.7
 ======
 

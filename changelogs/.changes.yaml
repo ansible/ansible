@@ -513,3 +513,33 @@ releases:
     - user-do-not-pass-ssh_key_passphrase-on-cmdline.yaml
     - v2.6.7_summary.yaml
     release_date: '2018-10-31'
+  2.6.8:
+    codename: Heartbreaker
+    fragments:
+    - 43997-docker_network-inspect.yaml
+    - 44988-acme-post-as-get.yaml
+    - 45508-parse-docker-service-parameter.yaml
+    - 46275-fix-_cond_not_supported_warn.yaml
+    - 46521-zabbix_host-fix-link-template-error.yml
+    - 46961_fix_aws_ec2_cache.yaml
+    - 47096-junos-terminal-regex-fix.yml
+    - 47296-docker_container-memory_swappiness.yaml
+    - 47313-vmware_utils-handle_requests_import_error.yaml
+    - 47395-docker_container-ipvX_address.yaml
+    - 47396-docker_container-detach-auto-remove.yaml
+    - 47712-docker_container-detach-auto-remove.yml
+    - 47722-vmware_guest_powerstate-restore_timeout.yaml
+    - 47889-vmware_doc-fix_privilege_names.yaml
+    - 47900-docker_container-paused.yml
+    - 47997-docker_container-ipc-pid-mode.yml
+    - 48061-docker_container-auto_removal.yml
+    - docker_volume-force-change-detection.yaml
+    - lvg_fix_47301.yaml
+    - nxos_26_changelog.yaml
+    - openssl-python3.yaml
+    - postgresql_user-not-sup-error.yaml
+    - psexec-handle-socket-errors.yaml
+    - psexec-imp-error.yaml
+    - v2.6.8_summary.yaml
+    - win_uri-junk-data.yaml
+    release_date: '2018-11-15'
