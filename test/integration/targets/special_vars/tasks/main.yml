@@ -55,4 +55,4 @@
 - name: ensure that ansible_role_names is the sum of ansible_play_role_names and ansible_dependent_role_names
   assert:
     that:
-      - "(ansible_play_role_names + ansible_dependent_role_names)|unique == ansible_role_names"
+      - "(ansible_play_role_names + ansible_dependent_role_names)|unique|sort|list == ansible_role_names|sort|list"
