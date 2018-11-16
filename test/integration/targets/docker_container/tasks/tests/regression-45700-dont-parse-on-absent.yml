@@ -17,7 +17,7 @@
 - name: Stop container with a lot of invalid options
   docker_container:
     name: "{{ cname }}"
-    stop_timeout: 1
+    force_kill: yes
     # Some options with "invalid" values, which would
     # have to be parsed. The values are "invalid" because
     # the containers and networks listed here do not exist.
