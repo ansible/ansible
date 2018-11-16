@@ -73,6 +73,22 @@ options:
     - How long in seconds to wait for the resource to end up in the desired state. Ignored if C(wait) is not set.
     default: 120
     version_added: "2.8"
+  validate:
+    description:
+      - how (if at all) to validate the resource definition against the kubernetes schema.
+        Requires the kubernetes-validate python module
+    suboptions:
+      fail_on_error:
+        description: whether to fail on validation errors.
+        required: yes
+        type: bool
+      version:
+        description: version of Kubernetes to validate against. defaults to Kubernetes server version
+      strict:
+        description: whether to fail when passing unexpected properties
+        default: no
+        type: bool
+    version_added: "2.8"
 
 requirements:
   - "python >= 2.7"
@@ -141,6 +157,21 @@ EXAMPLES = '''
   k8s:
     state: present
     definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+
+- name: fail on validation errors
+  k8s:
+    state: present
+    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+    validate:
+      fail_on_error: yes
+
+- name: warn on validation errors, check for unexpected properties
+  k8s:
+    state: present
+    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+    validate:
+      fail_on_error: no
+      strict: yes
 '''
 
 RETURN = '''
