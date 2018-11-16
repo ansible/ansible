@@ -40,9 +40,6 @@
         that:
           - service_discovery_private_namespace.namespace.id is defined
 
-
-
-
   always:
     # tear down: registry, namespace, vpc
     - name: announce teardown start
