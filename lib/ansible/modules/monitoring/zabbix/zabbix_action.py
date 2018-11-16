@@ -480,6 +480,7 @@ class Action(object):
 
     def update_action(self, **kwargs):
         try:
+            kwargs['actionid'] = kwargs.pop('action_id')
             return self._zapi.action.update(kwargs)
         except Exception as e:
             self._module.fail_json(msg="Failed to update action '%s': %s" % (kwargs['actionid'], e))
@@ -491,6 +492,13 @@ class Action(object):
             return action_list['actionids'][0]
         except Exception as e:
             self._module.fail_json(msg="Failed to create action '%s': %s" % (kwargs['name'], e))
+
+    def delete_action(self, action_id):
+        try:
+            return self._zapi.action.delete([action_id])
+        except Exception as e:
+            self._module.fail_json(msg="Failed to delete action '%s': %s" % (action_id, e))
+
 
 class Operations(object):
     def __init__(self, module, zbx, zapi_wrapper):
@@ -1015,39 +1023,46 @@ def main():
     fltr = Filter(module, zbx, zapi_wrapper)
 
     if action_exists:
-        action_id = str(zapi_wrapper.get_action_by_name(name)['actionid'])
-        difference = action.check_difference(
-            action_id=action_id,
-            name=name,
-            event_source=event_source,
-            esc_period=esc_period,
-            status=status,
-            operations=ops.construct_the_data(operations),
-            recovery_operations=recovery_ops.construct_the_data(recovery_operations),
-            acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
-            conditions=fltr.construct_the_data(formula, conditions)
-        )
-
-        if difference == {}:
-            module.exit_json(changed=False, result="Action is up to date: %s, %s" %(name, difference))
+        action_id = zapi_wrapper.get_action_by_name(name)['actionid']
+        if state == "absent":
+            result = action.delete_action(action_id)
+            module.exit_json(changed=True, result="Action Deleted: %s, ID: %s" %(name, result))
         else:
-            result = action.update_action(
-                actionid=action_id,
-                **difference
+            difference = action.check_difference(
+                action_id=action_id,
+                name=name,
+                event_source=event_source,
+                esc_period=esc_period,
+                status=status,
+                operations=ops.construct_the_data(operations),
+                recovery_operations=recovery_ops.construct_the_data(recovery_operations),
+                acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
+                conditions=fltr.construct_the_data(formula, conditions)
             )
-            module.exit_json(changed=True, result="Action Updated: %s, ID: %s" %(name, result) )
+
+            if difference == {}:
+                module.exit_json(changed=False, result="Action is up to date: %s" %(name))
+            else:
+                result = action.update_action(
+                    action_id=action_id,
+                    **difference
+                )
+                module.exit_json(changed=True, result="Action Updated: %s, ID: %s" %(name, result) )
     else:
-        action_id = action.add_action(
-            name=name,
-            event_source=event_source,
-            esc_period=esc_period,
-            status=status,
-            operations=ops.construct_the_data(operations),
-            recovery_operations=recovery_ops.construct_the_data(recovery_operations),
-            acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
-            conditions=fltr.construct_the_data(formula, conditions)
-        )
-        module.exit_json(changed=True, result="Action created: %s, ID: %s" %(name, action_id) )
+        if state == "absent":
+            module.exit_json(changed=False)
+        else:
+            action_id = action.add_action(
+                name=name,
+                event_source=event_source,
+                esc_period=esc_period,
+                status=status,
+                operations=ops.construct_the_data(operations),
+                recovery_operations=recovery_ops.construct_the_data(recovery_operations),
+                acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
+                conditions=fltr.construct_the_data(formula, conditions)
+            )
+            module.exit_json(changed=True, result="Action created: %s, ID: %s" %(name, action_id) )
 
 if __name__ == '__main__':
     main()
