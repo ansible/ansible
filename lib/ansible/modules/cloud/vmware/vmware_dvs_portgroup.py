@@ -39,6 +39,7 @@ options:
         description:
             - The description of the portgroup that is to be created.
         required: False
+        version_added: '2.8'
     switch_name:
         description:
             - The name of the distributed vSwitch the port group should be created on.
@@ -100,8 +101,8 @@ options:
             - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
             - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
             - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
-            - '. C(active_uplinks) (list): List of active uplink ports used for load balancing. Default uplink is used if not defined. (default: [])'
-            - '. C(standby_uplinks) (list): List of standby uplink ports used for failover. This parameter is ignored unless active_uplinks is defined. (default: [])'
+            - '. C(active_uplinks) (list): List of active uplinks used for load balancing. Default uplink is used if not defined. (default: [])'
+            - '. C(standby_uplinks) (list): List of standby uplinks used for failover. Parameter is ignored unless active_uplinks is defined. (default: [])'
         required: False
         version_added: '2.5'
         default: {
@@ -425,16 +426,16 @@ def main():
                                                  'failover_explicit',
                                              ],
                                              ),
-                    active_uplinks=dict(type='list', default=None),
-                    standby_uplinks=dict(type='list', default=None)
+                    active_uplinks=dict(type='list', default=[]),
+                    standby_uplinks=dict(type='list', default=[])
                 ),
                 default=dict(
                     inbound_policy=False,
                     notify_switches=True,
                     rolling_order=False,
                     load_balance_policy='loadbalance_srcid',
-                    active_uplinks=None,
-                    standby_uplinks=None
+                    active_uplinks=[],
+                    standby_uplinks=[]
                 ),
             ),
             port_policy=dict(
