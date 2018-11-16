@@ -53,7 +53,6 @@
 #---------------------------------------------------------#
 
 - set_fact: si='nxos.7.0.3.I7.2.bin'
-- set_fact: combined='true'
 
 - name: Upgrade to 7.0.3.I7.2
  include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
