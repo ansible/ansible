@@ -696,17 +696,32 @@ class DnfModule(YumDnf):
                 }
 
     def _parse_spec_group_file(self):
-        pkg_specs, grp_specs, filenames = [], [], []
+        pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
+        already_loaded_comps = False  # Only load this if necessary, it's slow
+
         for name in self.names:
             if name.endswith(".rpm"):
                 if '://' in name:
                     name = self.fetch_rpm_from_url(name)
                 filenames.append(name)
-            elif name.startswith("@"):
-                grp_specs.append(name[1:])
+            elif name.startswith("@") or ('/' in name):
+                if not already_loaded_comps:
+                    self.base.read_comps()
+                    already_loaded_comps = True
+
+                grp_env_mdl_candidate = name[1:].strip()
+
+                if self.with_modules:
+                    mdl = self.module_base._get_modules(grp_env_mdl_candidate)
+                    if mdl[0]:
+                        module_specs.append(grp_env_mdl_candidate)
+                    else:
+                        grp_specs.append(grp_env_mdl_candidate)
+                else:
+                    grp_specs.append(grp_env_mdl_candidate)
             else:
                 pkg_specs.append(name)
-        return pkg_specs, grp_specs, filenames
+        return pkg_specs, grp_specs, module_specs, filenames
 
     def _update_only(self, pkgs):
         not_installed = []
@@ -792,9 +807,7 @@ class DnfModule(YumDnf):
                 failure_response['msg'] = "Depsolve Error occured attempting to upgrade all packages"
                 self.module.fail_json(**failure_response)
         else:
-            pkg_specs, group_specs, filenames = self._parse_spec_group_file()
-            if group_specs:
-                self.base.read_comps()
+            pkg_specs, group_specs, module_specs, filenames = self._parse_spec_group_file()
 
             pkg_specs = [p.strip() for p in pkg_specs]
             filenames = [f.strip() for f in filenames]
@@ -866,6 +879,23 @@ class DnfModule(YumDnf):
                 for filename in filenames:
                     response['results'].append("Installed {0}".format(filename))
 
+                # Upgrade modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} upgraded.".format(module))
+                            self.module_base.upgrade([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
+
                 for group in groups:
                     try:
                         try:
@@ -917,6 +947,24 @@ class DnfModule(YumDnf):
                         msg="Cannot remove paths -- please specify package name.",
                         results=[],
                     )
+
+                # Remove modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} removed.".format(module))
+                            self.module_base.disable([module])
+                            self.module_base.remove([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
 
                 for group in groups:
                     try:
