@@ -279,10 +279,10 @@ allowed_divergence_value:
   type: int
   sample: 25
 description:
-    description: The description of the monitor.
-    returned: changed
-    type: str
-    sample: Important Monitor
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important Monitor
 adaptive_limit:
   description: Absolute number of milliseconds that may not be exceeded by a monitor probe.
   returned: changed

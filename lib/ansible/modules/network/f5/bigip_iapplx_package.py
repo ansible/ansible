@@ -330,7 +330,7 @@ class ModuleManager(object):
                 raise F5ModuleError(resp.content)
         return response
 
-    def upload_to_device(self,):
+    def upload_to_device(self):
         url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
             self.client.provider['server'],
             self.client.provider['server_port']
