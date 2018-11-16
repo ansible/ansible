@@ -442,7 +442,6 @@ class Zapi(object):
         else:
             return script_list[0]
 
-
 class Action(object):
     def __init__(self, module, zbx, zapi_wrapper):
         self._module = module
@@ -472,7 +471,6 @@ class Action(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to create action '%s': %s" % (kwargs['name'], e))
 
-
 class Operations(object):
     def __init__(self, module, zbx, zapi_wrapper):
         self._module = module
@@ -480,149 +478,141 @@ class Operations(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_opmessage(self, operation):
-        message_keys = {
-            'media_type',
-            'message',
-            'subject'
+        return {
+            'default_msg': 0 if 'message' in operation or 'subject' in operation else 1,
+            'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
+                operation.get('media_type')
+            )['mediatypeid'] if operation.get('media_type') is not None else None,
+            'message': operation.get('message',None),
+            'subject': operation.get('subject',None),
         }
 
-        operation['opmessage'] = {
-                'default_msg': 0 if 'message' in operation or 'subject' in operation else 1,
-                'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(operation.get('media_type'))['mediatypeid'] if operation.get('media_type') is not None else None,
-                'message': operation.get('message',None),
-                'subject': operation.get('subject',None),
-        }
-
-        for _key in message_keys:
-            if _key in operation:
-                operation.pop(_key)
-
-    def _construct_opmessage_targets(self, operation):
-        operation['opmessage_usr'] = [{
+    def _construct_opmessage_usr(self, operation):
+        if operation.get('send_to_users') is None:
+            return None
+        return [{
             'userid': self._zapi_wrapper.get_user_by_user_name(_user)['userid']
-        } for _user in operation.get('send_to_users',[])]
-        operation['opmessage_grp'] = [{
+        } for _user in operation.get('send_to_users')]
+
+    def _construct_opmessage_grp(self, operation):
+        if operation.get('send_to_groups') is None:
+            return None
+        return [{
             'usrgripid': self._zapi_wrapper.get_usergroup_by_usergroup_name(_group)['usrgripid']
-        } for _group in operation.get('send_to_groups',[])]
-        operation.pop('send_to_users', None)
-        operation.pop('send_to_groups', None)
+        } for _group in operation.get('send_to_groups')]
 
     def _construct_operationtype(self, operation):
-        operation['type'] = map_to_int([
-                "send_message",
-                "remote_command",
-                "add_host",
-                "remove_host",
-                "add_to_host_group",
-                "remove_from_host_group",
-                "link_to_template",
-                "unlink_from_template",
-                "enable_host",
-                "disable_host",
-                "set_host_inventory_mode"], operation['type'])
-        operation['operationtype'] = operation.pop('type')
+        return map_to_int([
+            "send_message",
+            "remote_command",
+            "add_host",
+            "remove_host",
+            "add_to_host_group",
+            "remove_from_host_group",
+            "link_to_template",
+            "unlink_from_template",
+            "enable_host",
+            "disable_host",
+            "set_host_inventory_mode"], operation['type']
+        )
 
     def _construct_opcommand(self, operation):
-        self.command_keys = {
-            'command_type',
-            'command',
-            'execute_on',
-            'script_name',
-            'ssh_auth_type',
-            'ssh_privatekey_file',
-            'ssh_publickey_file',
-            'username',
-            'password',
-            'port'
+        return {
+            'type': map_to_int([
+                'custom_script',
+                'ipmi',
+                'ssh',
+                'telnet',
+                'global_script'], operation.get('command_type','custom_script')),
+            'command': operation.get('command',None),
+            'execute_on': map_to_int([
+                'agent',
+                'server',
+                'proxy'],operation.get('execute_on','server')),
+            'scriptid': self._zapi_wrapper.get_script_by_script_name(
+                operation.get('script_name')
+            ).get('scriptid', None),
+            'authtype': map_to_int([
+                'password',
+                'private_key'
+                ], operation.get('ssh_auth_type', 'password')),
+            'privatekey': operation.get('ssh_privatekey_file',None),
+            'publickey': operation.get('ssh_publickey_file',None),
+            'username': operation.get('username',None),
+            'password': operation.get('password',None),
+            'port': operation.get('port',None)
         }
 
-        operation['opcommand'] = {
-                'type': map_to_int([
-                    'custom_script',
-                    'ipmi',
-                    'ssh',
-                    'telnet',
-                    'global_script'], operation.get('command_type','custom_script')),
-                'command': operation.get('command',None),
-                'execute_on': map_to_int([
-                    'agent',
-                    'server',
-                    'proxy'],operation.get('execute_on','server')),
-                'scriptid': self._zapi_wrapper.get_script_by_script_name(operation.get('script_name')).get('scriptid', None),
-                'authtype': map_to_int([
-                    'password',
-                    'private_key'
-                    ], operation.get('ssh_auth_type', 'password')),
-                'privatekey': operation.get('ssh_privatekey_file',None),
-                'publickey': operation.get('ssh_publickey_file',None),
-                'username': operation.get('username',None),
-                'password': operation.get('password',None),
-                'port': operation.get('port',None)
-        }
-
-        for _key in self.command_keys:
-            if _key in operation:
-                operation.pop(_key)
-
-    def _construct_opcommand_targets(self, operation):
-        operation['opcommand_hst'] = [{
+    def _construct_opcommand_hst(self, operation):
+        if operation.get('run_on_host') is None:
+            return None
+        return [{
             'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
-        } if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_host',[])]
-        operation['opcommand_grp'] = [{
-            'groupid': self._zapi_wrapper.get_hostgroup_by_hostgroup_name(_group)['groupid']
-        } for _group in operation.get('run_on_group',[])]
-        operation.pop('run_on_host', None)
-        operation.pop('run_on_group', None)
+        } if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_host')]
+
+    def _construct_opcommand_grp(self, operation):
+        if operation.get('run_on_group') is None:
+            return None
+        return [{
+            'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
+        } if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_group')]
 
     def _construct_opgroup(self, operation):
-        operation['opgroup'] = [{
+        return [{
             'groupid': self._zapi_wrapper.get_hostgroup_by_hostgroup_name(_group)['groupid']
         } for _group in operation.get('host_groups',[])]
         operation.pop('host_groups', None)
 
     def _construct_optemplate(self, operation):
-        operation['optemplate'] = [{
+        return [{
             'templateid': self._zapi_wrapper.get_template_by_template_name(_template)['templateid']
-            } for _template in operation.get('templates',[])]
+        } for _template in operation.get('templates',[])]
         operation.pop('templates', None)
 
     def _construct_opinventory(self, operation):
-        operation['opinventory'] = {'inventory_mode': operation.get('inventory', None)}
-        operation.pop('inventory', None)
+        return {'inventory_mode': operation.get('inventory', None)}
 
     def construct_the_data(self, operations):
+        constructed_data = []
         for op in operations:
-            self._construct_operationtype(op)
-
+            operation_type = self._construct_operationtype(op)
+            constructed_operation = {
+                'operationtype': operation_type,
+                'esc_period': op.get('esc_period'),
+                'esc_step_from': op.get('esc_step_from'),
+                'esc_step_to': op.get('esc_step_to')
+            }
             # Send Message type
-            if op['operationtype'] == 0:
-                self._construct_opmessage(op)
-                self._construct_opmessage_targets(op)
+            if constructed_operation['operationtype'] == 0:
+                constructed_operation['opmessage'] = self._construct_opmessage(op)
+                constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
+                constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
 
             # Send Command type
-            if op['operationtype'] == 1:
-                self._construct_opcommand(op)
-                self._construct_opcommand_targets(op)
+            if constructed_operation['operationtype'] == 1:
+                constructed_operation['opcommand'] = self._construct_opcommand(op)
+                constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
+                constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
 
             # Add to/Remove from host group
-            if op['operationtype'] in (4, 5):
-                self._construct_opgroup(op)
+            if constructed_operation['operationtype'] in (4, 5):
+                constructed_operation['opgroup'] = self._construct_opgroup(op)
 
             # Link/Unlink template
-            if op['operationtype'] in (6, 7):
-                self._construct_optemplate(op)
+            if constructed_operation['operationtype'] in (6, 7):
+                constructed_operation['optemplate'] = self._construct_optemplate(op)
 
             # Set inventory mode
-            if op['operationtype'] == 10:
-                self._construct_opinventory(op)
+            if constructed_operation['operationtype'] == 10:
+                constructed_operation['opinventory'] = self._construct_opinventory(op)
 
-            op = cleanup_data(op)
+            constructed_data.append(constructed_operation)
 
-        return operations
+        return cleanup_data(constructed_data)
 
 class RecoveryOperations(Operations):
     def _construct_operationtype(self, operation):
-        operation['type'] = map_to_int([
+        return map_to_int([
                 "send_message",
                 "remote_command",
                 "placeholder1",
@@ -635,31 +625,36 @@ class RecoveryOperations(Operations):
                 "placeholder8",
                 "placeholder9",
                 "notify_all_involved"], operation['type'])
-        operation['operationtype'] = operation.pop('type')
 
     def construct_the_data(self, operations):
         if operations is None:
             return None
+        constructed_data = []
         for op in operations:
-            self._construct_operationtype(op)
+            operation_type = self._construct_operationtype(op)
+            constructed_operation = {
+                'operationtype': operation_type,
+            }
 
             # Send Message type
-            if op['operationtype'] in (0,11):
-                self._construct_opmessage(op)
-                self._construct_opmessage_targets(op)
+            if constructed_operation['operationtype'] in (0, 11):
+                constructed_operation['opmessage'] = self._construct_opmessage(op)
+                constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
+                constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
 
             # Send Command type
-            if op['operationtype'] == 1:
-                self._construct_opcommand(op)
-                self._construct_opcommand_targets(op)
+            if constructed_operation['operationtype'] == 1:
+                constructed_operation['opcommand'] = self._construct_opcommand(op)
+                constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
+                constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
 
-            op = cleanup_data(op)
+            constructed_data.append(constructed_operation)
 
-        return operations
+        return cleanup_data(constructed_data)
 
 class AcknowledgeOperations(Operations):
     def _construct_operationtype(self, operation):
-        operation['type'] = map_to_int([
+        return map_to_int([
                 "send_message",
                 "remote_command",
                 "placeholder1",
@@ -673,28 +668,32 @@ class AcknowledgeOperations(Operations):
                 "placeholder9",
                 "placeholder10",
                 "notify_all_involved"], operation['type'])
-        operation['operationtype'] = operation.pop('type')
 
     def construct_the_data(self, operations):
         if operations is None:
             return None
+        constructed_data = []
         for op in operations:
-            self._construct_operationtype(op)
+            operation_type = self._construct_operationtype(op)
+            constructed_operation = {
+                'operationtype': operation_type,
+            }
 
             # Send Message type
-            if op['operationtype'] in (0,12):
-                self._construct_opmessage(op)
-                self._construct_opmessage_targets(op)
+            if constructed_operation['operationtype'] in (0, 11):
+                constructed_operation['opmessage'] = self._construct_opmessage(op)
+                constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
+                constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
 
             # Send Command type
-            if op['operationtype'] == 1:
-                self._construct_opcommand(op)
-                self._construct_opcommand_targets(op)
+            if constructed_operation['operationtype'] == 1:
+                constructed_operation['opcommand'] = self._construct_opcommand(op)
+                constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
+                constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
 
-            op = cleanup_data(op)
+            constructed_data.append(constructed_operation)
 
-        return operations
-
+        return cleanup_data(constructed_data)
 
 class Filter(object):
     def __init__(self, module, zbx, zapi_wrapper):
@@ -722,7 +721,6 @@ class Filter(object):
             'evaltype': 3,
             'formula': _eval
         }
-
 
     def _construct_conditiontype(self, _condition):
         return map_to_int([
@@ -768,7 +766,6 @@ class Filter(object):
         )
 
     def _construct_value(self, conditiontype, value):
-
         # Host group
         if conditiontype == 0:
             return self._zapi_wrapper.get_hostgroup_by_hostgroup_name(value)['groupid']
@@ -872,7 +869,7 @@ class Filter(object):
                 "formulaid": cond.get("formulaid"),
                 "operator": self._construct_operator(cond)
             })
-        return constructed_data
+        return cleanup_data(constructed_data)
 
 
 def map_to_int(strs, value):
