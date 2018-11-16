@@ -42,14 +42,14 @@
 # Upgrade to 6.0(2)U6(3a)                                 #
 #---------------------------------------------------------#
 
-- set_fact: si='000-s2-dk9.8.0.1.bin'
-- set_fact: ki='000-s2-kickstart.8.0.1.bin'
+- set_fact: si='n3000-s2-dk9.8.0.1.bin'
+- set_fact: ki='n3000-s2-kickstart.8.0.1.bin'
 
-- name: Upgrade N7k
+- name: Upgrade to U6.3a
   include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
 
 #---------------------------------------------------------#
-# Upgrade to 7.0(3)I7(3)                                  #
+# Upgrade to 7.0(3)I7(2)                                  #
 #---------------------------------------------------------#
 
 - set_fact: si='nxos.7.0.3.I7.2.bin'
