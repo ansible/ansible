@@ -64,7 +64,7 @@ EXAMPLES = '''
       azure_rm_cdnprofile:
           resource_group: Testing
           name: cdntest
-          sku: Standard_Akamai
+          sku: standard_akamai
           tags:
               testing: testing
 
