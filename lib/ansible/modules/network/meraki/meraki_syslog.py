@@ -21,8 +21,8 @@ version_added: "2.8"
 description:
 - Allows for creation and management of Syslog servers within Meraki.
 notes:
-- Changes to existing syslog servers replaces existing configuration. If you need to add to an existing configuration \
-perform a C(state: query) to gather the existing configuration and then modify or add.
+- Changes to existing syslog servers replaces existing configuration. If you need to add to an
+  existing configuration set state to query to gather the existing configuration and then modify or add.
 options:
     auth_key:
         description:
@@ -46,9 +46,9 @@ options:
     org_id:
         description:
         - ID of organization associated to a network.
-    server:
+    servers:
         description:
-        - Syslog server settings
+        - List of syslog server settings
         suboptions:
             host:
                 description:
@@ -56,7 +56,7 @@ options:
             port:
                 description:
                 - Port number Syslog server is listening on.
-                default: 514
+                default: "514"
             roles:
                 description:
                 - List of applicable Syslog server roles.
@@ -122,20 +122,20 @@ data:
     type: complex
     contains:
       host:
-        description: Hostname or IP address of Syslog server.
+        description: Hostname or IP address of syslog server.
         returned: success
         type: string
         sample: 192.0.1.1
       port:
-        description: Port number for Syslog communication.
+        description: Port number for syslog communication.
         returned: success
         type: string
         sample: 443
       roles:
-        description: Organization ID which owns the network.
+        description: List of roles assigned to syslog server.
         returned: success
         type: list
-        sample: "Wireless event log", "URLs"
+        sample: "Wireless event log, URLs"
 '''
 
 import os
