@@ -24,6 +24,10 @@ from lib.ansible_util import (
     ansible_environment,
 )
 
+from lib.config import (
+    ShellConfig,
+)
+
 
 class ManageWindowsCI(object):
     """Manage access to a Windows instance provided by Ansible Core CI."""
@@ -203,6 +207,11 @@ class ManagePosixCI(object):
     def setup(self):
         """Start instance and wait for it to become ready and respond to an ansible ping."""
         self.wait()
+
+        if isinstance(self.core_ci.args, ShellConfig):
+            if self.core_ci.args.raw:
+                return
+
         self.configure()
         self.upload_source()
 
