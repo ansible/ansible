@@ -336,6 +336,64 @@ class Operations(object):
         else:
             return host_list[0]
 
+    # get hostgroup by hostgroup name
+    def get_hostgroup_by_hostgroup_name(self, hostgroup_name):
+        hostgroup_list = self._zapi.hostgroup.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'hostgroup': [hostgroup_name]}})
+        if len(hostgroup_list) < 1:
+            self._module.fail_json(msg="Host group not found: %s" % hostgroup_name)
+        else:
+            return hostgroup_list[0]
+
+    # get mediatype by mediatype name
+    def get_mediatype_by_mediatype_name(self, mediatype_name):
+        mediatype_list = self._zapi.mediatype.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'mediatype': [mediatype_name]}})
+        if len(mediatype_list) < 1:
+            self._module.fail_json(msg="Media type not found: %s" % mediatype_name)
+        else:
+            return mediatype_list[0]
+
+    # get user by user name
+    def get_user_by_user_name(self, user_name):
+        user_list = self._zapi.user.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'user': [user_name]}})
+        if len(user_list) < 1:
+            self._module.fail_json(msg="User not found: %s" % user_name)
+        else:
+            return user_list[0]
+
+    # get usergroup by usergroup name
+    def get_usergroup_by_usergroup_name(self, usergroup_name):
+        usergroup_list = self._zapi.usergroup.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'usergroup': [usergroup_name]}})
+        if len(usergroup_list) < 1:
+            self._module.fail_json(msg="User group not found: %s" % usergroup_name)
+        else:
+            return usergroup_list[0]
+
+    def _construct_opmessage(self, operation):
+        message_keys = {
+            'media_type',
+            'message',
+            'subject'
+        }
+
+        operation['opmessage'] = {
+                'default_msg': 0 if 'message' in operation or 'subject' in operation else 1,
+                'mediatypeid': self.get_mediatype_by_mediatype_name(operation.get('media_type',None))['mediatypeid'],
+                'message': operation.get('message',None),
+                'subject': operation.get('subject',None),
+        }
+
+        for _key in message_keys:
+            if _key in operation:
+                operation.pop(_key)
+
+
+    def _construct_opmessage_targets(self, operation):
+        operation['opmessage_usr'] = [{'userid': self.get_user_by_user_name(_user)['userid']} for _user in operation.get('send_to_users',[])]
+        operation['opmessage_grp'] = [{'usrgripid': self.get_usergroup_by_usergroup_name(_group)['usrgripid']} for _group in operation.get('send_to_groups',[])]
+        operation.pop('send_to_users', None)
+        operation.pop('send_to_groups', None)
+
+
     def _construct_operationtype(self, operation):
         operation['type'] = map_to_int([
                 "send_message",
@@ -396,7 +454,7 @@ class Operations(object):
 
     def _construct_opcommand_targets(self, operation):
         operation['opcommand_hst'] = [{'hostid': self.get_host_by_host_name(_host)} if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_host',[])]
-        operation['opcommand_grp'] = [{'groupid': self.get_group_by_group_name(_group)} for _group in operation.get('run_on_group',[])]
+        operation['opcommand_grp'] = [{'groupid': self.get_hostgroup_by_hostgroup_name(_group)} for _group in operation.get('run_on_group',[])]
         operation.pop('run_on_host',None)
         operation.pop('run_on_group', None)
 
@@ -404,11 +462,18 @@ class Operations(object):
     def construct_the_data(self, operations):
         for op in operations:
             self._construct_operationtype(op)
+
+            # Send Message type
+            if op['operationtype'] == 0:
+                self._construct_opmessage(op)
+                self._construct_opmessage_targets(op)
+
             # Send Command type
             if op['operationtype'] == 1:
                 self._construct_opcommand(op)
                 self._construct_opcommand_targets(op)
             op = cleanup_data(op)
+
         return operations
 
 
