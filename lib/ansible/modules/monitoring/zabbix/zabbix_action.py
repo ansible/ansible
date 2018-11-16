@@ -292,6 +292,142 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 
 
+class Action(object):
+    def __init__(self, module, zbx):
+        self._module = module
+        self._zapi = zbx
+
+    def check_if_action_exists(self, name):
+        result = self._zapi.action.get({'filter': {'name': name}})
+        return result
+
+    def get_action_by_name(self, name):
+        action_list = self._zapi.action.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'name': [name]}})
+        if len(action_list) < 1:
+            self._module.fail_json(msg="Action not found: " % name)
+        else:
+            return action_list[0]
+
+    def add_action(self, **kwargs):
+        try:
+            parameters = {
+                    'name': kwargs['name'],
+                    'eventsource': kwargs['event_source'],
+                    'esc_period': kwargs['esc_period'],
+                    'operations': kwargs['operations'],
+                    'status': kwargs['status'],
+                    }
+            action_list = self._zapi.action.create(parameters)
+            return action_list['actionids'][0]
+        except Exception as e:
+            self._module.fail_json(msg="Failed to create action '%s': %s" % (kwargs['name'], e))
+
+
+class Operations(object):
+    def __init__(self, module, zbx):
+        self._module = module
+        self._zapi = zbx
+
+    # get host by host name
+    def get_host_by_host_name(self, host_name):
+        host_list = self._zapi.host.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'host': [host_name]}})
+        if len(host_list) < 1:
+            self._module.fail_json(msg="Host not found: %s" % host_name)
+        else:
+            return host_list[0]
+
+    def _construct_operationtype(self, operation):
+        operation['type'] = map_to_int([
+                "send_message",
+                "remote_command",
+                "add_host",
+                "remove_host",
+                "add_to_host_group",
+                "remove_from_host_group",
+                "link_to_template",
+                "unlink_from_template",
+                "enable_host",
+                "disable_host",
+                "set_host_inventory_mode"], operation['type'])
+        operation['operationtype'] = operation.pop('type')
+
+    # Convert to opcommand
+    def _construct_opcommand(self, operation):
+        self.command_keys = {
+            'command_type',
+            'command',
+            'execute_on',
+            'global_script',
+            'ssh_auth_type',
+            'ssh_privatekey_file',
+            'ssh_publickey_file',
+            'username',
+            'password',
+            'port'
+        }
+
+        operation['opcommand'] = {
+                'type': map_to_int([
+                    'custom_script',
+                    'ipmi',
+                    'ssh',
+                    'telnet',
+                    'global_script'], operation.get('command_type','custom_script')),
+                'command': operation.get('command',None),
+                'execute_on': map_to_int([
+                    'agent',
+                    'server',
+                    'proxy'],operation.get('execute_on','server')),
+                'scriptid': operation.get('global_script',None),
+                'authtype': map_to_int([
+                    'password',
+                    'private_key'
+                    ], operation.get('ssh_auth_type', 'password')),
+                'privatekey': operation.get('ssh_privatekey_file',None),
+                'publickey': operation.get('ssh_publickey_file',None),
+                'username': operation.get('username',None),
+                'password': operation.get('password',None),
+                'port': operation.get('port',None)
+        }
+
+        for _key in self.command_keys:
+            if _key in operation:
+                operation.pop(_key)
+
+    def _construct_opcommand_targets(self, operation):
+        operation['opcommand_hst'] = [{'hostid': self.get_host_by_host_name(_host)} if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_host',[])]
+        operation['opcommand_grp'] = [{'groupid': self.get_group_by_group_name(_group)} for _group in operation.get('run_on_group',[])]
+        operation.pop('run_on_host',None)
+        operation.pop('run_on_group', None)
+
+
+    def construct_the_data(self, operations):
+        for op in operations:
+            self._construct_operationtype(op)
+            # Send Command type
+            if op['operationtype'] == 1:
+                self._construct_opcommand(op)
+                self._construct_opcommand_targets(op)
+            op = cleanup_data(op)
+        return operations
+
+
+
+def map_to_int(strs, value):
+    """ Convert string values to integers"""
+    tmp_dict = dict(zip(strs, list(range(len(strs)))))
+    return tmp_dict[value]
+
+
+def cleanup_data(obj):
+    if isinstance(obj, (list, tuple, set)):
+        return type(obj)(cleanup_data(x) for x in obj if x is not None)
+    elif isinstance(obj, dict):
+        return type(obj)((cleanup_data(k), cleanup_data(v))
+            for k, v in obj.items() if k is not None and v is not None)
+    else:
+        return obj
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -304,13 +440,13 @@ def main():
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
             event_source=dict(type='str', required=True),
-            state=dict(type='str', required=True),
-            status=dict(type='str', required=False),
-            conditions=dict(type='list', required=False),
-            formula=dict(type='str', required=False),
-            operations=dict(type='list', required=False),
-            recovery_operations=dict(type='list', required=False),
-            acknowledge_operations=dict(type='list', required=False)
+            state=dict(type='str', required=False, default='present'),
+            status=dict(type='str', required=False, default='enabled'),
+            conditions=dict(type='list', required=False, default=None),
+            formula=dict(type='str', required=False, default=None),
+            operations=dict(type='list', required=False, default=None),
+            recovery_operations=dict(type='list', required=False, default=None),
+            acknowledge_operations=dict(type='list', required=False, default=None)
         ),
         supports_check_mode=True
     )
@@ -335,6 +471,11 @@ def main():
     recovery_operations = module.params['recovery_operations']
     acknowledge_operations = module.params['acknowledge_operations']
 
+
+    # Convert strings to integers
+    status = map_to_int(['enabled', 'disabled'], status)
+    event_source = map_to_int(['trigger', 'discovery', 'auto_registration', 'internal'], event_source)
+    esc_period = "1h"
     try:
         zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                                validate_certs=validate_certs)
@@ -342,7 +483,26 @@ def main():
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
-    module.exit_json(changed=True, result="Successfully logged in")
+    action = Action(module, zbx)
+
+    action_exists = action.check_if_action_exists(name)
+
+    ops = Operations(module, zbx)
+
+    if action_exists:
+        pass
+    #    zabbix_action_obj = action.get_action_by_name(name)
+    #    action_id = zabbix_action_obj['actionid']
+    #    module.exit_json(changed=False, result="Action already exists: %s" %action_id)
+    else:
+        action_id = action.add_action(
+                name=name,
+                event_source=event_source,
+                esc_period=esc_period,
+                status=status,
+                operations=ops.construct_the_data(operations)
+                )
+        module.exit_json(changed=True, result="Action created: %s, ID: %s" %(name, action_id) )
 
 if __name__ == '__main__':
     main()
