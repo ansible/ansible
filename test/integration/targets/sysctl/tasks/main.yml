@@ -73,7 +73,7 @@
       that:
         - sysctl_test0 is changed
         - sysctl_test1 is not changed
-        - 'sysctl_content0.stdout_lines[sysctl_content0.stdout_lines.index("vm.swappiness=5")] == "vm.swappiness=5"'
+        - 'sysctl_content0.stdout_lines[sysctl_content0.stdout_lines.index("vm.swappiness = 5")] == "vm.swappiness = 5"'
 
 - name: Remove kernel.panic
   sysctl:
