@@ -70,6 +70,13 @@ def test_equal_objects_return_true_with_equal_objects():
     )
 
 
+def test_equal_objects_return_true_with_equal_str_like_values():
+    assert equal_objects(
+        {'foo': b'bar'},
+        {'foo': u'bar'}
+    )
+
+
 def test_equal_objects_return_true_with_equal_nested_dicts():
     assert equal_objects(
         {'foo': {'bar': 1, 'buz': 2}},
