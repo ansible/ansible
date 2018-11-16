@@ -9,16 +9,15 @@ DOCUMENTATION = '''
     version_added: "2.4"
     short_description: Uses a specific YAML file as an inventory source.
     description:
-        - "YAML based inventory, SHOULD starts with the C(all) group and has hosts/vars/children entries."
+        - "YAML-based inventory, should start with the C(all) group and contain hosts/vars/children entries."
         - Host entries can have sub-entries defined, which will be treated as variables.
         - Vars entries are normal group vars.
         - "Children are 'child groups', which can also have their own vars/hosts/children and so on."
         - File MUST have a valid extension, defined in configuration
     notes:
-        - It takes the place of the previously hardcoded YAML inventory.
-        - To function it requires being whitelisted in configuration.
-        - Beginning with the C(all) group is the only way to set vars for the
-          C(all) group inside the inventory file.
+        - Replaces the previously hardcoded YAML inventory.
+        - Must be whitelisted in configuration to function.
+        - If you want to set vars for the C(all) group inside the inventory file, the C(all) group must be the first entry in the file.
     options:
       yaml_extensions:
         description: list of 'valid' extensions for files containing YAML
