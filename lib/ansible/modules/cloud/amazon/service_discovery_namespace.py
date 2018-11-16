@@ -24,9 +24,9 @@ DOCUMENTATION = '''
 module: service_discovery_namespace
 short_description: thin wrap for boto servicediscovery client
 description:
-    - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/servicediscovery.html
+    - works with service discovery namespaces
 notes:
-     - nah.
+     - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/servicediscovery.html
 version_added: "2.8"
 author:
     - "tad merchant @ezmac"
