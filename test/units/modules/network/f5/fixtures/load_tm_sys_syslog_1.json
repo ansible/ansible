@@ -29,7 +29,7 @@
       "remotePort": 514
     },
     {
-      "name": "/Common/remotesyslog1",
+      "name": "/Common/remotesyslog2",
       "host": "20.20.20.20",
       "localIp": "1.1.1.1",
       "remotePort": 8000
