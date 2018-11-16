@@ -17,7 +17,7 @@ Find the task that best describes what you want to do:
    * I want to :ref:`add a custom plugin or module locally <developing_locally>`.
    * I want to figure out if :ref:`developing a module is the right approach <module_dev_should_you>` for my use case.
 
-* I've read the info above, and I’m sure I want to develop a module:
+* I've read the info above, and I'm sure I want to develop a module:
 
    * What do I need to know before I start coding?
    * I want to :ref:`set up my Python development environment <environment_setup>`.
@@ -41,7 +41,7 @@ Find the task that best describes what you want to do:
 
 * I want to contribute back to the Ansible project:
 
-  * I want to :ref:`understand how to contirbute to Ansible <ansible_community_guide>`.
+  * I want to :ref:`understand how to contribute to Ansible <ansible_community_guide>`.
   * I want to :ref:`contribute my module or plugin <developing_modules_checklist>`.
   * I want to :ref:`understand the license agreement <contributor_license_agreement>` for contributions to Ansible.
 
