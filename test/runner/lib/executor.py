@@ -161,6 +161,10 @@ def install_command_requirements(args, python_version=None):
     :type args: EnvironmentConfig
     :type python_version: str | None
     """
+    if isinstance(args, ShellConfig):
+        if args.raw:
+            return
+
     generate_egg_info(args)
 
     if not args.requirements:

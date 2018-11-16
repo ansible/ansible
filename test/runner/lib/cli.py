@@ -409,6 +409,10 @@ def parse_args():
     shell.set_defaults(func=command_shell,
                        config=ShellConfig)
 
+    shell.add_argument('--raw',
+                       action='store_true',
+                       help='direct to shell with no setup')
+
     add_environments(shell, tox_version=True)
     add_extra_docker_options(shell)
     add_httptester_options(shell, argparse)
