@@ -368,7 +368,7 @@ def update_dynamo_table(module, client, table, throughput=None, check_mode=False
         'WriteCapacityUnits': throughput['write']
     }
     throughput_updates = has_throughput_changed(table, throughput)
-    global_indexes_updates = get_changed_global_indexes(table, global_indexes)
+    global_indexes_updates = get_changed_global_indexes(table.global_secondary_indexes, global_indexes)
     kwargs = update_dynamodb_table_args(table_name, prov_throughput, throughput_updates, global_indexes_updates, global_attr_definitions)
     if not check_mode and (global_indexes_updates or throughput_updates):
         client.update_table(**kwargs)
@@ -408,18 +408,23 @@ def get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_typ
     return schema
 
 
-def get_changed_global_indexes(table, global_indexes):
+def get_changed_global_indexes(table_gsi_indexes, global_indexes):
     global_indexes_updates = []
-    table_gsi_indexes = table.global_secondary_indexes
     if global_indexes:
-        param_global_indexes = map(lambda index: index['IndexName'], global_indexes)
-        param_global_indexes_prov_throughput = map(lambda index: (index['IndexName'], index['ProvisionedThroughput']), global_indexes)
+        param_global_indexes = []
+        param_global_indexes_prov_throughput = []
+        for idx in global_indexes:
+            param_global_indexes.append(idx['IndexName'])
+            param_global_indexes_prov_throughput.append((idx['IndexName'], idx['ProvisionedThroughput']))
         set_table_indexes = []
         set_table_indexes_prov_throughput = []
 
         if table_gsi_indexes:
-            set_table_indexes = map(lambda index: index['IndexName'], table_gsi_indexes)
-            set_table_indexes_prov_throughput = map(lambda index: (index['IndexName'], index['ProvisionedThroughput']), table_gsi_indexes)
+            set_table_indexes = []
+            set_table_indexes_prov_throughput = []
+            for idx in table_gsi_indexes:
+                set_table_indexes.append(idx['IndexName'])
+                set_table_indexes_prov_throughput.append((idx['IndexName'], idx['ProvisionedThroughput']))
 
         for index in set_table_indexes:
             if index not in param_global_indexes:

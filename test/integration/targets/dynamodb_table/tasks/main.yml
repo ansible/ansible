@@ -60,7 +60,7 @@
            - '"Authentication failure" in result.msg'
 
 - module_defaults:
-    group/aws:
+    group / aws:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       region: "{{ aws_region }}"
@@ -83,6 +83,9 @@
             type: global_all
             hash_key_name: myhashkey
             range_key_name: myrangekey
+          - name: NamedLocalIndex
+            type: all
+            hash_key_name: mylocalhashkey
         tags:
           newtag: "hellotag"
           ntak: "helovdg"
