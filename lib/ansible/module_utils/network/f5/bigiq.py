@@ -8,7 +8,6 @@ __metaclass__ = type
 
 
 import os
-import time
 
 
 try:

@@ -102,19 +102,15 @@ options:
         description:
           - Configures the transport connection to use when connecting to the
             remote device.
-        required: true
         choices:
           - rest
           - cli
-        default: cli
+        default: rest
 notes:
   - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/integrations/networks/f5).
-  - Requires the f5-sdk Python package on the host. This is as easy as C(pip install f5-sdk).
   - Requires BIG-IP software version >= 12.
   - The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP
     specific configuration persists to disk, be sure to include at least one task that uses the
     M(bigip_config) module to save the running configuration. Refer to the module's documentation for
     the correct usage of the module to save your running configuration.
-requirements:
-  - f5-sdk >= 3.0.16
 '''

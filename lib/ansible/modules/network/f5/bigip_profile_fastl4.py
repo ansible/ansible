@@ -553,7 +553,7 @@ class Parameters(AnsibleF5Parameters):
     ]
 
     returnables = [
-        'client_timeout'
+        'client_timeout',
         'description',
         'explicit_flow_migration',
         'idle_timeout',
