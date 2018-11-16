@@ -225,6 +225,13 @@ class PlaybookExecutor:
             display.display("No issues encountered")
             return result
 
+        if self._options.start_at_task and not self._tqm._start_at_done:
+            display.error(
+                "No matching task \"%s\" found. "
+                "Note: --start-at-task can only follow static includes."
+                % self._options.start_at_task
+            )
+
         return result
 
     def _get_serialized_batches(self, play):
