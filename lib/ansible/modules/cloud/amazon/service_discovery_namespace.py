@@ -145,12 +145,7 @@ operation_id:
     returned: when creating and wait=false
 
 '''
-import time
 
-DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
-    'maximum_percent': 'int',
-    'minimum_healthy_percent': 'int'
-}
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
