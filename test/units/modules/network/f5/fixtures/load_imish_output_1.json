@@ -1,0 +1,6 @@
+{
+    "kind": "tm:util:bash:runstate",
+    "command": "run",
+    "utilCmdArgs": "-c 'imish -r 0 -e \"show running-config\"'",
+    "commandResult": "!\nno service password-encryption\n!\nline con 0\n login\nline vty 0 39\n login\n!\nend\n\n"
+}
