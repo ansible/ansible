@@ -479,6 +479,53 @@
           - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.subnets|length == 2"
           - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.securityGroups|length == 1"
 
+    - name: create ecs_service using healthcheck_grace_period
+      ecs_service:
+        name: "{{ ecs_service_name }}-mft"
+        cluster: "{{ ecs_cluster_name }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        scheduling_strategy: "REPLICA"
+        healthcheck_grace_period: 10
+        desired_count: 1
+        state: present
+        <<: *aws_connection_info
+      register: ecs_service_creation_hcgp
+
+    - name: DEBUG
+      debug: var=ecs_service_creation_hcgp
+
+    - name: healthcheck_grace_period sets HealthChecGracePeriodSeconds
+      assert:
+        that:
+          - ecs_service_creation_hcgp.changed
+          - "{{ecs_service_creation_hcgp.service.healthCheckGracePeriodSeconds}} == 10"
+
+    - name: update ecs_service using healthcheck_grace_period
+      ecs_service:
+        name: "{{ ecs_service_name }}-mft"
+        cluster: "{{ ecs_cluster_name }}"
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 1
+        healthcheck_grace_period: 30
+        state: present
+        <<: *aws_connection_info
+      register: ecs_service_creation_hcgp2
+      ignore_errors: no
+
+    - name: check that module returns success
+      assert:
+        that:
+          - ecs_service_creation_hcgp2.changed
+          - "{{ecs_service_creation_hcgp2.service.healthCheckGracePeriodSeconds}} == 30"
+
     - name: obtain facts for all ECS services in the cluster
       ecs_service_facts:
         cluster: "{{ ecs_cluster_name }}"
@@ -728,6 +775,21 @@
       ignore_errors: yes
       register: ecs_service_scale_down
 
+    - name: scale down multifunction-test service
+      ecs_service:
+        name: "{{ ecs_service_name }}-mft"
+        cluster: "{{ ecs_cluster_name }}"
+        state: present
+        load_balancers:
+          - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
+            containerName: "{{ ecs_task_name }}"
+            containerPort: "{{ ecs_task_container_port }}"
+        task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+        desired_count: 0
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: ecs_service_scale_down
+
     - name: scale down Fargate ECS service
       ecs_service:
         state: present
@@ -758,6 +820,14 @@
         state: absent
         cluster: "{{ ecs_cluster_name }}"
         name: "{{ ecs_service_name }}2"
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove mft ecs service
+      ecs_service:
+        state: absent
+        cluster: "{{ ecs_cluster_name }}"
+        name: "{{ ecs_service_name }}-mft"
         <<: *aws_connection_info
       ignore_errors: yes
 

@@ -132,6 +132,27 @@ options:
           - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.8.20.
         required: false
         version_added: 2.8
+    service_registries:
+        description:
+          - describes service disovery registries this service will register with.
+        required: false
+        version_added: 2.8
+        suboptions:
+            container_name:
+                description:
+                  - container name for service disovery registration
+            container_port:
+                description:
+                  - container port for service disovery registration
+            arn:
+                description:
+                  - Service discovery registry ARN
+    scheduling_strategy:
+        description:
+          - The scheduling strategy, defaults to "REPLICA" if not given to preserve previous behavior
+        required: false
+        version_added: 2.8
+        choices: ["DAEMON", "REPLICA"]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -435,6 +456,9 @@ class EcsServiceManager:
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         if force_new_deployment:
             params['forceNewDeployment'] = force_new_deployment
+        if healthcheck_grace_period:
+            params['healthCheckGracePeriodSeconds'] = healthcheck_grace_period
+
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
 
@@ -504,7 +528,7 @@ def main():
                                            ('launch_type', 'FARGATE', ['network_configuration'])],
                               required_together=[['load_balancers', 'role']])
 
-    if module.params['state'] == 'present' and module.params['scheduling_strategy']== 'REPLICA':
+    if module.params['state'] == 'present' and module.params['scheduling_strategy'] == 'REPLICA':
         if not module.params['desired_count']:
             module.fail_json(msg='state is present, scheduling_strategy is REPLICA; missing desired_count')
 
@@ -569,10 +593,13 @@ def main():
                     if 'containerPort' in loadBalancer:
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
+
                 if update:
                     # If boto is not up to snuff, getting params will fail;
                     # Move checks to where they matter vs generall at module level
+                    #So, boto3 of various versions supports various features.  Parameters that are not supported
 
+                    
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):
                             module.fail_json(msg='botocore needs to be version 1.10.37 or higher to use scheduling_strategy')
@@ -586,7 +613,7 @@ def main():
                             module.fail_json(msg="It is not possible to update the service registries of an existing service")
 
                     if (existing['loadBalancers'] or []) != loadBalancers:
-                        module.fail_json(msg="It is not possible to update the load balancers of an existing service")
+                        module.fail_json(msg="It is not possible to update the load balancers of an existing service", existing=existing, loadBalancers=loadBalancers)
 
                     # update required
                     response = service_mgr.update_service(module.params['name'],
