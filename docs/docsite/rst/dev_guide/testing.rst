@@ -11,7 +11,7 @@ Testing Ansible
 Why test your Ansible contributions?
 ====================================
 
-If you’re a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs, since we almost always prioritize bug fixing over feature development.
+If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs, since we almost always prioritize bug fixing over feature development.
 Even for non-developers, helping to test pull requests for bug fixes and features is still immensely valuable.
 
 Ansible users who understand writing playbooks and roles should be able to test their work.  GitHub pull requests with various types of tests that show bugs in action will help ensure that your contributions will be on track to be reviewed.  Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend those testing capabilities.
