@@ -27,19 +27,52 @@ if [ "${platform}" = "freebsd" ]; then
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 elif [ "${platform}" = "rhel" ]; then
-    while true; do
-        yum install -y \
-            gcc \
-            python-devel \
-            python-jinja2 \
-            python-virtualenv \
-            python2-cryptography \
-         && break
-         echo "Failed to install packages. Sleeping before trying again..."
-         sleep 10
-    done
+    if grep '8\.' /etc/redhat-release; then
+        while true; do
+            curl -o /etc/yum.repos.d/rhel-8-beta.repo http://downloads.redhat.com/redhat/rhel/rhel-8-beta/rhel-8-beta.repo
+            dnf config-manager --set-enabled rhel-8-for-x86_64-baseos-beta-rpms
+            dnf config-manager --set-enabled rhel-8-for-x86_64-appstream-beta-rpms
 
-    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+            yum -y module install python36
+
+            # FIXME
+            # HACK HACK HACK
+            #   RHEL8 doesn't have python2 by default but we need this path for
+            #   the tests to run
+            if ! [ -f /usr/bin/python]; then
+                ln -s /usr/bin/python3 /usr/bin/python &> /dev/null
+            fi
+            if ! [ -f /usr/bin/pip]; then
+                ln -s /usr/bin/pip3 /usr/bin/pip &> /dev/null
+            fi
+
+            yum install -y \
+                gcc \
+                python3-devel \
+                python3-jinja2 \
+                python3-virtualenv \
+                python3-cryptography \
+                iptables \
+             && break
+             echo "Failed to install packages. Sleeping before trying again..."
+             sleep 10
+        done
+        pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python3
+    else
+        while true; do
+            yum install -y \
+                gcc \
+                python-devel \
+                python-jinja2 \
+                python-virtualenv \
+                python2-cryptography \
+             && break
+             echo "Failed to install packages. Sleeping before trying again..."
+             sleep 10
+        done
+
+        pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+    fi
 fi
 
 if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then
