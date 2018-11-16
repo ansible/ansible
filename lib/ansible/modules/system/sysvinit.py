@@ -267,7 +267,7 @@ def main():
             # Perform enable/disable here
             if enabled:
                 if location.get('update-rc.d'):
-                    (rc, out, err) = module.run_command("%s %s enable" % (location['update-rc.d'], name))
+                    (rc, out, err) = module.run_command("%s %s defaults" % (location['update-rc.d'], name))
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s %s on" % (location['chkconfig'], name))
             else:
