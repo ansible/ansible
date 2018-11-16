@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" PN CLI vlan-create/vlan-delete """
+""" PN-CLI vrouter-ospf-add/remove """
 
 #
 # This file is part of Ansible
@@ -19,21 +19,24 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 ---
-module: pn_vlan
+module: pn_ospf
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-short_description: CLI command to create/delete a VLAN.
+short_description: CLI command to add/remove ospf protocol to a vRouter.
+deprecated:
+  removed_in: '2.8'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in ansible 2.9 instead.
 description:
-  - Execute vlan-create or vlan-delete command.
-  - VLANs are used to isolate network traffic at Layer 2.The VLAN identifiers
-    0 and 4095 are reserved and cannot be used per the IEEE 802.1Q standard.
-    The range of configurable VLAN identifiers is 2 through 4092.
+  - Execute vrouter-ospf-add, vrouter-ospf-remove command.
+  - This command adds/removes Open Shortest Path First(OSPF) routing
+    protocol to a virtual router(vRouter) service.
 options:
   pn_cliusername:
     description:
@@ -45,53 +48,40 @@ options:
     required: False
   pn_cliswitch:
     description:
-      - Target switch(es) to run the cli on.
+      - Target switch to run the CLI on.
     required: False
   state:
     description:
-      - State the action to perform. Use 'present' to create vlan and
-        'absent' to delete vlan.
+      - Assert the state of the ospf. Use 'present' to add ospf
+        and 'absent' to remove ospf.
     required: True
+    default: present
     choices: ['present', 'absent']
-  pn_vlanid:
+  pn_vrouter_name:
     description:
-      - Specify a VLAN identifier for the VLAN. This is a value between
-        2 and 4092.
+      - Specify the name of the vRouter.
     required: True
-  pn_scope:
+  pn_network_ip:
     description:
-      - Specify a scope for the VLAN.
-      - Required for vlan-create.
-    choices: ['fabric', 'local']
-  pn_description:
+      - Specify the network IP (IPv4 or IPv6) address.
+    required: True
+  pn_ospf_area:
     description:
-      - Specify a description for the VLAN.
-  pn_stats:
-    description:
-      - Specify if you want to collect statistics for a VLAN. Statistic
-        collection is enabled by default.
-  pn_ports:
-    description:
-      - Specifies the switch network data port number, list of ports, or range
-        of ports. Port numbers must ne in the range of 1 to 64.
-  pn_untagged_ports:
-    description:
-      - Specifies the ports that should have untagged packets mapped to the
-        VLAN. Untagged packets are packets that do not contain IEEE 802.1Q VLAN
-        tags.
+    - Stub area number for the configuration. Required for vrouter-ospf-add.
 """
 
 EXAMPLES = """
-- name: create a VLAN
-  pn_vlan:
-    state: 'present'
-    pn_vlanid: 1854
-    pn_scope: fabric
+- name: "Add OSPF to vrouter"
+  pn_ospf:
+    state: present
+    pn_vrouter_name: name-string
+    pn_network_ip: 192.168.11.2/24
+    pn_ospf_area: 1.0.0.0
 
-- name: delete VLANs
-  pn_vlan:
-    state: 'absent'
-    pn_vlanid: 1854
+- name: "Remove OSPF from vrouter"
+  pn_ospf:
+    state: absent
+    pn_vrouter_name: name-string
 """
 
 RETURN = """
@@ -100,11 +90,11 @@ command:
   returned: always
   type: str
 stdout:
-  description: The set of responses from the vlan command.
+  description: The set of responses from the ospf command.
   returned: always
   type: list
 stderr:
-  description: The set of error responses from the vlan command.
+  description: The set of error responses from the ospf command.
   returned: on error
   type: list
 changed:
@@ -118,9 +108,8 @@ import shlex
 # AnsibleModule boilerplate
 from ansible.module_utils.basic import AnsibleModule
 
-VLAN_EXISTS = None
-MAX_VLAN_ID = 4092
-MIN_VLAN_ID = 2
+VROUTER_EXISTS = None
+NETWORK_EXISTS = None
 
 
 def pn_cli(module):
@@ -148,26 +137,43 @@ def pn_cli(module):
 
 def check_cli(module, cli):
     """
-    This method checks for idempotency using the vlan-show command.
-    If a vlan with given vlan id exists, return VLAN_EXISTS as True else False.
+    This method checks if vRouter exists on the target node.
+    This method also checks for idempotency using the vrouter-ospf-show command.
+    If the given vRouter exists, return VROUTER_EXISTS as True else False.
+    If an OSPF network with the given ip exists on the given vRouter,
+    return NETWORK_EXISTS as True else False.
+
     :param module: The Ansible module to fetch input parameters
     :param cli: The CLI string
-    :return Global Booleans: VLAN_EXISTS
+    :return Global Booleans: VROUTER_EXISTS, NETWORK_EXISTS
     """
-    vlanid = module.params['pn_vlanid']
+    vrouter_name = module.params['pn_vrouter_name']
+    network_ip = module.params['pn_network_ip']
+    # Global flags
+    global VROUTER_EXISTS, NETWORK_EXISTS
 
-    show = cli + \
-        ' vlan-show id %s format id,scope no-show-headers' % str(vlanid)
+    # Check for vRouter
+    check_vrouter = cli + ' vrouter-show format name no-show-headers '
+    check_vrouter = shlex.split(check_vrouter)
+    out = module.run_command(check_vrouter)[1]
+    out = out.split()
+
+    if vrouter_name in out:
+        VROUTER_EXISTS = True
+    else:
+        VROUTER_EXISTS = False
+
+    # Check for OSPF networks
+    show = cli + ' vrouter-ospf-show vrouter-name %s ' % vrouter_name
+    show += 'format network no-show-headers'
     show = shlex.split(show)
     out = module.run_command(show)[1]
-
     out = out.split()
-    # Global flags
-    global VLAN_EXISTS
-    if str(vlanid) in out:
-        VLAN_EXISTS = True
+
+    if network_ip in out:
+        NETWORK_EXISTS = True
     else:
-        VLAN_EXISTS = False
+        NETWORK_EXISTS = False
 
 
 def run_cli(module, cli):
@@ -180,16 +186,13 @@ def run_cli(module, cli):
     cliswitch = module.params['pn_cliswitch']
     state = module.params['state']
     command = get_command_from_state(state)
-
     cmd = shlex.split(cli)
-    # 'out' contains the output
-    # 'err' contains the error messages
+
     result, out, err = module.run_command(cmd)
 
     print_cli = cli.split(cliswitch)[1]
 
     # Response in JSON format
-
     if result != 0:
         module.exit_json(
             command=print_cli,
@@ -222,9 +225,9 @@ def get_command_from_state(state):
     """
     command = None
     if state == 'present':
-        command = 'vlan-create'
+        command = 'vrouter-ospf-add'
     if state == 'absent':
-        command = 'vlan-delete'
+        command = 'vrouter-ospf-remove'
     return command
 
 
@@ -235,76 +238,60 @@ def main():
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state=dict(required=True, type='str',
-                       choices=['present', 'absent']),
-            pn_vlanid=dict(required=True, type='int'),
-            pn_scope=dict(type='str', choices=['fabric', 'local']),
-            pn_description=dict(type='str'),
-            pn_stats=dict(type='bool'),
-            pn_ports=dict(type='str'),
-            pn_untagged_ports=dict(type='str')
+            state=dict(type='str', default='present', choices=['present',
+                                                               'absent']),
+            pn_vrouter_name=dict(required=True, type='str'),
+            pn_network_ip=dict(required=True, type='str'),
+            pn_ospf_area=dict(type='str')
         ),
         required_if=(
-            ["state", "present", ["pn_vlanid", "pn_scope"]],
-            ["state", "absent", ["pn_vlanid"]]
+            ['state', 'present',
+             ['pn_network_ip', 'pn_ospf_area']],
+            ['state', 'absent', ['pn_network_ip']]
         )
     )
 
     # Accessing the arguments
     state = module.params['state']
-    vlanid = module.params['pn_vlanid']
-    scope = module.params['pn_scope']
-    description = module.params['pn_description']
-    stats = module.params['pn_stats']
-    ports = module.params['pn_ports']
-    untagged_ports = module.params['pn_untagged_ports']
+    vrouter_name = module.params['pn_vrouter_name']
+    network_ip = module.params['pn_network_ip']
+    ospf_area = module.params['pn_ospf_area']
 
     command = get_command_from_state(state)
 
     # Building the CLI command string
     cli = pn_cli(module)
+    check_cli(module, cli)
 
-    if not MIN_VLAN_ID <= vlanid <= MAX_VLAN_ID:
-        module.exit_json(
-            msg="VLAN id must be between 2 and 4092",
-            changed=False
-        )
-
-    if command == 'vlan-create':
-
-        check_cli(module, cli)
-        if VLAN_EXISTS is True:
+    if state == 'present':
+        if VROUTER_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg='VLAN with id %s already exists' % str(vlanid)
+                msg='vRouter %s does not exist' % vrouter_name
             )
-
-        cli += ' %s id %s scope %s ' % (command, str(vlanid), scope)
-
-        if description:
-            cli += ' description ' + description
-
-        if stats is True:
-            cli += ' stats '
-        if stats is False:
-            cli += ' no-stats '
-
-        if ports:
-            cli += ' ports ' + ports
-
-        if untagged_ports:
-            cli += ' untagged-ports ' + untagged_ports
-
-    if command == 'vlan-delete':
-
-        check_cli(module, cli)
-        if VLAN_EXISTS is False:
+        if NETWORK_EXISTS is True:
             module.exit_json(
                 skipped=True,
-                msg='VLAN with id %s does not exist' % str(vlanid)
+                msg=('OSPF with network ip %s already exists on %s'
+                     % (network_ip, vrouter_name))
             )
+        cli += (' %s vrouter-name %s network %s ospf-area %s'
+                % (command, vrouter_name, network_ip, ospf_area))
 
-        cli += ' %s id %s ' % (command, str(vlanid))
+    if state == 'absent':
+        if VROUTER_EXISTS is False:
+            module.exit_json(
+                skipped=True,
+                msg='vRouter %s does not exist' % vrouter_name
+            )
+        if NETWORK_EXISTS is False:
+            module.exit_json(
+                skipped=True,
+                msg=('OSPF with network ip %s already exists on %s'
+                     % (network_ip, vrouter_name))
+            )
+        cli += (' %s vrouter-name %s network %s'
+                % (command, vrouter_name, network_ip))
 
     run_cli(module, cli)
 

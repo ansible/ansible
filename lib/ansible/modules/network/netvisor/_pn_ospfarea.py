@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_ospfarea
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to add/remove ospf area to/from a vrouter.
+deprecated:
+  removed_in: '2.8'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in ansible 2.9 instead.
 description:
   - Execute vrouter-ospf-add, vrouter-ospf-remove command.
   - This command adds/removes Open Shortest Path First(OSPF) area to/from
