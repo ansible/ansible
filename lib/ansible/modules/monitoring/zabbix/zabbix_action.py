@@ -479,6 +479,8 @@ class Action(object):
 
     def update_action(self, **kwargs):
         try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
             kwargs['actionid'] = kwargs.pop('action_id')
             return self._zapi.action.update(kwargs)
         except Exception as e:
@@ -486,6 +488,8 @@ class Action(object):
 
     def add_action(self, **kwargs):
         try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
             parameters = self._construct_parameters(**kwargs)
             action_list = self._zapi.action.create(parameters)
             return action_list['actionids'][0]
@@ -494,6 +498,8 @@ class Action(object):
 
     def delete_action(self, action_id):
         try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
             return self._zapi.action.delete([action_id])
         except Exception as e:
             self._module.fail_json(msg="Failed to delete action '%s': %s" % (action_id, e))
