@@ -1,0 +1,82 @@
+---
+
+- name: get an existance of the PSGallery and its InstallationPolicy
+  win_shell: '(Get-PSRepository -Name PSGallery).InstallationPolicy'
+  register: policy
+  changed_when: false
+
+- debug:
+    msg: '{{ policy.stdout | trim }}'
+  register: policy
+
+- name: check setting of InstallationPolicy
+  win_psrepository:
+    name: PSGallery
+    installation_policy: trusted
+  when: policy.msg == "Untrusted"
+  register: change_installation_policy_1
+
+- name: test check setting of InstallationPolicy
+  assert:
+    that:
+      - "change_installation_policy_1 is changed"
+      - "change_installation_policy_1.output == 'The InstallationPolicy for the repository PSGallery was changed to trusted.'"
+
+- name: check setting of InstallationPolicy idempotency
+  win_psrepository:
+    name: PSGallery
+    installation_policy: trusted
+  register: change_installation_policy_2
+
+- name: test check setting of InstallationPolicy idempotency
+  assert:
+    that:
+      - "change_installation_policy_2 is not changed"
+
+- name: check adding of repository
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source_location: "{{ repository_sourcelocation }}"
+    state: present
+  register: adding_repository_1
+
+- name: test adding of repository
+  assert:
+      that:
+        - "adding_repository_1 is changed"
+        - "adding_repository_1.output == 'The repository {{ repository_name }} with the SourceLocation {{ repository_sourcelocation }} was registered.'"
+
+- name: check adding of repository idempotency
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source_location: "{{ repository_sourcelocation }}"
+    state: present
+  register: adding_repository_2
+
+- name: test adding of repository idempotency
+  assert:
+      that:
+        - "adding_repository_2 is not changed"
+
+- name: check removing of repository
+  win_psrepository:
+    name: "{{ repository_name }}"
+    state: absent
+  register: removing_repository_1
+
+- name: test removing of repository
+  assert:
+    that:
+      - "removing_repository_1 is changed"
+      - "removing_repository_1.output == 'The repository {{ repository_name }} was unregistered.'"
+
+- name: check removing of repository idempotency
+  win_psrepository:
+    name: "{{ repository_name }}"
+    state: absent
+  register: removing_repository_2
+
+- name: test removing of repository idempotency
+  assert:
+    that:
+      - "removing_repository_2 is not changed"
