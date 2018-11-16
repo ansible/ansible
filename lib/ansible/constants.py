@@ -103,6 +103,7 @@ DEFAULT_SUDO_PASS = None
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
 DEFAULT_SU_PASS = None
+DEFAULT_VERBOSITY = 0
 # FIXME: expand to other plugins, but never doc fragments
 CONFIGURABLE_PLUGINS = ('cache', 'callback', 'connection', 'inventory', 'lookup', 'shell', 'cliconf', 'httpapi')
 # NOTE: always update the docs/docsite/Makefile to match
