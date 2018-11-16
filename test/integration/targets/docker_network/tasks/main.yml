@@ -18,7 +18,7 @@
     docker_container:
       name: "{{ item }}"
       state: absent
-      stop_timeout: 1
+      force_kill: yes
     loop: "{{ cnames }}"
   - name: "Make sure all networks are removed"
     docker_network:

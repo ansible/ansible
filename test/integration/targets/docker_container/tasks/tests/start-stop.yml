@@ -122,12 +122,13 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
 
 - name: Start container from scratch (check)
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   check_mode: yes
@@ -137,6 +138,7 @@
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   register: start_scratch_2
@@ -145,6 +147,7 @@
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   register: start_scratch_3
@@ -153,6 +156,7 @@
   docker_container:
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
     name: "{{ cname }}"
     state: started
   check_mode: yes
@@ -262,7 +266,7 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   check_mode: yes
   register: remove_from_running_1
 
@@ -270,21 +274,21 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   register: remove_from_running_2
 
 - name: Remove container from running (idempotent)
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   register: remove_from_running_3
 
 - name: Remove container from running (idempotent check)
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
   check_mode: yes
   register: remove_from_running_4
 

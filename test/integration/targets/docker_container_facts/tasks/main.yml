@@ -8,7 +8,7 @@
     docker_container:
       name: "{{ cname }}"
       state: absent
-      stop_timeout: 1
+      force_kill: yes
 
   - name: Inspect a non-present container
     docker_container_facts:
@@ -28,7 +28,7 @@
       command: '/bin/sh -c "sleep 10m"'
       state: started
       auto_remove: yes
-      stop_timeout: 1
+      force_kill: yes
 
   - name: Inspect a present container
     docker_container_facts:
@@ -49,7 +49,7 @@
     docker_container:
       name: "{{ cname }}"
       state: absent
-      stop_timeout: 1
+      force_kill: yes
 
   - assert:
       that:
