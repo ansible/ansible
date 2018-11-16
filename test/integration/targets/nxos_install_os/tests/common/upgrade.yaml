@@ -26,7 +26,7 @@
 - set_fact: ki='n3000-uk9-kickstart.6.0.2.U6.1a.bin'
 
 - name: Upgrade to U6.1a
- include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
+  include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
 
 #---------------------------------------------------------#
 # Upgrade to 6.0(2)U6(2a)                                 #
@@ -36,7 +36,7 @@
 - set_fact: ki='n3000-uk9-kickstart.6.0.2.U6.2a.bin'
 
 - name: Upgrade to U6.2a
- include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
+  include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
 
 #---------------------------------------------------------#
 # Upgrade to 6.0(2)U6(3a)                                 #
@@ -55,6 +55,6 @@
 - set_fact: si='nxos.7.0.3.I7.2.bin'
 
 - name: Upgrade to 7.0.3.I7.2
- include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
+  include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
 
 - debug: msg="END connection={{ ansible_connection }} nxos_os_install upgrade"

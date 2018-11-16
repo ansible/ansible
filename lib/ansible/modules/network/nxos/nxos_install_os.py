@@ -580,7 +580,7 @@ def main():
     install_result = do_install_all(module, issu, sif, kick=kif)
     if install_result['error']:
         cmd = install_result['upgrade_cmd']
-        msg = "Failed to upgrade device using command: {}".format(cmd)
+        msg = 'Failed to upgrade device using command: %s' % cmd
         module.fail_json(msg=msg, raw_data=install_result['list_data'])
 
     state = install_result['processed']
