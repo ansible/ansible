@@ -29,7 +29,7 @@ options:
   source_location:
     description:
       - URL of the custom repository to register.
-    aliasses:
+    aliases:
       - url
   state:
     description:
@@ -44,6 +44,7 @@ options:
     default: trusted
 notes:
   - Windows PowerShell 5.0 or higher is needed.
+  - The NuGet package provider version 2.8.5.201 or newer is required.
   - You can't use M(win_psrepository) to re-register (add) removed PSGallery, use the command `Register-PSRepository -Default` instead.
 author:
 - Wojciech Sciesinski (@it-praktyk)

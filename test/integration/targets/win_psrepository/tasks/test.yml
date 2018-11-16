@@ -1,5 +1,8 @@
 ---
 
+- name: install updated NuGet version
+  win_shell: 'Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force'
+
 - name: get an existance of the PSGallery and its InstallationPolicy
   win_shell: '(Get-PSRepository -Name PSGallery).InstallationPolicy'
   register: policy

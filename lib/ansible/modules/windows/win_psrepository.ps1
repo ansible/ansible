@@ -10,8 +10,8 @@
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 
-$name = Get-AnsibleParam -obj $params -name "name" -type "str" -aliasses "repository" -failifempty $true
-$url = Get-AnsibleParam -obj $params -name "source_location" -type "str" -aliasses "url"
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -aliases "repository" -failifempty $true
+$url = Get-AnsibleParam -obj $params -name "source_location" -type "str" -aliases "url"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
@@ -90,6 +90,9 @@ if ($PsVersion.Major -lt 5){
     $ErrorMessage = "Windows PowerShell 5.0 or higher is needed."
     Fail-Json $result $ErrorMessage
 }
+
+# Check NuGet version, fail if < 2.8.5.201
+$NugetVersion = (Get-PackageProvider -Name Nuget).Version
 
 $Repos = Get-PSRepository
 
