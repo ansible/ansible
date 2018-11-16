@@ -60,7 +60,8 @@ FACE_ID = dict(
 NO_DEFAULT_ID = set([
     'primary_ip',
     'primary_ip4',
-    'primary_ip6'
+    'primary_ip6',
+    'vrf'
 ])
 
 DEVICE_STATUS = dict(
@@ -125,10 +126,10 @@ def find_ids(nb, data):
             else:
                 query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
 
-            if k in NO_DEFAULT_ID:
+            if query_id:
+               data[k] = query_id.id
+            elif k in NO_DEFAULT_ID:
                 pass
-            elif query_id:
-                data[k] = query_id.id
             else:
                 data[k] = 1
     return data
