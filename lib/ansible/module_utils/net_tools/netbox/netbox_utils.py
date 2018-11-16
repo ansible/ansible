@@ -127,7 +127,7 @@ def find_ids(nb, data):
                 query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
 
             if query_id:
-               data[k] = query_id.id
+                data[k] = query_id.id
             elif k in NO_DEFAULT_ID:
                 pass
             else:
