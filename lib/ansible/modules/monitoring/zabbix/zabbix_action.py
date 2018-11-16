@@ -472,15 +472,15 @@ class Action(object):
         }
 
     def check_difference(self, **kwargs):
-        existing_action = self._zapi_wrapper.check_if_action_exists(kwargs['name'])[0]
-        parameters = self._construct_parameters(**kwargs)
+        existing_action = convert_unicode_to_str(self._zapi_wrapper.check_if_action_exists(kwargs['name'])[0])
+        parameters = convert_unicode_to_str(self._construct_parameters(**kwargs))
         change_parameters = {}
         return cleanup_data(compare_dictionaries(parameters, existing_action, change_parameters))
 
     def update_action(self, **kwargs):
         try:
             if self._module.check_mode:
-                self._module.exit_json(changed=True)
+                self._module.exit_json(msg="Action would be updated if check mode was not specified: %s" % kwargs, changed=True)
             kwargs['actionid'] = kwargs.pop('action_id')
             return self._zapi.action.update(kwargs)
         except Exception as e:
@@ -489,7 +489,7 @@ class Action(object):
     def add_action(self, **kwargs):
         try:
             if self._module.check_mode:
-                self._module.exit_json(changed=True)
+                self._module.exit_json(msg="Action would be added if check mode was not specified", changed=True)
             parameters = self._construct_parameters(**kwargs)
             action_list = self._zapi.action.create(parameters)
             return action_list['actionids'][0]
@@ -499,7 +499,7 @@ class Action(object):
     def delete_action(self, action_id):
         try:
             if self._module.check_mode:
-                self._module.exit_json(changed=True)
+                self._module.exit_json(msg="Action would be deleted if check mode was not specified", changed=True)
             return self._zapi.action.delete([action_id])
         except Exception as e:
             self._module.fail_json(msg="Failed to delete action '%s': %s" % (action_id, e))
@@ -888,6 +888,15 @@ class Filter(object):
                 "operator": self._construct_operator(cond)
             })
         return cleanup_data(constructed_data)
+
+
+def convert_unicode_to_str(data):
+    if isinstance(data, basestring):
+        return str(data)
+    elif isinstance(data, dict):
+        return dict(map(convert_unicode_to_str, data.items()))
+    elif isinstance(data, (list,tuple,set)):
+        return type(data)(map(convert_unicode_to_str, data))
 
 
 def map_to_int(strs, value):
