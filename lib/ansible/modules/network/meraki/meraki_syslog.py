@@ -75,12 +75,43 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
-- name: Query Syslog configurations on network named MyNet in the YourOrg organization
-  meraki_snmp:
+- name: Query syslog configurations on network named MyNet in the YourOrg organization
+  meraki_syslog:
     auth_key: abc12345
     status: query
     org_name: YourOrg
     net_name: MyNet
+  delegate_to: localhost
+
+- name: Add single syslog server with Appliance event log role
+  meraki_syslog:
+    auth_key: abc12345
+    status: query
+    org_name: YourOrg
+    net_name: MyNet
+    servers:
+      - host: 192.0.1.2
+        port: 514
+        roles:
+          - Appliance event log
+  delegate_to: localhost
+
+- name: Add multiple syslog servers
+  meraki_syslog:
+    auth_key: abc12345
+    status: query
+    org_name: YourOrg
+    net_name: MyNet
+    servers:
+      - host: 192.0.1.2
+        port: 514
+        roles:
+          - Appliance event log
+      - host: 192.0.1.3
+        port: 514
+        roles:
+          - Appliance event log
+          - Flows
   delegate_to: localhost
 '''
 
