@@ -164,26 +164,26 @@ EXAMPLES = r'''
 - name: Create a vCMP guest
   bigip_vcmp_guest:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
     mgmt_network: bridge
     mgmt_address: 10.20.30.40/24
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create a vCMP guest with specific VLANs
   bigip_vcmp_guest:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
     mgmt_network: bridge
     mgmt_address: 10.20.30.40/24
     vlans:
       - vlan1
       - vlan2
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove vCMP guest and disk
@@ -191,6 +191,10 @@ EXAMPLES = r'''
     name: guest1
     state: absent
     delete_virtual_disk: yes
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   register: result
 '''
 
@@ -361,7 +365,7 @@ class ModuleParameters(Parameters):
         )
 
     def initial_image_exists(self, image):
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/images/".format(
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/image/".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
@@ -436,7 +440,7 @@ class Difference(object):
         want = self.want.mgmt_tuple
         if want.subnet is None:
             raise F5ModuleError(
-                "A subnet must be specified when changing the mgmt_address"
+                "A subnet must be specified when changing the mgmt_address."
             )
         if self.want.mgmt_address != self.have.mgmt_address:
             return self.want.mgmt_address
@@ -776,8 +780,8 @@ class ModuleManager(object):
         result = parseStats(response)
 
         if 'stats' in result:
-            if result['requestedState']['description'] == 'provisioned':
-                if result['vmStatus']['description'] == 'stopped':
+            if result['stats']['requestedState'] == 'provisioned':
+                if result['stats']['vmStatus'] == 'stopped':
                     return True
         return False
 
@@ -805,8 +809,8 @@ class ModuleManager(object):
         result = parseStats(response)
 
         if 'stats' in result:
-            if result['requestedState']['description'] == 'deployed':
-                if result['vmStatus']['description'] == 'running':
+            if result['stats']['requestedState'] == 'deployed':
+                if result['stats']['vmStatus'] == 'running':
                     return True
         return False
 
