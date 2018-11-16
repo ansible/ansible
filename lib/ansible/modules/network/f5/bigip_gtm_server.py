@@ -204,6 +204,67 @@ options:
         just as an object name (C(foo)).
       - In C(TMOS) version C(12.x) prober_pool can be set to empty string to revert to default setting of inherit.
     version_added: 2.8
+  limits:
+    description:
+      - Specifies resource thresholds or limit requirements at the pool member level.
+      - When you enable one or more limit settings, the system then uses that data to take
+        members in and out of service.
+      - You can define limits for any or all of the limit settings. However, when a
+        member does not meet the resource threshold limit requirement, the system marks
+        the member as unavailable and directs load-balancing traffic to another resource.
+    version_added: 2.8
+    suboptions:
+      bits_enabled:
+        description:
+          - Whether the bits limit it enabled or not.
+          - This parameter allows you to switch on or off the effect of the limit.
+        type: bool
+      packets_enabled:
+        description:
+          - Whether the packets limit it enabled or not.
+          - This parameter allows you to switch on or off the effect of the limit.
+        type: bool
+      connections_enabled:
+        description:
+          - Whether the current connections limit it enabled or not.
+          - This parameter allows you to switch on or off the effect of the limit.
+        type: bool
+      cpu_enabled:
+        description:
+          - Whether the CPU limit it enabled or not.
+          - This parameter allows you to switch on or off the effect of the limit.
+        type: bool
+      memory_enabled:
+        description:
+          - Whether the memory limit it enabled or not.
+          - This parameter allows you to switch on or off the effect of the limit.
+        type: bool
+      bits_limit:
+        description:
+          - Specifies the maximum allowable data throughput rate, in bits per second,
+            for the member.
+          - If the network traffic volume exceeds this limit, the system marks the
+            member as unavailable.
+      packets_limit:
+        description:
+          - Specifies the maximum allowable data transfer rate, in packets per second,
+            for the member.
+          - If the network traffic volume exceeds this limit, the system marks the
+            member as unavailable.
+      connections_limit:
+        description:
+          - Specifies the maximum number of concurrent connections, combined, for all of
+            the member.
+          - If the connections exceed this limit, the system marks the server as
+            unavailable.
+      cpu_limit:
+        description:
+          - Specifies the percent of CPU usage.
+          - If percent of CPU usage goes above the limit, the system marks the server as unavailable.
+      memory_limit:
+        description:
+          - Specifies the available memory required by the virtual servers on the server.
+          - If available memory falls below this limit, the system marks the server as unavailable.
 extends_documentation_fragment: f5
 author:
   - Robert Teller
@@ -261,6 +322,26 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+bits_enabled:
+  description: Whether the bits limit is enabled.
+  returned: changed
+  type: bool
+  sample: yes
+bits_limit:
+  description: The new bits_enabled limit.
+  returned: changed
+  type: int
+  sample: 100
+connections_enabled:
+  description: Whether the connections limit is enabled.
+  returned: changed
+  type: bool
+  sample: yes
+connections_limit:
+  description: The new connections_limit limit.
+  returned: changed
+  type: int
+  sample: 100
 monitors:
   description: The new list of monitors for the resource.
   returned: changed
@@ -286,6 +367,16 @@ datacenter:
   returned: changed
   type: string
   sample: datacenter01
+packets_enabled:
+  description: Whether the packets limit is enabled.
+  returned: changed
+  type: bool
+  sample: yes
+packets_limit:
+  description: The new packets_limit limit.
+  returned: changed
+  type: int
+  sample: 100
 '''
 
 import re
@@ -343,6 +434,16 @@ class Parameters(AnsibleF5Parameters):
         'proberPreference': 'prober_preference',
         'proberPool': 'prober_pool',
         'proberFallback': 'prober_fallback',
+        'limitMaxBps': 'bits_limit',
+        'limitMaxBpsStatus': 'bits_enabled',
+        'limitMaxConnections': 'connections_limit',
+        'limitMaxConnectionsStatus': 'connections_enabled',
+        'limitMaxPps': 'packets_limit',
+        'limitMaxPpsStatus': 'packets_enabled',
+        'limitCpuUsage': 'cpu_limit',
+        'limitCpuUsageStatus': 'cpu_enabled',
+        'limitMemAvail': 'memory_limit',
+        'limitMemAvailStatus': 'memory_enabled',
     }
 
     api_attributes = [
@@ -360,6 +461,16 @@ class Parameters(AnsibleF5Parameters):
         'proberPreference',
         'proberPool',
         'proberFallback',
+        'limitMaxBps',
+        'limitMaxBpsStatus',
+        'limitMaxConnections',
+        'limitMaxConnectionsStatus',
+        'limitMaxPps',
+        'limitMaxPpsStatus',
+        'limitCpuUsage',
+        'limitCpuUsageStatus',
+        'limitMemAvail',
+        'limitMemAvailStatus',
     ]
 
     updatables = [
@@ -375,6 +486,16 @@ class Parameters(AnsibleF5Parameters):
         'prober_preference',
         'prober_pool',
         'prober_fallback',
+        'bits_enabled',
+        'bits_limit',
+        'connections_enabled',
+        'connections_limit',
+        'packets_enabled',
+        'packets_limit',
+        'cpu_enabled',
+        'cpu_limit',
+        'memory_enabled',
+        'memory_limit',
     ]
 
     returnables = [
@@ -392,6 +513,16 @@ class Parameters(AnsibleF5Parameters):
         'prober_preference',
         'prober_pool',
         'prober_fallback',
+        'bits_enabled',
+        'bits_limit',
+        'connections_enabled',
+        'connections_limit',
+        'packets_enabled',
+        'packets_limit',
+        'cpu_enabled',
+        'cpu_limit',
+        'memory_enabled',
+        'memory_limit',
     ]
 
 
@@ -560,6 +691,22 @@ class ApiParameters(Parameters):
 
 
 class ModuleParameters(Parameters):
+    def _get_limit_value(self, type):
+        if self._values['limits'] is None:
+            return None
+        if self._values['limits'][type] is None:
+            return None
+        return int(self._values['limits'][type])
+
+    def _get_limit_status(self, type):
+        if self._values['limits'] is None:
+            return None
+        if self._values['limits'][type] is None:
+            return None
+        if self._values['limits'][type]:
+            return 'enabled'
+        return 'disabled'
+
     @property
     def devices(self):
         if self._values['devices'] is None:
@@ -716,6 +863,46 @@ class ModuleParameters(Parameters):
         if self._values['prober_fallback'] == 'any':
             return 'any-available'
         return self._values['prober_fallback']
+
+    @property
+    def bits_limit(self):
+        return self._get_limit_value('bits_limit')
+
+    @property
+    def packets_limit(self):
+        return self._get_limit_value('packets_limit')
+
+    @property
+    def connections_limit(self):
+        return self._get_limit_value('connections_limit')
+
+    @property
+    def cpu_limit(self):
+        return self._get_limit_value('cpu_limit')
+
+    @property
+    def memory_limit(self):
+        return self._get_limit_value('memory_limit')
+
+    @property
+    def bits_enabled(self):
+        return self._get_limit_status('bits_enabled')
+
+    @property
+    def packets_enabled(self):
+        return self._get_limit_status('packets_enabled')
+
+    @property
+    def connections_enabled(self):
+        return self._get_limit_status('connections_enabled')
+
+    @property
+    def cpu_enabled(self):
+        return self._get_limit_status('cpu_enabled')
+
+    @property
+    def memory_enabled(self):
+        return self._get_limit_status('memory_enabled')
 
 
 class Changes(Parameters):
@@ -1505,6 +1692,21 @@ class ArgumentSpec(object):
                     ['type', 'at_least', ['at_least']],
                     ['type', 'require', ['number_of_probes', 'number_of_probers']]
                 ]
+            ),
+            limits=dict(
+                type='dict',
+                options=dict(
+                    bits_enabled=dict(type='bool'),
+                    packets_enabled=dict(type='bool'),
+                    connections_enabled=dict(type='bool'),
+                    cpu_enabled=dict(type='bool'),
+                    memory_enabled=dict(type='bool'),
+                    bits_limit=dict(type='int'),
+                    packets_limit=dict(type='int'),
+                    connections_limit=dict(type='int'),
+                    cpu_limit=dict(type='int'),
+                    memory_limit=dict(type='int'),
+                )
             ),
             monitors=dict(type='list'),
             prober_preference=dict(
