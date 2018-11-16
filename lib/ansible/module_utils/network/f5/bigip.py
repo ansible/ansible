@@ -7,15 +7,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import re
-
-try:
-    from f5.bigip import ManagementRoot
-    from icontrol.exceptions import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
-
 try:
     from library.module_utils.network.f5.common import F5BaseClient
     from library.module_utils.network.f5.common import F5ModuleError
@@ -24,34 +15,6 @@ except ImportError:
     from ansible.module_utils.network.f5.common import F5BaseClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.icontrol import iControlRestSession
-
-
-class F5Client(F5BaseClient):
-    def __init__(self, *args, **kwargs):
-        super(F5Client, self).__init__(*args, **kwargs)
-        self.provider = self.merge_provider_params()
-
-    @property
-    def api(self):
-        if self._client:
-            return self._client
-
-        try:
-            result = ManagementRoot(
-                self.provider['server'],
-                self.provider['user'],
-                self.provider['password'],
-                port=self.provider['server_port'],
-                verify=self.provider['validate_certs'],
-                token='tmos'
-            )
-            self._client = result
-            return self._client
-        except Exception as ex:
-            error = 'Unable to connect to {0} on port {1}. The reported error was "{2}".'.format(
-                self.provider['server'], self.provider['server_port'], str(ex)
-            )
-            raise F5ModuleError(error)
 
 
 class F5RestClient(F5BaseClient):
