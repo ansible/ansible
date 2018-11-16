@@ -20,15 +20,18 @@ short_description: Manage syslog server settings in the Meraki cloud.
 version_added: "2.8"
 description:
 - Allows for creation and management of Syslog servers within Meraki.
-
+notes:
+- Changes to existing syslog servers replaces existing configuration. If you need to add to an existing configuration \
+perform a C(state: query) to gather the existing configuration and then modify or add.
 options:
     auth_key:
         description:
         - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
     state:
         description:
-        - Create or modify an organization.
-        choices: [absent, present, query]
+        - Query or edit syslog servers
+        - To delete a syslog server, do not include server in list of servers
+        choices: [present, query]
         default: present
     net_name:
         description:
@@ -130,20 +133,23 @@ def construct_tags(tags):
         return tag_list
     return None
 
-def validate_roles(meraki, data):
-    ''' Validates whether provided rules are valid '''
-    valid_roles = ['WIRELESS EVENT LOG',
-                   'APPLIANCE EVENT LOG',
-                   'SWITCH EVENT LOG',
-                   'AIR MARSHAL EVENTS',
-                   'FLOWS',
-                   'URLS',
-                   'IDS ALERTS',
-                   'SECURITY EVENTS']
-    for server in data['servers']:
-        for role in server['roles']:
-            if role.upper() not in valid_roles:
-                meraki.fail_json(msg='{0} is not a valid Syslog role.'.format(role))
+# This code was used but relying on API and/or server_arg_spec instead
+# def validate_roles(meraki, data):
+#     ''' Validates whether provided rules are valid '''
+#     valid_roles = ['WIRELESS EVENT LOG',
+#                    'APPLIANCE EVENT LOG',
+#                    'SWITCH EVENT LOG',
+#                    'AIR MARSHAL EVENTS',
+#                    'FLOWS',
+#                    'URLS',
+#                    'IDS ALERTS',
+#                    'SECURITY EVENTS']
+#     for server in data['servers']:
+#         for role in server['roles']:
+#             if role.upper() not in valid_roles:
+#                 # meraki.fail_json(msg="Heck yes")
+#                 meraki.fail_json(msg='{0} is not a valid Syslog role.'.format(role))
+
 
 def main():
 
@@ -152,13 +158,21 @@ def main():
 
     server_arg_spec = dict(host=dict(type='str'),
                            port=dict(type='str', default="514"),
-                           roles=dict(type='list'),
+                           roles=dict(type='list', choices=['Wireless Event log',
+                                                            'Appliance event log',
+                                                            'Switch event log',
+                                                            'Air Marshal events',
+                                                            'Flows',
+                                                            'URLs',
+                                                            'IDS alerts',
+                                                            'Security events',
+                                                            ]),
                            )
 
     argument_spec = meraki_argument_spec()
     argument_spec.update(net_id=dict(type='str'),
                          servers=dict(type='list', element='dict', options=server_arg_spec),
-                         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
+                         state=dict(type='str', choices=['present', 'query'], default='present'),
                          net_name=dict(type='str', aliases=['name', 'network']),
                          )
 
@@ -222,30 +236,12 @@ def main():
             original = dict()
             original['servers'] = r
 
-        validate_roles(meraki, payload)
-        # meraki.fail_json(msg="Payload comparison", original=original, proposed=payload)
         if meraki.is_update_required(original, payload):
             path = meraki.construct_path('query_update', net_id=net_id)
             r = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
                 meraki.result['data'] = r
                 meraki.result['changed'] = True
-    elif meraki.params['state'] == 'absent':
-        # Construct payload
-        payload = dict()
-
-        path = meraki.construct_path('query_update', net_id=net_id)
-        r = meraki.request(path, method='GET')
-        if meraki.status == 200:
-            original = r
-
-        if meraki.is_update_required(original, payload):
-            path = meraki.construct_path('query_update', net_id=net_id)
-            r = meraki.request(path, method='PUT', payload=json.dumps(payload))
-            if meraki.status == 200:
-                meraki.result['data'] = r
-                meraki.result['changed'] = True        
-
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
