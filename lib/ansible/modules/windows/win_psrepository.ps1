@@ -93,6 +93,10 @@ if ($PsVersion.Major -lt 5){
 
 # Check NuGet version, fail if < 2.8.5.201
 $NugetVersion = (Get-PackageProvider -Name Nuget).Version
+if ( $NugetVersion -lt [Version]"2.8.5.201" ) {
+    $ErrorMessage = "The NuGet package provider in version 2.8.5.201 or higher is needed."
+    Fail-Json $result $ErrorMessage
+}
 
 $Repos = Get-PSRepository
 
