@@ -14,9 +14,13 @@ try:
 except ImportError:
     from io import StringIO
 
+try:
+    from BytesIO import BytesIO
+except ImportError:
+    from io import BytesIO
+
 from ansible.module_utils.urls import urlparse
 from ansible.module_utils.urls import generic_urlparse
-from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import Request
 
 try:
@@ -392,7 +396,7 @@ def upload_file(client, url, src, dest=None):
     Raises:
         F5ModuleError: Raised if ``retries`` limit is exceeded.
     """
-    if isinstance(src, StringIO):
+    if isinstance(src, StringIO) or isinstance(src, BytesIO):
         fileobj = src
     else:
         fileobj = open(src, 'rb')
