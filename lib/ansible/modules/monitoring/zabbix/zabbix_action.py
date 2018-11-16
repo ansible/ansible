@@ -338,15 +338,23 @@ class Operations(object):
 
     # get hostgroup by hostgroup name
     def get_hostgroup_by_hostgroup_name(self, hostgroup_name):
-        hostgroup_list = self._zapi.hostgroup.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'hostgroup': [hostgroup_name]}})
+        hostgroup_list = self._zapi.hostgroup.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'name': [hostgroup_name]}})
         if len(hostgroup_list) < 1:
             self._module.fail_json(msg="Host group not found: %s" % hostgroup_name)
         else:
             return hostgroup_list[0]
 
+    # get template by template name
+    def get_template_by_template_name(self, template_name):
+        template_list = self._zapi.template.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'host': [template_name]}})
+        if len(template_list) < 1:
+            self._module.fail_json(msg="Template not found: %s" % template_name)
+        else:
+            return template_list[0]
+
     # get mediatype by mediatype name
     def get_mediatype_by_mediatype_name(self, mediatype_name):
-        mediatype_list = self._zapi.mediatype.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'mediatype': [mediatype_name]}})
+        mediatype_list = self._zapi.mediatype.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'description': [mediatype_name]}})
         if len(mediatype_list) < 1:
             self._module.fail_json(msg="Media type not found: %s" % mediatype_name)
         else:
@@ -354,7 +362,7 @@ class Operations(object):
 
     # get user by user name
     def get_user_by_user_name(self, user_name):
-        user_list = self._zapi.user.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'user': [user_name]}})
+        user_list = self._zapi.user.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'alias': [user_name]}})
         if len(user_list) < 1:
             self._module.fail_json(msg="User not found: %s" % user_name)
         else:
@@ -362,11 +370,21 @@ class Operations(object):
 
     # get usergroup by usergroup name
     def get_usergroup_by_usergroup_name(self, usergroup_name):
-        usergroup_list = self._zapi.usergroup.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'usergroup': [usergroup_name]}})
+        usergroup_list = self._zapi.usergroup.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'name': [usergroup_name]}})
         if len(usergroup_list) < 1:
             self._module.fail_json(msg="User group not found: %s" % usergroup_name)
         else:
             return usergroup_list[0]
+
+    # get script by script name
+    def get_script_by_script_name(self, script_name):
+        if script_name is None:
+            return {}
+        script_list = self._zapi.script.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'name': [script_name]}})
+        if len(script_list) < 1:
+            self._module.fail_json(msg="Script not found: %s" % script_name)
+        else:
+            return script_list[0]
 
     def _construct_opmessage(self, operation):
         message_keys = {
@@ -415,7 +433,7 @@ class Operations(object):
             'command_type',
             'command',
             'execute_on',
-            'global_script',
+            'script_name',
             'ssh_auth_type',
             'ssh_privatekey_file',
             'ssh_publickey_file',
@@ -436,7 +454,7 @@ class Operations(object):
                     'agent',
                     'server',
                     'proxy'],operation.get('execute_on','server')),
-                'scriptid': operation.get('global_script',None),
+                'scriptid': self.get_script_by_script_name(operation.get('script_name')).get('scriptid', None),
                 'authtype': map_to_int([
                     'password',
                     'private_key'
@@ -453,10 +471,22 @@ class Operations(object):
                 operation.pop(_key)
 
     def _construct_opcommand_targets(self, operation):
-        operation['opcommand_hst'] = [{'hostid': self.get_host_by_host_name(_host)} if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_host',[])]
-        operation['opcommand_grp'] = [{'groupid': self.get_hostgroup_by_hostgroup_name(_group)} for _group in operation.get('run_on_group',[])]
-        operation.pop('run_on_host',None)
+        operation['opcommand_hst'] = [{'hostid': self.get_host_by_host_name(_host)['hostid']} if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_host',[])]
+        operation['opcommand_grp'] = [{'groupid': self.get_hostgroup_by_hostgroup_name(_group)['groupid']} for _group in operation.get('run_on_group',[])]
+        operation.pop('run_on_host', None)
         operation.pop('run_on_group', None)
+
+    def _construct_opgroup(self, operation):
+        operation['opgroup'] = [{'groupid': self.get_hostgroup_by_hostgroup_name(_group)['groupid']} for _group in operation.get('host_groups',[])]
+        operation.pop('host_groups', None)
+
+    def _construct_optemplate(self, operation):
+        operation['optemplate'] = [{'templateid': self.get_template_by_template_name(_template)['templateid']} for _template in operation.get('templates',[])]
+        operation.pop('templates', None)
+
+    def _construct_opinventory(self, operation):
+        operation['opinventory'] = {'inventory_mode': operation.get('inventory', None)}
+        operation.pop('inventory', None)
 
 
     def construct_the_data(self, operations):
@@ -472,6 +502,19 @@ class Operations(object):
             if op['operationtype'] == 1:
                 self._construct_opcommand(op)
                 self._construct_opcommand_targets(op)
+
+            # Add to/Remove from host group
+            if op['operationtype'] in (4, 5):
+                self._construct_opgroup(op)
+
+            # Link/Unlink template
+            if op['operationtype'] in (6, 7):
+                self._construct_optemplate(op)
+
+            # Set inventory mode
+            if op['operationtype'] == 10:
+                self._construct_opinventory(op)
+
             op = cleanup_data(op)
 
         return operations
