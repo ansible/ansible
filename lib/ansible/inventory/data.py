@@ -189,7 +189,7 @@ class InventoryData(object):
         ''' adds a host to inventory and possibly a group if not there already '''
 
         if host:
-            if not isinstance(group, string_types):
+            if not isinstance(host, string_types):
                 raise AnsibleError("Invalid host name supplied, expected a string but got %s for %s" % (type(host), host))
             g = None
             if group:
