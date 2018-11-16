@@ -741,7 +741,7 @@ class DnfModule(YumDnf):
                 }
 
     def _parse_spec_group_file(self):
-        pkg_specs, grp_specs, env_specs, module_specs, filenames = [], [], [], [], []
+        pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
         already_loaded_comps = False  # Only load this if necessary, it's slow
 
         for name in self.names:
@@ -756,21 +756,17 @@ class DnfModule(YumDnf):
 
                 grp_env_mdl_candidate = name[1:].strip()
 
-                grp = self.base.comps.group_by_pattern(grp_env_mdl_candidate)
-                if grp:
-                    grp_specs.append(grp.id)
-
-                env = self.base.comps.environment_by_pattern(grp_env_mdl_candidate)
-                if env:
-                    env_specs.append(env.id)
-
                 if self.with_modules:
                     mdl = self.module_base._get_modules(grp_env_mdl_candidate)
                     if mdl[0]:
                         module_specs.append(grp_env_mdl_candidate)
+                    else:
+                        grp_specs.append(grp_env_mdl_candidate)
+                else:
+                    grp_specs.append(grp_env_mdl_candidate)
             else:
                 pkg_specs.append(name)
-        return pkg_specs, grp_specs, env_specs, module_specs, filenames
+        return pkg_specs, grp_specs, module_specs, filenames
 
     def _update_only(self, pkgs):
         not_installed = []
@@ -866,10 +862,25 @@ class DnfModule(YumDnf):
                 failure_response['msg'] = "Depsolve Error occured attempting to upgrade all packages"
                 self.module.fail_json(**failure_response)
         else:
-            pkg_specs, group_specs, env_specs, module_specs, filenames = self._parse_spec_group_file()
+            pkg_specs, group_specs, module_specs, filenames = self._parse_spec_group_file()
 
             pkg_specs = [p.strip() for p in pkg_specs]
             filenames = [f.strip() for f in filenames]
+            groups = []
+            environments = []
+            for group_spec in (g.strip() for g in group_specs):
+                group = self.base.comps.group_by_pattern(group_spec)
+                if group:
+                    groups.append(group.id)
+                else:
+                    environment = self.base.comps.environment_by_pattern(group_spec)
+                    if environment:
+                        environments.append(environment.id)
+                    else:
+                        self.module.fail_json(
+                            msg="No group {0} available.".format(group_spec),
+                            results=[],
+                        )
 
             if self.state in ['installed', 'present']:
                 # Install files.
@@ -895,7 +906,7 @@ class DnfModule(YumDnf):
                             )
 
                 # Install groups.
-                for group in group_specs:
+                for group in groups:
                     try:
                         group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
                         if group_pkg_count_installed == 0:
@@ -911,7 +922,7 @@ class DnfModule(YumDnf):
                         # this but still install as much as possible.
                         failure_response['failures'].append(" ".join((group, to_native(e))))
 
-                for environment in env_specs:
+                for environment in environments:
                     try:
                         self.base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
                     except dnf.exceptions.DepsolveError as e:
@@ -964,7 +975,7 @@ class DnfModule(YumDnf):
                                 )
                             )
 
-                for group in group_specs:
+                for group in groups:
                     try:
                         try:
                             self.base.group_upgrade(group)
@@ -980,7 +991,7 @@ class DnfModule(YumDnf):
                     except dnf.exceptions.Error as e:
                         failure_response['failures'].append(" ".join((group, to_native(e))))
 
-                for environment in env_specs:
+                for environment in environments:
                     try:
                         try:
                             self.base.environment_upgrade(environment)
@@ -1034,7 +1045,7 @@ class DnfModule(YumDnf):
                                 )
                             )
 
-                for group in group_specs:
+                for group in groups:
                     try:
                         self.base.group_remove(group)
                     except dnf.exceptions.CompsError:
@@ -1049,7 +1060,7 @@ class DnfModule(YumDnf):
                         #   https://bugzilla.redhat.com/show_bug.cgi?id=1620324
                         pass
 
-                for environment in env_specs:
+                for environment in environments:
                     try:
                         self.base.environment_remove(environment)
                     except dnf.exceptions.CompsError:
