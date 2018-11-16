@@ -205,7 +205,6 @@ def main():
     if module.check_mode:
         return meraki.result
 
-
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
