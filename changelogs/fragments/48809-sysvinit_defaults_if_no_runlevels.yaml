@@ -1,0 +1,2 @@
+bugfixes:
+  - sysvinit - enabling a service should use "defaults" if no runlevels are specified
