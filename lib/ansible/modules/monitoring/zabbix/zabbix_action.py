@@ -31,7 +31,7 @@ options:
         description:
             - Type of events that the action will handle.
         required: true
-        choices: ['triggers', 'discovery', 'auto_registration', 'internal']
+        choices: ['trigger', 'discovery', 'auto_registration', 'internal']
     state:
         description:
             - State of the action.
@@ -44,6 +44,10 @@ options:
             - Monitoring status of the action.
         choices: ['enabled', 'disabled']
         default: 'enabled'
+    esc_period:
+        description:
+            - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro
+        default: '1h'
     conditions:
         type: list
         description:
@@ -386,7 +390,6 @@ class Zapi(object):
         else:
             return discovery_check_list[0]
 
-
     def get_proxy_by_proxy_name(self, proxy_name):
         proxy_list = self._zapi.proxy.get({
             'output': 'extend',
@@ -447,6 +450,7 @@ class Zapi(object):
             self._module.fail_json(msg="Script not found: %s" % script_name)
         else:
             return script_list[0]
+
 
 class Action(object):
     def __init__(self, module, zbx, zapi_wrapper):
@@ -512,8 +516,8 @@ class Operations(object):
             'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
                 operation.get('media_type')
             )['mediatypeid'] if operation.get('media_type') is not None else None,
-            'message': operation.get('message',None),
-            'subject': operation.get('subject',None),
+            'message': operation.get('message'),
+            'subject': operation.get('subject'),
         }
 
     def _construct_opmessage_usr(self, operation):
@@ -552,24 +556,24 @@ class Operations(object):
                 'ipmi',
                 'ssh',
                 'telnet',
-                'global_script'], operation.get('command_type','custom_script')),
-            'command': operation.get('command',None),
+                'global_script'], operation.get('command_type', 'custom_script')),
+            'command': operation.get('command'),
             'execute_on': map_to_int([
                 'agent',
                 'server',
-                'proxy'],operation.get('execute_on','server')),
+                'proxy'], operation.get('execute_on', 'server')),
             'scriptid': self._zapi_wrapper.get_script_by_script_name(
                 operation.get('script_name')
-            ).get('scriptid', None),
+            ).get('scriptid'),
             'authtype': map_to_int([
                 'password',
                 'private_key'
-                ], operation.get('ssh_auth_type', 'password')),
-            'privatekey': operation.get('ssh_privatekey_file',None),
-            'publickey': operation.get('ssh_publickey_file',None),
-            'username': operation.get('username',None),
-            'password': operation.get('password',None),
-            'port': operation.get('port',None)
+            ], operation.get('ssh_auth_type', 'password')),
+            'privatekey': operation.get('ssh_privatekey_file'),
+            'publickey': operation.get('ssh_publickey_file'),
+            'username': operation.get('username'),
+            'password': operation.get('password'),
+            'port': operation.get('port')
         }
 
     def _construct_opcommand_hst(self, operation):
@@ -589,17 +593,15 @@ class Operations(object):
     def _construct_opgroup(self, operation):
         return [{
             'groupid': self._zapi_wrapper.get_hostgroup_by_hostgroup_name(_group)['groupid']
-        } for _group in operation.get('host_groups',[])]
-        operation.pop('host_groups', None)
+        } for _group in operation.get('host_groups', [])]
 
     def _construct_optemplate(self, operation):
         return [{
             'templateid': self._zapi_wrapper.get_template_by_template_name(_template)['templateid']
-        } for _template in operation.get('templates',[])]
-        operation.pop('templates', None)
+        } for _template in operation.get('templates', [])]
 
     def _construct_opinventory(self, operation):
-        return {'inventory_mode': operation.get('inventory', None)}
+        return {'inventory_mode': operation.get('inventory')}
 
     def construct_the_data(self, operations):
         constructed_data = []
@@ -639,21 +641,23 @@ class Operations(object):
 
         return cleanup_data(constructed_data)
 
+
 class RecoveryOperations(Operations):
     def _construct_operationtype(self, operation):
         return map_to_int([
-                "send_message",
-                "remote_command",
-                "placeholder1",
-                "placeholder2",
-                "placeholder3",
-                "placeholder4",
-                "placeholder5",
-                "placeholder6",
-                "placeholder7",
-                "placeholder8",
-                "placeholder9",
-                "notify_all_involved"], operation['type'])
+            "send_message",
+            "remote_command",
+            "placeholder1",
+            "placeholder2",
+            "placeholder3",
+            "placeholder4",
+            "placeholder5",
+            "placeholder6",
+            "placeholder7",
+            "placeholder8",
+            "placeholder9",
+            "notify_all_involved"], operation['type']
+        )
 
     def construct_the_data(self, operations):
         if operations is None:
@@ -680,23 +684,25 @@ class RecoveryOperations(Operations):
             constructed_data.append(constructed_operation)
 
         return cleanup_data(constructed_data)
+
 
 class AcknowledgeOperations(Operations):
     def _construct_operationtype(self, operation):
         return map_to_int([
-                "send_message",
-                "remote_command",
-                "placeholder1",
-                "placeholder2",
-                "placeholder3",
-                "placeholder4",
-                "placeholder5",
-                "placeholder6",
-                "placeholder7",
-                "placeholder8",
-                "placeholder9",
-                "placeholder10",
-                "notify_all_involved"], operation['type'])
+            "send_message",
+            "remote_command",
+            "placeholder1",
+            "placeholder2",
+            "placeholder3",
+            "placeholder4",
+            "placeholder5",
+            "placeholder6",
+            "placeholder7",
+            "placeholder8",
+            "placeholder9",
+            "placeholder10",
+            "notify_all_involved"], operation['type']
+        )
 
     def construct_the_data(self, operations):
         if operations is None:
@@ -723,6 +729,7 @@ class AcknowledgeOperations(Operations):
             constructed_data.append(constructed_operation)
 
         return cleanup_data(constructed_data)
+
 
 class Filter(object):
     def __init__(self, module, zbx, zapi_wrapper):
@@ -731,25 +738,6 @@ class Filter(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_evaltype(self, _eval):
-        return {
-            'evaltype': '3',
-            'formula': _eval
-        }
-        if _eval == "andor" or _eval is None:
-            return {
-                'evaltype': '0',
-                'formula': None
-            }
-        if _eval == "and":
-            return {
-                'evaltype': '1',
-                'formula': None
-            }
-        if _eval == "or":
-            return {
-                'evaltype': '2',
-                'formula': None
-            }
         return {
             'evaltype': '3',
             'formula': _eval
@@ -817,9 +805,9 @@ class Filter(object):
                 "warning",
                 "average",
                 "high",
-                "disaster"
-                ], value or "not classified"
+                "disaster"], value or "not classified"
             )
+
         # Trigger value
         if conditiontype == '5':
             return map_to_int([
@@ -846,8 +834,7 @@ class Filter(object):
                 "ICMP ping",
                 "SNMPv3 agent",
                 "HTTPS",
-                "Telnet"
-                ], value
+                "Telnet"], value
             )
         # Discovered service port: return as is
         # Discovery status
@@ -856,8 +843,7 @@ class Filter(object):
                 "up",
                 "down",
                 "discovered",
-                "lost"
-                ], value
+                "lost"], value
             )
         if conditiontype == '13':
             return self._zapi_wrapper.get_template_by_template_name(value)['templateid']
@@ -871,8 +857,7 @@ class Filter(object):
             return map_to_int([
                 "pchldrfor0",
                 "host",
-                "service"
-                ], value
+                "service"], value
             )
         if conditiontype == '23':
             return map_to_int([
@@ -881,8 +866,7 @@ class Filter(object):
                 "LLD rule in not supported state",
                 "LLD rule in normal state",
                 "trigger in unknown state",
-                "trigger in normal state"
-                ], value
+                "trigger in normal state"], value
             )
         return value
 
@@ -904,20 +888,21 @@ class Filter(object):
             })
         return cleanup_data(constructed_data)
 
+
 def map_to_int(strs, value):
     """ Convert string values to integers"""
     tmp_dict = dict(zip(strs, list(range(len(strs)))))
     return str(tmp_dict[value])
 
 
-def compare_lists(l1,l2,diff_dict):
+def compare_lists(l1, l2, diff_dict):
     if len(l1) != len(l2):
         diff_dict.append(l1)
         return diff_dict
     for i, item in enumerate(l1):
         if isinstance(item, dict):
             diff_dict.insert(i, {})
-            diff_dict[i] = compare_dictionaries(item, l2[i],diff_dict[i])
+            diff_dict[i] = compare_dictionaries(item, l2[i], diff_dict[i])
         else:
             if item != l2[i]:
                 diff_dict.append(item)
@@ -925,7 +910,8 @@ def compare_lists(l1,l2,diff_dict):
         diff_dict.remove({})
     return diff_dict
 
-def compare_dictionaries(d1,d2,diff_dict):
+
+def compare_dictionaries(d1, d2, diff_dict):
     for k, v in d1.items():
         if k not in d2:
             diff_dict[k] = v
@@ -949,14 +935,16 @@ def compare_dictionaries(d1,d2,diff_dict):
                 diff_dict[k] = v
     return diff_dict
 
+
 def cleanup_data(obj):
     if isinstance(obj, (list, tuple, set)):
         return type(obj)(cleanup_data(x) for x in obj if x is not None)
     elif isinstance(obj, dict):
         return type(obj)((cleanup_data(k), cleanup_data(v))
-            for k, v in obj.items() if k is not None and v is not None)
+                         for k, v in obj.items() if k is not None and v is not None)
     else:
         return obj
+
 
 def main():
     module = AnsibleModule(
@@ -970,9 +958,9 @@ def main():
             esc_period=dict(type='str', required=False, default='1h'),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
-            event_source=dict(type='str', required=True),
-            state=dict(type='str', required=False, default='present'),
-            status=dict(type='str', required=False, default='enabled'),
+            event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
+            state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
+            status=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
             conditions=dict(type='list', required=False, default=None),
             formula=dict(type='str', required=False, default=None),
             operations=dict(type='list', required=False, default=None),
@@ -1003,7 +991,6 @@ def main():
     recovery_operations = module.params['recovery_operations']
     acknowledge_operations = module.params['acknowledge_operations']
 
-
     try:
         zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                                validate_certs=validate_certs)
@@ -1026,7 +1013,7 @@ def main():
         action_id = zapi_wrapper.get_action_by_name(name)['actionid']
         if state == "absent":
             result = action.delete_action(action_id)
-            module.exit_json(changed=True, result="Action Deleted: %s, ID: %s" %(name, result))
+            module.exit_json(changed=True, result="Action Deleted: %s, ID: %s" % (name, result))
         else:
             difference = action.check_difference(
                 action_id=action_id,
@@ -1041,13 +1028,13 @@ def main():
             )
 
             if difference == {}:
-                module.exit_json(changed=False, result="Action is up to date: %s" %(name))
+                module.exit_json(changed=False, result="Action is up to date: %s" % (name))
             else:
                 result = action.update_action(
                     action_id=action_id,
                     **difference
                 )
-                module.exit_json(changed=True, result="Action Updated: %s, ID: %s" %(name, result) )
+                module.exit_json(changed=True, result="Action Updated: %s, ID: %s" % (name, result))
     else:
         if state == "absent":
             module.exit_json(changed=False)
@@ -1062,7 +1049,8 @@ def main():
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
                 conditions=fltr.construct_the_data(formula, conditions)
             )
-            module.exit_json(changed=True, result="Action created: %s, ID: %s" %(name, action_id) )
+            module.exit_json(changed=True, result="Action created: %s, ID: %s" % (name, action_id))
+
 
 if __name__ == '__main__':
     main()
