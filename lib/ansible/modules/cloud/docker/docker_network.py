@@ -424,12 +424,17 @@ class DockerNetworkManager(object):
                     else:
                         ipam_pools.append(utils.create_ipam_pool(**ipam_pool))
 
-            if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
-                params['ipam'] = IPAMConfig(driver=self.parameters.ipam_driver,
-                                            pool_configs=ipam_pools)
-            else:
-                params['ipam'] = utils.create_ipam_config(driver=self.parameters.ipam_driver,
-                                                          pool_configs=ipam_pools)
+            if self.parameters.ipam_driver or ipam_pools:
+                # Only add ipam parameter if a driver was specified or if IPAM parameters
+                # were specified. Leaving this parameter away can significantly speed up
+                # creation; on my machine creation with this option needs ~15 seconds,
+                # and without just a few seconds.
+                if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+                    params['ipam'] = IPAMConfig(driver=self.parameters.ipam_driver,
+                                                pool_configs=ipam_pools)
+                else:
+                    params['ipam'] = utils.create_ipam_config(driver=self.parameters.ipam_driver,
+                                                              pool_configs=ipam_pools)
 
             if self.parameters.enable_ipv6 is not None:
                 params['enable_ipv6'] = self.parameters.enable_ipv6
