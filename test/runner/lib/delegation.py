@@ -334,9 +334,11 @@ def delegate_remote(args, exclude, require, integration_targets):
 
     core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider)
     success = False
+    raw = False
 
     if isinstance(args, ShellConfig):
         use_httptester = args.httptester
+        raw = args.raw
     else:
         use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in integration_targets)
 
@@ -359,6 +361,9 @@ def delegate_remote(args, exclude, require, integration_targets):
             # Windows doesn't need the ansible-test fluff, just run the SSH command
             manage = ManageWindowsCI(core_ci)
             cmd = ['powershell.exe']
+        elif raw:
+            manage = ManagePosixCI(core_ci)
+            cmd = create_shell_command(['bash'])
         else:
             options = {
                 '--remote': 1,
@@ -384,6 +389,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             manage = ManagePosixCI(core_ci)
 
         manage.setup()
+
         if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)
 
@@ -394,7 +400,16 @@ def delegate_remote(args, exclude, require, integration_targets):
             manage.ssh(cmd, ssh_options)
             success = True
         finally:
+            download = False
+
             if platform != 'windows':
+                download = True
+
+            if isinstance(args, ShellConfig):
+                if args.raw:
+                    download = False
+
+            if download:
                 manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
                 manage.download('/tmp/results', 'test')
     finally:
