@@ -458,12 +458,14 @@ class Action(object):
                         'discovery',
                         'auto_registration',
                         'internal'], kwargs['event_source']),
-                    'esc_period': kwargs.get('esc_period', '1h'),
-                    'filter': kwargs.get('conditions'),
+                    'esc_period': kwargs.get('esc_period'),
+                    'filter': kwargs['conditions'],
                     'operations': kwargs['operations'],
+                    'recovery_operations': kwargs.get('recovery_operations'),
+                    'acknowledge_operations': kwargs.get('acknowledge_operations'),
                     'status': map_to_int([
                         'enabled',
-                        'disabled'], kwargs['status']),
+                        'disabled'], kwargs['status'])
                     }
             action_list = self._zapi.action.create(parameters)
             return action_list['actionids'][0]
@@ -486,7 +488,7 @@ class Operations(object):
 
         operation['opmessage'] = {
                 'default_msg': 0 if 'message' in operation or 'subject' in operation else 1,
-                'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(operation.get('media_type',None))['mediatypeid'],
+                'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(operation.get('media_type'))['mediatypeid'] if operation.get('media_type') is not None else None,
                 'message': operation.get('message',None),
                 'subject': operation.get('subject',None),
         }
@@ -494,7 +496,6 @@ class Operations(object):
         for _key in message_keys:
             if _key in operation:
                 operation.pop(_key)
-
 
     def _construct_opmessage_targets(self, operation):
         operation['opmessage_usr'] = [{
@@ -505,7 +506,6 @@ class Operations(object):
         } for _group in operation.get('send_to_groups',[])]
         operation.pop('send_to_users', None)
         operation.pop('send_to_groups', None)
-
 
     def _construct_operationtype(self, operation):
         operation['type'] = map_to_int([
@@ -522,7 +522,6 @@ class Operations(object):
                 "set_host_inventory_mode"], operation['type'])
         operation['operationtype'] = operation.pop('type')
 
-    # Convert to opcommand
     def _construct_opcommand(self, operation):
         self.command_keys = {
             'command_type',
@@ -591,7 +590,6 @@ class Operations(object):
         operation['opinventory'] = {'inventory_mode': operation.get('inventory', None)}
         operation.pop('inventory', None)
 
-
     def construct_the_data(self, operations):
         for op in operations:
             self._construct_operationtype(op)
@@ -622,6 +620,80 @@ class Operations(object):
 
         return operations
 
+class RecoveryOperations(Operations):
+    def _construct_operationtype(self, operation):
+        operation['type'] = map_to_int([
+                "send_message",
+                "remote_command",
+                "placeholder1",
+                "placeholder2",
+                "placeholder3",
+                "placeholder4",
+                "placeholder5",
+                "placeholder6",
+                "placeholder7",
+                "placeholder8",
+                "placeholder9",
+                "notify_all_involved"], operation['type'])
+        operation['operationtype'] = operation.pop('type')
+
+    def construct_the_data(self, operations):
+        if operations is None:
+            return None
+        for op in operations:
+            self._construct_operationtype(op)
+
+            # Send Message type
+            if op['operationtype'] in (0,11):
+                self._construct_opmessage(op)
+                self._construct_opmessage_targets(op)
+
+            # Send Command type
+            if op['operationtype'] == 1:
+                self._construct_opcommand(op)
+                self._construct_opcommand_targets(op)
+
+            op = cleanup_data(op)
+
+        return operations
+
+class AcknowledgeOperations(Operations):
+    def _construct_operationtype(self, operation):
+        operation['type'] = map_to_int([
+                "send_message",
+                "remote_command",
+                "placeholder1",
+                "placeholder2",
+                "placeholder3",
+                "placeholder4",
+                "placeholder5",
+                "placeholder6",
+                "placeholder7",
+                "placeholder8",
+                "placeholder9",
+                "placeholder10",
+                "notify_all_involved"], operation['type'])
+        operation['operationtype'] = operation.pop('type')
+
+    def construct_the_data(self, operations):
+        if operations is None:
+            return None
+        for op in operations:
+            self._construct_operationtype(op)
+
+            # Send Message type
+            if op['operationtype'] in (0,12):
+                self._construct_opmessage(op)
+                self._construct_opmessage_targets(op)
+
+            # Send Command type
+            if op['operationtype'] == 1:
+                self._construct_opcommand(op)
+                self._construct_opcommand_targets(op)
+
+            op = cleanup_data(op)
+
+        return operations
 
 
 class Filter(object):
@@ -785,6 +857,8 @@ class Filter(object):
         return value
 
     def construct_the_data(self, _formula, _conditions):
+        if _conditions is None:
+            return None
         constructed_data = {}
         constructed_data['evaltype'] = self._construct_evaltype(_formula)['evaltype']
         constructed_data['formula'] = self._construct_evaltype(_formula)['formula']
@@ -825,6 +899,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
+            esc_period=dict(type='str', required=False, default='1h'),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
             event_source=dict(type='str', required=True),
@@ -850,6 +925,7 @@ def main():
     validate_certs = module.params['validate_certs']
     timeout = module.params['timeout']
     name = module.params['name']
+    esc_period = module.params['esc_period']
     event_source = module.params['event_source']
     state = module.params['state']
     status = module.params['status']
@@ -860,8 +936,6 @@ def main():
     acknowledge_operations = module.params['acknowledge_operations']
 
 
-    # Convert strings to integers
-    esc_period = "1h"
     try:
         zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                                validate_certs=validate_certs)
@@ -876,6 +950,8 @@ def main():
     action_exists = False
 
     ops = Operations(module, zbx, zapi_wrapper)
+    recovery_ops = RecoveryOperations(module, zbx, zapi_wrapper)
+    acknowledge_ops = AcknowledgeOperations(module, zbx, zapi_wrapper)
 
     fltr = Filter(module, zbx, zapi_wrapper)
 
@@ -886,13 +962,15 @@ def main():
     #    module.exit_json(changed=False, result="Action already exists: %s" %action_id)
     else:
         action_id = action.add_action(
-                name=name,
-                event_source=event_source,
-                esc_period=esc_period,
-                status=status,
-                operations=ops.construct_the_data(operations),
-                conditions=fltr.construct_the_data(formula, conditions)
-                )
+            name=name,
+            event_source=event_source,
+            esc_period=esc_period,
+            status=status,
+            operations=ops.construct_the_data(operations),
+            recovery_operations=recovery_ops.construct_the_data(recovery_operations),
+            acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
+            conditions=fltr.construct_the_data(formula, conditions)
+        )
         module.exit_json(changed=True, result="Action created: %s, ID: %s" %(name, action_id) )
 
 if __name__ == '__main__':
