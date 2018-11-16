@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 from __future__ import absolute_import, division, print_function
@@ -112,7 +115,8 @@ options:
         description:
             - User-defined expression to be used for evaluating conditions of filters with a custom expression.
             - The expression must contain IDs that reference specific filter conditions by its formulaid.
-            - The IDs used in the expression must exactly match the ones defined in the filter conditions: no condition can remain unused or omitted.
+            - The IDs used in the expression must exactly match the ones
+              defined in the filter conditions. No condition can remain unused or omitted.
             - Required for custom expression filters.
     operations:
         type: list
@@ -231,14 +235,12 @@ options:
         type: list
         description:
             - List of recovery operations
-        suboptions:
-            - Same as I(operations)
+            - C(Suboptions) are the same as I(operations)
     acknowledge_operations:
         type: list
         description:
             - List of acknowledge operations
-        suboptions:
-            - Same as I(operations)
+            - C(Suboptions) are the same as I(operations)
 
 
 
@@ -267,13 +269,6 @@ EXAMPLES = '''
     name: fail me
 '''
 
-RETURN = '''
-original_message:
-    description: The original name param that was passed in
-    type: str
-message:
-    description: The output message that the sample module generates
-'''
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
