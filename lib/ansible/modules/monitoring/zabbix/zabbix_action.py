@@ -291,14 +291,20 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 class Zapi(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
 
     def check_if_action_exists(self, name):
-        result = self._zapi.action.get({'filter': {'name': name}})
-        return result
+        return self._zapi.action.get({
+            "selectOperations": "extend",
+            "selectRecoveryOperations": "extend",
+            "selectFilter": "extend",
+            'selectInventory': 'extend',
+            'filter': {'name': [name]}
+        })
 
     def get_action_by_name(self, name):
         action_list = self._zapi.action.get({
@@ -448,24 +454,39 @@ class Action(object):
         self._zapi = zbx
         self._zapi_wrapper = zapi_wrapper
 
+    def _construct_parameters(self, **kwargs):
+        return {
+            'name': kwargs['name'],
+            'eventsource': map_to_int([
+                'trigger',
+                'discovery',
+                'auto_registration',
+                'internal'], kwargs['event_source']),
+            'esc_period': kwargs.get('esc_period'),
+            'filter': kwargs['conditions'],
+            'operations': kwargs['operations'],
+            'recovery_operations': kwargs.get('recovery_operations'),
+            'acknowledge_operations': kwargs.get('acknowledge_operations'),
+            'status': map_to_int([
+                'enabled',
+                'disabled'], kwargs['status'])
+        }
+
+    def check_difference(self, **kwargs):
+        existing_action = self._zapi_wrapper.check_if_action_exists(kwargs['name'])[0]
+        parameters = self._construct_parameters(**kwargs)
+        change_parameters = {}
+        return cleanup_data(compare_dictionaries(parameters, existing_action, change_parameters))
+
+    def update_action(self, **kwargs):
+        try:
+            return self._zapi.action.update(kwargs)
+        except Exception as e:
+            self._module.fail_json(msg="Failed to update action '%s': %s" % (kwargs['actionid'], e))
+
     def add_action(self, **kwargs):
         try:
-            parameters = {
-                    'name': kwargs['name'],
-                    'eventsource': map_to_int([
-                        'trigger',
-                        'discovery',
-                        'auto_registration',
-                        'internal'], kwargs['event_source']),
-                    'esc_period': kwargs.get('esc_period'),
-                    'filter': kwargs['conditions'],
-                    'operations': kwargs['operations'],
-                    'recovery_operations': kwargs.get('recovery_operations'),
-                    'acknowledge_operations': kwargs.get('acknowledge_operations'),
-                    'status': map_to_int([
-                        'enabled',
-                        'disabled'], kwargs['status'])
-                    }
+            parameters = self._construct_parameters(**kwargs)
             action_list = self._zapi.action.create(parameters)
             return action_list['actionids'][0]
         except Exception as e:
@@ -479,7 +500,7 @@ class Operations(object):
 
     def _construct_opmessage(self, operation):
         return {
-            'default_msg': 0 if 'message' in operation or 'subject' in operation else 1,
+            'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
             'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
                 operation.get('media_type')
             )['mediatypeid'] if operation.get('media_type') is not None else None,
@@ -548,14 +569,14 @@ class Operations(object):
             return None
         return [{
             'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
-        } if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_host')]
+        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_host')]
 
     def _construct_opcommand_grp(self, operation):
         if operation.get('run_on_group') is None:
             return None
         return [{
             'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
-        } if _host != 0 else {'hostid': 0} for _host in operation.get('run_on_group')]
+        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_group')]
 
     def _construct_opgroup(self, operation):
         return [{
@@ -583,27 +604,27 @@ class Operations(object):
                 'esc_step_to': op.get('esc_step_to')
             }
             # Send Message type
-            if constructed_operation['operationtype'] == 0:
+            if constructed_operation['operationtype'] == '0':
                 constructed_operation['opmessage'] = self._construct_opmessage(op)
                 constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
                 constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
 
             # Send Command type
-            if constructed_operation['operationtype'] == 1:
+            if constructed_operation['operationtype'] == '1':
                 constructed_operation['opcommand'] = self._construct_opcommand(op)
                 constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
                 constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
 
             # Add to/Remove from host group
-            if constructed_operation['operationtype'] in (4, 5):
+            if constructed_operation['operationtype'] in ('4', '5'):
                 constructed_operation['opgroup'] = self._construct_opgroup(op)
 
             # Link/Unlink template
-            if constructed_operation['operationtype'] in (6, 7):
+            if constructed_operation['operationtype'] in ('6', '7'):
                 constructed_operation['optemplate'] = self._construct_optemplate(op)
 
             # Set inventory mode
-            if constructed_operation['operationtype'] == 10:
+            if constructed_operation['operationtype'] == '10':
                 constructed_operation['opinventory'] = self._construct_opinventory(op)
 
             constructed_data.append(constructed_operation)
@@ -637,13 +658,13 @@ class RecoveryOperations(Operations):
             }
 
             # Send Message type
-            if constructed_operation['operationtype'] in (0, 11):
+            if constructed_operation['operationtype'] in ('0', '11'):
                 constructed_operation['opmessage'] = self._construct_opmessage(op)
                 constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
                 constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
 
             # Send Command type
-            if constructed_operation['operationtype'] == 1:
+            if constructed_operation['operationtype'] == '1':
                 constructed_operation['opcommand'] = self._construct_opcommand(op)
                 constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
                 constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
@@ -680,13 +701,13 @@ class AcknowledgeOperations(Operations):
             }
 
             # Send Message type
-            if constructed_operation['operationtype'] in (0, 11):
+            if constructed_operation['operationtype'] in ('0', '11'):
                 constructed_operation['opmessage'] = self._construct_opmessage(op)
                 constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
                 constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
 
             # Send Command type
-            if constructed_operation['operationtype'] == 1:
+            if constructed_operation['operationtype'] == '1':
                 constructed_operation['opcommand'] = self._construct_opcommand(op)
                 constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
                 constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
@@ -702,23 +723,27 @@ class Filter(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_evaltype(self, _eval):
+        return {
+            'evaltype': '3',
+            'formula': _eval
+        }
         if _eval == "andor" or _eval is None:
             return {
-                'evaltype': 0,
+                'evaltype': '0',
                 'formula': None
             }
         if _eval == "and":
             return {
-                'evaltype': 1,
+                'evaltype': '1',
                 'formula': None
             }
         if _eval == "or":
             return {
-                'evaltype': 2,
+                'evaltype': '2',
                 'formula': None
             }
         return {
-            'evaltype': 3,
+            'evaltype': '3',
             'formula': _eval
         }
 
@@ -767,17 +792,17 @@ class Filter(object):
 
     def _construct_value(self, conditiontype, value):
         # Host group
-        if conditiontype == 0:
+        if conditiontype == '0':
             return self._zapi_wrapper.get_hostgroup_by_hostgroup_name(value)['groupid']
         # Host
-        if conditiontype == 1:
+        if conditiontype == '1':
             return self._zapi_wrapper.get_host_by_host_name(value)['hostid']
         # Trigger
-        if conditiontype == 2:
+        if conditiontype == '2':
             return self._zapi_wrapper.get_trigger_by_trigger_name(value)['triggerid']
         # Trigger name: return as is
         # Trigger severity
-        if conditiontype == 4:
+        if conditiontype == '4':
             return map_to_int([
                 "not classified",
                 "information",
@@ -788,7 +813,7 @@ class Filter(object):
                 ], value or "not classified"
             )
         # Trigger value
-        if conditiontype == 5:
+        if conditiontype == '5':
             return map_to_int([
                 "ok",
                 "problem"], value or "ok"
@@ -796,7 +821,7 @@ class Filter(object):
         # Time period: return as is
         # Host IP: return as is
         # Discovered service type
-        if conditiontype == 8:
+        if conditiontype == '8':
             return map_to_int([
                 "SSH",
                 "LDAP",
@@ -818,7 +843,7 @@ class Filter(object):
             )
         # Discovered service port: return as is
         # Discovery status
-        if conditiontype == 10:
+        if conditiontype == '10':
             return map_to_int([
                 "up",
                 "down",
@@ -826,22 +851,22 @@ class Filter(object):
                 "lost"
                 ], value
             )
-        if conditiontype == 13:
+        if conditiontype == '13':
             return self._zapi_wrapper.get_template_by_template_name(value)['templateid']
-        if conditiontype == 18:
+        if conditiontype == '18':
             return self._zapi_wrapper.get_discovery_rule_by_discovery_rule_name(value)['druleid']
-        if conditiontype == 19:
+        if conditiontype == '19':
             return self._zapi_wrapper.get_discovery_check_by_discovery_check_name(value)['dcheckid']
-        if conditiontype == 20:
+        if conditiontype == '20':
             return self._zapi_wrapper.get_proxy_by_proxy_name(value)['proxyid']
-        if conditiontype == 21:
+        if conditiontype == '21':
             return map_to_int([
                 "pchldrfor0",
                 "host",
                 "service"
                 ], value
             )
-        if conditiontype == 23:
+        if conditiontype == '23':
             return map_to_int([
                 "item in not supported state",
                 "item in normal state",
@@ -871,12 +896,50 @@ class Filter(object):
             })
         return cleanup_data(constructed_data)
 
-
 def map_to_int(strs, value):
     """ Convert string values to integers"""
     tmp_dict = dict(zip(strs, list(range(len(strs)))))
-    return tmp_dict[value]
+    return str(tmp_dict[value])
 
+
+def compare_lists(l1,l2,diff_dict):
+    if len(l1) != len(l2):
+        diff_dict.append(l1)
+        return diff_dict
+    for i, item in enumerate(l1):
+        if isinstance(item, dict):
+            diff_dict.insert(i, {})
+            diff_dict[i] = compare_dictionaries(item, l2[i],diff_dict[i])
+        else:
+            if item != l2[i]:
+                diff_dict.append(item)
+    while {} in diff_dict:
+        diff_dict.remove({})
+    return diff_dict
+
+def compare_dictionaries(d1,d2,diff_dict):
+    for k, v in d1.items():
+        if k not in d2:
+            diff_dict[k] = v
+            continue
+        if isinstance(v, dict):
+            diff_dict[k] = {}
+            compare_dictionaries(v, d2[k], diff_dict[k])
+            if diff_dict[k] == {}:
+                del diff_dict[k]
+            else:
+                diff_dict[k] = v
+        elif isinstance(v, list):
+            diff_dict[k] = []
+            compare_lists(v, d2[k], diff_dict[k])
+            if diff_dict[k] == []:
+                del diff_dict[k]
+            else:
+                diff_dict[k] = v
+        else:
+            if v != d2[k]:
+                diff_dict[k] = v
+    return diff_dict
 
 def cleanup_data(obj):
     if isinstance(obj, (list, tuple, set)):
@@ -944,8 +1007,7 @@ def main():
 
     action = Action(module, zbx, zapi_wrapper)
 
-    action_exists = False
-
+    action_exists = zapi_wrapper.check_if_action_exists(name)
     ops = Operations(module, zbx, zapi_wrapper)
     recovery_ops = RecoveryOperations(module, zbx, zapi_wrapper)
     acknowledge_ops = AcknowledgeOperations(module, zbx, zapi_wrapper)
@@ -953,10 +1015,27 @@ def main():
     fltr = Filter(module, zbx, zapi_wrapper)
 
     if action_exists:
-        pass
-    #    zabbix_action_obj = action.get_action_by_name(name)
-    #    action_id = zabbix_action_obj['actionid']
-    #    module.exit_json(changed=False, result="Action already exists: %s" %action_id)
+        action_id = str(zapi_wrapper.get_action_by_name(name)['actionid'])
+        difference = action.check_difference(
+            action_id=action_id,
+            name=name,
+            event_source=event_source,
+            esc_period=esc_period,
+            status=status,
+            operations=ops.construct_the_data(operations),
+            recovery_operations=recovery_ops.construct_the_data(recovery_operations),
+            acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
+            conditions=fltr.construct_the_data(formula, conditions)
+        )
+
+        if difference == {}:
+            module.exit_json(changed=False, result="Action is up to date: %s, %s" %(name, difference))
+        else:
+            result = action.update_action(
+                actionid=action_id,
+                **difference
+            )
+            module.exit_json(changed=True, result="Action Updated: %s, ID: %s" %(name, result) )
     else:
         action_id = action.add_action(
             name=name,
