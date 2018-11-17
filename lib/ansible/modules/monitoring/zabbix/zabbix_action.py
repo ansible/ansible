@@ -784,131 +784,141 @@ class Filter(object):
         }
 
     def _construct_conditiontype(self, _condition):
-        return map_to_int([
-            "host_group",
-            "host",
-            "trigger",
-            "trigger_name",
-            "trigger_severity",
-            "trigger_value",
-            "time_period",
-            "host_ip",
-            "discovered_service_type",
-            "discovered_service_port",
-            "discovery_status",
-            "uptime_or_downtime_duration",
-            "received_value",
-            "host_template",
-            "zabbix_has_no_value_for_14",
-            "application",
-            "maintenance_status",
-            "zabbix_has_no_value_for_17",
-            "discovery_rule",
-            "discovery_check",
-            "proxy",
-            "discovery_object",
-            "host_name",
-            "event_type",
-            "host_metadata",
-            "event_tag",
-            "event_tag_value"], _condition['type']
-        )
+        try:
+            return map_to_int([
+                "host_group",
+                "host",
+                "trigger",
+                "trigger_name",
+                "trigger_severity",
+                "trigger_value",
+                "time_period",
+                "host_ip",
+                "discovered_service_type",
+                "discovered_service_port",
+                "discovery_status",
+                "uptime_or_downtime_duration",
+                "received_value",
+                "host_template",
+                "zabbix_has_no_value_for_14",
+                "application",
+                "maintenance_status",
+                "zabbix_has_no_value_for_17",
+                "discovery_rule",
+                "discovery_check",
+                "proxy",
+                "discovery_object",
+                "host_name",
+                "event_type",
+                "host_metadata",
+                "event_tag",
+                "event_tag_value"], _condition['type']
+            )
+        except Exception as e:
+            self._module.fail_json(msg="Unsupperted value '%s' for condition type." % _condition['type'])
 
     def _construct_operator(self, _condition):
-        return map_to_int([
-            "=",
-            "<>",
-            "like",
-            "not like",
-            "in",
-            ">=",
-            "<=",
-            "not in"], _condition['operator']
-        )
+        try:
+            return map_to_int([
+                "=",
+                "<>",
+                "like",
+                "not like",
+                "in",
+                ">=",
+                "<=",
+                "not in"], _condition['operator']
+            )
+        except Exception as e:
+            self._module.fail_json(msg="Unsupperted value '%s' for operator." % _condition['operator'])
+
 
     def _construct_value(self, conditiontype, value):
-        # Host group
-        if conditiontype == '0':
-            return self._zapi_wrapper.get_hostgroup_by_hostgroup_name(value)['groupid']
-        # Host
-        if conditiontype == '1':
-            return self._zapi_wrapper.get_host_by_host_name(value)['hostid']
-        # Trigger
-        if conditiontype == '2':
-            return self._zapi_wrapper.get_trigger_by_trigger_name(value)['triggerid']
-        # Trigger name: return as is
-        # Trigger severity
-        if conditiontype == '4':
-            return map_to_int([
-                "not classified",
-                "information",
-                "warning",
-                "average",
-                "high",
-                "disaster"], value or "not classified"
-            )
+        try:
+            # Host group
+            if conditiontype == '0':
+                return self._zapi_wrapper.get_hostgroup_by_hostgroup_name(value)['groupid']
+            # Host
+            if conditiontype == '1':
+                return self._zapi_wrapper.get_host_by_host_name(value)['hostid']
+            # Trigger
+            if conditiontype == '2':
+                return self._zapi_wrapper.get_trigger_by_trigger_name(value)['triggerid']
+            # Trigger name: return as is
+            # Trigger severity
+            if conditiontype == '4':
+                return map_to_int([
+                    "not classified",
+                    "information",
+                    "warning",
+                    "average",
+                    "high",
+                    "disaster"], value or "not classified"
+                )
 
-        # Trigger value
-        if conditiontype == '5':
-            return map_to_int([
-                "ok",
-                "problem"], value or "ok"
-            )
-        # Time period: return as is
-        # Host IP: return as is
-        # Discovered service type
-        if conditiontype == '8':
-            return map_to_int([
-                "SSH",
-                "LDAP",
-                "SMTP",
-                "FTP",
-                "HTTP",
-                "POP",
-                "NNTP",
-                "IMAP",
-                "TCP",
-                "Zabbix agent",
-                "SNMPv1 agent",
-                "SNMPv2 agent",
-                "ICMP ping",
-                "SNMPv3 agent",
-                "HTTPS",
-                "Telnet"], value
-            )
-        # Discovered service port: return as is
-        # Discovery status
-        if conditiontype == '10':
-            return map_to_int([
-                "up",
-                "down",
-                "discovered",
-                "lost"], value
-            )
-        if conditiontype == '13':
-            return self._zapi_wrapper.get_template_by_template_name(value)['templateid']
-        if conditiontype == '18':
-            return self._zapi_wrapper.get_discovery_rule_by_discovery_rule_name(value)['druleid']
-        if conditiontype == '19':
-            return self._zapi_wrapper.get_discovery_check_by_discovery_check_name(value)['dcheckid']
-        if conditiontype == '20':
-            return self._zapi_wrapper.get_proxy_by_proxy_name(value)['proxyid']
-        if conditiontype == '21':
-            return map_to_int([
-                "pchldrfor0",
-                "host",
-                "service"], value
-            )
-        if conditiontype == '23':
-            return map_to_int([
-                "item in not supported state",
-                "item in normal state",
-                "LLD rule in not supported state",
-                "LLD rule in normal state",
-                "trigger in unknown state",
-                "trigger in normal state"], value
-            )
-        return value
+            # Trigger value
+            if conditiontype == '5':
+                return map_to_int([
+                    "ok",
+                    "problem"], value or "ok"
+                )
+            # Time period: return as is
+            # Host IP: return as is
+            # Discovered service type
+            if conditiontype == '8':
+                return map_to_int([
+                    "SSH",
+                    "LDAP",
+                    "SMTP",
+                    "FTP",
+                    "HTTP",
+                    "POP",
+                    "NNTP",
+                    "IMAP",
+                    "TCP",
+                    "Zabbix agent",
+                    "SNMPv1 agent",
+                    "SNMPv2 agent",
+                    "ICMP ping",
+                    "SNMPv3 agent",
+                    "HTTPS",
+                    "Telnet"], value
+                )
+            # Discovered service port: return as is
+            # Discovery status
+            if conditiontype == '10':
+                return map_to_int([
+                    "up",
+                    "down",
+                    "discovered",
+                    "lost"], value
+                )
+            if conditiontype == '13':
+                return self._zapi_wrapper.get_template_by_template_name(value)['templateid']
+            if conditiontype == '18':
+                return self._zapi_wrapper.get_discovery_rule_by_discovery_rule_name(value)['druleid']
+            if conditiontype == '19':
+                return self._zapi_wrapper.get_discovery_check_by_discovery_check_name(value)['dcheckid']
+            if conditiontype == '20':
+                return self._zapi_wrapper.get_proxy_by_proxy_name(value)['proxyid']
+            if conditiontype == '21':
+                return map_to_int([
+                    "pchldrfor0",
+                    "host",
+                    "service"], value
+                )
+            if conditiontype == '23':
+                return map_to_int([
+                    "item in not supported state",
+                    "item in normal state",
+                    "LLD rule in not supported state",
+                    "LLD rule in normal state",
+                    "trigger in unknown state",
+                    "trigger in normal state"], value
+                )
+            return value
+        except Exception as e:
+            self._module.fail_json(msg="Unsupperted value '%s' for specified condition type. Check out Zabbix API documetation for supported values for condition type '%s' at https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition" % (value, conditiontype))
 
     def construct_the_data(self, _formula, _conditions):
         if _conditions is None:
