@@ -126,12 +126,13 @@ class ActionModule(ActionBase):
             exec_data = None
             # WinRM requires a special wrapper to work with environment variables
             if self._connection.transport == "winrm":
-                pay = self._connection._create_raw_wrapper_payload(script_cmd,
-                                                                   env_dict)
-                exec_data = exec_wrapper.replace(b"$json_raw = ''",
-                                                 b"$json_raw = @'\r\n%s\r\n'@"
-                                                 % to_bytes(pay))
-                script_cmd = "-"
+                pay = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
+                exec_data = to_bytes(exec_wrapper) + b"\0\0\0\0" + to_bytes(pay)
+
+                # build the necessary exec wrapper command
+                # FUTURE: this still doesn't let script work on Windows with non-pipelined connections or
+                # full manual exec of KEEP_REMOTE_FILES
+                script_cmd = self._connection._shell.build_module_command(env_string='', shebang='#!powershell', cmd='')
 
             result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
 
