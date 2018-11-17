@@ -52,8 +52,10 @@
   # test cleanup
   always:
   - name: remove stored credential
-    win_command: cmdkey.exe /delete:{{ansible_hostname}}
-    ignore_errors: yes
+    win_credential_manager:
+      name: '{{ ansible_hostname }}'
+      type: domain_password
+      state: absent
     vars:
       ansible_become: yes
       ansible_become_method: runas

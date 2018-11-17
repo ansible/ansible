@@ -273,7 +273,12 @@
     - delete_without_path_again is not changed
 
 - name: store credential for test network account
-  win_command: cmdkey.exe /add:{{ansible_hostname}} /user:{{test_win_mapped_drive_temp_user}} /pass:{{test_win_mapped_drive_temp_password}}
+  win_credential_manager:
+    name: '{{ ansible_hostname }}'
+    type: domain_password
+    username: '{{ test_win_mapped_drive_temp_user }}'
+    secret: '{{ test_win_mapped_drive_temp_password }}'
+    state: present
   vars: &become_vars
     ansible_become: yes
     ansible_become_method: runas
