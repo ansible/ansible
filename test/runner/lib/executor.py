@@ -1632,6 +1632,13 @@ def get_integration_remote_filter(args, targets):
         display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
 
+    skip = 'skip/%s/' % args.remote.replace('/', '')
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
+                        % (skip.rstrip('/'), platform, ', '.join(skipped)))
+
     python_version = 2  # remotes are expected to default to python 2
 
     skip = 'skip/python%d/' % python_version
