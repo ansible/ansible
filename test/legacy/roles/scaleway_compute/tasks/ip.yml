@@ -199,3 +199,208 @@
     that:
       - server_destroy_task is success
       - server_destroy_task is changed
+
+# Reserved IP
+- name: Reserve public IPV4
+  scaleway_ip:
+    organization: '{{ scaleway_organization }}'
+    state: present
+    region: '{{ scaleway_region }}'
+  register: reserved_ip_1
+
+- name: Reserve public IPV4
+  scaleway_ip:
+    organization: '{{ scaleway_organization }}'
+    state: present
+    region: '{{ scaleway_region }}'
+  register: reserved_ip_2
+
+- name: Create a server reserved IP
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: '{{ reserved_ip_1.scaleway_ip.id }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_creation_reserved_task
+
+- debug: var=server_creation_reserved_task
+
+- assert:
+    that:
+      - server_creation_reserved_task is success
+      - server_creation_reserved_task is changed
+
+- name: Check server reserved IP
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: '{{ reserved_ip_1.scaleway_ip.id }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_creation_reserved_check_task
+
+- debug: var=server_creation_reserved_check_task
+
+- assert:
+    that:
+      - server_creation_reserved_check_task is success
+      - server_creation_reserved_check_task is not changed
+
+- name: Switch reserved IP
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: '{{ reserved_ip_2.scaleway_ip.id }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_switch_reserved_task
+
+- debug: var=server_switch_reserved_task
+
+- assert:
+    that:
+      - server_switch_reserved_task is success
+      - server_switch_reserved_task is changed
+
+- name: Switch to dynamic IP
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: 'dynamic'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_switch_dynamic_task
+
+- debug: var=server_switch_dynamic_task
+
+- assert:
+    that:
+      - server_switch_dynamic_task is success
+      - server_switch_dynamic_task is changed
+
+- name: Switch to reserved IP
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: '{{ reserved_ip_1.scaleway_ip.id }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_switch_reserved_task2
+
+- debug: var=server_switch_reserved_task2
+
+- assert:
+    that:
+      - server_switch_reserved_task2 is success
+      - server_switch_reserved_task2 is changed
+
+- name: Switch to no IP
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: 'absent'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_switch_absent_task
+
+- debug: var=server_switch_absent_task
+
+- assert:
+    that:
+      - server_switch_absent_task is success
+      - server_switch_absent_task is changed
+
+- name: Switch to reserved IP
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: '{{ reserved_ip_1.scaleway_ip.id }}'
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_switch_reserved_task3
+
+- debug: var=server_switch_reserved_task3
+
+- assert:
+    that:
+      - server_switch_reserved_task3 is success
+      - server_switch_reserved_task3 is changed
+
+# Cleanup
+- name: Destroy it
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_destroy_task
+
+- debug: var=server_destroy_task
+
+- assert:
+    that:
+      - server_destroy_task is success
+      - server_destroy_task is changed
+
+- name: Destroy IP
+  scaleway_ip:
+    state: absent
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    id: '{{ reserved_ip_1.scaleway_ip.id }}'
+  register: ip_destroy_task
+
+- debug: var=ip_destroy_task
+
+- assert:
+    that:
+      - ip_destroy_task is success
+      - ip_destroy_task is changed
+
+- name: Destroy IP
+  scaleway_ip:
+    state: absent
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    id: '{{ reserved_ip_2.scaleway_ip.id }}'
+  register: ip_destroy_task
+
+- debug: var=ip_destroy_task
+
+- assert:
+    that:
+      - ip_destroy_task is success
+      - ip_destroy_task is changed
