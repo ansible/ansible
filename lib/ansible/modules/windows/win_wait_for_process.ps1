@@ -4,52 +4,61 @@
 # Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.SID
 
-$ErrorActionPreference = "Stop"
-
-$params = Parse-Args -arguments $args -supports_check_mode $true
-
-$process_name_exact = Get-AnsibleParam -obj $params -name "process_name_exact" -type "list"
-$process_name_pattern = Get-AnsibleParam -obj $params -name "process_name_pattern" -type "str"
-$process_id = Get-AnsibleParam -obj $params -name "pid" -type "int" -default 0  # pid is a reserved variable in PowerShell, using process_id instead.
-$owner = Get-AnsibleParam -obj $params -name "owner" -type "str"
-$sleep = Get-AnsibleParam -obj $params -name "sleep" -type "int" -default 1
-$pre_wait_delay = Get-AnsibleParam -obj $params -name "pre_wait_delay" -type "int" -default 0
-$post_wait_delay = Get-AnsibleParam -obj $params -name "post_wait_delay" -type "int" -default 0
-$process_min_count = Get-AnsibleParam -obj $params -name "process_min_count" -type "int" -default 1
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
-$timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 300
-
-$result = @{
-    changed = $false
-    elapsed = 0
-    matched_processes = @()
+$spec = @{
+    options = @{
+        process_name_exact = @{ type='list' }
+        process_name_pattern = @{ type='str' }
+        pid = @{ type='int'; default=0 }
+        owner = @{ type='str' }
+        sleep = @{ type='int'; default=1 }
+        pre_wait_delay = @{ type='int'; default=0 }
+        post_wait_delay = @{ type='int'; default=0 }
+        process_min_count = @{ type='int'; default=1 }
+        state = @{ type='str'; default='present'; choices=@( 'absent', 'present' ) }
+        timeout = @{ type='int'; default=300 }
+    }
+    mutually_exclusive = @(
+        @( 'pid', 'process_name_exact' ),
+        @( 'pid', 'process_name_pattern' ),
+        @( 'process_name_exact', 'process_name_pattern' )
+    )
+    required_one_of = @(
+        ,@( 'owner', 'pid', 'process_name_exact', 'process_name_pattern' )
+    )
+    supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$process_name_exact = $module.Params.process_name_exact
+$process_name_pattern = $module.Params.process_name_pattern
+$process_id = $module.Params.pid  # pid is a reserved variable in PowerShell, using process_id instead
+$owner = $module.Params.owner
+$sleep = $module.Params.sleep
+$pre_wait_delay = $module.Params.pre_wait_delay
+$post_wait_delay = $module.Params.post_wait_delay
+$process_min_count = $module.Params.process_min_count
+$state = $module.Params.state
+$timeout = $module.Params.timeout
+
+$module.Result.changed = $false
+$module.Result.elapsed = 0
+$module.Result.matched_processes = @()
 
 # Validate the input
 if ($state -eq "absent" -and $sleep -ne 1) {
-    Add-Warning -obj $result -message "Parameter 'sleep' has no effect when waiting for a process to stop."
+    $module.Warn("Parameter 'sleep' has no effect when waiting for a process to stop.")
 }
 
 if ($state -eq "absent" -and $process_min_count -ne 1) {
-    Add-Warning -obj $result -message "Parameter 'process_min_count' has no effect when waiting for a process to stop."
-}
-
-if (($process_name_exact -or $process_name_pattern) -and $process_id) {
-    Fail-Json -obj $result -message "Parameter 'pid' may not be used with process_name_exact or process_name_pattern."
-}
-if ($process_name_exact -and $process_name_pattern) {
-    Fail-Json -obj $result -message "Parameter 'process_name_exact' and 'process_name_pattern' may not be used at the same time."
-}
-
-if (-not ($process_name_exact -or $process_name_pattern -or $process_id -or $owner)) {
-    Fail-Json -obj $result -message "At least one of 'process_name_exact', 'process_name_pattern', 'pid' or 'owner' must be supplied."
+    $module.Warn("Parameter 'process_min_count' has no effect when waiting for a process to stop.")
 }
 
 if ($owner -and ("IncludeUserName" -notin (Get-Command -Name Get-Process).Parameters.Keys)) {
-    Fail-Json -obj $result -message "This version of Powershell does not support filtering processes by 'owner'."
+    $module.FailJson("This version of Powershell does not support filtering processes by 'owner'.")
 }
 
 Function Get-FilteredProcesses {
@@ -128,15 +137,15 @@ if ($state -eq "present" ) {
     do {
 
         $Processes = Get-FilteredProcesses -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
-        $result.matched_processes = $Processes
+        $module.Result.matched_processes = $Processes
 
         if ($Processes.count -ge $process_min_count) {
             break
         }
 
         if (((Get-Date) - $module_start).TotalSeconds -gt $timeout) {
-            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-            Fail-Json -obj $result -message "Timed out while waiting for process(es) to start"
+            $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+            $module.FailJson("Timed out while waiting for process(es) to start")
         }
 
         Start-Sleep -Seconds $sleep
@@ -147,21 +156,21 @@ if ($state -eq "present" ) {
 
     # Wait for a process to stop
     $Processes = Get-FilteredProcesses -Owner $owner -ProcessNameExact $process_name_exact -ProcessNamePattern $process_name_pattern -ProcessId $process_id
-    $result.matched_processes = $Processes
+    $module.Result.matched_processes = $Processes
 
     if ($Processes.count -gt 0 ) {
         try {
             # This may randomly fail when used on specially protected processes (think: svchost)
             Wait-Process -Id $Processes.pid -Timeout $timeout
         } catch [System.TimeoutException] {
-            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-            Fail-Json -obj $result -message "Timeout while waiting for process(es) to stop"
+            $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+            $module.FailJson("Timeout while waiting for process(es) to stop")
         }
     }
 
 }
 
 Start-Sleep -Seconds $post_wait_delay
-$result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+$module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
-Exit-Json -obj $result
+$module.ExitJson()
