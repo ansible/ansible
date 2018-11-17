@@ -15,7 +15,7 @@
   - name: swarm
     docker_swarm:
       state: present
-      advertise_addr: 192.168.1.1
+      advertise_addr: "{{ansible_default_ipv4.address}}"
 
   - name: overlay
     docker_network:
