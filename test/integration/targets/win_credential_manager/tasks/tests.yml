@@ -7,7 +7,7 @@
     secret: password
     state: present
   register: fail_no_become
-  failed_when: '"Failed to access the user''s credential store, run the module with become or CredSSP" not in fail_no_become.msg'
+  failed_when: '"Failed to access the user''s credential store, run the module with become" not in fail_no_become.msg'
 
 - name: create domain user credential (check mode)
   win_credential_manager:

@@ -23,6 +23,7 @@ options:
     - Adds an alias for the credential.
     - Typically this is the NetBIOS name of a host if I(name) is set to the DNS
       name.
+    type: str
   attributes:
     description:
     - A list of dicts that set application specific attributes for a
@@ -150,8 +151,8 @@ options:
       C(CurrentUser\My) certificate store for the executing user.
     type: str
 notes:
-- This module requires to be run with CredSSP authentication or with C(become)
-  so it can access the user's credential store.
+- This module requires to be run with C(become) so it can access the
+  user's credential store.
 - There can only be one credential per host and type. if a second credential is
   defined that uses the same host and type, then the original credential is
   overwritten.
@@ -192,7 +193,7 @@ EXAMPLES = r'''
 
 - name: Create a certificate credential
   win_credential_manager:
-    name: *.domain.com
+    name: '*.domain.com'
     type: domain_certificate
     username: 0074CC4F200D27DC3877C24A92BA8EA21E6C7AF4
     state: present

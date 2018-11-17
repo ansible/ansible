@@ -405,9 +405,9 @@ namespace Ansible.CredentialManager
             {
                 int lastErr = Marshal.GetLastWin32Error();
 
-                // Not running with CredSSP or Become so cannot manage the user's credentials
+                // Not running with Become so cannot manage the user's credentials
                 if (lastErr == 0x00000520) // ERROR_NO_SUCH_LOGON_SESSION
-                    throw new InvalidOperationException("Failed to access the user's credential store, run the module with become or CredSSP");
+                    throw new InvalidOperationException("Failed to access the user's credential store, run the module with become");
                 else if (lastErr == 0x00000490)  // ERROR_NOT_FOUND
                     return null;
                 throw new Win32Exception(lastErr, "CredEnumerateW() failed");
