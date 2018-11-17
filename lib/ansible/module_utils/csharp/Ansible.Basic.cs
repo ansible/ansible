@@ -700,7 +700,8 @@ namespace Ansible.Basic
             // initially parse the params and check for unsupported ones and set internal vars
             CheckUnsupportedArguments(param, legalInputs);
 
-            if (CheckMode && !(bool)spec["supports_check_mode"])
+            // Only run this check if we are at the root argument (optionsContext.Count == 0)
+            if (CheckMode && !(bool)spec["supports_check_mode"] && optionsContext.Count == 0)
             {
                 Result["skipped"] = true;
                 Result["msg"] = String.Format("remote module ({0}) does not support check mode", ModuleName);

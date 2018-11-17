@@ -1352,6 +1352,28 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "abc"}}
     }
 
+    "Check mode with suboption without supports_check_mode" = {
+        $spec = @{
+            options = @{
+                sub_options = @{
+                    # This tests the situation where a sub key doesn't set supports_check_mode, the logic in
+                    # Ansible.Basic automatically sets that to $false and we want it to ignore it for a nested check
+                    type = "dict"
+                    options = @{
+                        sub_option = @{ type = "str"; default = "value" }
+                    }
+                }
+            }
+            supports_check_mode = $true
+        }
+        $complex_args = @{
+            _ansible_check_mode = $true
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.CheckMode | Assert-Equals -Expected $true
+    }
+
     "Type conversion error" = {
         $spec = @{
             options = @{
