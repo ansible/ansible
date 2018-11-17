@@ -39,11 +39,11 @@ elif [ "${platform}" = "rhel" ]; then
             # HACK HACK HACK
             #   RHEL8 doesn't have python2 by default but we need this path for
             #   the tests to run
-            if ! [ -f /usr/bin/python]; then
-                ln -s /usr/bin/python3 /usr/bin/python &> /dev/null
+            if [ ! -f /usr/bin/python ]; then
+                ln -s /usr/bin/python3 /usr/bin/python
             fi
-            if ! [ -f /usr/bin/pip]; then
-                ln -s /usr/bin/pip3 /usr/bin/pip &> /dev/null
+            if [ ! -f /usr/bin/pip ]; then
+                ln -s /usr/bin/pip3 /usr/bin/pip
             fi
 
             yum install -y \
