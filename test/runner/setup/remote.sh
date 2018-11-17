@@ -35,10 +35,8 @@ elif [ "${platform}" = "rhel" ]; then
 
             yum -y module install python36
 
-            # FIXME
-            # HACK HACK HACK
-            #   RHEL8 doesn't have python2 by default but we need this path for
-            #   the tests to run
+            # When running from source our python shebang is: #!/usr/bin/env python
+            # To avoid modifying all of our scripts while running tests we make sure `python` is in our PATH.
             if [ ! -f /usr/bin/python ]; then
                 ln -s /usr/bin/python3 /usr/bin/python
             fi
