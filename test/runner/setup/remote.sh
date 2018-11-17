@@ -35,15 +35,6 @@ elif [ "${platform}" = "rhel" ]; then
 
             yum -y module install python36
 
-            # When running from source our python shebang is: #!/usr/bin/env python
-            # To avoid modifying all of our scripts while running tests we make sure `python` is in our PATH.
-            if [ ! -f /usr/bin/python ]; then
-                ln -s /usr/bin/python3 /usr/bin/python
-            fi
-            if [ ! -f /usr/bin/pip ]; then
-                ln -s /usr/bin/pip3 /usr/bin/pip
-            fi
-
             yum install -y \
                 gcc \
                 python3-devel \
@@ -55,6 +46,15 @@ elif [ "${platform}" = "rhel" ]; then
              echo "Failed to install packages. Sleeping before trying again..."
              sleep 10
         done
+
+        # When running from source our python shebang is: #!/usr/bin/env python
+        # To avoid modifying all of our scripts while running tests we make sure `python` is in our PATH.
+        if [ ! -f /usr/bin/python ]; then
+            ln -s /usr/bin/python3 /usr/bin/python
+        fi
+        if [ ! -f /usr/bin/pip ]; then
+            ln -s /usr/bin/pip3 /usr/bin/pip
+        fi
     else
         while true; do
             yum install -y \
