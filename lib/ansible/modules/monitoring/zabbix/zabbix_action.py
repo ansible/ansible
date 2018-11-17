@@ -930,12 +930,14 @@ class Filter(object):
 
 
 def convert_unicode_to_str(data):
-    if isinstance(data, (str, unicode)):
-        return str(data)
-    elif isinstance(data, dict):
-        return dict(map(convert_unicode_to_str, data.items()))
-    elif isinstance(data, (list, tuple, set)):
-        return type(data)(map(convert_unicode_to_str, data))
+     if isinstance(data, dict):
+         return dict(map(convert_unicode_to_str, data.items()))
+     elif isinstance(data, (list, tuple, set)):
+         return type(data)(map(convert_unicode_to_str, data))
+     elif data is None:
+         return data
+     else:
+         return str(data)
 
 
 def map_to_int(strs, value):
