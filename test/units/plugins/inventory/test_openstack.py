@@ -68,7 +68,7 @@ def inventory():
     return inventory
 
 
-def test_simpel_groups(inventory):
+def test_simple_groups(inventory):
     inventory._set_variables(hostvars, {})
     groups = inventory.inventory.get_groups_dict()
     assert 'testgroup' in groups
