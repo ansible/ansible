@@ -55,7 +55,6 @@ elif [ "${platform}" = "rhel" ]; then
              echo "Failed to install packages. Sleeping before trying again..."
              sleep 10
         done
-        pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python3
     else
         while true; do
             yum install -y \
