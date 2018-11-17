@@ -29,12 +29,10 @@ if [ "${platform}" = "freebsd" ]; then
 elif [ "${platform}" = "rhel" ]; then
     if grep '8\.' /etc/redhat-release; then
         while true; do
-            curl -o /etc/yum.repos.d/rhel-8-beta.repo http://downloads.redhat.com/redhat/rhel/rhel-8-beta/rhel-8-beta.repo
-            dnf config-manager --set-enabled rhel-8-for-x86_64-baseos-beta-rpms
-            dnf config-manager --set-enabled rhel-8-for-x86_64-appstream-beta-rpms
-
-            yum -y module install python36
-
+            curl -o /etc/yum.repos.d/rhel-8-beta.repo http://downloads.redhat.com/redhat/rhel/rhel-8-beta/rhel-8-beta.repo && \
+            dnf config-manager --set-enabled rhel-8-for-x86_64-baseos-beta-rpms && \
+            dnf config-manager --set-enabled rhel-8-for-x86_64-appstream-beta-rpms && \
+            yum -y module install python36 && \
             yum install -y \
                 gcc \
                 python3-devel \
