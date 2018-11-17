@@ -103,6 +103,7 @@ import traceback
 import json
 import tempfile
 import subprocess
+import xml.etree.ElementTree as ET
 
 HAVE_KERBEROS = False
 try:
@@ -550,14 +551,17 @@ class Connection(ConnectionBase):
         return (result.status_code, result.std_out, result.std_err)
 
     def is_clixml(self, value):
-        return value.startswith(b"#< CLIXML")
+        return value.startswith(b"#< CLIXML\r\n")
 
     # hacky way to get just stdout- not always sure of doc framing here, so use with care
     def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
-        clear_xml = clixml_doc.replace(b'#< CLIXML\r\n', b'')
-        doc = xmltodict.parse(clear_xml)
-        lines = [l.get('#text', '').replace('_x000D__x000A_', '') for l in doc.get('Objs', {}).get('S', {}) if l.get('@S') == stream_name]
-        return '\r\n'.join(lines)
+        clixml = ET.fromstring(clixml_doc.split(b"\r\n", 1)[-1])
+        namespace_match = re.match(r'{(.*)}', clixml.tag)
+        namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
+
+        strings = clixml.findall("./%sS" % namespace)
+        lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream_name]
+        return to_bytes('\r\n'.join(lines))
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
