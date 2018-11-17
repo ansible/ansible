@@ -738,21 +738,23 @@ $tests = @{
         $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
     }
 
-    "Logon without password using S4U" = {
+    "Logon without password with standard" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $null, "LOGON_WITH_PROFILE",
             "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
+        # Too unstable, there might be another process still lingering which causes become to steal instead of using
+        # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Batch"
+        # $stdout.LogonType | Assert-Equals -Expected "Batch"
         $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
         $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "ansible"
+        # $stdout.SourceName | Assert-Equals -Expected "ansible"
         $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
     }
 
-    "Logon without password and network type using S4U" = {
+    "Logon without password and network type with standard" = {
         # Server 2008 will not work with become to Network or Network Cleartext
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
@@ -762,11 +764,13 @@ $tests = @{
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
+        # Too unstable, there might be another process still lingering which causes become to steal instead of using
+        # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Network"
+        # $stdout.LogonType | Assert-Equals -Expected "Network"
         $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
         $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "ansible"
+        # $stdout.SourceName | Assert-Equals -Expected "ansible"
         $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
     }
 
@@ -840,11 +844,13 @@ $tests = @{
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
+        # Too unstable, there might be another process still lingering which causes become to steal instead of using
+        # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Batch"
+        # $stdout.LogonType | Assert-Equals -Expected "Batch"
         $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
         $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "ansible"
+        # $stdout.SourceName | Assert-Equals -Expected "ansible"
         $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
     }
 
@@ -858,11 +864,13 @@ $tests = @{
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
 
+        # Too unstable, there might be another process still lingering which causes become to steal instead of using
+        # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Network"
+        # $stdout.LogonType | Assert-Equals -Expected "Network"
         $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
         $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "ansible"
+        # $stdout.SourceName | Assert-Equals -Expected "ansible"
         $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
     }
 
