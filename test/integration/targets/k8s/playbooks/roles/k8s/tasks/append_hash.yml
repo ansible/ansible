@@ -28,11 +28,6 @@
           - k8s_configmap1.result.metadata.name != 'config-map-test'
           - k8s_configmap1.result.metadata.name[:-10] == 'config-map-test-'
 
-    - name: Check k8s_config_hash filter
-      assert:
-        that:
-          - (k8s_resource | k8s_config_hash) == k8s_configmap1.result.metadata.name[-10:]
-
     - name: recreate same config map
       k8s:
         definition: "{{ k8s_resource }}"
@@ -71,4 +66,3 @@
         kind: Namespace
         name: append-hash
         state: absent
-

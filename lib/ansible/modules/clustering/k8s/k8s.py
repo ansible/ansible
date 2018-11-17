@@ -97,8 +97,7 @@ options:
     - The full definition of an object is needed to generate the hash - this means that deleting an object created with append_hash
       will only work if the same object is passed with state=absent (alternatively, just use state=absent with the name including
       the generated hash and append_hash=no)
-    type:
-    - bool
+    type: bool
     version_added: "2.8"
 
 requirements:

@@ -1091,7 +1091,7 @@ including its hash::
 
     {{ configmap_resource_definition | k8s_config_resource_name }}
 
-This can then be used to reference hashes in Pod specifications.
+This can then be used to reference hashes in Pod specifications::
 
     my_secret:
       kind: Secret

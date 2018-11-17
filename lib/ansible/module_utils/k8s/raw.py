@@ -323,7 +323,6 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 self.fail_json(msg="Resource update timed out", **result)
             return result
 
-
     def patch_resource(self, resource, definition, existing, name, namespace, merge_type=None):
         try:
             params = dict(name=name, namespace=namespace)
