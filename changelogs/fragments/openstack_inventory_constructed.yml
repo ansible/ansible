@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - 'openstack inventory plugin: allow "constructed" functionality
+    (``compose``, ``groups``, and ``keyed_groups``) to work as documented.'
