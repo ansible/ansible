@@ -44,7 +44,7 @@ options:
      required: false
 requirements:
     - "python >= 2.7"
-    - "shade"
+    - "openstack"
 '''
 
 EXAMPLES = '''

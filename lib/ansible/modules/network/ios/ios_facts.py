@@ -282,6 +282,9 @@ class Config(FactsBase):
         super(Config, self).populate()
         data = self.responses[0]
         if data:
+            data = re.sub(
+                r'^Building configuration...\s+Current configuration : \d+ bytes\n',
+                '', data, flags=re.MULTILINE)
             self.facts['config'] = data
 
 
@@ -483,7 +486,6 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
-global warnings
 warnings = list()
 
 

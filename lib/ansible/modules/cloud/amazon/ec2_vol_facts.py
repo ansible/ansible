@@ -92,7 +92,7 @@ def get_volume_info(volume, region):
             'status': attachment[0]["state"] if len(attachment) > 0 else None,
             'delete_on_termination': attachment[0]["delete_on_termination"] if len(attachment) > 0 else None
         },
-        'tags': boto3_tag_list_to_ansible_dict(volume['tags'])
+        'tags': boto3_tag_list_to_ansible_dict(volume['tags']) if "tags" in volume else None
     }
 
     return volume_info

@@ -4,6 +4,8 @@
 
 # Kubernetes resources
 
+- include_tasks: waiter.yml
+
 - block:
     - name: Create a namespace
       k8s:
@@ -14,6 +16,19 @@
     - name: show output
       debug:
         var: output
+
+    - name: k8s_facts works with empty resources
+      k8s_facts:
+        kind: Deployment
+        namespace: testing
+        api_version: extensions/v1beta1
+      register: k8s_facts
+
+    - name: assert that k8s_facts is in correct format
+      assert:
+        that:
+          - "'resources' in k8s_facts"
+          - not k8s_facts.resources
 
     - name: Create a service
       k8s:
@@ -85,7 +100,7 @@
       k8s:
         state: present
         inline: &deployment
-          apiVersion: apps/v1beta1
+          apiVersion: extensions/v1beta1
           kind: Deployment
           metadata:
             name: elastic
@@ -130,66 +145,11 @@
       assert:
         that: not output.changed
 
-    # OpenShift Resources
-    - name: Create a project
-      k8s:
-        name: testing
-        kind: project
-        api_version: v1
-      register: output
+    - debug:
+        var: k8s_openshift
 
-    - name: show output
-      debug:
-        var: output
-
-    - name: Create deployment config
-      k8s:
-        state: present
-        inline: &dc
-          apiVersion: v1
-          kind: DeploymentConfig
-          metadata:
-            name: elastic
-            labels:
-              app: galaxy
-              service: elastic
-            namespace: testing
-          spec:
-            template:
-              metadata:
-                labels:
-                  app: galaxy
-                  service: elastic
-              spec:
-                containers:
-                  - name: elastic
-                    volumeMounts:
-                    - mountPath: /usr/share/elasticsearch/data
-                      name: elastic-volume
-                    command: ['elasticsearch']
-                    image: 'ansible/galaxy-elasticsearch:2.4.6'
-                volumes:
-                - name: elastic-volume
-                  persistentVolumeClaim:
-                    claimName: elastic-volume
-            replicas: 1
-            strategy:
-              type: Rolling
-      register: output
-
-    - name: Show output
-      debug:
-        var: output
-
-    - name: Create deployment config again
-      k8s:
-        state: present
-        inline: *dc
-      register: output
-
-    - name: DC creation should be idempotent
-      assert:
-        that: not output.changed
+    - include: openshift.yml
+      when: k8s_openshift | bool
 
     ### Type tests
     - name: Create a namespace from a string
@@ -323,12 +283,18 @@
         that: not item.resources or item.resources[0].status.phase == "Terminating"
       loop: "{{ k8s_facts.results }}"
 
+    - include_tasks: crd.yml
+
   always:
 
     - name: Delete all namespaces
       k8s:
         state: absent
         definition:
+          - kind: Namespace
+            apiVersion: v1
+            metadata:
+              name: testing
           - kind: Namespace
             apiVersion: v1
             metadata:
@@ -350,5 +316,3 @@
             metadata:
               name: testing5
       ignore_errors: yes
-
-- include_tasks: crd.yml

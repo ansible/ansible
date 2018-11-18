@@ -130,7 +130,7 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP/CDP neighbors from the remote device
+  description: The list of LLDP and CDP neighbors from the device
   returned: when interfaces is configured
   type: dict
 
@@ -398,6 +398,7 @@ class Interfaces(FactsBase):
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
+        self.facts['neighbors'] = {}
         data = None
 
         data = self.run('show interface', output='json')
@@ -420,16 +421,21 @@ class Interfaces(FactsBase):
                 interfaces = self.parse_interfaces(data)
                 self.populate_ipv6_interfaces(interfaces)
 
-        data = self.run('show lldp neighbors')
+        data = self.run('show lldp neighbors', output='json')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(data)
+            if isinstance(data, dict):
+                self.facts['neighbors'].update(self.populate_structured_neighbors_lldp(data))
+            else:
+                self.facts['neighbors'].update(self.populate_neighbors(data))
 
         data = self.run('show cdp neighbors detail', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['neighbors'] = self.populate_structured_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_structured_neighbors_cdp(data))
             else:
-                self.facts['neighbors'] = self.populate_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_neighbors_cdp(data))
+
+        self.facts['neighbors'].pop(None, None)  # Remove null key
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
@@ -473,6 +479,23 @@ class Interfaces(FactsBase):
                 return ""
         except TypeError:
             return ""
+
+    def populate_structured_neighbors_lldp(self, data):
+        objects = dict()
+        data = data['TABLE_nbor']['ROW_nbor']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
+            local_intf = item['l_port_id']
+            objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['port_id']
+            nbor['sysname'] = item['chassis_id']
+            objects[local_intf].append(nbor)
+
+        return objects
 
     def populate_structured_neighbors_cdp(self, data):
         objects = dict()
@@ -661,7 +684,7 @@ class Interfaces(FactsBase):
     def parse_lldp_intf(self, data):
         match = re.search(r'Interface:\s*(\S+)', data, re.M)
         if match:
-            return match.group(1)
+            return match.group(1).strip(',')
 
     def parse_lldp_port(self, data):
         match = re.search(r'Port ID \(outgoing port\):\s*(\S+)', data, re.M)

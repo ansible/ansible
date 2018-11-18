@@ -15,6 +15,11 @@ from random import randint
 try:
     # requests is required for exception handling of the ConnectionError
     import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
@@ -27,7 +32,8 @@ from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(TaskError, self).__init__(*args, **kwargs)
 
 
 def wait_for_task(task, max_backoff=64, timeout=3600):
@@ -51,12 +57,15 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
             error_msg = task.info.error
+            host_thumbprint = None
             try:
                 error_msg = error_msg.msg
+                if hasattr(task.info.error, 'thumbprint'):
+                    host_thumbprint = task.info.error.thumbprint
             except AttributeError:
                 pass
             finally:
-                raise_from(TaskError(error_msg), task.info.error)
+                raise_from(TaskError(error_msg, host_thumbprint), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
             sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
@@ -101,17 +110,6 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
         if pg.name == portgroup_name:
             return pg
 
-    return None
-
-
-# Maintain for legacy, or remove with 2.1 ?
-# Should be replaced with find_cluster_by_name
-def find_cluster_by_name_datacenter(datacenter, cluster_name):
-
-    host_folder = datacenter.hostFolder
-    for folder in host_folder.childEntity:
-        if folder.name == cluster_name:
-            return folder
     return None
 
 
@@ -347,13 +345,11 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for dummy, v in iteritems(net_dict):
-        for ipaddress in v:
-            if ipaddress:
-                if '::' in ipaddress:
-                    facts['ipv6'] = ipaddress
-                else:
-                    facts['ipv4'] = ipaddress
+    if vm.guest.ipAddress:
+        if ':' in vm.guest.ipAddress:
+            facts['ipv6'] = vm.guest.ipAddress
+        else:
+            facts['ipv4'] = vm.guest.ipAddress
 
     ethernet_idx = 0
     for entry in vm.config.hardware.device:
@@ -777,6 +773,10 @@ class PyVmomi(object):
         """
         Constructor
         """
+        if not HAS_REQUESTS:
+            self.module.fail_json(msg="Unable to find 'requests' Python library which is required."
+                                      " Please install using 'pip install requests'")
+
         if not HAS_PYVMOMI:
             module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
 
@@ -984,8 +984,16 @@ class PyVmomi(object):
 
         """
         template_obj = None
+        if not template_name:
+            return template_obj
 
-        if template_name:
+        if "/" in template_name:
+            vm_obj_path = os.path.dirname(template_name)
+            vm_obj_name = os.path.basename(template_name)
+            template_obj = find_vm_by_id(self.content, vm_obj_name, vm_id_type="inventory_path", folder=vm_obj_path)
+            if template_obj:
+                return template_obj
+        else:
             template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
             if template_obj:
                 return template_obj
@@ -1006,6 +1014,7 @@ class PyVmomi(object):
                 self.module.fail_json(msg="Multiple virtual machines or templates with same name [%s] found." % template_name)
             elif templates:
                 template_obj = templates[0]
+
         return template_obj
 
     # Cluster related functions

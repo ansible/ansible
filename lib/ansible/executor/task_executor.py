@@ -42,13 +42,18 @@ def remove_omit(task_args, omit_token):
     Remove args with a value equal to the ``omit_token`` recursively
     to align with now having suboptions in the argument_spec
     '''
-    new_args = {}
 
+    if not isinstance(task_args, dict):
+        return task_args
+
+    new_args = {}
     for i in iteritems(task_args):
         if i[1] == omit_token:
             continue
         elif isinstance(i[1], dict):
             new_args[i[0]] = remove_omit(i[1], omit_token)
+        elif isinstance(i[1], list):
+            new_args[i[0]] = [remove_omit(v, omit_token) for v in i[1]]
         else:
             new_args[i[0]] = i[1]
 
@@ -210,7 +215,12 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
-        if self._task.loop_with:
+        loop_cache = self._job_vars.get('_ansible_loop_cache')
+        if loop_cache is not None:
+            # _ansible_loop_cache may be set in `get_vars` when calculating `delegate_to`
+            # to avoid reprocessing the loop
+            items = loop_cache
+        elif self._task.loop_with:
             if self._task.loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
                 if self._task.loop_with == 'first_found':
@@ -236,7 +246,7 @@ class TaskExecutor:
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
-        elif self._task.loop:
+        elif self._task.loop is not None:
             items = templar.template(self._task.loop)
             if not isinstance(items, list):
                 raise AnsibleError(

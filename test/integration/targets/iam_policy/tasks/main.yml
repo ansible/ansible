@@ -1,0 +1,325 @@
+---
+- block:
+    # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+           aws_access_key: "{{ aws_access_key }}"
+           aws_secret_key: "{{ aws_secret_key }}"
+           security_token: "{{ security_token }}"
+           region: "{{ aws_region }}"
+      no_log: yes
+    # ============================================================
+    - name: Create a temporary folder for the policies
+      tempfile:
+        state: directory
+      register: tmpdir
+    # ============================================================
+    - name: Copy over policy
+      copy:
+        src: no_access.json
+        dest: "{{ tmpdir.path }}"
+    # ============================================================
+    - name: Copy over other policy
+      copy:
+        src: no_access_with_id.json
+        dest: "{{ tmpdir.path }}"
+    # ============================================================
+    - name: Create user for tests
+      iam_user:
+        name: "{{ iam_user_name }}"
+        state: present
+        <<: *aws_connection_info
+    # ============================================================
+    - name: Create role for tests
+      iam_role:
+        name: "{{ iam_role_name }}"
+        assume_role_policy_document: "{{ lookup('file','no_trust.json') }}"
+        state: present
+        <<: *aws_connection_info
+    # ============================================================
+    - name: Create group for tests
+      iam_group:
+        name: "{{ iam_group_name }}"
+        state: present
+        <<: *aws_connection_info
+    # ============================================================
+    - name: Create policy for user
+      iam_policy:
+        iam_type: user
+        iam_name: "{{ iam_user_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was added for user
+      assert:
+        that:
+          - result.changed == True
+          - result.policies == ["{{ iam_policy_name }}"]
+          - result.user_name == "{{ iam_user_name }}" 
+    # ============================================================
+    - name: Update policy for user
+      iam_policy:
+        iam_type: user
+        iam_name: "{{ iam_user_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was updated for user
+      assert:
+        that:
+          - result.changed == True
+    # ============================================================
+    - name: Update policy for user with same policy
+      iam_policy:
+        iam_type: user
+        iam_name: "{{ iam_user_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy did not change for user
+      assert:
+        that:
+          - result.changed == False
+    # ============================================================
+    - name: Create policy for user using policy_json
+      iam_policy:
+        iam_type: user
+        iam_name: "{{ iam_user_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_json: "{{ lookup('file', '{{ tmpdir.path }}/no_access.json') }}"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was added for user
+      assert:
+        that:
+          - result.changed == True
+          - result.policies == ["{{ iam_policy_name }}"]
+          - result.user_name == "{{ iam_user_name }}" 
+    # ============================================================
+    - name: Create policy for role
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ iam_role_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was added for role
+      assert:
+        that:
+          - result.changed == True
+          - result.policies == ["{{ iam_policy_name }}"]
+          - result.role_name == "{{ iam_role_name }}" 
+    # ============================================================
+    - name: Update policy for role
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ iam_role_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was updated for role
+      assert:
+        that:
+          - result.changed == True
+    # ============================================================
+    - name: Update policy for role with same policy
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ iam_role_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy did not change for role
+      assert:
+        that:
+          - result.changed == False
+    # ============================================================
+    - name: Create policy for role using policy_json
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ iam_role_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_json: "{{ lookup('file', '{{ tmpdir.path }}/no_access.json') }}"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was added for role
+      assert:
+        that:
+          - result.changed == True
+          - result.policies == ["{{ iam_policy_name }}"]
+          - result.role_name == "{{ iam_role_name }}" 
+    # ============================================================
+    - name: Create policy for group
+      iam_policy:
+        iam_type: group
+        iam_name: "{{ iam_group_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was added for group
+      assert:
+        that:
+          - result.changed == True
+          - result.policies == ["{{ iam_policy_name }}"]
+          - result.group_name == "{{ iam_group_name }}" 
+    # ============================================================
+    - name: Update policy for group
+      iam_policy:
+        iam_type: group
+        iam_name: "{{ iam_group_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was updated for group
+      assert:
+        that:
+          - result.changed == True
+    # ============================================================
+    - name: Update policy for group with same policy
+      iam_policy:
+        iam_type: group
+        iam_name: "{{ iam_group_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_document: "{{ tmpdir.path }}/no_access_with_id.json"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy did not change for group
+      assert:
+        that:
+          - result.changed == False
+    # ============================================================
+    - name: Create policy for group using policy_json
+      iam_policy:
+        iam_type: group
+        iam_name: "{{ iam_group_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: present
+        policy_json: "{{ lookup('file', '{{ tmpdir.path }}/no_access.json') }}"
+        <<: *aws_connection_info
+      register: result 
+    # ============================================================
+    - name: Assert policy was added for group
+      assert:
+        that:
+          - result.changed == True
+          - result.policies == ["{{ iam_policy_name }}"]
+          - result.group_name == "{{ iam_group_name }}"
+    # ============================================================
+    - name: Delete policy for user
+      iam_policy:
+        iam_type: user
+        iam_name: "{{ iam_user_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+    - assert:
+        that:
+          - result.changed == True
+    # ============================================================
+    - name: Delete policy for role
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ iam_role_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+    - assert:
+        that:
+          - result.changed == True
+    # ============================================================
+    - name: Delete policy for group
+      iam_policy:
+        iam_type: group
+        iam_name: "{{ iam_group_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+    - assert:
+        that:
+          - result.changed == True
+    # ============================================================
+  always:
+    # ============================================================
+    - name: Delete policy for user
+      iam_policy:
+        iam_type: user
+        iam_name: "{{ iam_user_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+    # ============================================================
+    - name: Delete user for tests
+      iam_user:
+        name: "{{ iam_user_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+    # ============================================================
+    - name: Delete policy for role
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ iam_role_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+    # ============================================================
+    - name: Delete role for tests
+      iam_role:
+        name: "{{ iam_role_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+    # ============================================================
+    - name: Delete policy for group
+      iam_policy:
+        iam_type: group
+        iam_name: "{{ iam_group_name }}"
+        policy_name: "{{ iam_policy_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+    # ============================================================
+    - name: Delete group for tests
+      iam_group:
+        name: "{{ iam_group_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+    # ============================================================
+    - name: Delete temporary folder containing the policies
+      file:
+        state: absent
+        path: "{{ tmpdir.path }}/"

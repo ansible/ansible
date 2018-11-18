@@ -15,7 +15,7 @@
     state: present
     level: machine
   register: create_fail_null
-  failed_when: create_fail_null.msg != "When state=present, value must be defined and not an empty string, if you wish to remove the envvar, set state=absent"
+  failed_when: 'create_fail_null.msg != "state is present but all of the following are missing: value"'
 
 - name: fail to create environment value with empty value
   win_environment:
@@ -24,7 +24,7 @@
     state: present
     level: machine
   register: create_fail_empty_string
-  failed_when: create_fail_null.msg != "When state=present, value must be defined and not an empty string, if you wish to remove the envvar, set state=absent"
+  failed_when: create_fail_empty_string.msg != "When state=present, value must be defined and not an empty string, if you wish to remove the envvar, set state=absent"
 
 - name: create test environment value for machine check
   win_environment:

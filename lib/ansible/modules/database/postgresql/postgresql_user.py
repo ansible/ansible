@@ -215,6 +215,7 @@ except ImportError:
 else:
     postgresqldb_found = True
 
+import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
 from ansible.module_utils._text import to_bytes, to_native
@@ -406,6 +407,8 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
                 return changed
             else:
                 raise psycopg2.InternalError(e)
+        except psycopg2.NotSupportedError as e:
+            module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
 
     elif no_password_changes and role_attr_flags != '':
         # Grab role information from pg_roles instead of pg_authid
@@ -724,28 +727,25 @@ def get_valid_flags_by_version(cursor):
 
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        user=dict(required=True, aliases=['name']),
+        password=dict(default=None, no_log=True),
+        state=dict(default="present", choices=["absent", "present"]),
+        priv=dict(default=None),
+        db=dict(default=''),
+        fail_on_user=dict(type='bool', default='yes'),
+        role_attr_flags=dict(default=''),
+        encrypted=dict(type='bool', default='yes'),
+        no_password_changes=dict(type='bool', default='no'),
+        expires=dict(default=None),
+        ssl_mode=dict(default='prefer', choices=[
+            'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ssl_rootcert=dict(default=None),
+        conn_limit=dict(default=None)
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            user=dict(required=True, aliases=['name']),
-            password=dict(default=None, no_log=True),
-            state=dict(default="present", choices=["absent", "present"]),
-            priv=dict(default=None),
-            db=dict(default=''),
-            port=dict(default='5432'),
-            fail_on_user=dict(type='bool', default='yes'),
-            role_attr_flags=dict(default=''),
-            encrypted=dict(type='bool', default='yes'),
-            no_password_changes=dict(type='bool', default='no'),
-            expires=dict(default=None),
-            ssl_mode=dict(default='prefer', choices=[
-                          'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None),
-            conn_limit=dict(default=None)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 

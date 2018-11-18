@@ -1,0 +1,13 @@
+# The loopback network interface
+auto lo eth0
+iface lo inet loopback
+
+# The primary network interface
+iface eth0 inet static
+  address 192.168.0.1
+  post-up echo configuring ipv4
+
+iface eth0 inet6 static
+  address fc00::1
+  post-up echo configuring ipv6
+  mtu 1350

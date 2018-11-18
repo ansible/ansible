@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix consistency issue in grafana_dashboard module where the module would detect absence of 'dashboard' key on dashboard create but not dashboard update.

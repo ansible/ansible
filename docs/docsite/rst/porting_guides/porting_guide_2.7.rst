@@ -71,6 +71,25 @@ In Ansible 2.7 a new module argument named ``public`` was added to the ``include
 
 There is an important difference in the way that ``include_role`` (dynamic) will expose the role's variables, as opposed to ``import_role`` (static). ``import_role`` is a pre-processor, and the ``defaults`` and ``vars`` are evaluated at playbook parsing, making the variables available to tasks and roles listed at any point in the play. ``include_role`` is a conditional task, and the ``defaults`` and ``vars`` are evaluated at execution time, making the variables available to tasks and roles listed *after* the ``include_role`` task.
 
+include_tasks/import_tasks inline variables
+-------------------------------------------
+
+As of Ansible 2.7, `include_tasks` and `import_tasks` can no longer accept inline variables. Instead of using inline variables, tasks should supply variables under the ``vars`` keyword.
+
+**OLD** In Ansible 2.6 (and earlier) the following was valid syntax for specifying variables:
+
+.. code-block:: yaml
+
+    - include_tasks: include_me.yml variable=value
+
+**NEW** In Ansible 2.7 the task should be changed to use the ``vars`` keyword:
+
+.. code-block:: yaml
+
+    - include_tasks: include_me.yml
+      vars:
+        variable: value
+
 vars_prompt with unknown algorithms
 -----------------------------------
 
@@ -201,6 +220,10 @@ Noteworthy module changes
 * ``include_role`` and ``include_tasks`` can now be used directly from ``ansible`` (adhoc) and ``ansible-console``::
 
     #> ansible -m include_role -a 'name=myrole' all
+
+* The ``pip`` module has added a dependency on ``setuptools`` to support version requirements, this requirement is for
+  the Python interpreter that executes the module and not the Python interpreter that the module is managing.
+
 
 Plugins
 =======

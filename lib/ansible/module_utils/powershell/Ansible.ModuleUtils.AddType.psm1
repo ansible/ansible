@@ -19,9 +19,8 @@ Function Add-CSharpType {
     [Switch] Whether to return the loaded Assembly
 
     .PARAMETER AnsibleModule
-    TODO - This is an AnsibleModule object that is used to derive the
-    TempPath and Debug values.
-        TempPath is set to the TmpDir property of the class
+    [Ansible.Basic.AnsibleModule] used to derive the TempPath and Debug values.
+        TempPath is set to the Tmpdir property of the class
         IncludeDebugInfo is set when the Ansible verbosity is >= 3
 
     .PARAMETER TempPath
@@ -69,7 +68,8 @@ Function Add-CSharpType {
     }
 
     # pattern used to find referenced assemblies in the code
-    $assembly_pattern = "^//\s*AssemblyReference\s+-Name\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?$"
+    $assembly_pattern = [Regex]"//\s*AssemblyReference\s+-Name\s+(?<Name>[\w.]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
+    $no_warn_pattern = [Regex]"//\s*NoWarn\s+-Name\s+(?<Name>[\w\d]*)(\s+-CLR\s+(?<CLR>Core|Framework))?"
 
     # PSCore vs PSDesktop use different methods to compile the code,
     # PSCore uses Roslyn and can compile the code purely in memory
@@ -85,30 +85,39 @@ Function Add-CSharpType {
             [Microsoft.CodeAnalysis.CompilationReference]::CreateFromFile(([System.Reflection.Assembly]::GetAssembly([PSObject])).Location)
         )
         $netcore_app_ref_folder = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName([PSObject].Assembly.Location), "ref")
+        $lib_assembly_location = [System.IO.Path]::GetDirectoryName([object].Assembly.Location)
         foreach ($file in [System.IO.Directory]::EnumerateFiles($netcore_app_ref_folder, "*.dll", [System.IO.SearchOption]::TopDirectoryOnly)) {
             $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($file)) > $null
         }
 
         # loop through the references, parse as a SyntaxTree and get
         # referenced assemblies
+        $ignore_warnings = New-Object -TypeName 'System.Collections.Generic.Dictionary`2[[String], [Microsoft.CodeAnalysis.ReportDiagnostic]]'
         $parse_options = ([Microsoft.CodeAnalysis.CSharp.CSharpParseOptions]::Default).WithPreprocessorSymbols($defined_symbols)
         $syntax_trees = [System.Collections.Generic.List`1[Microsoft.CodeAnalysis.SyntaxTree]]@()
         foreach ($reference in $References) {
             # scan through code and add any assemblies that match
             # //AssemblyReference -Name ... [-CLR Core]
-            $sr = New-Object -TypeName System.IO.StringReader -ArgumentList $reference
-            try {
-                while ($null -ne ($line = $sr.ReadLine())) {
-                    if ($line -imatch $assembly_pattern) {
-                        # verify the reference is not for .NET Framework
-                        if ($Matches.ContainsKey("CLR") -and $Matches.CLR -ne "Core") {
-                            continue
-                        }
-                        $assemblies.Add($Matches.Name) > $null
-                    }
+            # //NoWarn -Name ... [-CLR Core]
+            $assembly_matches = $assembly_pattern.Matches($reference)
+            foreach ($match in $assembly_matches) {
+                $clr = $match.Groups["CLR"].Value
+                if ($clr -and $clr -ne "Core") {
+                    continue
                 }
-            } finally {
-                $sr.Close()
+                $assembly_path = $match.Groups["Name"]
+                if (-not ([System.IO.Path]::IsPathRooted($assembly_path))) {
+                    $assembly_path = Join-Path -Path $lib_assembly_location -ChildPath $assembly_path
+                }
+                $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($assembly_path)) > $null
+            }
+            $warn_matches = $no_warn_pattern.Matches($reference)
+            foreach ($match in $warn_matches) {
+                $clr = $match.Groups["CLR"].Value
+                if ($clr -and $clr -ne "Core") {
+                    continue
+                }
+                $ignore_warnings.Add($match.Groups["Name"], [Microsoft.CodeAnalysis.ReportDiagnostic]::Suppress)
             }
             $syntax_trees.Add([Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText($reference, $parse_options)) > $null
         }
@@ -122,6 +131,7 @@ Function Add-CSharpType {
         # set warnings to error out if IgnoreWarnings is not set
         if (-not $IgnoreWarnings.IsPresent) {
             $compiler_options = $compiler_options.WithGeneralDiagnosticOption([Microsoft.CodeAnalysis.ReportDiagnostic]::Error)
+            $compiler_options = $compiler_options.WithSpecificDiagnosticOptions($ignore_warnings)
         }
 
         # create compilation object
@@ -189,7 +199,7 @@ Function Add-CSharpType {
 
         # configure compile options based on input
         if ($PSCmdlet.ParameterSetName -eq "Module") {
-            $temp_path = $AnsibleModule.TmpDir
+            $temp_path = $AnsibleModule.Tmpdir
             $include_debug = $AnsibleModule.Verbosity -ge 3
         } else {
             $temp_path = $TempPath
@@ -201,7 +211,6 @@ Function Add-CSharpType {
         }
 
         $compile_parameters = New-Object -TypeName System.CodeDom.Compiler.CompilerParameters
-        $compile_parameters.CompilerOptions = [String]::Join(" ", $compiler_options.ToArray())
         $compile_parameters.GenerateExecutable = $false
         $compile_parameters.GenerateInMemory = $true
         $compile_parameters.TreatWarningsAsErrors = (-not $IgnoreWarnings.IsPresent)
@@ -218,30 +227,44 @@ Function Add-CSharpType {
 
         # create a code snippet for each reference and check if we need
         # to reference any extra assemblies
-        # //AssemblyReference -Name ... [-CLR Framework]
+        $ignore_warnings = [System.Collections.ArrayList]@()
         $compile_units = [System.Collections.Generic.List`1[System.CodeDom.CodeSnippetCompileUnit]]@()
         foreach ($reference in $References) {
-            $sr = New-Object -TypeName System.IO.StringReader -ArgumentList $reference
-            try {
-                while ($null -ne ($line = $sr.ReadLine())) {
-                    if ($line -imatch $assembly_pattern) {
-                        # verify the reference is not for .NET Core
-                        if ($Matches.ContainsKey("CLR") -and $Matches.CLR -ne "Framework") {
-                            continue
-                        }
-                        $assemblies.Add($Matches.Name) > $null
-                    }
+            # scan through code and add any assemblies that match
+            # //AssemblyReference -Name ... [-CLR Framework]
+            # //NoWarn -Name ... [-CLR Framework]
+            $assembly_matches = $assembly_pattern.Matches($reference)
+            foreach ($match in $assembly_matches) {
+                $clr = $match.Groups["CLR"].Value
+                if ($clr -and $clr -ne "Framework") {
+                    continue
                 }
-            } finally {
-                $sr.Close()
+                $assemblies.Add($match.Groups["Name"].Value) > $null
+            }
+            $warn_matches = $no_warn_pattern.Matches($reference)
+            foreach ($match in $warn_matches) {
+                $clr = $match.Groups["CLR"].Value
+                if ($clr -and $clr -ne "Framework") {
+                    continue
+                }
+                $warning_id = $match.Groups["Name"].Value
+                # /nowarn should only contain the numeric part
+                if ($warning_id.StartsWith("CS")) {
+                    $warning_id = $warning_id.Substring(2)
+                }
+                $ignore_warnings.Add($warning_id) > $null
             }
             $compile_units.Add((New-Object -TypeName System.CodeDom.CodeSnippetCompileUnit -ArgumentList $reference)) > $null
         }
+        if ($ignore_warnings.Count -gt 0) {
+            $compiler_options.Add("/nowarn:" + ([String]::Join(",", $ignore_warnings.ToArray()))) > $null
+        }
         $compile_parameters.ReferencedAssemblies.AddRange($assemblies)
+        $compile_parameters.CompilerOptions = [String]::Join(" ", $compiler_options.ToArray())
 
         # compile the code together and check for errors
         $provider = New-Object -TypeName Microsoft.CSharp.CSharpCodeProvider
-        $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units.ToArray())
+        $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
         if ($compile.Errors.HasErrors) {
             $msg = "Failed to compile C# code: "
             foreach ($e in $compile.Errors) {

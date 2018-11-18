@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.edgeos import edgeos_command
 from units.modules.utils import set_module_args
 from .edgeos_module import TestEdgeosModule, load_fixture

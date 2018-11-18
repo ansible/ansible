@@ -1,0 +1,15 @@
+---
+# ============================================================
+# Release a lock obtained using obtain-lock.yaml
+# This should be included in the always clause of a block to
+# ensure the lock is released. See obtain-lock.yaml for more
+# details of how the locking works.
+# ============================================================
+
+- cloudwatchlogs_log_group:
+    log_group_name: "{{ lock_attempt_log_group_name }}"
+    state: absent
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    region: "{{ aws_region }}"

@@ -14,25 +14,27 @@ Here is a most basic example::
 
     ---
     - hosts: all
-      remote_user: root
-
-      vars:
-        from: "camelot"
-
       vars_prompt:
-        - name: "name"
-          prompt: "what is your name?"
-        - name: "quest"
-          prompt: "what is your quest?"
-        - name: "favcolor"
-          prompt: "what is your favorite color?"
 
+        - name: username
+          prompt: "What is your username?"
+          private: no
+
+        - name: password
+          prompt: "What is your password?"
+
+      tasks: 
+
+        - debug: 
+            msg: 'Logging in as {{ username }}'
+
+The user input is hidden by default but it can be made visible by setting ``private: no``.
 
 .. note::
     Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible Tower). See :ref:`passing_variables_on_the_command_line` in the /Variables/ chapter.
 
 If you have a variable that changes infrequently, it might make sense to
-provide a default value that can be overridden.  This can be accomplished using
+provide a default value that can be overridden. This can be accomplished using
 the default argument::
 
    vars_prompt:
@@ -40,19 +42,6 @@ the default argument::
      - name: "release_version"
        prompt: "Product release version"
        default: "1.0"
-
-An alternative form of vars_prompt allows for hiding input from the user, and may later support
-some other options, but otherwise works equivalently::
-
-   vars_prompt:
-
-     - name: "some_password"
-       prompt: "Enter password"
-       private: yes
-
-     - name: "release_version"
-       prompt: "Product release version"
-       private: no
 
 If `Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed, vars_prompt can also encrypt the
 entered value so you can use it, for instance, with the user module to define a password::

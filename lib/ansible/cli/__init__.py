@@ -807,7 +807,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         no_hosts = False
         if len(inventory.list_hosts()) == 0:
             # Empty inventory
-            if C.LOCALHOST_WARNING:
+            if C.LOCALHOST_WARNING and pattern not in C.LOCALHOST:
                 display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
             no_hosts = True
 

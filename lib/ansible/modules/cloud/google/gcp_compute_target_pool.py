@@ -32,91 +32,106 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_target_pool
 description:
-    - Represents a TargetPool resource, used for Load Balancing.
+- Represents a TargetPool resource, used for Load Balancing.
 short_description: Creates a GCP TargetPool
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    backup_pool:
-        description:
-            - This field is applicable only when the containing target pool is serving a forwarding
-              rule as the primary pool, and its failoverRatio field is properly set to a value
-              between [0, 1].
-            - 'backupPool and failoverRatio together define the fallback behavior of the primary
-              target pool: if the ratio of the healthy instances in the primary pool is at or
-              below failoverRatio, traffic arriving at the load-balanced IP will be directed to
-              the backup pool.'
-            - In case where failoverRatio and backupPool are not set, or all the instances in
-              the backup pool are unhealthy, the traffic will be directed back to the primary
-              pool in the "force" mode, where traffic will be spread to the healthy instances
-              with the best effort, or to all instances when no instance is healthy.
-        required: false
+  state:
     description:
-        description:
-            - An optional description of this resource.
-        required: false
-    failover_ratio:
-        description:
-            - This field is applicable only when the containing target pool is serving a forwarding
-              rule as the primary pool (i.e., not as a backup pool to some other target pool).
-              The value of the field must be in [0, 1].
-            - 'If set, backupPool must also be set. They together define the fallback behavior
-              of the primary target pool: if the ratio of the healthy instances in the primary
-              pool is at or below this number, traffic arriving at the load-balanced IP will be
-              directed to the backup pool.'
-            - In case where failoverRatio is not set or all the instances in the backup pool are
-              unhealthy, the traffic will be directed back to the primary pool in the "force"
-              mode, where traffic will be spread to the healthy instances with the best effort,
-              or to all instances when no instance is healthy.
-        required: false
-    health_check:
-        description:
-            - A reference to a HttpHealthCheck resource.
-            - A member instance in this pool is considered healthy if and only if the health checks
-              pass. If not specified it means all member instances will be considered healthy
-              at all times.
-        required: false
-    instances:
-        description:
-            - A list of virtual machine instances serving this pool.
-            - They must live in zones contained in the same region as this pool.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    session_affinity:
-        description:
-            - 'Session affinity option. Must be one of these values:  - NONE: Connections from
-              the same client IP may go to any instance in   the pool.'
-            - "- CLIENT_IP: Connections from the same client IP will go to the same   instance
-              in the pool while that instance remains healthy."
-            - "- CLIENT_IP_PROTO: Connections from the same client IP with the same   IP protocol
-              will go to the same instance in the pool while that   instance remains healthy."
-        required: false
-        choices: ['NONE', 'CLIENT_IP', 'CLIENT_IP_PROTO']
-    region:
-        description:
-            - The region where the target pool resides.
-        required: true
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  backup_pool:
+    description:
+    - This field is applicable only when the containing target pool is serving a forwarding
+      rule as the primary pool, and its failoverRatio field is properly set to a value
+      between [0, 1].
+    - 'backupPool and failoverRatio together define the fallback behavior of the primary
+      target pool: if the ratio of the healthy instances in the primary pool is at
+      or below failoverRatio, traffic arriving at the load-balanced IP will be directed
+      to the backup pool.'
+    - In case where failoverRatio and backupPool are not set, or all the instances
+      in the backup pool are unhealthy, the traffic will be directed back to the primary
+      pool in the "force" mode, where traffic will be spread to the healthy instances
+      with the best effort, or to all instances when no instance is healthy.
+    - 'This field represents a link to a TargetPool resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_compute_target_pool
+      task and then set this backup_pool field to "{{ name-of-resource }}" Alternatively,
+      you can set this backup_pool to a dictionary with the selfLink key where the
+      value is the selfLink of your TargetPool'
+    required: false
+  description:
+    description:
+    - An optional description of this resource.
+    required: false
+  failover_ratio:
+    description:
+    - This field is applicable only when the containing target pool is serving a forwarding
+      rule as the primary pool (i.e., not as a backup pool to some other target pool).
+      The value of the field must be in [0, 1].
+    - 'If set, backupPool must also be set. They together define the fallback behavior
+      of the primary target pool: if the ratio of the healthy instances in the primary
+      pool is at or below this number, traffic arriving at the load-balanced IP will
+      be directed to the backup pool.'
+    - In case where failoverRatio is not set or all the instances in the backup pool
+      are unhealthy, the traffic will be directed back to the primary pool in the
+      "force" mode, where traffic will be spread to the healthy instances with the
+      best effort, or to all instances when no instance is healthy.
+    required: false
+  health_check:
+    description:
+    - A reference to a HttpHealthCheck resource.
+    - A member instance in this pool is considered healthy if and only if the health
+      checks pass. If not specified it means all member instances will be considered
+      healthy at all times.
+    - 'This field represents a link to a HttpHealthCheck resource in GCP. It can be
+      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_http_health_check
+      task and then set this health_check field to "{{ name-of-resource }}" Alternatively,
+      you can set this health_check to a dictionary with the selfLink key where the
+      value is the selfLink of your HttpHealthCheck'
+    required: false
+  instances:
+    description:
+    - A list of virtual machine instances serving this pool.
+    - They must live in zones contained in the same region as this pool.
+    required: false
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  session_affinity:
+    description:
+    - 'Session affinity option. Must be one of these values: - NONE: Connections from
+      the same client IP may go to any instance in the pool.'
+    - "- CLIENT_IP: Connections from the same client IP will go to the same instance
+      in the pool while that instance remains healthy."
+    - "- CLIENT_IP_PROTO: Connections from the same client IP with the same IP protocol
+      will go to the same instance in the pool while that instance remains healthy."
+    required: false
+    choices:
+    - NONE
+    - CLIENT_IP
+    - CLIENT_IP_PROTO
+  region:
+    description:
+    - The region where the target pool resides.
+    required: true
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/targetPools)"
-    - "Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/network/target-pools)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/targetPools)'
+- 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/network/target-pools)'
 '''
 
 EXAMPLES = '''
@@ -125,96 +140,96 @@ EXAMPLES = '''
       name: "test_object"
       region: us-west1
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    backup_pool:
-        description:
-            - This field is applicable only when the containing target pool is serving a forwarding
-              rule as the primary pool, and its failoverRatio field is properly set to a value
-              between [0, 1].
-            - 'backupPool and failoverRatio together define the fallback behavior of the primary
-              target pool: if the ratio of the healthy instances in the primary pool is at or
-              below failoverRatio, traffic arriving at the load-balanced IP will be directed to
-              the backup pool.'
-            - In case where failoverRatio and backupPool are not set, or all the instances in
-              the backup pool are unhealthy, the traffic will be directed back to the primary
-              pool in the "force" mode, where traffic will be spread to the healthy instances
-              with the best effort, or to all instances when no instance is healthy.
-        returned: success
-        type: dict
-    creation_timestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-        returned: success
-        type: str
-    failover_ratio:
-        description:
-            - This field is applicable only when the containing target pool is serving a forwarding
-              rule as the primary pool (i.e., not as a backup pool to some other target pool).
-              The value of the field must be in [0, 1].
-            - 'If set, backupPool must also be set. They together define the fallback behavior
-              of the primary target pool: if the ratio of the healthy instances in the primary
-              pool is at or below this number, traffic arriving at the load-balanced IP will be
-              directed to the backup pool.'
-            - In case where failoverRatio is not set or all the instances in the backup pool are
-              unhealthy, the traffic will be directed back to the primary pool in the "force"
-              mode, where traffic will be spread to the healthy instances with the best effort,
-              or to all instances when no instance is healthy.
-        returned: success
-        type: str
-    health_check:
-        description:
-            - A reference to a HttpHealthCheck resource.
-            - A member instance in this pool is considered healthy if and only if the health checks
-              pass. If not specified it means all member instances will be considered healthy
-              at all times.
-        returned: success
-        type: dict
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    instances:
-        description:
-            - A list of virtual machine instances serving this pool.
-            - They must live in zones contained in the same region as this pool.
-        returned: success
-        type: list
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    session_affinity:
-        description:
-            - 'Session affinity option. Must be one of these values:  - NONE: Connections from
-              the same client IP may go to any instance in   the pool.'
-            - "- CLIENT_IP: Connections from the same client IP will go to the same   instance
-              in the pool while that instance remains healthy."
-            - "- CLIENT_IP_PROTO: Connections from the same client IP with the same   IP protocol
-              will go to the same instance in the pool while that   instance remains healthy."
-        returned: success
-        type: str
-    region:
-        description:
-            - The region where the target pool resides.
-        returned: success
-        type: str
+backupPool:
+  description:
+  - This field is applicable only when the containing target pool is serving a forwarding
+    rule as the primary pool, and its failoverRatio field is properly set to a value
+    between [0, 1].
+  - 'backupPool and failoverRatio together define the fallback behavior of the primary
+    target pool: if the ratio of the healthy instances in the primary pool is at or
+    below failoverRatio, traffic arriving at the load-balanced IP will be directed
+    to the backup pool.'
+  - In case where failoverRatio and backupPool are not set, or all the instances in
+    the backup pool are unhealthy, the traffic will be directed back to the primary
+    pool in the "force" mode, where traffic will be spread to the healthy instances
+    with the best effort, or to all instances when no instance is healthy.
+  returned: success
+  type: dict
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  returned: success
+  type: str
+failoverRatio:
+  description:
+  - This field is applicable only when the containing target pool is serving a forwarding
+    rule as the primary pool (i.e., not as a backup pool to some other target pool).
+    The value of the field must be in [0, 1].
+  - 'If set, backupPool must also be set. They together define the fallback behavior
+    of the primary target pool: if the ratio of the healthy instances in the primary
+    pool is at or below this number, traffic arriving at the load-balanced IP will
+    be directed to the backup pool.'
+  - In case where failoverRatio is not set or all the instances in the backup pool
+    are unhealthy, the traffic will be directed back to the primary pool in the "force"
+    mode, where traffic will be spread to the healthy instances with the best effort,
+    or to all instances when no instance is healthy.
+  returned: success
+  type: str
+healthCheck:
+  description:
+  - A reference to a HttpHealthCheck resource.
+  - A member instance in this pool is considered healthy if and only if the health
+    checks pass. If not specified it means all member instances will be considered
+    healthy at all times.
+  returned: success
+  type: dict
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+instances:
+  description:
+  - A list of virtual machine instances serving this pool.
+  - They must live in zones contained in the same region as this pool.
+  returned: success
+  type: list
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+sessionAffinity:
+  description:
+  - 'Session affinity option. Must be one of these values: - NONE: Connections from
+    the same client IP may go to any instance in the pool.'
+  - "- CLIENT_IP: Connections from the same client IP will go to the same instance
+    in the pool while that instance remains healthy."
+  - "- CLIENT_IP_PROTO: Connections from the same client IP with the same IP protocol
+    will go to the same instance in the pool while that instance remains healthy."
+  returned: success
+  type: str
+region:
+  description:
+  - The region where the target pool resides.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -259,7 +274,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -312,9 +328,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -325,9 +341,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/targetPools".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -344,8 +360,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -409,8 +423,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result

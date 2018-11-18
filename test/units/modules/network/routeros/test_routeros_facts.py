@@ -17,7 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.routeros import routeros_facts
 from units.modules.utils import set_module_args
 from .routeros_module import TestRouterosModule, load_fixture

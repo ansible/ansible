@@ -14,10 +14,6 @@ from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
-from ansible.compat.tests.mock import mock_open
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY3
 
@@ -27,9 +23,14 @@ try:
     from library.modules.bigip_irule import ArgumentSpec
     from library.modules.bigip_irule import GtmManager
     from library.modules.bigip_irule import LtmManager
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+    from test.units.compat.mock import mock_open
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_irule import Parameters
@@ -37,8 +38,13 @@ except ImportError:
         from ansible.modules.network.f5.bigip_irule import ArgumentSpec
         from ansible.modules.network.f5.bigip_irule import GtmManager
         from ansible.modules.network.f5.bigip_irule import LtmManager
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+
+        # Ansible 2.8 imports
+        from units.compat import unittest
+        from units.compat.mock import Mock
+        from units.compat.mock import patch
+        from units.compat.mock import mock_open
+
         from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
@@ -80,7 +86,7 @@ class TestParameters(unittest.TestCase):
             state='present'
         )
         p = Parameters(params=args)
-        assert p.content == content.strip()
+        assert p.content == content
 
     def test_module_parameters_gtm(self):
         content = load_fixture('create_gtm_irule.tcl')
@@ -91,7 +97,7 @@ class TestParameters(unittest.TestCase):
             state='present'
         )
         p = Parameters(params=args)
-        assert p.content == content.strip()
+        assert p.content == content
 
     def test_api_parameters_ltm(self):
         content = load_fixture('create_ltm_irule.tcl')
@@ -99,7 +105,7 @@ class TestParameters(unittest.TestCase):
             apiAnonymous=content
         )
         p = Parameters(params=args)
-        assert p.content == content.strip()
+        assert p.content == content
 
     def test_return_api_params(self):
         content = load_fixture('create_ltm_irule.tcl')

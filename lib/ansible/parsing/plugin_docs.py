@@ -68,11 +68,15 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
         data['metadata'] = extract_metadata(module_ast=M)[0]
 
-        # remove version
         if data['metadata']:
+            # remove version
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
+        else:
+            # Add default metadata
+            data['metadata'] = {'supported_by': 'community',
+                                'status': ['preview']}
     except:
         if verbose:
             display.error("unable to parse %s" % filename)
@@ -90,18 +94,29 @@ def read_docstub(filename):
     """
 
     t_module_data = open(filename, 'r')
+    in_documentation = False
     capturing = False
+    indent_detection = ''
     doc_stub = []
 
     for line in t_module_data:
-        # start capturing the stub until indentation returns
-        if capturing and line[0] == ' ':
-            doc_stub.append(line)
-        elif capturing and line[0] != ' ':
-            break
-        if 'short_description:' in line:
-            capturing = True
-            doc_stub.append(line)
+        if in_documentation:
+            # start capturing the stub until indentation returns
+            if capturing and line.startswith(indent_detection):
+                doc_stub.append(line)
+
+            elif capturing and not line.startswith(indent_detection):
+                break
+
+            elif line.lstrip().startswith('short_description:'):
+                capturing = True
+                # Detect that the short_description continues on the next line if it's indented more
+                # than short_description itself.
+                indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
+                doc_stub.append(line)
+
+        elif line.startswith('DOCUMENTATION') and '=' in line:
+            in_documentation = True
 
     short_description = r''.join(doc_stub).strip().rstrip('.')
     data = AnsibleLoader(short_description, file_name=filename).get_single_data()

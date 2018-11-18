@@ -43,7 +43,9 @@ options:
       - The JSON policy as a string.
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
+      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc.
+      - Assumes AWS if not specified.
+      - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
   ceph:
     description:
@@ -72,6 +74,11 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+notes:
+    - If C(requestPayment), C(policy), C(tagging) or C(versioning)
+      operations/API aren't implemented by the endpoint, module doesn't fail
+      if related parameters I(requester_pays), I(policy), I(tags) or
+      I(versioning) are C(None).
 '''
 
 EXAMPLES = '''
@@ -130,6 +137,7 @@ def create_or_update_bucket(s3_client, module, location):
     tags = module.params.get("tags")
     versioning = module.params.get("versioning")
     changed = False
+    result = {}
 
     try:
         bucket_is_present = bucket_exists(s3_client, name)
@@ -151,102 +159,121 @@ def create_or_update_bucket(s3_client, module, location):
     # Versioning
     try:
         versioning_status = get_bucket_versioning(s3_client, name)
-    except (ClientError, BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Failed to get bucket versioning")
+    except BotoCoreError as exp:
+        module.fail_json_aws(exp, msg="Failed to get bucket versioning")
+    except ClientError as exp:
+        if exp.response['Error']['Code'] != 'NotImplemented' or versioning is not None:
+            module.fail_json_aws(exp, msg="Failed to get bucket versioning")
+    else:
+        if versioning is not None:
+            required_versioning = None
+            if versioning and versioning_status.get('Status') != "Enabled":
+                required_versioning = 'Enabled'
+            elif not versioning and versioning_status.get('Status') == "Enabled":
+                required_versioning = 'Suspended'
 
-    if versioning is not None:
-        required_versioning = None
-        if versioning and versioning_status.get('Status') != "Enabled":
-            required_versioning = 'Enabled'
-        elif not versioning and versioning_status.get('Status') == "Enabled":
-            required_versioning = 'Suspended'
+            if required_versioning:
+                try:
+                    put_bucket_versioning(s3_client, name, required_versioning)
+                    changed = True
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Failed to update bucket versioning")
 
-        if required_versioning:
-            try:
-                put_bucket_versioning(s3_client, name, required_versioning)
-                changed = True
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Failed to update bucket versioning")
+                versioning_status = wait_versioning_is_applied(module, s3_client, name, required_versioning)
 
-            versioning_status = wait_versioning_is_applied(module, s3_client, name, required_versioning)
-
-    # This output format is there to ensure compatibility with previous versions of the module
-    versioning_return_value = {
-        'Versioning': versioning_status.get('Status', 'Disabled'),
-        'MfaDelete': versioning_status.get('MFADelete', 'Disabled'),
-    }
+        # This output format is there to ensure compatibility with previous versions of the module
+        result['versioning'] = {
+            'Versioning': versioning_status.get('Status', 'Disabled'),
+            'MfaDelete': versioning_status.get('MFADelete', 'Disabled'),
+        }
 
     # Requester pays
     try:
         requester_pays_status = get_bucket_request_payment(s3_client, name)
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg="Failed to get bucket request payment")
+    except BotoCoreError as exp:
+        module.fail_json_aws(exp, msg="Failed to get bucket request payment")
+    except ClientError as exp:
+        if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays is not None:
+            module.fail_json_aws(exp, msg="Failed to get bucket request payment")
+    else:
+        if requester_pays is not None:
+            payer = 'Requester' if requester_pays else 'BucketOwner'
+            if requester_pays_status != payer:
+                put_bucket_request_payment(s3_client, name, payer)
+                requester_pays_status = wait_payer_is_applied(module, s3_client, name, payer, should_fail=False)
+                if requester_pays_status is None:
+                    # We have seen that it happens quite a lot of times that the put request was not taken into
+                    # account, so we retry one more time
+                    put_bucket_request_payment(s3_client, name, payer)
+                    requester_pays_status = wait_payer_is_applied(module, s3_client, name, payer, should_fail=True)
+                changed = True
 
-    payer = 'Requester' if requester_pays else 'BucketOwner'
-    if requester_pays_status != payer:
-        put_bucket_request_payment(s3_client, name, payer)
-        requester_pays_status = wait_payer_is_applied(module, s3_client, name, payer, should_fail=False)
-        if requester_pays_status is None:
-            # We have seen that it happens quite a lot of times that the put request was not taken into
-            # account, so we retry one more time
-            put_bucket_request_payment(s3_client, name, payer)
-            requester_pays_status = wait_payer_is_applied(module, s3_client, name, payer, should_fail=True)
-        changed = True
+        result['requester_pays'] = requester_pays
 
     # Policy
     try:
         current_policy = get_bucket_policy(s3_client, name)
-    except (ClientError, BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Failed to get bucket policy")
+    except BotoCoreError as exp:
+        module.fail_json_aws(exp, msg="Failed to get bucket policy")
+    except ClientError as exp:
+        if exp.response['Error']['Code'] != 'NotImplemented' or policy is not None:
+            module.fail_json_aws(exp, msg="Failed to get bucket policy")
+    else:
+        if policy is not None:
+            if isinstance(policy, string_types):
+                policy = json.loads(policy)
 
-    if policy is not None:
-        if isinstance(policy, string_types):
-            policy = json.loads(policy)
+            if not policy and current_policy:
+                try:
+                    delete_bucket_policy(s3_client, name)
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Failed to delete bucket policy")
+                current_policy = wait_policy_is_applied(module, s3_client, name, policy)
+                changed = True
+            elif compare_policies(current_policy, policy):
+                try:
+                    put_bucket_policy(s3_client, name, policy)
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Failed to update bucket policy")
+                current_policy = wait_policy_is_applied(module, s3_client, name, policy, should_fail=False)
+                if current_policy is None:
+                    # As for request payement, it happens quite a lot of times that the put request was not taken into
+                    # account, so we retry one more time
+                    put_bucket_policy(s3_client, name, policy)
+                    current_policy = wait_policy_is_applied(module, s3_client, name, policy, should_fail=True)
+                changed = True
 
-        if not policy and current_policy:
-            try:
-                delete_bucket_policy(s3_client, name)
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Failed to delete bucket policy")
-            current_policy = wait_policy_is_applied(module, s3_client, name, policy)
-            changed = True
-        elif compare_policies(current_policy, policy):
-            try:
-                put_bucket_policy(s3_client, name, policy)
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Failed to update bucket policy")
-            current_policy = wait_policy_is_applied(module, s3_client, name, policy, should_fail=False)
-            if current_policy is None:
-                # As for request payement, it happens quite a lot of times that the put request was not taken into
-                # account, so we retry one more time
-                put_bucket_policy(s3_client, name, policy)
-                current_policy = wait_policy_is_applied(module, s3_client, name, policy, should_fail=True)
-            changed = True
+        result['policy'] = current_policy
 
     # Tags
     try:
         current_tags_dict = get_current_bucket_tags_dict(s3_client, name)
-    except (ClientError, BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Failed to get bucket tags")
+    except BotoCoreError as exp:
+        module.fail_json_aws(exp, msg="Failed to get bucket tags")
+    except ClientError as exp:
+        if exp.response['Error']['Code'] != 'NotImplemented' or tags is not None:
+            module.fail_json_aws(exp, msg="Failed to get bucket tags")
+    else:
+        if tags is not None:
+            # Tags are always returned as text
+            tags = dict((to_text(k), to_text(v)) for k, v in tags.items())
+            if current_tags_dict != tags:
+                if tags:
+                    try:
+                        put_bucket_tagging(s3_client, name, tags)
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Failed to update bucket tags")
+                else:
+                    try:
+                        delete_bucket_tagging(s3_client, name)
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Failed to delete bucket tags")
+                current_tags_dict = wait_tags_are_applied(module, s3_client, name, tags)
+                changed = True
 
-    if tags is not None:
-        if current_tags_dict != tags:
-            if tags:
-                try:
-                    put_bucket_tagging(s3_client, name, tags)
-                except (BotoCoreError, ClientError) as e:
-                    module.fail_json_aws(e, msg="Failed to update bucket tags")
-            else:
-                try:
-                    delete_bucket_tagging(s3_client, name)
-                except (BotoCoreError, ClientError) as e:
-                    module.fail_json_aws(e, msg="Failed to delete bucket tags")
-            wait_tags_are_applied(module, s3_client, name, tags)
-            current_tags_dict = tags
-            changed = True
+        result['tags'] = current_tags_dict
 
-    module.exit_json(changed=changed, name=name, versioning=versioning_return_value,
-                     requester_pays=requester_pays, policy=current_policy, tags=current_tags_dict)
+    module.exit_json(changed=changed, name=name, **result)
 
 
 def bucket_exists(s3_client, bucket_name):
@@ -397,7 +424,7 @@ def wait_tags_are_applied(module, s3_client, bucket_name, expected_tags_dict):
         if current_tags_dict != expected_tags_dict:
             time.sleep(5)
         else:
-            return
+            return current_tags_dict
     module.fail_json(msg="Bucket tags failed to apply in the expected time")
 
 
@@ -483,17 +510,6 @@ def is_fakes3(s3_url):
         return False
 
 
-def is_walrus(s3_url):
-    """ Return True if it's Walrus endpoint, not S3
-
-    We assume anything other than *.amazonaws.com is Walrus"""
-    if s3_url is not None:
-        o = urlparse(s3_url)
-        return not o.hostname.endswith('amazonaws.com')
-    else:
-        return False
-
-
 def get_s3_client(module, aws_connect_kwargs, location, ceph, s3_url):
     if s3_url and ceph:  # TODO - test this
         ceph = urlparse(s3_url)
@@ -512,9 +528,6 @@ def get_s3_client(module, aws_connect_kwargs, location, ceph, s3_url):
         params = dict(module=module, conn_type='client', resource='s3', region=location,
                       endpoint="%s://%s:%s" % (protocol, fakes3.hostname, to_text(port)),
                       use_ssl=fakes3.scheme == 'fakes3s', **aws_connect_kwargs)
-    elif is_walrus(s3_url):
-        walrus = urlparse(s3_url).hostname
-        params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
     else:
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=s3_url, **aws_connect_kwargs)
     return boto3_conn(**params)

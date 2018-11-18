@@ -338,5 +338,51 @@
     - shell_result7.cmd == 'cat <<EOF\nOne\n  Two\n    Three\nEOF\n'
     - shell_result7.stdout == 'One\n  Two\n    Three'
 
+- name: execute a shell command with no trailing newline to stdin
+  shell: cat > {{output_dir_test | expanduser}}/afile.txt
+  args:
+    stdin: test
+    stdin_add_newline: no
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{output_dir_test | expanduser}}/afile.txt"
+    content: test
+  register: shell_result7
+  failed_when:
+    - shell_result7 is failed or
+      shell_result7 is changed
+
+- name: execute a shell command with trailing newline to stdin
+  shell: cat > {{output_dir_test | expanduser}}/afile.txt
+  args:
+    stdin: test
+    stdin_add_newline: yes
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{output_dir_test | expanduser}}/afile.txt"
+    content: |
+        test
+  register: shell_result8
+  failed_when:
+    - shell_result8 is failed or
+      shell_result8 is changed
+
+- name: execute a shell command with trailing newline to stdin, default
+  shell: cat > {{output_dir_test | expanduser}}/afile.txt
+  args:
+    stdin: test
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{output_dir_test | expanduser}}/afile.txt"
+    content: |
+        test
+  register: shell_result9
+  failed_when:
+    - shell_result9 is failed or
+      shell_result9 is changed
+
 - name: remove the previously created file
   file: path={{output_dir_test}}/afile.txt state=absent

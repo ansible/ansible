@@ -311,6 +311,7 @@ from ansible.module_utils.ovirt import (
     equal,
     get_entity,
     get_id_by_name,
+    OvirtRetry,
     ovirt_full_argument_spec,
     search_by_name,
     search_by_attributes,
@@ -565,6 +566,13 @@ def control_state(sd_module):
         return
 
     sd_service = sd_module._service.service(sd.id)
+
+    # In the case of no status returned, it's an attached storage domain.
+    # Redetermine the corresponding serivce and entity:
+    if sd.status is None:
+        sd_service = sd_module._attached_sd_service(sd)
+        sd = get_entity(sd_service)
+
     if sd.status == sdstate.LOCKED:
         wait(
             service=sd_service,
@@ -669,7 +677,10 @@ def main():
         elif state == 'maintenance':
             sd_id = storage_domains_module.create()['id']
             storage_domains_module.post_create_check(sd_id)
-            ret = storage_domains_module.action(
+
+            ret = OvirtRetry.backoff(tries=5, delay=1, backoff=2)(
+                storage_domains_module.action
+            )(
                 action='deactivate',
                 action_condition=lambda s: s.status == sdstate.ACTIVE,
                 wait_condition=lambda s: s.status == sdstate.MAINTENANCE,

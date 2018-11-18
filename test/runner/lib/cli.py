@@ -333,6 +333,7 @@ def parse_args():
                                      config=WindowsIntegrationConfig)
 
     add_extra_docker_options(windows_integration, integration=False)
+    add_httptester_options(windows_integration, argparse)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -407,6 +408,10 @@ def parse_args():
 
     shell.set_defaults(func=command_shell,
                        config=ShellConfig)
+
+    shell.add_argument('--raw',
+                       action='store_true',
+                       help='direct to shell with no setup')
 
     add_environments(shell, tox_version=True)
     add_extra_docker_options(shell)

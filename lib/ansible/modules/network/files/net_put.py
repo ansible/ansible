@@ -44,7 +44,7 @@ options:
     required: no
   mode:
     description:
-      - Set the file transfer mode. If mode is set to I(template) then I(src)
+      - Set the file transfer mode. If mode is set to I(text) then I(src)
         file will go through Jinja2 template engine to replace any vars if
         present in the src file. If mode is set to I(binary) then file will be
         copied as it is to destination device.

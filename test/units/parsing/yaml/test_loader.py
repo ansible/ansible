@@ -22,7 +22,7 @@ __metaclass__ = type
 
 from io import StringIO
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible import errors
 from ansible.module_utils.six import text_type, binary_type

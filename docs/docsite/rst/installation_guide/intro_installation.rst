@@ -119,7 +119,7 @@ To enable the Ansible Engine repository, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.6-rpms
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.7-rpms
 
 RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
@@ -194,12 +194,6 @@ To install the newest version, you may need to unmask the ansible package prior 
 
     $ echo 'app-admin/ansible' >> /etc/portage/package.accept_keywords
 
-.. note::
-
-    The current default Python slot on Gentoo is version 3.4.  Ansible needs Python-3.5 or higher so
-    you will need to `:ref:`bootstrap <managed_node_requirements>` a compatible version onto the
-    machines.
-
 Latest Releases via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
 
@@ -265,6 +259,22 @@ The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <htt
 
 Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
 
+.. _from_sbopkg:
+
+Latest Releases via sbopkg (Slackware Linux)
+++++++++++++++++++++++++++++++++++++++++++++
+
+Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository.
+Can be built and installed using `sbopkg <https://sbopkg.org/>`_.
+
+Create queue with Ansible and all dependencies::
+
+    # sqg -p ansible
+
+Build and install packages from created queuefile (answer Q for question if sbopkg should use queue or package)::
+
+    # sbopkg -k -i ansible
+
 .. _from_pip:
 
 Latest Releases via Pip
@@ -329,7 +339,7 @@ To install from source, clone the Ansible git repository:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/ansible/ansible.git --recursive
+    $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
 
 Once git has cloned the Ansible repository, setup the Ansible environment:
@@ -381,10 +391,6 @@ other than /etc/ansible/hosts:
 
     $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_INVENTORY=~/ansible_hosts
-
-.. note::
-
-    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
 
 You can read more about the inventory file in later parts of the manual.
 

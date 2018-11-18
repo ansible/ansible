@@ -135,6 +135,13 @@ EXAMPLES = '''
       - django>1.11.0,<1.12.0
       - bottle>0.10,<0.20,!=0.11
 
+# Install python package using a proxy - it doesn't use the standard environment variables, please use the CAPITALIZED ones below
+- pip:
+    name: six
+  environment:
+    HTTP_PROXY: '127.0.0.1:8080'
+    HTTPS_PROXY: '127.0.0.1:8080'
+
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
@@ -234,16 +241,19 @@ import sys
 import tempfile
 import operator
 import shlex
+import traceback
 from distutils.version import LooseVersion
 
+SETUPTOOLS_IMP_ERR = None
 try:
     from pkg_resources import Requirement
 
     HAS_SETUPTOOLS = True
 except ImportError:
     HAS_SETUPTOOLS = False
+    SETUPTOOLS_IMP_ERR = traceback.format_exc()
 
-from ansible.module_utils.basic import AnsibleModule, is_executable
+from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 
@@ -292,11 +302,16 @@ def _recover_package_name(names):
     # reconstruct the names
     name_parts = []
     package_names = []
+    in_brackets = False
     for name in names:
-        if _is_package_name(name):
+        if _is_package_name(name) and not in_brackets:
             if name_parts:
                 package_names.append(",".join(name_parts))
             name_parts = []
+        if "[" in name:
+            in_brackets = True
+        if in_brackets and "]" in name:
+            in_brackets = False
         name_parts.append(name)
     package_names.append(",".join(name_parts))
     return package_names
@@ -335,10 +350,11 @@ def _is_present(module, req, installed_pkgs, pkg_command):
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
+            pkg_name = Package.canonicalize_name(pkg_name)
         else:
             continue
 
-        if pkg_name.lower() == req.package_name and req.is_satisfied_by(pkg_version):
+        if pkg_name == req.package_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
@@ -484,6 +500,8 @@ class Package:
     test whether a package is already satisfied.
     """
 
+    _CANONICALIZE_RE = re.compile(r'[-_.]+')
+
     def __init__(self, name_string, version_string=None):
         self._plain_package = False
         self.package_name = name_string
@@ -498,8 +516,9 @@ class Package:
             # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
             if self._requirement.project_name == "distribute":
                 self.package_name = "setuptools"
+                self._requirement.project_name = "setuptools"
             else:
-                self.package_name = self._requirement.project_name
+                self.package_name = Package.canonicalize_name(self._requirement.project_name)
             self._plain_package = True
         except ValueError as e:
             pass
@@ -522,6 +541,11 @@ class Package:
                 op_dict[op](version_to_test, LooseVersion(ver))
                 for op, ver in self._requirement.specs
             )
+
+    @staticmethod
+    def canonicalize_name(name):
+        # This is taken from PEP 503.
+        return Package._CANONICALIZE_RE.sub("-", name).lower()
 
     def __str__(self):
         if self._plain_package:
@@ -560,7 +584,8 @@ def main():
     )
 
     if not HAS_SETUPTOOLS:
-        module.fail_json(msg="No setuptools found in remote host, please install it first.")
+        module.fail_json(msg=missing_required_lib("setuptools"),
+                         exception=SETUPTOOLS_IMP_ERR)
 
     state = module.params['state']
     name = module.params['name']
@@ -639,7 +664,7 @@ def main():
                             "Please keep the version specifier, but remove the 'version' argument."
                     )
                 # if the version specifier is provided by version, append that into the package
-                packages[0] = Package(packages[0].package_name, version)
+                packages[0] = Package(to_native(packages[0]), version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all

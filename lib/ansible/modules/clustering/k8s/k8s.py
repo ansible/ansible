@@ -28,7 +28,7 @@ author:
 description:
   - Use the OpenShift Python client to perform CRUD operations on K8s objects.
   - Pass the object definition from a source file or inline. See examples for reading
-    files and using Jinja templates.
+    files and using Jinja templates or vault-encrypted files.
   - Access to the full range of K8s APIs.
   - Use the M(k8s_facts) module to obtain a list of items about an object of type C(kind)
   - Authenticate using either a config file, certificates, password or token.
@@ -43,7 +43,7 @@ extends_documentation_fragment:
 options:
   merge_type:
     description:
-    - Whether to override the default patch merge approach with a specific type. By the default, the strategic
+    - Whether to override the default patch merge approach with a specific type. By default, the strategic
       merge will typically be used.
     - For example, Custom Resource Definitions typically aren't updatable by the usual strategic merge. You may
       want to use C(merge) if you see "strategic merge patch format is not supported"
@@ -59,6 +59,36 @@ options:
     - strategic-merge
     type: list
     version_added: "2.7"
+  wait:
+    description:
+    - Whether to wait for certain resource kinds to end up in the desired state. By default the module exits once Kubernetes has
+      received the request
+    - Implemented for C(state=present) for C(Deployment), C(DaemonSet) and C(Pod), and for C(state=absent) for all resource kinds.
+    - For resource kinds without an implementation, C(wait) returns immediately.
+    default: no
+    type: bool
+    version_added: "2.8"
+  wait_timeout:
+    description:
+    - How long in seconds to wait for the resource to end up in the desired state. Ignored if C(wait) is not set.
+    default: 120
+    version_added: "2.8"
+  validate:
+    description:
+      - how (if at all) to validate the resource definition against the kubernetes schema.
+        Requires the kubernetes-validate python module
+    suboptions:
+      fail_on_error:
+        description: whether to fail on validation errors.
+        required: yes
+        type: bool
+      version:
+        description: version of Kubernetes to validate against. defaults to Kubernetes server version
+      strict:
+        description: whether to fail when passing unexpected properties
+        default: no
+        type: bool
+    version_added: "2.8"
 
 requirements:
   - "python >= 2.7"
@@ -116,7 +146,9 @@ EXAMPLES = '''
     state: present
     src: /testing/deployment.yml
 
-- name: Read definition file from the Ansible controller file system
+- name: >-
+    Read definition file from the Ansible controller file system.
+    If the definition file has been encrypted with Ansible Vault it will automatically be decrypted.
   k8s:
     state: present
     definition: "{{ lookup('file', '/testing/deployment.yml') }}"
@@ -125,6 +157,21 @@ EXAMPLES = '''
   k8s:
     state: present
     definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+
+- name: fail on validation errors
+  k8s:
+    state: present
+    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+    validate:
+      fail_on_error: yes
+
+- name: warn on validation errors, check for unexpected properties
+  k8s:
+    state: present
+    definition: "{{ lookup('template', '/testing/deployment.yml') }}"
+    validate:
+      fail_on_error: no
+      strict: yes
 '''
 
 RETURN = '''
@@ -158,6 +205,11 @@ result:
        description: Returned only when multiple yaml documents are passed to src or resource_definition
        returned: when resource_definition or src contains list of objects
        type: list
+     duration:
+       description: elapsed time of task in seconds
+       returned: when C(wait) is true
+       type: int
+       sample: 48
 '''
 
 from ansible.module_utils.k8s.raw import KubernetesRawModule

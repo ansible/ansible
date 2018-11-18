@@ -316,7 +316,6 @@ RHEV_UNAVAILABLE = 2
 RHEV_TYPE_OPTS = ['server', 'desktop', 'host']
 STATE_OPTS = ['ping', 'present', 'absent', 'up', 'down', 'restart', 'cd', 'info']
 
-global msg, changed, failed
 msg = []
 changed = False
 failed = False

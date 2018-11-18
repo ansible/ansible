@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2017, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -42,7 +28,7 @@ options:
     default: '0.0.0.0/0'
   rule_position:
     description:
-      - CIDR of the rule.
+      - The position of the network ACL rule.
     required: true
     aliases: [ number ]
   protocol:
@@ -52,25 +38,25 @@ options:
     default: tcp
   protocol_number:
     description:
-      - Protocol number from 1 to 256 required if C(protocol=by_number).
+      - Protocol number from 1 to 256 required if I(protocol=by_number).
   start_port:
     description:
       - Start port for this rule.
-      - Considered if C(protocol=tcp) or C(protocol=udp).
+      - Considered if I(protocol=tcp) or I(protocol=udp).
     aliases: [ port ]
   end_port:
     description:
       - End port for this rule.
-      - Considered if C(protocol=tcp) or C(protocol=udp).
-      - If not specified, equal C(start_port).
+      - Considered if I(protocol=tcp) or I(protocol=udp).
+      - If not specified, equal I(start_port).
   icmp_type:
     description:
       - Type of the icmp message being sent.
-      - Considered if C(protocol=icmp).
+      - Considered if I(protocol=icmp).
   icmp_code:
     description:
       - Error code for this icmp message.
-      - Considered if C(protocol=icmp).
+      - Considered if I(protocol=icmp).
   vpc:
     description:
       - VPC the network ACL is related to.
@@ -85,11 +71,11 @@ options:
     description:
       - Action policy of the rule.
     choices: [ allow, deny ]
-    default: ingress
+    default: allow
     aliases: [ action ]
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
     aliases: [ tag ]
   domain:
@@ -119,8 +105,8 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a network ACL rule, allow port 80 ingress
-- local_action:
+- name: create a network ACL rule, allow port 80 ingress
+  local_action:
     module: cs_network_acl_rule
     network_acl: web
     rule_position: 1
@@ -130,8 +116,8 @@ EXAMPLES = '''
     port: 80
     cidr: 0.0.0.0/0
 
-# create a network ACL rule, deny port range 8000-9000 ingress for 10.20.0.0/16
-- local_action:
+- name: create a network ACL rule, deny port range 8000-9000 ingress for 10.20.0.0/16
+  local_action:
     module: cs_network_acl_rule
     network_acl: web
     rule_position: 1
@@ -142,8 +128,8 @@ EXAMPLES = '''
     end_port: 8000
     cidr: 10.20.0.0/16
 
-# create a network ACL rule
-- local_action:
+- name: create a network ACL rule
+  local_action:
     module: cs_network_acl_rule
     network_acl: web
     rule_position: 1
@@ -154,8 +140,8 @@ EXAMPLES = '''
     end_port: 8000
     cidr: 10.20.0.0/16
 
-# remove a network ACL rule
-- local_action:
+- name: remove a network ACL rule
+  local_action:
     module: cs_network_acl_rule
     network_acl: web
     rule_position: 1
@@ -407,7 +393,7 @@ def main():
         vpc=dict(required=True),
         cidr=dict(default='0.0.0.0/0'),
         protocol=dict(choices=['tcp', 'udp', 'icmp', 'all', 'by_number'], default='tcp'),
-        protocol_number=dict(type='int', choices=list(range(0, 256))),
+        protocol_number=dict(type='int'),
         traffic_type=dict(choices=['ingress', 'egress'], aliases=['type'], default='ingress'),
         action_policy=dict(choices=['allow', 'deny'], aliases=['action'], default='allow'),
         icmp_type=dict(type='int'),

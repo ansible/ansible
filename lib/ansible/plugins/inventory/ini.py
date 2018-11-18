@@ -14,15 +14,20 @@ DOCUMENTATION = '''
         - The C(children) modifier indicates that the section contains groups.
         - The C(vars) modifier indicates that the section contains variables assigned to members of the group.
         - Anything found outside a section is considered an 'ungrouped' host.
-        - Values passed in using the C(key=value) syntax are interpreted as Python literal structure (strings, numbers, tuples, lists, dicts,
-          booleans, None), alternatively as string. For example C(var=FALSE) would create a string equal to 'FALSE'. Do not rely on types set
-          during definition, always make sure you specify type with a filter when needed when consuming the variable.
+        - Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared within your inventory.
+        - When declared inline with the host, INI values are are processed by Python's ast.literal_eval function
+          (U(https://docs.python.org/2/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures
+          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple C(key=value) parameters per line.
+          Therefore they need a way to indicate that a space is part of a value rather than a separator.
+        - When declared in a C(:vars) section, INI values are interpreted as strings. For example C(var=FALSE) would create a string equal to C(FALSE).
+          Unlike host lines, C(:vars) sections accept only a single entry per line, so everything after the C(=) must be the value for the entry.
+        - Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+        - See the Examples for proper quoting to prevent changes to variable type.
     notes:
-        - It takes the place of the previously hardcoded INI inventory.
-        - To function it requires being whitelisted in configuration.
-        - Variable values are processed by Python's ast.literal_eval function (U(https://docs.python.org/2/library/ast.html#ast.literal_eval))
-          which could cause the value to change in some cases. See the Examples for proper quoting to prevent changes. Another option would be
-          to use the yaml format for inventory source which processes the values correctly.
+        - Replaces the previously hardcoded INI inventory.
+        - Must be whitelisted in configuration to function.
+        - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable.
+          The YAML inventory plugin processes variable values consistently and correctly.
 '''
 
 EXAMPLES = '''
@@ -30,11 +35,11 @@ EXAMPLES = '''
       # example cfg file
       [web]
       host1
-      host2 ansible_port=222
+      host2 ansible_port=222 # defined inline, interpreted as an integer
 
       [web:vars]
       http_port=8080 # all members of 'web' will inherit these
-      myvar=23
+      myvar=23 # defined in a :vars section, interpreted as a string
 
       [web:children] # child groups will automatically add their hosts to partent group
       apache
@@ -73,8 +78,7 @@ EXAMPLES = '''
 import ast
 import re
 
-from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
-from ansible.parsing.utils.addresses import parse_address
+from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_text
@@ -313,27 +317,19 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _expand_hostpattern(self, hostpattern):
         '''
-        Takes a single host pattern and returns a list of hostnames and an
-        optional port number that applies to all of them.
+        do some extra checks over normal processing
         '''
-
-        # Can the given hostpattern be parsed as a host with an optional port
         # specification?
 
-        try:
-            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except Exception:
-            # not a recognizable host pattern
-            pattern = hostpattern
-            port = None
+        hostnames, port = super(InventoryModule, self)._expand_hostpattern(hostpattern)
 
-        # Once we have separated the pattern, we expand it into list of one or
-        # more hostnames, depending on whether it contains any [x:y] ranges.
-
-        if detect_range(pattern):
-            hostnames = expand_hostname_range(pattern)
-        else:
-            hostnames = [pattern]
+        if hostpattern.strip().endswith(':') and port is None:
+            raise AnsibleParserError("Invalid host pattern '%s' supplied, ending in ':' is not allowed, this character is reserved to provide a port." %
+                                     hostpattern)
+        for pattern in hostnames:
+            # some YAML parsing prevention checks
+            if pattern.strip() == '---':
+                raise AnsibleParserError("Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
 
         return (hostnames, port)
 

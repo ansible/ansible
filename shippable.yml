@@ -11,6 +11,7 @@ matrix:
     - env: T=sanity/1
     - env: T=sanity/2
     - env: T=sanity/3
+    - env: T=sanity/4
 
     - env: T=units/2.6
     - env: T=units/2.7
@@ -45,8 +46,8 @@ matrix:
     - env: T=network
 
     - env: T=osx/10.11/1
-    - env: T=rhel/7.5/1
-    - env: T=freebsd/10.4/1
+    - env: T=rhel/7.6/1
+    - env: T=rhel/8.0/1
     - env: T=freebsd/11.1/1
     - env: T=linux/centos6/1
     - env: T=linux/centos7/1
@@ -58,8 +59,8 @@ matrix:
     - env: T=linux/ubuntu1604py3/1
 
     - env: T=osx/10.11/2
-    - env: T=rhel/7.5/2
-    - env: T=freebsd/10.4/2
+    - env: T=rhel/7.6/2
+    - env: T=rhel/8.0/2
     - env: T=freebsd/11.1/2
     - env: T=linux/centos6/2
     - env: T=linux/centos7/2
@@ -71,8 +72,8 @@ matrix:
     - env: T=linux/ubuntu1604py3/2
 
     - env: T=osx/10.11/3
-    - env: T=rhel/7.5/3
-    - env: T=freebsd/10.4/3
+    - env: T=rhel/7.6/3
+    - env: T=rhel/8.0/3
     - env: T=freebsd/11.1/3
     - env: T=linux/centos6/3
     - env: T=linux/centos7/3
