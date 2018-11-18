@@ -6,14 +6,6 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
-# $complex_args = @{
-#     "_ansible_check_mode" = $false
-#     "_ansible_diff" = $false
-#     "name" = "powershell-yaml"
-#     #"minimum_version" = "4.4.0-beta2"
-#     "state" = "present"
-# }
-
 # win_psmodule (Windows PowerShell modules Additions/Removals/Updates)
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
@@ -69,8 +61,9 @@ Function Install-PrereqModule {
                 Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -WhatIf:$CheckMode | Out-Null
 
                 if ( $Name -eq 'PowerShellGet' ) {
-                    Remove-Module -Name $PrereqModules.Keys -Force -ErrorAction Ignore
-                    Import-Module -Name $PrereqModules.Keys -Force
+                    # An order has to be reverted due to dependency
+                    Remove-Module -Name PowerShellGet, PackageManagement -Force #-ErrorAction Ignore
+                    Import-Module -Name PowerShellGet, PackageManagement -Force
                 }
 
                 $result.changed = $true
@@ -342,10 +335,11 @@ if ( $repo ) {
 
 }
 
-if ( $AllowClobber -or $AllowPrerelease ) {
+if ( ($allow_clobber -or $allow_prerelease -or
+    $required_version -or $minimum_version -or $maximum_version) ) {
     # Update the PowerShellGet and PackageManagement modules.
     # It's required to support AllowClobber, AllowPrerelease parameters.
-    Install-PrereqModule -CheckMode $CheckMode
+    Install-PrereqModule -CheckMode $check_mode
 }
 
 if ($state -eq "present") {
