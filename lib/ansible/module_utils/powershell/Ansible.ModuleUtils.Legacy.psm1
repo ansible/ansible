@@ -201,54 +201,54 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         }
     }
 
-    # If $value -eq $null, the parameter was unspecified by the user (deliberately or not)
+    # If $null -eq $value, the parameter was unspecified by the user (deliberately or not)
     # Please leave $null-values intact, modules need to know if a parameter was specified
-    # When $value is already an array, we cannot rely on the null check, as an empty list
-    # is seen as null in the check below
-    if ($null -ne $value -or $value -is [array]) {
-        if ($type -eq "path") {
-            # Expand environment variables on path-type
-            $value = Expand-Environment($value)
-            # Test if a valid path is provided
-            if (-not (Test-Path -IsValid $value)) {
-                $path_invalid = $true
-                # could still be a valid-shaped path with a nonexistent drive letter
-                if ($value -match "^\w:") {
-                    # rewrite path with a valid drive letter and recheck the shape- this might still fail, eg, a nonexistent non-filesystem PS path
-                    if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $value.Substring(1))) {
-                        $path_invalid = $false
-                    }
-                }
-                if ($path_invalid) {
-                    Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
+    if ($null -eq $value) {
+        return $null
+    }
+
+    if ($type -eq "path") {
+        # Expand environment variables on path-type
+        $value = Expand-Environment($value)
+        # Test if a valid path is provided
+        if (-not (Test-Path -IsValid $value)) {
+            $path_invalid = $true
+            # could still be a valid-shaped path with a nonexistent drive letter
+            if ($value -match "^\w:") {
+                # rewrite path with a valid drive letter and recheck the shape- this might still fail, eg, a nonexistent non-filesystem PS path
+                if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $value.Substring(1))) {
+                    $path_invalid = $false
                 }
             }
-        } elseif ($type -eq "str") {
-            # Convert str types to real Powershell strings
-            $value = $value.ToString()
-        } elseif ($type -eq "bool") {
-            # Convert boolean types to real Powershell booleans
-            $value = $value | ConvertTo-Bool
-        } elseif ($type -eq "int") {
-            # Convert int types to real Powershell integers
-            $value = $value -as [int]
-        } elseif ($type -eq "float") {
-            # Convert float types to real Powershell floats
-            $value = $value -as [float]
-        } elseif ($type -eq "list") {
-            if ($value -is [array]) {
-                # Nothing to do
-            } elseif ($value -is [string]) {
-                # Convert string type to real Powershell array
-                $value = $value.Split(",").Trim()
-            } elseif ($value -is [int]) {
-                $value = @($value)
-            } else {
-                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
+            if ($path_invalid) {
+                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
             }
-            # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
-            return ,$value
         }
+    } elseif ($type -eq "str") {
+        # Convert str types to real Powershell strings
+        $value = $value.ToString()
+    } elseif ($type -eq "bool") {
+        # Convert boolean types to real Powershell booleans
+        $value = $value | ConvertTo-Bool
+    } elseif ($type -eq "int") {
+        # Convert int types to real Powershell integers
+        $value = $value -as [int]
+    } elseif ($type -eq "float") {
+        # Convert float types to real Powershell floats
+        $value = $value -as [float]
+    } elseif ($type -eq "list") {
+        if ($value -is [array]) {
+            # Nothing to do
+        } elseif ($value -is [string]) {
+            # Convert string type to real Powershell array
+            $value = $value.Split(",").Trim()
+        } elseif ($value -is [int]) {
+            $value = @($value)
+        } else {
+            Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
+        }
+        # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
+        return ,$value
     }
 
     return $value
