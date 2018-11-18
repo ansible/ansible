@@ -6,6 +6,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ---
+- name: install updated NuGet version
+  win_shell: 'Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force'
+
 - name: get the latest version of module in PowerShell Gallery
   win_shell: ((Find-Module -Name {{ powershell_module }}).Version).ToString()
   changed_when: false
