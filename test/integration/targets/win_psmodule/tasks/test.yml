@@ -14,56 +14,56 @@
   changed_when: false
   register: module_latest_version
 
-- name: check install module from Powershell Gallery - without version
+- name: check installing module from Powershell Gallery - without version
   win_psmodule:
     name: "{{ powershell_module }}"
     state: present
-  register: module_setup
+  register: module_without_version_setup_1
 
-- name: test Powershell Gallery module setup - without version
+- name: test installing module from Powershell Gallery - without version
   assert:
     that:
-      - "module_setup is changed"
-      - "module_setup.output == 'Module {{ powershell_module }} installed in the version {{ module_latest_version.stdout | trim }}.'"
+      - "module_without_version_setup_1 is changed"
+      - "module_without_version_setup_1.output == 'Module {{ powershell_module }} installed in the version {{ module_latest_version.stdout | trim }}.'"
 
-- name: check idempotency reinstalling module - without version
+- name: check idempotency installing module from PowerShell Gallery - without version
   win_psmodule:
     name: "{{ powershell_module }}"
     state: present
-  register: module_reinstall
+  register: module_without_version_setup_2
 
-- name: test win_psmodule idempotency - without version
+- name: test idempotency installing module from PowerShell Gallery - without version
   assert:
     that:
-      - "module_reinstall is not changed"
+      - "module_without_version_setup_2 is not changed"
 
-- name: check install module from Powershell Gallery - required_version
+- name: check installing module from Powershell Gallery - required_version
   win_psmodule:
     name: "{{ powershell_module }}"
     required_version: "{{ powershell_module_required_version }}"
     state: present
   register: module_required_version_setup_1
 
-- name: test Powershell Gallery module setup - required_version
+- name: test installing module from Powershell Gallery - required_version
   assert:
     that:
       - "module_required_version_setup_1 is changed"
       - "module_required_version_setup_1.output == 'Module {{ powershell_module }} installed in the version {{ powershell_module_required_version }}.'"
 
-- name: check idempotency reinstalling module - required_version
+- name: check idempotency installing module from Powershell Gallery - required_version
   win_psmodule:
     name: "{{ powershell_module }}"
     required_version: "{{ powershell_module_required_version }}"
     state: present
   register: module_required_version_setup_2
 
-- name: test win_psmodule idempotency - required_version
+- name: test idempotency installing module from Powershell Gallery - required_version
   assert:
     that:
       - "module_required_version_setup_2 is not changed"
       - "module_required_version_setup_2.output == 'Module {{ powershell_module }} already present in the version {{ powershell_module_required_version }}.'"
 
-- name: check install module from Powershell Gallery - required_version but not existing
+- name: check installing module from Powershell Gallery - required_version but not existing
   win_psmodule:
     name: "{{ powershell_module }}"
     required_version: "{{ powershell_module_ultra_high_version }}"
@@ -71,41 +71,40 @@
   register: module_required_version_setup_3
   ignore_errors: yes
 
-- name: test Powershell Gallery module setup - - required_version but not existing
+- name: test installing module from Powershell Gallery - required_version but not existing
   assert:
     that:
       - "module_required_version_setup_3 is not changed"
       - "module_required_version_setup_3 is failed"
-      - "'Problems installing {{ powershell_module }} module' in module_required_version_setup_3.msg"
-      - "'No match was found for the specified search criteria' in module_required_version_setup_3.msg"
+      - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_required_version_setup_3.msg"
 
-- name: check Powershell Gallery module setup - maximum_version
+- name: check installing module from Powershell Gallery - maximum_version
   win_psmodule:
     name: "{{ powershell_module }}"
     maximum_version: "{{ powershell_module_maximum_version_request }}"
     state: present
   register: module_maximum_version_setup_1
 
-- name: test Powershell Gallery module setup - maximum_version
+- name: test installing module from Powershell Gallery - maximum_version
   assert:
     that:
       - "module_maximum_version_setup_1 is changed"
       - "module_maximum_version_setup_1.output == 'Module {{ powershell_module }} installed in the version {{ powershell_module_maximum_version_result }}.'"
 
-- name: check idempotency reinstalling module - maximum_version
+- name: check idempotency installing module from Powershell Gallery - maximum_version
   win_psmodule:
     name: "{{ powershell_module }}"
     maximum_version: "{{ powershell_module_maximum_version_request }}"
     state: present
   register: module_maximum_version_setup_2
 
-- name: test Powershell Gallery module setup - maximum_version
+- name: test idempotency installing module from Powershell Gallery - maximum_version
   assert:
     that:
       - "module_maximum_version_setup_2 is not changed"
       - "module_maximum_version_setup_2.output == 'Module {{ powershell_module }} already present in the version {{ powershell_module_maximum_version_result }}.'"
 
-- name: check install module from Powershell Gallery - maximum_version but not existing
+- name: check installing module from Powershell Gallery - maximum_version but not existing
   win_psmodule:
     name: "{{ powershell_module }}"
     maximum_version: "{{ powershell_module_ultra_low_version }}"
@@ -113,36 +112,37 @@
   register: module_maximum_version_setup_3
   ignore_errors: yes
 
-- name: test Powershell Gallery module setup - maximum_version but not existing
+- name: test installing module from Powershell Gallery - maximum_version but not existing
   assert:
     that:
       - "module_maximum_version_setup_3 is not changed"
       - "module_maximum_version_setup_3 is failed"
       - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_maximum_version_setup_3.msg"
 
-- name: chek module install with allow_clobber not active
+- name: check installing module with allow_clobber not active
   win_psmodule:
     name: "{{ allow_clobber_module }}"
   register: fail_allow_clobber
   ignore_errors: yes
 
-- name: test allow_clobber has failed
+- name: test installing module with allow_clobber not active
   assert:
     that:
       - "fail_allow_clobber is failed"
+      - "'The following commands are already available on this system' in fail_allow_clobber.msg"
 
-- name: check module install with allow_clobber active
+- name: check installing module with allow_clobber active
   win_psmodule:
     name: "{{ allow_clobber_module }}"
     allow_clobber: yes
   register: ok_allow_clobber
 
-- name: test module install with allow_clobber active
+- name: test installing module with allow_clobber active
   assert:
     that:
       - "ok_allow_clobber is changed"
 
-- name: check module install with skip_publisher_check not active
+- name: check installing module with skip_publisher_check not active
   win_psmodule:
     name: "{{ skip_publisher_check_module }}"
     #Adding a minimum version is required because the tested module
@@ -151,12 +151,13 @@
   register: fail_skip_publisher_check
   ignore_errors: yes
 
-- name: test skip_publisher_check has failed
+- name: test installing module with skip_publisher_check not active
   assert:
     that:
       - "fail_skip_publisher_check is failed"
+      - "'being installed is not catalog signed. Ensure that the version' in fail_skip_publisher_check.msg"
 
-- name: check module install with skip_publisher_check active
+- name: check installing module with skip_publisher_check active
   win_psmodule:
     name: "{{ skip_publisher_check_module }}"
     #Adding a minimum version is required because the tested module
@@ -165,12 +166,12 @@
     skip_publisher_check: yes
   register: ok_skip_publisher_check
 
-- name: test module install with skip_publisher_check active
+- name: test installing module with skip_publisher_check active
   assert:
     that:
       - "ok_skip_publisher_check is changed"
 
-- name: check module install with allow_prerelease not active
+- name: check installing module with allow_prerelease not active
   win_psmodule:
     name: "{{ allow_prerelease_module }}"
     required_version: "{{ allow_prerelease_version }}"
@@ -178,44 +179,36 @@
   register: fail_allow_prerelease
   ignore_errors: yes
 
-- name: test module install with allow_prerelease not active
+- name: test installing module with allow_prerelease not active
   assert:
     that:
       - "fail_allow_prerelease is failed"
+      - "'parameter must be specified when using the Prerelease string in MinimumVersion' in fail_allow_prerelease.msg"
 
-- name: check prerelease module install with allow_prerelease active
+- name: check installing prerelease module with allow_prerelease active
   win_psmodule:
     name: "{{ allow_prerelease_module }}"
     required_version: "{{ allow_prerelease_version }}"
     allow_prerelease: yes
   register: ok_allow_prerelease
 
-- name: test prerelease module install with allow_prerelease active
+- name: test intstalling prerelease module with allow_prerelease active
   assert:
     that:
       - "ok_allow_prerelease is changed"
 
-- name: check wrong module install attempt
+- name: check installing module with a wrong name
   win_psmodule:
     name: "{{ wrong_module }}"
     state: present
   ignore_errors: yes
   register: module_fail
 
-- name: test module setup fails
+- name: test installing module with a wrong name
   assert:
     that:
       - "module_fail is failed"
       - "'Problems installing {{ wrong_module }} module: No match was found for the specified search criteria' in module_fail.msg"
-
-# # - name: validate module is installed
-# #   win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
-# #   register: module_check
-
-# # - name: test module is installed
-# #   assert:
-# #     that:
-#       - "module_check.stdout_lines[0] == '{{ powershell_module }}'"
 
 - name: check allow_clobber module is installed
   win_shell: (Get-Module -Name {{ allow_clobber_module }} -ListAvailable).Name
@@ -228,7 +221,7 @@
 
 - name: check uninstall powershell module - required_version
   win_psmodule:
-    name: powershell-yaml
+    name: "{{ powershell_module }}"
     required_version: "{{ powershell_module_required_version }}"
     state: absent
   register: module_uninstall_required_version
@@ -241,7 +234,7 @@
 
 - name: check uninstall powershell module - maximum_version
   win_psmodule:
-    name: powershell-yaml
+    name: "{{ powershell_module }}"
     maximum_version: "{{ powershell_module_maximum_version_request }}"
     state: absent
   register: module_uninstall_maximum_version
@@ -252,13 +245,13 @@
       - "module_uninstall_maximum_version is changed"
       - "module_uninstall_maximum_version.output == 'The version {{ powershell_module_maximum_version_result }} of the module {{ powershell_module }} uninstalled.'"
 
-- name: check uninstall powershell module - without version
+- name: check uninstalling powershell module - without version
   win_psmodule:
-    name: powershell-yaml
+    name: "{{ powershell_module }}"
     state: absent
   register: module_uninstall
 
-- name: test powershell module uninstall - without version
+- name: test uninstalling powershell module - without version
   assert:
     that:
       - "module_uninstall is changed"
@@ -268,22 +261,67 @@
   win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
   register: module_check
 
-- name: test module is no more present
+- name: test module is uninstalled
   assert:
     that:
       - "module_check.stdout == ''"
 
-- name: check idempotency re-removing module
+- name: check idempotency uninstalling powershell module - without version
   win_psmodule:
     name: "{{ powershell_module }}"
     state: absent
   register: module_uninstall_2
 
-- name: test idempotency
+- name: test idempotency uninstalling powershell module - without version
   assert:
     that:
       - "module_uninstall_2 is not changed"
       - "module_uninstall_2.output == 'Module {{ powershell_module }} already absent.'"
+
+- name: check installing module from Powershell Gallery - without_version 2
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: present
+  register: module_without_version_setup_3
+
+- name: check installing module from Powershell Gallery - required_version 2
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    required_version: "{{ powershell_module_required_version }}"
+    state: present
+  register: module_required_version_setup_4
+
+- name: check installing module from Powershell Gallery - maximum_version 2
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    maximum_version: "{{ powershell_module_maximum_version_request }}"
+    state: present
+  register: module_maximum_version_setup_4
+
+- name: test Powershell Gallery module setup - without_version 2, required_version 2, maximum_version 2
+  assert:
+    that:
+      - "module_without_version_setup_3 is changed"
+      - "module_without_version_setup_3.output == 'Module {{ powershell_module }} installed in the version {{ module_latest_version.stdout | trim }}.'"
+      - "module_required_version_setup_4 is changed"
+      - "module_required_version_setup_4.output == 'Module {{ powershell_module }} installed in the version {{ powershell_module_required_version }}.'"
+      - "module_maximum_version_setup_4 is changed"
+      - "module_maximum_version_setup_4.output == 'Module {{ powershell_module }} installed in the version {{ powershell_module_maximum_version_result }}.'"
+
+- name: check uninstall powershell module - without version
+  win_psmodule:
+    name: "{{ powershell_module }}"
+    state: absent
+  register: module_uninstall_3
+
+- name: check module is uninstalled - 2
+  win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
+  register: module_existance_check_2
+
+- name: test module is no more present
+  assert:
+    that:
+      - "module_existance_check_2.stdout == ''"
 
 - name: check removing allow_clobber module
   win_psmodule:
@@ -294,7 +332,6 @@
 - name: test removing allow_clobber module
   assert:
     that:
-      - "module_uninstall_2 is not changed"
       - "module_uninstall_3 is changed"
 
 - name: check Powershell Gallery module setup - minimum_version
@@ -328,13 +365,13 @@
     name: "{{ powershell_module }}"
     required_version: "{{ powershell_module_required_version }}"
     state: present
-  register: module_required_version_setup_3
+  register: module_required_version_setup_5
 
-- name: test Powershell Gallery module setup - required_version
+- name: test PowerShell Gallery module setup - other version for test minimum_version
   assert:
     that:
-      - "module_required_version_setup_3 is changed"
-      - "module_required_version_setup_3.output == 'Module {{ powershell_module }} installed in the version {{ powershell_module_required_version }}.'"
+      - "module_required_version_setup_5 is changed"
+      - "module_required_version_setup_5.output == 'Module {{ powershell_module }} installed in the version {{ powershell_module_required_version }}.'"
 
 - name: check uninstall powershell module - minimum_version
   win_psmodule:
@@ -418,14 +455,14 @@
   changed_when: false
   register: saved_module_latest_version
 
-- name: check install module from custom Powershell repository
+- name: check installing module from custom Powershell repository
   win_psmodule:
     name: "{{ powershell_module }}"
     state: present
     repository: "{{custom_repo_name}}"
   register: module_from_custom_repo
 
-- name: test custom Powershell repository module install
+- name: test installing module from custom Powershell repository
   assert:
     that:
       - "module_from_custom_repo is changed"
@@ -440,27 +477,27 @@
     that:
       - "is_package_customrepo.stdout_lines[0] == custom_repo_name"
 
-- name: check uninstall saved module from custom PowerShell repository
+- name: check uninstalling saved module from custom PowerShell repository
   win_psmodule:
     name: "{{ powershell_module }}"
     state: absent
     repository: "{{custom_repo_name}}"
   register: saved_module_uninstall
 
-- name: test uninstall saved module from custom PowerShell repository
+- name: test uninstaling saved module from custom PowerShell repository
   assert:
     that:
       - "saved_module_uninstall is changed"
       - "saved_module_uninstall.output == 'The version {{ saved_module_latest_version .stdout | trim }} of the module {{ powershell_module }} uninstalled.'"
 
-- name: check install module that exists in more than one repository
+- name: check installing module that exists in more than one repository
   win_psmodule:
     name: "{{ powershell_module }}"
     state: present
   ignore_errors: yes
   register: install_module_existing_in_two_repositories
 
-- name: test install module that exists in more than one repository
+- name: test installing module that exists in more than one repository
   assert:
     that:
       - "install_module_existing_in_two_repositories is not changed"

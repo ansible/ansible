@@ -62,7 +62,7 @@ Function Install-PrereqModule {
 
                 if ( $Name -eq 'PowerShellGet' ) {
                     # An order has to be reverted due to dependency
-                    Remove-Module -Name PowerShellGet, PackageManagement -Force #-ErrorAction Ignore
+                    Remove-Module -Name PowerShellGet, PackageManagement -Force
                     Import-Module -Name PowerShellGet, PackageManagement -Force
                 }
 
@@ -237,6 +237,10 @@ Function Remove-PsModule {
                 if ( $VersionParameterVariable.Value ){
                         $ht.Add($VersionParameterString,$VersionParameterVariable.Value)
                 }
+            }
+
+            if ( -not ( $RequiredVersion -or $MinimumVersion -or $MaximumVersion ) ) {
+                $ht.Add("AllVersions", $true)
             }
 
             if ( $ExistingModuleBefore.Exists) {
