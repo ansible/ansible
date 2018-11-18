@@ -83,7 +83,6 @@ options:
         required: False
         type: bool
         default: True
-        
 '''
 EXAMPLES = '''
 # check for migrations on local node
@@ -175,7 +174,7 @@ def run_module():
     if not AEROSPIKE_LIB_FOUND:
         module.fail_json(
             msg='Aerospike module not found.' +
-                'Please run "pip install aerospike".')
+            'Please run "pip install aerospike".')
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -198,8 +197,6 @@ def run_module():
         module.fail_json(
             msg="Failed.", **result
         )
-
-
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
     #    if module.params['new']:
@@ -348,8 +345,8 @@ class Migrations:
         try_num = 0
         while \
                 try_num < self.tries_limit and \
-                        consecutive_good < self.consecutive_good_required and \
-                        self._cluster_unchanged():
+                consecutive_good < self.consecutive_good_required and \
+                self._cluster_unchanged():
             if self._is_min_cluster_size() is False:
                 consecutive_good = 0
             else:
