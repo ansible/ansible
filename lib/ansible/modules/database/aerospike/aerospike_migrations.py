@@ -4,6 +4,7 @@
 # Copyright: (c) 2018, Albert Autin
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -66,8 +67,23 @@ options:
             - Do you wish to only check for migrations on the local node
             - before returning, or do you want all nodes in the cluster
             - to finish before returning?
+        required: True
+        type: bool
+    min_cluster_size:
+        description:
+            - Check will return bad until cluster size is met
+            - or until tries is exhausted
+        required: False
+        type: int
+        default: 1
+    fail_on_cluster_change:
+        description:
+            - Fail if the cluster key changes
+            - if something else is changing the cluster, we may want to fail
         required: False
         type: bool
+        default: True
+        
 '''
 EXAMPLES = '''
 # check for migrations on local node
@@ -132,7 +148,9 @@ def run_module():
         consecutive_good_checks=dict(type='int', required=False, default=3),
         sleep_between_checks=dict(type='int', required=False, default=60),
         tries_limit=dict(type='int', requires=False, default=300),
-        local_only=dict(type='bool', required=True)
+        local_only=dict(type='bool', required=True),
+        min_cluster_size=dict(type='int', required=False, default=1),
+        fail_on_cluster_change=dict(type='bool', required=False, default=True)
     )
 
     # seed the result dict in the object
@@ -157,7 +175,7 @@ def run_module():
     if not AEROSPIKE_LIB_FOUND:
         module.fail_json(
             msg='Aerospike module not found.' +
-            'Please run "pip install aerospike".')
+                'Please run "pip install aerospike".')
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -175,9 +193,12 @@ def run_module():
     if has_migs is False:
         result['message'] = "No migrations"
     else:
-        result['message'] = "Migrations still found after reaching limit."
+        result['message'] = "Migrations still found after reaching limit or " \
+                            "cluster size not met."
         module.fail_json(
-            msg="Migrations still found after reaching tries limit.")
+            msg="Failed.", **result
+        )
+
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
@@ -197,6 +218,7 @@ def run_module():
 
 class Migrations:
     """short_description: Check or wait for migrations between nodes"""
+
     # TODO: add support for auth, tls, and other special features
     def __init__(self, module):
         config = {
@@ -217,6 +239,8 @@ class Migrations:
             module.params['consecutive_good_checks']
         self.sleep_between = module.params['sleep_between_checks']
         self.tries_limit = module.params['tries_limit']
+        self.min_cluster_size = module.params['min_cluster_size']
+        self.fail_on_cluster_change = module.params['fail_on_cluster_change']
 
     # delimiter is for seperate stats that come back, NOT for kv
     # seperation which is =
@@ -299,28 +323,53 @@ class Migrations:
             return self._local_node_has_migs()
         return self._cluster_has_migs()
 
+    def _cluster_unchanged(self):
+        if self.module.params['fail_on_cluster_change'] is False:
+            return True
+        cluster_key = self.statistics['cluster_key']
+        self._update_statistics()
+        if cluster_key != self.statistics['cluster_key']:
+            self.module.fail_json(
+                msg="Cluster key changed."
+            )
+            return False
+        return True
+
+    def _is_min_cluster_size(self):
+        # we dont need to update stats again because cluster_unchanged will
+        if int(self.statistics['cluster_size']) < \
+                self.module.params['min_cluster_size']:
+            return False
+        return True
+
     def has_migs(self, local=True):
         """returns a boolean, False if no migrations otherwise True"""
         consecutive_good = 0
         try_num = 0
         while \
                 try_num < self.tries_limit and \
-                        consecutive_good < self.consecutive_good_required:
-            if self._has_migs(local) is True:
+                        consecutive_good < self.consecutive_good_required and \
+                        self._cluster_unchanged():
+            if self._is_min_cluster_size() is False:
                 consecutive_good = 0
-            elif self._has_migs(local) is False:
-                consecutive_good += 1
-                if consecutive_good is self.consecutive_good_required:
-                    break
+            else:
+                if self._has_migs(local) is True:
+                    consecutive_good = 0
+                elif self._has_migs(local) is False:
+                    consecutive_good += 1
+                    if consecutive_good is self.consecutive_good_required:
+                        break
             try_num += 1
             sleep(self.sleep_between)
         if consecutive_good is self.consecutive_good_required:
             return False
         return True
 
+
 def main():
     """main method for ansible module"""
     run_module()
+
 
 if __name__ == '__main__':
     main()
