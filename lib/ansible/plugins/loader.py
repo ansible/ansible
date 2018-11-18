@@ -345,7 +345,7 @@ class PluginLoader:
     def _load_module_source(self, name, path):
 
         # avoid collisions across plugins
-        full_name = '.'.join([self.package, name])
+        full_name = self._get_module_pkg_name(name)
 
         if full_name in sys.modules:
             # Avoids double loading, See https://github.com/ansible/ansible/issues/13110
@@ -420,6 +420,15 @@ class PluginLoader:
 
         display.debug(msg)
 
+    def _get_module_pkg_name(self, module_name):
+        '''
+        Forms package name, e.g. ansible.plugins.filter.ipaddr
+
+        :module_name string: module_name, e.g. ipaddr
+        :returns string: package_name, e.g. ansible.plugins.filter.ipaddr
+        '''
+        return '.'.join([self.package, module_name])
+
     def all(self, *args, **kwargs):
         '''
         Iterate through all plugins of this type
@@ -486,8 +495,19 @@ class PluginLoader:
                 continue
 
             if path not in self._module_cache:
+                module_name = basename
+                module_pkg_name = self._get_module_pkg_name(module_name)
+
+                if module_pkg_name in sys.modules:
+                    module_pkg_name_old = module_pkg_name
+                    module_pkg_name = self._get_module_pkg_name(name)
+
+                    display.warning(u"Other plugin already loaded as {0}. "
+                                    u"Loading as {1}".format(module_pkg_name_old, module_pkg_name))
+                    module_name = name
+
                 try:
-                    module = self._load_module_source(name, path)
+                    module = self._load_module_source(module_name, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 self._module_cache[path] = module
