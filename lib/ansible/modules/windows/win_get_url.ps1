@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
+#Requires -Module Ansible.ModuleUtils.AddType
 
 $spec = @{
     options = @{
@@ -42,7 +43,7 @@ $proxy_username = $module.Params.proxy_username
 $proxy_password = $module.Params.proxy_password
 $force = $module.Params.force
 
-$webclient_util = @"
+Add-CSharpType -AnsibleModule $module -References @'
     using System.Net;
     public class ExtendedWebClient : WebClient {
         public int Timeout;
@@ -57,11 +58,7 @@ $webclient_util = @"
             return request;
         }
     }
-"@
-$original_tmp = $env:TMP
-$env:TMP = $module.Tmpdir
-Add-Type -TypeDefinition $webclient_util
-$env:TMP = $original_tmp
+'@
 
 
 Function CheckModified-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
@@ -180,7 +177,6 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
 
 }
 
-$module.Result.changed = $false
 $module.Result.dest = $dest
 $module.Result.elapsed = 0
 $module.Result.url = $url
@@ -221,6 +217,9 @@ if (Test-Path -LiteralPath $dest -PathType Container) {
     } else {
         $dest = Join-Path -Path $dest -ChildPath $uri.Host
     }
+
+    # Ensure we have a string instead of a PS object to avoid serialization issues
+    $dest = $dest.ToString()
 } elseif (([System.IO.Path]::GetFileName($dest)) -eq '') {
     # We have a trailing path separator
     $module.FailJson("The destination path '$dest' does not exist, or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs.")
