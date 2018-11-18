@@ -1,34 +1,36 @@
 #!powershell
 
-# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+
+# $complex_args = @{
+#     "_ansible_check_mode" = $false
+#     "_ansible_diff" = $false
+#     "name" = "powershell-yaml"
+#     #"minimum_version" = "4.4.0-beta2"
+#     "state" = "present"
+# }
 
 # win_psmodule (Windows PowerShell modules Additions/Removals/Updates)
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 
-$name = Get-AnsibleParam -obj $params -name "name" -type "str"
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $required_version = Get-AnsibleParam -obj $params -name "required_version" -type "str"
 $minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str"
 $maximum_version = Get-AnsibleParam -obj $params -name "maximum_version" -type "str"
 $repo = Get-AnsibleParam -obj $params -name "repository" -type "str"
-$url = Get-AnsibleParam -obj $params -name "url" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent", "latest"
 $allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool" -default $false
-$skip_publisher_check = Get-AnsibleParam -obj $params -nam "skip_publisher_check" -type "bool" -default $false
+$skip_publisher_check = Get-AnsibleParam -obj $params -name "skip_publisher_check" -type "bool" -default $false
 $allow_prerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
-$result = @{"changed" = $false
-            "output" = ""
-            "module_version" = ""
-            "nuget_changed" = $false
-            "repository_changed" = $false
-            "powershellget_changed" = $false
-            "packagemanagement_changed" = $false}
+$result = @{changed = $false
+            output = ""}
 
 Function Install-NugetProvider {
     Param(
@@ -37,9 +39,8 @@ Function Install-NugetProvider {
     $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object {($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201")}
     if (-not($PackageProvider)){
         try{
-            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -WhatIf:$CheckMode | out-null
             $result.changed = $true
-            $result.nuget_changed = $true
         }
         catch{
             $ErrorMessage = "Problems adding package provider: $($_.Exception.Message)"
@@ -48,93 +49,36 @@ Function Install-NugetProvider {
     }
 }
 
-Function Install-PackageManagement {
+Function Install-PrereqModule {
     Param(
         [Bool]$CheckMode
     )
-    $PackageManagement = Get-Module -ListAvailable | Where-Object {($_.name -eq 'PackageManagement') -and ($_.version -ge "1.1.7.0")}
 
-    if ( -not ($PackageManagement)) {
-        try {
-            Install-Module -Name PackageManagement -MinimumVersion 1.1.7.0 -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
-            $result.changed = $true
-            $result.packagemanagement_changed = $true
-        }
-        catch{
-            $ErrorMessage = "Problems adding module: $($_.Exception.Message)"
-            Fail-Json $result $ErrorMessage
-        }
+    # Those are minimum required versions of modules.
+    $PrereqModules = @{
+        PackageManagement = '1.1.7'
+        PowerShellGet = '1.6.0'
     }
-}
 
-Function Install-PowerShellGet {
-    Param(
-        [Bool]$CheckMode
-    )
-    $PowerShellGet = Get-Module -ListAvailable | Where-Object {($_.name -eq 'PowerShellGet') -and ($_.version -ge "1.6.0")}
+    ForEach ( $Name in $PrereqModules.Keys ) {
 
-    if ( -not ($PowerShellGet) ) {
-        try {
-            Install-Module -Name PowerShellGet -MinimumVersion 1.6.0 -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
-            $result.changed = $true
-            $result.powershellget_changed = $true
+        $ExistingPrereqModule = Get-Module -ListAvailable | Where-Object {($_.name -eq $Name ) -and ($_.version -ge $PrereqModules[$Name] )}
 
-            Remove-Module -Name PowerShellGet, PackageManagement -Force -ErrorAction Stop
-            Import-Module -Name PowerShellGet, PackageManagement -Force -ErrorAction Stop
-        }
-        catch{
-            $ErrorMessage = "Problems adding module: $($_.Exception.Message)"
-            Fail-Json $result $ErrorMessage
-        }
-    }
-}
+        if ( -not $ExistingPrereqModule ) {
+            try {
+                Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -WhatIf:$CheckMode | Out-Null
 
-Function Install-Repository {
-    Param(
-        [Parameter(Mandatory=$true)]
-        [String]$Name,
-        [Parameter(Mandatory=$true)]
-        [String]$Url,
-        [Bool]$CheckMode
-    )
-    $Repo = (Get-PSRepository).SourceLocation
+                if ( $Name -eq 'PowerShellGet' ) {
+                    Remove-Module -Name $PrereqModules.Keys -Force -ErrorAction Ignore
+                    Import-Module -Name $PrereqModules.Keys -Force
+                }
 
-    # If repository isn't already present, try to register it as trusted.
-    if ($Repo -notcontains $Url){
-        try {
-            if (-not($CheckMode)) {
-               Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop
+                $result.changed = $true
             }
-            $result.changed = $true
-            $result.repository_changed = $true
-        }
-        catch {
-            $ErrorMessage = "Problems adding $($Name) repository: $($_.Exception.Message)"
-            Fail-Json $result $ErrorMessage
-        }
-    }
-}
-
-Function Remove-Repository{
-    Param(
-        [Parameter(Mandatory=$true)]
-        [String]$Name,
-        [Bool]$CheckMode
-    )
-    $Repo = (Get-PSRepository).SourceLocation
-
-    # Try to remove the repository
-    if ($Repo -contains $Name){
-        try {
-            if (-not ($CheckMode)) {
-                Unregister-PSRepository -Name $Name -ErrorAction Stop
+            catch{
+                $ErrorMessage = "Problems adding a prerequisite module $Name $($_.Exception.Message)"
+                Fail-Json $result $ErrorMessage
             }
-            $result.changed = $true
-            $result.repository_changed = $true
-        }
-        catch {
-            $ErrorMessage = "Problems removing $($Name)repository: $($_.Exception.Message)"
-            Fail-Json $result $ErrorMessage
         }
     }
 }
@@ -149,9 +93,9 @@ Function Get-PsModule {
     )
 
     $props = @{
-        'Exists' = $false
-        'Version' = ""
-        'Versions' = @("")
+        Exists = $false
+        Version = ""
+        Versions = @("")
     }
     $ExistingModule = New-Object -TypeName psobject -Property $props
 
@@ -164,24 +108,23 @@ Function Get-PsModule {
 
         $ExistingModule.Versions = $ExistingModules.FullVersion
 
-        if ( [String]::IsNullOrEmpty($RequiredVersion) -and
-                [String]::IsNullOrEmpty($MinimumVersion) -and
-                [String]::IsNullOrEmpty($MaximumVersion))  {
+        if ( -not ($RequiredVersion -or
+                $MinimumVersion -or
+                $MaximumVersion) )  {
 
             $ReturnedModule = $ExistingModules | Select-Object -First 1
         }
-        elseif ( -not ([String]::IsNullOrEmpty($RequiredVersion)) ) {
+        elseif ( $RequiredVersion ) {
             $ReturnedModule = $ExistingModules | Where-Object -FilterScript { $_.FullVersion -eq $RequiredVersion }
         }
-        elseif ( (-not ([String]::IsNullOrEmpty($MinimumVersion))) -and
-                (-not ([String]::IsNullOrEmpty($MaximumVersion))) ) {
-            $ReturnedModule = $ExistingModules | Where-Object -FilterScript { $_.Version -ge $MinimumVersion -and $_.Version -le $MaximumVersion } | Select-Object -First 1
+        elseif ( $MinimumVersion -and $MaximumVersion ) {
+            $ReturnedModule = $ExistingModules | Where-Object -FilterScript { $MinimumVersion -le $_.Version -and $MaximumVersion -ge $_.Version } | Select-Object -First 1
         }
-        elseif ( -not ([String]::IsNullOrEmpty($MinimumVersion)) ) {
-            $ReturnedModule = $ExistingModules | Where-Object -FilterScript { $_.Version -ge $MinimumVersion } | Select-Object -First 1
+        elseif ( $MinimumVersion ) {
+            $ReturnedModule = $ExistingModules | Where-Object -FilterScript { $MinimumVersion -le $_.Version } | Select-Object -First 1
         }
-        elseif ( -not ([String]::IsNullOrEmpty($MaximumVersion)) ) {
-            $ReturnedModule = $ExistingModules | Where-Object -FilterScript { $_.Version -le $MaximumVersion } | Select-Object -First 1
+        elseif ( $MaximumVersion ) {
+            $ReturnedModule = $ExistingModules | Where-Object -FilterScript { $MaximumVersion -ge $_.Version } | Select-Object -First 1
         }
     }
 
@@ -212,35 +155,26 @@ Function Install-PsModule {
     $ExistingModuleBefore = Get-PsModule -Name $Name -RequiredVersion $RequiredVersion -MinimumVersion $MinimumVersion -MaximumVersion $MaximumVersion
 
     if ( $ExistingModuleBefore.Exists ) {
-        $result.output = "Module $($Name) already present."
-        $result.module_version = $($ExistingModuleBefore.Version).ToString()
+        $result.output = "Module $($Name) already present in the version $($($ExistingModuleBefore.Version).ToString())."
     }
     else {
-        try{
-            # Install NuGet provider if needed
+        try {
+            # Install NuGet provider if needed.
             Install-NugetProvider -CheckMode $CheckMode
 
-            if ( $AllowClobber -or $AllowPrerelease ) {
-                # Update the PowerShellGet and PackageManagement modules
-                # it's required to support AllowClobber, AllowPrerelease parameters
-                Install-PackageManagement -CheckMode $CheckMode
-                Install-PowerShellGet -CheckMode $CheckMode
-            }
-
             $ht = @{
-                "Name" = $Name
-                "AllowClobber" = $AllowClobber
-                "SkipPublisherCheck" = $SkipPublisherCheck
-                "WhatIf" = $CheckMode
-                "ErrorAction" = "Stop"
-                "Force" = $true
+                Name = $Name
+                AllowClobber = $AllowClobber
+                SkipPublisherCheck = $SkipPublisherCheck
+                WhatIf = $CheckMode
+                'Force' = $true
             }
 
             [String[]]$VersionParameters = @("RequiredVersion","MinimumVersion","MaximumVersion")
 
             ForEach ($VersionParameterString in $VersionParameters) {
                 $VersionParameterVariable = Get-Variable -Name $VersionParameterString
-                if ( -not([String]::IsNullOrEmpty($VersionParameterVariable.Value)) ){
+                if ( $VersionParameterVariable.Value ){
                         $ht.Add($VersionParameterString,$VersionParameterVariable.Value)
                 }
             }
@@ -249,26 +183,34 @@ Function Install-PsModule {
                 $ht.Add("AllowPrerelease",$AllowPrerelease)
             }
 
-            # If specified, use repository name to select module source
-            if ( -not([String]::IsNullOrEmpty($Repository)) ) {
+            # If specified, use repository name to select module source.
+            if ( $Repository ) {
                 $ht.Add("Repository", "$Repository")
             }
 
-            Install-Module @ht | out-null
+            Install-Module @ht -ErrorVariable ErrorDetails | out-null
 
             $ExistingModuleAfter = Get-PsModule -Name $Name
 
             $VersionInstalled = Compare-Object -ReferenceObject $ExistingModuleBefore.Versions -DifferenceObject $ExistingModuleAfter.Versions -PassThru
 
-            $result.output = "Module $($Name) installed."
+            $result.output = "Module $($Name) installed in the version $($($VersionInstalled.GetEnumerator() -Join ',').Trim().Replace(' ',''))."
 
-            Get-Member -InputObject $VersionInstalled
-
-            $result.module_version = $($VersionInstalled.GetEnumerator() -Join ',').Trim().Replace(' ','')
             $result.changed = $true
         }
-        catch{
-            $ErrorMessage = "Problems installing $($Name) module: $($_.Exception.Message)"
+        catch {
+
+            if ( $ErrorDetails.Exception.Message ) {
+                $ErrorDetailsText = $($ErrorDetails.Exception.Message)
+            }
+            elseif ( $ErrorDetails.Message ) {
+                $ErrorDetailsText = $($ErrorDetails.Message)
+            }
+            else {
+                $ErrorDetailsText = "Unknown"
+            }
+
+            $ErrorMessage = "Problems installing $($Name) module: $ErrorDetailsText"
             Fail-Json $result $ErrorMessage
         }
     }
@@ -287,11 +229,10 @@ Function Remove-PsModule {
     if (Get-Module -Listavailable | Where-Object {$_.name -eq $Name}){
         try{
             $ht = @{
-                "Name" = $Name
-                "Confirm" = $false
-                "WhatIf" = $CheckMode
-                "ErrorAction" = "Stop"
-                "Force" = $true
+                Name = $Name
+                Confirm = $false
+                WhatIf = $CheckMode
+                Force = $true
             }
 
             $ExistingModuleBefore = Get-PsModule -Name $Name -RequiredVersion $RequiredVersion -MinimumVersion $MinimumVersion -MaximumVersion $MaximumVersion
@@ -300,21 +241,20 @@ Function Remove-PsModule {
 
             ForEach ($VersionParameterString in $VersionParameters) {
                 $VersionParameterVariable = Get-Variable -Name $VersionParameterString
-                if ( -not([String]::IsNullOrEmpty($VersionParameterVariable.Value)) ){
+                if ( $VersionParameterVariable.Value ){
                         $ht.Add($VersionParameterString,$VersionParameterVariable.Value)
                 }
             }
 
             if ( $ExistingModuleBefore.Exists) {
 
-                Uninstall-Module @ht | out-null
+                Uninstall-Module @ht -ErrorVariable ErrorDetails | out-null
 
                 $ExistingModuleAfter = Get-PsModule -Name $Name
 
                 $VersionUninstalled = Compare-Object -ReferenceObject $ExistingModuleAfter.Versions -DifferenceObject $ExistingModuleBefore.Versions -PassThru
 
-                $result.output = "Module $($Name) removed."
-                $result.module_version = $($VersionUninstalled.GetEnumerator() -Join ',').Trim().Replace(' ','')
+                $result.output = "The version $($($VersionUninstalled.GetEnumerator() -Join ',').Trim().Replace(' ','')) of the module $($Name) uninstalled."
                 $result.changed = $true
             }
             else {
@@ -322,12 +262,12 @@ Function Remove-PsModule {
             }
         }
         catch{
-            $ErrorMessage = "Problems removing $($Name) module: $($_.Exception.Message)"
+            $ErrorMessage = "Problems removing $($Name) module: $($ErrorDetails.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
     }
     else{
-        $result.output = "Module $($Name) not present"
+        $result.output = "Module $($Name) already absent."
     }
 }
 
@@ -342,21 +282,15 @@ Function Find-LatestPsModule {
 
     try {
         $ht = @{
-            "Name" = $Name
-            "ErrorAction" = "Stop"
+            Name = $Name
         }
 
         if ( $AllowPrerelease ) {
-            # Update the PowerShellGet and PackageManagement modules
-            # it's required to support AllowPrerelease parameters
-            Install-PackageManagement -CheckMode $CheckMode
-            Install-PowerShellGet -CheckMode $CheckMode
-
             $ht.Add("AllowPrerelease",$AllowPrerelease)
         }
 
-        # If specified, use repository name to select module source
-        if ( -not([String]::IsNullOrEmpty($Repository)) ) {
+        # If specified, use repository name to select module source.
+        if ( $Repository ) {
             $ht.Add("Repository", "$Repository")
         }
 
@@ -373,25 +307,17 @@ Function Find-LatestPsModule {
 
 # Check PowerShell version, fail if < 5.0
 $PsVersion = $PSVersionTable.PSVersion
-if ($PsVersion.Major -lt 5){
+if ($PsVersion.Major -lt 5 ){
     $ErrorMessage = "Windows PowerShell 5.0 or higher is needed"
     Fail-Json $result $ErrorMessage
 }
 
-# You can separately make operations on modules or repositories
-# but one of them is required, fails if not
-if ( [String]::IsNullOrEmpty($name) -and [String]::IsNullOrEmpty($repo) ) {
-    $ErrorMessage = "The value of name and repo can't be both empty."
-    Fail-Json $result $ErrorMessage
-}
-
-if ( -not ( [String]::IsNullOrEmpty($required_version) ) -and
-   ( -not ([String]::IsNullOrEmpty($minimum_version)) -or -not ([String]::IsNullOrEmpty($maximum_version))  ) ) {
+if ( $required_version -and ( $minimum_version -or $maximum_version ) ) {
        $ErrorMessage = "Parameters required_version and minimum/maximum_version are mutually exclusive."
        Fail-Json $result $ErrorMessage
 }
 
-if ( $allow_prerelease -and ( (-not ([String]::IsNullOrEmpty($minimum_version))) -or (-not ([String]::IsNullOrEmpty($maximum_version))) ) ) {
+if ( $allow_prerelease -and ( $minimum_version -or $maximum_version ) ) {
     $ErrorMessage = "Parameters minimum_version, maximum_version can't be used with the parameter allow_prerelease."
     Fail-Json $result $ErrorMessage
 }
@@ -402,64 +328,61 @@ if ( $allow_prerelease -and $state -eq "absent" ) {
 }
 
 if ( ($state -eq "latest") -and
-    ( -not ( [String]::IsNullOrEmpty($required_version) ) -or
-      -not ([String]::IsNullOrEmpty($minimum_version)) -or
-     -not ([String]::IsNullOrEmpty($maximum_version) ) ) ) {
+    ( $required_version -or $minimum_version -or $maximum_version ) ) {
         $ErrorMessage = "When the parameter state is equal 'latest' you can use any of required_version, minimum_version, maximum_version."
         Fail-Json $result $ErrorMessage
 }
 
-if ($state -eq "present") {
-    if ( -not $([String]::IsNullOrEmpty($repo)) -and -not $([String]::IsNullOrEmpty($url)) ) {
-        Install-Repository -Name $repo -Url $url -CheckMode $check_mode
-    }
-    else {
-        $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
+if ( $repo ) {
+    $RepositoryExists = Get-PSRepository -Name $repo -ErrorAction Ignore
+    if ( $null -eq $RepositoryExists) {
+        $ErrorMessage = "The repository $repo doesn't exist."
+        Fail-Json $result $ErrorMessage
     }
 
-    if ( -not $([String]::IsNullOrEmpty($name)) ) {
+}
+
+if ( $AllowClobber -or $AllowPrerelease ) {
+    # Update the PowerShellGet and PackageManagement modules.
+    # It's required to support AllowClobber, AllowPrerelease parameters.
+    Install-PrereqModule -CheckMode $CheckMode
+}
+
+if ($state -eq "present") {
+    if ($name) {
         $ht = @{
-            "Name" = $name
-            "RequiredVersion" = $required_version
-            "MinimumVersion" = $minimum_version
-            "MaximumVersion" = $maximum_version
-            "Repository" = $repo
-            "AllowClobber" = $allow_clobber
-            "SkipPublisherCheck" = $skip_publisher_check
-            "AllowPrerelease" = $allow_prerelease
-            "CheckMode" = $check_mode
+            Name = $name
+            RequiredVersion = $required_version
+            MinimumVersion = $minimum_version
+            MaximumVersion = $maximum_version
+            Repository = $repo
+            AllowClobber = $allow_clobber
+            SkipPublisherCheck = $skip_publisher_check
+            AllowPrerelease = $allow_prerelease
+            CheckMode = $check_mode
         }
         Install-PsModule @ht
     }
-    else {
-        $ErrorMessage = "Module Name is mandatory."
-        Fail-Json $result $ErrorMessage
-    }
 }
 elseif ($state -eq "absent") {
-    if ( -not([String]::IsNullOrEmpty($Repository)) ) {
-        Remove-Repository -Name $repo -CheckMode $check_mode
-    }
-
-    if ( -not([String]::IsNullOrEmpty($name)) ) {
+    if ($name) {
         $ht = @{
-            "Name" = $Name
-            "CheckMode" = $check_mode
-            "RequiredVersion" = $required_version
-            "MinimumVersion" = $minimum_version
-            "MaximumVersion" = $maximum_version
+            Name = $Name
+            CheckMode = $check_mode
+            RequiredVersion = $required_version
+            MinimumVersion = $minimum_version
+            MaximumVersion = $maximum_version
         }
         Remove-PsModule @ht
     }
-
 }
 elseif ( $state -eq "latest") {
 
     $ht = @{
-        "Name" = $Name
-        "AllowPrerelease" = $allow_prerelease
-        "Repository" = $repo
-        "CheckMode" = $check_mode
+        Name = $Name
+        AllowPrerelease = $allow_prerelease
+        Repository = $repo
+        CheckMode = $check_mode
     }
 
     $LatestVersion = Find-LatestPsModule @ht
@@ -469,13 +392,13 @@ elseif ( $state -eq "latest") {
     if ( $LatestVersion.Version -ne $ExistingModule.Version ) {
 
         $ht = @{
-            "Name" = $Name
-            "RequiredVersion" = $LatestVersion
-            "Repository" = $repo
-            "AllowClobber" = $allow_clobber
-            "SkipPublisherCheck" = $skip_publisher_check
-            "AllowPrerelease" = $allow_prerelease
-            "CheckMode" = $check_mode
+            Name = $Name
+            RequiredVersion = $LatestVersion
+            Repository = $repo
+            AllowClobber = $allow_clobber
+            SkipPublisherCheck = $skip_publisher_check
+            AllowPrerelease = $allow_prerelease
+            CheckMode = $check_mode
         }
         Install-PsModule @ht
     }

@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -16,14 +16,14 @@ DOCUMENTATION = '''
 ---
 module: win_psmodule
 version_added: "2.4"
-short_description: Adds or removes a Windows PowerShell Module
+short_description: Adds or removes a Windows PowerShell module
 description:
   - This module helps to install Windows PowerShell modules and register custom modules repository on Windows-based systems.
 options:
   name:
     description:
       - Name of the Windows PowerShell module that has to be installed.
-    required: no
+    required: yes
   state:
     description:
       - If C(present) a new module is installed.
@@ -53,8 +53,8 @@ options:
     default: no
   skip_publisher_check:
     description:
-      - If C(yes) allows installs a newer version of a module that already exists on your computer in the case when a newer one is not
-      - digitally signed by a trusted publisher and the newest existing module is digitally signed by a trusted publisher.
+      - If C(yes), allows you to install a newer version of a module that already exists on your computer in the case when a newer one
+        is not digitally signed by a trusted publisher and the newest existing module is digitally signed by a trusted publisher.
     type: bool
     default: no
     version_added: "2.8"
@@ -68,10 +68,7 @@ options:
     version_added: "2.8"
   repository:
     description:
-      - Name of the custom repository to register or use.
-  url:
-    description:
-      - URL of the custom repository to register.
+      - Name of the custom repository to use.
 notes:
 <<<<<<< HEAD
    -  Powershell 5.0 or higher is needed.
@@ -81,8 +78,8 @@ seealso:
    -  PowerShell 5.0 or higher is needed.
 >>>>>>> Correction of documentation
 author:
-- Daniele Lazzari (@dlazz)
 - Wojciech Sciesinski (@it-praktyk)
+- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = '''
@@ -113,7 +110,6 @@ EXAMPLES = '''
   win_psmodule:
     name: MyCustomModule
     repository: MyRepository
-    url: https://myrepo.com
     state: present
 
 - name: Add a PowerShell module from a specific repository
@@ -125,12 +121,6 @@ EXAMPLES = '''
 - name: Remove a PowerShell module
   win_psmodule:
     name: PowerShellModule
-    state: absent
-
-- name: Remove a PowerShell module and a repository
-  win_psmodule:
-    name: MyCustomModule
-    repository: MyRepository
     state: absent
 '''
 
