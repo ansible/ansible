@@ -107,7 +107,6 @@ else:
     aerospike_found = True
 
 from time import sleep
-import sys
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -184,10 +183,11 @@ def run_module():
     module.exit_json(**result)
 
 class Migrations:
-        def __init__(self,host,port,timeout=1000,consecutive_good_required=3,sleep_between=5,tries_limit=300,username=None,password=None):
+        #TODO: add support for auth, tls, and other special features
+        def __init__(self,host,port,timeout=1000,consecutive_good_required=3,sleep_between=5,tries_limit=300):
             config = {
                 'hosts': [
-                        ( '127.0.0.1', 3000 )
+                        ( host, port )
                 ],
                 'policies': {
                         'timeout': timeout # milliseconds
@@ -231,19 +231,12 @@ class Migrations:
             namespace_tx = int(namespace_stats["migrate_tx_partitions_remaining"])
             namespace_rx = int(namespace_stats["migrate_rx_partitions_remaining"])
             if not namespace_tx >= 0 or not namespace_rx >= 0:
-                #raise Exception("Unexpected values returned for migrate_tx or migrate_rx")
-                #sys.exit(-1)
                 module.fail_json(msg="Unexpected values returned for migrate_tx or migrate_rx", **result)
             elif namespace_tx != 0 or namespace_rx != 0:
-                print("Namespace: " + namespace + " -> " +
-                        "TX:" + str(namespace_tx) + " RX:" + str(namespace_rx))
                 return True
             elif namespace_tx == 0 and namespace_rx == 0:
-                print("OK. Namespace: " + namespace + " -> " +
-                        "TX:" + str(namespace_tx) + " RX:" + str(namespace_rx))
                 return False
             else:
-                #raise Exception("Not sure why, but you didn't match what we expected in migrations check.")
                 module.fail_json(msg="Not sure why, but you didn't match what we expected in migrations check.", **result)
 
         def _node_has_migs(self,node=None):
