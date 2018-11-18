@@ -2,7 +2,7 @@
 
 # Copyright: (c) 2018, Albert Autin
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+__metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -96,17 +96,16 @@ EXAMPLES = '''
 RETURN = '''
 # im not real sure what goes here
 '''
-
+from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 
 try:
     import aerospike
 except ImportError:
-    aerospike_found = False
+    AEROSPIKE_LIB_FOUND = False
 else:
-    aerospike_found = True
+    AEROSPIKE_LIB_FOUND = True
 
-from time import sleep
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -139,10 +138,11 @@ def run_module():
         argument_spec=module_args,
         supports_check_mode=True
     )
-    if not aerospike_found:
-        module.fail_json(msg='Aerospike module not found. Please run "pip install aerospike".')
+    if not AEROSPIKE_LIB_FOUND:
+        module.fail_json(
+            msg='Aerospike module not found. Please run "pip install aerospike".')
 
-    #if the user is working with this module in only check mode we do not
+    # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
     if module.check_mode:
@@ -152,141 +152,159 @@ def run_module():
     # part where your module will do what it needs to do)
 
     migrations = Migrations(
-            module,
-            module.params['host'],
-            module.params['port'],
-            module.params['connect_timeout'],
-            module.params['consecutive_good_checks'],
-            module.params['sleep_between_checks'],
-            module.params['tries_limit'])
-    #host,port,timeout=1000,consecutive_good_required=3,sleep_between=5,tries_limit=300,username=None,password=None
-    #migrations.has_migs accepts 1 argument, a bool to specify checking local node only or entire cluster
+        module,
+        module.params['host'],
+        module.params['port'],
+        module.params['connect_timeout'],
+        module.params['consecutive_good_checks'],
+        module.params['sleep_between_checks'],
+        module.params['tries_limit'])
+    # migrations.has_migs accepts 1 argument,
+    # a bool to specify checking local node only or entire cluster
     has_migs = migrations.has_migs(module.params['local_only'])
     if has_migs is False:
         result['message'] = "No migrations"
     else:
         result['message'] = "Migrations still found after reaching limit."
-        module.fail_json(msg="Migrations still found after reaching tries limit.")
+        module.fail_json(
+            msg="Migrations still found after reaching tries limit.")
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
-#    if module.params['new']:
-#        result['changed'] = True
+    #    if module.params['new']:
+    #        result['changed'] = True
 
     # during the execution of the module, if there is an exception or a
     # conditional state that effectively causes a failure, run
     # AnsibleModule.fail_json() to pass in the message and the result
-#    if module.params['name'] == 'fail me':
-#        module.fail_json(msg='You requested this to fail', **result)
+    #    if module.params['name'] == 'fail me':
+    #        module.fail_json(msg='You requested this to fail', **result)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
+
 class Migrations:
-        #TODO: add support for auth, tls, and other special features
-        def __init__(self, module, host, port, timeout=1000, consecutive_good_required=3, sleep_between=5, tries_limit=300):
-            config = {
-                'hosts': [
-                        ( host, port )
-                ],
-                'policies': {
-                        'timeout': timeout # milliseconds
-                }
+
+    # TODO: add support for auth, tls, and other special features
+    def __init__(self,
+                 module,
+                 host,
+                 port,
+                 timeout=1000,
+                 consecutive_good_required=3,
+                 sleep_between=5,
+                 tries_limit=300):
+        config = {
+            'hosts': [
+                (host, port)
+            ],
+            'policies': {
+                'timeout': timeout  # milliseconds
             }
-            self.module = module
-            self.client = aerospike.client(config)
-            self.client.connect()
-            self._update_nodes_list()
-            self._update_statistics()
-            self._update_namespace_list()
-            self.consecutive_good_required = consecutive_good_required
-            self.sleep_between = sleep_between
-            self.tries_limit = tries_limit
-            
+        }
+        self.module = module
+        self.client = aerospike.client(config)
+        self.client.connect()
+        self._update_nodes_list()
+        self._update_statistics()
+        self._update_namespace_list()
+        self.consecutive_good_required = consecutive_good_required
+        self.sleep_between = sleep_between
+        self.tries_limit = tries_limit
 
-        #delimiter is for seperate stats that come back, NOT for kv seperation which is =
-        def _info_cmd_helper(self, cmd, node, delimiter=';'):
-            if node is None:
-                node = self.nodes[0]
+    # delimiter is for seperate stats that come back, NOT for kv seperation which is =
+    def _info_cmd_helper(self, cmd, node, delimiter=';'):
+        if node is None:
+            node = self.nodes[0]
 
-            data = self.client.info_node(cmd, node).split("\t")[1] #TODO: is there a better way to clean the command off the output?
-            data = data.rstrip("\n\r")
-            data_arr = data.split(delimiter)
-            if '=' in data: #some commands don't return in kv format, so we dont want a dict from those.
-                retval = dict(metric.split("=") for metric in data.split(delimiter))
-            else:
-                retval = data_arr
-            return retval
-        
-        def _update_namespace_list(self, node=None):
-            self.namespaces = self._info_cmd_helper('namespaces', node)
+        data = self.client.info_node(cmd, node).split("\t")[
+            1]  # TODO: is there a better way to clean the command off the output?
+        data = data.rstrip("\n\r")
+        data_arr = data.split(delimiter)
 
-        def _update_statistics(self, node=None):
-            self.statistics = self._info_cmd_helper('statistics', node)
+        # some commands don't return in kv format
+        # , so we dont want a dict from those.
+        if '=' in data:
+            retval = dict(
+                metric.split("=") for metric in data.split(delimiter))
+        else:
+            retval = data_arr
+        return retval
 
-        def _update_nodes_list(self):
-            self.nodes = self.client.get_nodes()
+    def _update_namespace_list(self, node=None):
+        self.namespaces = self._info_cmd_helper('namespaces', node)
 
-        def _namespace_has_migs(self, namespace, node=None):
-            namespace_stats = self._info_cmd_helper("namespace/" + namespace, node)
-            namespace_tx = int(namespace_stats["migrate_tx_partitions_remaining"])
-            namespace_rx = int(namespace_stats["migrate_rx_partitions_remaining"])
-            if not namespace_tx >= 0 or not namespace_rx >= 0:
-                self.module.fail_json(msg="Unexpected values returned for migrate_tx or migrate_rx")
-            elif namespace_tx != 0 or namespace_rx != 0:
-                return True
-            elif namespace_tx == 0 and namespace_rx == 0:
-                return False
-            else:
-                self.module.fail_json(msg="Not sure why, but you didn't match what we expected in migrations check.")
+    def _update_statistics(self, node=None):
+        self.statistics = self._info_cmd_helper('statistics', node)
 
-        def _node_has_migs(self, node=None):
-            self._update_namespace_list(node)
-            migs = 0
-            for namespace in self.namespaces:
-                if self._namespace_has_migs(namespace, node) is True:
-                    migs += 1
-            if migs != 0:
-                return True
-            return False
+    def _update_nodes_list(self):
+        self.nodes = self.client.get_nodes()
 
-        def _local_node_has_migs(self):
-            return self._node_has_migs()
-
-        def _cluster_has_migs(self):
-            migs = 0
-            self._update_nodes_list()
-            for node in self.nodes:
-                if self._node_has_migs(node) is True:
-                    migs += 1
-            if migs != 0:
-                return True
-            return False
-
-        def _has_migs(self, local):
-            if local is True:
-                return self._local_node_has_migs()
-            return self._cluster_has_migs()
-        
-        def has_migs(self, local=True):
-            consecutive_good = 0
-            try_num = 0
-            while try_num < self.tries_limit and consecutive_good < self.consecutive_good_required:
-                if self._has_migs(local) is True:
-                    consecutive_good = 0
-                elif self._has_migs(local) is False:
-                    consecutive_good += 1
-                    if consecutive_good is self.consecutive_good_required:
-                        break
-                try_num += 1
-                sleep(self.sleep_between)
-            if consecutive_good is self.consecutive_good_required:
-                return False
+    def _namespace_has_migs(self, namespace, node=None):
+        namespace_stats = self._info_cmd_helper("namespace/" + namespace, node)
+        namespace_tx = int(namespace_stats["migrate_tx_partitions_remaining"])
+        namespace_rx = int(namespace_stats["migrate_rx_partitions_remaining"])
+        if namespace_tx != 0 or namespace_rx != 0:
             return True
+        elif namespace_tx == 0 and namespace_rx == 0:
+            return False
+        else:
+            self.module.fail_json(
+                msg="Not sure why, but you didn't match what we expected in "
+            + "migrations check."
+            )
+            return True
+
+    def _node_has_migs(self, node=None):
+        self._update_namespace_list(node)
+        migs = 0
+        for namespace in self.namespaces:
+            if self._namespace_has_migs(namespace, node) is True:
+                migs += 1
+        if migs != 0:
+            return True
+        return False
+
+    def _local_node_has_migs(self):
+        return self._node_has_migs()
+
+    def _cluster_has_migs(self):
+        migs = 0
+        self._update_nodes_list()
+        for node in self.nodes:
+            if self._node_has_migs(node) is True:
+                migs += 1
+        if migs != 0:
+            return True
+        return False
+
+    def _has_migs(self, local):
+        if local is True:
+            return self._local_node_has_migs()
+        return self._cluster_has_migs()
+
+    def has_migs(self, local=True):
+        consecutive_good = 0
+        try_num = 0
+        while try_num < self.tries_limit and consecutive_good < self.consecutive_good_required:
+            if self._has_migs(local) is True:
+                consecutive_good = 0
+            elif self._has_migs(local) is False:
+                consecutive_good += 1
+                if consecutive_good is self.consecutive_good_required:
+                    break
+            try_num += 1
+            sleep(self.sleep_between)
+        if consecutive_good is self.consecutive_good_required:
+            return False
+        return True
+
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
