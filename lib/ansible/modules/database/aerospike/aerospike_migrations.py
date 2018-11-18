@@ -152,6 +152,7 @@ def run_module():
     # part where your module will do what it needs to do)
 
     migrations = Migrations(
+            module,
             module.params['host'],
             module.params['port'],
             module.params['connect_timeout'],
@@ -162,9 +163,9 @@ def run_module():
     #migrations.has_migs accepts 1 argument, a bool to specify checking local node only or entire cluster
     has_migs = migrations.has_migs(module.params['local_only'])
     if has_migs is False:
-        result['message']="No migrations"
+        result['message'] = "No migrations"
     else:
-        result['message']="Migrations still found after reaching limit."
+        result['message'] = "Migrations still found after reaching limit."
         module.fail_json(msg="Migrations still found after reaching tries limit.")
 
     # use whatever logic you need to determine whether or not this module
@@ -184,7 +185,7 @@ def run_module():
 
 class Migrations:
         #TODO: add support for auth, tls, and other special features
-        def __init__(self, host, port, timeout=1000, consecutive_good_required=3, sleep_between=5, tries_limit=300):
+        def __init__(self, module, host, port, timeout=1000, consecutive_good_required=3, sleep_between=5, tries_limit=300):
             config = {
                 'hosts': [
                         ( host, port )
@@ -193,14 +194,15 @@ class Migrations:
                         'timeout': timeout # milliseconds
                 }
             }
+            self.module = module
             self.client = aerospike.client(config)
             self.client.connect()
             self._update_nodes_list()
             self._update_statistics()
             self._update_namespace_list()
-            self.consecutive_good_required=consecutive_good_required
-            self.sleep_between=sleep_between
-            self.tries_limit=tries_limit
+            self.consecutive_good_required = consecutive_good_required
+            self.sleep_between = sleep_between
+            self.tries_limit = tries_limit
             
 
         #delimiter is for seperate stats that come back, NOT for kv seperation which is =
@@ -231,17 +233,17 @@ class Migrations:
             namespace_tx = int(namespace_stats["migrate_tx_partitions_remaining"])
             namespace_rx = int(namespace_stats["migrate_rx_partitions_remaining"])
             if not namespace_tx >= 0 or not namespace_rx >= 0:
-                module.fail_json(msg="Unexpected values returned for migrate_tx or migrate_rx")
+                self.module.fail_json(msg="Unexpected values returned for migrate_tx or migrate_rx")
             elif namespace_tx != 0 or namespace_rx != 0:
                 return True
             elif namespace_tx == 0 and namespace_rx == 0:
                 return False
             else:
-                module.fail_json(msg="Not sure why, but you didn't match what we expected in migrations check.")
+                self.module.fail_json(msg="Not sure why, but you didn't match what we expected in migrations check.")
 
         def _node_has_migs(self, node=None):
             self._update_namespace_list(node)
-            migs=0
+            migs = 0
             for namespace in self.namespaces:
                 if self._namespace_has_migs(namespace, node) is True:
                     migs += 1
@@ -253,7 +255,7 @@ class Migrations:
             return self._node_has_migs()
 
         def _cluster_has_migs(self):
-            migs=0
+            migs = 0
             self._update_nodes_list()
             for node in self.nodes:
                 if self._node_has_migs(node) is True:
@@ -282,7 +284,7 @@ class Migrations:
             if consecutive_good is self.consecutive_good_required:
                 return False
             return True
-            
+
 def main():
     run_module()
 
