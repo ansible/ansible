@@ -140,7 +140,7 @@ def run_module():
         supports_check_mode=True
     )
     if not aerospike_found:
-        module.fail_json(msg='Aerospike module not found. Please run "pip install aerospike".', **result)
+        module.fail_json(msg='Aerospike module not found. Please run "pip install aerospike".')
 
     #if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -161,11 +161,11 @@ def run_module():
     #host,port,timeout=1000,consecutive_good_required=3,sleep_between=5,tries_limit=300,username=None,password=None
     #migrations.has_migs accepts 1 argument, a bool to specify checking local node only or entire cluster
     has_migs = migrations.has_migs(module.params['local_only'])
-    if has_migs == False:
+    if has_migs is False:
         result['message']="No migrations"
     else:
         result['message']="Migrations still found after reaching limit."
-        module.fail_json(msg="Migrations still found after reaching tries limit.", **result)
+        module.fail_json(msg="Migrations still found after reaching tries limit.")
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
@@ -184,7 +184,7 @@ def run_module():
 
 class Migrations:
         #TODO: add support for auth, tls, and other special features
-        def __init__(self,host,port,timeout=1000,consecutive_good_required=3,sleep_between=5,tries_limit=300):
+        def __init__(self, host, port, timeout=1000, consecutive_good_required=3, sleep_between=5, tries_limit=300):
             config = {
                 'hosts': [
                         ( host, port )
@@ -204,11 +204,11 @@ class Migrations:
             
 
         #delimiter is for seperate stats that come back, NOT for kv seperation which is =
-        def _info_cmd_helper(self,cmd,node,delimiter=';'):
-            if node == None:
+        def _info_cmd_helper(self, cmd, node, delimiter=';'):
+            if node is None:
                 node = self.nodes[0]
 
-            data = self.client.info_node(cmd,node).split("\t")[1] #TODO: is there a better way to clean the command off the output?
+            data = self.client.info_node(cmd, node).split("\t")[1] #TODO: is there a better way to clean the command off the output?
             data = data.rstrip("\n\r")
             data_arr = data.split(delimiter)
             if '=' in data: #some commands don't return in kv format, so we dont want a dict from those.
@@ -217,33 +217,33 @@ class Migrations:
                 retval = data_arr
             return retval
         
-        def _update_namespace_list(self,node=None):
-            self.namespaces = self._info_cmd_helper('namespaces',node)
+        def _update_namespace_list(self, node=None):
+            self.namespaces = self._info_cmd_helper('namespaces', node)
 
-        def _update_statistics(self,node=None):
-            self.statistics = self._info_cmd_helper('statistics',node)
+        def _update_statistics(self, node=None):
+            self.statistics = self._info_cmd_helper('statistics', node)
 
         def _update_nodes_list(self):
             self.nodes = self.client.get_nodes()
 
-        def _namespace_has_migs(self,namespace,node=None):
-            namespace_stats = self._info_cmd_helper("namespace/" + namespace,node)
+        def _namespace_has_migs(self, namespace, node=None):
+            namespace_stats = self._info_cmd_helper("namespace/" + namespace, node)
             namespace_tx = int(namespace_stats["migrate_tx_partitions_remaining"])
             namespace_rx = int(namespace_stats["migrate_rx_partitions_remaining"])
             if not namespace_tx >= 0 or not namespace_rx >= 0:
-                module.fail_json(msg="Unexpected values returned for migrate_tx or migrate_rx", **result)
+                module.fail_json(msg="Unexpected values returned for migrate_tx or migrate_rx")
             elif namespace_tx != 0 or namespace_rx != 0:
                 return True
             elif namespace_tx == 0 and namespace_rx == 0:
                 return False
             else:
-                module.fail_json(msg="Not sure why, but you didn't match what we expected in migrations check.", **result)
+                module.fail_json(msg="Not sure why, but you didn't match what we expected in migrations check.")
 
-        def _node_has_migs(self,node=None):
+        def _node_has_migs(self, node=None):
             self._update_namespace_list(node)
             migs=0
             for namespace in self.namespaces:
-                if self._namespace_has_migs(namespace,node) == True:
+                if self._namespace_has_migs(namespace, node) is True:
                     migs += 1
             if migs != 0:
                 return True
@@ -256,32 +256,30 @@ class Migrations:
             migs=0
             self._update_nodes_list()
             for node in self.nodes:
-                if self._node_has_migs(node) == True:
+                if self._node_has_migs(node) is True:
                     migs += 1
             if migs != 0:
                 return True
             return False
 
-        def _has_migs(self,local):
-            if local == True:
+        def _has_migs(self, local):
+            if local is True:
                 return self._local_node_has_migs()
             return self._cluster_has_migs()
         
-        def has_migs(self,local=True):
+        def has_migs(self, local=True):
             consecutive_good = 0
             try_num = 0
             while try_num < self.tries_limit and consecutive_good < self.consecutive_good_required:
-                if self._has_migs(local) == True:
+                if self._has_migs(local) is True:
                     consecutive_good = 0
-                elif self._has_migs(local) == False:
+                elif self._has_migs(local) is False:
                     consecutive_good += 1
-                    if consecutive_good == self.consecutive_good_required:
+                    if consecutive_good is self.consecutive_good_required:
                         break
-                else:
-                    raise Exception("Why are you here?")
                 try_num += 1
                 sleep(self.sleep_between)
-            if consecutive_good == self.consecutive_good_required:
+            if consecutive_good is self.consecutive_good_required:
                 return False
             return True
             
