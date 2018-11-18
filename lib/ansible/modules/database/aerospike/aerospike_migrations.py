@@ -1,8 +1,11 @@
 #!/usr/bin/python
+"""short_description: Check or wait for migrations between nodes"""
 
 # Copyright: (c) 2018, Albert Autin
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -12,48 +15,60 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: aerospike_migrations
-
-short_description: This module can be used to check/wait for migrations between nodes.
-
-version_added: "2.8"
-
+short_description: Check or wait for migrations between nodes
 description:
-    - "This can be used to check for migrations in a cluster. This makes it easy to do a rolling upgrade/update on Aerospike nodes with using 'serial: 1' in the playbook. If waiting for migrations is not desired, simply just poll until port 3000 if available or asinfo -v status returns ok."
-
+    - This can be used to check for migrations in a cluster.
+    - This makes it easy to do a rolling upgrade/update on Aerospike nodes.
+    - If waiting for migrations is not desired, simply just poll until
+    - port 3000 if available or asinfo -v status returns ok
+version_added: 2.8
+author: "Albert Autin github.com/Alb0t"
 options:
     host:
         description:
-            - Which host do we use as seed. Default: localhost
-        required: false
+            - Which host do we use as seed for info connection
+        required: False
+        type: str
+        default: localhost
     port:
         description:
-            - Which port to connect to Aerospike on (service port). Default: 3000
-        required: false
+            - Which port to connect to Aerospike on (service port)
+        required: False
+        type: int
+        default: 3000
     connect_timeout:
         description:
-            - How long to try to connect to node before giving up (milliseconds). Default: 1000
-        required: false
+            - How long to try to connect to node before giving up (ms)
+        required: False
+        type: int
+        default: 1000
     consecutive_good_checks:
         description:
-            - How many times should the cluster report "no migrations" before returning success?. Default: 3
-        required: false
+            - How many times should the cluster report "no migrations"
+            - consecutively before returning OK back to ansible?
+        required: False
+        type: int
+        default: 3
     sleep_between_checks:
         description:
-            - How long to sleep between each check (seconds). Default: 60
-        required: false
+            - How long to sleep between each check (seconds).
+        required: False
+        type: int
+        default: 60
     tries_limit:
         description:
-            - How many times do we poll before giving up and failing? Default: 300
-        required: false
+            - How many times do we poll before giving up and failing?
+        default: 300
+        required: False
+        type: int
     local_only:
         description:
-            - Do you wish to only check for migrations on the local node before returning, or do you want all nodes in the cluster to finish before returning?
-        required: true
-
-author:
-    - Albert Autin github.com/Alb0t
+            - Do you wish to only check for migrations on the local node
+            - before returning, or do you want all nodes in the cluster
+            - to finish before returning?
+        required: False
+        type: bool
 '''
-
 EXAMPLES = '''
 # check for migrations on local node
 - name: wait for migrations on local node before proceeding
@@ -108,6 +123,7 @@ else:
 
 
 def run_module():
+    """run ansible module"""
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         host=dict(type='str', required=False, default='localhost'),
@@ -140,7 +156,8 @@ def run_module():
     )
     if not AEROSPIKE_LIB_FOUND:
         module.fail_json(
-            msg='Aerospike module not found. Please run "pip install aerospike".')
+            msg='Aerospike module not found.' +
+            'Please run "pip install aerospike".')
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -151,14 +168,7 @@ def run_module():
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
-    migrations = Migrations(
-        module,
-        module.params['host'],
-        module.params['port'],
-        module.params['connect_timeout'],
-        module.params['consecutive_good_checks'],
-        module.params['sleep_between_checks'],
-        module.params['tries_limit'])
+    migrations = Migrations(module)
     # migrations.has_migs accepts 1 argument,
     # a bool to specify checking local node only or entire cluster
     has_migs = migrations.has_migs(module.params['local_only'])
@@ -186,22 +196,15 @@ def run_module():
 
 
 class Migrations:
-
+    """short_description: Check or wait for migrations between nodes"""
     # TODO: add support for auth, tls, and other special features
-    def __init__(self,
-                 module,
-                 host,
-                 port,
-                 timeout=1000,
-                 consecutive_good_required=3,
-                 sleep_between=5,
-                 tries_limit=300):
+    def __init__(self, module):
         config = {
             'hosts': [
-                (host, port)
+                (module.params['host'], module.params['port'])
             ],
             'policies': {
-                'timeout': timeout  # milliseconds
+                'timeout': module.params['connect_timeout']  # milliseconds
             }
         }
         self.module = module
@@ -210,17 +213,20 @@ class Migrations:
         self._update_nodes_list()
         self._update_statistics()
         self._update_namespace_list()
-        self.consecutive_good_required = consecutive_good_required
-        self.sleep_between = sleep_between
-        self.tries_limit = tries_limit
+        self.consecutive_good_required = \
+            module.params['consecutive_good_checks']
+        self.sleep_between = module.params['sleep_between_checks']
+        self.tries_limit = module.params['tries_limit']
 
-    # delimiter is for seperate stats that come back, NOT for kv seperation which is =
+    # delimiter is for seperate stats that come back, NOT for kv
+    # seperation which is =
     def _info_cmd_helper(self, cmd, node, delimiter=';'):
         if node is None:
             node = self.nodes[0]
 
-        data = self.client.info_node(cmd, node).split("\t")[
-            1]  # TODO: is there a better way to clean the command off the output?
+        data = self.client.info_node(cmd, node).split("\t")[1]
+        # TODO: is there a better way to
+        # clean the command off the output?
         data = data.rstrip("\n\r")
         data_arr = data.split(delimiter)
 
@@ -244,18 +250,26 @@ class Migrations:
 
     def _namespace_has_migs(self, namespace, node=None):
         namespace_stats = self._info_cmd_helper("namespace/" + namespace, node)
-        namespace_tx = int(namespace_stats["migrate_tx_partitions_remaining"])
-        namespace_rx = int(namespace_stats["migrate_rx_partitions_remaining"])
+        try:
+            namespace_tx = \
+                int(namespace_stats["migrate_tx_partitions_remaining"])
+            namespace_rx = \
+                int(namespace_stats["migrate_rx_partitions_remaining"])
+            test = int(namespace_tx) + 1
+            test = int(namespace_rx) + 1
+        except KeyError:
+            self.module.fail_json(
+                msg="Did not find partition remaining key in output"
+            )
+        except TypeError:
+            self.module.fail_json(
+                msg="namespace stat returned was not numerical"
+            )
+
         if namespace_tx != 0 or namespace_rx != 0:
             return True
-        elif namespace_tx == 0 and namespace_rx == 0:
+        if namespace_tx == 0 and namespace_rx == 0:
             return False
-        else:
-            self.module.fail_json(
-                msg="Not sure why, but you didn't match what we expected in "
-            + "migrations check."
-            )
-            return True
 
     def _node_has_migs(self, node=None):
         self._update_namespace_list(node)
@@ -286,9 +300,12 @@ class Migrations:
         return self._cluster_has_migs()
 
     def has_migs(self, local=True):
+        """returns a boolean, False if no migrations otherwise True"""
         consecutive_good = 0
         try_num = 0
-        while try_num < self.tries_limit and consecutive_good < self.consecutive_good_required:
+        while \
+                try_num < self.tries_limit and \
+                        consecutive_good < self.consecutive_good_required:
             if self._has_migs(local) is True:
                 consecutive_good = 0
             elif self._has_migs(local) is False:
@@ -301,10 +318,9 @@ class Migrations:
             return False
         return True
 
-
 def main():
+    """main method for ansible module"""
     run_module()
-
 
 if __name__ == '__main__':
     main()
