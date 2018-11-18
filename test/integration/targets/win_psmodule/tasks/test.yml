@@ -76,7 +76,8 @@
     that:
       - "module_required_version_setup_3 is not changed"
       - "module_required_version_setup_3 is failed"
-      - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_required_version_setup_3.module_stderr"
+      - "'Problems installing {{ powershell_module }} module' in module_required_version_setup_3.msg"
+      - "'No match was found for the specified search criteria' in module_required_version_setup_3.msg"
 
 - name: check Powershell Gallery module setup - maximum_version
   win_psmodule:
@@ -117,7 +118,7 @@
     that:
       - "module_maximum_version_setup_3 is not changed"
       - "module_maximum_version_setup_3 is failed"
-      - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_maximum_version_setup_3.module_stderr"
+      - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_maximum_version_setup_3.msg"
 
 - name: chek module install with allow_clobber not active
   win_psmodule:
@@ -205,7 +206,7 @@
   assert:
     that:
       - "module_fail is failed"
-      - "'Problems installing {{ wrong_module }} module: No match was found for the specified search criteria' in module_fail.module_stderr"
+      - "'Problems installing {{ wrong_module }} module: No match was found for the specified search criteria' in module_fail.msg"
 
 # # - name: validate module is installed
 # #   win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
@@ -372,8 +373,8 @@
   assert:
     that:
       - "fake_repo_fail is failed"
-      - "'The repository {{ fake_repo_name }} doesn' in fake_repo_fail.module_stderr"
-      - "'t exist.' in fake_repo_fail.module_stderr"
+      - "'The repository {{ fake_repo_name }} doesn' in fake_repo_fail.msg"
+      - "'t exist.' in fake_repo_fail.msg"
 
 - name: create repository path
   win_file:
@@ -464,8 +465,8 @@
     that:
       - "install_module_existing_in_two_repositories is not changed"
       - "install_module_existing_in_two_repositories is failed"
-      - "'Unable to install, multiple modules matched' in install_module_existing_in_two_repositories.module_stderr"
-      - "'Please specify a single -Repository' in install_module_existing_in_two_repositories.module_stderr"
+      - "'Unable to install, multiple modules matched' in install_module_existing_in_two_repositories.msg"
+      - "'Please specify a single -Repository' in install_module_existing_in_two_repositories.msg"
 
 - name: unregister custom repo
   win_shell: 'Unregister-PSRepository {{ custom_repo_name }} -ErrorAction Ignore'
