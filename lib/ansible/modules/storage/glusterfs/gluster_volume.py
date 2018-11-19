@@ -253,6 +253,8 @@ def get_volumes():
                     volume['arbiters'] = []
                 value = value[:-10]
                 volume['arbiters'].append(value)
+            elif key.lower() == 'number of bricks':
+                volume['replicas'] = value[-1:]
             if key.lower() != 'bricks' and key.lower()[:5] == 'brick':
                 if 'bricks' not in volume:
                     volume['bricks'] = []
@@ -400,6 +402,14 @@ def remove_bricks(name, removed_bricks, force):
                                  "Commit operation needs to be followed.")
 
 
+def reduce_config(name, removed_bricks, replicas, force):
+    args = ['volume', 'remove-brick', name, 'replica', replicas]
+    args.extend(removed_bricks)
+    if force:
+        args.append('force')
+    run_gluster(args)
+
+
 def do_rebalance(name):
     run_gluster(['volume', 'rebalance', name, 'start'])
 
@@ -530,7 +540,10 @@ def main():
                 changed = True
 
             if removed_bricks:
-                remove_bricks(volume_name, removed_bricks, force)
+                if int(replicas) < int(volumes[volume_name]['replicas']):
+                    reduce_config(volume_name, removed_bricks, str(replicas), force)
+                else:
+                    remove_bricks(volume_name, removed_bricks, force)
                 changed = True
 
             # handle quotas
