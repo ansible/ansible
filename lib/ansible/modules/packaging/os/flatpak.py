@@ -82,7 +82,7 @@ EXAMPLES = r'''
   flatpak:
     name: org.gnome.gedit
     state: present
-  method: user
+    method: user
 
 - name: Install the Gnome Calendar flatpak from the gnome remote system-wide
   flatpak:
