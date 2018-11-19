@@ -163,7 +163,7 @@ def main():
         msc.existing = msc.get_obj(path, id=role_id)
         existing_by_name = msc.get_obj(path, name=role)
         if existing_by_name and role_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided role '{1}' with id '{2}' does not match existing id '{3}'.".format(role, role_id, existing_by_name['id']))
+            msc.fail_json(msg="Provided role '{0}' with id '{1}' does not match existing id '{2}'.".format(role, role_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if role_id:
