@@ -31,7 +31,7 @@ notes:
   - An IAM role must have been previously created
 version_added: "2.1"
 author:
-    - "Mark Chance (@java1guy)"
+    - "Mark Chance (@Java1Guy)"
     - "Darek Kaczynski (@kaczynskid)"
     - "Stephane Maarek (@simplesteph)"
     - "Zac Blazic (@zacblazic)"

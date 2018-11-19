@@ -28,7 +28,7 @@ short_description: Manages advanced ACL configuration on HUAWEI CloudEngine swit
 description:
     - Manages advanced ACL configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

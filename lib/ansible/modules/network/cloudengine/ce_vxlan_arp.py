@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages ARP attributes of VXLAN on HUAWEI CloudEngine devices.
 description:
     - Manages ARP attributes of VXLAN on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     evn_bgp:
         description:
