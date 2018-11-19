@@ -341,7 +341,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_policies
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, MATCH_LOOKUP
-from ansible.module_utils.aws.waf import get_rule_with_backoff, list_rules_with_backoff
+from ansible.module_utils.aws.waf import get_rule_with_backoff, list_rules_with_backoff, list_regional_rules_with_backoff
 
 
 class Condition(object):
@@ -525,7 +525,10 @@ class Condition(object):
     def find_condition_in_rules(self, condition_set_id):
         rules_in_use = []
         try:
-            all_rules = list_rules_with_backoff(self.client)
+            if type(self.client).__name__ == 'WAF':
+                all_rules = list_rules_with_backoff(self.client)
+            elif type(self.client).__name__ == 'WAFRegional':
+                all_rules = list_regional_rules_with_backoff(self.client)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not list rules')
         for rule in all_rules:
