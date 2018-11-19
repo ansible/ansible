@@ -38,8 +38,6 @@ options:
       - IP address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'.
-      - If this value is an IP address, and the C(type) is C(tcp) (the default),
-        then a C(port) number must be specified.
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this

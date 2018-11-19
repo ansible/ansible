@@ -31,21 +31,19 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_monitor_tcp_echo import Parameters
-        from ansible.modules.network.f5.bigip_monitor_tcp_echo import ModuleManager
-        from ansible.modules.network.f5.bigip_monitor_tcp_echo import ArgumentSpec
+    from ansible.modules.network.f5.bigip_monitor_tcp_echo import Parameters
+    from ansible.modules.network.f5.bigip_monitor_tcp_echo import ModuleManager
+    from ansible.modules.network.f5.bigip_monitor_tcp_echo import ArgumentSpec
 
-        from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import F5ModuleError
 
-        # Ansible 2.8 imports
-        from units.compat import unittest
-        from units.compat.mock import Mock
-        from units.compat.mock import patch
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
 
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}

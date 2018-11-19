@@ -616,7 +616,7 @@ class ArgumentSpec(object):
             receive=dict(),
             receive_disable=dict(required=False),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),

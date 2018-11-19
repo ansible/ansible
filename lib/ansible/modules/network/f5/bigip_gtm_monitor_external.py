@@ -659,7 +659,7 @@ class ArgumentSpec(object):
             parent=dict(default='/Common/external'),
             arguments=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             external_program=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),

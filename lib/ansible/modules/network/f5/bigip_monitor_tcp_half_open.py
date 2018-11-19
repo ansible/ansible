@@ -606,7 +606,7 @@ class ArgumentSpec(object):
             parent=dict(default='/Common/tcp_half_open'),
             description=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),

@@ -960,7 +960,7 @@ class ArgumentSpec(object):
             receive=dict(),
             ip=dict(),
             description=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             manual_resume=dict(type='bool'),
