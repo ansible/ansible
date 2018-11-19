@@ -20,5 +20,7 @@
       force: yes
     with_items: "{{ vnames }}"
 
-  # Skip for CentOS 6
-  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
+  when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.20', '>=')  # FIXME: find out API version!
+
+- fail: msg="Too old docker / docker-py version to run docker_volume tests!"
+  when: not(docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)
