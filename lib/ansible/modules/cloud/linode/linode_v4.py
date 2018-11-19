@@ -181,9 +181,7 @@ def create_linode(module, client, **kwargs):
     try:
         response = client.linode.instance_create(**kwargs)
     except Exception as exception:
-        raise module.fail_json(msg=(
-            'Unable to query the Linode API. Saw: %s'
-        ) % exception)
+        module.fail_json(msg='Unable to query the Linode API. Saw: %s' % exception)
 
     try:
         if isinstance(response, tuple):
@@ -194,11 +192,10 @@ def create_linode(module, client, **kwargs):
         else:
             return response._raw_json
     except TypeError:
-        raise module.fail_json(msg=(
-            'Unable to parse Linode instance creation '
-            'response. Please raise a bug against this '
-            'module on https://github.com/ansible/ansible/issues'
-        ))
+        module.fail_json(msg='Unable to parse Linode instance creation'
+                             ' response. Please raise a bug against this'
+                             ' module on https://github.com/ansible/ansible/issues'
+                         )
 
 
 def maybe_instance_from_label(module, client):
@@ -210,9 +207,7 @@ def maybe_instance_from_label(module, client):
     except IndexError:
         return None
     except Exception as exception:
-        raise module.fail_json(msg=(
-            'Unable to query the Linode API. Saw: %s'
-        ) % exception)
+        module.fail_json(msg='Unable to query the Linode API. Saw: %s' % exception)
 
 
 def initialise_module():
@@ -262,8 +257,7 @@ def main():
     module = initialise_module()
 
     if not HAS_LINODE_DEPENDENCY:
-        msg = 'The linode_v4 module requires the linode_api4 package'
-        raise module.fail_json(msg=msg)
+        module.fail_json(msg='The linode_v4 module requires the linode_api4 package')
 
     client = build_client(module)
     instance = maybe_instance_from_label(module, client)
