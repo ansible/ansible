@@ -349,7 +349,6 @@ def main():
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
             target_filter={'name': ap},
         ),
