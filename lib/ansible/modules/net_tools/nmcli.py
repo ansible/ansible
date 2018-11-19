@@ -20,11 +20,11 @@ DOCUMENTATION = '''
 module: nmcli
 author: "Chris Long (@alcamie101)"
 short_description: Manage Networking
-requirements: [ nmcli, dbus, NetworkManager-glib ]
+requirements: [ nmcli, dbus, NetworkManager-libnm ]
 version_added: "2.0"
 description:
     - Manage the network devices. Create, modify and manage various connection and device type e.g., ethernet, teams, bonds, vlans etc.
-    - "On CentOS and Fedora like systems, install dependencies as 'yum/dnf install -y python-gobject NetworkManager-glib'"
+    - "On CentOS and Fedora like systems, install dependencies as 'yum/dnf install -y python-gobject NetworkManager-libnm'"
     - "On Ubuntu and Debian like systems, install dependencies as 'apt-get install -y libnm-glib-dev'"
 options:
     state:
@@ -318,7 +318,7 @@ EXAMPLES = '''
       name: '{{ item }}'
       state: installed
     with_items:
-      - NetworkManager-glib
+      - NetworkManager-libnm
       - libnm-qt-devel.x86_64
       - nm-connection-editor.x86_64
       - libsemanage-python
@@ -501,10 +501,9 @@ except ImportError:
 
 try:
     import gi
-    gi.require_version('NMClient', '1.0')
-    gi.require_version('NetworkManager', '1.0')
+    gi.require_version('NM', '1.0')
 
-    from gi.repository import NetworkManager, NMClient
+    from gi.repository import NM
     HAVE_NM_CLIENT = True
 except (ImportError, ValueError):
     HAVE_NM_CLIENT = False
