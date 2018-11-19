@@ -344,7 +344,6 @@ try:
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
-
 class EcsServiceManager:
     """Handles ECS Services"""
 
@@ -435,6 +434,8 @@ class EcsServiceManager:
             params['launchType'] = launch_type
         if self.health_check_setable(params) and health_check_grace_period_seconds is not None:
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
+        if service_registries:
+            params['serviceRegistries'] = service_registries
 
         if scheduling_strategy:
             params['schedulingStrategy'] = scheduling_strategy
