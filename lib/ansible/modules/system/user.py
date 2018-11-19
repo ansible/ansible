@@ -460,6 +460,7 @@ class User(object):
         self.profile = module.params['profile']
         self.authorization = module.params['authorization']
         self.role = module.params['role']
+        self.changes = {}
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -668,6 +669,7 @@ class User(object):
         has_append = self._check_usermod_append()
 
         if self.uid is not None and info[2] != int(self.uid):
+            self.changes['uid'] = (info[2], self.uid)
             cmd.append('-u')
             cmd.append(self.uid)
 
@@ -679,6 +681,7 @@ class User(object):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
+                self.changes['group'] = (info[3], ginfo[2])
                 cmd.append('-g')
                 cmd.append(self.group)
 
@@ -691,6 +694,7 @@ class User(object):
             if self.groups == '':
                 if current_groups and not self.append:
                     groups_need_mod = True
+                    self.changes['groups'] = (','.join(sorted(current_groups)), '')
             else:
                 groups = self.get_groups_set(remove_existing=False)
                 group_diff = set(current_groups).symmetric_difference(groups)
@@ -702,9 +706,17 @@ class User(object):
                                 if has_append:
                                     cmd.append('-a')
                                 groups_need_mod = True
+                                self.changes['groups'] = (
+                                    ','.join(sorted(current_groups)),
+                                    ','.join(sorted(current_groups) + sorted(group_diff))
+                                )
                                 break
                     else:
                         groups_need_mod = True
+                        self.changes['groups'] = (
+                            ','.join(sorted(current_groups)),
+                            ','.join(sorted(groups))
+                        )
 
             if groups_need_mod:
                 if self.append and not has_append:
@@ -715,16 +727,19 @@ class User(object):
                     cmd.append(','.join(groups))
 
         if self.comment is not None and info[4] != self.comment:
+            self.changes['comment'] = (info[4], self.comment)
             cmd.append('-c')
             cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
+            self.changes['home'] = (info[5], self.home)
             cmd.append('-d')
             cmd.append(self.home)
             if self.move_home:
                 cmd.append('-m')
 
         if self.shell is not None and info[6] != self.shell:
+            self.changes['shell'] = (info[6], self.shell)
             cmd.append('-s')
             cmd.append(self.shell)
 
@@ -736,6 +751,7 @@ class User(object):
                 if current_expires >= 0:
                     cmd.append('-e')
                     cmd.append('')
+                    self.changes['expires'] = (current_expires, '')
             else:
                 # Convert days since Epoch to seconds since Epoch as struct_time
                 current_expire_date = time.gmtime(current_expires * 86400)
@@ -744,17 +760,21 @@ class User(object):
                 if current_expires < 0 or current_expire_date[:3] != self.expires[:3]:
                     cmd.append('-e')
                     cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                    self.changes['expires'] = (current_expires, self.expires)
 
         # Lock if no password or unlocked, unlock only if locked
         if self.password_lock and not info[1].startswith('!'):
             cmd.append('-L')
+            self.changes['password_lock'] = ('unlocked', 'locked')
         elif self.password_lock is False and info[1].startswith('!'):
             # usermod will refuse to unlock a user with no password, module shows 'changed' regardless
             cmd.append('-U')
+            self.changes['password_lock'] = ('locked', 'unlocked')
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
+            self.changes['password'] = ('NOT_LOGGING_PASSWORD', 'NOT_LOGGING_PASSWORD')
 
         # skip if no changes to be made
         if len(cmd) == 1:
@@ -2609,6 +2629,10 @@ def main():
                 module.fail_json(name=user.name, msg=err, rc=rc)
             result['force'] = user.force
             result['remove'] = user.remove
+            result['diff'] = {
+                'before': 'user exists\n',
+                'after': 'user removed\n',
+            }
     elif user.state == 'present':
         if not user.user_exists():
             if module.check_mode:
@@ -2619,11 +2643,27 @@ def main():
             else:
                 result['system'] = user.system
                 result['create_home'] = user.create_home
+            result['diff'] = {
+                'before': 'user does not exist\n',
+                'after': 'user created\n',
+            }
         else:
             # modify user (note: this function is check mode aware)
             (rc, out, err) = user.modify_user()
             result['append'] = user.append
             result['move_home'] = user.move_home
+            result['diff'] = {
+                'before':
+                    ''.join([
+                        '%s = %s\n' % (key, oldv)
+                        for key, (oldv, newv) in sorted(user.changes.items())
+                    ]),
+                'after':
+                    ''.join([
+                        '%s = %s\n' % (key, newv)
+                        for key, (oldv, newv) in sorted(user.changes.items())
+                    ]),
+            }
         if rc is not None and rc != 0:
             module.fail_json(name=user.name, msg=err, rc=rc)
         if user.password is not None:
@@ -2660,6 +2700,7 @@ def main():
                 user.create_homedir(user.home)
                 user.chown_homedir(info[2], info[3], user.home)
             result['changed'] = True
+            result['diff']['after'] += 'created %s\n' % user.home
 
         # deal with ssh key
         if user.sshkeygen:
@@ -2669,6 +2710,7 @@ def main():
                 module.fail_json(name=user.name, msg=err, rc=rc)
             if rc == 0:
                 result['changed'] = True
+            result['diff']['after'] += 'generated SSH key'
             (rc, out, err) = user.ssh_key_fingerprint()
             if rc == 0:
                 result['ssh_fingerprint'] = out.strip()
