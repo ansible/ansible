@@ -64,7 +64,12 @@ TESTCASE_CONNECTION = [
         'state': 'absent',
         '_ansible_check_mode': True,
     },
-
+    {
+        'type': 'macvlan',
+        'conn_name': 'non_existent_nw_device',
+        'state': 'absent',
+        '_ansible_check_mode': True,
+    },
 ]
 
 TESTCASE_GENERIC = [
@@ -152,6 +157,19 @@ TESTCASE_VXLAN = [
         'vxlan_id': '11',
         'vxlan_local': '192.168.225.5',
         'vxlan_remote': '192.168.225.6',
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
+
+
+TESTCASE_MACVLAN = [
+    {
+        'type': 'macvlan',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'macvlan-existent_nw_device',
+        'macvlan_dev': 'macvlan-existent_device',
+        'macvlan_mode': 'vepa',
         'state': 'present',
         '_ansible_check_mode': False,
     }
@@ -568,6 +586,49 @@ def test_ipip_mod(mocked_generic_connection_modify):
     assert args[0][3] == 'non_existent_nw_device'
 
     for param in ['ip-tunnel.local', '192.168.225.5', 'ip-tunnel.remote', '192.168.225.6']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_MACVLAN, indirect=['patch_ansible_module'])
+def test_create_macvlan(mocked_generic_connection_create):
+    """
+    Test if macvlan created
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'add'
+    assert args[0][3] == 'type'
+    assert args[0][4] == 'macvlan'
+
+    for param in ['mode', 'vepa']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_MACVLAN, indirect=['patch_ansible_module'])
+def test_macvlan_mod(mocked_generic_connection_modify):
+    """
+    Test if macvlan modified
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert args[0][0] == '/usr/bin/nmcli'
+    assert args[0][1] == 'con'
+    assert args[0][2] == 'mod'
+    assert args[0][3] == 'non_existent_nw_device'
+
+    for param in ['macvlan.mode', 'vepa']:
         assert param in args[0]
 
 
