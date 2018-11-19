@@ -1,37 +1,38 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ---
 
 - name: install updated NuGet version
   win_shell: 'Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force'
 
-- name: get an existance of the PSGallery and its InstallationPolicy
-  win_shell: '(Get-PSRepository -Name PSGallery).InstallationPolicy'
-  register: policy
-  changed_when: false
-
-- debug:
-    msg: '{{ policy.stdout | trim }}'
-  register: policy
-
 - name: check setting of InstallationPolicy
   win_psrepository:
     name: PSGallery
     installation_policy: trusted
-  when: policy.msg == "Untrusted"
   register: change_installation_policy_1
+
+- name: get result of setting of InstallationPolicy
+  win_shell: '(Get-PSRepository -Name PSGallery).InstallationPolicy'
+  changed_when: false
+  register: result_change_installation_policy_1
 
 - name: test check setting of InstallationPolicy
   assert:
     that:
       - "change_installation_policy_1 is changed"
-      - "change_installation_policy_1.output == 'The InstallationPolicy for the repository PSGallery was changed to trusted.'"
+      - "change_installation_policy_1.msg == 'The InstallationPolicy for the repository PSGallery was changed to trusted.'"
+      - "'{{ result_change_installation_policy_1.stdout | trim }}' == 'Trusted'"
 
-- name: check setting of InstallationPolicy idempotency
+- name: check idempotency setting of InstallationPolicy
   win_psrepository:
     name: PSGallery
     installation_policy: trusted
   register: change_installation_policy_2
 
-- name: test check setting of InstallationPolicy idempotency
+- name: test idempotency setting of InstallationPolicy
   assert:
     that:
       - "change_installation_policy_2 is not changed"
@@ -43,20 +44,38 @@
     state: present
   register: adding_repository_1
 
+- name: get result of adding of repository 1 - 1
+  win_shell: '((Get-PSRepository -Name {{ repository_name }} | Measure-Object).Count -eq 1)'
+  changed_when: false
+  register: result_adding_repository_1_1
+
+- name: get result of adding of repository 1 - 2
+  win_shell: '(Get-PSRepository -Name {{ repository_name }}).SourceLocation'
+  changed_when: false
+  register: result_adding_repository_1_2
+
+- name: get result of adding of repository 1 - 3
+  win_shell: '(Get-PSRepository -Name {{ repository_name }}).InstallationPolicy'
+  changed_when: false
+  register: result_adding_repository_1_3
+
 - name: test adding of repository
   assert:
       that:
         - "adding_repository_1 is changed"
-        - "adding_repository_1.output == 'The repository {{ repository_name }} with the SourceLocation {{ repository_sourcelocation }} was registered.'"
+        - "adding_repository_1.msg == 'The repository {{ repository_name }} with the SourceLocation {{ repository_sourcelocation }} was registered.'"
+        - "'{{ result_adding_repository_1_1.stdout | trim }}' == 'True'"
+        - "'{{ result_adding_repository_1_2.stdout | trim }}' == '{{ repository_sourcelocation }}'"
+        - "'{{ result_adding_repository_1_3.stdout | trim }}' == 'Trusted'"
 
-- name: check adding of repository idempotency
+- name: check idempotency adding of repository
   win_psrepository:
     name: "{{ repository_name }}"
     source_location: "{{ repository_sourcelocation }}"
     state: present
   register: adding_repository_2
 
-- name: test adding of repository idempotency
+- name: test idempotency adding of repository
   assert:
       that:
         - "adding_repository_2 is not changed"
@@ -67,11 +86,17 @@
     state: absent
   register: removing_repository_1
 
+- name: get result removing  of repository 1
+  win_shell: '((Get-PSRepository -Name {{ repository_name }} -ErrorAction Ignore | Measure-Object).Count -eq 0)'
+  changed_when: false
+  register: result_removing_repository_1
+
 - name: test removing of repository
   assert:
     that:
       - "removing_repository_1 is changed"
-      - "removing_repository_1.output == 'The repository {{ repository_name }} was unregistered.'"
+      - "removing_repository_1.msg == 'The repository {{ repository_name }} was unregistered.'"
+      - "'{{ result_removing_repository_1.stdout | trim }}' == 'True'"
 
 - name: check removing of repository idempotency
   win_psrepository:
@@ -83,3 +108,35 @@
   assert:
     that:
       - "removing_repository_2 is not changed"
+
+- name: check adding of repository - 3
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source_location: "{{ repository_sourcelocation }}"
+    installation_policy: untrusted
+    state: present
+  register: adding_repository_3
+
+- name: get result of adding of repository 3 - 1
+  win_shell: '((Get-PSRepository -Name {{ repository_name }} | Measure-Object).Count -eq 1)'
+  changed_when: false
+  register: result_adding_repository_3_1
+
+- name: get result of adding of repository 3 - 2
+  win_shell: '(Get-PSRepository -Name {{ repository_name }}).SourceLocation'
+  changed_when: false
+  register: result_adding_repository_3_2
+
+- name: get result of adding of repository 3 - 3
+  win_shell: '(Get-PSRepository -Name {{ repository_name }}).InstallationPolicy'
+  changed_when: false
+  register: result_adding_repository_3_3
+
+- name: test adding of repository
+  assert:
+      that:
+        - "adding_repository_3 is changed"
+        - "adding_repository_3.msg == 'The repository {{ repository_name }} with the SourceLocation {{ repository_sourcelocation }} was registered.'"
+        - "'{{ result_adding_repository_3_1.stdout | trim }}' == 'True'"
+        - "'{{ result_adding_repository_3_2.stdout | trim }}' == '{{ repository_sourcelocation }}'"
+        - "'{{ result_adding_repository_3_3.stdout | trim }}' == 'Untrusted'"
