@@ -28,7 +28,7 @@ short_description: Manages STP configuration on HUAWEI CloudEngine switches.
 description:
     - Manages STP configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

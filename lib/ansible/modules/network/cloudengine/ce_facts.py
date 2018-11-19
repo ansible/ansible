@@ -24,7 +24,7 @@ DOCUMENTATION = """
 ---
 module: ce_facts
 version_added: "2.4"
-author: "wangdezhuang (@CloudEngine-Ansible)"
+author: "wangdezhuang (@QijunPan)"
 short_description: Gets facts about HUAWEI CloudEngine switches.
 description:
   - Collects facts from CloudEngine devices running the CloudEngine

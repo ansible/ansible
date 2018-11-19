@@ -28,7 +28,7 @@ short_description: Manages VRRP interfaces on HUAWEI CloudEngine devices.
 description:
     - Manages VRRP interface attributes on HUAWEI CloudEngine devices.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@numone213)
 options:
     interface:
         description:

@@ -26,7 +26,7 @@ description:
 - Existing remotes will not be updated.
 - See the M(flatpak) module for managing flatpaks.
 author:
-- John Kwiatkoski (@jaykayy)
+- John Kwiatkoski (@JayKayy)
 - Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak

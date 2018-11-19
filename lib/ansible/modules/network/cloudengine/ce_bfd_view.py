@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages BFD session view configuration on HUAWEI CloudEngine devices.
 description:
     - Manages BFD session view configuration on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     session_name:
         description:

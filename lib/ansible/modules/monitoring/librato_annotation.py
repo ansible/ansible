@@ -20,7 +20,7 @@ short_description: create an annotation in librato
 description:
     - Create an annotation event on the given annotation stream :name. If the annotation stream does not exist, it will be created automatically
 version_added: "1.6"
-author: "Seth Edwards (@sedward)"
+author: "Seth Edwards (@Sedward)"
 requirements: []
 options:
     user:

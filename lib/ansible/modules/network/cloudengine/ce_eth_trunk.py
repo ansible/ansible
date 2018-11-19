@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - C(state=absent) removes the Eth-Trunk config and interface if it
       already exists. If members to be removed are not explicitly

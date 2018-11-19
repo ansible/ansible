@@ -26,7 +26,7 @@ version_added: "2.4"
 short_description: Manages timeout mode of NetStream on HUAWEI CloudEngine switches.
 description:
     - Manages timeout mode of NetStream on HUAWEI CloudEngine switches.
-author: YangYang (@CloudEngine-Ansible)
+author: YangYang (@QijunPan)
 options:
     timeout_interval:
         description:

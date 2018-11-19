@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages VPN instance on HUAWEI CloudEngine switches.
 description:
     - Manages VPN instance of HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine-Ansible)
+author: Yang yang (@QijunPan)
 notes:
     - If I(state=absent), the route will be removed, regardless of the
       non-required options.

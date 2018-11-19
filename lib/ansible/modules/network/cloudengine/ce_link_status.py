@@ -29,7 +29,7 @@ short_description: Get interface link status on HUAWEI CloudEngine switches.
 description:
     - Get interface link status on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 notes:
     - Current physical state shows an interface's physical status.
     - Current link state shows an interface's link layer protocol status.

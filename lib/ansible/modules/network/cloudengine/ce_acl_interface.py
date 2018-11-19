@@ -28,7 +28,7 @@ short_description: Manages applying ACLs to interfaces on HUAWEI CloudEngine swi
 description:
     - Manages applying ACLs to interfaces on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     acl_name:
         description:

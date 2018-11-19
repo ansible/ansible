@@ -27,7 +27,7 @@ short_description: Manages BGP EVPN configuration on HUAWEI CloudEngine switches
 description:
     - This module offers the ability to configure a BGP EVPN peer relationship on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     bgp_instance:
         description:
