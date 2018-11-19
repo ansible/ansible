@@ -83,6 +83,20 @@ options:
         required: False
         type: bool
         default: True
+    migrate_tx_key:
+        description:
+            - The metric key used to determine if we have tx migrations
+            - remaining. Changeable due to backwards compatibility.
+        required: False
+        type: str
+        default: migrate_tx_partitions_remaining
+    migrate_rx_key:
+        description:
+            - The metric key used to determine if we have rx migrations
+            - remaining. Changeable due to backwards compatibility.
+        required: False
+        type: str
+        default: migrate_rx_partitions_remaining
 '''
 EXAMPLES = '''
 # check for migrations on local node
@@ -149,7 +163,11 @@ def run_module():
         tries_limit=dict(type='int', requires=False, default=300),
         local_only=dict(type='bool', required=True),
         min_cluster_size=dict(type='int', required=False, default=1),
-        fail_on_cluster_change=dict(type='bool', required=False, default=True)
+        fail_on_cluster_change=dict(type='bool', required=False, default=True),
+        migrate_tx_key=dict(type='str', required=False,
+                            default="migrate_tx_partitions_remaining"),
+        migrate_rx_key=dict(type='str', required=False,
+                            default="migrate_rx_partitions_remaining")
     )
 
     # seed the result dict in the object
@@ -188,12 +206,11 @@ def run_module():
     migrations = Migrations(module)
     # migrations.has_migs accepts 1 argument,
     # a bool to specify checking local node only or entire cluster
-    has_migs = migrations.has_migs(module.params['local_only'])
-    if has_migs is False:
+    has_migrations, skip_reason = migrations.has_migs(module.params['local_only'])
+    if has_migrations is False:
         result['message'] = "No migrations"
     else:
-        result['message'] = "Migrations still found after reaching limit or " \
-                            "cluster size not met."
+        result['message'] = "Failing due to " + skip_reason
         module.fail_json(
             msg="Failed.", **result
         )
@@ -246,7 +263,7 @@ class Migrations:
         data_arr = data.split(delimiter)
 
         # some commands don't return in kv format
-        # , so we dont want a dict from those.
+        # so we dont want a dict from those.
         if '=' in data:
             retval = dict(
                 metric.split("=") for metric in data.split(delimiter))
@@ -267,14 +284,20 @@ class Migrations:
         namespace_stats = self._info_cmd_helper("namespace/" + namespace, node)
         try:
             namespace_tx = \
-                int(namespace_stats["migrate_tx_partitions_remaining"])
+                int(namespace_stats[self.module.params['migrate_tx_key']])
             namespace_rx = \
-                int(namespace_stats["migrate_rx_partitions_remaining"])
+                int(namespace_stats[self.module.params['migrate_tx_key']])
             test = int(namespace_tx) + 1
             test = int(namespace_rx) + 1
         except KeyError:
             self.module.fail_json(
-                msg="Did not find partition remaining key in output"
+                msg="Did not find partition remaining key:" +
+                self.module.params['migrate_tx_key'] +
+                " or key:" +
+                self.module.params['migrate_rx_key'] +
+                " in 'namespace/" +
+                namespace +
+                "' output."
             )
         except TypeError:
             self.module.fail_json(
@@ -338,13 +361,17 @@ class Migrations:
         consecutive_good = 0
         try_num = 0
         while \
-                try_num < self.module.params['tries_limit'] and \
-                consecutive_good < self.module.params['consecutive_good_checks'] and \
+                try_num < int(self.module.params['tries_limit']) and \
+                consecutive_good < int(self.module.params['consecutive_good_checks']) and \
                 self._cluster_unchanged():
             if self._is_min_cluster_size() is False:
+                skip_reason = "cluster size: " + \
+                    str(self.statistics['cluster_size']) + \
+                    " is < " + str(self.module.params['min_cluster_size'])
                 consecutive_good = 0
             else:
                 if self._has_migs(local) is True:
+                    skip_reason = 'migrations underway'
                     consecutive_good = 0
                 elif self._has_migs(local) is False:
                     consecutive_good += 1
@@ -353,8 +380,9 @@ class Migrations:
             try_num += 1
             sleep(self.module.params['sleep_between_checks'])
         if consecutive_good is self.module.params['consecutive_good_checks']:
-            return False
-        return True
+            return False, None
+
+        return True, skip_reason
 
 
 def main():
