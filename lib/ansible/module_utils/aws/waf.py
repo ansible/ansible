@@ -169,8 +169,12 @@ def list_rules_with_backoff(client):
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_regional_rules_with_backoff(client):
-    # TODO: Implement manual pagination. This only returns the first 100 results
-    return client.list_rules()['Rules']
+    resp = client.list_rules()
+    rules = []
+    while resp:
+        rules += resp['Rules']
+        resp = client.list_rules(NextMarker=resp['NextMarker']) if 'NextMarker' in resp else None
+    return rules
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -181,8 +185,12 @@ def list_web_acls_with_backoff(client):
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_regional_web_acls_with_backoff(client):
-    # TODO: Implement manual pagination. This only returns the first 100 ACLs
-    return client.list_web_acls()['WebACLs']
+    resp = client.list_web_acls()
+    acls = []
+    while resp:
+        acls += resp['WebACLs']
+        resp = client.list_rules(NextMarker=resp['NextMarker']) if 'NextMarker' in resp else None
+    return acls
 
 
 def list_web_acls(client, module):
@@ -190,13 +198,6 @@ def list_web_acls(client, module):
         return list_web_acls_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't obtain web acls")
-
-
-# def list_regional_web_acls(client, module):
-#    try:
-#        return list_regional_web_acls_with_backoff(client)
-#    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-#        module.fail_json_aws(e, msg="Couldn't obtain web acls")
 
 
 def get_change_token(client, module):
