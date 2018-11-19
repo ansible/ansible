@@ -471,6 +471,11 @@ files:
   $module_utils/crypto.py:
     maintainers: Spredzy
     notified: felixfontein
+  $module_utils/csharp:
+    support: core
+    maintainers: $team_windows_core
+    labels:
+      - windows
   $module_utils/docker_common.py:
     maintainers: $team_docker
   $module_utils/ipa.py:
