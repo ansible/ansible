@@ -218,9 +218,9 @@ class AzureRMImage(AzureRMModuleBase):
             return (blob_uri, disk, snapshot)
 
         tokenize = dict()
-        if isinstace(source, dict):
+        if isinstance(source, dict):
             tokenize = source
-        elif isinstace(source, str):
+        elif isinstance(source, str):
             tokenize = parse_resource_id(source)
         else:
             self.fail("source parameter sould be in type string or dictionary")
