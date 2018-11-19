@@ -48,12 +48,12 @@ options:
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
-    - Determines if the Domain is physical (phys) or virtual (vmm).
-    choices: [ phys, vmm ]
+    - Specify whether the Domain is a physical (phys), a virtual (vmm) or an L2 external domain association (l2dom).
+    choices: [ l2dom, phys, vmm ]
     aliases: [ type ]
   encap:
     description:
-    - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
+    - The VLAN encapsulation for the EPG when binding a VMM Domain with static C(encap_mode).
     - This acts as the secondary encap when using useg.
     - Accepted values range between C(1) and C(4096).
     type: int
@@ -277,7 +277,7 @@ def main():
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
-        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['l2dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
         epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
@@ -326,13 +326,15 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
 
-    if domain_type == 'phys' and vm_provider is not None:
-        module.fail_json(msg="Domain type 'phys' cannot have a 'vm_provider'")
+    if domain_type in ['l2dom', 'phys'] and vm_provider is not None:
+        module.fail_json(msg="Domain type '%s' cannot have a 'vm_provider'" % domain_type)
 
     # Compile the full domain for URL building
     if domain_type == 'vmm':
         epg_domain = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-    elif domain_type is not None:
+    elif domain_type == 'l2dom':
+        epg_domain = 'uni/l2dom-{0}'.format(domain)
+    elif domain_type == 'phys':
         epg_domain = 'uni/phys-{0}'.format(domain)
     else:
         epg_domain = None
