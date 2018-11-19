@@ -80,39 +80,3 @@ class F5RestClient(F5BaseClient):
         if response.status not in [200]:
             return None, response.content
         return session, None
-
-    # TODO(This section of code should be developed to support proxy_to)
-    #
-    # def get_identifier(self, proxy_to):
-    #     if re.search(r'([0-9-a-z]+\-){4}[0-9-a-z]+', proxy_to, re.I):
-    #         return proxy_to
-    #     return self.get_device_uuid(proxy_to)
-    #
-    # def get_device_uuid(self, proxy_to):
-    #     uri = "https://{0}:{1}/mgmt/shared/resolver/device-groups/cm-cloud-managed-devices/devices/?$filter=hostname+eq+'{2}'&$select=uuid".format(
-    #         self.provider['server'], self.provider['server_port'], proxy_to
-    #     )
-    #     resp = self.client.api.get(uri)
-    #     try:
-    #         response = resp.json()
-    #     except ValueError as ex:
-    #         raise F5ModuleError(str(ex))
-    #
-    #     if 'code' in response and response['code'] == 400:
-    #         if 'message' in response:
-    #             raise F5ModuleError(response['message'])
-    #         else:
-    #             raise F5ModuleError(resp.content)
-    #
-    #     if len(collection) > 1:
-    #         raise F5ModuleError(
-    #             "More that one managed device was found with this hostname. "
-    #             "'proxy_to' devices must be unique. Consider specifying the UUID of the device."
-    #         )
-    #     elif len(collection) == 0:
-    #         raise F5ModuleError(
-    #             "No device was found with that hostname"
-    #         )
-    #     else:
-    #         resource = collection.pop()
-    #         return resource.pop('uuid', None)
