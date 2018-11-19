@@ -159,8 +159,6 @@ def run_update_fw_from_nw_share(idrac, module):
         if '12' in idrac.ServerGeneration or '13' in idrac.ServerGeneration:
             idrac.use_redfish = False
 
-        # upd_share_file_path = upd_share.new_file("Catalog.xml")
-
         apply_update = True
         msg['msg'] = idrac.update_mgr.update_from_repo(upd_share,
                                                        apply_update,
