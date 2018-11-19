@@ -48,5 +48,7 @@
       - "'hello-world:latest' in result.images[0].RepoTags"
       - "'alpine:3.8' in result.images[1].RepoTags"
 
-  # Skip for CentOS 6
-  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
+  when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_image_facts tests!"
+  when: not(docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)
