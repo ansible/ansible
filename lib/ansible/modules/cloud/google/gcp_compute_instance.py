@@ -993,7 +993,7 @@ def machine_type_update(module, request, response):
     auth.post(
         ''.join([
             "https://www.googleapis.com/compute/v1/",
-            "projdcts/{project}/zones/{zone}/instances/{name}/setMachineType"
+            "projects/{project}/zones/{zone}/instances/{name}/setMachineType"
         ]).format(**module.params),
         {
             u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params)
