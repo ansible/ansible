@@ -102,9 +102,6 @@ dest:
     returned: success
     type: string
     sample: "{
-        "@odata.context": "/redfish/v1/$metadata#DellJob.DellJob",
-        "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1/Jobs/JID_XXXXXXXXXXXXX",
-        "@odata.type": "#DellJob.v1_0_0.DellJob",
         "CompletionTime": "2018-01-24T00:47:33",
         "Description": "Job Instance",
         "EndTime": null,
