@@ -31,12 +31,16 @@ options:
         required: true
     source:
         description:
-            - OS disk source from the same region, including a virtual machine id or name,
-              OS disk blob uri, managed OS disk id or name, or OS snapshot id or name.
+            - OS disk source from the same region.
+            - It can be a virtual machine, OS disk blob uri, managed OS disk, or OS snapshot.
+            - Each type of source expect for blob uri can be given as resource id, name or a dict contains C(resource_group), C(name) and C(types).
+            - If source type is blob uri, the source should be the full uri of the blob in string type.
+        type: raw
         required: true
     data_disk_sources:
         description:
             - List of data disk sources, including unmanaged blob uri, managed disk id or name, or snapshot id or name.
+        type: list
     location:
         description:
             - Location of the image. Derived from I(resource_group) if not specified.
@@ -114,7 +118,7 @@ class AzureRMImage(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            source=dict(type='str'),
+            source=dict(type='raw'),
             data_disk_sources=dict(type='list', default=[]),
             os_type=dict(type='str', choices=['Windows', 'Linux'])
         )
@@ -208,17 +212,32 @@ class AzureRMImage(AzureRMModuleBase):
         blob_uri = None
         disk = None
         snapshot = None
-        if source.lower().endswith('.vhd'):
+        # blob uri can only be given by str
+        if isinstance(source, str) and source.lower().endswith('.vhd'):
             blob_uri = source
             return (blob_uri, disk, snapshot)
 
-        tokenize = parse_resource_id(source)
+        tokenize = dict()
+        if isinstace(source, dict):
+            tokenize = source
+        elif isinstace(source, str):
+            tokenize = parse_resource_id(source)
+        else:
+            self.fail("source parameter sould be in type string or dictionary")
         if tokenize.get('type') == 'disks':
-            disk = source
+            disk = format_resource_id(tokenize['name'],
+                                      tokenize.get('subscription_id') or self.subscription_id,
+                                      'Microsoft.Compute',
+                                      'disks',
+                                      tokenize.get('resource_group') or self.resource_group)
             return (blob_uri, disk, snapshot)
 
         if tokenize.get('type') == 'snapshots':
-            snapshot = source
+            snapshot = format_resource_id(tokenize['name'],
+                                          tokenize.get('subscription_id') or self.subscription_id,
+                                          'Microsoft.Compute',
+                                          'snapshots',
+                                          tokenize.get('resource_group') or self.resource_group)
             return (blob_uri, disk, snapshot)
 
         # not a disk or snapshots
@@ -226,12 +245,14 @@ class AzureRMImage(AzureRMModuleBase):
             return (blob_uri, disk, snapshot)
 
         # source can be name of snapshot or disk
-        snapshot_instance = self.get_snapshot(source)
+        snapshot_instance = self.get_snapshot(tokenize.get('resource_group') or self.resource_group,
+                                              tokenize['name'])
         if snapshot_instance:
             snapshot = snapshot_instance.id
             return (blob_uri, disk, snapshot)
 
-        disk_instance = self.get_disk(source)
+        disk_instance = self.get_disk(tokenize.get('resource_group') or self.resource_group,
+                                      tokenize['name'])
         if disk_instance:
             disk = disk_instance.id
         return (blob_uri, disk, snapshot)
@@ -260,19 +281,28 @@ class AzureRMImage(AzureRMModuleBase):
         return list(filter(None, [self.create_data_disk(lun, source) for lun, source in enumerate(self.data_disk_sources)]))
 
     def get_source_vm(self):
-        vm_resource_id = format_resource_id(self.source,
-                                            self.subscription_id,
-                                            'Microsoft.Compute',
-                                            'virtualMachines',
-                                            self.resource_group)
-        resource = parse_resource_id(vm_resource_id)
+        # self.resource can be a vm (id/name/dict), or not a vm. return the vm iff it is an existing vm.
+        resource = dict()
+        if isinstace(self.source, dict):
+           resource = dict(type=self.source.get('type', 'virtualMachines'),
+                           name=self.source['name'],
+                           resource_group=self.source.get('resource_group') or self.resource_group)
+        elif isinstace(self.source, str):
+            vm_resource_id = format_resource_id(self.source,
+                                                self.subscription_id,
+                                                'Microsoft.Compute',
+                                                'virtualMachines',
+                                                self.resource_group)
+            resource = parse_resource_id(vm_resource_id)
+        else:
+            self.fail("Unsupported type of source parameter, please give string or dictionary")
         return self.get_vm(resource['resource_group'], resource['name']) if resource['type'] == 'virtualMachines' else None
 
-    def get_snapshot(self, snapshot_name):
-        return self._get_resource(self.compute_client.snapshots.get, self.resource_group, snapshot_name)
+    def get_snapshot(self, resource_group, snapshot_name):
+        return self._get_resource(self.compute_client.snapshots.get, resource_group, snapshot_name)
 
-    def get_disk(self, disk_name):
-        return self._get_resource(self.compute_client.disks.get, self.resource_group, disk_name)
+    def get_disk(self, resource_group, disk_name):
+        return self._get_resource(self.compute_client.disks.get, resource_group, disk_name)
 
     def get_vm(self, resource_group, vm_name):
         return self._get_resource(self.compute_client.virtual_machines.get, resource_group, vm_name, 'instanceview')
