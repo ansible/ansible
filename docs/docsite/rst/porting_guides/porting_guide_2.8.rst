@@ -110,6 +110,10 @@ Noteworthy module changes
 
 * The ``vmware_local_role_facts`` module now returns a list of dicts instead of a dict of dicts for role information.
 
+* If ``docker_network`` or ``docker_volume`` were called with ``diff: yes``, ``check_mode: yes`` or ``debug: yes``,
+  a return value called ``diff`` was returned of type ``list``. To enable proper diff output, this was changed to
+  type ``dict``; the original ``list`` is returned as ``diff.differences``.
+
 Plugins
 =======
 
