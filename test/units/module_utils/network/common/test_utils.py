@@ -26,8 +26,9 @@ import pytest
 from ansible.module_utils.network.common.utils import to_list, sort_list
 from ansible.module_utils.network.common.utils import dict_diff, dict_merge
 from ansible.module_utils.network.common.utils import conditional, Template
-from ansible.module_utils.network.common.utils import to_masklen, to_netmask, to_subnet, to_ipv6_network, to_ipv6_subnet
-from ansible.module_utils.network.common.utils import is_masklen, is_netmask
+from ansible.module_utils.common.network import (
+    to_masklen, to_netmask, to_subnet, to_ipv6_network, to_ipv6_subnet, is_masklen, is_netmask
+)
 
 
 def test_to_list():

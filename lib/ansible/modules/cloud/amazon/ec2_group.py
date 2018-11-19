@@ -301,7 +301,7 @@ from ansible.module_utils.aws.iam import get_aws_account_id
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.network.common.utils import to_ipv6_subnet, to_subnet
+from ansible.module_utils.common.network import to_ipv6_subnet, to_subnet
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 
