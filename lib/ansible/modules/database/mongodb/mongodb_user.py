@@ -95,7 +95,7 @@ notes:
 requirements: [ "pymongo" ]
 author:
     - "Elliott Foster (@elliotttf)"
-    - "Julien Thebault (@lujeni)"
+    - "Julien Thebault (@Lujeni)"
 '''
 
 EXAMPLES = '''
