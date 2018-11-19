@@ -550,15 +550,36 @@ class Operations(object):
         # self._zapi = zbx
         self._zapi_wrapper = zapi_wrapper
 
+    def _construct_operationtype(self, operation):
+        try:
+            return map_to_int([
+                "send_message",
+                "remote_command",
+                "add_host",
+                "remove_host",
+                "add_to_host_group",
+                "remove_from_host_group",
+                "link_to_template",
+                "unlink_from_template",
+                "enable_host",
+                "disable_host",
+                "set_host_inventory_mode"], operation['type']
+            )
+        except Exception as e:
+            self._module.fail_json(msg="Unsupperted value '%s' for operation type." % _condition['type'])
+
     def _construct_opmessage(self, operation):
-        return {
-            'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
-            'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
-                operation.get('media_type')
-            )['mediatypeid'] if operation.get('media_type') is not None else None,
-            'message': operation.get('message'),
-            'subject': operation.get('subject'),
-        }
+        try:
+            return {
+                'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
+                'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
+                    operation.get('media_type')
+                )['mediatypeid'] if operation.get('media_type') is not None else None,
+                'message': operation.get('message'),
+                'subject': operation.get('subject'),
+            }
+        except Exception as e:
+            self._module.fail_json(msg="Failed to construct operation message. The error was: %s" % e)
 
     def _construct_opmessage_usr(self, operation):
         if operation.get('send_to_users') is None:
@@ -574,47 +595,35 @@ class Operations(object):
             'usrgripid': self._zapi_wrapper.get_usergroup_by_usergroup_name(_group)['usrgripid']
         } for _group in operation.get('send_to_groups')]
 
-    def _construct_operationtype(self, operation):
-        return map_to_int([
-            "send_message",
-            "remote_command",
-            "add_host",
-            "remove_host",
-            "add_to_host_group",
-            "remove_from_host_group",
-            "link_to_template",
-            "unlink_from_template",
-            "enable_host",
-            "disable_host",
-            "set_host_inventory_mode"], operation['type']
-        )
-
     def _construct_opcommand(self, operation):
-        return {
-            'type': map_to_int([
-                'custom_script',
-                'ipmi',
-                'ssh',
-                'telnet',
-                'global_script'], operation.get('command_type', 'custom_script')),
-            'command': operation.get('command'),
-            'execute_on': map_to_int([
-                'agent',
-                'server',
-                'proxy'], operation.get('execute_on', 'server')),
-            'scriptid': self._zapi_wrapper.get_script_by_script_name(
-                operation.get('script_name')
-            ).get('scriptid'),
-            'authtype': map_to_int([
-                'password',
-                'private_key'
-            ], operation.get('ssh_auth_type', 'password')),
-            'privatekey': operation.get('ssh_privatekey_file'),
-            'publickey': operation.get('ssh_publickey_file'),
-            'username': operation.get('username'),
-            'password': operation.get('password'),
-            'port': operation.get('port')
-        }
+        try:
+            return {
+                'type': map_to_int([
+                    'custom_script',
+                    'ipmi',
+                    'ssh',
+                    'telnet',
+                    'global_script'], operation.get('command_type', 'custom_script')),
+                'command': operation.get('command'),
+                'execute_on': map_to_int([
+                    'agent',
+                    'server',
+                    'proxy'], operation.get('execute_on', 'server')),
+                'scriptid': self._zapi_wrapper.get_script_by_script_name(
+                    operation.get('script_name')
+                ).get('scriptid'),
+                'authtype': map_to_int([
+                    'password',
+                    'private_key'
+                ], operation.get('ssh_auth_type', 'password')),
+                'privatekey': operation.get('ssh_privatekey_file'),
+                'publickey': operation.get('ssh_publickey_file'),
+                'username': operation.get('username'),
+                'password': operation.get('password'),
+                'port': operation.get('port')
+            }
+        except Exception as e:
+            self._module.fail_json(msg="Failed to construct operation command. The error was: %s" % e)
 
     def _construct_opcommand_hst(self, operation):
         if operation.get('run_on_host') is None:
