@@ -642,7 +642,7 @@ def main():
             type=dict(required=True, choices=['byte', 'geo', 'ip', 'regex', 'size', 'sql', 'xss']),
             filters=dict(type='list'),
             purge_filters=dict(type='bool', default=False),
-            cloudfront=dict(type='bool', default=True),
+            waf_regional=dict(type='bool', default=False),
             state=dict(default='present', choices=['present', 'absent']),
         ),
     )
