@@ -28,7 +28,7 @@ short_description: Manages BGP Address-family configuration on HUAWEI CloudEngin
 description:
     - Manages BGP Address-family configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

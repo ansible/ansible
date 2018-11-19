@@ -28,7 +28,7 @@ short_description: Manages AAA server host configuration on HUAWEI CloudEngine s
 description:
     - Manages AAA server host configuration on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

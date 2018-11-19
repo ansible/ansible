@@ -45,7 +45,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ian Philpot (@tripdubroot)"
+    - "Ian Philpot (@iphilpot)"
 
 '''
 

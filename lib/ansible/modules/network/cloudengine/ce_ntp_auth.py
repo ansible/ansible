@@ -29,7 +29,7 @@ short_description: Manages NTP authentication configuration on HUAWEI CloudEngin
 description:
     - Manages NTP authentication configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 notes:
     - If C(state=absent), the module will attempt to remove the given key configuration.
       If a matching key configuration isn't found on the device, the module will fail.

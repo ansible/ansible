@@ -28,7 +28,7 @@ short_description: Manages SNMP location configuration on HUAWEI CloudEngine swi
 description:
     - Manages SNMP location configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     location:
         description:

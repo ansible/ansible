@@ -28,7 +28,7 @@ short_description: Manages BGP neighbor Address-family configuration on HUAWEI C
 description:
     - Manages BGP neighbor Address-family configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     vrf_name:
         description:

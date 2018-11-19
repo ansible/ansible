@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: onepassword_facts
 author:
-    - Ryan Conway (@rylon)
+    - Ryan Conway (@Rylon)
 version_added: "2.7"
 requirements:
     - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)

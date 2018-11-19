@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
 description:
     - Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     process_id:
         description:

@@ -127,7 +127,7 @@ files:
     ignored: sivel angstwad
   $modules/cloud/scaleway/scaleway_volume.py:
     ignored: hekonsek
-  $modules/cloud/univention/: 2-B
+  $modules/cloud/univention/: 2-b
   $modules/cloud/vmware/:
     maintainers: $team_vmware
     ignored: jcpowermac mtnbikenc
@@ -216,7 +216,7 @@ files:
   $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
   $modules/network/dellos6/: abirami-n skg-net
-  $modules/network/dellos9/: dhivyap skg-net
+  $modules/network/dellos9/: Dhivyap skg-net
   $modules/network/edgeos/: samdoran
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: trishnaguha
@@ -270,7 +270,7 @@ files:
   $modules/packaging/language/npm.py:
     ignored: chrishoffman
     maintainers: shane-walker xcambar
-  $modules/packaging/language/pip.py: lujeni webknjaz
+  $modules/packaging/language/pip.py: Lujeni webknjaz
   $modules/packaging/os/apk.py:
     ignored: kbrebanov
     maintainers: tdtrask
@@ -1133,7 +1133,7 @@ macros:
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
-  team_linode: intheclouddan lwm displague rmcintosh
+  team_linode: InTheCloudDan lwm displague rmcintosh
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
@@ -1144,13 +1144,13 @@ macros:
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha tstoner
   team_onyx: anasbadaha samerd
-  team_openstack: emonty juliakreger rcarrillocruz shrews dagnello mnaser odyssey4me evrardjp cloudnull
+  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
-  team_rhn: alikins barnabycourt flossware vritant
-  team_scaleway: sieben Spredzy abarbare anthony25 pilou-
+  team_rhn: alikins barnabycourt FlossWare vritant
+  team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
   team_e_spirit: MatrixCrawler getjack
