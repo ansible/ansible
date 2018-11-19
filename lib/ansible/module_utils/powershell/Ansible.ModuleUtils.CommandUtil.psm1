@@ -11,11 +11,11 @@ Function Load-CommandUtils {
     Param()
     $msg = "Load-CommandUtils is deprecated and no longer needed, this cmdlet will be removed in a future version"
     if ((Get-Command -Name Add-DeprecationWarning -ErrorAction SilentlyContinue) -and (Get-Variable -Name result -ErrorAction SilentlyContinue)) {
-        Add-DeprecationWarning -obj $result -message $msg -version 2.12
+        Add-DeprecationWarning -obj $result.Value -message $msg -version 2.12
     } else {
         $module = Get-Variable -Name module -ErrorAction SilentlyContinue
-        if ($null -ne $module -and $module.GetType().FullName -eq "Ansible.Basic.AnsibleModule") {
-            $module.Deprecate($msg, "2.12")
+        if ($null -ne $module -and $module.Value.GetType().FullName -eq "Ansible.Basic.AnsibleModule") {
+            $module.Value.Deprecate($msg, "2.12")
         }
     }
 }
