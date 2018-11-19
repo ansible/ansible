@@ -1,0 +1,2 @@
+minor_changes:
+- Puppet module remove ``--ignorecache`` to allow Puppet 6 support
