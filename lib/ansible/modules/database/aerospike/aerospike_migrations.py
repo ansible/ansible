@@ -232,12 +232,6 @@ class Migrations:
         self._update_nodes_list()
         self._update_statistics()
         self._update_namespace_list()
-        self.consecutive_good_required = \
-            module.params['consecutive_good_checks']
-        self.sleep_between = module.params['sleep_between_checks']
-        self.tries_limit = module.params['tries_limit']
-        self.min_cluster_size = module.params['min_cluster_size']
-        self.fail_on_cluster_change = module.params['fail_on_cluster_change']
 
     # delimiter is for seperate stats that come back, NOT for kv
     # seperation which is =
@@ -344,8 +338,8 @@ class Migrations:
         consecutive_good = 0
         try_num = 0
         while \
-                try_num < self.tries_limit and \
-                consecutive_good < self.consecutive_good_required and \
+                try_num < self.module.params['tries_limit'] and \
+                consecutive_good < self.module.params['consecutive_good_checks'] and \
                 self._cluster_unchanged():
             if self._is_min_cluster_size() is False:
                 consecutive_good = 0
@@ -354,11 +348,11 @@ class Migrations:
                     consecutive_good = 0
                 elif self._has_migs(local) is False:
                     consecutive_good += 1
-                    if consecutive_good is self.consecutive_good_required:
+                    if consecutive_good is self.module.params['consecutive_good_checks']:
                         break
             try_num += 1
-            sleep(self.sleep_between)
-        if consecutive_good is self.consecutive_good_required:
+            sleep(self.module.params['sleep_between_checks'])
+        if consecutive_good is self.module.params['consecutive_good_checks']:
             return False
         return True
 
