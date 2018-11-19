@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -48,12 +48,12 @@ options:
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
-    - Determines if the Domain is physical (phys) or virtual (vmm) or L2 external domain association (l2dom).
-    choices: [ phys, vmm, l2dom ]
+    - Specify whether the Domain is a physical (phys), a virtual (vmm) or an L2 external domain association (l2dom).
+    choices: [ l2dom, phys, vmm ]
     aliases: [ type ]
   encap:
     description:
-    - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
+    - The VLAN encapsulation for the EPG when binding a VMM Domain with static C(encap_mode).
     - This acts as the secondary encap when using useg.
     - Accepted values range between C(1) and C(4096).
     type: int
@@ -112,6 +112,7 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: present
+  delegate_to: localhost
 
 - name: Remove an existing physical domain to EPG binding
   aci_epg_to_domain:
@@ -124,6 +125,7 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific physical domain to EPG binding
   aci_epg_to_domain:
@@ -136,13 +138,17 @@ EXAMPLES = r'''
     domain: anstest
     domain_type: phys
     state: query
-
+  delegate_to: localhost
+  register: query_result
+  
 - name: Query all domain to EPG bindings
   aci_epg_to_domain:
     host: apic
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -271,7 +277,7 @@ def main():
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
-        domain_type=dict(type='str', choices=['phys', 'vmm', 'l2dom'], aliases=['type']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['l2dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
         epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
@@ -320,8 +326,8 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
 
-    if (domain_type == 'phys' or domain_type == 'l2dom') and vm_provider is not None:
-        module.fail_json(msg="Domain type 'phys' or 'l2dom' cannot have a 'vm_provider'")
+    if domain_type in ['l2dom', 'phys'] and vm_provider is not None:
+        module.fail_json(msg="Domain type '%s' cannot have a 'vm_provider'" % domain_type)
 
     # Compile the full domain for URL building
     if domain_type == 'vmm':
@@ -337,26 +343,27 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
             filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvTenant.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class='fvRsDomAtt',
             aci_rn='rsdomAtt-[{0}]'.format(epg_domain),
-            filter_target='eq(fvRsDomAtt.tDn, "{0}")'.format(epg_domain),
             module_object=epg_domain,
+            target_filter={'tDn': epg_domain},
         ),
     )
 
