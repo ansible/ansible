@@ -283,11 +283,11 @@ class AzureRMImage(AzureRMModuleBase):
     def get_source_vm(self):
         # self.resource can be a vm (id/name/dict), or not a vm. return the vm iff it is an existing vm.
         resource = dict()
-        if isinstace(self.source, dict):
+        if isinstance(self.source, dict):
            resource = dict(type=self.source.get('type', 'virtualMachines'),
                            name=self.source['name'],
                            resource_group=self.source.get('resource_group') or self.resource_group)
-        elif isinstace(self.source, str):
+        elif isinstance(self.source, str):
             vm_resource_id = format_resource_id(self.source,
                                                 self.subscription_id,
                                                 'Microsoft.Compute',
