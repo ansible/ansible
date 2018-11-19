@@ -28,7 +28,7 @@ options:
     required: yes
   source_location:
     description:
-      - URL of the custom repository to register.
+      - Specifies the URI for discovering and installing modules from this repository.
     aliases:
       - url
   state:
@@ -39,16 +39,14 @@ options:
     default: present
   installation_policy:
     description:
-      - If present than property InstallationPolicy of the new or existing repository will be set using it.
+      - Set's the C(InstallationPolicy) of a repository.
     choices: [ trusted, untrusted ]
     default: trusted
 notes:
-  - Windows PowerShell 5.0 or higher is needed.
-  - The NuGet package provider version 2.8.5.201 or newer is required.
+  - The PowerShellGet module (version 1.6.0 or newer) and the NuGet package provider (version 2.8.5.201 or newer) are required.
   - You can't use M(win_psrepository) to re-register (add) removed PSGallery, use the command `Register-PSRepository -Default` instead.
 author:
 - Wojciech Sciesinski (@it-praktyk)
-- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = '''
@@ -72,7 +70,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
-output:
+msg:
   description: A message describing the task result.
   returned: always
   sample: "The repository MyInternal with the SourceLocation https://repo.example.com/api/v2 was registred."

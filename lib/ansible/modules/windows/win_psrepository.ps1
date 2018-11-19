@@ -17,7 +17,7 @@ $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" 
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $result = @{"changed" = $false
-            "output" = ""}
+            "msg" = ""}
 
 Function Install-Repository {
     Param(
@@ -29,10 +29,10 @@ Function Install-Repository {
         [Bool]$CheckMode
     )
         try {
-            if (-not($CheckMode)) {
+            if (-not $CheckMode) {
                Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy $InstallationPolicy
             }
-            $result.output = "The repository $Name with the SourceLocation $Url was registered."
+            $result.msg = "The repository $Name with the SourceLocation $Url was registered."
             $result.changed = $true
         }
         catch {
@@ -47,14 +47,14 @@ Function Remove-Repository {
         [String]$Name,
         [Bool]$CheckMode
     )
-    $ReposNames = (Get-PSRepository).Name
+    $ReposNames = $(Get-PSRepository).Name
 
     if ($ReposNames -contains $Name){
         try {
-            if (-not ($CheckMode)) {
+            if (-not $CheckMode) {
                 Unregister-PSRepository -Name $Name
             }
-            $result.output = "The repository $Name was unregistered."
+            $result.msg = "The repository $Name was unregistered."
             $result.changed = $true
         }
         catch {
@@ -72,10 +72,10 @@ Function Set-Repository {
         [Bool]$CheckMode
     )
     try {
-        if (-not ($CheckMode)) {
+        if (-not $CheckMode) {
             Set-PSRepository -Name $Name -InstallationPolicy $InstallationPolicy
         }
-        $result.output = "The InstallationPolicy for the repository $Name was changed to $InstallationPolicy."
+        $result.msg = "The InstallationPolicy for the repository $Name was changed to $InstallationPolicy."
         $result.changed = $true
     }
     catch {
@@ -84,25 +84,11 @@ Function Set-Repository {
     }
 }
 
-# Check PowerShell version, fail if < 5.0
-$PsVersion = $PSVersionTable.PSVersion
-if ($PsVersion.Major -lt 5){
-    $ErrorMessage = "Windows PowerShell 5.0 or higher is needed."
-    Fail-Json $result $ErrorMessage
-}
-
-# Check NuGet version, fail if < 2.8.5.201
-$NugetVersion = (Get-PackageProvider -Name Nuget).Version
-if ( $NugetVersion -lt [Version]"2.8.5.201" ) {
-    $ErrorMessage = "The NuGet package provider in version 2.8.5.201 or higher is needed."
-    Fail-Json $result $ErrorMessage
-}
-
 $Repos = Get-PSRepository
 
 if ($state -eq "present") {
-    if ($name -and $url) {
-        $ReposSourceLocations = ($Repos).SourceLocation
+    if ($url) {
+        $ReposSourceLocations = $Repos.SourceLocation
         # If repository isn't already present, try to register it.
         if ($ReposSourceLocations -notcontains $Url){
             if ( $installationpolicy ) {
@@ -115,21 +101,19 @@ if ($state -eq "present") {
             Install-Repository -Name $name -Url $url -InstallationPolicy $installationpolicy_internal -CheckMode $check_mode
         }
     }
-    elseif ($name -and $installationpolicy) {
+    elseif ($installationpolicy) {
         $ExistingInstallationPolicy = $($Repos | Where-Object { $_.Name -eq $Name }).InstallationPolicy
         if ( $ExistingInstallationPolicy -ne $installationpolicy ) {
             Set-Repository -Name $Name -InstallationPolicy $installationpolicy -CheckMode $check_mode
         }
     }
     else {
-        $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository."
+        $ErrorMessage = "Repository name and source_location are mandatory if you want to add a new repository."
         Fail-Json $result $ErrorMessage
     }
 }
 elseif ($state -eq "absent") {
-    if ( $name ) {
         Remove-Repository -Name $name -CheckMode $check_mode
-    }
 }
 
 Exit-Json $result
