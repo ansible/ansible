@@ -3,6 +3,8 @@
 # Makefile for Ansible
 #
 # useful targets:
+#   make clean ---------------- clean up
+#   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
 #   make srpm ----------------- produce a SRPM
 #   make rpm  ----------------- produce RPMs
