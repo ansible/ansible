@@ -140,7 +140,7 @@ EXAMPLES = r'''
     state: query
   delegate_to: localhost
   register: query_result
-  
+
 - name: Query all domain to EPG bindings
   aci_epg_to_domain:
     host: apic
