@@ -141,11 +141,6 @@ def get_web_acl_with_backoff(client, web_acl_id):
     return client.get_web_acl(WebACLId=web_acl_id)['WebACL']
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-def get_regional_web_acl_with_backoff(client, web_acl_id):
-    return client.get_web_acl(WebACLId=web_acl_id)['WebACL']
-
-
 def get_web_acl(client, module, web_acl_id):
     try:
         web_acl = get_web_acl_with_backoff(client, web_acl_id)
@@ -185,11 +180,12 @@ def list_web_acls_with_backoff(client):
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_regional_web_acls_with_backoff(client):
+    import ipdb; ipdb.set_trace()
     resp = client.list_web_acls()
     acls = []
     while resp:
         acls += resp['WebACLs']
-        resp = client.list_rules(NextMarker=resp['NextMarker']) if 'NextMarker' in resp else None
+        resp = client.list_web_acls(NextMarker=resp['NextMarker']) if 'NextMarker' in resp else None
     return acls
 
 

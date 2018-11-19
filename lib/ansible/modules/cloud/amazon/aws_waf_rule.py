@@ -52,6 +52,9 @@ options:
     cloudfront:
         description: Wether to use CloudFront WAF. Defaults to true
         default: true
+    waf_regional:
+        description: Wether to use waf_regional module. Defaults to true
+        default: false
         required: no
 '''
 
@@ -132,7 +135,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, list_regional_rules_with_backoff, MATCH_LOOKUP
-from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff
+from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff, list_regional_web_acls_with_backoff
 
 
 def get_rule_by_name(client, module, name):
@@ -277,7 +280,10 @@ def ensure_rule_present(client, module):
 def find_rule_in_web_acls(client, module, rule_id):
     web_acls_in_use = []
     try:
-        all_web_acls = list_web_acls_with_backoff(client)
+        if type(client).__name__ == 'WAF':
+            all_web_acls = list_web_acls_with_backoff(client)
+        elif type(client).__name__ == 'WAFRegional':
+            all_web_acls = list_regional_web_acls_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg='Could not list Web ACLs')
     for web_acl in all_web_acls:
