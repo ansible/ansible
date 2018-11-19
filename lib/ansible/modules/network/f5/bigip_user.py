@@ -199,6 +199,8 @@ shell:
 import os
 import tempfile
 
+from ansible.module_utils._text import to_bytes
+
 try:
     from BytesIO import BytesIO
 except ImportError:
@@ -870,11 +872,11 @@ class RootUserManager(BaseManager):
     def encrypt_password_change_file(self, public_key, password):
         # This function call requires that the public_key be expressed in bytes
         pub = serialization.load_pem_public_key(
-            bytes(public_key, 'utf-8'),
+            to_bytes(public_key),
             backend=default_backend()
         )
 
-        message = bytes("{0}\n{0}\n".format(password), 'utf-8')
+        message = to_bytes("{0}\n{0}\n".format(password))
         ciphertext = pub.encrypt(
             message,
 
