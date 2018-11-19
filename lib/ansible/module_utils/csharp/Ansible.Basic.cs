@@ -338,14 +338,25 @@ namespace Ansible.Basic
 
         public static string ToJson(object obj)
         {
+            // Using PowerShell to serialize the JSON is preferable over the native .NET libraries as it handles
+            // PS Objects a lot better than the alternatives. In case we are debugging in Visual Studio we have a
+            // fallback to the other libraries as we won't be dealing with PowerShell objects there.
+            if (Runspace.DefaultRunspace != null)
+            {
+                PSObject rawOut = ScriptBlock.Create("ConvertTo-Json -InputObject $args[0] -Depth 99 -Compress").Invoke(obj)[0];
+                return rawOut.BaseObject as string;
+            }
+            else
+            {
 #if CORECLR
-            return JsonConvert.SerializeObject(obj);
+                return JsonConvert.SerializeObject(obj);
 #else
-            JavaScriptSerializer jss = new JavaScriptSerializer();
-            jss.MaxJsonLength = int.MaxValue;
-            jss.RecursionLimit = int.MaxValue;
-            return jss.Serialize(obj);
+                JavaScriptSerializer jss = new JavaScriptSerializer();
+                jss.MaxJsonLength = int.MaxValue;
+                jss.RecursionLimit = int.MaxValue;
+                return jss.Serialize(obj);
 #endif
+            }
         }
 
         public static IDictionary GetParams(string[] args)
