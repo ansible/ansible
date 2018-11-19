@@ -654,7 +654,7 @@ class ArgumentSpec(object):
             name=dict(required=True),
             parent=dict(default='/Common/tcp_half_open'),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             probe_interval=dict(type='int'),

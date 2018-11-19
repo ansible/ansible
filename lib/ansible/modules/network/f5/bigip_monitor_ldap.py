@@ -756,7 +756,7 @@ class ArgumentSpec(object):
             parent=dict(default='/Common/ldap'),
             ip=dict(),
             description=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             target_username=dict(),
