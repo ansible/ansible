@@ -29,20 +29,18 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_virtual_server import ApiParameters
-        from ansible.modules.network.f5.bigip_virtual_server import ModuleParameters
-        from ansible.modules.network.f5.bigip_virtual_server import ModuleManager
-        from ansible.modules.network.f5.bigip_virtual_server import ArgumentSpec
+    from ansible.modules.network.f5.bigip_virtual_server import ApiParameters
+    from ansible.modules.network.f5.bigip_virtual_server import ModuleParameters
+    from ansible.modules.network.f5.bigip_virtual_server import ModuleManager
+    from ansible.modules.network.f5.bigip_virtual_server import ArgumentSpec
 
-        # Ansible 2.8 imports
-        from units.compat import unittest
-        from units.compat.mock import Mock
-        from units.compat.mock import patch
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
 
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -356,6 +354,18 @@ class TestManager(unittest.TestCase):
 
     def setUp(self):
         self.spec = ArgumentSpec()
+
+        try:
+            self.p1 = patch('library.modules.bigip_virtual_server.modules_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = ['ltm', 'gtm', 'asm']
+        except Exception:
+            self.p1 = patch('ansible.modules.network.f5.bigip_virtual_server.modules_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = ['ltm', 'gtm', 'asm']
+
+    def tearDown(self):
+        self.p1.stop()
 
     def test_create_virtual_server(self, *args):
         set_module_args(dict(
