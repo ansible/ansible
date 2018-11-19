@@ -102,21 +102,15 @@ dest:
     returned: success
     type: string
     sample: "{
-        "CompletionTime": "2018-01-24T00:47:33",
-        "Description": "Job Instance",
-        "EndTime": null,
-        "Id": "JID_XXXXXXXXXXXX",
-        "JobState": "Completed",
-        "JobType": "ImportConfiguration",
-        "Message": "Successfully imported and applied Server Configuration Profile.",
-        "MessageArgs": [],
-        "MessageId": "SYSXXX",
-        "Name": "Import Configuration",
-        "PercentComplete": 100,
-        "StartTime": "TIME_NOW",
-        "Status": "Success",
-        "TargetSettingsURI": null,
-        "retval": true
+        'CompletionTime': '2018-01-24T00:47:33',
+        'Id': 'JID_XXXXXXXXXXXX',
+        'JobState': 'Completed',
+        'JobType': 'ImportConfiguration',
+        'Message': 'Successfully imported and applied Server Configuration Profile.',
+        'MessageId': 'SYSXXX',
+        'Name': 'Import Configuration',
+        'StartTime': 'TIME_NOW',
+        'Status': 'Success',
     }"
 """
 
