@@ -66,6 +66,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
