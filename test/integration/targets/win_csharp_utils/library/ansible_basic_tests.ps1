@@ -655,7 +655,7 @@ test_no_log - Invoked with:
             }
             deprecations = @(
                 @{
-                    message = "Param 'removed1' is deprecated. See the module docs for more information"
+                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
                     version = "2.1"
                 }
             )
@@ -710,7 +710,7 @@ test_no_log - Invoked with:
                 module_args = @{}
             }
             warnings = @("warning")
-            deprecations = @(@{message = "message"; version = "2.8"})
+            deprecations = @(@{msg = "message"; version = "2.8"})
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
