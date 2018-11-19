@@ -673,7 +673,7 @@ class ArgumentSpec(object):
             id=dict(type='int'),
             description=dict(),
             strict=dict(type='bool'),
-            parent=dict(type='int'),
+            parent=dict(),
             vlans=dict(type='list'),
             routing_protocol=dict(
                 type='list',
