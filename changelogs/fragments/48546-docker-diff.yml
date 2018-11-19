@@ -1,0 +1,7 @@
+minor_changes:
+- "docker_container - improved ``diff`` mode to show output."
+- "docker_swarm_service - added ``diff`` mode."
+- "docker_network - changed return value ``diff`` from ``list`` to ``dict``; the original list is contained in ``diff.differences``."
+- "docker_network - improved ``diff`` mode to show output."
+- "docker_volume - changed return value ``diff`` from ``list`` to ``dict``; the original list is contained in ``diff.differences``."
+- "docker_volume - improved ``diff`` mode to show output."

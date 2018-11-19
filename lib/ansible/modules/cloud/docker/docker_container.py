@@ -868,7 +868,7 @@ from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.docker_common import (
     AnsibleDockerClient,
     DockerBaseClass, sanitize_result, is_image_name_id,
-    compare_generic,
+    compare_generic, DifferenceTracker,
 )
 from ansible.module_utils.six import string_types
 
@@ -1852,7 +1852,7 @@ class Container(DockerBaseClass):
                 memory_swap=host_config.get('MemorySwap'),
             ))
 
-        differences = []
+        differences = DifferenceTracker()
         for key, value in config_mapping.items():
             compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
             self.log('check differences %s %s vs %s (%s)' % (key, getattr(self.parameters, key), str(value), compare))
@@ -1861,14 +1861,24 @@ class Container(DockerBaseClass):
 
                 if not match:
                     # no match. record the differences
-                    item = dict()
-                    item[key] = dict(
-                        parameter=getattr(self.parameters, key),
-                        container=value
-                    )
-                    differences.append(item)
+                    p = getattr(self.parameters, key)
+                    c = value
+                    if compare['type'] == 'set':
+                        # Since the order does not matter, sort so that the diff output is better.
+                        if p is not None:
+                            p = sorted(p)
+                        if c is not None:
+                            c = sorted(c)
+                    elif compare['type'] == 'set(dict)':
+                        # Since the order does not matter, sort so that the diff output is better.
+                        # We sort the list of dictionaries by using the sorted items of a dict as its key.
+                        if p is not None:
+                            p = sorted(p, key=lambda x: sorted(x.items()))
+                        if c is not None:
+                            c = sorted(c, key=lambda x: sorted(x.items()))
+                    differences.add(key, parameter=p, active=c)
 
-        has_differences = True if len(differences) > 0 else False
+        has_differences = not differences.empty
         return has_differences, differences
 
     def has_different_resource_limits(self):
@@ -1896,7 +1906,7 @@ class Container(DockerBaseClass):
             memory_swap=host_config.get('MemorySwap'),
         )
 
-        differences = []
+        differences = DifferenceTracker()
         for key, value in config_mapping.items():
             if getattr(self.parameters, key, None):
                 compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
@@ -1904,13 +1914,8 @@ class Container(DockerBaseClass):
 
                 if not match:
                     # no match. record the differences
-                    item = dict()
-                    item[key] = dict(
-                        parameter=getattr(self.parameters, key),
-                        container=value
-                    )
-                    differences.append(item)
-        different = (len(differences) > 0)
+                    differences.add(key, parameter=getattr(self.parameters, key), active=value)
+        different = not differences.empty
         return different, differences
 
     def has_network_differences(self):
@@ -2233,6 +2238,7 @@ class ContainerManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
         self.results = {'changed': False, 'actions': []}
         self.diff = {}
+        self.diff_tracker = DifferenceTracker()
         self.facts = {}
 
         state = self.parameters.state
@@ -2245,6 +2251,7 @@ class ContainerManager(DockerBaseClass):
             self.results.pop('actions')
 
         if self.client.module._diff or self.parameters.debug:
+            self.diff['before'], self.diff['after'] = self.diff_tracker.get_before_after()
             self.results['diff'] = self.diff
 
         if self.facts:
@@ -2252,6 +2259,8 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
+        was_running = container.running
+        was_paused = container.paused
 
         # If the image parameter was passed then we need to deal with the image
         # version comparison. Otherwise we handle this depending on whether
@@ -2265,6 +2274,7 @@ class ContainerManager(DockerBaseClass):
             self.log('No container found')
             if not self.parameters.image:
                 self.fail('Cannot create container when image is not specified!')
+            self.diff_tracker.add('exists', parameter=True, active=False)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -2275,7 +2285,8 @@ class ContainerManager(DockerBaseClass):
             if self.parameters.comparisons['image']['comparison'] == 'strict':
                 image_different = self._image_is_different(image, container)
             if image_different or different or self.parameters.recreate:
-                self.diff['differences'] = differences
+                self.diff_tracker.merge(differences)
+                self.diff['differences'] = differences.get_legacy_docker_container_diffs()
                 if image_different:
                     self.diff['image_different'] = True
                 self.log("differences")
@@ -2297,15 +2308,19 @@ class ContainerManager(DockerBaseClass):
             container = self.update_networks(container)
 
             if state == 'started' and not container.running:
+                self.diff_tracker.add('running', parameter=True, active=was_running)
                 container = self.container_start(container.Id)
             elif state == 'started' and self.parameters.restart:
+                self.diff_tracker.add('running', parameter=True, active=was_running)
                 self.container_stop(container.Id)
                 container = self.container_start(container.Id)
             elif state == 'stopped' and container.running:
+                self.diff_tracker.add('running', parameter=False, active=was_running)
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
 
             if state == 'started' and container.paused != self.parameters.paused:
+                self.diff_tracker.add('paused', parameter=self.parameters.paused, active=was_paused)
                 if not self.check_mode:
                     try:
                         if self.parameters.paused:
@@ -2326,7 +2341,9 @@ class ContainerManager(DockerBaseClass):
         container = self._get_container(self.parameters.name)
         if container.exists:
             if container.running:
+                self.diff_tracker.add('running', parameter=False, active=True)
                 self.container_stop(container.Id)
+            self.diff_tracker.add('exists', parameter=False, active=True)
             self.container_remove(container.Id)
 
     def fail(self, msg, **kwargs):
@@ -2369,6 +2386,7 @@ class ContainerManager(DockerBaseClass):
         if image and image.get('Id'):
             if container and container.Image:
                 if image.get('Id') != container.Image:
+                    self.diff_tracker.add('image', parameter=image.get('Id'), active=container.Image)
                     return True
         return False
 
@@ -2376,7 +2394,8 @@ class ContainerManager(DockerBaseClass):
         limits_differ, different_limits = container.has_different_resource_limits()
         if limits_differ:
             self.log("limit differences:")
-            self.log(different_limits, pretty_print=True)
+            self.log(different_limits.get_legacy_docker_container_diffs(), pretty_print=True)
+            self.diff_tracker.merge(different_limits)
         if limits_differ and not self.check_mode:
             self.container_update(container.Id, self.parameters.update_parameters)
             return self._get_container(container.Id)
@@ -2390,6 +2409,12 @@ class ContainerManager(DockerBaseClass):
                 self.diff['differences'].append(dict(network_differences=network_differences))
             else:
                 self.diff['differences'] = [dict(network_differences=network_differences)]
+            for netdiff in network_differences:
+                self.diff_tracker.add(
+                    'network.{0}'.format(netdiff['parameter']['name']),
+                    parameter=netdiff['parameter'],
+                    active=netdiff['container']
+                )
             self.results['changed'] = True
             updated_container = self._add_networks(container, network_differences)
 
@@ -2400,6 +2425,11 @@ class ContainerManager(DockerBaseClass):
                     self.diff['differences'].append(dict(purge_networks=extra_networks))
                 else:
                     self.diff['differences'] = [dict(purge_networks=extra_networks)]
+                for extra_network in extra_networks:
+                    self.diff_tracker.add(
+                        'network.{0}'.format(extra_network['name']),
+                        active=extra_network
+                    )
                 self.results['changed'] = True
                 updated_container = self._purge_networks(container, extra_networks)
         return updated_container

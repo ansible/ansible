@@ -455,16 +455,18 @@ EXAMPLES = '''
 '''
 
 import time
-from ansible.module_utils.docker_common import DockerBaseClass
-from ansible.module_utils.docker_common import AnsibleDockerClient
-from ansible.module_utils.docker_common import docker_version
+from ansible.module_utils.docker_common import (
+    DockerBaseClass,
+    AnsibleDockerClient,
+    docker_version,
+    DifferenceTracker,
+)
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
 
 
 try:
     from distutils.version import LooseVersion
-    from docker import utils
     from docker import types
 except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker
@@ -653,87 +655,86 @@ class DockerService(DockerBaseClass):
         return s
 
     def compare(self, os):
-        differences = []
+        differences = DifferenceTracker()
         needs_rebuild = False
         force_update = False
         if self.endpoint_mode != os.endpoint_mode:
-            differences.append('endpoint_mode')
+            differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
         if self.env != os.env:
-            differences.append('env')
+            differences.add('env', parameter=self.env, active=os.env)
         if self.log_driver != os.log_driver:
-            differences.append('log_driver')
+            differences.add('log_driver', parameter=self.log_driver, active=os.log_driver)
         if self.log_driver_options != os.log_driver_options:
-            differences.append('log_opt')
+            differences.add('log_opt', parameter=self.log_driver_options, active=os.log_driver_options)
         if self.mode != os.mode:
             needs_rebuild = True
-            differences.append('mode')
+            differences.add('mode', parameter=self.mode, active=os.mode)
         if self.mounts != os.mounts:
-            differences.append('mounts')
+            differences.add('mounts', parameter=self.mounts, active=os.mounts)
         if self.configs != os.configs:
-            differences.append('configs')
+            differences.add('configs', parameter=self.configs, active=os.configs)
         if self.secrets != os.secrets:
-            differences.append('secrets')
+            differences.add('secrets', parameter=self.secrets, active=os.secrets)
         if self.networks != os.networks:
-            differences.append('networks')
+            differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = True
         if self.replicas != os.replicas:
-            differences.append('replicas')
+            differences.add('replicas', parameter=self.replicas, active=os.replicas)
         if self.args != os.args:
-            differences.append('args')
+            differences.add('args', parameter=self.args, active=os.args)
         if self.constraints != os.constraints:
-            differences.append('constraints')
+            differences.add('constraints', parameter=self.constraints, active=os.constraints)
         if self.labels != os.labels:
-            differences.append('labels')
+            differences.add('labels', parameter=self.labels, active=os.labels)
         if self.limit_cpu != os.limit_cpu:
-            differences.append('limit_cpu')
+            differences.add('limit_cpu', parameter=self.limit_cpu, active=os.limit_cpu)
         if self.limit_memory != os.limit_memory:
-            differences.append('limit_memory')
+            differences.add('limit_memory', parameter=self.limit_memory, active=os.limit_memory)
         if self.reserve_cpu != os.reserve_cpu:
-            differences.append('reserve_cpu')
+            differences.add('reserve_cpu', parameter=self.reserve_cpu, active=os.reserve_cpu)
         if self.reserve_memory != os.reserve_memory:
-            differences.append('reserve_memory')
+            differences.add('reserve_memory', parameter=self.reserve_memory, active=os.reserve_memory)
         if self.container_labels != os.container_labels:
-            differences.append('container_labels')
+            differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
         if self.publish != os.publish:
-            differences.append('publish')
+            differences.add('publish', parameter=self.publish, active=os.publish)
         if self.restart_policy != os.restart_policy:
-            differences.append('restart_policy')
+            differences.add('restart_policy', parameter=self.restart_policy, active=os.restart_policy)
         if self.restart_policy_attempts != os.restart_policy_attempts:
-            differences.append('restart_policy_attempts')
+            differences.add('restart_policy_attempts', parameter=self.restart_policy_attempts, active=os.restart_policy_attempts)
         if self.restart_policy_delay != os.restart_policy_delay:
-            differences.append('restart_policy_delay')
+            differences.add('restart_policy_delay', parameter=self.restart_policy_delay, active=os.restart_policy_delay)
         if self.restart_policy_window != os.restart_policy_window:
-            differences.append('restart_policy_window')
+            differences.add('restart_policy_window', parameter=self.restart_policy_window, active=os.restart_policy_window)
         if self.update_delay != os.update_delay:
-            differences.append('update_delay')
+            differences.add('update_delay', parameter=self.update_delay, active=os.update_delay)
         if self.update_parallelism != os.update_parallelism:
-            differences.append('update_parallelism')
+            differences.add('update_parallelism', parameter=self.update_parallelism, active=os.update_parallelism)
         if self.update_failure_action != os.update_failure_action:
-            differences.append('update_failure_action')
+            differences.add('update_failure_action', parameter=self.update_failure_action, active=os.update_failure_action)
         if self.update_monitor != os.update_monitor:
-            differences.append('update_monitor')
+            differences.add('update_monitor', parameter=self.update_monitor, active=os.update_monitor)
         if self.update_max_failure_ratio != os.update_max_failure_ratio:
-            differences.append('update_max_failure_ratio')
+            differences.add('update_max_failure_ratio', parameter=self.update_max_failure_ratio, active=os.update_max_failure_ratio)
         if self.update_order != os.update_order:
-            differences.append('update_order')
+            differences.add('update_order', parameter=self.update_order, active=os.update_order)
         if self.image != os.image.split('@')[0]:
-            differences.append('image')
+            differences.add('image', parameter=self.image, active=os.image.split('@')[0])
         if self.user != os.user:
-            differences.append('user')
+            differences.add('user', parameter=self.user, active=os.user)
         if self.dns != os.dns:
-            differences.append('dns')
+            differences.add('dns', parameter=self.dns, active=os.dns)
         if self.dns_search != os.dns_search:
-            differences.append('dns_search')
+            differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
         if self.dns_options != os.dns_options:
-            differences.append('dns_options')
+            differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
         if self.hostname != os.hostname:
-            differences.append('hostname')
+            differences.add('hostname', parameter=self.hostname, active=os.hostname)
         if self.tty != os.tty:
-            differences.append('tty')
+            differences.add('tty', parameter=self.tty, active=os.tty)
         if self.force_update:
-            differences.append('force_update')
             force_update = True
-        return len(differences) > 0, differences, needs_rebuild, force_update
+        return not differences.empty or force_update, differences, needs_rebuild, force_update
 
     def __str__(self):
         return str({
@@ -1020,6 +1021,7 @@ class DockerServiceManager():
 
     def __init__(self, client):
         self.client = client
+        self.diff_tracker = DifferenceTracker()
 
     def test_parameter_versions(self):
         parameters_versions = [
@@ -1067,7 +1069,7 @@ class DockerServiceManager():
         changed = False
         msg = 'noop'
         rebuilt = False
-        changes = []
+        differences = DifferenceTracker()
         facts = {}
 
         if current_service:
@@ -1077,8 +1079,9 @@ class DockerServiceManager():
                 msg = 'Service removed'
                 changed = True
             else:
-                changed, changes, need_rebuild, force_update = new_service.compare(current_service)
+                changed, differences, need_rebuild, force_update = new_service.compare(current_service)
                 if changed:
+                    self.diff_tracker.merge(differences)
                     if need_rebuild:
                         if not module.check_mode:
                             self.remove_service(module.params['name'])
@@ -1116,7 +1119,7 @@ class DockerServiceManager():
                 changed = True
                 facts = new_service.get_facts()
 
-        return msg, changed, rebuilt, changes, facts
+        return msg, changed, rebuilt, differences.get_legacy_docker_diffs(), facts
 
 
 def main():
@@ -1173,7 +1176,18 @@ def main():
     dsm = DockerServiceManager(client)
     msg, changed, rebuilt, changes, facts = dsm.run()
 
-    client.module.exit_json(msg=msg, changed=changed, rebuilt=rebuilt, changes=changes, ansible_docker_service=facts)
+    results = dict(
+        msg=msg,
+        changed=changed,
+        rebuilt=rebuilt,
+        changes=changes,
+        ansible_docker_service=facts,
+    )
+    if client.module._diff:
+        before, after = dsm.diff_tracker.get_before_after()
+        results['diff'] = dict(before=before, after=after)
+
+    client.module.exit_json(**results)
 
 
 if __name__ == '__main__':

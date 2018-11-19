@@ -50,8 +50,8 @@
 - assert:
     that:
       - network is changed
-      - network['diff'] | length == 1
-      - network['diff'][0] == "ipam_config[0].subnet"
+      - network.diff.differences | length == 1
+      - network.diff.differences[0] == "ipam_config[0].subnet"
 
 - name: Cleanup network with ipam_config and deprecated ipam_options
   docker_network:
@@ -91,11 +91,11 @@
 - assert:
     that:
       - network is changed
-      - network['diff'] | length == 4
-      - '"ipam_config[0].subnet" in network["diff"]'
-      - '"ipam_config[0].gateway" in network["diff"]'
-      - '"ipam_config[0].iprange" in network["diff"]'
-      - '"ipam_config[0].aux_addresses" in network["diff"]'
+      - network.diff.differences | length == 4
+      - '"ipam_config[0].subnet" in network.diff.differences'
+      - '"ipam_config[0].gateway" in network.diff.differences'
+      - '"ipam_config[0].iprange" in network.diff.differences'
+      - '"ipam_config[0].aux_addresses" in network.diff.differences'
 
 - name: Remove gateway and iprange of network with custom IPAM config
   docker_network:
@@ -140,8 +140,8 @@
 - assert:
     that:
       - network is changed
-      - network['diff'] | length == 1
-      - network['diff'][0] == "ipam_config[0].subnet"
+      - network.diff.differences | length == 1
+      - network.diff.differences[0] == "ipam_config[0].subnet"
 
 - name: Change subnet of network with IPv6 IPAM config
   docker_network:
@@ -203,8 +203,8 @@
 - assert:
     that:
       - network is changed
-      - network['diff'] | length == 1
-      - network['diff'][0] == "enable_ipv6"
+      - network.diff.differences | length == 1
+      - network.diff.differences[0] == "enable_ipv6"
 
 - name: Cleanup network with IPv6 and custom IPv4 IPAM config
   docker_network:
