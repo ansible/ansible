@@ -55,9 +55,9 @@ options:
         default: False
         type: bool
         description: Whether to remove rules that aren't passed with C(rules). Defaults to false
-    cloudfront:
-        description: Wether to use CloudFront WAF. Defaults to true
-        default: true
+    waf_regional:
+        description: Wether to use waf_regional module. Defaults to true
+        default: false
         required: no
 '''
 
@@ -323,10 +323,8 @@ def main():
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if module.params.get('cloudfront'):
-        client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    elif not module.params.get('cloudfront'):
-        client = boto3_conn(module, conn_type='client', resource='waf-regional', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
+    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
     if state == 'present':
         (changed, results) = ensure_web_acl_present(client, module)
     else:

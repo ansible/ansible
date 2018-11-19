@@ -59,9 +59,9 @@ options:
         default: False
         type: bool
         description: Whether to remove existing filters from a condition if not passed in I(filters). Defaults to false.
-    cloudfront:
-        description: Wether to use CloudFront WAF. Defaults to true
-        default: true
+    waf_regional:
+        description: Wether to use waf_regional module. Defaults to true
+        default: false
         required: no
     state:
         description: Whether the condition should be C(present) or C(absent).
@@ -651,10 +651,8 @@ def main():
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if module.params.get('cloudfront'):
-        client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    elif not module.params.get('cloudfront'):
-        client = boto3_conn(module, conn_type='client', resource='waf-regional', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
+    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     condition = Condition(client, module)
 
