@@ -20,7 +20,7 @@ import os
 import re
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule, env_fallback, jsonify
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 
@@ -651,3 +651,57 @@ def compare_generic(a, b, method, type):
                 if not found:
                     return False
         return True
+
+
+class DifferenceTracker(object):
+    def __init__(self):
+        self._diff = []
+
+    def add(self, name, parameter=None, active=None):
+        self._diff.append(dict(
+            name=name,
+            parameter=parameter,
+            active=active,
+        ))
+
+    def merge(self, other_tracker):
+        self._diff.extend(other_tracker._diff)
+
+    @property
+    def empty(self):
+        return len(self._diff) == 0
+
+    def get_before_after(self):
+        '''
+        Return texts ``before`` and ``after``.
+        '''
+        before = dict()
+        after = dict()
+        for item in self._diff:
+            before[item['name']] = item['active']
+            after[item['name']] = item['parameter']
+        return (
+            jsonify(before, sort_keys=True, indent=2),
+            jsonify(after, sort_keys=True, indent=2),
+        )
+
+    def get_legacy_docker_container_diffs(self):
+        '''
+        Return differences in the docker_container legacy format.
+        '''
+        result = []
+        for entry in self._diff:
+            item = dict()
+            item[entry['name']] = dict(
+                parameter=entry['parameter'],
+                container=entry['active'],
+            )
+            result.append(item)
+        return result
+
+    def get_legacy_docker_diffs(self):
+        '''
+        Return differences in the docker_container legacy format.
+        '''
+        result = [entry['name'] for entry in self._diff]
+        return result

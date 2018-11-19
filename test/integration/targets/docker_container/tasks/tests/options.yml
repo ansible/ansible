@@ -96,6 +96,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -160,6 +161,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -202,6 +204,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -246,6 +249,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -290,6 +294,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -334,6 +339,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -381,6 +387,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -428,6 +435,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -495,6 +503,7 @@
     name: "{{ cname }}"
     state: absent
   register: detach_no_cleanup_cleanup
+  diff: no
 
 - name: detach with cleanup
   docker_container:
@@ -509,6 +518,7 @@
     name: "{{ cname }}"
     state: absent
   register: detach_cleanup_cleanup
+  diff: no
 
 - name: detach with auto_remove and cleanup
   docker_container:
@@ -525,6 +535,7 @@
     name: "{{ cname }}"
     state: absent
   register: detach_auto_remove_cleanup
+  diff: no
 
 - assert:
     that:
@@ -597,6 +608,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -669,6 +681,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -747,6 +760,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -816,6 +830,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -886,6 +901,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -954,6 +970,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1016,6 +1033,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1061,6 +1079,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1137,6 +1156,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1199,6 +1219,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1234,6 +1255,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1293,6 +1315,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1354,6 +1377,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1421,6 +1445,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1552,6 +1577,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1607,6 +1633,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1654,6 +1681,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1704,6 +1732,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1758,6 +1787,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1821,6 +1851,7 @@
   - "{{ cname_h1 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -1865,6 +1896,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -1931,6 +1963,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2012,6 +2045,7 @@
   - "{{ cname_h3 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -2057,6 +2091,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2121,6 +2156,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2166,6 +2202,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2210,6 +2247,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2254,6 +2292,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2307,6 +2346,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2360,6 +2400,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2404,6 +2445,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2479,6 +2521,7 @@
       name: "{{ cname }}"
       state: absent
       force_kill: yes
+    diff: no
 
   - assert:
       that:
@@ -2530,6 +2573,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2583,6 +2627,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2649,6 +2694,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2712,6 +2758,7 @@
   - "{{ cname_h1 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -2763,6 +2810,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2823,6 +2871,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2874,6 +2923,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -2928,6 +2978,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - debug: var=recreate_1
 - debug: var=recreate_2
@@ -2972,6 +3023,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - debug: var=restart_1
 - debug: var=restart_2
@@ -3019,6 +3071,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3066,6 +3119,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3102,6 +3156,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3183,6 +3238,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3228,6 +3284,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3272,6 +3329,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3316,6 +3374,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3390,6 +3449,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3457,6 +3517,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3508,6 +3569,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3568,6 +3630,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3613,6 +3676,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3660,6 +3724,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3713,6 +3778,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3769,6 +3835,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3841,6 +3908,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -3907,6 +3975,7 @@
   - "{{ cname_h2 }}"
   loop_control:
     loop_var: container_name
+  diff: no
 
 - assert:
     that:
@@ -3951,6 +4020,7 @@
     name: "{{ cname }}"
     state: absent
     force_kill: yes
+  diff: no
 
 - assert:
     that:
