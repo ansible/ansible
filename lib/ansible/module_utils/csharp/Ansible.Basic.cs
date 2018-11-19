@@ -242,7 +242,7 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, string version)
         {
-            deprecations.Add(new Dictionary<string, string>() { { "message", message }, { "version", version } });
+            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
             LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
         }
 
