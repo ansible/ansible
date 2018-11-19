@@ -141,7 +141,7 @@ def main():
         msc.existing = msc.get_obj(path, id=tenant_id)
         existing_by_name = msc.get_obj(path, name=tenant)
         if existing_by_name and tenant_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided tenant '{1}' with id '{2}' does not match existing id '{3}'.".format(tenant, tenant_id, existing_by_name['id']))
+            msc.fail_json(msg="Provided tenant '{0}' with id '{1}' does not match existing id '{2}'.".format(tenant, tenant_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if tenant_id:
