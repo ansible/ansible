@@ -55,6 +55,8 @@ options:
         type: list
         description:
             - List of dictionaries of conditions to evaluate.
+            - For more information about suboptions of this options please
+              check out Zabbix API documentation U(https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition)
         suboptions:
             type:
                 description: Type (label) of the condition
@@ -95,6 +97,14 @@ options:
             value:
                 description:
                     - Value to compare with.
+                    - When I(type) is set to C(discovery_status), the choices
+                      are C(up), C(down), C(discovered), C(lost)
+                    - When I(type) is set to C(discovery_object), the choices
+                      are C(host), C(service)
+                    - When I(type) is set to C(event_type), the choices
+                      are C(item in not supported state), C(item in normal state), C(LLD rule in not supported state), C(LLD rule in normal state), C(trigger in unknown state), C(trigger in normal state)
+                    - Besides the above options, this is usualy either the name
+                      of the object or a string to compare with.
             operator:
                 description:
                     - Condition operator.
