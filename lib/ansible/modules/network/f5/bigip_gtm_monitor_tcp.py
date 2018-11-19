@@ -747,7 +747,7 @@ class ArgumentSpec(object):
             send=dict(),
             receive=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             ignore_down_response=dict(type='bool'),
