@@ -102,7 +102,9 @@ options:
                     - When I(type) is set to C(discovery_object), the choices
                       are C(host), C(service)
                     - When I(type) is set to C(event_type), the choices
-                      are C(item in not supported state), C(item in normal state), C(LLD rule in not supported state), C(LLD rule in normal state), C(trigger in unknown state), C(trigger in normal state)
+                      are C(item in not supported state), C(item in normal state),
+                      C(LLD rule in not supported state),
+                      C(LLD rule in normal state), C(trigger in unknown state), C(trigger in normal state)
                     - Besides the above options, this is usualy either the name
                       of the object or a string to compare with.
             operator:
@@ -360,7 +362,7 @@ class Zapi(object):
             else:
                 return hostgroup_list[0]
         except Exception as e:
-            self._module.fail_json(msg="Failed to get host group '%s': %s" % (host_group, e))
+            self._module.fail_json(msg="Failed to get host group '%s': %s" % (hostgroup_name, e))
 
     # get template by template name
     def get_template_by_template_name(self, template_name):
@@ -576,7 +578,7 @@ class Operations(object):
                 "set_host_inventory_mode"], operation['type']
             )
         except Exception as e:
-            self._module.fail_json(msg="Unsupperted value '%s' for operation type." % _condition['type'])
+            self._module.fail_json(msg="Unsupperted value '%s' for operation type." % operation['type'])
 
     def _construct_opmessage(self, operation):
         try:
@@ -851,7 +853,6 @@ class Filter(object):
         except Exception as e:
             self._module.fail_json(msg="Unsupperted value '%s' for operator." % _condition['operator'])
 
-
     def _construct_value(self, conditiontype, value):
         try:
             # Host group
@@ -937,7 +938,12 @@ class Filter(object):
                 )
             return value
         except Exception as e:
-            self._module.fail_json(msg="Unsupperted value '%s' for specified condition type. Check out Zabbix API documetation for supported values for condition type '%s' at https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition" % (value, conditiontype))
+            self._module.fail_json(
+                msg="""Unsupperted value '%s' for specified condition type.
+                       Check out Zabbix API documetation for supported values for
+                       condition type '%s' at
+                       https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition""" % (value, conditiontype)
+            )
 
     def construct_the_data(self, _formula, _conditions):
         if _conditions is None:
@@ -959,14 +965,14 @@ class Filter(object):
 
 
 def convert_unicode_to_str(data):
-     if isinstance(data, dict):
-         return dict(map(convert_unicode_to_str, data.items()))
-     elif isinstance(data, (list, tuple, set)):
-         return type(data)(map(convert_unicode_to_str, data))
-     elif data is None:
-         return data
-     else:
-         return str(data)
+    if isinstance(data, dict):
+        return dict(map(convert_unicode_to_str, data.items()))
+    elif isinstance(data, (list, tuple, set)):
+        return type(data)(map(convert_unicode_to_str, data))
+    elif data is None:
+        return data
+    else:
+        return str(data)
 
 
 def map_to_int(strs, value):
