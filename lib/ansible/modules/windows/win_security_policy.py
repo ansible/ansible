@@ -36,6 +36,8 @@ options:
     - Example sections to use are 'Account Policies', 'Local Policies',
       'Event Log', 'Restricted Groups', 'System Services', 'Registry' and
       'File System'
+    - If wanting to edit the C(Privilege Rights) section, use the
+      M(win_user_right) module instead.
     required: yes
   key:
     description:
