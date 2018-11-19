@@ -648,6 +648,10 @@ files:
 
   lib/ansible/plugins:
     support: community
+  lib/ansible/plugins/__init__.py:
+    support: core
+  lib/ansible/plugins/loader.py:
+    support: core
   lib/ansible/plugins/action/add_host.py:
     support: core
   lib/ansible/plugins/action/assemble.py:
