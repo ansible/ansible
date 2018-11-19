@@ -169,7 +169,7 @@ class LdapEntries(object):
         result = False
         if self.dn:
             result = self.connection.search(
-                self.dn, '', search_scope=ldap3.SUBTREE, attributes=ldap3.ALL_ATTRIBUTES)
+                self.dn, '(objectClass=*)', search_scope=ldap3.SUBTREE, attributes=ldap3.ALL_ATTRIBUTES)
         else:
             result = self.connection.search(
                 self.search_base, self.search_filter, search_scope=ldap3.SUBTREE, attributes=ldap3.ALL_ATTRIBUTES)
@@ -177,7 +177,7 @@ class LdapEntries(object):
         if result:
             return self.connection.response
 
-        return None
+        return []
 
     def close(self):
         if self.connection:
