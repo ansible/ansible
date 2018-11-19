@@ -35,6 +35,7 @@ options:
   admin:
     description:
       - Whether the user should be in the admin role or not.
+      - Since version 2.8, the role will also be updated.
     default: no
     type: bool
   state:
