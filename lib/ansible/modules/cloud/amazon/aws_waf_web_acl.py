@@ -315,7 +315,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             rules=dict(type='list'),
             purge_rules=dict(type='bool', default=False),
-            cloudfront=dict(type='bool', default=True),
+            waf_regional=dict(type='bool', default=False),
         ),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
