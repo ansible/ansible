@@ -436,7 +436,15 @@ class ConfigManager(object):
                             return value, origin
 
             # ensure correct type, can raise exceptoins on mismatched types
-            value = ensure_type(value, defs[config].get('type'), origin=origin)
+            try:
+                value = ensure_type(value, defs[config].get('type'), origin=origin)
+            except ValueError as e:
+                if origin.startswith('env:') and value == '':
+                    # this is empty env var for non string so we can set to default
+                    origin = 'default'
+                    value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
+                else:
+                    raise AnsibleOptionsError('Invalid type for configuration option %s: %s' % (to_native(config), to_native(e)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
