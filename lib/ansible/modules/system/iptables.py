@@ -370,6 +370,19 @@ EXAMPLES = '''
         - RST
         - SYN
         - FIN
+
+- name: iptables flush filter
+  iptables:
+    chain: "{{ item }}"
+    flush: yes
+  with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
+
+- name: iptables flush nat
+  iptables:
+    table: nat
+    chain: "{{ item }}"
+    flush: yes
+  with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
 '''
 
 import re
