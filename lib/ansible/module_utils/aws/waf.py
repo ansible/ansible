@@ -180,7 +180,6 @@ def list_web_acls_with_backoff(client):
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_regional_web_acls_with_backoff(client):
-    import ipdb; ipdb.set_trace()
     resp = client.list_web_acls()
     acls = []
     while resp:
