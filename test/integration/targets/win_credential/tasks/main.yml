@@ -18,12 +18,12 @@
     password: '{{ key_password }}'
   vars: &become_vars
     ansible_become: True
-    ansible_become_method: runas
+    ansible_become_method: runasd
     ansible_become_user: '{{ ansible_user }}'
     ansible_become_pass: '{{ ansible_password }}'
 
 - name: ensure test credentials are removed before testing
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: '{{ item }}'
     state: absent
@@ -47,7 +47,7 @@
       store_name: My
 
   - name: remove test credentials
-    win_credential_manager:
+    win_credential:
       name: '{{ test_hostname }}'
       type: '{{ item }}'
       state: absent

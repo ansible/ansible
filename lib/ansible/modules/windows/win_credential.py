@@ -10,13 +10,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_credential_manager
+module: win_credential
 version_added: '2.8'
 short_description: Manages Windows Credentials in the Credential Manager
 description:
 - Used to create and remove Windows Credentials in the Credential Manager.
 - This module can manage both standard username/password credentials as well as
-  certificiates.
+  certificate credentials.
 options:
   alias:
     description:
@@ -162,7 +162,7 @@ author:
 
 EXAMPLES = r'''
 - name: Create a local only credential
-  win_credential_manager:
+  win_credential:
     name: server.domain.com
     type: domain_password
     username: DOMAIN\username
@@ -170,13 +170,13 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove a credential
-  win_credential_manager:
+  win_credential:
     name: server.domain.com
     type: domain_password
     state: absent
 
 - name: Create a credential with full values
-  win_credential_manager:
+  win_credential:
     name: server.domain.com
     type: domain_password
     alias: server
@@ -192,14 +192,14 @@ EXAMPLES = r'''
       data_format: base64
 
 - name: Create a certificate credential
-  win_credential_manager:
+  win_credential:
     name: '*.domain.com'
     type: domain_certificate
     username: 0074CC4F200D27DC3877C24A92BA8EA21E6C7AF4
     state: present
 
 - name: Create a generic credential
-  win_credential_manager:
+  win_credential:
     name: smbhost
     type: generic_password
     username: smbuser
@@ -207,7 +207,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove a generic credential
-  win_credential_manager:
+  win_credential:
     name: smbhost
     type: generic_password
     state: absent

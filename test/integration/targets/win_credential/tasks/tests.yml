@@ -1,6 +1,6 @@
 ---
 - name: fail to run the module without become
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username
@@ -10,7 +10,7 @@
   failed_when: '"Failed to access the user''s credential store, run the module with become" not in fail_no_become.msg'
 
 - name: create domain user credential (check mode)
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username
@@ -38,7 +38,7 @@
     - not domain_user_actual_check.exists
 
 - name: create domain user credential
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username
@@ -69,7 +69,7 @@
     - domain_user_actual.username == "DOMAIN\\username"
 
 - name: create domain user credential again always update
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username
@@ -79,7 +79,7 @@
   vars: *become_vars
 
 - name: create domain user credential again on_create
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username
@@ -96,7 +96,7 @@
     - not domain_user_again_on_create is changed
 
 - name: update credential (check mode)
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username2
@@ -136,7 +136,7 @@
     - update_cred_actual_check.username == "DOMAIN\\username"
 
 - name: update credential
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username2
@@ -179,7 +179,7 @@
     - update_cred_actual.username == "DOMAIN\\username2"
 
 - name: update credential again
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username2
@@ -202,7 +202,7 @@
     - not update_cred_again is changed
 
 - name: add new attribute
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username2
@@ -241,7 +241,7 @@
     - add_attribute_actual.attributes[2].data == "attribute 3 value"|b64encode
 
 - name: remove attribute
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username2
@@ -276,7 +276,7 @@
     - remove_attribute_actual.attributes[1].data == "attribute 2 value"|b64encode
 
 - name: edit attribute
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     username: DOMAIN\username2
@@ -311,7 +311,7 @@
     - edit_attribute_actual.attributes[1].data == "attribute 2 value"|b64encode
 
 - name: remove credential (check mode)
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     state: absent
@@ -333,7 +333,7 @@
     - remove_cred_actual_check.exists
 
 - name: remove credential
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     state: absent
@@ -354,7 +354,7 @@
     - not remove_cred_actual.exists
 
 - name: remove credential again
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_password
     state: absent
@@ -367,7 +367,7 @@
     - not remove_cred_again is changed
 
 - name: create generic password (check mode)
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: generic_password
     persistence: enterprise
@@ -392,7 +392,7 @@
     - not generic_password_actual_check.exists
 
 - name: create generic password
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: generic_password
     persistence: enterprise
@@ -424,7 +424,7 @@
     - generic_password_actual.username == "genericuser"
 
 - name: create generic password again
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: generic_password
     persistence: enterprise
@@ -440,7 +440,7 @@
     - not generic_password_again is changed
 
 - name: fail to create certificate cred with invalid thumbprint
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_certificate
     username: 00112233445566778899AABBCCDDEEFF00112233
@@ -450,7 +450,7 @@
   vars: *become_vars
 
 - name: create domain certificate cred (check mode)
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_certificate
     username: '{{ cert_thumbprint }}'
@@ -473,7 +473,7 @@
     - not domain_cert_actual_check.exists
 
 - name: create domain certificate cred
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_certificate
     username: '{{ cert_thumbprint }}'
@@ -503,7 +503,7 @@
     - domain_cert_actual.username == cert_thumbprint
 
 - name: create domain certificate cred again
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: domain_certificate
     username: '{{ cert_thumbprint }}'
@@ -517,7 +517,7 @@
     - not domain_cert_again is changed
 
 - name: create generic certificate cred (check mode)
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: generic_certificate
     username: '{{ cert_thumbprint }}'
@@ -542,7 +542,7 @@
     - not generic_cert_actual_check.exists
 
 - name: create generic certificate cred
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: generic_certificate
     username: '{{ cert_thumbprint }}'
@@ -574,7 +574,7 @@
     - generic_cert_actual.username == cert_thumbprint
 
 - name: create generic certificate cred again
-  win_credential_manager:
+  win_credential:
     name: '{{ test_hostname }}'
     type: generic_certificate
     username: '{{ cert_thumbprint }}'
