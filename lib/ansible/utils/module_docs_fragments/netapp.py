@@ -61,12 +61,17 @@ options:
       description:
       - Override the default port (80 or 443) with this port
       type: int
+  ontapi:
+      description:
+      - The ontap api version to use
+      type: int
 
 
 requirements:
-  - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 9.3
+  - A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
   - Ansible 2.6
-  - netapp-lib (2017.10.30). Install using 'pip install netapp-lib'
+  - Python2 netapp-lib (2017.10.30) or later. Install using 'pip install netapp-lib'
+  - Python3 netapp-lib (2018.11.13) or later. Install using 'pip install netapp-lib'
   - To enable http on the cluster you must run the following commands 'set -privilege advanced;' 'system services web modify -http-enabled true;'
 
 notes:
