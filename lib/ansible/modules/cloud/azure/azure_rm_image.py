@@ -35,6 +35,7 @@ options:
             - It can be a virtual machine, OS disk blob uri, managed OS disk, or OS snapshot.
             - Each type of source expect for blob uri can be given as resource id, name or a dict contains C(resource_group), C(name) and C(types).
             - If source type is blob uri, the source should be the full uri of the blob in string type.
+            - If you specify the C(type) in a dict, acceptable value constains C(disks), C(virtualMachines) and C(snapshots).
         type: raw
         required: true
     data_disk_sources:
