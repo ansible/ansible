@@ -5,7 +5,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -21,13 +20,13 @@ module: utm_aaa_group
 author: 
     - Johannes Brunswicker (@MatrixCrawler)
 
-short_description: create, update or destroy reverse_proxy frontend entry in Sophos UTM
+short_description: create, update or destroy aaa group entry in Sophos UTM
 
 description:
     - Create, update or destroy a reverse_proxy frontend entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -55,7 +54,7 @@ options:
           - ldap
     dynamic:
         description:
-          - 
+          - What type of group is this
         default: none
         choices:
           - none
@@ -63,7 +62,7 @@ options:
           - directory_groups
     edirectory_groups :
         description:
-          - list of edirectory group strings 
+          - list of edirectory group strings
         type: list
     ipsec_dn:
         description:
@@ -83,7 +82,8 @@ options:
         default: []
     network:
         description:
-          - The network reference name. The objects contains the known ip addresses for the authentication object (network/aaa)
+          - The network reference name.
+            The objects contains the known ip addresses for the authentication object (network/aaa)
         default: ""
     radius_groups:
         description:
