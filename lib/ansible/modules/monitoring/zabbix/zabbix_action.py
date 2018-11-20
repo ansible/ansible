@@ -705,20 +705,23 @@ class Operations(object):
 
 class RecoveryOperations(Operations):
     def _construct_operationtype(self, operation):
-        return map_to_int([
-            "send_message",
-            "remote_command",
-            "placeholder1",
-            "placeholder2",
-            "placeholder3",
-            "placeholder4",
-            "placeholder5",
-            "placeholder6",
-            "placeholder7",
-            "placeholder8",
-            "placeholder9",
-            "notify_all_involved"], operation['type']
-        )
+        try:
+            return map_to_int([
+                "send_message",
+                "remote_command",
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "notify_all_involved"], operation['type']
+            )
+        except Exception as e:
+            self._module.fail_json(msg="Unsupported value '%s' for recovery operation type." % operation['type'])
 
     def construct_the_data(self, operations):
         if operations is None:
@@ -749,21 +752,23 @@ class RecoveryOperations(Operations):
 
 class AcknowledgeOperations(Operations):
     def _construct_operationtype(self, operation):
-        return map_to_int([
-            "send_message",
-            "remote_command",
-            "placeholder1",
-            "placeholder2",
-            "placeholder3",
-            "placeholder4",
-            "placeholder5",
-            "placeholder6",
-            "placeholder7",
-            "placeholder8",
-            "placeholder9",
-            "placeholder10",
-            "notify_all_involved"], operation['type']
-        )
+        try:
+            return map_to_int([
+                "send_message",
+                "remote_command",
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "notify_all_involved"], operation['type']
+            )
+        except Exception as e:
+            self._module.fail_json(msg="Unsupported value '%s' for acknowledge operation type." % operation['type'])
 
     def construct_the_data(self, operations):
         if operations is None:
