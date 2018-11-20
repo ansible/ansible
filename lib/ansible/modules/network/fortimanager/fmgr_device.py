@@ -29,7 +29,10 @@ DOCUMENTATION = '''
 ---
 module: fmgr_device
 version_added: "2.8"
-author: Andrew Welsh, Luke Weighall
+author:
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Add or remove device
 description:
   - Add or remove a device or list of devices from FortiManager Device Manager using JSON RPC API.
