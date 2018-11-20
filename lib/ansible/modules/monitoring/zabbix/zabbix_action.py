@@ -264,21 +264,91 @@ author:
 '''
 
 EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
-  my_new_test_module:
-    name: hello world
+# Trigger action with only one condition
+- name: Deploy trigger action
+  zabbix_action:
+    server_url: "http://zabbix.example.com/zabbix/"
+    login_user: Admin
+    login_password: secret
+    name: "Send alerts to Admin"
+    event_source: 'trigger'
+    state: present
+    status: enabled
+    conditions:
+      - type: 'trigger_severity'
+        operator: '>='
+        value: 'Information'
+    operations:
+      - type: send_message
+        subject: "Something bad is happening"
+        message: "Come on, guys do something"
+        media_type: 'Email'
+        send_to_users:
+          - 'Admin'
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  my_new_test_module:
-    name: hello world
-    new: true
+# Trigger action with multiple conditions and operations
+- name: Deploy trigger action
+  zabbix_action:
+    server_url: "http://zabbix.example.com/zabbix/"
+    login_user: Admin
+    login_password: secret
+    name: "Send alerts to Admin"
+    event_source: 'trigger'
+    state: present
+    status: enabled
+    conditions:
+      - type: 'trigger_name'
+        operator: 'like'
+        value: 'Zabbix agent is unreachable'
+        formulaid: A
+      - type: 'trigger_severity'
+        operator: '>='
+        value: 'disaster'
+        formulaid: B
+    formula: A or B
+    operations:
+      - type: send_message
+        media_type: 'Email'
+        send_to_users:
+          - 'Admin'
+      - type: remote_command
+        command: 'systemctl restart zabbix-agent'
+        run_on_hosts:
+          - 0
 
-# fail the module
-- name: Test failure of the module
-  my_new_test_module:
-    name: fail me
+# Trigger action with recovery and aknowledge operations
+- name: Deploy trigger action
+  zabbix_action:
+    server_url: "http://zabbix.example.com/zabbix/"
+    login_user: Admin
+    login_password: secret
+    name: "Send alerts to Admin"
+    event_source: 'trigger'
+    state: present
+    status: enabled
+    conditions:
+      - type: 'trigger_severity'
+        operator: '>='
+        value: 'Information'
+    operations:
+      - type: send_message
+        subject: "Something bad is happening"
+        message: "Come on, guys do something"
+        media_type: 'Email'
+        send_to_users:
+          - 'Admin'
+    recovery_operations:
+      - type: send_message
+        subject: "Host is down"
+        message: "Come on, guys do something"
+        media_type: 'Email'
+        send_to_users:
+          - 'Admin'
+    acknowledge_operations:
+      - type: send_message
+        media_type: 'Email'
+        send_to_users:
+          - 'Admin'
 '''
 
 
