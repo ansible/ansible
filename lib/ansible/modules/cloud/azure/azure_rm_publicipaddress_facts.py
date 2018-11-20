@@ -142,7 +142,7 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         result = self.filter_and_format(result)
 
         if self.format == 'curated':
-            self.results['publicipaddress'] = result
+            self.results['publicipaddresses'] = result
         else:
             self.results['ansible_facts']['azure_publicipaddresses'] = result
 
