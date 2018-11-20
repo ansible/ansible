@@ -806,7 +806,7 @@ class TaskExecutor:
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
-                return dict(failed=True, msg="async task did not complete within the requested time")
+                return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val)
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
