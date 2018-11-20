@@ -16,7 +16,7 @@ module: seport
 short_description: Manages SELinux network port type definitions
 description:
     - Manages SELinux network port type definitions.
-version_added: "2.1"
+version_added: "2.8"
 options:
   ports:
     description:
@@ -105,7 +105,12 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
 from ansible.module_utils._text import to_native
-from ansible.modules.system.selinux import get_runtime_status
+
+try:
+    from .selinux import get_runtime_status
+    HAVE_RUNTIME_STATUS = True
+except ImportError:
+    HAVE_RUNTIME_STATUS = False
 
 
 def semanage_port_get_ports(seport, setype, proto):
@@ -261,6 +266,9 @@ def main():
 
     if not HAVE_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
+
+    if not HAVE_RUNTIME_STATUS:
+        module.fail_json(msg="This module requires the runtime status")
 
     force = module.params['force']
 
