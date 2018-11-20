@@ -78,9 +78,15 @@
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
+      format: curated
+  register: pip
 
 - assert:
-      that: azure_publicipaddresses | length == 1
+      that:
+      - "pip.publicipaddresses | length == 1"
+      - "pip.publicipaddress.name == pip{{ rpfx }}"
+      - pip.allocation_method == Static
+      - "pip.domain_name == {{ domain_name }}"
 
 - name: Gather facts for all public ips
   azure_rm_publicipaddress_facts:

@@ -35,6 +35,18 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    format:
+        description:
+            - Format of the data returned.
+            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
+            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_publicipaddress module.
+            - In Ansible 2.8 and lower facts are always returned in raw format.
+            - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
+        default: 'curated'
+        choices:
+            - 'curated'
+            - 'raw'
+        version_added: "2.9"
 
 extends_documentation_fragment:
     - azure
@@ -93,7 +105,8 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            format=dict(type='str', choices=['curated', 'raw'], default='curated')
         )
 
         self.results = dict(
@@ -104,6 +117,7 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         self.name = None
         self.resource_group = None
         self.tags = None
+        self.format = None
 
         super(AzureRMPublicIPFacts, self).__init__(self.module_arg_spec,
                                                    supports_tags=False,
@@ -114,35 +128,74 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
+        result = []
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
 
         if self.name:
-            self.results['ansible_facts']['azure_publicipaddresses'] = self.get_item()
+            result = self.get_item()
         elif self.resource_group:
-            self.results['ansible_facts']['azure_publicipaddresses'] = self.list_resource_group()
+            result = self.list_resource_group()
         else:
-            self.results['ansible_facts']['azure_publicipaddresses'] = self.list_all()
+            result = self.list_all()
+
+        result = self.filter_and_format(result)
+
+        if self.format == 'curated':
+            self.results['publicipaddress'] = result
+        else:
+            self.results['ansible_facts']['azure_publicipaddresses'] = result
 
         return self.results
+
+    def filter_and_format(self, response):
+        results = []
+        for item in response:
+            if self.has_tags(item.tags, self.tags):
+                pip = dict()
+                if self.format == 'raw':
+                    pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+                    pip['name'] = item.name
+                    pip['type'] = item.type
+                else:
+                    pip = self.pip_to_dict(item)
+                results.append(pip)
+        return results
+
+    # duplicate with azure_rm_publicipaddress
+    def pip_to_dict(self, pip):
+        result = dict(
+            id=pip.id,
+            name=pip.name,
+            type=pip.type,
+            location=pip.location,
+            tags=pip.tags,
+            allocation_method=pip.public_ip_allocation_method,
+            version=pip.public_ip_address_version,
+            dns_settings=dict(),
+            ip_tags=dict(),
+            ip_address=pip.ip_address,
+            idle_timeout=pip.idle_timeout_in_minutes,
+            provisioning_state=pip.provisioning_state,
+            etag=pip.etag,
+            sku=pip.sku.name
+        )
+        if pip.dns_settings:
+            result['dns_settings']['domain_name_label'] = pip.dns_settings.domain_name_label
+            result['dns_settings']['fqdn'] = pip.dns_settings.fqdn
+            result['dns_settings']['reverse_fqdn'] = pip.dns_settings.reverse_fqdn
+        if pip.ip_tags:
+            result['ip_tags'] = [dict(type=x.ip_tag_type, value=x.tag) for x in pip.ip_tags]
+        return result
 
     def get_item(self):
         self.log('Get properties for {0}'.format(self.name))
         item = None
-        result = []
-
         try:
             item = self.network_client.public_ip_addresses.get(self.resource_group, self.name)
         except CloudError:
             pass
-
-        if item and self.has_tags(item.tags, self.tags):
-            pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-            pip['name'] = item.name
-            pip['type'] = item.type
-            result = [pip]
-
-        return result
+        return [item] if item else []
 
     def list_resource_group(self):
         self.log('List items in resource groups')
@@ -150,15 +203,7 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
             response = self.network_client.public_ip_addresses.list(self.resource_group)
         except AzureHttpError as exc:
             self.fail("Error listing items in resource groups {0} - {1}".format(self.resource_group, str(exc)))
-
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                pip['name'] = item.name
-                pip['type'] = item.type
-                results.append(pip)
-        return results
+        return response
 
     def list_all(self):
         self.log('List all items')
@@ -166,15 +211,8 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
             response = self.network_client.public_ip_addresses.list_all()
         except AzureHttpError as exc:
             self.fail("Error listing all items - {0}".format(str(exc)))
+        return response
 
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                pip['name'] = item.name
-                pip['type'] = item.type
-                results.append(pip)
-        return results
 
 
 def main():

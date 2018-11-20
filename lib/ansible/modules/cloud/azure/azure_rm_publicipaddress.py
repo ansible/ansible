@@ -158,7 +158,7 @@ def pip_to_dict(pip):
         result['dns_settings']['fqdn'] = pip.dns_settings.fqdn
         result['dns_settings']['reverse_fqdn'] = pip.dns_settings.reverse_fqdn
     if pip.ip_tags:
-        result['ip_tags'] = [dict(type=to_native(x.ip_tag_type), to_native(value=x.tag)) for x in pip.ip_tags]
+        result['ip_tags'] = [dict(type=to_native(x.ip_tag_type), value=to_native(x.tag)) for x in pip.ip_tags]
     return result
 
 
@@ -193,6 +193,9 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
         self.allocation_method = None
         self.domain_name = None
         self.sku = None
+        self.version = None
+        self.ip_tags = None
+        self.idle_timeout = None
 
         self.results = dict(
             changed=False,
@@ -246,17 +249,17 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                 if self.version != results['public_ip_address_version']:
                     self.log("CHANGED: version")
                     changed = True
-                    result['public_ip_address_version'] = self.version
+                    results['public_ip_address_version'] = self.version
 
-                if self.idle_timeout != result['idle_timeout_in_minutes']:
+                if self.idle_timeout != results['idle_timeout_in_minutes']:
                     self.log("CHANGED: idle_timeout")
                     changed = True
-                    result['idle_timeout_in_minutes'] = self.idle_timeout
+                    results['idle_timeout_in_minutes'] = self.idle_timeout
 
-                if str(self.ip_tags or []) != str(result['ip_tags'] or []):
+                if str(self.ip_tags or []) != str(results['ip_tags'] or []):
                     self.log("CHANGED: ip_tags")
                     changed = True
-                    result['ip_tags'] = self.ip_tags
+                    results['ip_tags'] = self.ip_tags
 
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
