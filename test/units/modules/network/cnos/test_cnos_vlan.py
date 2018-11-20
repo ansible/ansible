@@ -62,9 +62,6 @@ class TestCnosVlanModule(TestCnosModule):
     def test_cnos_vlan_id_startwith_9(self):
         set_module_args({'vlan_id': '13', 'name': 'anil', 'state': 'present'})
         result = self.execute_module(changed=False)
-        f = open("demofile.txt", "w")
-        f.write(str(result['commands']))
-        f.close()
         expected_commands = []
         self.assertEqual(result['commands'], expected_commands)
 
