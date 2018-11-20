@@ -638,18 +638,18 @@ class Operations(object):
             self._module.fail_json(msg="Failed to construct operation command. The error was: %s" % e)
 
     def _construct_opcommand_hst(self, operation):
-        if operation.get('run_on_host') is None:
+        if operation.get('run_on_hosts') is None:
             return None
         return [{
             'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
-        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_host')]
+        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_hosts')]
 
     def _construct_opcommand_grp(self, operation):
-        if operation.get('run_on_group') is None:
+        if operation.get('run_on_groups') is None:
             return None
         return [{
             'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
-        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_group')]
+        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_groups')]
 
     def _construct_opgroup(self, operation):
         return [{
