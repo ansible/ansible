@@ -239,6 +239,7 @@
       filters:
         - ip_address: "10.0.0.0/8"
       type: ip
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_ip_condition
@@ -250,6 +251,7 @@
         - ip_address: "10.0.0.0/8"
         - ip_address: "192.168.0.0/24"
       type: ip
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: add_ip_address_to_waf_regional_condition
@@ -265,6 +267,7 @@
       filters:
         - ip_address: "192.168.10.0/24"
       type: ip
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: add_ip_address_to_waf_regional_condition_no_purge
