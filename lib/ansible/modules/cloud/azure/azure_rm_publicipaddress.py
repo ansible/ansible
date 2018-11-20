@@ -38,6 +38,8 @@ options:
         choices:
             - dynamic
             - static
+            - Static
+            - Dynamic
         default: dynamic
     domain_name:
         description:
@@ -66,6 +68,8 @@ options:
         choices:
             - basic
             - standard
+            - Basic
+            - Standard
         version_added: 2.6
     ip_tags:
         description:
@@ -163,7 +167,7 @@ def pip_to_dict(pip):
     return result
 
 
-ip_tag_spec=dict(
+ip_tag_spec = dict(
     type=dict(type='str', required=True),
     value=dict(type='str', required=True)
 )
@@ -182,7 +186,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             allocation_method=dict(type='str', default='Dynamic', choices=['Dynamic', 'Static', 'dynamic', 'static']),
             domain_name=dict(type='str', aliases=['domain_name_label']),
             sku=dict(type='str', choices=['Basic', 'Standard', 'basic', 'standard']),
-            ip_tags=dict(type='list', elements='dict',options=ip_tag_spec),
+            ip_tags=dict(type='list', elements='dict', options=ip_tag_spec),
             idle_timeout=dict(type='int', default=4)
         )
 

@@ -214,7 +214,6 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         return response
 
 
-
 def main():
     AzureRMPublicIPFacts()
 
