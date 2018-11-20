@@ -13,6 +13,7 @@ import ansible.module_utils.netapp as netapp_utils
 if not netapp_utils.has_netapp_lib():
     raise SkipTest("skipping as missing required netapp_lib")
 
+
 class MockONTAPConnection(object):
     ''' mock a server connection to ONTAP host '''
 
