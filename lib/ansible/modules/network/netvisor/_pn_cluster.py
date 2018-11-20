@@ -77,7 +77,7 @@ options:
     description:
       - Validate the inter-switch links and state of switches in the cluster.
     choices: ['validate', 'no-validate']
-    type: 'bool'
+    type: bool
 """
 
 EXAMPLES = """

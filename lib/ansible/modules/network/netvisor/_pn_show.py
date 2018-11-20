@@ -49,7 +49,6 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
-    default: 'local'
   pn_command:
     description:
       - The C(pn_command) takes a CLI show command as value.
