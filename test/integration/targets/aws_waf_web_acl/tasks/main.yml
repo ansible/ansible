@@ -285,6 +285,7 @@
         - ip_address: "192.168.20.0/24"
       purge_filters: yes
       type: ip
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: add_ip_address_to_waf_regional_condition_purge
@@ -304,6 +305,7 @@
         target_string: Hello
         header: Content-type
       type: byte
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_byte_condition
@@ -317,6 +319,7 @@
         target_string: Hello
         header: Content-type
       type: byte
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: recreate_waf_regional_byte_condition
@@ -334,6 +337,7 @@
         - country: AU
         - country: AT
       type: geo
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_geo_condition
@@ -346,6 +350,7 @@
           size: 300
           comparison: GT
       type: size
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_size_condition
@@ -357,6 +362,7 @@
         - field_to_match: query_string
           transformation: url_decode
       type: sql
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_sql_condition
@@ -368,6 +374,7 @@
         - field_to_match: query_string
           transformation: url_decode
       type: xss
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_xss_condition
@@ -384,6 +391,7 @@
               - '^Hi there'
               - '.*Good Day to You'
       type: regex
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_regex_condition
@@ -401,6 +409,7 @@
               - '^Hi there'
               - '.*Good Day to You'
       type: regex
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_second_waf_regional_regex_condition
@@ -427,6 +436,7 @@
               - '.*Good Day to You'
       type: regex
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: delete_waf_regional_regex_condition
@@ -445,6 +455,7 @@
               - '.*Good Day to You'
       type: regex
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: delete_second_waf_regional_regex_condition
@@ -461,6 +472,7 @@
               - '^Hi there'
               - '.*Good Day to You'
       type: regex
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: recreate_waf_regional_regex_condition
@@ -598,6 +610,7 @@
           type: byte
           negated: no
       purge_conditions: yes
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_aws_regional_waf_rule
@@ -621,6 +634,7 @@
         - name: "{{ resource_prefix }}_byte_condition"
           type: byte
           negated: no
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_aws_waf_regional_rule
@@ -644,6 +658,7 @@
         - name: "{{ resource_prefix }}_xss_condition"
           type: xss
           negated: no
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: add_conditions_to_aws_waf_regional_rule
@@ -671,6 +686,7 @@
           type: size
           negated: no
       purge_conditions: yes
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: add_and_remove_waf_regional_rule_conditions
@@ -686,6 +702,7 @@
       name: "{{ resource_prefix }}_size_condition"
       type: size
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -839,6 +856,7 @@
       default_action: block
       purge_rules: yes
       state: present
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: create_waf_regional_web_acl
@@ -852,6 +870,7 @@
           action: block
       default_action: block
       state: present
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: recreate_waf_regional_web_acl
@@ -875,6 +894,7 @@
         - name: "{{ resource_prefix }}_xss_condition"
           type: xss
           negated: no
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
 
@@ -887,6 +907,7 @@
           action: allow
       default_action: block
       state: present
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: waf_regional_web_acl_add_rule
@@ -907,6 +928,7 @@
       purge_rules: yes
       default_action: block
       state: present
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: waf_regional_web_acl_add_rule
@@ -927,6 +949,7 @@
       purge_rules: yes
       default_action: block
       state: present
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: waf_regional_web_acl_swap_rule
@@ -935,6 +958,7 @@
     aws_waf_rule:
       name: "{{ resource_prefix }}_rule"
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -949,6 +973,7 @@
     aws_waf_web_acl:
       name: "{{ resource_prefix }}_web_acl"
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     register: delete_waf_regional_web_acl
@@ -963,6 +988,7 @@
     aws_waf_rule:
       name: "{{ resource_prefix }}_rule"
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
 
@@ -1067,6 +1093,7 @@
       name: "{{ resource_prefix }}_web_acl"
       state: absent
       purge_rules: yes
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1076,6 +1103,7 @@
       name: "{{ resource_prefix }}_rule_2"
       state: absent
       purge_conditions: yes
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1085,6 +1113,7 @@
       name: "{{ resource_prefix }}_rule"
       state: absent
       purge_conditions: yes
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1094,6 +1123,7 @@
       name: "{{ resource_prefix }}_xss_condition"
       type: xss
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1103,6 +1133,7 @@
       name: "{{ resource_prefix }}_sql_condition"
       type: sql
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1112,6 +1143,7 @@
       name: "{{ resource_prefix }}_size_condition"
       type: size
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1121,6 +1153,7 @@
       name: "{{ resource_prefix }}_geo_condition"
       type: geo
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1130,6 +1163,7 @@
       name: "{{ resource_prefix }}_byte_condition"
       type: byte
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1139,6 +1173,7 @@
       name: "{{ resource_prefix }}_ip_condition"
       type: ip
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1148,6 +1183,7 @@
       name: "{{ resource_prefix }}_regex_condition_part_2"
       type: regex
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
@@ -1157,6 +1193,7 @@
       name: "{{ resource_prefix }}_regex_condition"
       type: regex
       state: absent
+      region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
     ignore_errors: yes
