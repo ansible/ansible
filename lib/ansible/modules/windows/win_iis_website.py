@@ -52,7 +52,7 @@ options:
     description:
       - Custom site Parameters from string where properties are separated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
 author:
-- Henrik Wallström
+- Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''

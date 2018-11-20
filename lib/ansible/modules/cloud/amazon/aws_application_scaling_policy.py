@@ -21,8 +21,8 @@ description:
     - Creates, updates or removes a Scaling Policy
 version_added: "2.5"
 author:
-    - Gustavo Maia(@gurumaia)
-    - Chen Leibovich(@chenl87)
+    - Gustavo Maia (@gurumaia)
+    - Chen Leibovich (@chenl87)
 requirements: [ json, botocore, boto3 ]
 options:
     policy_name:

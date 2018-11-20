@@ -54,7 +54,7 @@ options:
 requirements:
   - "python >= 2.6"
   - pyghmi
-author: "Bulat Gaifullin (gaifullinbf@gmail.com)"
+author: "Bulat Gaifullin (@bgaifullin) <gaifullinbf@gmail.com>"
 '''
 
 RETURN = '''

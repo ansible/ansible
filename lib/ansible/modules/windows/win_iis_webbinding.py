@@ -59,7 +59,7 @@ options:
     version_added: "2.5"
 author:
   - Noah Sparks (@nwsparks)
-  - Henrik Wallström
+  - Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''

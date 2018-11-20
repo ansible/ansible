@@ -17,7 +17,7 @@ module: iosxr_system
 version_added: "2.3"
 author:
   - "Peter Sprygada (@privateip)"
-  - "Kedar Kekan @kedarX"
+  - "Kedar Kekan (@kedarX)"
 short_description: Manage the system attributes on Cisco IOS XR devices
 description:
   - This module provides declarative management of node system attributes

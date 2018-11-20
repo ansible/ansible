@@ -20,7 +20,7 @@ short_description: Manage Red Hat Network registration using the C(rhnreg_ks) co
 description:
     - Manage registration to the Red Hat Network.
 version_added: "1.2"
-author: James Laska
+author: James Laska (@jlaska)
 notes:
     - In order to register a system, rhnreg_ks requires either a username and password, or an activationkey.
 requirements:

@@ -14,7 +14,7 @@ short_description: Gather facts about availability zones in AWS.
 description:
     - Gather facts about availability zones in AWS.
 version_added: '2.5'
-author: 'Henrique Rodrigues (github.com/Sodki)'
+author: 'Henrique Rodrigues (@Sodki)'
 options:
   filters:
     description:

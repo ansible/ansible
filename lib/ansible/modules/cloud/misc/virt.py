@@ -55,7 +55,7 @@ requirements:
 author:
     - Ansible Core Team
     - Michael DeHaan
-    - Seth Vidal
+    - Seth Vidal (@skvidal)
 '''
 
 EXAMPLES = '''

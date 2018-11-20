@@ -117,7 +117,7 @@ options:
 requirements:
      - "profitbricks"
      - "python >= 2.6"
-author: Matt Baldwin (baldwin@stackpointcloud.com)
+author: Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
 '''
 
 EXAMPLES = '''

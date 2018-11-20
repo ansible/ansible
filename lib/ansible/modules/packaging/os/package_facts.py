@@ -25,9 +25,9 @@ options:
     required: False
 version_added: "2.5"
 author:
-  - Matthew Jones
-  - Brian Coca
-  - Adam Miller
+  - Matthew Jones (@matburt)
+  - Brian Coca (@bcoca)
+  - Adam Miller (@maxamillion)
 '''
 
 EXAMPLES = '''

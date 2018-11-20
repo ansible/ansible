@@ -14,7 +14,7 @@ description:
     - Gather facts about customer gateways in AWS
 version_added: "2.5"
 requirements: [ boto3 ]
-author: Madhura Naniwadekar(@Madhura-CSI)
+author: Madhura Naniwadekar (@Madhura-CSI)
 options:
   filters:
     description:

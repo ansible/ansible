@@ -170,7 +170,7 @@ requirements: [ gentoolkit ]
 author:
     - "William L Thomson Jr (@wltjr)"
     - "Yap Sok Ann (@sayap)"
-    - "Andrew Udvare"
+    - "Andrew Udvare (@Tatsh)"
 '''
 
 EXAMPLES = '''

@@ -20,7 +20,9 @@ module: os_stack
 short_description: Add/Remove Heat Stack
 extends_documentation_fragment: openstack
 version_added: "2.2"
-author: "Mathieu Bultel (matbu), Steve Baker (steveb)"
+author:
+  - "Mathieu Bultel (@matbu)"
+  - "Steve Baker (@steveb)"
 description:
    - Add or Remove a Stack to an OpenStack Heat
 options:
