@@ -642,14 +642,14 @@ class Operations(object):
             return None
         return [{
             'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
-        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_hosts')]
+        } if str(_host) != '0' else {'hostid': '0'} for _host in operation.get('run_on_hosts')]
 
     def _construct_opcommand_grp(self, operation):
         if operation.get('run_on_groups') is None:
             return None
         return [{
-            'hostid': self._zapi_wrapper.get_host_by_host_name(_host)['hostid']
-        } if _host != '0' else {'hostid': '0'} for _host in operation.get('run_on_groups')]
+            'groupid': self._zapi_wrapper.get_hostgroup_by_hostgroup_name(_group)['hostid']
+        } for _group in operation.get('run_on_groups')]
 
     def _construct_opgroup(self, operation):
         return [{
