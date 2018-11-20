@@ -803,7 +803,12 @@ class Filter(object):
         self._zapi = zbx
         self._zapi_wrapper = zapi_wrapper
 
-    def _construct_evaltype(self, _eval):
+    def _construct_evaltype(self, _eval, _conditions):
+        if len(_conditions) <= 1:
+            return {
+                'evaltype': '0',
+                'formula': None
+            }
         return {
             'evaltype': '3',
             'formula': _eval
@@ -954,8 +959,6 @@ class Filter(object):
         if _conditions is None:
             return None
         constructed_data = {}
-        constructed_data['evaltype'] = self._construct_evaltype(_formula)['evaltype']
-        constructed_data['formula'] = self._construct_evaltype(_formula)['formula']
         constructed_data['conditions'] = []
         for cond in _conditions:
             condition_type = self._construct_conditiontype(cond)
@@ -966,6 +969,12 @@ class Filter(object):
                 "formulaid": cond.get("formulaid"),
                 "operator": self._construct_operator(cond)
             })
+        _constructed_evaltype = self._construct_evaltype(
+            _formula,
+            constructed_data['conditions']
+        )
+        constructed_data['evaltype'] = _constructed_evaltype['evaltype']
+        constructed_data['formula'] = _constructed_evaltype['formula']
         return cleanup_data(constructed_data)
 
 
