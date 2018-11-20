@@ -478,6 +478,8 @@ files:
       - windows
   $module_utils/docker_common.py:
     maintainers: $team_docker
+  $module_utils/facts:
+    support: core
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -930,11 +932,15 @@ files:
     labels:
       - cloud
   lib/ansible/plugins/inventory/scaleway.py: *scaleway
+  lib/ansible/plugins/inventory/script.py:
+    support: core
   lib/ansible/plugins/inventory/vultr.py: *vultr
   lib/ansible/plugins/inventory/yaml.py:
     support: core
 ###############################
 # plugins/loader
+  lib/ansible/plugins/__init__.py:
+    support: core
   lib/ansible/plugins/loader:
     support: core
 
