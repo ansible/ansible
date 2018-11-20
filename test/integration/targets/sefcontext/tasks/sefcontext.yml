@@ -20,6 +20,14 @@
     name: policycoreutils-python
   when:
     - ansible_distribution == 'RedHat'
+    - ansible_distribution_major_version|int < 8
+
+- name: install requirements for rhel8 beta
+  package:
+    name: python3-policycoreutils
+  when:
+    - ansible_distribution == 'RedHat'
+    - ansible_distribution_major_version|int >= 8
 
 - name: Ensure we start with a clean state
   sefcontext:
