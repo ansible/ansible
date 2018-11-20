@@ -982,7 +982,7 @@ def convert_unicode_to_str(data):
 
 def map_to_int(strs, value):
     """ Convert string values to integers"""
-    strs = [s.lower() for s in strs]
+    strs = [s.lower() if isinstance(s, str) else s for s in strs]
     value = value.lower()
     tmp_dict = dict(zip(strs, list(range(len(strs)))))
     return str(tmp_dict[value])
