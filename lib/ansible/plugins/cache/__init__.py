@@ -46,9 +46,6 @@ def sanitize_key(funky):
     return wrapper
 
 
-sanatize_key = sanitize_key()
-
-
 class BaseCacheModule(with_metaclass(ABCMeta, object)):
 
     # Backwards compat only.  Just import the global display instead
