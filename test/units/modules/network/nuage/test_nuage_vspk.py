@@ -18,16 +18,19 @@
 
 import sys
 
-from nose.plugins.skip import SkipTest
+import pytest
+
+pytestmark = []
+
 if not(sys.version_info[0] == 2 and sys.version_info[1] >= 7):
-    raise SkipTest('Nuage Ansible modules requires Python 2.7')
+    pytestmark.append(pytest.mark.skip('Nuage Ansible modules requires Python 2.7'))
 
 try:
     from vspk import v5_0 as vsdk
     from bambou.exceptions import BambouHTTPError
     from ansible.modules.network.nuage import nuage_vspk
 except ImportError:
-    raise SkipTest('Nuage Ansible modules requires the vspk and bambou python libraries')
+    pytestmark.append(pytest.mark.skip('Nuage Ansible modules requires the vspk and bambou python libraries'))
 
 from units.compat.mock import patch
 from units.modules.utils import set_module_args, AnsibleExitJson, AnsibleFailJson
