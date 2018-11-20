@@ -190,7 +190,10 @@ def list_regional_web_acls_with_backoff(client):
 
 def list_web_acls(client, module):
     try:
-        return list_web_acls_with_backoff(client)
+        if type(client).__name__ == 'WAF':
+            return list_web_acls_with_backoff(client)
+        elif type(client).__name__ == 'WAFRegional':
+            return list_regional_web_acls_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't obtain web acls")
 
