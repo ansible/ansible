@@ -21,6 +21,7 @@ options:
       description: Wether to use waf_regional module. Defaults to true
       default: false
       required: no
+      type: bool
       version_added: "2.8"
 
 author:
