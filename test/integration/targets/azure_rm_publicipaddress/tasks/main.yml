@@ -42,6 +42,8 @@
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
+      allocation_method: Static
+      domain_name: "{{ domain_name }}"
       append_tags: yes
       tags:
           delete: never
@@ -67,6 +69,8 @@
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
+      allocation_method: Static
+      domain_name: "{{ domain_name }}"
       append_tags: no
   register: output
 
@@ -84,9 +88,9 @@
 - assert:
       that:
       - "pip.publicipaddresses | length == 1"
-      - "pip.publicipaddresses[0].name == pip{{ rpfx }}"
-      - pip.publicipaddresses[0].allocation_method == Static
-      - "pip.publicipaddresses[0].domain_name == {{ domain_name }}"
+      - pip.publicipaddresses[0].name == "pip{{ rpfx }}"
+      - pip.publicipaddresses[0].allocation_method == 'Static'
+      - pip.publicipaddresses[0].dns_settings.domain_name_label == domain_name
 
 - name: Gather facts for all public ips
   azure_rm_publicipaddress_facts:
