@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rabbitmq_vhost_limits
-author: '"Hiroyuki Matsuo (@h-matsuo)"'
+author: Hiroyuki Matsuo (@h-matsuo)
 version_added: "2.8"
 
 short_description: Manage the state of virtual host limits in RabbitMQ
