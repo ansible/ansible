@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: apache2_mod_proxy
-author: Olivier Boukili (@oboukili)"
+author: Olivier Boukili (@oboukili)
 version_added: "2.2"
 short_description: Set and/or get members' attributes of an Apache httpd 2.4 mod_proxy balancer pool
 description:

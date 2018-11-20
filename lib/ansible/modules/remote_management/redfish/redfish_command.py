@@ -64,7 +64,7 @@ options:
     description:
       - bootdevice when setting boot configuration
 
-author: "Jose Delarosa (github: jose-delarosa)"
+author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''

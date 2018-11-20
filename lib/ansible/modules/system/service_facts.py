@@ -32,7 +32,6 @@ notes:
 
 
 author:
-  - Matthew Jones
   - Adam Miller (@maxamillion)
 '''
 

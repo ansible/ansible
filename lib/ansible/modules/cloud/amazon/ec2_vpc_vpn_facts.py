@@ -16,7 +16,7 @@ description:
     - Gather facts about VPN Connections in AWS.
 version_added: "2.6"
 requirements: [ boto3 ]
-author: Madhura Naniwadekar(@Madhura-CSI)
+author: Madhura Naniwadekar (@Madhura-CSI)
 options:
   filters:
     description:

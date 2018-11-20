@@ -106,7 +106,7 @@ options:
       - absent
 extends_documentation_fragment: f5
 author:
-  - Wojciech Wypior(@wojtek0806)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''

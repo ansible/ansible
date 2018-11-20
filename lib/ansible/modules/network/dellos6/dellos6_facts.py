@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: dellos6_facts
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Collect facts from remote devices running Dell EMC Networking OS6
 description:
   - Collects a base set of device facts from a remote device that

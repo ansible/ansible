@@ -63,7 +63,7 @@ options:
       - value of Manager attribute to update
     default: 'null'
 
-author: "Jose Delarosa (github: jose-delarosa)"
+author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''

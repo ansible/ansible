@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 ---
 module: nios_txt_record
 version_added: "2.7"
-author: "Corey Wanless"
+author: "Corey Wanless (@coreywan)"
 short_description: Configure Infoblox NIOS txt records
 description:
   - Adds and/or removes instances of txt record objects from

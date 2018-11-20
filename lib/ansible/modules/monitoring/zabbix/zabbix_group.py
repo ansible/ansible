@@ -22,7 +22,7 @@ description:
    - Delete existing host groups if they exist.
 version_added: "1.8"
 author:
-    - "(@cove)"
+    - "Cove (@cove)"
     - "Tony Minfei Ding"
     - "Harrison Gu (@harrisongu)"
 requirements:

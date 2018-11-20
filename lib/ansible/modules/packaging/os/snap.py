@@ -55,8 +55,8 @@ options:
         default: stable
 
 author:
-    - Victor Carceler (vcarceler@iespuigcastellar.xeill.net)
-    - Stanislas Lange (angristan) <angristan@pm.me>
+    - Victor Carceler (@vcarceler) <vcarceler@iespuigcastellar.xeill.net>
+    - Stanislas Lange (@angristan) <<angristan@pm.me>
 '''
 
 EXAMPLES = '''

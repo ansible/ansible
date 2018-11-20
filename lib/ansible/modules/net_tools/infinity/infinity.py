@@ -26,7 +26,7 @@ description:
   - "Manage Infinity IPAM using REST API"
 version_added: "2.4"
 author:
-  - "Meirong Liu"
+  - "Meirong Liu (@MeganLiu)"
 options:
   server_ip:
     description:

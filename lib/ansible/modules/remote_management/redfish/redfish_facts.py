@@ -43,7 +43,7 @@ options:
     description:
       - Password for authentication with OOB controller
 
-author: "Jose Delarosa (github: jose-delarosa)"
+author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''

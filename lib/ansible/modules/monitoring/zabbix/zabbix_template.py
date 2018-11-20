@@ -33,7 +33,7 @@ description:
     - create/delete/dump zabbix template
 version_added: "2.5"
 author:
-    - "@sookido"
+    - "sookido (@sookido)"
     - "Logan Vig (@logan2211)"
 requirements:
     - "python >= 2.6"

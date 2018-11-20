@@ -18,7 +18,7 @@ description:
     - Create and manage AWS EC2 instance
 version_added: "2.5"
 author:
-  - Ryan Scott Brown, @ryansb
+  - Ryan Scott Brown (@ryansb)
 requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:

@@ -31,7 +31,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_useraccount
-author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
+author: Chaitanya Deshpande (@chaitanyaavi) <chaitanya.deshpande@avinetworks.com>
 
 short_description: Avi UserAccount Module
 description:

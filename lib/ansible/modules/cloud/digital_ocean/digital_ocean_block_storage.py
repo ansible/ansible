@@ -59,7 +59,7 @@ notes:
   - If snapshot_id is used, region and block_size will be ignored and changed to null.
 
 author:
-    - "Harnek Sidhu (github: @harneksidhu)"
+    - "Harnek Sidhu (@harneksidhu)"
 '''
 
 EXAMPLES = '''

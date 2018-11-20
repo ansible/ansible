@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: tempfile
 version_added: "2.3"
 author:
-  - Krzysztof Magosa
+  - Krzysztof Magosa (@krzysztof-magosa)
 short_description: Creates temporary files and directories.
 description:
   - The C(tempfile) module creates temporary files and directories. C(mktemp) command takes different parameters on various systems, this module helps

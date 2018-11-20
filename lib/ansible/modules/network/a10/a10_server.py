@@ -22,7 +22,9 @@ version_added: 1.8
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices' server object.
 description:
     - Manage SLB (Server Load Balancer) server objects on A10 Networks devices via aXAPIv2.
-author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
+author:
+  - Eric Chou (@ericchou)
+  - Mischa Peters (@mischapeters)
 notes:
     - Requires A10 Networks aXAPI 2.1.
 extends_documentation_fragment:

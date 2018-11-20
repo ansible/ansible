@@ -44,7 +44,7 @@ notes:
    -  Powershell 5.0 or higher is needed.
 
 author:
-- Daniele Lazzari
+- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = '''
