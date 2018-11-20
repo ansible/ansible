@@ -88,6 +88,7 @@ options:
         choices:
             - ipv4
             - ipv6
+        default: ipv4
         version_added: 2.8
 
 extends_documentation_fragment:
@@ -183,7 +184,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
             version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
-            allocation_method=dict(type='str', default='Dynamic', choices=['Dynamic', 'Static', 'dynamic', 'static']),
+            allocation_method=dict(type='str', default='dynamic', choices=['Dynamic', 'Static', 'dynamic', 'static']),
             domain_name=dict(type='str', aliases=['domain_name_label']),
             sku=dict(type='str', choices=['Basic', 'Standard', 'basic', 'standard']),
             ip_tags=dict(type='list', elements='dict', options=ip_tag_spec),
