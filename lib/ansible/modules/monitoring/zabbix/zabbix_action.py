@@ -130,6 +130,24 @@ options:
             - The IDs used in the expression must exactly match the ones
               defined in the filter conditions. No condition can remain unused or omitted.
             - Required for custom expression filters.
+    default_message:
+        description:
+            - Problem message default text.
+    default_subject:
+        description:
+            - Problem message default subject.
+    recovery_default_message:
+        description:
+            - Recovery message text.
+    recovery_default_subject:
+        description:
+            - Recovery message subject.
+    acknowledge_default_message:
+        description:
+            - Acknowledge operation message text.
+    acknowledge_default_subject:
+        description:
+            - Acknowledge operation message subject.
     operations:
         type: list
         description:
@@ -584,6 +602,12 @@ class Action(object):
                 'internal'], kwargs['event_source']),
             'esc_period': kwargs.get('esc_period'),
             'filter': kwargs['conditions'],
+            'def_longdata': kwargs['default_message'],
+            'def_shortdata': kwargs['default_subject'],
+            'r_longdata': kwargs['recovery_default_message'],
+            'r_shortdata': kwargs['recovery_default_subject'],
+            'ack_longdata': kwargs['acknowledge_default_message'],
+            'ack_shortdata': kwargs['acknowledge_default_subject'],
             'operations': kwargs['operations'],
             'recovery_operations': kwargs.get('recovery_operations'),
             'acknowledge_operations': kwargs.get('acknowledge_operations'),
@@ -1133,6 +1157,12 @@ def main():
             event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             status=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
+            default_message=dict(type='str', required=False, default=None),
+            default_subject=dict(type='str', required=False, default=None),
+            recovery_default_message=dict(type='str', required=False, default=None),
+            recovery_default_subject=dict(type='str', required=False, default=None),
+            acknowledge_default_message=dict(type='str', required=False, default=None),
+            acknowledge_default_subject=dict(type='str', required=False, default=None),
             conditions=dict(type='list', required=False, default=None),
             formula=dict(type='str', required=False, default=None),
             operations=dict(type='list', required=False, default=None),
@@ -1157,6 +1187,12 @@ def main():
     event_source = module.params['event_source']
     state = module.params['state']
     status = module.params['status']
+    default_message = module.params['default_message']
+    default_subject = module.params['default_subject']
+    recovery_default_message = module.params['recovery_default_message']
+    recovery_default_subject = module.params['recovery_default_subject']
+    acknowledge_default_message = module.params['acknowledge_default_message']
+    acknowledge_default_subject = module.params['acknowledge_default_subject']
     conditions = module.params['conditions']
     formula = module.params['formula']
     operations = module.params['operations']
@@ -1193,6 +1229,12 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
+                default_message = default_message,
+                default_subject = default_subject,
+                recovery_default_message = recovery_default_message,
+                recovery_default_subject = recovery_default_subject,
+                acknowledge_default_message = acknowledge_default_message,
+                acknowledge_default_subject = acknowledge_default_subject,
                 operations=ops.construct_the_data(operations),
                 recovery_operations=recovery_ops.construct_the_data(recovery_operations),
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
@@ -1216,6 +1258,12 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
+                default_message = default_message,
+                default_subject = default_subject,
+                recovery_default_message = recovery_default_message,
+                recovery_default_subject = recovery_default_subject,
+                acknowledge_default_message = acknowledge_default_message,
+                acknowledge_default_subject = acknowledge_default_subject,
                 operations=ops.construct_the_data(operations),
                 recovery_operations=recovery_ops.construct_the_data(recovery_operations),
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
