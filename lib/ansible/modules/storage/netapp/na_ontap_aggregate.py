@@ -79,7 +79,7 @@ options:
   raid_type:
     description:
     - Specifies the type of RAID groups to use in the new aggregate.
-    - The default value is raid4 on most platforms.
+    choices: ['raid4', 'raid_dp', 'raid_tec']
     version_added: '2.7'
 
   unmount_volumes:
@@ -109,12 +109,6 @@ options:
     type: list
     description:
     - List of mirror disks to use. It must contain the same number of disks specified in 'disks'.
-    version_added: '2.8'
-
-  raid_type:
-    description:
-    - Specifies the type of RAID groups to use in the new aggregate.
-    choices: ['raid4', 'raid_dp', 'raid_tec']
     version_added: '2.8'
 
   spare_pool:
