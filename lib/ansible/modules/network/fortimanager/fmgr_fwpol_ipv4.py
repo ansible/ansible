@@ -29,9 +29,9 @@ DOCUMENTATION = '''
 module: fmgr_fwpol_ipv4
 version_added: "2.8"
 author:
-    - Luke Weighall - lweighall
-    - Andrew Welsh - Ghilli3
-    - Jim Huber - p4r4n0y1ng
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Allows the add/delete of Firewall Policies on Packages in FortiManager.
 description:
   -  Allows the add/delete of Firewall Policies on Packages in FortiManager.
@@ -312,7 +312,7 @@ options:
 
   schedule_timeout:
     description:
-      - Enable to force current sessions to end when the schedule object times out. Disable allows them to end from inactivity.
+      - Enable to force current sessions to end when the schedule object times out.
       - choice | disable | Disable schedule timeout.
       - choice | enable | Enable schedule timeout.
     required: false
@@ -656,7 +656,7 @@ options:
   firewall_session_dirty:
     description:
       - How to handle sessions if the configuration of this firewall policy changes.
-      - choice | check-all | Flush all current sessions accepted by this policy. These sessions must be started and re-matched with policies.
+      - choice | check-all | Flush all current sessions accepted by this policy.
       - choice | check-new | Continue to allow sessions already accepted by this policy.
     required: false
     choices: ["check-all", "check-new"]
@@ -866,7 +866,6 @@ options:
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED. This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, OMIT THE USE OF THIS PARAMETER AND USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
     required: false
 
   vpn_dst_node_host:
@@ -891,7 +890,6 @@ options:
       - Dictionaries must use FortiManager API parameters, not the ansible ones listed below.
       - If submitted, all other prefixed sub-parameters ARE IGNORED. This object is MUTUALLY EXCLUSIVE with its options.
       - We expect that you know what you are doing with these list parameters, and are leveraging the JSON API Guide.
-      - WHEN IN DOUBT, OMIT THE USE OF THIS PARAMETER AND USE THE SUB OPTIONS BELOW INSTEAD TO CREATE OBJECTS WITH MULTIPLE TASKS
     required: false
 
   vpn_src_node_host:
@@ -1003,7 +1001,7 @@ except ImportError:
 
 def fmgr_firewall_policy_addsetdelete(fmg, paramgram):
     """
-    fmgr_firewall_policy -- Your Description here, bruh
+    fmgr_firewall_policy -- Add/Set/Deletes Firewall Policy Objects defined in the "paramgram"
     """
 
     mode = paramgram["mode"]
