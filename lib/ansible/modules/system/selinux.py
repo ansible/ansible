@@ -39,7 +39,7 @@ options:
 notes:
    - Not tested on any debian based system
 requirements: [ libselinux-python ]
-author: "Derek Carter (@goozbach) <goozbach@friocorte.com>
+author: "Derek Carter (@goozbach) <goozbach@friocorte.com>"
 '''
 
 EXAMPLES = '''
