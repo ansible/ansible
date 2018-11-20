@@ -18,7 +18,7 @@
     password: '{{ key_password }}'
   vars: &become_vars
     ansible_become: True
-    ansible_become_method: runasd
+    ansible_become_method: runas
     ansible_become_user: '{{ ansible_user }}'
     ansible_become_pass: '{{ ansible_password }}'
 
