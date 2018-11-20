@@ -29,12 +29,12 @@ DOCUMENTATION = '''
 module: fmgr_fwobj_vip
 version_added: "2.8"
 author:
-    - Luke Weighall - lweighall
-    - Andrew Welsh - Ghilli3
-    - Jim Huber - p4r4n0y1ng
-short_description: Manages Virtual IPs objects in FortiManager.
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
+short_description: Manages Virtual IPs objects in FortiManager
 description:
-  -  Manages Virtual IP objects in FortiManager for IPv4.
+  -  Manages Virtual IP objects in FortiManager for IPv4
 
 options:
   adom:
@@ -45,7 +45,7 @@ options:
 
   host:
     description:
-      - The FortiManager's address.
+      - The FortiManager's Address.
     required: true
 
   username:
@@ -61,7 +61,7 @@ options:
   mode:
     description:
       - Sets one of three modes for managing the object.
-      - Allows use of soft-adds instead of overwriting existing values.
+      - Allows use of soft-adds instead of overwriting existing values
     choices: ['add', 'set', 'delete', 'update']
     required: false
     default: add
@@ -89,7 +89,7 @@ options:
       - choice | load-balance | Load balance.
       - choice | server-load-balance | Server load balance.
       - choice | dns-translation | DNS translation.
-      - choice | fqdn | FQDN Translation.
+      - choice | fqdn | FQDN Translation
     required: false
     choices: ["static-nat", "load-balance", "server-load-balance", "dns-translation", "fqdn"]
 
@@ -137,7 +137,7 @@ options:
 
   ssl_server_algorithm:
     description:
-      - Permitted encryption algorithms for the server side of SSL full mode sessions according to encryption strength.
+      - Permitted encryption algorithms for the server side of SSL full mode sessions according to encryption strength
       - choice | high | High encryption. Allow only AES and ChaCha.
       - choice | low | Low encryption. Allow AES, ChaCha, 3DES, RC4, and DES.
       - choice | medium | Medium encryption. Allow AES, ChaCha, 3DES, and RC4.
@@ -149,7 +149,6 @@ options:
   ssl_send_empty_frags:
     description:
       - Enable/disable sending empty fragments to avoid CBC IV attacks (SSL 3.0 &amp; TLS 1.0 only).
-      - sabled for compatibility with older systems.
       - choice | disable | Do not send empty fragments.
       - choice | enable | Send empty fragments.
     required: false
@@ -157,11 +156,10 @@ options:
 
   ssl_pfs:
     description:
-      - Select the cipher suites that can be used for SSL perfect forward secrecy (PFS). Applies to both client and
-      - server sessions.
+      - Select the cipher suites that can be used for SSL perfect forward secrecy (PFS).
       - choice | require | Allow only Diffie-Hellman cipher-suites, so PFS is applied.
       - choice | deny | Allow only non-Diffie-Hellman cipher-suites, so PFS is not applied.
-      - choice | allow | Allow use of any cipher suite so PFS may or may not be used depending on the cipher suite.
+      - choice | allow | Allow use of any cipher suite so PFS may or may not be used depending on the cipher suite
     required: false
     choices: ["require", "deny", "allow"]
 
@@ -339,7 +337,7 @@ options:
 
   src_filter:
     description:
-      - Source address filter. Each address must be either an IP/subnet (x.x.x.x/n) or a range (x.x.x.x-y.y.y.y).
+      - Source address filter. Each address must be either an IP/subnet (x.x.x.x/n) or a range (x.x.x.x-y.y.y.y). 
       - Separate addresses with spaces.
     required: false
 
@@ -391,7 +389,8 @@ options:
 
   persistence:
     description:
-      - Configure client persistance to servers in same session.
+      - Configure how to make sure that clients connect to the same server every time they make a request that is part
+      - of the same session.
       - choice | none | None.
       - choice | http-cookie | HTTP cookie.
       - choice | ssl-session-id | SSL session ID.
@@ -408,7 +407,7 @@ options:
 
   nat_source_vip:
     description:
-      - Enable to prevent unintended servers from using a virtual IP.
+      - Enable to prevent unintended servers from using a virtual IP. 
       - Disable to use the actual IP address of the server as the source address.
       - choice | disable | Do not force to NAT as VIP.
       - choice | enable | Force to NAT as VIP.
@@ -476,7 +475,7 @@ options:
 
   http_ip_header_name:
     description:
-      - For HTTP multiplexing, enter a custom HTTPS header name. The original client IP address is added to header.
+      - For HTTP multiplexing, enter a custom HTTPS header name. The orig client IP address is added to this header.
       - If empty, X-Forwarded-For is used.
     required: false
 
@@ -490,8 +489,8 @@ options:
 
   http_cookie_share:
     description:
-      - Control sharing of cookies across virtual servers.
-      - Same-ip means a cookie from one virtual server can be used by another. Disable stops cookie sharing.
+      - Control sharing of cookies across virtual servers. same-ip means a cookie from one virtual server can be used
+      - by another. Disable stops cookie sharing.
       - choice | disable | Only allow HTTP cookie to match this virtual server.
       - choice | same-ip | Allow HTTP cookie to match any virtual server with same IP.
     required: false
@@ -543,7 +542,8 @@ options:
 
   extintf:
     description:
-      - Interface connected to the source network that receives the packets that will be forwarded to the dst net.
+      - Interface connected to the source network that receives the packets that will be forwarded to the destination
+      - network.
     required: false
 
   extaddr:
@@ -587,439 +587,632 @@ options:
 
   dynamic_mapping_arp_reply:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_color:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_comment:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_dns_mapping_ttl:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_extaddr:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_extintf:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_extip:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_extport:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_gratuitous_arp_interval:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_http_cookie_age:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_http_cookie_domain:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_http_cookie_domain_from_host:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_http_cookie_generation:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_http_cookie_path:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_http_cookie_share:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | same-ip |
     required: false
     choices: ["disable", "same-ip"]
 
   dynamic_mapping_http_ip_header:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_http_ip_header_name:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_http_multiplex:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_https_cookie_secure:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ldb_method:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | static |
+      - choice | round-robin |
+      - choice | weighted |
+      - choice | least-session |
+      - choice | least-rtt |
+      - choice | first-alive |
+      - choice | http-host |
     required: false
     choices: ["static", "round-robin", "weighted", "least-session", "least-rtt", "first-alive", "http-host"]
 
   dynamic_mapping_mapped_addr:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_mappedip:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_mappedport:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_max_embryonic_connections:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_monitor:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_nat_source_vip:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_outlook_web_access:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_persistence:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | none |
+      - choice | http-cookie |
+      - choice | ssl-session-id |
     required: false
     choices: ["none", "http-cookie", "ssl-session-id"]
 
   dynamic_mapping_portforward:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_portmapping_type:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | 1-to-1 |
+      - choice | m-to-n |
     required: false
     choices: ["1-to-1", "m-to-n"]
 
   dynamic_mapping_protocol:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | tcp |
+      - choice | udp |
+      - choice | sctp |
+      - choice | icmp |
     required: false
     choices: ["tcp", "udp", "sctp", "icmp"]
 
   dynamic_mapping_server_type:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | http |
+      - choice | https |
+      - choice | ssl |
+      - choice | tcp |
+      - choice | udp |
+      - choice | ip |
+      - choice | imaps |
+      - choice | pop3s |
+      - choice | smtps |
     required: false
     choices: ["http", "https", "ssl", "tcp", "udp", "ip", "imaps", "pop3s", "smtps"]
 
   dynamic_mapping_service:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_src_filter:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_srcintf_filter:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_algorithm:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | high |
+      - choice | medium |
+      - choice | low |
+      - choice | custom |
     required: false
     choices: ["high", "medium", "low", "custom"]
 
   dynamic_mapping_ssl_certificate:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_client_fallback:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ssl_client_renegotiation:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | deny |
+      - choice | allow |
+      - choice | secure |
     required: false
     choices: ["deny", "allow", "secure"]
 
   dynamic_mapping_ssl_client_session_state_max:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_client_session_state_timeout:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_client_session_state_type:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | time |
+      - choice | count |
+      - choice | both |
     required: false
     choices: ["disable", "time", "count", "both"]
 
   dynamic_mapping_ssl_dh_bits:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | 768 |
+      - choice | 1024 |
+      - choice | 1536 |
+      - choice | 2048 |
+      - choice | 3072 |
+      - choice | 4096 |
     required: false
     choices: ["768", "1024", "1536", "2048", "3072", "4096"]
 
   dynamic_mapping_ssl_hpkp:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
+      - choice | report-only |
     required: false
     choices: ["disable", "enable", "report-only"]
 
   dynamic_mapping_ssl_hpkp_age:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_hpkp_backup:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_hpkp_include_subdomains:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ssl_hpkp_primary:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_hpkp_report_uri:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_hsts:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ssl_hsts_age:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_hsts_include_subdomains:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
+    required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ssl_http_location_conversion:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ssl_http_match_host:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ssl_max_version:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | ssl-3.0 |
+      - choice | tls-1.0 |
+      - choice | tls-1.1 |
+      - choice | tls-1.2 |
     required: false
     choices: ["ssl-3.0", "tls-1.0", "tls-1.1", "tls-1.2"]
 
   dynamic_mapping_ssl_min_version:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | ssl-3.0 |
+      - choice | tls-1.0 |
+      - choice | tls-1.1 |
+      - choice | tls-1.2 |
     required: false
     choices: ["ssl-3.0", "tls-1.0", "tls-1.1", "tls-1.2"]
 
   dynamic_mapping_ssl_mode:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | half |
+      - choice | full |
     required: false
     choices: ["half", "full"]
 
   dynamic_mapping_ssl_pfs:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | require |
+      - choice | deny |
+      - choice | allow |
     required: false
     choices: ["require", "deny", "allow"]
 
   dynamic_mapping_ssl_send_empty_frags:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_ssl_server_algorithm:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | high |
+      - choice | low |
+      - choice | medium |
+      - choice | custom |
+      - choice | client |
     required: false
     choices: ["high", "low", "medium", "custom", "client"]
 
   dynamic_mapping_ssl_server_max_version:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | ssl-3.0 |
+      - choice | tls-1.0 |
+      - choice | tls-1.1 |
+      - choice | tls-1.2 |
+      - choice | client |
     required: false
     choices: ["ssl-3.0", "tls-1.0", "tls-1.1", "tls-1.2", "client"]
 
   dynamic_mapping_ssl_server_min_version:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | ssl-3.0 |
+      - choice | tls-1.0 |
+      - choice | tls-1.1 |
+      - choice | tls-1.2 |
+      - choice | client |
     required: false
     choices: ["ssl-3.0", "tls-1.0", "tls-1.1", "tls-1.2", "client"]
 
   dynamic_mapping_ssl_server_session_state_max:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_server_session_state_timeout:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_server_session_state_type:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | time |
+      - choice | count |
+      - choice | both |
+    required: false
     choices: ["disable", "time", "count", "both"]
 
   dynamic_mapping_type:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | static-nat |
+      - choice | load-balance |
+      - choice | server-load-balance |
+      - choice | dns-translation |
+      - choice | fqdn |
     required: false
     choices: ["static-nat", "load-balance", "server-load-balance", "dns-translation", "fqdn"]
 
   dynamic_mapping_weblogic_server:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_websphere_server:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
     required: false
     choices: ["disable", "enable"]
 
   dynamic_mapping_realservers_client_ip:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_healthcheck:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | disable |
+      - choice | enable |
+      - choice | vip |
     required: false
     choices: ["disable", "enable", "vip"]
 
   dynamic_mapping_realservers_holddown_interval:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_http_host:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_ip:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_max_connections:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_monitor:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_port:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_seq:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_realservers_status:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | active |
+      - choice | standby |
+      - choice | disable |
     required: false
     choices: ["active", "standby", "disable"]
 
   dynamic_mapping_realservers_weight:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
     required: false
 
   dynamic_mapping_ssl_cipher_suites_cipher:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
+      - choice | TLS-RSA-WITH-RC4-128-MD5 |
+      - choice | TLS-RSA-WITH-RC4-128-SHA |
+      - choice | TLS-RSA-WITH-DES-CBC-SHA |
+      - choice | TLS-RSA-WITH-3DES-EDE-CBC-SHA |
+      - choice | TLS-RSA-WITH-AES-128-CBC-SHA |
+      - choice | TLS-RSA-WITH-AES-256-CBC-SHA |
+      - choice | TLS-RSA-WITH-AES-128-CBC-SHA256 |
+      - choice | TLS-RSA-WITH-AES-256-CBC-SHA256 |
+      - choice | TLS-RSA-WITH-CAMELLIA-128-CBC-SHA |
+      - choice | TLS-RSA-WITH-CAMELLIA-256-CBC-SHA |
+      - choice | TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256 |
+      - choice | TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256 |
+      - choice | TLS-RSA-WITH-SEED-CBC-SHA |
+      - choice | TLS-RSA-WITH-ARIA-128-CBC-SHA256 |
+      - choice | TLS-RSA-WITH-ARIA-256-CBC-SHA384 |
+      - choice | TLS-DHE-RSA-WITH-DES-CBC-SHA |
+      - choice | TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA |
+      - choice | TLS-DHE-RSA-WITH-AES-128-CBC-SHA |
+      - choice | TLS-DHE-RSA-WITH-AES-256-CBC-SHA |
+      - choice | TLS-DHE-RSA-WITH-AES-128-CBC-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-AES-256-CBC-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA |
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA |
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-SEED-CBC-SHA |
+      - choice | TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384 |
+      - choice | TLS-ECDHE-RSA-WITH-RC4-128-SHA |
+      - choice | TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA |
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA |
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA |
+      - choice | TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256 |
+      - choice | TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-AES-128-GCM-SHA256 |
+      - choice | TLS-DHE-RSA-WITH-AES-256-GCM-SHA384 |
+      - choice | TLS-DHE-DSS-WITH-AES-128-CBC-SHA |
+      - choice | TLS-DHE-DSS-WITH-AES-256-CBC-SHA |
+      - choice | TLS-DHE-DSS-WITH-AES-128-CBC-SHA256 |
+      - choice | TLS-DHE-DSS-WITH-AES-128-GCM-SHA256 |
+      - choice | TLS-DHE-DSS-WITH-AES-256-CBC-SHA256 |
+      - choice | TLS-DHE-DSS-WITH-AES-256-GCM-SHA384 |
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256 |
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256 |
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384 |
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384 |
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA |
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256 |
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256 |
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384 |
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384 |
+      - choice | TLS-RSA-WITH-AES-128-GCM-SHA256 |
+      - choice | TLS-RSA-WITH-AES-256-GCM-SHA384 |
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA |
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA |
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256 |
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256 |
+      - choice | TLS-DHE-DSS-WITH-SEED-CBC-SHA |
+      - choice | TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256 |
+      - choice | TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384 |
+      - choice | TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256 |
+      - choice | TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384 |
+      - choice | TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC-SHA256 |
+      - choice | TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC-SHA384 |
+      - choice | TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA |
+      - choice | TLS-DHE-DSS-WITH-DES-CBC-SHA |
     required: false
     choices: ["TLS-RSA-WITH-RC4-128-MD5",
                 "TLS-RSA-WITH-RC4-128-SHA",
@@ -1091,8 +1284,12 @@ options:
 
   dynamic_mapping_ssl_cipher_suites_versions:
     description:
-      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same descriptions as parent.
+      - Dynamic Mapping Version of Suffixed Option Name. Sub-Table. Same Descriptions as Parent.
       - FLAG Based Options. Specify multiple in list form.
+      - flag | ssl-3.0 |
+      - flag | tls-1.0 |
+      - flag | tls-1.1 |
+      - flag | tls-1.2 |
     required: false
     choices: ["ssl-3.0", "tls-1.0", "tls-1.1", "tls-1.2"]
 
@@ -1123,7 +1320,7 @@ options:
 
   realservers_holddown_interval:
     description:
-      - Time in seconds that the health check monitor check for unresponsive servers.
+      - Time in seconds that the health check monitor monitors an unresponsive server that should be active.
     required: false
 
   realservers_http_host:
@@ -1138,7 +1335,8 @@ options:
 
   realservers_max_connections:
     description:
-      - Max number of active connections that can be directed to the real server.
+      - Max number of active connections that can be directed to the real server. When reached, sessions are sent to
+      - their real servers.
     required: false
 
   realservers_monitor:
@@ -1158,8 +1356,8 @@ options:
 
   realservers_status:
     description:
-      - Set the status of the real server to active so that it can accept traffic, or on standby or disabled so no tra
-      - ffic is sent.
+      - Set the status of the real server to active so that it can accept traffic.
+      - Or on standby or disabled so no traffic is sent.
       - choice | active | Server status active.
       - choice | standby | Server status standby.
       - choice | disable | Server status disable.
@@ -1186,6 +1384,73 @@ options:
   ssl_cipher_suites_cipher:
     description:
       - Cipher suite name.
+      - choice | TLS-RSA-WITH-RC4-128-MD5 | Cipher suite TLS-RSA-WITH-RC4-128-MD5.
+      - choice | TLS-RSA-WITH-RC4-128-SHA | Cipher suite TLS-RSA-WITH-RC4-128-SHA.
+      - choice | TLS-RSA-WITH-DES-CBC-SHA | Cipher suite TLS-RSA-WITH-DES-CBC-SHA.
+      - choice | TLS-RSA-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-RSA-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-RSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-RSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-RSA-WITH-AES-256-CBC-SHA | Cipher suite TLS-RSA-WITH-AES-256-CBC-SHA.
+      - choice | TLS-RSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-RSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-RSA-WITH-AES-256-CBC-SHA256 | Cipher suite TLS-RSA-WITH-AES-256-CBC-SHA256.
+      - choice | TLS-RSA-WITH-CAMELLIA-128-CBC-SHA | Cipher suite TLS-RSA-WITH-CAMELLIA-128-CBC-SHA.
+      - choice | TLS-RSA-WITH-CAMELLIA-256-CBC-SHA | Cipher suite TLS-RSA-WITH-CAMELLIA-256-CBC-SHA.
+      - choice | TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256 | Cipher suite TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256.
+      - choice | TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256 | Cipher suite TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256.
+      - choice | TLS-RSA-WITH-SEED-CBC-SHA | Cipher suite TLS-RSA-WITH-SEED-CBC-SHA.
+      - choice | TLS-RSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-RSA-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-RSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-RSA-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-DHE-RSA-WITH-DES-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-DES-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-AES-256-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-AES-256-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-AES-256-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-AES-256-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-SEED-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-SEED-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-RC4-128-SHA | Cipher suite TLS-ECDHE-RSA-WITH-RC4-128-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA | Cipher suite TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256 | Cipher suite TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256.
+      - choice | TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256 | Cipher suite TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256.
+      - choice | TLS-DHE-RSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-DHE-RSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-DHE-RSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-DHE-RSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-DHE-DSS-WITH-AES-128-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-AES-128-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-AES-256-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-AES-256-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-DHE-DSS-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-DHE-DSS-WITH-AES-256-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-AES-256-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-DHE-DSS-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384 | Cipher suite TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-RSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-RSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-RSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-RSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA | Cipher suite TLS-DSS-RSA-WITH-CAMELLIA-128-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-SEED-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-SEED-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC_SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC_SHA384.
+      - choice | TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-DES-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-DES-CBC-SHA.
     required: false
     choices: ["TLS-RSA-WITH-RC4-128-MD5",
             "TLS-RSA-WITH-RC4-128-SHA",
@@ -1280,6 +1545,73 @@ options:
   ssl_server_cipher_suites_cipher:
     description:
       - Cipher suite name.
+      - choice | TLS-RSA-WITH-RC4-128-MD5 | Cipher suite TLS-RSA-WITH-RC4-128-MD5.
+      - choice | TLS-RSA-WITH-RC4-128-SHA | Cipher suite TLS-RSA-WITH-RC4-128-SHA.
+      - choice | TLS-RSA-WITH-DES-CBC-SHA | Cipher suite TLS-RSA-WITH-DES-CBC-SHA.
+      - choice | TLS-RSA-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-RSA-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-RSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-RSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-RSA-WITH-AES-256-CBC-SHA | Cipher suite TLS-RSA-WITH-AES-256-CBC-SHA.
+      - choice | TLS-RSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-RSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-RSA-WITH-AES-256-CBC-SHA256 | Cipher suite TLS-RSA-WITH-AES-256-CBC-SHA256.
+      - choice | TLS-RSA-WITH-CAMELLIA-128-CBC-SHA | Cipher suite TLS-RSA-WITH-CAMELLIA-128-CBC-SHA.
+      - choice | TLS-RSA-WITH-CAMELLIA-256-CBC-SHA | Cipher suite TLS-RSA-WITH-CAMELLIA-256-CBC-SHA.
+      - choice | TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256 | Cipher suite TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256.
+      - choice | TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256 | Cipher suite TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256.
+      - choice | TLS-RSA-WITH-SEED-CBC-SHA | Cipher suite TLS-RSA-WITH-SEED-CBC-SHA.
+      - choice | TLS-RSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-RSA-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-RSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-RSA-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-DHE-RSA-WITH-DES-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-DES-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-AES-256-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-AES-256-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-AES-256-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-AES-256-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-SEED-CBC-SHA | Cipher suite TLS-DHE-RSA-WITH-SEED-CBC-SHA.
+      - choice | TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-RC4-128-SHA | Cipher suite TLS-ECDHE-RSA-WITH-RC4-128-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA | Cipher suite TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA.
+      - choice | TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256 | Suite TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256.
+      - choice | TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256 | Cipher suite TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256.
+      - choice | TLS-DHE-RSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-DHE-RSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-DHE-RSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-DHE-RSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-DHE-DSS-WITH-AES-128-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-AES-128-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-AES-256-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-AES-256-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-DHE-DSS-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-DHE-DSS-WITH-AES-256-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-AES-256-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-DHE-DSS-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384 | Cipher suite TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384.
+      - choice | TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-RSA-WITH-AES-128-GCM-SHA256 | Cipher suite TLS-RSA-WITH-AES-128-GCM-SHA256.
+      - choice | TLS-RSA-WITH-AES-256-GCM-SHA384 | Cipher suite TLS-RSA-WITH-AES-256-GCM-SHA384.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA | Cipher suite TLS-DSS-RSA-WITH-CAMELLIA-128-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-SEED-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-SEED-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256.
+      - choice | TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384.
+      - choice | TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC-SHA256 | Cipher suite TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC_SHA256.
+      - choice | TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC-SHA384 | Cipher suite TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC_SHA384.
+      - choice | TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA.
+      - choice | TLS-DHE-DSS-WITH-DES-CBC-SHA | Cipher suite TLS-DHE-DSS-WITH-DES-CBC-SHA.
     required: false
     choices: ["TLS-RSA-WITH-RC4-128-MD5",
             "TLS-RSA-WITH-RC4-128-SHA",
@@ -1364,6 +1696,7 @@ options:
       - flag | tls-1.2 | TLS 1.2.
     required: false
     choices: ["ssl-3.0", "tls-1.0", "tls-1.1", "tls-1.2"]
+
 
 '''
 
@@ -1471,7 +1804,7 @@ except ImportError:
 
 def fmgr_firewall_vip_addsetdelete(fmg, paramgram):
     """
-    fmgr_firewall_vip -- Your Description here, bruh
+    fmgr_firewall_vip -- Add/Set/Deletes Firewall Virtual IP Objects
     """
 
     mode = paramgram["mode"]
