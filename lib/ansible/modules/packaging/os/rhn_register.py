@@ -22,6 +22,7 @@ description:
 version_added: "1.2"
 author: James Laska
 notes:
+    - This is for older Red Hat products. You probably want the redhat_subscription module instead.
     - In order to register a system, rhnreg_ks requires either a username and password, or an activationkey.
 requirements:
     - rhnreg_ks
