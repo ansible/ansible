@@ -337,7 +337,7 @@ options:
 
   src_filter:
     description:
-      - Source address filter. Each address must be either an IP/subnet (x.x.x.x/n) or a range (x.x.x.x-y.y.y.y). 
+      - Source address filter. Each address must be either an IP/subnet (x.x.x.x/n) or a range (x.x.x.x-y.y.y.y).
       - Separate addresses with spaces.
     required: false
 
@@ -407,7 +407,7 @@ options:
 
   nat_source_vip:
     description:
-      - Enable to prevent unintended servers from using a virtual IP. 
+      - Enable to prevent unintended servers from using a virtual IP.
       - Disable to use the actual IP address of the server as the source address.
       - choice | disable | Do not force to NAT as VIP.
       - choice | enable | Force to NAT as VIP.
