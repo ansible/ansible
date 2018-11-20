@@ -163,6 +163,17 @@ EXAMPLES = """
       - 10.70.42.85
     force: true
   run_once: true
+
+- name: Reduce cluster configuration
+  gluster_volume:
+    state: present
+    name: testvol
+    bricks: /bricks/brick3/b1,/bricks/brick4/b2
+    replicas: 2
+    cluster:
+      - 10.70.42.85
+    force: true
+  run_once: true
 """
 
 import re
@@ -403,10 +414,17 @@ def remove_bricks(name, removed_bricks, force):
 
 
 def reduce_config(name, removed_bricks, replicas, force):
+    out = run_gluster(['volume', 'heal', name, 'info'])
+    summary = out.split("\n")
+    for line in summary:
+        if 'Number' in line and int(line.split(":")[1].strip()) != 0:
+            module.fail_json(msg="Operation aborted, self-heal in progress.")
     args = ['volume', 'remove-brick', name, 'replica', replicas]
     args.extend(removed_bricks)
     if force:
         args.append('force')
+    else:
+        module.fail_json(msg="Force option is mandatory")
     run_gluster(args)
 
 
@@ -540,7 +558,7 @@ def main():
                 changed = True
 
             if removed_bricks:
-                if int(replicas) < int(volumes[volume_name]['replicas']):
+                if replicas and int(replicas) < int(volumes[volume_name]['replicas']):
                     reduce_config(volume_name, removed_bricks, str(replicas), force)
                 else:
                     remove_bricks(volume_name, removed_bricks, force)
