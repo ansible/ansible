@@ -1,4 +1,4 @@
-f#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2013 Shaun Zinck <shaun.zinck at gmail.com>
