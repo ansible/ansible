@@ -24,7 +24,7 @@ from ansible.errors import AnsibleFilterError
 
 def k8s_config_resource_name(resource):
     if not HAS_GENERATE_HASH:
-        raise AnsibleFilterError("k8s_config_resource_name requires openshift>=0.6.3")
+        raise AnsibleFilterError("k8s_config_resource_name requires openshift>=0.7.2")
     try:
         return resource['metadata']['name'] + '-' + generate_hash(resource)
     except KeyError:
