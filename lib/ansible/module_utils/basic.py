@@ -2710,7 +2710,7 @@ class AnsibleModule(object):
         :kw data: If given, information to write to the stdin of the command
         :kw binary_data: If False, append a newline to the data.  Default False
         :kw path_prefix: If given, additional path to find the command in.
-            This adds to the PATH environment vairable so helper commands in
+            This adds to the PATH environment variable so helper commands in
             the same directory can also be found
         :kw cwd: If given, working directory to run the command inside
         :kw use_unsafe_shell: See `args` parameter.  Default False
