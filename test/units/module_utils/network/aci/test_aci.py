@@ -25,7 +25,7 @@ from ansible.module_utils.network.aci.aci import ACIModule
 from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_native
 
-from nose.plugins.skip import SkipTest
+import pytest
 
 
 class AltModule():
@@ -52,7 +52,7 @@ try:
     if sys.version_info >= (2, 7):
         from xmljson import cobra
 except ImportError:
-    raise SkipTest("ACI Ansible modules require the lxml and xmljson Python libraries")
+    pytestmark = pytest.mark.skip("ACI Ansible modules require the lxml and xmljson Python libraries")
 
 
 class AciRest(unittest.TestCase):

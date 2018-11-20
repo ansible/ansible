@@ -19,12 +19,13 @@
 from units.compat.mock import patch
 from units.modules.utils import set_module_args as _set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
-from nose.plugins.skip import SkipTest
+import pytest
+
 try:
     from vspk import v5_0 as vsdk
     from bambou import nurest_session
 except ImportError:
-    raise SkipTest('Nuage Ansible modules requires the vspk and bambou python libraries')
+    pytestmark = pytest.mark.skip('Nuage Ansible modules requires the vspk and bambou python libraries')
 
 
 def set_module_args(args):
