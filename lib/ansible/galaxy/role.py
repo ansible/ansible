@@ -41,7 +41,6 @@ from ansible.utils.display import Display
 display = Display()
 
 
-
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])

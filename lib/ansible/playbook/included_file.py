@@ -29,7 +29,6 @@ from ansible.utils.display import Display
 display = Display()
 
 
-
 class IncludedFile:
 
     def __init__(self, filename, args, task, is_role=False):

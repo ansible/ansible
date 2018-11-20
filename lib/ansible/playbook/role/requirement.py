@@ -33,9 +33,7 @@ from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.utils.display import Display
 
-
 __all__ = ['RoleRequirement']
-
 
 VALID_SPEC_KEYS = [
     'name',
@@ -46,7 +44,6 @@ VALID_SPEC_KEYS = [
 ]
 
 display = Display()
-
 
 
 class RoleRequirement(RoleDefinition):

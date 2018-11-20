@@ -28,7 +28,6 @@ from ansible.utils.display import Display
 display = Display()
 
 
-
 def get_reserved_names(include_private=True):
     ''' this function returns the list of reserved names associated with play objects'''
 
