@@ -212,7 +212,7 @@ options:
 author:
     - "Tim Gerla (@tgerla)"
     - "Lester Wade (@lwade)"
-    - "Seth Vidal"
+    - "Seth Vidal (@skvidal)"
 extends_documentation_fragment: aws
 '''
 

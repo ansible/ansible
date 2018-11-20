@@ -14,7 +14,7 @@ DOCUMENTATION = """
 ---
 module: onyx_ptp_interface
 version_added: '2.8'
-author: 'Anas Badaha(@anasb)'
+author: 'Anas Badaha (@anasb)'
 short_description: 'Configures PTP on interface'
 description:
     - "This module provides declarative management of PTP interfaces configuration\non Mellanox ONYX network devices."

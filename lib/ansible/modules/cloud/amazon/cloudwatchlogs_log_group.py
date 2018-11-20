@@ -21,7 +21,7 @@ description:
     - Create or delete log_group in CloudWatchLogs.
 version_added: "2.5"
 author:
-    - Willian Ricardo(@willricardo) <willricardo@gmail.com>
+    - Willian Ricardo (@willricardo) <willricardo@gmail.com>
 requirements: [ json, botocore, boto3 ]
 options:
     state:

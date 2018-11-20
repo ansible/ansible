@@ -68,7 +68,7 @@ options:
 
 
 requirements: [ "boto" ]
-author: Jonathan I. Davila
+author: Jonathan I. Davila (@defionscode)
 extends_documentation_fragment:
     - aws
     - ec2
