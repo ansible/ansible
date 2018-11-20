@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: awall
 short_description: Manage awall policies
 version_added: "2.4"
-author: Ted Trask (@tdtrask) <ttrask01@yahoo.com>
+author: Ted Trask (@tdtrask)
 description:
   - This modules allows for enable/disable/activate of I(awall) policies.
     Alpine Wall (I(awall)) generates a firewall configuration from the enabled policy files

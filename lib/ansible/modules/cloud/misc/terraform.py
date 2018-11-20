@@ -106,7 +106,7 @@ options:
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
-author: "Ryan Scott Brown @ryansb"
+author: "Ryan Scott Brown (@ryansb)"
 '''
 
 EXAMPLES = """

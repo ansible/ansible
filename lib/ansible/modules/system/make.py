@@ -19,7 +19,7 @@ module: make
 short_description: Run targets in a Makefile
 requirements: [ make ]
 version_added: "2.1"
-author: Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
+author: Linus Unnebäck (@LinusU)
 description:
   - Run targets in a Makefile.
 options:

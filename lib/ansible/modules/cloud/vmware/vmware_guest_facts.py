@@ -23,7 +23,7 @@ description:
     - Gather facts about a single VM on a VMware ESX cluster.
 version_added: 2.3
 author:
-    - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
+    - Loic Blot (@nerzhul)
 notes:
     - Tested on vSphere 5.5
 requirements:

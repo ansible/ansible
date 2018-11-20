@@ -31,7 +31,7 @@ notes:
   - This module requires the ipaddress python library. This library is included in Python since version 3.3. It is available as a
     module on PyPI for earlier versions.
 version_added: 2.5
-author: "Gaudenz Steinlin (@gaudenz) <gaudenz.steinlin@cloudscale.ch>"
+author: "Gaudenz Steinlin (@gaudenz)"
 options:
   state:
     description:

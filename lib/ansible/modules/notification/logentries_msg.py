@@ -37,7 +37,7 @@ options:
     description:
       - API endpoint port
     default: 80
-author: "Jimmy Tang (@jcftang) <jimmy_tang@rapid7.com>"
+author: "Jimmy Tang (@jcftang)"
 '''
 
 RETURN = '''# '''

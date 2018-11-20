@@ -117,7 +117,7 @@ notes:
   - This module should run from a system that can access vSphere directly.
     Either by using local_action, or using delegate_to.
 author:
-- Richard Hoop (@rhoop) <wrhoop@gmail.com>
+- Richard Hoop (@rhoop)
 requirements:
   - "python >= 2.6"
   - pysphere

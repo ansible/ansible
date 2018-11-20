@@ -44,7 +44,7 @@ options:
 notes:
     - Requires a recent version of SELinux and C(policycoreutils-python) (EL 6 or newer).
 requirements: [ policycoreutils-python ]
-author: Michael Scherer (@mscherer) <misc@zarb.org>
+author: Michael Scherer (@mscherer)
 '''
 
 EXAMPLES = '''

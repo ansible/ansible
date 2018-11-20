@@ -77,7 +77,7 @@ notes:
      using this module.
 requirements: [ psycopg2 ]
 author:
-    - Flavien Chantelot (@Dorn-) <contact@flavien.io>
+    - Flavien Chantelot (@Dorn-)
     - Thomas O'Donnell (@andytom)
 '''
 

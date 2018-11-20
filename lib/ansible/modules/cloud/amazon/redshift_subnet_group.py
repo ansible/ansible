@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 author:
-  - "Jens Carl (@j-carl), Hothead Games Inc."
+  - "Jens Carl (@j-carl)"
 module: redshift_subnet_group
 version_added: "2.2"
 short_description: manage Redshift cluster subnet groups

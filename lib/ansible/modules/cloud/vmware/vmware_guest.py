@@ -22,9 +22,9 @@ description: >
    rename a virtual machine and remove a virtual machine with associated components.
 version_added: '2.2'
 author:
-- Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
-- Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
-- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+- Loic Blot (@nerzhul)
+- Philippe Dellaert (@pdellaert)
+- Abhijeet Kasurde (@Akasurde)
 requirements:
 - python >= 2.6
 - PyVmomi

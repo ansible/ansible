@@ -23,7 +23,7 @@ description:
     - This module can be used for placing a ESXi host into maintenance mode.
     - Support for VSAN compliant maintenance mode when selected.
 author:
-- Jay Jahns (@jjahns) <jjahns@vmware.com>
+- Jay Jahns (@jjahns)
 - Abhijeet Kasurde (@Akasurde)
 version_added: "2.1"
 notes:

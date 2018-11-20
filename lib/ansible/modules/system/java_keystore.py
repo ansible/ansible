@@ -60,7 +60,7 @@ options:
         type: bool
         default: 'no'
 requirements: [openssl, keytool]
-author: Guillaume Grossetie
+author: Guillaume Grossetie (@Mogztter)
 '''
 
 EXAMPLES = '''

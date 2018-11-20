@@ -87,7 +87,7 @@ options:
     type: bool
     default: 'no'
 author:
-- Eric Johnson (@erjohnso) <erjohnso@google.com>
+- Eric Johnson (@erjohnso)
 '''
 
 EXAMPLES = '''

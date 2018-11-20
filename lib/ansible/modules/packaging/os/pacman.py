@@ -22,7 +22,7 @@ description:
 version_added: "1.0"
 author:
     - Indrajit Raychaudhuri (@indrajitr)
-    - Aaron Bull Schaefer (@elasticdog) <aaron@elasticdog.com>
+    - Aaron Bull Schaefer (@elasticdog)
     - Afterburn
 options:
     name:

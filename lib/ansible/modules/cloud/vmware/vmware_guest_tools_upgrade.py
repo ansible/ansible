@@ -62,7 +62,7 @@ options:
         required: True
 extends_documentation_fragment: vmware.documentation
 author:
-    - Mike Klebolt (@MikeKlebolt) <michael.klebolt@centurylink.com>
+    - Mike Klebolt (@MikeKlebolt)
 '''
 
 EXAMPLES = '''

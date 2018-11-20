@@ -1,4 +1,4 @@
-#!/usr/bin/python
+f#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2013 Shaun Zinck <shaun.zinck at gmail.com>
@@ -29,7 +29,7 @@ description:
       or any OS that uses C(pkgsrc).  (Home: U(http://pkgin.net/))"
 version_added: "1.0"
 author:
-    - "Larry Gilbert (L2G)"
+    - "Larry Gilbert (@L2G)"
     - "Shaun Zinck (@szinck)"
     - "Jasper Lievisse Adriaanse (@jasperla)"
 notes:

@@ -72,7 +72,7 @@ options:
     default: false
     version_added: 2.6
 author:
-- Amir Moulavi (@amir343) <amir.moulavi@gmail.com>
+- Amir Moulavi (@amir343)
 - Tim C <defunct@defunct.io>
 extends_documentation_fragment:
     - aws

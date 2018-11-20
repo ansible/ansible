@@ -19,7 +19,7 @@ short_description: Send notification to Hall
 description:
     - "The C(hall) module connects to the U(https://hall.com) messaging API and allows you to deliver notication messages to rooms."
 version_added: "2.0"
-author: Billy Kimble (@bkimble) <basslines@gmail.com>
+author: Billy Kimble (@bkimble)
 options:
   room_token:
     description:

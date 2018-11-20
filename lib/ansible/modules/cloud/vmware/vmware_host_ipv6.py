@@ -24,7 +24,7 @@ description:
 - It also checks if the host needs to be restarted.
 version_added: 2.8
 author:
-- Christian Kotte (@ckotte) <christian.kotte@gmx.de>
+- Christian Kotte (@ckotte)
 notes:
 - Tested on vSphere 6.5
 requirements:

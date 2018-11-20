@@ -28,9 +28,9 @@ description:
 version_added: "2.3"
 
 author:
-    - Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>
-    - Matt Baldwin <baldwin@stackpointcloud.com>
-    - Thibaud Morel l'Horset <teebes@gmail.com>
+    - Tomas Karasek (@t0mk)
+    - Matt Baldwin (@baldwinSPC)
+    - Thibaud Morel l'Horset (@teebes)
 
 options:
   auth_token:

@@ -21,7 +21,7 @@ version_added: "2.2"
 extends_documentation_fragment:
   - aws
   - ec2
-author: "Jim Dalton (@jsdalton) <jim.dalton@gmail.com>"
+author: "Jim Dalton (@jsdalton)"
 requirements:
   - python >= 2.6
   - boto3

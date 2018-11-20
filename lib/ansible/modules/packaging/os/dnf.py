@@ -195,10 +195,10 @@ requirements:
   - python-dnf
   - for the autoremove option you need dnf >= 2.0.1"
 author:
-  - Igor Gnatenko (@ignatenkobrain) <i.gnatenko.brain@gmail.com>
-  - Cristian van Ee (@DJMuggs) <cristian at cvee.org>
+  - Igor Gnatenko (@ignatenkobrain)
+  - Cristian van Ee (@DJMuggs)
   - Berend De Schouwer (@berenddeschouwer)
-  - Adam Miller (@maxamillion) <admiller@redhat.com>
+  - Adam Miller (@maxamillion)
 '''
 
 EXAMPLES = '''

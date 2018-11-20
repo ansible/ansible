@@ -182,7 +182,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - "Yunge Zhu (@yungezz)"
 
 '''
 

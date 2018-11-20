@@ -15,7 +15,7 @@ version_added: '2.5'
 short_description: Gather facts about ec2 AMIs
 description: Gather facts about ec2 AMIs
 author:
-  - Prasad Katti, @prasadkatti
+  - Prasad Katti (@prasadkatti)
 requirements: [ boto3 ]
 options:
   image_ids:

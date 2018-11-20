@@ -113,10 +113,10 @@ options:
       - Set to simple to enable enhanced networking with the Intel 82599 Virtual Function interface for the AMI and any instances that you launch from the AMI.
     version_added: "2.5"
 author:
-    - "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
-    - "Constantin Bugneac (@Constantin07) <constantin.bugneac@endava.com>"
-    - "Ross Williams (@gunzy83) <gunzy83au@gmail.com>"
-    - "Willem van Ketwich (@wilvk) <willvk@gmail.com>"
+    - "Evan Duffield (@scicoin-project)"
+    - "Constantin Bugneac (@Constantin07)"
+    - "Ross Williams (@gunzy83)"
+    - "Willem van Ketwich (@wilvk)"
 extends_documentation_fragment:
     - aws
     - ec2

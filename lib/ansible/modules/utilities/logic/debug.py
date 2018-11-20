@@ -43,7 +43,7 @@ notes:
     - This module is also supported for Windows targets.
 author:
     - "Dag Wieers (@dagwieers)"
-    - "Michael DeHaan"
+    - "Michael DeHaan (@mpdehaan)"
 '''
 
 EXAMPLES = '''

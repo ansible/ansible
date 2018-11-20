@@ -23,7 +23,7 @@ requirements:
 notes:
   - Global addresses can only be used with Global Forwarding Rules.
 author:
-  - "Tom Melendez (@supertom) <tom@supertom.com>"
+  - "Tom Melendez (@supertom)"
 options:
   name:
     description:

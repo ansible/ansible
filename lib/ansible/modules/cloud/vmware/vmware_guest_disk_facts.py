@@ -23,7 +23,7 @@ description:
     - All parameters and VMware object names are case sensitive.
 version_added: 2.6
 author:
-    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.0 and 6.5.
     - Disk UUID information is added in version 2.8.

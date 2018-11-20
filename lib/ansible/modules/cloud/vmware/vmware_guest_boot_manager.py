@@ -23,7 +23,7 @@ description:
     - This module can be used to manage boot options for the given virtual machine.
 version_added: 2.7
 author:
-    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.5
 requirements:

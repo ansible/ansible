@@ -18,7 +18,7 @@ module: iptables
 short_description: Modify iptables rules
 version_added: "2.0"
 author:
-- Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
+- Linus Unnebäck (@LinusU)
 - Sébastien DA ROCHA (@sebastiendarocha)
 description:
   - C(iptables) is used to set up, maintain, and inspect the tables of IP packet

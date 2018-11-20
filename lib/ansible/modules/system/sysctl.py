@@ -1,4 +1,4 @@
-#!/usr/bin/python
+f#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012, David "DaviXX" CHANIAL <david.chanial@gmail.com>
@@ -58,7 +58,7 @@ options:
         type: bool
         default: 'no'
         version_added: 1.5
-author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
+author: "David CHANIAL (@davixx)"
 '''
 
 EXAMPLES = '''

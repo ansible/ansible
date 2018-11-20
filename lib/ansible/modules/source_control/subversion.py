@@ -19,7 +19,7 @@ description:
    - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
 author:
-- Dane Summers (@dsummersl) <njharman@gmail.com>
+- Dane Summers (@dsummersl)
 notes:
    - Requires I(svn) to be installed on the client.
    - This module does not handle externals.

@@ -66,7 +66,7 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
-author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
+author: "Rick Mendes (@rickmendes)"
 notes:
    - There may be a delay between the time the EIP is assigned and when
      the cloud instance is reachable via the new address. Use wait_for and
