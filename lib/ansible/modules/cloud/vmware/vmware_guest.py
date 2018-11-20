@@ -674,10 +674,10 @@ class PyVmomiDeviceHelper(object):
         diskspec.device.controllerKey = disk_ctl_key
         # one nvme controller attach 0 - 14 disks
         if self.next_disk_unit_number > 14:
-            raise AssertionError("unitNumber for nvme disk >14, valid 0-14.")
+            self.module.fail_json(msg='unitNumber for nvme disk >14, valid 0-14.')
         if disk_index is not None:
             if disk_index > 14:
-                raise AssertionError("unitNumber for nvme disk >14, valid 0-14.")
+                self.module.fail_json(msg='unitNumber for nvme disk >14, valid 0-14.')
             else:
                 diskspec.device.unitNumber = disk_index
                 self.next_disk_unit_number = disk_index + 1
