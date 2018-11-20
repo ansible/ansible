@@ -30,9 +30,9 @@ DOCUMENTATION = '''
 module: fmgr_device_config
 version_added: "2.8"
 author:
-    - Luke Weighall - lweighall
-    - Andrew Welsh - Ghilli3
-    - Jim Huber - p4r4n0y1ng
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Edit device configurations
 description:
   - Edit device configurations from FortiManager Device Manager using JSON RPC API.
