@@ -58,7 +58,7 @@ requirements:
 notes:
  - Either I(instance_name) or I(instance_pattern) is required.
 author:
- - Do Hoang Khiem (dohoangkhiem@gmail.com)
+ - Do Hoang Khiem (@dohoangkhiem) <(dohoangkhiem@gmail.com>
  - Tom Melendez (@supertom)
 '''
 

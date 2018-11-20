@@ -267,7 +267,7 @@ options:
           - If available memory falls below this limit, the system marks the server as unavailable.
 extends_documentation_fragment: f5
 author:
-  - Robert Teller
+  - Robert Teller (@r-teller)
   - Tim Rupp (@caphrim007)
   - Wojciech Wypior (@wojtek0806)
 '''
