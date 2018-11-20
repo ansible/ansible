@@ -70,7 +70,7 @@ class MerakiModule(object):
         self.original = None
         self.proposed = dict()
         self.merged = None
-        self.ignored_keys = ('id', 'organizationId')
+        self.ignored_keys = ['id', 'organizationId']
 
         # debug output
         self.filter_string = ''
@@ -129,12 +129,23 @@ class MerakiModule(object):
         else:
             self.params['protocol'] = 'http'
 
+    def sanitize(self, original, proposed):
+        """Determine which keys are unique to original"""
+        keys = []
+        for k, v in original.items():
+            try:
+                if proposed[k] and k not in self.ignored_keys:
+                    pass
+            except KeyError:
+                keys.append(k)
+        return keys
+
     def filter_items(self, d):
         ''' Filter out keys when returning items() '''
         l = []
         # Ensure we return sorted tuples
         for k, v in sorted(d.items()):
-            if k not in self.ignored_keys:
+            if k not in self.ignored_keys and v is not None:
                 l.append((k, v))
         return l
 
