@@ -4,14 +4,14 @@
 ''' unit tests for module_utils netapp.py '''
 from __future__ import absolute_import, division, print_function
 
-from ansible.module_utils.ansible_release import __version__ as ansible_version
+import pytest
 
-from nose.plugins.skip import SkipTest
+from ansible.module_utils.ansible_release import __version__ as ansible_version
 
 import ansible.module_utils.netapp as netapp_utils
 
 if not netapp_utils.has_netapp_lib():
-    raise SkipTest("skipping as missing required netapp_lib")
+    pytest.skip("skipping as missing required netapp_lib")
 
 
 class MockONTAPConnection(object):
