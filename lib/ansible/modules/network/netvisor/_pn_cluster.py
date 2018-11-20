@@ -76,7 +76,6 @@ options:
   pn_validate:
     description:
       - Validate the inter-switch links and state of switches in the cluster.
-    choices: ['validate', 'no-validate']
     type: bool
 """
 
@@ -87,7 +86,7 @@ EXAMPLES = """
     pn_name: 'spine-cluster'
     pn_cluster_node1: 'spine01'
     pn_cluster_node2: 'spine02'
-    pn_validate: validate
+    pn_validate: True
     pn_quiet: True
 
 - name: delete spine cluster
