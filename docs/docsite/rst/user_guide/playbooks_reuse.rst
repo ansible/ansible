@@ -69,6 +69,8 @@ Using ``import*`` can also have some limitations when compared to dynamic includ
 
 .. seealso::
 
+   :ref:`utilities_modules`
+       Documentation of the ``include*`` and ``import*`` modules discussed here.
    :ref:`working_with_playbooks`
        Review the basic Playbook language features
    :ref:`playbooks_variables`
