@@ -205,6 +205,7 @@ def parse_show_install(data):
     ud['disruptive'] = False
     ud['upgrade_needed'] = False
     ud['error'] = False
+    ud['invalid_command'] = False
     ud['install_in_progress'] = False
     ud['server_error'] = False
     ud['upgrade_succeeded'] = False
@@ -228,6 +229,7 @@ def parse_show_install(data):
             ud['error'] = True
             break
         if re.search(r'[I|i]nvalid command', x):
+            ud['invalid_command'] = True
             ud['error'] = True
             break
         if re.search(r'No install all data found', x):
@@ -239,6 +241,9 @@ def parse_show_install(data):
             ud['install_in_progress'] = True
             break
         if re.search(r'Backend processing error', x):
+            ud['server_error'] = True
+            break
+        if re.search(r'timed out', x):
             ud['server_error'] = True
             break
         if re.search(r'^(-1|5\d\d)$', x):
@@ -343,7 +348,7 @@ def massage_install_data(data):
     return result_data
 
 
-def build_install_cmd_set(issu, image, kick, type):
+def build_install_cmd_set(issu, image, kick, type, force=True):
     commands = ['terminal dont-ask']
 
     # Different NX-OS plaforms behave differently for
@@ -355,6 +360,7 @@ def build_install_cmd_set(issu, image, kick, type):
     # 2) Separate kickstart + system images.
     #    * Omit hidden 'force' option for issu.
     #    * Use hidden 'force' option for disruptive upgrades.
+    #    * Note: Not supported on all platforms
     if re.search(r'required|desired|yes', issu):
         if kick is None:
             issu_cmd = 'non-disruptive'
@@ -364,7 +370,7 @@ def build_install_cmd_set(issu, image, kick, type):
         if kick is None:
             issu_cmd = ''
         else:
-            issu_cmd = 'force'
+            issu_cmd = 'force' if force else ''
 
     if type == 'impact':
         rootcmd = 'show install all impact'
@@ -411,6 +417,7 @@ def check_mode_legacy(module, issu, image, kick=None):
     # Process System Image
     data['error'] = False
     tsver = 'show version image bootflash:%s' % image
+    data['upgrade_cmd'] = [tsver]
     target_image = parse_show_version(execute_show_command(module, tsver))
     if target_image['error']:
         data['error'] = True
@@ -423,6 +430,7 @@ def check_mode_legacy(module, issu, image, kick=None):
     # Process Kickstart Image
     if kick is not None and not data['error']:
         tkver = 'show version image bootflash:%s' % kick
+        data['upgrade_cmd'].append(tsver)
         target_kick = parse_show_version(execute_show_command(module, tkver))
         if target_kick['error']:
             data['error'] = True
@@ -432,6 +440,7 @@ def check_mode_legacy(module, issu, image, kick=None):
             data['disruptive'] = True
             upgrade_msg = upgrade_msg + ' kickstart: %s' % tkver
 
+    data['list_data'] = data['raw']
     data['processed'] = upgrade_msg
     return data
 
@@ -451,6 +460,7 @@ def check_mode_nextgen(module, issu, image, kick=None):
         data = check_install_in_progress(module, commands, opts)
     if data['server_error']:
         data['error'] = True
+    data['upgrade_cmd'] = commands
     return data
 
 
@@ -470,6 +480,11 @@ def check_mode(module, issu, image, kick=None):
     if data['server_error']:
         # We encountered an unrecoverable error in the attempt to get upgrade
         # impact data from the 'show install all impact' command.
+        # Fallback to legacy method.
+        data = check_mode_legacy(module, issu, image, kick)
+    if data['invalid_command']:
+        # If we are upgrading from a device running a separate kickstart and
+        # system image the impact command will fail.
         # Fallback to legacy method.
         data = check_mode_legacy(module, issu, image, kick)
     return data
@@ -501,6 +516,12 @@ def do_install_all(module, issu, image, kick=None):
         # The system may be busy from the call to check_mode so loop until
         # it's done.
         upgrade = check_install_in_progress(module, commands, opts)
+        if upgrade['invalid_command'] and 'force' in commands[1]:
+            # Not all platforms support the 'force' keyword.  Check for this
+            # condition and re-try without the 'force' keyword if needed.
+            commands = build_install_cmd_set(issu, image, kick, 'install', False)
+            upgrade = check_install_in_progress(module, commands, opts)
+        upgrade['upgrade_cmd'] = commands
 
         # Special case:  If we encounter a server error at this stage
         # it means the command was sent and the upgrade was started but
@@ -549,11 +570,8 @@ def main():
 
     install_result = do_install_all(module, issu, sif, kick=kif)
     if install_result['error']:
-        msg = "Failed to upgrade device using image "
-        if kif:
-            msg = msg + "files: kickstart: %s, system: %s" % (kif, sif)
-        else:
-            msg = msg + "file: system: %s" % sif
+        cmd = install_result['upgrade_cmd']
+        msg = 'Failed to upgrade device using command: %s' % cmd
         module.fail_json(msg=msg, raw_data=install_result['list_data'])
 
     state = install_result['processed']
