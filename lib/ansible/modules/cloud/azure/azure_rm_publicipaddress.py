@@ -71,20 +71,20 @@ options:
         description:
             - List of IpTag associated with the public IP address.
             - Each element should contain type:value pair.
-        version_added: 2.9
+        version_added: 2.8
     idle_timeout:
         description:
             - Idle timeout in minutes.
         type: int
         default: 4
-        version_added: 2.9
+        version_added: 2.8
     version:
         description:
             - The public IP address version.
         choices:
             - ipv4
             - ipv6
-        version_added: 2.9
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure

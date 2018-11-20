@@ -42,11 +42,11 @@ options:
             - If C(curated) is selected the structure will be identical to input parameters of azure_rm_publicipaddress module.
             - In Ansible 2.8 and lower facts are always returned in raw format.
             - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
-        default: 'curated'
+        default: 'raw'
         choices:
             - 'curated'
             - 'raw'
-        version_added: "2.9"
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
