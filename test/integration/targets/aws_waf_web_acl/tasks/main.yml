@@ -613,7 +613,7 @@
       region: "{{ aws_region }}"
       waf_regional: true
       <<: *aws_connection_info
-    register: create_aws_regional_waf_rule
+    register: create_aws_waf_regional_waf_rule
 
   - name: check WAF Regional rule
     assert:
