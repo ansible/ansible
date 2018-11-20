@@ -29,9 +29,9 @@ DOCUMENTATION = '''
 module: fmgr_secprof_waf
 version_added: "2.8"
 author:
-    - Luke Weighall (lweighall)
-    - Andrew Welsh (Ghilli3)
-    - Jim Huber (p4r4n0y1ng)
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: FortiManager web application firewall security profile
 description:
   -  Manage web application firewall security profiles for FGTs via FMG
