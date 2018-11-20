@@ -1,0 +1,5 @@
+bugfixes:
+- loop_control - Catch exceptions when templating label individually for loop
+  iterations which caused the templating failure as the full
+  result. This instead only registers the templating exception for a single
+  loop result (https://github.com/ansible/ansible/issues/48879)

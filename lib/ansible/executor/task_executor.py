@@ -361,7 +361,13 @@ class TaskExecutor:
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
-            res['_ansible_item_label'] = templar.template(label, cache=False)
+            try:
+                res['_ansible_item_label'] = templar.template(label, cache=False)
+            except AnsibleUndefinedVariable as e:
+                res.update({
+                    'failed': True,
+                    'msg': 'Failed to template loop_control.label: %s' % to_text(e)
+                })
 
             self._final_q.put(
                 TaskResult(
