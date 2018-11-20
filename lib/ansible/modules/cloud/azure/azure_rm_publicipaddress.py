@@ -215,8 +215,8 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
         pip = None
 
         # capitalize the sku and allocation_method. basic => Basic, Basic => Basic.
-        self.allocation_method = self.allocation_method.capitalize()
-        self.sku = self.sku.capitalize()
+        self.allocation_method = self.allocation_method.capitalize() if self.allocation_method else None
+        self.sku = self.sku.capitalize() if self.sku else None
         self.version = 'IPv4' if self.version == 'ipv4' else 'IPv6'
 
         resource_group = self.get_resource_group(self.resource_group)
