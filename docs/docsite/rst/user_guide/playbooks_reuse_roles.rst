@@ -282,6 +282,13 @@ Role dependencies allow you to automatically pull in other roles when using a ro
           dbname: blarg
           other_parameter: 12
 
+Role dependencies may be conditional::
+
+    ---
+    dependencies:
+      - role: apache
+        when: need_apache|default(false)
+
 .. note::
     Role dependencies must use the classic role definition style.
 
