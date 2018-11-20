@@ -812,8 +812,9 @@ An idempotent method to generate unique hashes per system is to use a salt that 
 
     {{ 'secretpassword' | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}
 
-Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
+Hash types available depends on the master system running Ansible,
+'hash' depends on `hashlib <https://docs.python.org/3.7/library/hashlib.html>`_
+and 'password_hash' depends on `Passlib <https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html>`_.
 
 .. versionadded:: 2.7
 

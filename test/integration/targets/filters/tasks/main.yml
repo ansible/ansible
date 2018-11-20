@@ -253,3 +253,14 @@
     that:
       - "unions|type_debug == 'list'"
       - "unions|length == 4"
+
+- name: Test password hash
+  vars:
+    sample_sha512: '$6$mysecretsalt$zeii.GqxRvlshLBHuPu8aNwdkkG9.BjGyfknta0deijW59AF3yjZa9GJa8Madx8sWinuaNkkCsXnWpt2f33lW/'
+    cafe_sha512: '$6$mysecretsalt$Be.QxXhGbe6Z.WwwaYcpg8Br102WdsKgknWZg/vtzLSo3pqGShli0.pO.xQUOQJkrRmWgsuxHDjntkXmjWiFP/'
+  assert:
+    that:
+    - "'sample' | password_hash('sha256', 'mysecretsalt') == '$5$mysecretsalt$ImwJrld25AlXvuuebhzXJxV2llwwJAGkO46kQdhymD6'"
+    - "'café' | password_hash('sha256', 'mysecretsalt') == '$5$mysecretsalt$0ahy9OSne5GuR9Amg8MnvYJP7fr8MHC7oega2IqPFxD'"
+    - "'sample' | password_hash('sha512', 'mysecretsalt') == sample_sha512"
+    - "'café' | password_hash('sha512', 'mysecretsalt') == cafe_sha512"

@@ -594,7 +594,7 @@ class FilterModule(object):
             'bool': to_bool,
             'to_datetime': to_datetime,
 
-            # date formating
+            # date formatting
             'strftime': strftime,
 
             # quote string for shell usage
@@ -603,9 +603,9 @@ class FilterModule(object):
             # hash filters
             # md5 hex digest of string
             'md5': md5s,
-            # sha1 hex digeset of string
+            # sha1 hex digest of string
             'sha1': checksum_s,
-            # checksum of string as used by ansible for checksumming files
+            # checksum of string as used by ansible for calculating checksum of files
             'checksum': checksum_s,
             # generic hashing
             'password_hash': get_encrypted_password,
