@@ -106,7 +106,7 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            format=dict(type='str', choices=['curated', 'raw'], default='curated')
+            format=dict(type='str', choices=['curated', 'raw'], default='raw')
         )
 
         self.results = dict(
