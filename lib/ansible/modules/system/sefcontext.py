@@ -103,7 +103,7 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.mobules.system.selinux import get_runtime_status
+from ansible.modules.system.selinux import get_runtime_status
 
 try:
     import selinux
