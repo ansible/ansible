@@ -1,6 +1,3 @@
-# (c) 2018, NetApp, Inc
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 """ unit tests for Ansible module: na_ontap_aggregate """
 
 from __future__ import print_function
@@ -9,6 +6,7 @@ import pytest
 
 from units.compat import unittest
 from units.compat.mock import patch, Mock
+from nose.plugins.skip import SkipTest
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 import ansible.module_utils.netapp as netapp_utils
@@ -16,8 +14,8 @@ import ansible.module_utils.netapp as netapp_utils
 from ansible.modules.storage.netapp.na_ontap_aggregate \
     import NetAppOntapAggregate as my_module  # module under test
 
-HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-HAS_NETAPP_LIB_MSG = "pip install netapp_lib is required"
+if not netapp_utils.has_netapp_lib():
+    raise SkipTest("skipping as missing required netapp_lib")
 
 
 def set_module_args(args):
@@ -96,7 +94,6 @@ class TestMyModule(unittest.TestCase):
     ''' a group of related Unit Tests '''
 
     def setUp(self):
-        assert HAS_NETAPP_LIB, HAS_NETAPP_LIB_MSG
         self.mock_module_helper = patch.multiple(basic.AnsibleModule,
                                                  exit_json=exit_json,
                                                  fail_json=fail_json)
