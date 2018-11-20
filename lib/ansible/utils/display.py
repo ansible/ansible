@@ -29,14 +29,21 @@ import subprocess
 import sys
 import textwrap
 import time
+import traceback
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.utils.color import stringc
+
+_EARLY_ERRORS = []
+try:
+    from ansible.utils.color import stringc
+except AttributeError as e:
+    _EARLY_ERRORS.append('Error initializing display colorization.  Perhaps a bug in config:\n%s' % traceback.format_exc())
 
 
 try:
@@ -57,7 +64,7 @@ class FilterBlackList(logging.Filter):
 
 logger = None
 # TODO: make this a logging callback instead
-if getattr(C, 'DEFAULT_LOG_PATH'):
+if getattr(C, 'DEFAULT_LOG_PATH', False):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
         logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
@@ -76,10 +83,44 @@ b_COW_PATHS = (
     b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
 )
 
+# Display is needed early on for displaying errors/warnings/etc. Unfortunately, we use config to
+# help format messages and so if there's a problem with config we may never get notified of those
+# issues.  We keep a list of all the things we use from CONFIG so that we can display errors for
+# those.  Note that the default may not match up with config/base.yml's defaults as something is
+# probably drastically wrong at this point and we want to use the settings most likely to give us
+# good debugging information.
+_NEEDED_CONFIG = {'ANSIBLE_COW_PATH': None,
+                  'ANSIBLE_COW_SELECTION': None,
+                  'ANSIBLE_COW_WHITELIST': tuple(),
+                  'ANSIBLE_NOCOWS': True,
+                  'COLOR_DEBUG': 'normal',
+                  'COLOR_DEPRECATE': 'normal',
+                  'COLOR_ERROR': 'normal',
+                  'COLOR_VERBOSE': 'normal',
+                  'COLOR_WARN': 'normal',
+                  'DEFAULT_DEBUG': False,
+                  'DEPRECATION_WARNINGS': False,
+                  'SYSTEM_WARNINGS': True,
+                  }
+
+
+def _config_sanity():
+    errors = []
+    for cfg_item, cfg_default in _NEEDED_CONFIG.items():
+        if not hasattr(C, cfg_item):
+            errors.append('%s is not present in config.  Perhaps a bug in the config parser?' % cfg_item)
+            setattr(C, cfg_item, cfg_default)
+    if len(errors) >= len(_NEEDED_CONFIG):
+        _EARLY_ERRORS.append('All config items needed by display are missing.  Probably a bug in config')
+    else:
+        _EARLY_ERRORS.extend(errors)
+
 
 class Display:
 
     def __init__(self, verbosity=0):
+
+        global _EARLY_ERRORS
 
         self.columns = None
         self.verbosity = verbosity
@@ -90,7 +131,11 @@ class Display:
         self._errors = {}
 
         self.b_cowsay = None
+
+        _config_sanity()
+
         self.noncow = C.ANSIBLE_COW_SELECTION
+        cow_whitelist = C.ANSIBLE_COW_WHITELIST
 
         self.set_cowsay_info()
 
@@ -99,13 +144,16 @@ class Display:
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
                 self.cows_available = set([to_text(c) for c in out.split()])
-                if C.ANSIBLE_COW_WHITELIST:
-                    self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
-            except:
+                if cow_whitelist:
+                    self.cows_available = set(cow_whitelist).intersection(self.cows_available)
+            except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
 
         self._set_column_width()
+
+        for err_msg in _EARLY_ERRORS:
+            self._minimal_display(err_msg, stderr=False)
 
     def set_cowsay_info(self):
         if C.ANSIBLE_NOCOWS:
@@ -118,10 +166,41 @@ class Display:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def _minimal_display(self, msg, stderr):
+        if not msg.endswith(u'\n'):
+            msg2 = msg + u'\n'
+        else:
+            msg2 = msg
+
+        msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
+        if PY3:
+            # Convert back to text string on python3
+            # We first convert to a byte string so that we get rid of
+            # characters that are invalid in the user's locale
+            msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
+
+        # Note: After Display() class is refactored need to update the log capture
+        # code in 'bin/ansible-connection' (and other relevant places).
+        if not stderr:
+            fileobj = sys.stdout
+        else:
+            fileobj = sys.stderr
+
+        fileobj.write(msg2)
+
+        try:
+            fileobj.flush()
+        except IOError as e:
+            # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+            # when piping to "head -n1"
+            if e.errno != errno.EPIPE:
+                raise
+
+    def _display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
+        Note: color is deprecated.  Use type instead.
         """
 
         nocolor = msg
@@ -129,34 +208,7 @@ class Display:
             msg = stringc(msg, color)
 
         if not log_only:
-            if not msg.endswith(u'\n'):
-                msg2 = msg + u'\n'
-            else:
-                msg2 = msg
-
-            msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
-            if sys.version_info >= (3,):
-                # Convert back to text string on python3
-                # We first convert to a byte string so that we get rid of
-                # characters that are invalid in the user's locale
-                msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
-
-            # Note: After Display() class is refactored need to update the log capture
-            # code in 'bin/ansible-connection' (and other relevant places).
-            if not stderr:
-                fileobj = sys.stdout
-            else:
-                fileobj = sys.stderr
-
-            fileobj.write(msg2)
-
-            try:
-                fileobj.flush()
-            except IOError as e:
-                # Ignore EPIPE in case fileobj has been prematurely closed, eg.
-                # when piping to "head -n1"
-                if e.errno != errno.EPIPE:
-                    raise
+            self._minimal_display(msg, stderr)
 
         if logger and not screen_only:
             msg2 = nocolor.lstrip(u'\n')
@@ -172,6 +224,12 @@ class Display:
                 logger.error(msg2)
             else:
                 logger.info(msg2)
+
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+        try:
+            self._display(msg, color, stderr, screen_only, log_only)
+        except (AttributeError, NameError):
+            self._minimal_display(msg, stderr)
 
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)

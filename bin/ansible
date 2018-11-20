@@ -130,7 +130,7 @@ if __name__ == '__main__':
         display.error("User interrupted execution")
         exit_code = 99
     except Exception as e:
-        if C.DEFAULT_DEBUG:
+        if hasattr(C, 'DEFAULT_DEBUG') and C.DEFAULT_DEBUG:
             # Show raw stacktraces in debug mode, It also allow pdb to
             # enter post mortem mode.
             raise
@@ -150,6 +150,7 @@ if __name__ == '__main__':
         exit_code = 250
     finally:
         # Remove ansible tmpdir
-        shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
+        if hasattr(C, 'DEFAULT_LOCAL_TMP'):
+            shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
     sys.exit(exit_code)
