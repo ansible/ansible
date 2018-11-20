@@ -6,12 +6,12 @@ from __future__ import absolute_import, division, print_function
 
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 
-import pytest
+from nose.plugins.skip import SkipTest
+
 import ansible.module_utils.netapp as netapp_utils
 
-HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-HAS_NETAPP_LIB_MSG = "pip install netapp_lib is required"
-
+if not netapp_utils.has_netapp_lib():
+    raise SkipTest("skipping as missing required netapp_lib")
 
 class MockONTAPConnection(object):
     ''' mock a server connection to ONTAP host '''
@@ -40,14 +40,6 @@ class MockONTAPConnection(object):
                                           **{'vserver-name': vserver})
         xml.add_child_elem(attributes)
         return xml
-
-
-@pytest.fixture
-def has_zapi():
-    assert HAS_NETAPP_LIB, HAS_NETAPP_LIB_MSG
-
-
-pytestmark = pytest.mark.usefixtures("has_zapi")
 
 
 def test_ems_log_event_version():
