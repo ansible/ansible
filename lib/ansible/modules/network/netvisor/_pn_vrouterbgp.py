@@ -30,7 +30,7 @@ author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to add/remove/modify vrouter-bgp.
 deprecated:
-  removed_in: '2.8'
+  removed_in: '2.12'
   why: Doesn't support latest Pluribus Networks netvisor
   alternative: Latest modules will be pushed in ansible 2.9 instead.
 description:
