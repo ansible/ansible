@@ -24,14 +24,11 @@ from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 __all__ = ['TaskInclude']
+
+display = Display()
 
 
 class TaskInclude(Task):

@@ -13,13 +13,9 @@ from datetime import datetime, timedelta
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TimedOutException(Exception):

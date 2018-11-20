@@ -35,12 +35,9 @@ import subprocess
 from ansible.plugins.connection.jail import Connection as Jail
 
 from ansible.errors import AnsibleError
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(Jail):

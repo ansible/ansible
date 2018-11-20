@@ -25,7 +25,7 @@ from functools import wraps
 from ansible.plugins import AnsiblePlugin
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
-
+from ansible.utils.display import Display
 
 try:
     from scp import SCPClient
@@ -33,11 +33,7 @@ try:
 except ImportError:
     HAS_SCP = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def enable_mode(func):

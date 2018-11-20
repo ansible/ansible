@@ -120,6 +120,7 @@ from ansible.module_utils.six import binary_type, PY3
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
+from ansible.utils.display import Display
 
 # getargspec is deprecated in favour of getfullargspec in Python 3 but
 # getfullargspec is not available in Python 2
@@ -164,11 +165,7 @@ try:
 except ImportError:
     HAS_IPADDRESS = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):

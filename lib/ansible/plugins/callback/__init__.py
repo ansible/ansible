@@ -32,13 +32,10 @@ from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
+from ansible.utils.display import Display
 from ansible.vars.clean import strip_internal_keys
 
-try:
-    from __main__ import display as global_display
-except ImportError:
-    from ansible.utils.display import Display
-    global_display = Display()
+global_display = Display()
 
 try:
     from __main__ import cli
