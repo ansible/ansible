@@ -1,2 +1,3 @@
 ---
-bugfixes: Fix response.getheaders regression
+bugfixes:
+- scaleway inventory plugin - Fix response.getheaders regression (https://github.com/ansible/ansible/pull/48671)
