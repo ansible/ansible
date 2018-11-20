@@ -11,79 +11,89 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: getent
-short_description: A wrapper to the unix getent utility
+short_description: Query information from a getent database
 description:
-     - Runs getent against one of it's various databases and returns information into
-       the host's facts, in a getent_<database> prefixed variable.
+- Runs the C(getent) utility against one of its various databases and returns information into
+  the host's facts, in a getent_<database> prefixed variable.
 version_added: "1.8"
 options:
-    database:
-        description:
-            - The name of a getent database supported by the target system (passwd, group,
-              hosts, etc).
-        required: True
-    key:
-        description:
-            - Key from which to return values from the specified database, otherwise the
-              full contents are returned.
-        default: ''
-    split:
-        description:
-            - "Character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database."
-    fail_key:
-        description:
-            - If a supplied key is missing this will make the task fail if C(yes).
-        type: bool
-        default: 'yes'
-
+  database:
+    description:
+    - The name of a getent database supported by the target system.
+    - Possible values include
+      C(ahosts), C(ahostsv4), C(ahostsv6), C(aliases), C(ethers), C(group), C(gshadow),
+      C(hosts), C(initgroups), C(netgroup), C(networks), C(passwd), C(protocols), C(rpc),
+      C(services), C(shadow) and more, depending on the target system.
+    type: str
+    required: true
+  key:
+    description:
+    - Key from which to return values from the specified C(database).
+    - If unset, the full contents will be returned in the C(getent_<database>) host fact.
+    type: str
+  split:
+    description:
+    - Character used to split the database values into lists/arrays.
+    - Possible values include colon C(:) or TAB (\t), otherwise it will try to pick one depending on the C(database) used.
+    type: str
+  fail_key:
+    description:
+    - Whether the operation should fail of the supplied key is missing.
+    - When set to C(yes) the operation will fail if the supplied key is missing.
+    type: bool
+    default: yes
 notes:
-   - Not all databases support enumeration, check system documentation for details.
+- Not all databases support enumeration, check system documentation for details.
+- This module updates the host facts, accessing results is done through C(getent_<database>) rather than registering return values.
 author:
 - Brian Coca (@bcoca)
 '''
 
-EXAMPLES = '''
-# get root user info
-- getent:
+EXAMPLES = r'''
+# Example using the passwd database
+- name: Get root user info
+  getent:
     database: passwd
     key: root
 - debug:
     var: getent_passwd
 
-# get all groups
-- getent:
+# Example using the group database
+- name: Get all groups
+  getent:
     database: group
     split: ':'
 - debug:
     var: getent_group
 
-# get all hosts, split by tab
-- getent:
+# Example using the hosts database
+- name: Get all hosts, split by tab
+  getent:
     database: hosts
 - debug:
     var: getent_hosts
 
-# get http service info, no error if missing
-- getent:
+# Example using the services database
+- name: Get http service info, no error if missing
+  getent:
     database: services
     key: http
-    fail_key: False
+    fail_key: no
 - debug:
     var: getent_services
 
-# get user password hash (requires sudo/root)
-- getent:
+# Example using the shadow database
+- name: Get user password hash (requires sudo/root)
+  getent:
     database: shadow
     key: www-data
     split: ':'
 - debug:
     var: getent_shadow
-
 '''
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -120,9 +130,8 @@ def main():
     try:
         rc, out, err = module.run_command(cmd)
     except Exception as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg=to_native(e))
 
-    msg = "Unexpected failure!"
     dbtree = 'getent_%s' % database
     results = {dbtree: {}}
 
@@ -130,20 +139,22 @@ def main():
         for line in out.splitlines():
             record = line.split(split)
             results[dbtree][record[0]] = record[1:]
-
         module.exit_json(ansible_facts=results)
 
     elif rc == 1:
-        msg = "Missing arguments, or database unknown."
-    elif rc == 2:
-        msg = "One or more supplied key could not be found in the database."
-        if not fail_key:
-            results[dbtree][key] = None
-            module.exit_json(ansible_facts=results, msg=msg)
-    elif rc == 3:
-        msg = "Enumeration not supported on this database."
+        module.fail_json(msg="Missing arguments, or database unknown.")
 
-    module.fail_json(msg=msg)
+    elif rc == 2:
+        if fail_key:
+            module.fail_json(msg="One or more supplied keys could not be found in the database.")
+        else:
+            results[dbtree][key] = None
+            module.exit_json(ansible_facts=results, msg="One or more supplied keys could not be found in the database.")
+
+    elif rc == 3:
+        module.fail_json(msg="Enumeration not supported on this database.")
+
+    module.fail_json(msg="Unexpected failure!")
 
 
 if __name__ == '__main__':
