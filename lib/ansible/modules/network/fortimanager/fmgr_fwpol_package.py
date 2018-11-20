@@ -30,9 +30,9 @@ DOCUMENTATION = '''
 module: fmgr_fwpol_package
 version_added: "2.8"
 author:
-    - Luke Weighall - lweighall
-    - Andrew Welsh - Ghilli3
-    - Jim Huber - p4r4n0y1ng
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Manages FortiManager Firewall Policies Packages.
 description:
   -  Manages FortiManager Firewall Policies Packages.
