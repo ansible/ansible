@@ -144,7 +144,7 @@ EXAMPLES = '''
     image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
     organization: 951df375-e094-4d26-97c1-ba548eeb9c42
     region: ams1
-    commercial_type: VC1S
+    commercial_type: START1-S
     tags:
       - test
       - www
@@ -156,7 +156,7 @@ EXAMPLES = '''
     image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
     organization: 951df375-e094-4d26-97c1-ba548eeb9c42
     region: ams1
-    commercial_type: VC1S
+    commercial_type: START1-S
     security_group: 4a31b633-118e-4900-bd52-facf1085fc8d
     tags:
       - test
@@ -169,7 +169,7 @@ EXAMPLES = '''
     image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
     organization: 951df375-e094-4d26-97c1-ba548eeb9c42
     region: ams1
-    commercial_type: VC1S
+    commercial_type: START1-S
 '''
 
 RETURN = '''
@@ -301,7 +301,7 @@ def create_server(compute_api, server):
             }
 
     # Update optional parameters
-    for optional_param in ("security_group", "dynamic_ip_required", "public_ip"):
+    for optional_param in OPTIONAL_SERVER_ATTRIBUTES:
         if server.get(optional_param, None):
             data[optional_param] = server[optional_param]
 
@@ -371,9 +371,8 @@ def present_strategy(compute_api, wished_server):
     else:
         target_server = query_results[0]
 
-    if server_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server) or ip_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                                                                                           wished_server=wished_server):
+    if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
+                                           wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -436,9 +435,8 @@ def running_strategy(compute_api, wished_server):
     else:
         target_server = query_results[0]
 
-    if server_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server) or ip_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                                                                                           wished_server=wished_server):
+    if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
+                                           wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -481,9 +479,8 @@ def stop_strategy(compute_api, wished_server):
 
     compute_api.module.debug("stop_strategy: Servers are found.")
 
-    if server_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server) or ip_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                                                                                           wished_server=wished_server):
+    if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
+                                           wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -529,9 +526,8 @@ def restart_strategy(compute_api, wished_server):
     else:
         target_server = query_results[0]
 
-    if server_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server) or ip_attributes_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                                                                                           wished_server=wished_server):
+    if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
+                                           wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -589,6 +585,11 @@ def find(compute_api, wished_server, per_page=1):
 
     return search_results
 
+OPTIONAL_SERVER_ATTRIBUTES = (
+    "security_group",
+    "dynamic_ip_required",
+    "public_ip"
+)
 
 PATCH_MUTABLE_SERVER_ATTRIBUTES = (
     "ipv6",
@@ -599,7 +600,7 @@ PATCH_MUTABLE_SERVER_ATTRIBUTES = (
 )
 
 
-def server_attributes_should_be_changed(compute_api, target_server, wished_server):
+def server_or_ip_should_be_changed(compute_api, target_server, wished_server):
     compute_api.module.debug("Checking if server attributes should be changed")
     compute_api.module.debug("Current Server: %s" % target_server)
     compute_api.module.debug("Wished Server: %s" % wished_server)
@@ -608,6 +609,7 @@ def server_attributes_should_be_changed(compute_api, target_server, wished_serve
                       if x in target_server and x in wished_server)
     compute_api.module.debug("Debug dict %s" % debug_dict)
     try:
+        # Server attribute to change?
         for key in PATCH_MUTABLE_SERVER_ATTRIBUTES:
             if key in target_server and key in wished_server:
                 # When you are working with dict, only ID matter as we ask user to put only the resource ID in the playbook
@@ -617,32 +619,23 @@ def server_attributes_should_be_changed(compute_api, target_server, wished_serve
                 # Handling other structure compare simply the two objects content
                 elif not isinstance(target_server[key], dict) and target_server[key] != wished_server[key]:
                     return True
+
+        # IP attribute to change?
+        # Reserved IP to Reserved IP
+        if "public_ip" in wished_server and target_server["public_ip"] and wished_server["public_ip"] != target_server["public_ip"]["id"]:
+            return True
+
+        # Reserved IP to Dynamic/Absent IP
+        if target_server["public_ip"] and not target_server["public_ip"].get("dynamic") and "dynamic_ip_required" in wished_server:
+            return True
+
+        # Dynamic/Absent IP to Reserved one
+        if "public_ip" in wished_server and (target_server["public_ip"] is None or (target_server["public_ip"] and target_server["public_ip"].get("dynamic"))):
+            return True
+
         return False
     except AttributeError:
         compute_api.module.fail_json(msg="Error while checking if attributes should be changed")
-
-
-def ip_attributes_should_be_changed(compute_api, target_server, wished_server):
-    """ This function will handle the transition between dynamic and reserved IP on a server resource
-        The transition between two dynamic IPs is already handled by `server_attributes_should_be_changed` function
-    """
-    compute_api.module.debug("Checking if ip attributes should be changed")
-    compute_api.module.debug("Current Server: %s" % target_server)
-    compute_api.module.debug("Wished Server: %s" % wished_server)
-
-    # Update a reserved IP
-    if "public_ip" in wished_server and target_server["public_ip"] and wished_server["public_ip"] != target_server["public_ip"]["id"]:
-        return True
-
-    # Reserved IP to Dynamic IP
-    if target_server["public_ip"] and not target_server["public_ip"].get("dynamic") and "dynamic_ip_required" in wished_server:
-        return True
-
-    # Dynamic IP to Reserved one
-    if "public_ip" in wished_server and (target_server["public_ip"] is None or (target_server["public_ip"] and target_server["public_ip"].get("dynamic"))):
-        return True
-
-    return False
 
 
 def server_change_ip_attribute(compute_api, target_server, wished_server):
@@ -654,16 +647,24 @@ def server_change_ip_attribute(compute_api, target_server, wished_server):
         # Attach new IP on the current server
         compute_api.patch(path="ips/%s" % wished_server["public_ip"], data={"server": target_server["id"]})
 
-    # Reserved IP to Dynamic IP
+    # Reserved IP to Dynamic/Absent IP
     if target_server["public_ip"] and not target_server["public_ip"].get("dynamic", False) and "dynamic_ip_required" in wished_server:
         # Free the current IP address
         compute_api.patch(path="ips/%s" % target_server["public_ip"]["id"], data={"server": None})
         compute_api.patch(path="servers/%s" % target_server["public_ip"]["id"], data={"dynamic_ip_required": wished_server["dynamic_ip_required"]})
 
-    # Dynamic IP to Reserved one
+    # Dynamic/Absent IP to Reserved one
     if "public_ip" in wished_server and (target_server["public_ip"] is None or (target_server["public_ip"] and target_server["public_ip"].get("dynamic"))):
         # Attach the new IP to the current server
-        response = compute_api.patch(path="ips/%s" % wished_server["public_ip"], data={"server": target_server["id"]})
+        compute_api.patch(path="ips/%s" % wished_server["public_ip"], data={"server": target_server["id"]})
+
+    # Get modified server information
+    response = compute_api.get(path="servers/%s" % target_server["id"])
+    try:
+        target_server = response.json["server"]
+    except KeyError:
+        compute_api.module.fail_json(msg="Error in getting the server information from: %s" % response.json)
+    return target_server
 
 
 def server_change_attributes(compute_api, target_server, wished_server):
