@@ -186,6 +186,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def get_hosted_zone(client, module):
@@ -196,8 +197,7 @@ def get_hosted_zone(client, module):
     else:
         module.fail_json(msg="Hosted Zone Id is required")
 
-    results = client.get_hosted_zone(**params)
-    return results
+    return client.get_hosted_zone(**params)
 
 
 def reusable_delegation_set_details(client, module):
@@ -229,8 +229,7 @@ def list_hosted_zones(client, module):
     if module.params.get('delegation_set_id'):
         params['DelegationSetId'] = module.params.get('delegation_set_id')
 
-    results = client.list_hosted_zones(**params)
-    return results
+    return client.list_hosted_zones(**params)
 
 
 def list_hosted_zones_by_name(client, module):
@@ -245,8 +244,7 @@ def list_hosted_zones_by_name(client, module):
     if module.params.get('max_items'):
         params['MaxItems'] = module.params.get('max_items')
 
-    results = client.list_hosted_zones_by_name(**params)
-    return results
+    return client.list_hosted_zones_by_name(**params)
 
 
 def change_details(client, module):
@@ -262,8 +260,7 @@ def change_details(client, module):
 
 
 def checker_ip_range_details(client, module):
-    results = client.get_checker_ip_ranges()
-    return results
+    return client.get_checker_ip_ranges()
 
 
 def get_count(client, module):
@@ -306,8 +303,7 @@ def get_resource_tags(client, module):
     else:
         params['ResourceType'] = 'hostedzone'
 
-    results = client.list_tags_for_resources(**params)
-    return results
+    return client.list_tags_for_resources(**params)
 
 
 def list_health_checks(client, module):
@@ -319,8 +315,7 @@ def list_health_checks(client, module):
     if module.params.get('next_marker'):
         params['Marker'] = module.params.get('next_marker')
 
-    results = client.list_health_checks(**params)
-    return results
+    return client.list_health_checks(**params)
 
 
 def record_sets_details(client, module):
@@ -342,8 +337,7 @@ def record_sets_details(client, module):
     elif module.params.get('type'):
         params['StartRecordType'] = module.params.get('type')
 
-    results = client.list_resource_record_sets(**params)
-    return results
+    return client.list_resource_record_sets(**params)
 
 
 def health_check_details(client, module):
@@ -425,11 +419,8 @@ def main():
     if not (HAS_BOTO or HAS_BOTO3):
         module.fail_json(msg='json and boto/boto3 is required.')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        route53 = boto3_conn(module, conn_type='client', resource='route53', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg="Can't authorize connection - %s " % str(e))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    route53 = boto3_conn(module, conn_type='client', resource='route53', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     invocations = {
         'change': change_details,
@@ -439,7 +430,12 @@ def main():
         'record_sets': record_sets_details,
         'reusable_delegation_set': reusable_delegation_set_details,
     }
-    results = invocations[module.params.get('query')](route53, module)
+
+    results = dict(changed=False)
+    try:
+        results = invocations[module.params.get('query')](route53, module)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json(msg=to_native(e))
 
     module.exit_json(**results)
 
