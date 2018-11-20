@@ -29,7 +29,10 @@ DOCUMENTATION = '''
 ---
 module: fmgr_device_group
 version_added: "2.8"
-author: Luke Weighall, Andrew Welsh
+author:
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Alter FortiManager device groups.
 description:
   - Add or edit device groups and assign devices to device groups FortiManager Device Manager using JSON RPC API.
