@@ -209,4 +209,3 @@ class TestCnosVlanModule(TestCnosModule):
                 'name': 'anil',
                 'vlan_id': '13'}]
         self.assertEqual(result, obj)
-
