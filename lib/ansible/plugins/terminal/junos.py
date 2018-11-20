@@ -29,7 +29,6 @@ from ansible.utils.display import Display
 display = Display()
 
 
-
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [

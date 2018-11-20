@@ -31,7 +31,6 @@ from ansible.plugins.loader import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.display import Display
 
-
 display = Display()
 
 CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']

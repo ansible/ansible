@@ -36,10 +36,9 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
-from ansible.module_utils.six import with_metaclass
-from ansible.module_utils._text import to_bytes, to_text
 
 
 try:
