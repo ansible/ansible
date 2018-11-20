@@ -23,7 +23,7 @@ description:
 version_added: 2.0
 author:
     - Joseph Callen (@jcpowermac)
-    - Philippe Dellaert (@pdellaert)
+    - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
 notes:
     - Tested on vSphere 5.5
     - Tested on vSphere 6.5

@@ -87,7 +87,7 @@ requirements:
     - "Docker API >= 1.20"
     - 'Only to be able to logout (state=absent): the docker command line utility'
 author:
-    - Olaf Kilian (@olsaki)
+    - Olaf Kilian (@olsaki) <olaf.kilian@symanex.com>
     - Chris Houseknecht (@chouseknecht)
 '''
 

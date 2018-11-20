@@ -25,7 +25,7 @@ notes:
     capture API traffic
   - Use start_date and start_time with minutes to set future maintenance window
 version_added: "2.2"
-author: Benjamin Copeland (@bhcopeland)
+author: Benjamin Copeland (@bhcopeland) <ben@copeland.me.uk>
 options:
     title:
         description:

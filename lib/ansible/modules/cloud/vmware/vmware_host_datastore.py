@@ -24,8 +24,8 @@ description:
 - All parameters and VMware object names are case sensitive.
 version_added: '2.5'
 author:
-- Ludovic Rivallain (@lrivallain)
-- Christian Kotte (@ckotte)
+- Ludovic Rivallain (@lrivallain) <ludovic.rivallain@gmail.com>
+- Christian Kotte (@ckotte) <christian.kotte@gmx.de>
 notes:
 - Tested on vSphere 6.0 and 6.5
 - NFS v4.1 tested on vSphere 6.5

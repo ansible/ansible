@@ -22,7 +22,7 @@ description:
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
-- Christian Kotte (@ckotte)
+- Christian Kotte (@ckotte) <christian.kotte@gmx.de>
 notes:
 - Tested on vSphere 6.5
 requirements:

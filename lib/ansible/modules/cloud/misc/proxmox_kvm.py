@@ -20,7 +20,7 @@ short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluste
 description:
   - Allows you to create/delete/stop Qemu(KVM) Virtual Machines in Proxmox VE cluster.
 version_added: "2.3"
-author: "Abdoul Bah (@helldorado)"
+author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
 options:
   acpi:
     description:

@@ -23,7 +23,7 @@ description:
     - This module can be used to gather facts aboyt boot options for the given virtual machine.
 version_added: 2.7
 author:
-    - Abhijeet Kasurde (@Akasurde)
+    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.5
 requirements:

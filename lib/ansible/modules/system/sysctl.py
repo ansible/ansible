@@ -58,7 +58,7 @@ options:
         type: bool
         default: 'no'
         version_added: 1.5
-author: "David CHANIAL (@davixx)"
+author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
 '''
 
 EXAMPLES = '''

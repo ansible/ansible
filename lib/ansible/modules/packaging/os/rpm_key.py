@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: rpm_key
 author:
-- Hector Acosta (@hacosta)
+- Hector Acosta (@hacosta) <hector.acosta@gazzang.com>
 short_description: Adds or removes a gpg key from the rpm db
 description:
     - Adds or removes (rpm --import) a gpg key to your rpm database.

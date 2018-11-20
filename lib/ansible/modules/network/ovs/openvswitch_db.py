@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: openvswitch_db
-author: "Mark Hamilton (@markleehamilton)"
+author: "Mark Hamilton (@markleehamilton) <mhamilton@vmware.com>"
 version_added: 2.0
 short_description: Configure open vswitch database.
 requirements: [ "ovs-vsctl >= 2.3.3" ]

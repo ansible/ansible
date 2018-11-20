@@ -50,7 +50,7 @@ options:
   tags:
     description:
       - A hash/dictionary of tags to add to the new Snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
-author: Deepak Kothandan (@Deepakkothandan)
+author: Deepak Kothandan (@Deepakkothandan) <deepak.kdy@gmail.com>
 extends_documentation_fragment:
     - aws
     - ec2

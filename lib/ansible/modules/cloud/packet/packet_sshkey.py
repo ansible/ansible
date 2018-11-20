@@ -19,7 +19,7 @@ description:
      - Create/delete an SSH key in Packet host.
      - API is documented at U(https://www.packet.net/help/api/#page:ssh-keys,header:ssh-keys-ssh-keys-post).
 version_added: "2.3"
-author: "Tomas Karasek (@t0mk)"
+author: "Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>"
 options:
   state:
     description:

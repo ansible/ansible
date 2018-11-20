@@ -57,7 +57,7 @@ options:
     choices: ["present", "absent"]
 
 requirements: [ "profitbricks" ]
-author: Matt Baldwin (@baldwinSPC)
+author: Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
 '''
 
 EXAMPLES = '''

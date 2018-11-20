@@ -16,7 +16,7 @@ description:
   - In case Hook found, but provided parameters are differes, will update existing Hook.
   - In case state=absent and Hook exists, will delete it.
 version_added: "2.5"
-author: Igor 'Tsigankov' Eyrich (@tsiganenok)
+author: Igor 'Tsigankov' Eyrich (@tsiganenok) <tsiganenok@gmail.com>
 options:
   state:
     description:

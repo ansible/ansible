@@ -63,7 +63,7 @@ notes:
 requirements: [ "supervisorctl" ]
 author:
     - "Matt Wright (@mattupstate)"
-    - "Aaron Wang (@inetfuture)"
+    - "Aaron Wang (@inetfuture) <inetfuture@gmail.com>"
 '''
 
 EXAMPLES = '''
