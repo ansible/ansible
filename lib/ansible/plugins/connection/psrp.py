@@ -164,6 +164,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _common_args
+from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -181,11 +182,7 @@ except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):

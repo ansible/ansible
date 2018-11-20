@@ -27,12 +27,9 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import get_all_plugin_loaders
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['Playbook']

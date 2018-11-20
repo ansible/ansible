@@ -26,13 +26,10 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.utils.display import Display
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayIterator']

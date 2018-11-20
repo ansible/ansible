@@ -34,6 +34,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
 from ansible.module_utils._text import to_native, to_text
+from ansible.utils.display import Display
 
 try:
     from jinja2.filters import do_unique
@@ -41,11 +42,7 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 @environmentfilter

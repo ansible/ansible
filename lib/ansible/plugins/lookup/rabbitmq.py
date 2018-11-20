@@ -97,16 +97,12 @@ RETURN = """
 
 """
 
+import json
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_native, to_text
-import json
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 try:
     import pika
@@ -114,6 +110,8 @@ try:
     HAS_PIKA = True
 except ImportError:
     HAS_PIKA = False
+
+display = Display()
 
 
 class LookupModule(LookupBase):

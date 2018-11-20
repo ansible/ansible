@@ -36,7 +36,9 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
+from ansible.utils.singleton import Singleton
 
 
 try:
@@ -77,7 +79,7 @@ b_COW_PATHS = (
 )
 
 
-class Display:
+class Display(with_metaclass(Singleton, object)):
 
     def __init__(self, verbosity=0):
 

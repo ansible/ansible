@@ -26,12 +26,9 @@ from ansible import constants as C
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.sros.sros import sros_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(_ActionModule):

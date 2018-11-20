@@ -24,13 +24,9 @@ import re
 
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TerminalModule(TerminalBase):

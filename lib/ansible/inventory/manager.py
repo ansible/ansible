@@ -32,12 +32,9 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]

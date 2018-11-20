@@ -26,11 +26,9 @@ from stat import S_IRUSR, S_IWUSR
 
 import yaml
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class GalaxyToken(object):
