@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 ---
 module: fmgr_query
 version_added: "2.8"
-author: Luke Weighall - lweighall
+author: Luke Weighall (@lweighall)
 short_description: Query FortiManager data objects for use in Ansible workflows.
 description:
   - Provides information on data objects within FortiManager so that playbooks can perform conditionals.
