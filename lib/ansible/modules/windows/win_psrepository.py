@@ -68,3 +68,6 @@ EXAMPLES = '''
     name: PSGallery
     installation_policy: trusted
 '''
+
+RETURN = r'''
+'''
