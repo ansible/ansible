@@ -256,7 +256,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                     changed = True
                     results['idle_timeout_in_minutes'] = self.idle_timeout
 
-                if str(self.ip_tags or []) != str(results['ip_tags'] or []):
+                if str(self.ip_tags or []) != str(results.get('ip_tags') or []):
                     self.log("CHANGED: ip_tags")
                     changed = True
                     results['ip_tags'] = self.ip_tags
