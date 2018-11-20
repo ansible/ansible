@@ -21,7 +21,7 @@ module: selinux
 short_description: Change policy and state of SELinux
 description:
   - Configures the SELinux mode and policy. A reboot may be required after usage. Ansible will not issue this reboot but will let you know when it is required.
-version_added: "0.7"
+version_added: "0.8"
 options:
   policy:
     description:
@@ -164,8 +164,10 @@ def set_config_policy(module, policy, configfile):
 
     module.atomic_move(tmpfile, configfile)
 
+
 def get_runtime_status(force=False):
     return True if force is True else selinux.is_selinux_enabled()
+
 
 def main():
     module = AnsibleModule(

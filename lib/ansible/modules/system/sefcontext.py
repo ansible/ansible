@@ -17,7 +17,7 @@ short_description: Manages SELinux file context mapping definitions
 description:
 - Manages SELinux file context mapping definitions.
 - Similar to the C(semanage fcontext) command.
-version_added: '2.2'
+version_added: '2.3'
 options:
   target:
     description:

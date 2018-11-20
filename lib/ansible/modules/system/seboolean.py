@@ -16,7 +16,7 @@ module: seboolean
 short_description: Toggles SELinux booleans
 description:
      - Toggles SELinux booleans.
-version_added: "0.7"
+version_added: "0.8"
 options:
   name:
     description:
@@ -72,6 +72,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.modules.system.selinux import get_runtime_status
+
 
 def has_boolean_value(module, name):
     bools = []
