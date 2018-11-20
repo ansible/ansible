@@ -50,6 +50,7 @@ options:
     description:
       - Target switch to run the CLI on.
     required: False
+    default: 'local'
   state:
     description:
       - Assert the state of the ospf. Use 'present' to add ospf

@@ -49,6 +49,7 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
+    default: 'local'
   pn_command:
     description:
       - The C(pn_command) takes a CLI show command as value.
@@ -57,6 +58,7 @@ options:
     description:
       - Display output using a specific parameter. Use 'all' to display possible
         output. List of comma separated parameters.
+    default: 'all'
   pn_options:
     description:
       - Specify formatting options.

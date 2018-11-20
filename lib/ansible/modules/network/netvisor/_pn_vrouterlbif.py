@@ -52,6 +52,7 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to add vrouter loopback

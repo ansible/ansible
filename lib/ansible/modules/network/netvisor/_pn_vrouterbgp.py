@@ -51,6 +51,7 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to add bgp,
@@ -73,6 +74,7 @@ options:
   pn_next_hop_self:
     description:
       - Specify if the next-hop is the same router or not.
+    type: bool
   pn_password:
     description:
       - Specify a password, if desired.
@@ -90,12 +92,15 @@ options:
   pn_route_reflector:
     description:
       - Specify if a route reflector client is used.
+    type: bool
   pn_override_capability:
     description:
       - Specify if you want to override capability.
+    type: bool
   pn_soft_reconfig:
     description:
       - Specify if you want a soft reconfiguration of inbound traffic.
+    type: bool
   pn_max_prefix:
     description:
       - Specify the maximum number of prefixes.
@@ -103,9 +108,11 @@ options:
     description:
       - Specify if you want a warning message when the maximum number of
         prefixes is exceeded.
+    type: bool
   pn_bfd:
     description:
       - Specify if you want BFD protocol support for fault detection.
+    type: bool
   pn_multiprotocol:
     description:
       - Specify a multi-protocol for BGP.
@@ -117,6 +124,7 @@ options:
   pn_default_originate:
     description:
       - Specify if you want announce default routes to the neighbor or not.
+    type: bool
   pn_keepalive:
     description:
       - Specify BGP neighbor keepalive interval in seconds.

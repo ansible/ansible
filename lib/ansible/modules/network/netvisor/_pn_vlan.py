@@ -51,6 +51,7 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to create vlan and
@@ -74,6 +75,7 @@ options:
     description:
       - Specify if you want to collect statistics for a VLAN. Statistic
         collection is enabled by default.
+    type: bool
   pn_ports:
     description:
       - Specifies the switch network data port number, list of ports, or range

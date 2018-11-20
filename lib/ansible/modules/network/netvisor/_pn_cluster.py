@@ -54,6 +54,7 @@ options:
     description:
       - Target switch to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - Specify action to perform. Use 'present' to create cluster and 'absent'
@@ -76,6 +77,7 @@ options:
     description:
       - Validate the inter-switch links and state of switches in the cluster.
     choices: ['validate', 'no-validate']
+    type: 'bool'
 """
 
 EXAMPLES = """

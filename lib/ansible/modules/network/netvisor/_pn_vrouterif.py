@@ -51,6 +51,7 @@ options:
     description:
       - Target switch to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to add vrouter interface,
@@ -88,9 +89,12 @@ options:
         means that other configurations cannot use the interface. Exclusive is
         specified when you configure the interface as span interface and allows
         higher throughput through the interface.
+    type: bool
+    required: False
   pn_nic_enable:
     description:
       - Specify if the NIC is enabled or not
+    type: bool
   pn_vrrp_id:
     description:
       - Specify the ID for the VRRP interface. The IDs on both vRouters must be
@@ -355,7 +359,7 @@ def main():
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
             state=dict(required=True, type='str',
-                       choices=['present', 'absent']),
+                       choices=['present', 'absent', 'update']),
             pn_vrouter_name=dict(required=True, type='str'),
             pn_vlan=dict(type='int'),
             pn_interface_ip=dict(required=True, type='str'),

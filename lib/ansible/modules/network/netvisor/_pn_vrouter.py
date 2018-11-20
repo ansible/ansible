@@ -54,6 +54,7 @@ options:
     description:
       - Target switch(es) to run the CLI on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to create vrouter,
@@ -116,6 +117,9 @@ options:
     description:
       - Specify other OSPF options as a whitespaces separated string within
         single quotes ''.
+  pn_vrrp_track_port:
+    description:
+      - Specify list of ports and port ranges.
 """
 
 EXAMPLES = """

@@ -53,6 +53,7 @@ options:
   pn_cliswitch:
     description:
       - Target switch(es) to run this command on.
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to create vlag,
@@ -271,7 +272,7 @@ def main():
                               'off', 'passive', 'active']),
             pn_lacp_timeout=dict(type='str', choices=['slow', 'fast']),
             pn_lacp_fallback=dict(type='str', choices=[
-                                  'individual', 'bundled']),
+                                  'bundle', 'individual']),
             pn_lacp_fallback_timeout=dict(type='str')
         ),
         required_if=(

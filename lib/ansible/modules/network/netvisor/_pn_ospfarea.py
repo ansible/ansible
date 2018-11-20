@@ -78,6 +78,7 @@ options:
     description:
       - Enable/disable system information.
     required: false
+    type: bool
     default: true
 """
 
