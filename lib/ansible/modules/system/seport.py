@@ -16,7 +16,7 @@ module: seport
 short_description: Manages SELinux network port type definitions
 description:
     - Manages SELinux network port type definitions.
-version_added: "2.8"
+version_added: "2.0"
 options:
   ports:
     description:
@@ -47,6 +47,7 @@ options:
     - Run independent of selinux runtime state
     type: bool
     default: 'no'
+    version_added: '2.8'
 notes:
    - The changes are persistent across reboots.
    - Not tested on any debian based system.

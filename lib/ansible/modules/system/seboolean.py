@@ -16,7 +16,7 @@ module: seboolean
 short_description: Toggles SELinux booleans
 description:
      - Toggles SELinux booleans.
-version_added: "2.8"
+version_added: "0.7"
 options:
   name:
     description:
@@ -37,6 +37,7 @@ options:
     - Run independent of selinux runtime state
     type: bool
     default: 'no'
+    version_added: '2.8'
 notes:
    - Not tested on any Debian based system.
 requirements:
@@ -71,7 +72,12 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.modules.system.selinux import get_runtime_status
+
+try:
+    from .selinux import get_runtime_status
+    HAVE_RUNTIME_STATUS = True
+except ImportError:
+    HAVE_RUNTIME_STATUS = False
 
 
 def has_boolean_value(module, name):
@@ -279,6 +285,9 @@ def main():
 
     if not HAVE_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
+
+    if not HAVE_RUNTIME_STATUS:
+        module.fail_json(msg="This module requires the runtime status")
 
     force = module.params['force']
 
