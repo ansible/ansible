@@ -17,10 +17,11 @@ options:
   name:
     description:
       - The name of a Web Application Firewall
-    waf_regional:
-        description: Wether to use waf_regional module. Defaults to true
-        default: false
-        required: no
+  waf_regional:
+      description: Wether to use waf_regional module. Defaults to true
+      default: false
+      required: no
+      version_added: "2.8"
 
 author:
   - Mike Mochan (@mmochan)
@@ -37,6 +38,11 @@ EXAMPLES = '''
 - name: obtain all facts for a single WAF
   aws_waf_facts:
     name: test_waf
+
+- name: obtain all facts for a single WAF Regional
+  aws_waf_facts:
+    name: test_waf
+    waf_regional: true
 '''
 
 RETURN = '''

@@ -63,6 +63,7 @@ options:
         description: Wether to use waf_regional module. Defaults to true
         default: false
         required: no
+        version_added: 2.8
     state:
         description: Whether the condition should be C(present) or C(absent).
         choices:
@@ -525,9 +526,9 @@ class Condition(object):
     def find_condition_in_rules(self, condition_set_id):
         rules_in_use = []
         try:
-            if type(self.client).__name__ == 'WAF':
+            if self.client.__class__.__name__ == 'WAF':
                 all_rules = list_rules_with_backoff(self.client)
-            elif type(self.client).__name__ == 'WAFRegional':
+            elif self.client.__class__.__name__ == 'WAFRegional':
                 all_rules = list_regional_rules_with_backoff(self.client)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not list rules')

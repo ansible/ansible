@@ -59,6 +59,7 @@ options:
         description: Wether to use waf_regional module. Defaults to true
         default: false
         required: no
+        version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -157,13 +158,13 @@ def get_web_acl_by_name(client, module, name):
 
 
 def create_rule_lookup(client, module):
-    if type(client).__name__ == 'WAF':
+    if client.__class__.__name__ == 'WAF':
         try:
             rules = list_rules_with_backoff(client)
             return dict((rule['Name'], rule) for rule in rules)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not list rules')
-    elif type(client).__name__ == 'WAFRegional':
+    elif client.__class__.__name__ == 'WAFRegional':
         try:
             rules = list_regional_rules_with_backoff(client)
             return dict((rule['Name'], rule) for rule in rules)
@@ -179,12 +180,12 @@ def get_web_acl(client, module, web_acl_id):
 
 
 def list_web_acls(client, module,):
-    if type(client).__name__ == 'WAF':
+    if client.__class__.__name__ == 'WAF':
         try:
             return list_web_acls_with_backoff(client)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not get Web ACLs')
-    elif type(client).__name__ == 'WAFRegional':
+    elif client.__class__.__name__ == 'WAFRegional':
         try:
             return list_regional_web_acls_with_backoff(client)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:

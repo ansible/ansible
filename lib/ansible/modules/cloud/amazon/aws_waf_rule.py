@@ -56,6 +56,7 @@ options:
         description: Wether to use waf_regional module. Defaults to true
         default: false
         required: no
+        version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -152,12 +153,12 @@ def get_rule(client, module, rule_id):
 
 
 def list_rules(client, module):
-    if type(client).__name__ == 'WAF':
+    if client.__class__.__name__ == 'WAF':
         try:
             return list_rules_with_backoff(client)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not list WAF rules')
-    elif type(client).__name__ == 'WAFRegional':
+    elif client.__class__.__name__ == 'WAFRegional':
         try:
             return list_regional_rules_with_backoff(client)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -280,9 +281,9 @@ def ensure_rule_present(client, module):
 def find_rule_in_web_acls(client, module, rule_id):
     web_acls_in_use = []
     try:
-        if type(client).__name__ == 'WAF':
+        if client.__class__.__name__ == 'WAF':
             all_web_acls = list_web_acls_with_backoff(client)
-        elif type(client).__name__ == 'WAFRegional':
+        elif client.__class__.__name__ == 'WAFRegional':
             all_web_acls = list_regional_web_acls_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg='Could not list Web ACLs')
