@@ -92,6 +92,7 @@ options:
       - For more information please see the L(IOS Platform Options guide, ../network/user_guide/platform_ios.html).
       - HORIZONTALLINE
       - A dict object containing connection details.
+    version_added: "2.8"
     suboptions:
       host:
         description:
