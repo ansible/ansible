@@ -560,6 +560,16 @@
       name: "@Web Server"
       state: latest
     register: dnf_result
+  - name: verify installation of the environment
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
   always:
   - name: reinstall coreutils-single if coreutils was installed
     command: dnf install --allowerasing -y coreutils-single
@@ -573,19 +583,17 @@
       name: "@Server"
       state: latest
     register: dnf_result
+  - name: verify installation of the environment
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
   when: ansible_distribution == "RedHat"
-
-- name: verify installation of the environment
-  assert:
-    that:
-        - "not dnf_result.failed | default(False)"
-        - "dnf_result.changed"
-
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
 
 # https://github.com/ansible/ansible/issues/39704
 - name: install non-existent rpm, state=latest
