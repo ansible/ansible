@@ -28,9 +28,9 @@ DOCUMENTATION = '''
 module: fmgr_secprof_web
 version_added: "2.8"
 author:
-    - Luke Weighall (lweighall)
-    - Andrew Welsh (Ghilli3)
-    - Jim Huber (p4r4n0y1ng)
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Manage web filter security profiles in FortiManager
 description:
   -  Manage web filter security profiles in FortiManager through playbooks using the FMG API
