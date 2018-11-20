@@ -187,7 +187,7 @@ class Cli:
             message = getattr(e, 'err', e)
             err = to_text(message, errors='surrogate_then_replace')
             if opts.get('ignore_timeout') and code:
-                responses.append(code)
+                responses.append(err)
                 return responses
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
