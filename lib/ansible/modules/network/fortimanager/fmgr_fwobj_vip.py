@@ -165,8 +165,7 @@ options:
 
   ssl_mode:
     description:
-      - Apply SSL offloading between the client and the FortiGate (half) or from the client to the FortiGate and from
-      - the FortiGate to the server (full).
+      - Apply SSL offloading mode
       - choice | half | Client to FortiGate SSL.
       - choice | full | Client to FortiGate and FortiGate to Server SSL.
     required: false
