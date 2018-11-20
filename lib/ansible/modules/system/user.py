@@ -206,6 +206,30 @@ options:
         type: bool
         default: 'no'
         version_added: "2.4"
+    profile:
+        description:
+            - Sets the profile of the user.
+            - Does nothing when used with other platforms.
+            - Can set multiple profiles using comma separation.
+            - To delete all the profiles, use profile=''
+            - Currently supported on Illumos/Solaris.
+        version_added: "2.8"
+    authorization:
+        description:
+            - Sets the authorization of the user.
+            - Does nothing when used with other platforms.
+            - Can set multiple authorizations using comma separation.
+            - To delete all authorizations, use authorization=''
+            - Currently supported on Illumos/Solaris.
+        version_added: "2.8"
+    role:
+        description:
+            - Sets the role of the user.
+            - Does nothing when used with other platforms.
+            - Can set multiple roles using comma separation.
+            - To delete all roles, use role=''
+            - Currently supported on Illumos/Solaris.
+        version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -433,6 +457,9 @@ class User(object):
         self.password_lock = module.params['password_lock']
         self.groups = None
         self.local = module.params['local']
+        self.profile = module.params['profile']
+        self.authorization = module.params['authorization']
+        self.role = module.params['role']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -1591,11 +1618,13 @@ class SunOS(User):
       - create_user()
       - remove_user()
       - modify_user()
+      - user_info()
     """
 
     platform = 'SunOS'
     distribution = None
     SHADOWFILE = '/etc/shadow'
+    USER_ATTR = '/etc/user_attr'
 
     def get_password_defaults(self):
         # Read password aging defaults
@@ -1669,6 +1698,18 @@ class SunOS(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+        if self.profile is not None:
+            cmd.append('-P')
+            cmd.append(self.profile)
+
+        if self.authorization is not None:
+            cmd.append('-A')
+            cmd.append(self.authorization)
+
+        if self.role is not None:
+            cmd.append('-R')
+            cmd.append(self.role)
 
         cmd.append(self.name)
 
@@ -1773,6 +1814,18 @@ class SunOS(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
+        if self.profile is not None and info[7] != self.profile:
+            cmd.append('-P')
+            cmd.append(self.profile)
+
+        if self.authorization is not None and info[8] != self.authorization:
+            cmd.append('-A')
+            cmd.append(self.authorization)
+
+        if self.role is not None and info[9] != self.role:
+            cmd.append('-R')
+            cmd.append(self.role)
+
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             cmd.append(self.name)
@@ -1812,6 +1865,24 @@ class SunOS(User):
                     self.module.fail_json(msg="failed to update users password: %s" % to_native(err))
 
         return (rc, out, err)
+
+    def user_info(self):
+        info = super(SunOS, self).user_info()
+        if info:
+            info += self._user_attr_info()
+        return info
+
+    def _user_attr_info(self):
+        info = [''] * 3
+        with open(self.USER_ATTR, 'r') as file_handler:
+            for line in file_handler:
+                lines = line.strip().split('::::')
+                if lines[0] == self.user:
+                    tmp = dict(x.split('=') for x in lines[1].split(';'))
+                    info[0] = tmp.get('profiles', '')
+                    info[1] = tmp.get('auths', '')
+                    info[2] = tmp.get('roles', '')
+        return info
 
 
 class DarwinUser(User):
@@ -2509,6 +2580,9 @@ def main():
             expires=dict(type='float'),
             password_lock=dict(type='bool'),
             local=dict(type='bool'),
+            profile=dict(type='str'),
+            authorization=dict(type='str'),
+            role=dict(type='str'),
         ),
         supports_check_mode=True
     )
