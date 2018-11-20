@@ -34,7 +34,7 @@ description:
   - Manages configuration on Cisco FTD devices including creating, updating, removing configuration objects,
     scheduling and staring jobs, deploying pending changes, etc. All operations are performed over REST API.
 version_added: "2.7"
-author: "Cisco Systems, Inc."
+author: "Cisco Systems, Inc. (@annikulin)"
 options:
   operation:
     description:

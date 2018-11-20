@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: fmgr_sys_proxy
 version_added: "2.8"
-author: Andrew Welsh
+author: Andrew Welsh (@Ghilli3)
 short_description: Make FortiGate API calls via the FortiMananger
 description:
   - The FMG proxies FOS API calls via the FMG.  Review FortiGate API documentation to ensure you are passing correct

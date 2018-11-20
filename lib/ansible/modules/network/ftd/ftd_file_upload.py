@@ -33,7 +33,7 @@ short_description: Uploads files to Cisco FTD devices over HTTP(S)
 description:
   - Uploads files to Cisco FTD devices including disk files, backups, and upgrades.
 version_added: "2.7"
-author: "Cisco Systems, Inc."
+author: "Cisco Systems, Inc. (@annikulin)"
 options:
   operation:
     description:

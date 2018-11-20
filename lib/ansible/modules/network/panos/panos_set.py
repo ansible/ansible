@@ -39,7 +39,7 @@ description:
     cookie=XXXX><timezone>Australia/Melbourne</timezone></request>
   - The 'xpath' is  "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
   - The 'element' is "<timezone>Australia/Melbourne</timezone>"
-author: "Jasper Mackenzie"
+author: "Jasper Mackenzie (@spmp)"
 version_added: "2.7"
 requirements:
   - pan-python

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com>, Yunge Zhu <yungez@microsoft.com>
+# Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com>, Yunge Zhu (@yungezz) <yungez@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -38,8 +38,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao <t-haicao@microsoft.com>"
-    - "Yunge Zhu <yungez@microsoft.com>"
+    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
+    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
 '''
 
 EXAMPLES = '''
