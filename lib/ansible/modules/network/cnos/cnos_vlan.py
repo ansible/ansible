@@ -33,7 +33,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: cnos_vlan_lite
+module: cnos_vlan
 version_added: "2.8"
 author: "Anil Kumar Mureleedharan(@amuraleedhar)"
 short_description: Manage VLANs on CNOS network devices
@@ -46,14 +46,17 @@ options:
   name:
     description:
       - Name of the VLAN.
+    version_added: "2.8"
   vlan_id:
     description:
       - ID of the VLAN. Range 1-4094.
     required: true
+    version_added: "2.8"
   interfaces:
     description:
       - List of interfaces that should be associated to the VLAN.
     required: true
+    version_added: "2.8"
   associated_interfaces:
     description:
       - This is a intent option and checks the operational state of the for
@@ -66,18 +69,21 @@ options:
       - Delay the play should wait to check for declarative intent params
         values.
     default: 10
+    version_added: "2.8"
   aggregate:
     description: List of VLANs definitions.
+    version_added: "2.8"
   purge:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
     default: no
+    version_added: "2.8"
   state:
     description:
       - State of the VLAN configuration.
     default: present
+    version_added: "2.8"
     choices: ['present', 'absent', 'active', 'suspend']
-extends_documentation_fragment: cnos
 """
 
 EXAMPLES = """
