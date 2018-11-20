@@ -18,7 +18,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-########################################################
 import datetime
 import os
 import platform
@@ -34,15 +33,10 @@ from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
-
-########################################################
 
 class PullCLI(CLI):
     ''' is used to up a remote copy of ansible on each managed node,

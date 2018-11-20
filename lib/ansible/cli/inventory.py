@@ -27,12 +27,9 @@ from ansible.inventory.host import Host
 from ansible.plugins.loader import vars_loader
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 INTERNAL_VARS = frozenset(['ansible_diff_mode',
                            'ansible_facts',

@@ -124,7 +124,28 @@ Plugins
 Porting custom scripts
 ======================
 
-No notable changes.
+Display class
+-------------
+
+As of Ansible 2.8, the ``Display`` class is now a "singleton". Instead of using ``__main__.display`` each file should
+import and instantiate ``ansible.utils.display.Display`` on it's own.
+
+**OLD** In Ansible 2.7 (and earlier) the following was used to access the ``display`` object:
+
+.. code-block:: python
+
+   try:
+       from __main__ import display
+   except ImportError:
+       from ansible.utils.display import Display
+       display = Display()
+
+**NEW** In Ansible 2.8 the following should be used:
+
+.. code-block:: python
+
+   from ansible.utils.display import Display
+   display = Display()
 
 Networking
 ==========
