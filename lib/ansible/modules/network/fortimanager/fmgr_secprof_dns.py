@@ -29,9 +29,9 @@ DOCUMENTATION = '''
 module: fmgr_secprof_dns
 version_added: "2.8"
 author:
-    - Luke Weighall (lweighall)
-    - Andrew Welsh (Ghilli3)
-    - Jim Huber (p4r4n0y1ng)
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Manage DNS security profiles in FortiManager
 description:
   -  Manage DNS security profiles in FortiManager
