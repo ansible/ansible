@@ -30,20 +30,18 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_trunk import ApiParameters
-        from ansible.modules.network.f5.bigip_trunk import ModuleParameters
-        from ansible.modules.network.f5.bigip_trunk import ModuleManager
-        from ansible.modules.network.f5.bigip_trunk import ArgumentSpec
+    from ansible.modules.network.f5.bigip_trunk import ApiParameters
+    from ansible.modules.network.f5.bigip_trunk import ModuleParameters
+    from ansible.modules.network.f5.bigip_trunk import ModuleManager
+    from ansible.modules.network.f5.bigip_trunk import ArgumentSpec
 
-        # Ansible 2.8 imports
-        from units.compat import unittest
-        from units.compat.mock import Mock
-        from units.compat.mock import patch
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
 
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -103,8 +101,6 @@ class TestParameters(unittest.TestCase):
         assert p.link_selection_policy == 'maximum-bandwidth'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
