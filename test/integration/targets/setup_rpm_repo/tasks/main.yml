@@ -3,7 +3,7 @@
     package:
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     when:
-      - ansible_distribution in ['RedHat']
+      - ansible_distribution in ['RedHat'] and ansible_distribution_major_version|int <= 8 #EPEL8 doesn't exist yet
 
   - name: Install rpmfluff and deps
     package:
@@ -12,6 +12,12 @@
       - python{{ ansible_python_version.split(".")[0] }}-rpmfluff
     when:
       - ansible_distribution in ['Fedora']
+
+  - name: Install rpmfluff and deps (rhel8 beta)
+    package:
+      name: "https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/python3-rpmfluff-0.5.4-1.fc28.noarch.rpm"
+    when:
+      - ansible_distribution in ['RedHat'] and ansible_distribution_major_version|int == 8 #EPEL8 doesn't exist yet
 
   - name: Install rpmfluff and deps
     package:
