@@ -165,10 +165,6 @@ def set_config_policy(module, policy, configfile):
     module.atomic_move(tmpfile, configfile)
 
 
-def get_runtime_status(force=False):
-    return True if force is True else selinux.is_selinux_enabled()
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(

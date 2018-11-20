@@ -107,11 +107,9 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
 from ansible.module_utils._text import to_native
 
-try:
-    from .selinux import get_runtime_status
-    HAVE_RUNTIME_STATUS = True
-except ImportError:
-    HAVE_RUNTIME_STATUS = False
+
+def get_runtime_status(force=False):
+    return True if force is True else selinux.is_selinux_enabled()
 
 
 def semanage_port_get_ports(seport, setype, proto):
@@ -267,9 +265,6 @@ def main():
 
     if not HAVE_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
-
-    if not HAVE_RUNTIME_STATUS:
-        module.fail_json(msg="This module requires the runtime status")
 
     force = module.params['force']
 

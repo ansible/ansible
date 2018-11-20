@@ -73,11 +73,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text
 
-try:
-    from .selinux import get_runtime_status
-    HAVE_RUNTIME_STATUS = True
-except ImportError:
-    HAVE_RUNTIME_STATUS = False
+
+def get_runtime_status(force=False):
+    return True if force is True else selinux.is_selinux_enabled()
 
 
 def has_boolean_value(module, name):
@@ -285,9 +283,6 @@ def main():
 
     if not HAVE_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
-
-    if not HAVE_RUNTIME_STATUS:
-        module.fail_json(msg="This module requires the runtime status")
 
     force = module.params['force']
 
