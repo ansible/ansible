@@ -6,12 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils._text import to_native
-
-from ansible.module_utils.common._collections_compat import (
-    KeysView,
-    Mapping,
-    Sequence,
-)
+from ansible.module_utils.common._collections_compat import Iterable, Mapping
 
 from ansible.module_utils.six import (
     binary_type,
@@ -40,17 +35,6 @@ PASS_VARS = {
     'version': 'ansible_version',
 }
 
-# Note: When getting Sequence from collections, it matches with strings. If
-# this matters, make sure to check for strings before checking for sequencetype
-SEQUENCETYPE = frozenset, KeysView, Sequence
-
-_NUMBERTYPES = tuple(list(integer_types) + [float])
-
-# Deprecated compat.  Only kept in case another module used these names  Using
-# ansible.module_utils.six is preferred
-
-NUMBERTYPES = _NUMBERTYPES
-
 
 def return_values(obj):
     """ Return native stringified values from datastructures.
@@ -60,18 +44,18 @@ def return_values(obj):
         if obj:
             yield to_native(obj, errors='surrogate_or_strict')
         return
-    elif isinstance(obj, SEQUENCETYPE):
-        for element in obj:
-            for subelement in return_values(element):
-                yield subelement
     elif isinstance(obj, Mapping):
         for element in obj.items():
             for subelement in return_values(element[1]):
                 yield subelement
+    elif isinstance(obj, Iterable):
+        for element in obj:
+            for subelement in return_values(element):
+                yield subelement
     elif isinstance(obj, (bool, NoneType)):
         # This must come before int because bools are also ints
         return
-    elif isinstance(obj, NUMBERTYPES):
+    elif isinstance(obj, tuple(list(integer_types) + [float])):
         yield to_native(obj, nonstring='simplerepr')
     else:
         raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
@@ -80,9 +64,7 @@ def return_values(obj):
 def list_no_log_values(argument_spec, params):
     ''' Return list of no log values and deprecations '''
 
-    # Use the argspec to determine which args are no_log
     no_log_values = set()
-    deprecations = list()
     for arg_name, arg_opts in argument_spec.items():
 
         if arg_opts.get('no_log', False):
@@ -92,13 +74,21 @@ def list_no_log_values(argument_spec, params):
             if no_log_object:
                 no_log_values.update(return_values(no_log_object))
 
+    return no_log_values
+
+
+def list_deprications(argument_spec, params):
+    '''Return a list of deprecations'''
+
+    deprecations = list()
+    for arg_name, arg_opts in argument_spec.items():
         if arg_opts.get('removed_in_version') is not None and arg_name in params:
             deprecations.append({
                 'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
                 'version': arg_opts.get('removed_in_version')
             })
 
-    return no_log_values, deprecations
+    return deprecations
 
 
 def handle_aliases(argument_spec, params):

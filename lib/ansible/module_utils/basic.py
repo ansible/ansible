@@ -156,10 +156,9 @@ from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     handle_aliases,
     return_values,
+    list_deprications,
     list_no_log_values,
     PASS_VARS,
-    SEQUENCETYPE,
-    NUMBERTYPES,
 )
 
 from ansible.module_utils.six import (
@@ -409,7 +408,7 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
         deferred_removals.append((value, new_value))
         value = new_value
 
-    elif isinstance(value, tuple(chain(NUMBERTYPES, (bool, NoneType)))):
+    elif isinstance(value, tuple(chain(tuple(list(integer_types) + [float]), (bool, NoneType)))):
         stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
         if stringy_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
@@ -1554,7 +1553,8 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        no_log_values, deprecations = list_no_log_values(spec, param)
+        no_log_values = list_no_log_values(spec, param)
+        deprecations = list_deprications(spec, param)
 
         if no_log_values:
         for arg_name, arg_opts in spec.items():

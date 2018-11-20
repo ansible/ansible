@@ -8,7 +8,8 @@ __metaclass__ = type
 
 from units.compat import unittest
 
-from ansible.module_utils.basic import return_values, remove_values
+from ansible.module_utils.basic import remove_values
+from ansible.module_utils.common.parameters import return_values
 
 
 class TestReturnValues(unittest.TestCase):
