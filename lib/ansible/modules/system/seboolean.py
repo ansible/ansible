@@ -32,6 +32,11 @@ options:
       - Desired boolean value
     type: bool
     required: true
+  force:
+    description:
+    - Run independent of selinux runtime state
+    type: bool
+    default: 'no'
 notes:
    - Not tested on any Debian based system.
 requirements:
@@ -66,7 +71,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text
-
+from ansible.modules.system.selinux import get_runtime_status
 
 def has_boolean_value(module, name):
     bools = []
@@ -260,6 +265,7 @@ def set_boolean_value(module, name, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            force=dict(type='bool', default=False),
             name=dict(type='str', required=True),
             persistent=dict(type='bool', default=False),
             state=dict(type='bool', required=True),
@@ -273,7 +279,9 @@ def main():
     if not HAVE_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
 
-    if not selinux.is_selinux_enabled():
+    force = module.params['force']
+
+    if not get_runtime_status(force):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     name = module.params['name']

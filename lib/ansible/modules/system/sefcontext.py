@@ -64,6 +64,11 @@ options:
     - Note that this does not apply SELinux file contexts to existing files.
     type: bool
     default: 'yes'
+  force:
+    description:
+    - Run independent of selinux runtime state
+    type: bool
+    default: 'no'
 notes:
 - The changes are persistent across reboots.
 - The M(sefcontext) module does not modify existing files to the new
@@ -98,6 +103,7 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.mobules.system.selinux import get_runtime_status
 
 try:
     import selinux
@@ -235,6 +241,7 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            force=dict(type='bool', default=False),
             target=dict(required=True, aliases=['path']),
             ftype=dict(type='str', default='a', choices=option_to_file_type_str.keys()),
             setype=dict(type='str', required=True),
@@ -251,7 +258,9 @@ def main():
     if not HAVE_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
 
-    if not selinux.is_selinux_enabled():
+    force = module.params['force']
+
+    if not get_runtime_status(force):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     target = module.params['target']
