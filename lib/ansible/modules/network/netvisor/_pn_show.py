@@ -55,8 +55,8 @@ options:
     required: true
   pn_parameters:
     description:
-      - Display output using a specific parameter. Use 'all' to display possible
-        output. List of comma separated parameters.
+      - Display output using a specific parameter. Use 'all' to display
+        possible output. List of comma separated parameters.
     default: 'all'
   pn_options:
     description:
