@@ -1,3 +1,5 @@
 ---
+PSGallery_url: https://www.powershellgallery.com/api/v2
+
 repository_name: MyGet
 repository_sourcelocation: https://www.myget.org/F/powershellgetdemo/api/v2

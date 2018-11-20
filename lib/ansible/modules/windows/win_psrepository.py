@@ -31,6 +31,7 @@ options:
       - Specifies the URI for discovering and installing modules from this repository.
     aliases:
       - url
+    required: yes
   state:
     description:
       - If C(present) a new repository is added or existing updated.
@@ -66,13 +67,4 @@ EXAMPLES = '''
   win_psrepository:
     name: PSGallery
     installation_policy: trusted
-'''
-
-RETURN = '''
----
-msg:
-  description: A message describing the task result.
-  returned: always
-  sample: "The repository MyInternal with the SourceLocation https://repo.example.com/api/v2 was registred."
-  type: string
 '''

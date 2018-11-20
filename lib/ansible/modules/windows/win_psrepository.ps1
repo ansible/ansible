@@ -16,8 +16,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
-$result = @{"changed" = $false
-            "msg" = ""}
+$result = @{"changed" = $false}
 
 Function Install-Repository {
     Param(
@@ -32,7 +31,6 @@ Function Install-Repository {
             if (-not $CheckMode) {
                Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy $InstallationPolicy
             }
-            $result.msg = "The repository $Name with the SourceLocation $Url was registered."
             $result.changed = $true
         }
         catch {
@@ -47,14 +45,13 @@ Function Remove-Repository {
         [String]$Name,
         [Bool]$CheckMode
     )
-    $ReposNames = $(Get-PSRepository).Name
+    $ReposNames = $Repos.Name
 
     if ($ReposNames -contains $Name){
         try {
             if (-not $CheckMode) {
                 Unregister-PSRepository -Name $Name
             }
-            $result.msg = "The repository $Name was unregistered."
             $result.changed = $true
         }
         catch {
@@ -75,7 +72,6 @@ Function Set-Repository {
         if (-not $CheckMode) {
             Set-PSRepository -Name $Name -InstallationPolicy $InstallationPolicy
         }
-        $result.msg = "The InstallationPolicy for the repository $Name was changed to $InstallationPolicy."
         $result.changed = $true
     }
     catch {
@@ -87,33 +83,27 @@ Function Set-Repository {
 $Repos = Get-PSRepository
 
 if ($state -eq "present") {
-    if ($url) {
-        $ReposSourceLocations = $Repos.SourceLocation
-        # If repository isn't already present, try to register it.
-        if ($ReposSourceLocations -notcontains $Url){
-            if ( $installationpolicy ) {
-                $installationpolicy_internal = $installationpolicy
-            }
-            else {
-                $installationpolicy_internal = "Trusted"
-            }
-
-            Install-Repository -Name $name -Url $url -InstallationPolicy $installationpolicy_internal -CheckMode $check_mode
-        }
-    }
-    elseif ($installationpolicy) {
-        $ExistingInstallationPolicy = $($Repos | Where-Object { $_.Name -eq $Name }).InstallationPolicy
-        if ( $ExistingInstallationPolicy -ne $installationpolicy ) {
-            Set-Repository -Name $Name -InstallationPolicy $installationpolicy -CheckMode $check_mode
-        }
+    if ( $installationpolicy ) {
+        $installationpolicy_internal = $installationpolicy
     }
     else {
-        $ErrorMessage = "Repository name and source_location are mandatory if you want to add a new repository."
-        Fail-Json $result $ErrorMessage
+        $installationpolicy_internal = "Trusted"
+    }
+
+    $ReposSourceLocations = $Repos.SourceLocation
+    # If repository isn't already present, try to register it.
+    if ($ReposSourceLocations -notcontains $Url){
+        Install-Repository -Name $name -Url $url -InstallationPolicy $installationpolicy_internal -CheckMode $check_mode
+    }
+    else {
+        $ExistingInstallationPolicy = $($Repos | Where-Object { $_.Name -eq $Name }).InstallationPolicy
+        if ( $ExistingInstallationPolicy -ne $installationpolicy_internal ) {
+            Set-Repository -Name $Name -InstallationPolicy $installationpolicy_internal -CheckMode $check_mode
+        }
     }
 }
 elseif ($state -eq "absent") {
-        Remove-Repository -Name $name -CheckMode $check_mode
+    Remove-Repository -Name $name -CheckMode $check_mode
 }
 
 Exit-Json $result
