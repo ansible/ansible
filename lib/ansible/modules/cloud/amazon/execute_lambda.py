@@ -30,7 +30,7 @@ version_added: "2.2"
 extends_documentation_fragment:
   - aws
   - ec2
-author: "Ryan Scott Brown (@ryansb)"
+author: "Ryan Scott Brown (@ryansb) <ryansb@redhat.com>"
 requirements:
   - python >= 2.6
   - boto3

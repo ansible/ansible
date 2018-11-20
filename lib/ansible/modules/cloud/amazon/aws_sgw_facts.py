@@ -17,7 +17,7 @@ description:
     - Fetch AWS Storage Gateway facts
 version_added: "2.6"
 requirements: [ boto3 ]
-author: Loic Blot (@nerzhul)
+author: Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 options:
   gather_local_disks:
     description:

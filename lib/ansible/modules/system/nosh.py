@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: nosh
 author:
-    - "Thomas Caravia"
+    - "Thomas Caravia (@tacatac)"
 version_added: "2.5"
 short_description:  Manage services with nosh
 description:
