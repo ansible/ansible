@@ -12,7 +12,16 @@
   dnf:
     name: pass
     state: present
-  when: ansible_pkg_mgr == 'dnf'
+  when:
+    - ansible_pkg_mgr == 'dnf'
+    - not (ansible_distribution == "RedHat" and ansible_distribution_major_version|int >= 8)
+- name: "Install package"
+  dnf:
+    name:
+      - "https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/lookup_passwordstore/pass-1.7.1-6.fc28.noarch.rpm"
+      - "https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/lookup_passwordstore/xclip-0.13-5.fc28.x86_64.rpm"
+    state: present
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version|int >= 8
 - name: "Install package"
   zypper:
     name: password-store
