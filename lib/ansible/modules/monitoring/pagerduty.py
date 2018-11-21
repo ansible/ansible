@@ -24,7 +24,7 @@ author:
     - "Andrew Newdigate (@suprememoocow)"
     - "Dylan Silva (@thaumos)"
     - "Justin Johns"
-    - "Bruce Pennypacker"
+    - "Bruce Pennypacker (@bpennypacker)"
 requirements:
     - PagerDuty API access
 options:
