@@ -21,7 +21,7 @@ description:
 version_added: "1.2"
 author:
     - "Dylan Silva (@thaumos)"
-    - "Justin Johns"
+    - "Justin Johns (!UNKNOWN)"
 requirements:
     - "This pingdom python library: https://github.com/mbabineau/pingdom-python"
 options:

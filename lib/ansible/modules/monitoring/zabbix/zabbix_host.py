@@ -22,7 +22,7 @@ description:
 version_added: "2.0"
 author:
     - "Cove (@cove)"
-    - Tony Minfei Ding
+    - Tony Minfei Ding (!UNKNOWN)
     - Harrison Gu (@harrisongu)
     - Werner Dijkerman (@dj-wasabi)
     - Eike Frost (@eikef)

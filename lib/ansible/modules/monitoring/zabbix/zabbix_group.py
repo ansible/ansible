@@ -23,7 +23,7 @@ description:
 version_added: "1.8"
 author:
     - "Cove (@cove)"
-    - "Tony Minfei Ding"
+    - "Tony Minfei Ding (!UNKNOWN)"
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
