@@ -1,0 +1,26 @@
+---
+  - name: Set no SNMP community or SNMP manager
+    register: snmp_cleanup
+    win_snmp:
+      action: set
+      community_strings: []
+      permitted_managers: []
+
+  - name: Check registry for no SNMP community
+    register: snmp_cleanup_reg_community
+    win_reg_stat:
+      path: "{{ valid_communities_key }}"
+      name: snmp-cleanup
+
+  - name: Check registry for no SNMP manager
+    register: snmp_cleanup_reg_manager
+    win_reg_stat:
+      path: "{{ permitted_managers_key }}"
+      name: 1
+
+  - name: Asset SNMP set operation results in no remaining SNMP details
+    assert:
+      that:
+        - snmp_cleanup.changed
+        - snmp_cleanup_reg_community.exists == false
+        - snmp_cleanup_reg_manager.exists == false
