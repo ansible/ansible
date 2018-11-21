@@ -478,6 +478,8 @@ files:
       - windows
   $module_utils/docker_common.py:
     maintainers: $team_docker
+  $module_utils/facts:
+    support: core
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -651,404 +653,406 @@ files:
 ###############################
 # plugins
 
-  lib/ansible/plugins:
+  $plugins:
     support: community
-  lib/ansible/plugins/__init__.py:
+  $plugins/__init__.py:
     support: core
-  lib/ansible/plugins/loader.py:
+  $plugins/loader.py:
     support: core
-  lib/ansible/plugins/action/add_host.py:
+
+###############################
+# action
+
+  $plugins/action/add_host.py:
     support: core
-  lib/ansible/plugins/action/assemble.py:
+  $plugins/action/assemble.py:
     support: core
-  lib/ansible/plugins/action/assert.py:
+  $plugins/action/assert.py:
     support: core
-  lib/ansible/plugins/action/aws_s3.py:
+  $plugins/action/aws_s3.py:
     support: core
-  lib/ansible/plugins/action/command.py:
+  $plugins/action/command.py:
     support: core
-  lib/ansible/plugins/action/cli:
+  $plugins/action/cli:
     support: network
-  lib/ansible/plugins/action/copy.py:
+  $plugins/action/copy.py:
     support: core
-  lib/ansible/plugins/action/debug.py:
+  $plugins/action/debug.py:
     support: core
-  lib/ansible/plugins/action/fail.py:
+  $plugins/action/fail.py:
     support: core
-  lib/ansible/plugins/action/fetch.py:
+  $plugins/action/fetch.py:
     support: core
-  lib/ansible/plugins/action/group_by.py:
+  $plugins/action/group_by.py:
     support: core
-  lib/ansible/plugins/action/include_vars.py:
+  $plugins/action/include_vars.py:
     support: core
-  lib/ansible/plugins/action/__init__.py:
+  $plugins/action/__init__.py:
     support: core
-  lib/ansible/plugins/action/normal.py:
+  $plugins/action/normal.py:
     support: core
-  lib/ansible/plugins/action/package.py:
+  $plugins/action/package.py:
     support: core
-  lib/ansible/plugins/action/patch.py:
+  $plugins/action/patch.py:
     support: core
-  lib/ansible/plugins/action/pause.py:
+  $plugins/action/pause.py:
     support: core
-  lib/ansible/plugins/action/raw.py:
+  $plugins/action/raw.py:
     support: core
-  lib/ansible/plugins/action/reboot.py:
+  $plugins/action/reboot.py:
     support: core
-  lib/ansible/plugins/action/script.py:
+  $plugins/action/script.py:
     support: core
-  lib/ansible/plugins/action/service.py:
+  $plugins/action/service.py:
     support: core
-  lib/ansible/plugins/action/set_fact.py:
+  $plugins/action/set_fact.py:
     support: core
-  lib/ansible/plugins/action/shell.py:
+  $plugins/action/shell.py:
     support: core
-  lib/ansible/plugins/action/synchronize.py:
+  $plugins/action/synchronize.py:
     support: core
-  lib/ansible/plugins/action/telnet.py:
+  $plugins/action/telnet.py:
     support: core
-  lib/ansible/plugins/action/template.py:
+  $plugins/action/template.py:
     support: core
-  lib/ansible/plugins/action/uri.py:
+  $plugins/action/uri.py:
     support: core
-  lib/ansible/plugins/action/wait_for_connection.py:
+  $plugins/action/wait_for_connection.py:
     support: core
-  lib/ansible/plugins/action/win:
+  $plugins/action/win:
     support: core
     labels: windows
-  lib/ansible/plugins/action/yum.py:
+  $plugins/action/yum.py:
     support: core
-  lib/ansible/plugins/action/asa:
+  $plugins/action/asa:
     maintainers: ogenstad gdpak
     labels: networking
-  lib/ansible/plugins/action/aireos:
+  $plugins/action/aireos:
     maintainers: jmighion
     labels: networking
-  lib/ansible/plugins/action/aruba:
+  $plugins/action/aruba:
     maintainers: jmighion
     labels: networking
-  lib/ansible/plugins/action/bigip:
+  $plugins/action/bigip:
     maintainers: caphrim007
     labels: networking
-  lib/ansible/plugins/action/bigiq:
+  $plugins/action/bigiq:
     maintainers: caphrim007
     labels: networking
-  lib/ansible/plugins/action/dellos:
+  $plugins/action/dellos:
     maintainers: skg-net
     labels: networking
-  lib/ansible/plugins/action/eos:
+  $plugins/action/eos:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/ios:
+  $plugins/action/ios:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/iosxr:
+  $plugins/action/iosxr:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/ironware:
+  $plugins/action/ironware:
     maintainers: paulquack
     labels: networking
-  lib/ansible/plugins/action/junos:
+  $plugins/action/junos:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/net:
+  $plugins/action/net:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/nxos:
+  $plugins/action/nxos:
     support: network
     maintainers: $team_networking
     labels:
       - networking
       - nxos
-  lib/ansible/plugins/action/onyx_config.py:
+  $plugins/action/onyx_config.py:
     maintainers: $team_onyx
     labels: networking
-  lib/ansible/plugins/action/sros:
+  $plugins/action/sros:
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/action/vyos:
+  $plugins/action/vyos:
     support: network
     maintainers: $team_networking
     labels: networking
 ###############################
 # plugins/cache
-  lib/ansible/plugins/cache/__init__.py:
+  $plugins/cache/__init__.py:
     support: core
-  lib/ansible/plugins/cache/base.py:
+  $plugins/cache/base.py:
     support: core
 ###############################
 # plugins/callbacks
-  lib/ansible/plugins/callback/__init__.py:
+  $plugins/callback/__init__.py:
     support: core
-  lib/ansible/plugins/callback/debug:
+  $plugins/callback/debug:
     support: core
-  lib/ansible/plugins/callback/default:
+  $plugins/callback/default:
     support: core
-  lib/ansible/plugins/callback/grafana_annotations.py:
+  $plugins/callback/grafana_annotations.py:
     maintainers: rrey
     support: community
-  lib/ansible/plugins/callback/junit:
+  $plugins/callback/junit:
     support: core
-  lib/ansible/plugins/callback/minimal:
+  $plugins/callback/minimal:
     support: core
-  lib/ansible/plugins/callback/oneline:
+  $plugins/callback/oneline:
     support: core
-  lib/ansible/plugins/callback/profile:
+  $plugins/callback/profile:
     support: core
-  lib/ansible/plugins/callback/stderr.py:
+  $plugins/callback/stderr.py:
     maintainers: ysn2233
     support: community
-  lib/ansible/plugins/callback/sumologic.py:
+  $plugins/callback/sumologic.py:
     maintainers: ryancurrah
     support: community
-  lib/ansible/plugins/callback/tree:
+  $plugins/callback/tree:
     support: core
-  lib/ansible/plugins/callback/unixy.py:
+  $plugins/callback/unixy.py:
     maintainers: akatch
     support: community
 ###############################
 # plugins/cliconf
 
 
-  lib/ansible/plugins/cliconf/:
+  $plugins/cliconf/:
     labels: networking
-  lib/ansible/plugins/cliconf/eos.py:
+  $plugins/cliconf/eos.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/cliconf/exos.py:
+  $plugins/cliconf/exos.py:
     maintainers: rdvencioneck
-  lib/ansible/plugins/cliconf/ios.py:
+  $plugins/cliconf/ios.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/cliconf/iosxr.py:
+  $plugins/cliconf/iosxr.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/cliconf/ironware.py:
+  $plugins/cliconf/ironware.py:
     maintainers: paulquack
-  lib/ansible/plugins/cliconf/junos.py:
+  $plugins/cliconf/junos.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/cliconf/nos.py:
+  $plugins/cliconf/nos.py:
     maintainers: $team_extreme
-  lib/ansible/plugins/cliconf/nxos.py:
+  $plugins/cliconf/nxos.py:
     support: network
     maintainers: $team_nxos
     labels: nxos
-  lib/ansible/plugins/cliconf/onyx.py:
+  $plugins/cliconf/onyx.py:
     maintainers: $team_onyx
-  lib/ansible/plugins/cliconf/routeros.py:
+  $plugins/cliconf/routeros.py:
     maintainers: heuels
-  lib/ansible/plugins/cliconf/slxos.py:
+  $plugins/cliconf/slxos.py:
     maintainers: $team_extreme
-  lib/ansible/plugins/cliconf/voss.py:
+  $plugins/cliconf/voss.py:
     maintainers: $team_extreme
     labels: networking
-  lib/ansible/plugins/cliconf/vyos.py:
+  $plugins/cliconf/vyos.py:
     support: network
     maintainers: $team_networking
 ###############################
 # plugins/connection
-  lib/ansible/plugins/connection/:
+  $plugins/connection/:
     support: core
-  lib/ansible/plugins/connection/docker.py:
+  $plugins/connection/docker.py:
     support: community
     maintainers: $team_docker
-  lib/ansible/plugins/connection/httpapi.py:
+  $plugins/connection/httpapi.py:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/connection/lxd.py:
+  $plugins/connection/lxd.py:
     maintainers: mattclay
-  lib/ansible/plugins/connection/netconf.py:
+  $plugins/connection/netconf.py:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/connection/oc.py:
+  $plugins/connection/oc.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-  lib/ansible/plugins/connection/network_cli.py:
+  $plugins/connection/network_cli.py:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/connection/persistent.py:
+  $plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/connection/winrm.py:
+  $plugins/connection/winrm.py:
     maintainers: $team_windows_core
     labels:
       - windows
 ###############################
 # plugins/filter
-  lib/ansible/plugins/filter/:
+  $plugins/filter/:
     support: core
-  lib/ansible/plugins/filter/network.py:
+  $plugins/filter/network.py:
     support: network
     maintainers: $team_networking
     labels: networking
 ###############################
 # plugins/httpapi
-  lib/ansible/plugins/httpapi:
+  $plugins/httpapi:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/httpapi/ftd.py:
+  $plugins/httpapi/ftd.py:
     support: community
     maintainers: annikulin $team_networking
 ###############################
 # plugins/inventory
-  lib/ansible/plugins/inventory/__init__.py:
+  $plugins/inventory/__init__.py:
     support: core
-  lib/ansible/plugins/inventory/ini.py:
+  $plugins/inventory/ini.py:
     support: core
-  lib/ansible/plugins/inventory/k8s.py:
+  $plugins/inventory/k8s.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
-  lib/ansible/plugins/inventory/linode.py:
+  $plugins/inventory/linode.py:
     keywords:
       - linode dynamic inventory script
     maintainers: $team_linode
     labels:
       - cloud
       - linode
-  lib/ansible/plugins/inventory/netbox.py:
+  $plugins/inventory/netbox.py:
     support: community
     maintainers: $team_netbox
-  lib/ansible/plugins/inventory/openshift.py:
+  $plugins/inventory/openshift.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-  lib/ansible/plugins/inventory/openstack.py:
+  $plugins/inventory/openstack.py:
     maintainers: $team_openstack
     keywords:
       - openstack
       - inventory
     labels:
       - cloud
-  lib/ansible/plugins/inventory/scaleway.py: *scaleway
-  lib/ansible/plugins/inventory/vultr.py: *vultr
-  lib/ansible/plugins/inventory/yaml.py:
+  $plugins/inventory/scaleway.py: *scaleway
+  $plugins/inventory/script.py:
     support: core
-###############################
-# plugins/loader
-  lib/ansible/plugins/loader:
+  $plugins/inventory/vultr.py: *vultr
+  $plugins/inventory/yaml.py:
     support: core
 
 ###############################
 # plugins/lookup
-  lib/ansible/plugins/lookup/__init__.py:
+  $plugins/lookup/__init__.py:
     support: core
-  lib/ansible/plugins/lookup/conjur_variable.py:
+  $plugins/lookup/conjur_variable.py:
     maintainers: $team_cyberark_conjur
     notified: cyberark-bizdev
-  lib/ansible/plugins/lookup/dig:
+  $plugins/lookup/dig:
     maintainers: jpmens
     labels: community
-  lib/ansible/plugins/lookup/cyberarkpassword.py:
+  $plugins/lookup/cyberarkpassword.py:
     notified: cyberark-bizdev
-  lib/ansible/plugins/lookup/k8s.py:
+  $plugins/lookup/k8s.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
-  lib/ansible/plugins/lookup/nios:
+  $plugins/lookup/nios:
     support: core
     maintainers: $team_networking sganesh-infoblox
     labels:
       - networking
       - infoblox
-  lib/ansible/plugins/lookup/onepassword:
+  $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
 ###############################
 # plugins/netconf
-  lib/ansible/plugins/netconf/:
+  $plugins/netconf/:
     support: network
     maintainers: $team_networking
     labels: networking
-  lib/ansible/plugins/lookup/rabbitmq.py:
+  $plugins/lookup/rabbitmq.py:
     maintainers: Im0
     support: community
-  lib/ansible/plugins/netconf/sros.py:
+  $plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
 ###############################
 # plugins/shell
-  lib/ansible/plugins/shell/:
+  $plugins/shell/:
     support: core
-  lib/ansible/plugins/shell/powershell.py:
+  $plugins/shell/powershell.py:
     support: core
     maintainers: $team_windows_core
     labels:
       - windows
 ###############################
 # plugins/strategy
-  lib/ansible/plugins/strategy/:
+  $plugins/strategy/:
     support: core
 ###############################
 # plugins/terminal
-  lib/ansible/plugins/terminal/:
+  $plugins/terminal/:
     labels: networking
-  lib/ansible/plugins/terminal/__init__.py:
+  $plugins/terminal/__init__.py:
     support: network
-  lib/ansible/plugins/terminal/asa.py:
+  $plugins/terminal/asa.py:
     maintainers: ogenstad gdpak
-  lib/ansible/plugins/terminal/dellos10:
+  $plugins/terminal/dellos10:
     maintainers: skg-net
-  lib/ansible/plugins/terminal/edgeos.py:
+  $plugins/terminal/edgeos.py:
     maintainers: samdoran
-  lib/ansible/plugins/terminal/eos.py:
+  $plugins/terminal/eos.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/terminal/exos.py:
+  $plugins/terminal/exos.py:
     maintainers: rdvencioneck
-  lib/ansible/plugins/terminal/ios.py:
+  $plugins/terminal/ios.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/terminal/iosxr.py:
+  $plugins/terminal/iosxr.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/terminal/ironware.py:
+  $plugins/terminal/ironware.py:
     maintainers: paulquack
-  lib/ansible/plugins/terminal/junos.py:
+  $plugins/terminal/junos.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/terminal/nos.py:
+  $plugins/terminal/nos.py:
     maintainers: $team_extreme
-  lib/ansible/plugins/terminal/nxos.py:
+  $plugins/terminal/nxos.py:
     support: network
     maintainers: $team_networking
-  lib/ansible/plugins/terminal/onyx.py:
+  $plugins/terminal/onyx.py:
     maintainers: $team_onyx
-  lib/ansible/plugins/terminal/routeros.py:
+  $plugins/terminal/routeros.py:
     maintainers: heuels
-  lib/ansible/plugins/terminal/slxos.py:
+  $plugins/terminal/slxos.py:
     maintainers: $team_extreme
-  lib/ansible/plugins/terminal/sros.py:
+  $plugins/terminal/sros.py:
     maintainers: $team_networking
-  lib/ansible/plugins/terminal/voss.py:
+  $plugins/terminal/voss.py:
     maintainers: $team_extreme
-  lib/ansible/plugins/terminal/vyos.py:
+  $plugins/terminal/vyos.py:
     support: network
     maintainers: $team_networking samdoran
 ###############################
 # plugins/test
-  lib/ansible/plugins/test:
+  $plugins/test:
     support: core
 ###############################
-# plugins/test
-  lib/ansible/plugins/vars:
+# plugins/vars
+  $plugins/vars:
     support: core
-###############################
-###############################
 ###############################
   lib/ansible/release.py:
     notified: mattclay nitzmahone
-###############################
-# plugins/terminal
+
+##############################
+# other lib
+
   lib/ansible/template:
     keywords:
       - jinja
@@ -1127,6 +1131,7 @@ files:
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
+  plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
