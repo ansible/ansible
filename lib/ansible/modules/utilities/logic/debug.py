@@ -33,7 +33,7 @@ options:
   var:
     description:
       - A variable name to debug.  Mutually exclusive with the 'msg' option.
-      - Be aware that this option already runs in Jinaj2 context and has an implicit ``{{ }}` wrapping,
+      - Be aware that this option already runs in Jinja2 context and has an implicit ``{{ }}`` wrapping,
         so you should not be using Jinja2 delimiters unless you are looking for double interpolation.
   verbosity:
     description:
