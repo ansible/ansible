@@ -52,9 +52,9 @@ options:
             action:
                 description:
                     - Swap types.
-                    - 'preview' is to apply target slot settings on source source slot first.
-                    - 'swap' is to complete swapping.
-                    - 'reset' is to reset the swap.
+                    - preview is to apply target slot settings on source source slot first.
+                    - swap is to complete swapping.
+                    - reset is to reset the swap.
                 choices:
                     - preview
                     - swap
