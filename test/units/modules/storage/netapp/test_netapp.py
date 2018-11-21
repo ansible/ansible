@@ -4,13 +4,14 @@
 ''' unit tests for module_utils netapp.py '''
 from __future__ import absolute_import, division, print_function
 
+import pytest
+
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 
-import pytest
 import ansible.module_utils.netapp as netapp_utils
 
-HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-HAS_NETAPP_LIB_MSG = "pip install netapp_lib is required"
+if not netapp_utils.has_netapp_lib():
+    pytestmark = pytest.mark.skip("skipping as missing required netapp_lib")
 
 
 class MockONTAPConnection(object):
@@ -40,14 +41,6 @@ class MockONTAPConnection(object):
                                           **{'vserver-name': vserver})
         xml.add_child_elem(attributes)
         return xml
-
-
-@pytest.fixture
-def has_zapi():
-    assert HAS_NETAPP_LIB, HAS_NETAPP_LIB_MSG
-
-
-pytestmark = pytest.mark.usefixtures("has_zapi")
 
 
 def test_ems_log_event_version():
