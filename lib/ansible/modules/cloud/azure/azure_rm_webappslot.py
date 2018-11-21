@@ -42,8 +42,9 @@ options:
             - Source slot to clone configurations from when creating slot. Use webapp's name to refer to the production slot.
     auto_swap_slot_name:
         description:
-            - Target slot name to auto swap.
-            - Set it to 'None' to disable auto slot swap.
+            - Used to configure target slot name to auto swap, or disable auto swap.
+            - Set it target slot name to auto swap.
+            - Set it to False to disable auto slot swap.
     swap:
         description:
             - Swap deployment slots of a web app.
@@ -51,7 +52,7 @@ options:
             action:
                 description:
                     - Swap types.
-                    - 'preview' is to apply target slot's settings on source source slot first.
+                    - 'preview' is to apply target slot settings on source source slot first.
                     - 'swap' is to complete swapping.
                     - 'reset' is to reset the swap.
                 choices:
@@ -109,7 +110,7 @@ options:
                             - For Tomcat, e.g. 8.0, 8.5, 9.0. For Jetty, e.g. 9.1, 9.3.
 
     container_settings:
-        description: Web app container settings.
+        description: Web app slot container settings.
         suboptions:
             name:
                 description: Name of container. eg. "imagename:tag"
@@ -172,7 +173,7 @@ EXAMPLES = '''
       name: stage
       configuration_source: myJavaWebApp
       app_settings:
-          testkey: testvalue
+        testkey: testvalue
 
   - name: swap the slot with production slot
     azure_rm_webapp_slot:
@@ -195,16 +196,16 @@ EXAMPLES = '''
       webapp_name: myJavaWebApp
       name: stage
       app_settings:
-          testkey: testvalue
+        testkey: testvalue2
 
-  - name: udpate a webapp frameworks
+  - name: udpate a webapp slot frameworks
     azure_rm_webapp_slot:
       resource_group: myRG
       webapp_name: myJavaWebApp
       name: stage
       frameworks:
-        - name: node
-          version: 10.1
+        - name: "node"
+          version: "10.1"
 '''
 
 RETURN = '''
@@ -212,9 +213,7 @@ id:
     description: Id of current slot.
     returned: always
     type: str
-    sample: {
-        "id": "/subscriptions/<subsid>/resourceGroups/myRG/providers/Microsoft.Web/sites/testapp/slots/stage1"
-    }
+    sample: /subscriptions/<subsid>/resourceGroups/myRG/providers/Microsoft.Web/sites/testapp/slots/stage1
 '''
 
 import time
@@ -349,7 +348,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 type='str'
             ),
             auto_swap_slot_name=dict(
-                type='str'
+                type='raw'
             ),
             swap=dict(
                 type='dict',
@@ -477,6 +476,9 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
         # get slot
         old_response = self.get_slot()
 
+        # set is_linux
+        is_linux = True if webapp_response['reserved'] else False
+
         if self.state == 'present':
             if self.frameworks:
                 # java is mutually exclusive with other frameworks
@@ -535,8 +537,10 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                     self.app_settings['DOCKER_REGISTRY_SERVER_PASSWORD'] = self.container_settings['registry_server_password']
 
             # set auto_swap_slot_name
-            if self.auto_swap_slot_name:
+            if self.auto_swap_slot_name and isinstance(self.auto_swap_slot_name, str):
                 self.site_config['auto_swap_slot_name'] = self.auto_swap_slot_name
+            if self.auto_swap_slot_name is False:
+                self.site_config['auto_swap_slot_name'] = None
 
             # init site
             self.site = Site(location=self.location, site_config=self.site_config)
@@ -560,7 +564,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                         app_settings.append(NameValuePair(key, self.app_settings[key]))
 
                     self.site_config['app_settings'] = app_settings
-                
+
                 # clone slot
                 if self.configuration_source:
                     self.clone = True
@@ -629,10 +633,9 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
 
                 if self.clone:
                     self.clone_slot()
-            
+
             if self.to_do == Actions.UpdateAppSettings:
                 self.update_app_settings_slot()
-                
 
         slot = None
         if response:
@@ -668,7 +671,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                         getattr(existing_config, fx_version).upper() != self.site_config.get(fx_version).upper():
                             return True
 
-        if self.auto_swap_slot_name is None and existing_config.auto_swap_slot_name is not None:
+        if self.auto_swap_slot_name is False and existing_config.auto_swap_slot_name is not None:
             return True
         elif self.auto_swap_slot_name and self.auto_swap_slot_name != getattr(existing_config, 'auto_swap_slot_name', None):
             return True
@@ -835,7 +838,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
         if app_settings is None:
             app_settings = self.app_settings_strDic
         try:
-            response = self.web_client.web_apps.update_application_settings_slot(resource_group_name=self.resource_group, 
+            response = self.web_client.web_apps.update_application_settings_slot(resource_group_name=self.resource_group,
                                                                                  name=self.webapp_name,
                                                                                  slot=slot_name,
                                                                                  kind=None,
@@ -1025,7 +1028,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
             if self.app_settings:
                 app_settings_clone_from.properties.update(self.app_settings)
 
-            self.update_app_settings_slot(app_settings=app_setting_clone_from)
+            self.update_app_settings_slot(app_settings=app_settings_clone_from)
 
 
 def main():
