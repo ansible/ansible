@@ -372,7 +372,7 @@ def present_strategy(compute_api, wished_server):
         target_server = query_results[0]
 
     if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server):
+                                      wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -436,7 +436,7 @@ def running_strategy(compute_api, wished_server):
         target_server = query_results[0]
 
     if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server):
+                                      wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -480,7 +480,7 @@ def stop_strategy(compute_api, wished_server):
     compute_api.module.debug("stop_strategy: Servers are found.")
 
     if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server):
+                                      wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -527,7 +527,7 @@ def restart_strategy(compute_api, wished_server):
         target_server = query_results[0]
 
     if server_or_ip_should_be_changed(compute_api=compute_api, target_server=target_server,
-                                           wished_server=wished_server):
+                                      wished_server=wished_server):
         changed = True
 
         if compute_api.module.check_mode:
@@ -584,6 +584,7 @@ def find(compute_api, wished_server, per_page=1):
     search_results = response.json["servers"]
 
     return search_results
+
 
 OPTIONAL_SERVER_ATTRIBUTES = (
     "security_group",
