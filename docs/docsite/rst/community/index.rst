@@ -54,15 +54,6 @@ Working with the Ansible repo
 * I have an open pull request with a failing test. How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?
 * I'm ready to step up as a module maintainer. What are the :ref:`guidelines for maintainers <maintainers>`?
 
-.. toctree::
-   :caption: Guidelines for specific types of contributors
-   :maxdepth: 1
-
-   committer_guidelines
-   maintainers
-   release_managers
-   github_admins
-
 Traditional Table of Contents
 =============================
 
@@ -81,3 +72,12 @@ If you prefer to read the entire Community Guide, here's a list of the pages in 
    triage_process
    other_tools_and_programs
    ../dev_guide/style_guide/index
+
+.. toctree::
+   :caption: Guidelines for specific types of contributors
+   :maxdepth: 1
+
+   committer_guidelines
+   maintainers
+   release_managers
+   github_admins
