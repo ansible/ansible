@@ -36,7 +36,7 @@ PASS_VARS = {
 }
 
 
-def return_values(obj):
+def _return_datastructure_name(obj):
     """ Return native stringified values from datastructures.
 
     For use with removing sensitive values pre-jsonification."""
@@ -46,11 +46,11 @@ def return_values(obj):
         return
     elif isinstance(obj, Mapping):
         for element in obj.items():
-            for subelement in return_values(element[1]):
+            for subelement in _return_datastructure_name(element[1]):
                 yield subelement
     elif isinstance(obj, Iterable):
         for element in obj:
-            for subelement in return_values(element):
+            for subelement in _return_datastructure_name(element):
                 yield subelement
     elif isinstance(obj, (bool, NoneType)):
         # This must come before int because bools are also ints
@@ -72,7 +72,7 @@ def list_no_log_values(argument_spec, params):
             no_log_object = params.get(arg_name, None)
 
             if no_log_object:
-                no_log_values.update(return_values(no_log_object))
+                no_log_values.update(_return_datastructure_name(no_log_object))
 
     return no_log_values
 
