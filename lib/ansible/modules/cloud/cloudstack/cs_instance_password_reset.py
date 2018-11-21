@@ -83,7 +83,6 @@ password:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_required_together,
     cs_argument_spec
 )
@@ -136,13 +135,9 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_password = AnsibleCloudStackPasswordReset(module)
-        password = acs_password.reset_password()
-        result = acs_password.get_result({'password':password})
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    acs_password = AnsibleCloudStackPasswordReset(module)
+    password = acs_password.reset_password()
+    result = acs_password.get_result({'password':password})
 
     module.exit_json(**result)
 
