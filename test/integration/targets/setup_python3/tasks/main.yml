@@ -1,5 +1,0 @@
----
-- include: ubuntu1404.yml
-  when:
-    - ansible_distribution == 'Ubuntu'
-    - ansible_distribution_release == 'trusty'
