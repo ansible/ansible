@@ -35,5 +35,5 @@ If your module meets our objective requirements, we'll review your code to see i
 Other checklists
 ================
 
-* `Amazon development checklist <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`.
-* `Windows development checklist <developing_modules_general_windows>`.
+* `Amazon development checklist <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_.
+* :ref:`Windows development checklist <developing_modules_general_windows>`.
