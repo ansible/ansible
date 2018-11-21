@@ -384,3 +384,4 @@
     that:
       - unexisting_image_check is not success
       - unexisting_image_check is not changed
+      - unexisting_image_check.msg == "Error in getting image this-image-does-not-exists on https://cp-{{scaleway_region}}.scaleway.com"
