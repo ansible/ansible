@@ -102,7 +102,7 @@ options:
     version_added: "2.7"
   update_cache:
     description:
-      - Force yum to check if cache is out of date and redownload if needed.
+      - Force dnf to check if cache is out of date and redownload if needed.
         Has an effect only if state is I(present) or I(latest).
     type: bool
     default: "no"
@@ -141,7 +141,7 @@ options:
     description:
       - Disable the excludes defined in DNF config files.
       - If set to C(all), disables all excludes.
-      - If set to C(main), disable excludes defined in [main] in yum.conf.
+      - If set to C(main), disable excludes defined in [main] in dnf.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
     version_added: "2.7"
   validate_certs:
