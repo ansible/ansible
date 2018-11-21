@@ -51,15 +51,15 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# reset and get the root password
-- local_action:
+- name: reset and get the root password
+  local_action:
     cs_rootpassword:
       name: myvirtualmachine
   register: root
 - debug:
     msg: "new root password is {{ root.password }}"
-# reboot the virtual machine to activate the new password
-- local_action:
+- name: reboot the virtual machine to activate the new password
+  local_action:
     cs_instance:
       name: myvirtualmachine
       state: restarted
