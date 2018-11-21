@@ -151,7 +151,7 @@ options:
           Allowed values are "bios" and "efi". version_added: 2.7'
     - ' - C(virt_based_security) (bool): Enable Virtualization Based Security feature for Windows 10.
           (Support from Virtual machine hardware version 14, Guest OS Windows 10 64 bit, Windows Server 2016)'
-  
+
   guest_id:
     description:
     - Set the guest ID.
