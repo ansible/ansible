@@ -1,0 +1,4 @@
+bugfixes:
+- Fix the issue that FTD HTTP API retries authentication-related HTTP requests.
+- Fix the issue that module fails when the Swagger model does not have required fields.
+- Fix the issue with comparing string-like objects.
