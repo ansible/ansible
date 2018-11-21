@@ -1,0 +1,10 @@
+---
+- name: add ppa
+  apt_repository:
+    repo: "ppa:jonathonf/python-3.6"
+    update-cache: yes
+
+- name: install python3.6
+  apt:
+    package: python3.6
+    state: latest
