@@ -28,6 +28,7 @@ options:
     description:
       - The customized message that is printed. If omitted, prints a generic
         message.
+      - If you have a colon followed by a space (or newline), then you will need to use quotes around this value (see EXAMPLES section).
     required: false
     default: "Hello world!"
   var:
@@ -35,7 +36,7 @@ options:
       - A variable name to debug.  Mutually exclusive with the 'msg' option.
   verbosity:
     description:
-      - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above
+      - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above.
     required: False
     default: 0
     version_added: "2.1"
@@ -72,4 +73,10 @@ EXAMPLES = '''
     msg:
       - "Provisioning based on YOUR_KEY which is: '{{ lookup('env', 'YOUR_KEY') }}"
       - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
+
+# Example that prints value with colon followed by space
+- debug:
+    msg: "This is the value of my var: {{ my_var }}"
+  vars:
+    my_var: test
 '''
