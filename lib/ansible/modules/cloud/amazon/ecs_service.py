@@ -530,7 +530,7 @@ def main():
                               required_together=[['load_balancers', 'role']])
 
     if module.params['state'] == 'present' and module.params['scheduling_strategy'] == 'REPLICA':
-        if not module.params['desired_count']:
+        if module.params['desired_count']==None:
             module.fail_json(msg='state is present, scheduling_strategy is REPLICA; missing desired_count')
 
     service_mgr = EcsServiceManager(module)
