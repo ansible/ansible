@@ -20,7 +20,8 @@ version_added: 2.8
 short_description: Manage volumes on Vexata VX100 storage arrays
 description:
     - Create, deletes or extend volumes on a Vexata VX100 array.
-author: Sandeep Kasargod
+author:
+- Sandeep Kasargod (@vexata)
 options:
   name:
     description:
