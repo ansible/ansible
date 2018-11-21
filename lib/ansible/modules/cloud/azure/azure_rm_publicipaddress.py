@@ -242,7 +242,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                     changed = True
                     results['dns_settings']['domain_name_label'] = self.domain_name
 
-                if self.allocation_method != results['public_ip_allocation_method']:
+                if self.allocation_method.lower() != results['public_ip_allocation_method'].lower():
                     self.log("CHANGED: allocation_method")
                     changed = True
                     results['public_ip_allocation_method'] = self.allocation_method
@@ -252,7 +252,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                     changed = True
                     results['sku'] = self.sku
 
-                if self.version != results['public_ip_address_version']:
+                if self.version.lower() != results['public_ip_address_version'].lower():
                     self.log("CHANGED: version")
                     changed = True
                     results['public_ip_address_version'] = self.version
