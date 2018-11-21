@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: fmgr_provisioning
 version_added: "2.7"
-author: Andrew Welsh
+author: Andrew Welsh (@Ghilli3)
 short_description: Provision devices via FortiMananger
 description:
   - Add model devices on the FortiManager using jsonrpc API and have them pre-configured,

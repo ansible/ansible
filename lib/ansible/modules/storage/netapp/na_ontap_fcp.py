@@ -17,7 +17,7 @@ short_description: NetApp ONTAP Start, Stop and Enable FCP services.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Start, Stop and Enable FCP services.
 options:

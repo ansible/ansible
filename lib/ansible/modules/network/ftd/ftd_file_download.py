@@ -34,7 +34,7 @@ description:
   - Downloads files from Cisco FTD devices including pending changes, disk files, certificates,
     troubleshoot reports, and backups.
 version_added: "2.7"
-author: "Cisco Systems, Inc."
+author: "Cisco Systems, Inc. (@annikulin)"
 options:
   operation:
     description:
