@@ -128,7 +128,7 @@ requirements:
   - cron
 author:
     - Dane Summers (@dsummersl)
-    - Mike Grozak
+    - Mike Grozak (@rhaido)
     - Patrick Callahan (@dirtyharrycallahan)
     - Evan Kaufman (@EvanK)
     - Luca Berruti (@lberruti)

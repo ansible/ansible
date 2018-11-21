@@ -23,7 +23,7 @@ description:
 version_added: "2.6"
 author:
   - "David Gunter (@verkaufer)"
-  - "Chris Hoffman (@chrishoffman, creator of NPM Ansible module)"
+  - "Chris Hoffman (@chrishoffman), creator of NPM Ansible module)"
 options:
   name:
     description:

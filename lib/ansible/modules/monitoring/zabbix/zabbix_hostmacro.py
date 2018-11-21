@@ -22,7 +22,7 @@ description:
 version_added: "2.0"
 author:
     - "Cove (@cove)"
-    - Dean Hailin Song
+    - Dean Hailin Song (!UNKNOWN)
 requirements:
     - "python >= 2.6"
     - zabbix-api
