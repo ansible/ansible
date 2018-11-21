@@ -80,7 +80,9 @@ def get_array(module):
         else:
             module.fail_json(msg='Test connection to array failed.')
     except Exception as e:
-        module.fail_json(msg='Vexata API access failed: {0}'.format(str(e)))
+        from ansible.module_utils._text import to_native
+        ...
+        module.fail_json(msg='Vexata API access failed: {0}'.format(to_native(e)))
 
 
 def argument_spec():
