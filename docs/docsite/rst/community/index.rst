@@ -8,14 +8,16 @@ Welcome to the Ansible Community Guide!
 
 The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome, and necessary to Ansible's continued success.
 
+This page outlines the most common situations and questions that bring readers to this section. If you prefer a traditional table of contents, there's one at the bottom of the page.
+
 
 Getting started
 ===============
 
 * I'm new here. Where can I find the Ansible :ref:`code_of_conduct`?
-* I'd like to contribute to Ansible. Does Ansible have a :ref:`contributor_license_agreement`?
+* I'd like to know what I'm agreeing to when I contribute to Ansible. Does Ansible have a :ref:`contributor_license_agreement`?
 * I'd like to contribute but I'm not sure how. Are there :ref:`easy ways to contribute <how_can_i_help>`?
-* I want to talk to other Ansible users. How do I find an :ref:`Ansible Meetup near me <https://www.meetup.com/topics/ansible/>_`?
+* I want to talk to other Ansible users. How do I find an `Ansible Meetup near me <https://www.meetup.com/topics/ansible/>_`?
 * I have a question. What :ref:`Ansible email lists, IRC channels <communication>` will help me find answers?
 * I want to learn more about Ansible. What can I do?
 
@@ -25,7 +27,7 @@ Getting started
   * `Review getting started guides <https://www.ansible.com/resources/get-started>`_.
   * `Watch videos <https://www.ansible.com/resources/videos>`_ - includes Ansible Automates, AnsibleFest & webinar recordings.
 
-* I want updates about new Ansible versions. How are `new releases announced <https://groups.google.com/forum/#!forum/ansible-announce>`_?
+* I'd like updates about new Ansible versions. How are `new releases announced <https://groups.google.com/forum/#!forum/ansible-announce>`_?
 * I want to use the current release. How do I know which :ref:`releases are current <release_schedule>`?
 
 Going deeper
