@@ -24,7 +24,8 @@ description:
 options:
   name:
     description:
-      - Names of roles or features to install as a single feature or a comma-separated list of features. To list all available features use the PowerShell command Get-WindowsFeature.
+      - Names of roles or features to install as a single feature or a comma-separated list of features. 
+        To list all available features use the PowerShell command Get-WindowsFeature.
     required: yes
     type: list
   state:
