@@ -11,7 +11,7 @@ from ansible.module_utils.ansible_release import __version__ as ansible_version
 import ansible.module_utils.netapp as netapp_utils
 
 if not netapp_utils.has_netapp_lib():
-    pytest.skip("skipping as missing required netapp_lib")
+    pytestmark = pytest.mark.skip("skipping as missing required netapp_lib")
 
 
 class MockONTAPConnection(object):
