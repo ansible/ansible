@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
     SHUTDOWN_COMMAND_ARGS = {
         'linux': '-r {delay_min} "{message}"',
         'freebsd': '-r +{delay_sec}s "{message}"',
-        'sunos': '-y -g {delay_sec} -r "{message}"',
+        'sunos': '-i 6 -y -g {delay_sec} "{message}"',
         'darwin': '-r +{delay_min} "{message}"',
         'openbsd': '-r +{delay_min} "{message}"',
     }
