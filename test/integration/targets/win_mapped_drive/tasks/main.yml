@@ -2,6 +2,7 @@
 # test setup
 - name: gather facts required by the tests
   setup:
+    gather_subset: platform
 
 - name: ensure mapped drive is deleted before test
   win_mapped_drive:
@@ -31,12 +32,36 @@
   - { name: '{{test_win_mapped_drive_path}}', path: '{{test_win_mapped_drive_local_path}}' }
   - { name: '{{test_win_mapped_drive_path2}}', path: '{{test_win_mapped_drive_local_path2}}' }
 
+# This ensures we test out the split token/become behaviour
+- name: ensure builtin Administrator has a split token
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+    name: FilterAdministratorToken
+    data: 1
+    type: dword
+  register: admin_uac
+
+- name: reboot to apply Admin approval mode setting
+  win_reboot:
+  when: admin_uac is changed
+
 - block:
   # tests
   - include_tasks: tests.yml
 
   # test cleanup
   always:
+  - name: remove stored credential
+    win_credential:
+      name: '{{ ansible_hostname }}'
+      type: domain_password
+      state: absent
+    vars:
+      ansible_become: yes
+      ansible_become_method: runas
+      ansible_become_user: '{{ ansible_user }}'
+      ansible_become_pass: '{{ ansible_password }}'
+
   - name: ensure mapped drive is deleted at the end of the test
     win_mapped_drive:
       letter: '{{test_win_mapped_drive_letter}}'
@@ -60,3 +85,15 @@
     win_user:
       name: '{{test_win_mapped_drive_temp_user}}'
       state: absent
+
+  - name: disable Admin approval mode if changed in test
+    win_regedit:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+      name: FilterAdministratorToken
+      data: 0
+      type: dword
+    when: admin_uac is changed
+
+  - name: reboot to apply Admin approval mode setting
+    win_reboot:
+    when: admin_uac is changed
