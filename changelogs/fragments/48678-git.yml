@@ -1,0 +1,4 @@
+---
+
+minor_changes:
+  - git - Add explicit submodule_init parameter, add submodule_depth parameter, and cleanup parameter support verification. (https://github.com/ansible/ansible/issues/48678)

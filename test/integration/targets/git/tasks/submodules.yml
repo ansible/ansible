@@ -1,124 +1,361 @@
+---
+
 #
 # Submodule tests
 #
 
-# Repository A with submodules defined  (repo_submodules)
-#   .gitmodules file points to Repository I
-# Repository B forked from A that has newer commits (repo_submodules_newer)
-#   .gitmodules file points to Repository II instead of I
-#   .gitmodules file also points to Repository III
-# Repository I for submodule1 (repo_submodule1)
-#   Has 1 file checked in
-# Repository II forked from I that has newer commits (repo_submodule1_newer)
-#   Has 2 files checked in
-# Repository III for a second submodule (repo_submodule2)
-#   Has 1 file checked in
+# REPO INITIALIZATION
+#
+# repo_no_submodules         - commit 1: (README.md, no submodules) aka tag 1.0
+#                              commit 2: (commit_2_file.txt)        aka tag 2.0
+# repo_signle_submodule      - commit 1: (README.md, submodules: repo_no_submodules@commit 1)
+# repo_recursive_submodules  - commit 1: (README.md, submodules: repo_single_submodule@commit 1)
 
-- name: SUBMODULES | clear checkout_dir
+- name: "SUBMODULES | Create submodule repos base directory"
+  tempfile:
+    prefix: "ansible.integration.git"
+    state:  "directory"
+  register: git_repo_base
+
+- name: "SUBMODULES | Submodule repos base directory"
+  debug:
+    var: git_repo_base
+
+# repo_no_submodules
+
+- name: "SUBMODULES | Create git repo repo_no_submodules (README, no submodules)"
+  command: "git init repo_no_submodules"
+  args:
+    chdir: "{{ git_repo_base.path }}"
+
+- name: "SUBMODULES | Add local git config user.email for repo_no_submodules"
+  git_config:
+    name:  "user.email"
+    repo:  "{{ git_repo_base.path }}/repo_no_submodules"
+    scope: "local"
+    value: "ansible@ansible.com"
+
+- name: "SUBMODULES | Add local git config user.name for repo_no_submodules"
+  git_config:
+    name:  "user.name"
+    repo:  "{{ git_repo_base.path }}/repo_no_submodules"
+    scope: "local"
+    value: "Ansible Test Runner"
+
+- name: "SUBMODULES | Create git repo repo_no_submodules README"
+  lineinfile:
+    create: "yes"
+    line:   "repo_no_submodules (README, no submodules)"
+    mode:   0644
+    path:   "{{ git_repo_base.path }}/repo_no_submodules/README.md"
+    state:  "present"
+
+- name: "SUBMODULES | Commit git repo repo_no_submodules README"
+  shell: |
+    git add .
+    git commit -m 'Add README'
+    git tag 1.0
+  args:
+    chdir: "{{ git_repo_base.path }}/repo_no_submodules"
+
+# repo_single_submodule
+
+- name: "SUBMODULES | Create git repo repo_single_submodule (README, submodules: repo_no_submodules)"
+  command: "git init repo_single_submodule"
+  args:
+    chdir: "{{ git_repo_base.path }}"
+
+- name: "SUBMODULES | Add local git config user.email for repo_single_submodule"
+  git_config:
+    name:  "user.email"
+    repo:  "{{ git_repo_base.path }}/repo_single_submodule"
+    scope: "local"
+    value: "ansible@ansible.com"
+
+- name: "SUBMODULES | Add local git config user.name for repo_single_submodule"
+  git_config:
+    name:  "user.name"
+    repo:  "{{ git_repo_base.path }}/repo_single_submodule"
+    scope: "local"
+    value: "Ansible Test Runner"
+
+- name: "SUBMODULES | Create git repo repo_single_submodule README"
+  lineinfile:
+    create: "yes"
+    line:   "repo_single_submodule (README, submodules: repo_no_submodules)"
+    mode:   0644
+    path:   "{{ git_repo_base.path }}/repo_single_submodule/README.md"
+    state:  "present"
+
+- name: "SUBMODULES | Add git repo repo_single_submodule submodule repo_no_submodules"
+  command: "git submodule add file://{{ git_repo_base.path }}/repo_no_submodules repo_no_submodules"
+  args:
+    chdir: "{{ git_repo_base.path }}/repo_single_submodule"
+
+# Checkout is redundant but just in case someone changes the order of tests in the future
+- name: "SUBMODULES | Commit git repo repo_single_submodule README and submodule"
+  shell: |
+    pushd repo_no_submodules
+    git checkout 1.0
+    popd
+    git add .
+    git commit -m 'Add README and submodule'
+  args:
+    chdir: "{{ git_repo_base.path }}/repo_single_submodule"
+
+# repo_recursive_submodules
+
+- name: "SUBMODULES | Create git repo repo_recursive_submodules (README, submodules: repo_single_submodule)"
+  command: "git init repo_recursive_submodules"
+  args:
+    chdir: "{{ git_repo_base.path }}"
+
+- name: "SUBMODULES | Add local git config user.email for repo_recursive_submodules"
+  git_config:
+    name:  "user.email"
+    repo:  "{{ git_repo_base.path }}/repo_recursive_submodules"
+    scope: "local"
+    value: "ansible@ansible.com"
+
+- name: "SUBMODULES | Add local git config user.name for repo_recursive_submodules"
+  git_config:
+    name:  "user.name"
+    repo:  "{{ git_repo_base.path }}/repo_recursive_submodules"
+    scope: "local"
+    value: "Ansible Test Runner"
+
+- name: "SUBMODULES | Create git repo repo_recursive_submodules README"
+  lineinfile:
+    create: "yes"
+    line:   "repo_recursive_submodules (README, submodules: repo_single_submodule)"
+    mode:   0644
+    path:   "{{ git_repo_base.path }}/repo_recursive_submodules/README.md"
+    state:  "present"
+
+- name: "SUBMODULES | Add git repo repo_recursive_submodules submodule repo_single_submodule"
+  command: "git submodule add file://{{ git_repo_base.path }}/repo_single_submodule repo_single_submodule"
+  args:
+    chdir: "{{ git_repo_base.path }}/repo_recursive_submodules"
+
+- name: "SUBMODULES | Commit git repo repo_recursive_submodules README and submodule"
+  shell: |
+    git add .
+    git commit -m 'Add README and submodule'
+  args:
+    chdir: "{{ git_repo_base.path }}/repo_recursive_submodules"
+
+# repo_no_submodules - commit 2
+
+- name: "SUBMODULES | Create git repo repo_no_submodules commit 2 file"
+  lineinfile:
+    create: "yes"
+    line:   "repo_no_submodules (commit_2_file.txt)"
+    mode:   0644
+    path:   "{{ git_repo_base.path }}/repo_no_submodules/commit_2_file.txt"
+    state:  "present"
+
+- name: "SUBMODULES | Commit git repo repo_no_submodules commit_2_file.txt"
+  shell: |
+    git add .
+    git commit -m 'Add commit_2_file.txt'
+    git tag 2.0
+  args:
+    chdir: "{{ git_repo_base.path }}/repo_no_submodules"
+
+# GIT SUBMODULE TESTS
+
+# Test no submodule init clone
+
+- name: "SUBMODULES | Test that clone without submodule init does not retrieve submodules"
+  git:
+    dest:             "{{ git_repo_base.path }}/clone_repo_single_submodule"
+    repo:             "file://{{ git_repo_base.path }}/repo_single_submodule"
+    submodule_init:   "no"
+    track_submodules: "no"
+
+- name: "SUBMODULES | List files in submodule for clone without submodule init"
+  find:
+    file_type: "any"
+    hidden:    "yes"
+    path:      "{{ git_repo_base.path }}/clone_repo_single_submodule/repo_no_submodules"
+    recurse:   "no"
+  register: test_clone_no_submodule_init
+
+- name: "SUBMODULES | Assert that clone without submodule init does not retrieve submodules"
+  assert:
+    that: '{{ test_clone_no_submodule_init.matched }} == 0'
+
+- name: "SUBMODULES | Remove clone test repo clone_repo_single_submodule"
   file:
-    state: absent
-    path: "{{ checkout_dir }}"
+    path:  "{{ git_repo_base.path }}/clone_repo_single_submodule"
+    state: "absent"
 
-- name: SUBMODULES | Test that clone without recursive does not retrieve submodules
+# Test non-recursive submodule init clone
+
+- name: "SUBMODULES | Test that clone with submodule init but no recursive submodule init retrieves only one level of submodules"
   git:
-    repo: "{{ repo_submodules }}"
-    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
-    dest: "{{ checkout_dir }}"
-    recursive: no
+    dest:           "{{ git_repo_base.path }}/clone_repo_recursive_submodules"
+    repo:           "file://{{ git_repo_base.path }}/repo_recursive_submodules"
+    recursive:      "no"
+    submodule_init: "yes"
 
-- name: SUBMODULES | List submodule1
-  command: 'ls -1a {{ checkout_dir }}/submodule1'
-  register: submodule1
+- name: "SUBMODULES | List files in submodule for clone with non-recursive submodule init"
+  find:
+    file_type: "file"
+    hidden:    "yes"
+    path:      "{{ git_repo_base.path }}/clone_repo_recursive_submodules/repo_single_submodule"
+    patterns:
+      - "README.md"
+      - "commit_2_file.txt"
+    recurse:   "yes"
+  register: test_clone_non_recursive_submodule_init
 
-- name: SUBMODULES | Ensure submodu1 is at the appropriate commit
+- name: "SUBMODULES | Assert that clone with submodule init but no recursive submodule init retrieves only one level of submodules"
   assert:
-    that: '{{ submodule1.stdout_lines | length }} == 2'
+    that: '{{ test_clone_non_recursive_submodule_init.matched }} == 1'
 
-- name: SUBMODULES | clear checkout_dir
+- name: "SUBMODULES | Remove clone test repo clone_repo_recursive_submodules"
   file:
-    state: absent
-    path: "{{ checkout_dir }}"
+    path:  "{{ git_repo_base.path }}/clone_repo_recursive_submodules"
+    state: "absent"
 
+# Test rescursive submodule init clone
 
-- name: SUBMODULES | Test that clone with recursive retrieves submodules
+- name: "SUBMODULES | Test that clone with recursive submodule init retrieves all levels of submodules"
   git:
-    repo: "{{ repo_submodules }}"
-    dest: "{{ checkout_dir }}"
-    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
-    recursive: yes
+    dest:           "{{ git_repo_base.path }}/clone_repo_recursive_submodules"
+    repo:           "file://{{ git_repo_base.path }}/repo_recursive_submodules"
+    recursive:      "yes"
+    submodule_init: "yes"
 
-- name: SUBMODULES | List submodule1
-  command: 'ls -1a {{ checkout_dir }}/submodule1'
-  register: submodule1
+- name: "SUBMODULES | List files in submodule for clone with recursive submodule init"
+  find:
+    file_type: "file"
+    hidden:    "yes"
+    path:      "{{ git_repo_base.path }}/clone_repo_recursive_submodules/repo_single_submodule"
+    patterns:
+      - "README.md"
+      - "commit_2_file.txt"
+    recurse:   "yes"
+  register: test_clone_recursive_submodule_init
 
-- name: SUBMODULES | Ensure submodule1 is at the appropriate commit
+- name: "SUBMODULES | Assert that clone with recursive submodule init retrieves all levels of submodules"
   assert:
-    that: '{{ submodule1.stdout_lines | length }} == 4'
+    that: '{{ test_clone_recursive_submodule_init.matched }} == 2'
 
-- name: SUBMODULES | Copy the checkout so we can run several different tests on it
-  command: 'cp -pr {{ checkout_dir }} {{ checkout_dir }}.bak'
-
-
-- name: SUBMODULES | Test that update without recursive does not change submodules
-  git:
-    repo: "{{ repo_submodules }}"
-    version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
-    dest: "{{ checkout_dir }}"
-    recursive: no
-    update: yes
-    track_submodules: yes
-
-- name: SUBMODULES | List submodule1
-  command: 'ls -1a {{ checkout_dir }}/submodule1'
-  register: submodule1
-
-- name: SUBMODULES | Stat submodule2
-  stat:
-    path: "{{ checkout_dir }}/submodule2"
-  register: submodule2
-
-- name: SUBMODULES | List submodule2
-  command: ls -1a {{ checkout_dir }}/submodule2
-  register: submodule2
-
-- name: SUBMODULES | Ensure both submodules are at the appropriate commit
-  assert:
-    that:
-      - '{{ submodule1.stdout_lines|length }} == 4'
-      - '{{ submodule2.stdout_lines|length }} == 2'
-
-
-- name: SUBMODULES | Remove checkout dir
+- name: "SUBMODULES | Remove clone test repo clone_repo_recursive_submodules"
   file:
-    state: absent
-    path: "{{ checkout_dir }}"
+    path:  "{{ git_repo_base.path }}/clone_repo_recursive_submodules"
+    state: "absent"
 
-- name: SUBMODULES | Restore checkout to prior state
-  command: 'cp -pr {{ checkout_dir }}.bak {{ checkout_dir }}'
+# Test submodule init clone with submodule tracking enabled
+#
+# In a normal submodule init, the submodule is checked out to the commit hash it was pinned to in the parent repository.
+# With submodule tracking enabled however, the pinned commit is ignored, and the submodule is checked out at the latest master
+# branch (this can be changed via git-config) commit (it is equivalent to adding `--remote` to the submodule update as in
+# `git submodule update --init --remote`).
 
-
-- name: SUBMODULES | Test that update with recursive updated existing submodules
+- name: "SUBMODULES | Test that clone with submodule init and submodule tracking retrieves submodules at master and not at pinned commit"
   git:
-    repo: "{{ repo_submodules }}"
-    version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
-    dest: "{{ checkout_dir }}"
-    update: yes
-    recursive: yes
-    track_submodules: yes
+    dest:             "{{ git_repo_base.path }}/clone_repo_single_submodule"
+    repo:             "file://{{ git_repo_base.path }}/repo_single_submodule"
+    submodule_init:   "yes"
+    track_submodules: "yes"
 
-- name: SUBMODULES | List submodule 1
-  command: 'ls -1a {{ checkout_dir }}/submodule1'
-  register: submodule1
+- name: "SUBMODULES | List files in submodule for clone with submodule init and submodule tracking"
+  find:
+    file_type: "file"
+    hidden:    "yes"
+    path:      "{{ git_repo_base.path }}/clone_repo_single_submodule/repo_no_submodules"
+    patterns:
+      - "README.md"
+      - "commit_2_file.txt"
+    recurse:   "yes"
+  register: test_clone_submodule_init_with_submodule_tracking
 
-- name: SUBMODULES | Ensure submodule1 is at the appropriate commit
+- name: "SUBMODULES | Assert that clone with submodule init and submodule tracking results in submodule repo_no_submodules checked out master commit 2 and not pinned at commit 1"
   assert:
-    that: '{{ submodule1.stdout_lines | length }} == 5'
+    that: '{{ test_clone_submodule_init_with_submodule_tracking.matched }} == 2'
 
+- name: "SUBMODULES | Remove clone test repo clone_repo_single_submodule"
+  file:
+    path:  "{{ git_repo_base.path }}/clone_repo_single_submodule"
+    state: "absent"
 
-- name: SUBMODULES | Test that update with recursive found new submodules
-  command: 'ls -1a {{ checkout_dir }}/submodule2'
-  register: submodule2
+# Test cloning with updating disabled does not update the contents of the repo
+# (this is not explicitly a submodule test but includeded because it was here historically)
 
-- name: SUBMODULES | Enusre submodule2 is at the appropriate commit
+- name: "SUBMODULES | Test that cloning a no submodules repository at a specific commit works"
+  git:
+    dest:    "{{ git_repo_base.path }}/clone_repo_no_submodules"
+    repo:    "file://{{ git_repo_base.path }}/repo_no_submodules"
+    version: "1.0"
+
+- name: "SUBMODULES | List files in no submodules repository cloned at a specific commit"
+  find:
+    file_type: "file"
+    hidden:    "yes"
+    path:      "{{ git_repo_base.path }}/clone_repo_no_submodules"
+    patterns:
+      - "README.md"
+      - "commit_2_file.txt"
+    recurse:   "yes"
+  register: test_clone_no_submodules_at_specific_commit
+
+- name: "SUBMODULES | Assert that clone of no submodules repository is at the commit specified"
   assert:
-    that: '{{ submodule2.stdout_lines | length }} == 4'
+    that: '{{ test_clone_no_submodules_at_specific_commit.matched }} == 1'
+
+- name: "SUBMODULES | Test that cloning a no submodules repository with updates disabled does not change the repository contents"
+  git:
+    dest:   "{{ git_repo_base.path }}/clone_repo_no_submodules"
+    repo:   "file://{{ git_repo_base.path }}/repo_no_submodules"
+    update: "no"
+
+- name: "SUBMODULES | List files in no submodules repository clone with updates disabled"
+  find:
+    file_type: "file"
+    hidden:    "yes"
+    path:      "{{ git_repo_base.path }}/clone_repo_no_submodules"
+    patterns:
+      - "README.md"
+      - "commit_2_file.txt"
+    recurse:   "yes"
+  register: test_clone_no_submodules_with_updates_disabled
+
+- name: "SUBMODULES | Assert that clone of no submodules repository with updates disabled did not change the repository contents"
+  assert:
+    that: '{{ test_clone_no_submodules_with_updates_disabled.matched }} == 1'
+
+- name: "SUBMODULES | Test that cloning a no submodules repository with updates enabled brings contents up to latest master commit 2"
+  git:
+    dest:   "{{ git_repo_base.path }}/clone_repo_no_submodules"
+    repo:   "file://{{ git_repo_base.path }}/repo_no_submodules"
+
+- name: "SUBMODULES | List files in no submodules repository clone with updates enabled"
+  find:
+    file_type: "file"
+    hidden:    "yes"
+    path:      "{{ git_repo_base.path }}/clone_repo_no_submodules"
+    patterns:
+      - "README.md"
+      - "commit_2_file.txt"
+    recurse:   "yes"
+  register: test_clone_no_submodules_with_updates_enabled
+
+- name: "SUBMODULES | Assert that clone of no submodules repository with updates enabled brings contents up to latest master commit 2"
+  assert:
+    that: '{{ test_clone_no_submodules_with_updates_enabled.matched }} == 2'
+
+- name: "SUBMODULES | Remove clone test repo clone_repo_no_submodules"
+  file:
+    path:  "{{ git_repo_base.path }}/clone_repo_no_submodules"
+    state: "absent"
+
+# Cleanup
+
+- name: "SUBMODULES | Remove submodule repos base directory"
+  file:
+    path:  "{{ git_repo_base.path }}"
+    state: "absent"
+

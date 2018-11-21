@@ -113,7 +113,7 @@ options:
         version_added: "1.4"
     bare:
         description:
-            - if C(yes), repository will be created as a bare repo, otherwise
+            - If C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
         type: bool
         default: 'no'
@@ -126,26 +126,27 @@ options:
 
     recursive:
         description:
-            - if C(no), repository will be cloned without the --recursive
-              option, skipping sub-modules.
+            - If C(no), repository sub-modules will be cloned without the --recursive
+              option. Only used when C(submodule_init) is C(yes).
         type: bool
         default: 'yes'
         version_added: "1.6"
 
     track_submodules:
         description:
-            - if C(yes), submodules will track the latest commit on their
+            - If C(yes), submodules will track the latest commit on their
               master branch (or other branch specified in .gitmodules).  If
               C(no), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the --remote flag
-              to git submodule update.
+              to git submodule update. Needs I(git>=1.8.2) to work correctly.
+              Only used when C(submodule_init) is C(yes).
         type: bool
         default: 'no'
         version_added: "1.8"
 
     verify_commit:
         description:
-            - if C(yes), when cloning or checking out a C(version) verify the
+            - If C(yes), when cloning or checking out a C(version) verify the
               signature of a GPG signed commit. This requires C(git) version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
               be present in the GPG keyring.
@@ -176,6 +177,21 @@ options:
            - Only used when I(verify_commit=yes).
         type: list
         default: []
+        version_added: "2.9"
+
+    submodule_depth:
+        description:
+            - Create a shallow clone with a history truncated to the specified
+              number or revisions. The minimum possible value is C(1), otherwise
+              ignored. Needs I(git>=1.8.4) to work correctly.
+              Only used when C(submodule_init) is C(yes).
+        version_added: "2.9"
+
+    submodule_init:
+        description:
+            - If C(yes), submodules will be initialized and cloned.
+        type: bool
+        default: 'yes'
         version_added: "2.9"
 
 requirements:
@@ -333,34 +349,6 @@ def unfrackgitpath(path):
 
     # copied from ansible.utils.path
     return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
-
-
-def get_submodule_update_params(module, git_path, cwd):
-    # or: git submodule [--quiet] update [--init] [-N|--no-fetch]
-    # [-f|--force] [--rebase] [--reference <repository>] [--merge]
-    # [--recursive] [--] [<path>...]
-
-    params = []
-
-    # run a bad submodule command to get valid params
-    cmd = "%s submodule update --help" % (git_path)
-    rc, stdout, stderr = module.run_command(cmd, cwd=cwd)
-    lines = stderr.split('\n')
-    update_line = None
-    for line in lines:
-        if 'git submodule [--quiet] update ' in line:
-            update_line = line
-    if update_line:
-        update_line = update_line.replace('[', '')
-        update_line = update_line.replace(']', '')
-        update_line = update_line.replace('|', ' ')
-        parts = shlex.split(update_line)
-        for part in parts:
-            if part.startswith('--'):
-                part = part.replace('--', '')
-                params.append(part)
-
-    return params
 
 
 def write_ssh_wrapper():
@@ -847,23 +835,23 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
     return changed
 
 
-def submodule_update(git_path, module, dest, track_submodules, force=False):
+def submodule_update(git_path, module, dest, recursive, submodule_depth, track_submodules, force=False):
     ''' init and update any submodules '''
-
-    # get the valid submodule params
-    params = get_submodule_update_params(module, git_path, dest)
 
     # skip submodule commands if .gitmodules is not present
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
         return (0, '', '')
     cmd = [git_path, 'submodule', 'sync']
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if 'remote' in params and track_submodules:
-        cmd = [git_path, 'submodule', 'update', '--init', '--recursive', '--remote']
-    else:
-        cmd = [git_path, 'submodule', 'update', '--init', '--recursive']
+    cmd = [git_path, 'submodule', 'update', '--init']
     if force:
         cmd.append('--force')
+    if recursive:
+        cmd.append('--recursive')
+    if submodule_depth:
+        cmd.extend(['--depth', str(submodule_depth)])
+    if track_submodules:
+        cmd.append('--remote')
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
@@ -1060,6 +1048,8 @@ def main():
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
+            submodule_depth=dict(default=None, type='int'),
+            submodule_init=dict(default='yes', type='bool'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare')],
         supports_check_mode=True
@@ -1084,6 +1074,10 @@ def main():
     umask = module.params['umask']
     archive = module.params['archive']
     separate_git_dir = module.params['separate_git_dir']
+    recursive = module.params['recursive']
+    track_submodules = module.params['track_submodules']
+    submodule_depth = module.params['submodule_depth']
+    submodule_init = module.params['submodule_init']
 
     result = dict(changed=False, warnings=list())
 
@@ -1152,8 +1146,13 @@ def main():
         result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
-    recursive = module.params['recursive']
-    track_submodules = module.params['track_submodules']
+    if submodule_depth is not None and git_version_used < LooseVersion('1.8.4'):
+        result['warnings'].append("Your git version is too old to fully support the submodule_depth argument. Falling back to full checkouts.")
+        submodule_depth = None
+
+    if track_submodules and git_version_used < LooseVersion('1.8.2'):
+        result['warnings'].append("Your git version is too old to fully support the track_submodules argument. Falling back to not tracking submodules.")
+        track_submodules = False
 
     result.update(before=None)
 
@@ -1231,7 +1230,7 @@ def main():
 
     # Deal with submodules
     submodules_updated = False
-    if recursive and not bare:
+    if submodule_init and not bare:
         submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
         if submodules_updated:
             result.update(submodules_changed=submodules_updated)
@@ -1241,7 +1240,7 @@ def main():
                 module.exit_json(**result)
 
             # Switch to version specified
-            submodule_update(git_path, module, dest, track_submodules, force=force)
+            submodule_update(git_path, module, dest, recursive, submodule_depth, track_submodules, force=force)
 
     # determine if we changed anything
     result['after'] = get_version(module, git_path, dest)
