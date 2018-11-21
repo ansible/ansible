@@ -446,7 +446,6 @@ def flatten(mylist, levels=None):
 
     return ret
 
-
 def subelements(obj, subelements, skip_missing=False):
     '''Accepts a dict or list of dicts, and a dotted accessor and produces a product
     of the element and the results of the dotted accessor
@@ -491,6 +490,28 @@ def subelements(obj, subelements, skip_missing=False):
             results.append((element, value))
 
     return results
+
+
+def split_list(lst, max_sublist_elements=None):
+    '''Accepts a list and returns a list of lists, with each sublist containing
+    no more than <max_sublist_elements> items.
+    '''
+
+    if not isinstance(lst, list):
+        raise AnsibleFilterError('split_list requires a list, but got %s instead.' % type(lst))
+
+    if not max_sublist_elements or len(lst) <= max_sublist_elements:
+        return([lst])
+
+    subcount = int(len(lst) / max_sublist_elements) + (len(lst) % max_sublist_elements > 0)
+
+    lists = []
+
+    for i in range(0, subcount):
+        lists.append(lst[i*max_sublist_elements:(i+1)*max_sublist_elements])
+
+
+    return(lists)
 
 
 def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='value'):
@@ -640,6 +661,7 @@ class FilterModule(object):
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
+            'split_list': split_list,
 
             # Misc
             'random_mac': random_mac,
