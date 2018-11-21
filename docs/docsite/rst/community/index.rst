@@ -14,7 +14,7 @@ Getting started
 
 * I'm new here. Where can I find the Ansible community :ref:`code_of_conduct`?
 * I'd like to contribute but I'm not sure how. Are there :ref:`easy ways to contribute? <how_can_i_help>`
-* I want to talk to other Ansible users. How do I find a :ref:`Ansible Meetup near me <ansible_community_meetup>`?
+* I want to talk to other Ansible users. How do I find an :ref:`Ansible Meetup near me <ansible_community_meetup>`?
 * I have a question. What :ref:`Ansible email lists, IRC channels <communication>` will help me find answers?
 * I want to learn more about Ansible. What can I do?
 
@@ -24,7 +24,7 @@ Getting started
   * `Review getting started guides <https://www.ansible.com/resources/get-started>`_.
   * `Watch videos <https://www.ansible.com/resources/videos>`_ - includes AnsibleAutomate, AnsibleFest & webinar recordings.
 
-* I want to get notified when new Ansible versions are released. How can I subscribe to `Ansible Announce list <https://groups.google.com/forum/#!forum/ansible-announce>`_?
+* I want updates about new Ansible versions. How are `new releases announced <https://groups.google.com/forum/#!forum/ansible-announce>`_?
 * I want to use the current release. How do I know which :ref:`releases are current? <release_schedule>`.
 
 Going deeper
@@ -33,10 +33,9 @@ Going deeper
 * I think Ansible is broken. How do I :ref:`report a bug <reporting_bugs>`?
 * I need functionality Ansible doesn't offer. How do I :ref:`request a feature <request_features>`?
 * I'm waiting for a particular feature. How do I see what's :ref:`planned for future Ansible Releases <roadmaps>`?
-* I'm not a programmer, but I'd like to contribute. Can I help :ref:`improve the documentation <community_documentation_contributions>`?
-* I have a specific Ansible interest or expertise (for example, VMWare, linode, etc.). How do I get involved in a :ref:`working group? <community_working_groups>`.
-* How can I review Issues and Pull Requests?
-* Understanding Ansible's :ref:`Testing (CI) process <developing_testing>`.
+* I have a specific Ansible interest or expertise (for example, VMWare, linode, etc.). How do I get involved in a :ref:`working group <community_working_groups>`?
+* I can review code and/or participate in conversations about features and fixes. How do I review GitHub issues and pull requests?
+* I have an open pull request with a failing test. How do I learn about Ansible's :ref:`Testing (CI) process <developing_testing>`?
 
 Working with the Ansible repo
 =============================
