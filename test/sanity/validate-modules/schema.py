@@ -24,11 +24,12 @@ list_string_types = list(string_types)
 any_string_types = Any(*string_types)
 
 # Valid DOCUMENTATION.author lines
+# Based on Ansibulbot's extract_github_id()
 #   author: First Last (@name) [optional anything]
 #     "Ansible Core Team" - Used by the Bot
 #     "Michael DeHaan" - nop
-#      Remaining - Can't find corresponding GitHub account names, so ignore
-author_line = re.compile(r'^\w.*@([\w-]+)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$|^Haneef Ali$|^Justin Johns$|^Tony Minfei Ding$|^Dean Hailin Song$|^Mike Grozak$')
+#     "Name (!UNKNOWN)" - For the few untraceable authors
+author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$')
 
 
 def sequence_of_sequences(min=None, max=None):
