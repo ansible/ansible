@@ -1,0 +1,2 @@
+bugfixes:
+- win_mapped_drive - Updated win_mapped_drive to use the proper Win32 APIs and updated documentation for proper usage
