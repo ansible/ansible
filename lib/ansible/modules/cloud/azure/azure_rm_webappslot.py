@@ -1025,9 +1025,9 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 app_setting_clone_from = self.list_app_settings_slot(src_slot)
 
             if self.app_settings:
-                app_settings_clone_from.properties.update(self.app_settings)
+                app_setting_clone_from.properties.update(self.app_settings)
 
-            self.update_app_settings_slot(app_settings=app_settings_clone_from)
+            self.update_app_settings_slot(app_settings=app_setting_clone_from)
 
 
 def main():
