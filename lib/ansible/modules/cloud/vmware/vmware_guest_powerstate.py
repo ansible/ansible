@@ -27,7 +27,7 @@ options:
   state:
     description:
     - Set the state of the virtual machine.
-    choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended, present]
+    choices: [ poweredoff, poweredon, rebootguest, restarted, shutdownguest, suspended, present]
     default: present
   name:
     description:
@@ -73,7 +73,7 @@ options:
     version_added: 2.5
   state_change_timeout:
     description:
-    - If the C(state) is set to C(shutdown-guest), by default the module will return immediately after sending the shutdown signal.
+    - If the C(state) is set to C(shutdownguest), by default the module will return immediately after sending the shutdown signal.
     - If this argument is set to a positive integer, the module will instead wait for the VM to reach the poweredoff state.
     - The value sets a timeout in seconds for the module to wait for the state change.
     default: 0
@@ -90,7 +90,7 @@ EXAMPLES = r'''
     validate_certs: no
     folder: /"{{ datacenter_name }}"/vm/my_folder
     name: "{{ guest_name }}"
-    state: powered-off
+    state: poweredoff
   delegate_to: localhost
   register: deploy
 
@@ -101,7 +101,7 @@ EXAMPLES = r'''
     password: "{{ vcenter_password }}"
     folder: /"{{ datacenter_name }}"/vm/my_folder
     name: "{{ guest_name }}"
-    state: powered-off
+    state: poweredoff
     scheduled_at: "09/01/2018 10:18"
   delegate_to: localhost
   register: deploy_at_schedule_datetime
@@ -112,7 +112,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: "{{ guest_name }}"
-    state: shutdown-guest
+    state: shutdownguest
     state_change_timeout: 200
   delegate_to: localhost
   register: deploy
@@ -135,7 +135,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         state=dict(type='str', default='present',
-                   choices=['present', 'powered-off', 'powered-on', 'reboot-guest', 'restarted', 'shutdown-guest', 'suspended']),
+                   choices=['present', 'poweredoff', 'poweredon', 'rebootguest', 'restarted', 'shutdownguest', 'suspended']),
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
@@ -167,11 +167,11 @@ def main():
                 module.fail_json(msg="Scheduling task requires vCenter, hostname %s "
                                      "is an ESXi server." % module.params.get('hostname'))
             powerstate = {
-                'powered-off': vim.VirtualMachine.PowerOff,
-                'powered-on': vim.VirtualMachine.PowerOn,
-                'reboot-guest': vim.VirtualMachine.RebootGuest,
+                'poweredoff': vim.VirtualMachine.PowerOff,
+                'poweredon': vim.VirtualMachine.PowerOn,
+                'rebootguest': vim.VirtualMachine.RebootGuest,
                 'restarted': vim.VirtualMachine.Reset,
-                'shutdown-guest': vim.VirtualMachine.ShutdownGuest,
+                'shutdownguest': vim.VirtualMachine.ShutdownGuest,
                 'suspended': vim.VirtualMachine.Suspend,
             }
             dt = ''
