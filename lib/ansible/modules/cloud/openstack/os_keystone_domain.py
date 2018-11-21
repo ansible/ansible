@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: os_keystone_domain
 short_description: Manage OpenStack Identity Domains
 author:
-    - Monty
+    - Monty Taylor (@emonty)
     - Haneef Ali
 extends_documentation_fragment: openstack
 version_added: "2.1"

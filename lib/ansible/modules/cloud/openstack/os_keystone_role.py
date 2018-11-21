@@ -17,7 +17,9 @@ module: os_keystone_role
 short_description: Manage OpenStack Identity Roles
 extends_documentation_fragment: openstack
 version_added: "2.1"
-author: "Monty Taylor (@emonty), David Shrewsbury (@Shrews)"
+author:
+  - Monty Taylor (@emonty)
+  - David Shrewsbury (@Shrews)
 description:
     - Manage OpenStack Identity Roles.
 options:

@@ -23,7 +23,7 @@ short_description: Manage SolidFire accounts
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.3'
-author: Sumit Kumar (sumit4@netapp.com)
+author: Sumit Kumar (@timuster) <sumit4@netapp.com>
 description:
 - Create, destroy, or update accounts on SolidFire
 
