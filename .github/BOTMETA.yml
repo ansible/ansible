@@ -130,7 +130,7 @@ files:
   $modules/cloud/univention/: 2-b
   $modules/cloud/vmware/:
     maintainers: $team_vmware
-    ignored: jcpowermac mtnbikenc
+    ignored: cigamit jcpowermac mtnbikenc
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
