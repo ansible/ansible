@@ -31,7 +31,7 @@ version_added: "2.8"
 options:
     name:
         description:
-          - The name of the object. Will be used to identify the entry
+          - The name of the object. Will be used to identify the entry.
         required: true
     adirectory_groups :
         description:
