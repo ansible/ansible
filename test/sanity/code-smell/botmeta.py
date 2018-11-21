@@ -75,7 +75,7 @@ def main():
     # Ensure all `files` correspond to a file
     for file in botmeta['files']:
         for macro in path_macros:
-            file = file.replace('$'+ macro, botmeta.get('macros', {}).get(macro, ''))
+            file = file.replace('$' + macro, botmeta.get('macros', {}).get(macro, ''))
         if not os.path.exists(file):
             # Not a file or directory, though maybe the prefix to one?
             # https://github.com/ansible/ansibullbot/pull/1023
