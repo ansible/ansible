@@ -88,7 +88,7 @@ azure_publicipaddresses:
 publicipaddresses:
     description:
         - List of publicipaddress
-        - Contains the detail which matches azure_rm_publicipaddress parameters. 
+        - Contains the detail which matches azure_rm_publicipaddress parameters.
         - Returned when the format parameter set to curated.
     returned: always
     type: complex
@@ -121,13 +121,13 @@ publicipaddresses:
         allocation_method:
             description:
                 - The public IP allocation method.
-                - Possible values are: 'static' and 'dynamic'.
+                - Possible values are 'static' and 'dynamic'.
             returned: always
             type: str
         version:
             description:
                 - The public IP address version.
-                - Possible values are: 'ipv4' and 'ipv6'
+                - Possible values are 'ipv4' and 'ipv6'.
             returned: always
             type: str
         dns_settings:
@@ -153,7 +153,7 @@ publicipaddresses:
         provisioning_state:
             description:
                 - he provisioning state of the PublicIP resource.
-                - Possible values are: 'Updating', 'Deleting', and 'Failed'.
+                - Possible values are 'Updating', 'Deleting', and 'Failed'.
             returned: always
             type: str
         etag:

@@ -105,7 +105,7 @@ EXAMPLES = '''
       azure_rm_publicipaddress:
         resource_group: testing
         name: my_public_ip
-        allocation_method: Static
+        allocation_method: static
         domain_name: foobar
 
     - name: Delete public ip
@@ -128,7 +128,7 @@ state:
         "location": "westus",
         "name": "publicip002",
         "provisioning_state": "Succeeded",
-        "public_ip_allocation_method": "Static",
+        "public_ip_allocation_method": "static",
         "tags": {},
         "type": "Microsoft.Network/publicIPAddresses"
     }
@@ -150,8 +150,8 @@ def pip_to_dict(pip):
         type=pip.type,
         location=pip.location,
         tags=pip.tags,
-        public_ip_allocation_method=pip.public_ip_allocation_method,
-        public_ip_address_version=pip.public_ip_address_version,
+        public_ip_allocation_method=pip.public_ip_allocation_method.lower(),
+        public_ip_address_version=pip.public_ip_address_version.lower(),
         dns_settings=dict(),
         ip_address=pip.ip_address,
         idle_timeout_in_minutes=pip.idle_timeout_in_minutes,

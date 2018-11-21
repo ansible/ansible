@@ -22,7 +22,7 @@
 
 - assert:
       that:
-          - output.state.public_ip_allocation_method == 'Static'
+          - output.state.public_ip_allocation_method == 'static'
           - output.state.dns_settings.domain_name_label == domain_name
           - output.state.tags | length == 2
           - output.state.tags.testing == 'testing'
@@ -31,7 +31,7 @@
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
-      allocation_method: Static
+      allocation_method: static
       domain_name: "{{ domain_name }}"
   register: output
 
@@ -42,7 +42,7 @@
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
-      allocation_method: Static
+      allocation_method: static
       domain_name: "{{ domain_name }}"
       append_tags: yes
       tags:
@@ -69,7 +69,7 @@
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
-      allocation_method: Static
+      allocation_method: static
       domain_name: "{{ domain_name }}"
       append_tags: no
   register: output
@@ -89,7 +89,7 @@
       that:
       - "pip.publicipaddresses | length == 1"
       - pip.publicipaddresses[0].name == "pip{{ rpfx }}"
-      - pip.publicipaddresses[0].allocation_method == 'Static'
+      - pip.publicipaddresses[0].allocation_method == 'static'
       - pip.publicipaddresses[0].dns_settings.domain_name_label == domain_name
 
 - name: Gather facts for all public ips
