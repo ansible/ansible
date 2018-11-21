@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_webapp_slot
+module: azure_rm_webappslot
 version_added: "2.8"
 short_description: Manage Azure Web App slot.
 description:
@@ -108,7 +108,6 @@ options:
                         description:
                             - Version of Java container. This is supported by specific framework C(java) only.
                             - For Tomcat, e.g. 8.0, 8.5, 9.0. For Jetty, e.g. 9.1, 9.3.
-
     container_settings:
         description: Web app slot container settings.
         suboptions:
@@ -121,6 +120,10 @@ options:
             registry_server_password:
                 description:
                     - The container registry server password.
+    startup_file:
+        description:
+            - The slot startup file.
+            - This only applies for linux web app slot.
     app_settings:
         description:
             - Configure web app slot application settings. Suboptions are in key value pair format.
@@ -363,9 +366,6 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 type='dict',
                 options=container_settings_spec
             ),
-            scm_type=dict(
-                type='str',
-            ),
             deployment_source=dict(
                 type='dict',
                 options=deployment_source_spec
@@ -437,7 +437,6 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                                                  "java_version",
                                                  "php_version",
                                                  "python_version",
-                                                 "scm_type",
                                                  "linux_fx_version"]
 
         self.supported_linux_frameworks = ['ruby', 'php', 'dotnetcore', 'node', 'java']
