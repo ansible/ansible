@@ -123,8 +123,16 @@ DOCUMENTATION = """
         ini:
           - section: defaults
             key: use_persistent_connections
-# TODO:
-#timeout=self._play_context.timeout,
+      connection_timeout:
+        description: 'Sets the connection timeout in seconds.'
+        type: int
+        default:
+        env:
+          - name: ANSIBLE_PARAMIKO_CONNECTION_TIMEOUT
+        ini:
+          - section: paramiko_connection
+            key: timeout
+            version_added: '2.8'
 """
 
 import warnings
@@ -354,7 +362,7 @@ class Connection(ConnectionBase):
                 look_for_keys=self.get_option('look_for_keys'),
                 key_filename=key_filename,
                 password=self._play_context.password,
-                timeout=self._play_context.timeout,
+                timeout=self.get_option("connection_timeout", self._play_context.timeout),
                 port=port,
                 **ssh_connect_kwargs
             )
