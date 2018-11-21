@@ -4,6 +4,7 @@
     win_app_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}{{ 1000 | random}}winapp"
     win_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winplan"
     linux_plan_name: "{{ (resource_group_secondary | replace('-','x'))[-8:] }}linplan"
+    slot1_name: "stage1"
 
 - name: Create a windows web app with non-exist app service plan
   azure_rm_webapp:
