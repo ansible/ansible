@@ -129,7 +129,7 @@ requirements:
 author:
     - Dane Summers (@dsummersl)
     - Mike Grozak
-    - Patrick Callahan
+    - Patrick Callahan (@dirtyharrycallahan)
     - Evan Kaufman (@EvanK)
     - Luca Berruti (@lberruti)
 """
