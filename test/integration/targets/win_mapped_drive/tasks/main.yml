@@ -52,7 +52,7 @@
   # test cleanup
   always:
   - name: remove stored credential
-    win_credential_manager:
+    win_credential:
       name: '{{ ansible_hostname }}'
       type: domain_password
       state: absent

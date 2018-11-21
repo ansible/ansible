@@ -44,9 +44,8 @@ options:
     description:
     - The password for C(username) that is used when testing the initial
       connection.
-    - This is never saved with a mapped drive, use the
-      M(win_credential_manager) module to persist a username and password for a
-      host.
+    - This is never saved with a mapped drive, use the M(win_credential) module
+      to persist a username and password for a host.
   path:
     description:
     - The UNC path to map the drive to.
@@ -65,13 +64,12 @@ options:
   username:
     description:
     - The username that is used when testing the initial connection.
-    - This is never saved with a mapped drive, the the
-      M(win_credential_manager) module to persist a username and password for a
-      host.
+    - This is never saved with a mapped drive, the the M(win_credential) module
+      to persist a username and password for a host.
     - This is required if the mapped drive requires authentication with
       custom credentials and become, or CredSSP cannot be used.
     - If become or CredSSP is used, any credentials saved with
-      M(win_credential_manager) will automatically be used instead.
+      M(win_credential) will automatically be used instead.
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -96,7 +94,7 @@ EXAMPLES = r'''
 - name: Create mapped drive with credentials and save the username and password
   block:
   - name: Save the network credentials required for the mapped drive
-    win_credential_manager:
+    win_credential:
       name: server
       type: domain_password
       username: username@DOMAIN
