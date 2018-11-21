@@ -23,7 +23,7 @@ version_added: "1.0"
 author:
     - Indrajit Raychaudhuri (@indrajitr)
     - Aaron Bull Schaefer (@elasticdog) <aaron@elasticdog.com>
-    - Afterburn
+    - Kevin Karsopawiro (@Afterburn)
     - Maxime de Roucy (@tchernomax)
 options:
     name:
