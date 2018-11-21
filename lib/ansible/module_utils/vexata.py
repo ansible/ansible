@@ -1,35 +1,8 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright: (c) 2018, Sandeep Kasargod <sandeep@vexata.com>
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
-# Copyright (c) 2018, Sandeep Kasargod <sandeep@vexata.com>
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-from os import environ
 
 HAS_VEXATAPI = True
 try:
@@ -37,6 +10,8 @@ try:
 except ImportError:
     HAS_VEXATAPI = False
 
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import env_fallback
 
 VXOS_VERSION = None
 
@@ -62,13 +37,14 @@ def get_array(module):
     array = module.params['array']
     user = module.params.get('user', None)
     password = module.params.get('password', None)
+    validate = module.params.get('validate_certs')
+
+    if not HAS_VEXATAPI:
+        module.fail_json(msg='vexatapi library is required for this module. '
+                             'To install, use `pip install vexatapi`')
 
     if user and password:
-        system = VexataAPIProxy(array, user, password, verify_cert=False)
-    elif environ.get('VEXATA_USER') and environ.get('VEXATA_PASSWORD'):
-        user = environ.get('VEXATA_USER')
-        password = environ.get('VEXATA_PASSWORD')
-        system = VexataAPIProxy(array, user, password, verify_cert=False)
+        system = VexataAPIProxy(array, user, password, verify_cert=validate)
     else:
         module.fail_json(msg='The user/password are required to be passed in to '
                              'the module as arguments or by setting the '
@@ -80,15 +56,22 @@ def get_array(module):
         else:
             module.fail_json(msg='Test connection to array failed.')
     except Exception as e:
-        module.fail_json(msg='Vexata API access failed: {0}'.format(str(e)))
+        module.fail_json(msg='Vexata API access failed: {0}'.format(to_native(e)))
 
 
 def argument_spec():
     """Return standard base dictionary used for the argument_spec argument in AnsibleModule"""
     return dict(
-        array=dict(type='str', required=True),
-        user=dict(type='str'),
-        password=dict(type='str', no_log=True),
+        array=dict(type='str',
+                   required=True),
+        user=dict(type='str',
+                  fallback=(env_fallback, ['VEXATA_USER'])),
+        password=dict(type='str',
+                      no_log=True,
+                      fallback=(env_fallback, ['VEXATA_PASSWORD'])),
+        validate_certs=dict(type='bool',
+                           required=False,
+                           default=False),
     )
 
 

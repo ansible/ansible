@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2018, Sandeep Kasargod (sandeep@vexata.com)
+# Copyright: (c) 2018, Sandeep Kasargod (sandeep@vexata.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -17,10 +17,11 @@ DOCUMENTATION = '''
 ---
 module: vexata_volume
 version_added: 2.8
-short_description: Manage volumes on Vexata VX100 storage arrays.
+short_description: Manage volumes on Vexata VX100 storage arrays
 description:
     - Create, deletes or extend volumes on a Vexata VX100 array.
-author: Sandeep Kasargod
+author:
+- Sandeep Kasargod (@vexata)
 options:
   name:
     description:
@@ -71,8 +72,7 @@ RETURN = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vexata import (
-    HAS_VEXATAPI, VXOS_VERSION, argument_spec, get_array, required_together,
-    size_to_MiB)
+    argument_spec, get_array, required_together, size_to_MiB)
 
 
 def get_volume(module, array):
@@ -116,6 +116,8 @@ def create_volume(module, array):
 def update_volume(module, array, volume):
     """Expand the volume size."""
     changed = False
+    if not module.params.get('size', False):
+        module.fail_json(msg='Size is required to update volume')
     size = size_to_MiB(module.params['size'])
     prev_size = volume['volSize']
     if size <= prev_size:
@@ -170,10 +172,6 @@ def main():
     module = AnsibleModule(arg_spec,
                            supports_check_mode=True,
                            required_together=required_together())
-
-    if not HAS_VEXATAPI:
-        module.fail_json(msg='vexatapi library is required for this module. '
-                             'To install, use `pip install vexatapi`')
 
     state = module.params['state']
     size = module.params['size']
