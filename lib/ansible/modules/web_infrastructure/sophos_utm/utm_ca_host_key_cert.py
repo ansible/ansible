@@ -31,7 +31,7 @@ version_added: "2.8"
 options:
     name:
         description:
-          - The name of the object. Will be used to identify the entry
+          - The name of the object. Will be used to identify the entry.
         required: true
     ca:
         description:
@@ -43,19 +43,19 @@ options:
         required: true
     certificate:
         description:
-          - The certificate in PEM format
+          - The certificate in PEM format.
         required: true
     comment:
         description:
-          - Optional comment string
+          - Optional comment string.
     encrypted:
         description:
-          - Optionally enable encryption
+          - Optionally enable encryption.
         default: False
         type: bool
     key:
         description:
-          - Optional private key in PEM format
+          - Optional private key in PEM format.
 
 extends_documentation_fragment:
     - utm
@@ -149,7 +149,7 @@ def main():
             certificate=dict(type='str', required=True),
             comment=dict(type='str', required=False),
             encrypted=dict(type='bool', required=False, default=False),
-            key=dict(type='str', required=False),
+            key=dict(type='str', required=False, no_log=True),
         )
     )
     try:
