@@ -363,7 +363,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    setattr(self, name, attribute.default)
+                    if callable(attribute.default):
+                        setattr(self, name, attribute.default())
+                    else:
+                        setattr(self, name, attribute.default)
                     continue
 
                 # and make sure the attribute is of the type it should be
@@ -546,7 +549,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if name in data:
                 setattr(self, name, data[name])
             else:
-                setattr(self, name, attribute.default)
+                if callable(attribute.default):
+                    setattr(self, name, attribute.default())
+                else:
+                    setattr(self, name, attribute.default)
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
