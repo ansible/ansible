@@ -70,8 +70,8 @@ def argument_spec():
                       no_log=True,
                       fallback=(env_fallback, ['VEXATA_PASSWORD'])),
         validate_certs=dict(type='bool',
-                           required=False,
-                           default=False),
+                            required=False,
+                            default=False),
     )
 
 
