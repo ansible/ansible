@@ -36,18 +36,12 @@ options:
   domain:
     description:
       - Name of the domain the virtual machine belongs to.
-    required: false
-    default: null
   account:
     description:
       - Account the virtual machine belongs to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the virtual machine belongs to.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -58,11 +52,17 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # reset and get the root password
-- local_action: cs_rootpassword name=myvirtualmachine
+- local_action:
+    cs_rootpassword:
+      name: myvirtualmachine
   register: root
-- debug: msg='new root password is {{ root.password }}'
+- debug:
+    msg: "new root password is {{ root.password }}"
 # reboot the virtual machine to activate the new password
-- local_action: cs_instance name=myvirtualmachine state=restarted
+- local_action:
+    cs_instance
+      name: myvirtualmachine
+      state: restarted
   when: root is changed
 '''
 
@@ -93,7 +93,7 @@ class AnsibleCloudStackPasswordReset(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackPasswordReset, self).__init__(module)
         self.returns = {
-            'password':   'password',
+            'password':     'password',
         }
         self.password = None
 
@@ -104,7 +104,6 @@ class AnsibleCloudStackPasswordReset(AnsibleCloudStack):
         args['account']     = self.get_account('name')
         args['projectid']   = self.get_project('id')
         args['id']          = self.get_vm('id')
-        # module.params.get('vm')
 
         res = None
         self.result['changed'] = True
@@ -147,7 +146,5 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
