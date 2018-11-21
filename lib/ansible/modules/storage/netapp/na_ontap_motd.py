@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_motd
-author: Piotr Olczak (polczak@redhat.com)
+author: Piotr Olczak (@dprts) <polczak@redhat.com>
 extends_documentation_fragment:
     - netapp.na_ontap
 short_description: Setup motd on cDOT

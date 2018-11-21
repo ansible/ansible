@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: os_user
 short_description: Manage OpenStack Identity Users
 extends_documentation_fragment: openstack
-author: David Shrewsbury
+author: David Shrewsbury (@Shrews)
 version_added: "2.0"
 description:
     - Manage OpenStack Identity users. Users can be created,

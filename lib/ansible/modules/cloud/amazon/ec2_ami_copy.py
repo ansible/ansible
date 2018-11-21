@@ -73,7 +73,7 @@ options:
     version_added: 2.6
 author:
 - Amir Moulavi (@amir343) <amir.moulavi@gmail.com>
-- Tim C <defunct@defunct.io>
+- Tim C (@defunctio) <defunct@defunct.io>
 extends_documentation_fragment:
     - aws
     - ec2

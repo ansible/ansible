@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: nclu
 version_added: "2.3"
-author: "Cumulus Networks"
+author: "Cumulus Networks (@isharacomix)"
 short_description: Configure network interfaces using NCLU
 description:
     - Interface to the Network Command Line Utility, developed to make it easier

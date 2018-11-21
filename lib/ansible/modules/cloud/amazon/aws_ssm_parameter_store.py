@@ -64,7 +64,7 @@ options:
     required: false
 author:
   - Nathan Webster (@nathanwebsterdotme)
-  - Bill Wang (ozbillwang@gmail.com)
+  - Bill Wang (@ozbillwang) <ozbillwang@gmail.com>
   - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]

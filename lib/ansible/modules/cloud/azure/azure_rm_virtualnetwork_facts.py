@@ -40,8 +40,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht house@redhat.com"
-    - "Matt Davis mdavis@redhat.com"
+    - "Chris Houseknecht (@chouseknecht) <house@redhat.com>"
+    - "Matt Davis (@nitzmahone) <mdavis@redhat.com>"
 
 '''
 
