@@ -8,11 +8,11 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY3
