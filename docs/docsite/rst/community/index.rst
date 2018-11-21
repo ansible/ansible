@@ -39,7 +39,7 @@ Going deeper
 * I have a specific Ansible interest or expertise (for example, VMWare, linode, etc.). How do I get involved in a :ref:`working group <working_group_list>`?
 * I'd like to participate in conversations about features and fixes. How do I review GitHub issues and pull requests?
 * I found a typo or another problem on docs.ansible.com. How can I :ref:`improve the documentation <community_documentation_contributions>`?
-* I have an open pull request with a failing test. How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?
+
 
 Working with the Ansible repo
 =============================
@@ -51,6 +51,7 @@ Working with the Ansible repo
 * I'd like to :ref:`contribute a group of related modules <developing_modules_in_groups>`.
 * I want to :ref:`rebase my Pull Request <rebase_guide>`.
 * I'm using an older version of Ansible and want a bug fixed in my version that's already been fixed on the ``devel`` branch. How do I :ref:`backport a bugfix PR <backport_process>`?
+* I have an open pull request with a failing test. How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?
 * I'm ready to step up as a module maintainer. What are the :ref:`guidelines for maintainers <maintainers>`?
 
 .. toctree::
