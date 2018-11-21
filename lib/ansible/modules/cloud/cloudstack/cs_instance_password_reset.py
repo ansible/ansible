@@ -21,7 +21,7 @@
 
 DOCUMENTATION = '''
 ---
-module: cs_rootpassword
+module: cs_instance_password_reset
 short_description: Allows resetting VM root passwords on Apache CloudStack based clouds.
 description:
     - Reset the root password on a virtual machine.
@@ -53,7 +53,7 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 - name: reset and get the root password
   local_action:
-    cs_rootpassword:
+    cs_instance_password_reset:
       name: myvirtualmachine
   register: root
 - debug:
