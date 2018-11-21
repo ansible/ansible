@@ -509,8 +509,7 @@ def split_list(lst, max_sublist_elements=None):
     lists = []
 
     for i in range(0, subcount):
-        lists.append(lst[i*max_sublist_elements:(i+1)*max_sublist_elements])
-
+        lists.append(lst[i * max_sublist_elements:(i + 1) * max_sublist_elements])
 
     return(lists)
 
