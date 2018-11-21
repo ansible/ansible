@@ -164,7 +164,58 @@
       disable_my_meraki: no
     delegate_to: localhost
     register: enable_meraki_com
-    
+
+  - name: Disable remote status page
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      disable_remote_status_page: no
+    delegate_to: localhost
+    register: disable_remote_status
+
+  - debug:
+      msg: '{{disable_remote_status}}'
+
+  - assert:
+      that:
+        - disable_remote_status.data.disableRemoteStatusPage == False
+
+  - name: Enable remote status page
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      disable_remote_status_page: yes
+    delegate_to: localhost
+    register: enable_remote_status
+
+  - debug:
+      msg: '{{enable_remote_status}}'
+
+  - assert:
+      that:
+        - enable_remote_status.data.disableRemoteStatusPage == True
+
+
+  - name: Test status pages are mutually exclusive when on
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      disable_my_meraki: no
+      disable_remote_status_page: yes
+    delegate_to: localhost
+    register: status_exclusivity
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - '"must be true when setting" in status_exclusivity.msg'
+
   - name: Create network with one tag
     meraki_network:
       auth_key: '{{ auth_key }}'
