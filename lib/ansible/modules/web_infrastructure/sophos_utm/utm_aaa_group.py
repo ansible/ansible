@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: utm_aaa_group
 
-author: 
+author:
     - Johannes Brunswicker (@MatrixCrawler)
 
 short_description: create, update or destroy aaa group entry in Sophos UTM
@@ -35,11 +35,11 @@ options:
         required: true
     adirectory_groups :
         description:
-          - list of adirectory group strings 
+          - list of adirectory group strings
         type: list
-    adirectory_groups_ids :
+    adirectory_groups_sids :
         description:
-          - dictionary of group ids 
+          - dictionary of group ids
         type: list
     backend_match:
         description:
@@ -52,6 +52,9 @@ options:
           - radius
           - tacacs
           - ldap
+    comment:
+        description:
+          - An optional comment to add to the dns host object
     dynamic:
         description:
           - What type of group is this
