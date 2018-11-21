@@ -93,7 +93,7 @@ To pass Active Directory username/password in ADFS via the environment, define t
 * AZURE_TENANT
 * AZURE_ADFS_AUTHORITY_URL
 
-"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
+"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://yourdomain.com/adfs.
 
 Storing in a File
 `````````````````
@@ -136,7 +136,7 @@ Or, pass the following parameters for ADFS username/pasword:
 * tenant
 * adfs_authority_url
 
-"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
+"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://yourdomain.com/adfs.
 
 
 Other Cloud Environments
