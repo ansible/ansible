@@ -12,7 +12,7 @@ trap 'rm -rf "${MYTMPDIR}"' EXIT
 # but for the python3 tests we need virtualenv to use python3
 PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 
-# servicediscovery has been touched in 3 botocore versions, 1.8.8, 1.9.8 1.8.38
+# servicediscovery has been touched in 3 botocore versions, 1.8.8, 1.9.8 1.9.38
 # looks like 1.9.8 added custom health check, so I'm ignoring previous versions
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-recent"
