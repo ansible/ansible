@@ -85,6 +85,87 @@ azure_publicipaddresses:
         },
         "type": "Microsoft.Network/publicIPAddresses"
     }]
+publicipaddresses:
+    description:
+        - List of publicipaddress
+        - Contains the detail which matches azure_rm_publicipaddress parameters. 
+        - Returned when the format parameter set to curated.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+        name:
+            description:
+                - Name of the public ip address.
+            returned: always
+            type: str
+        type:
+            description:
+                - Resource type.
+            returned: always
+            type: str
+        location:
+            description:
+                - Resource location.
+            returned: always
+            type: str
+        tags:
+            description:
+                - Resource tags.
+            returned: always
+            type: complex
+        allocation_method:
+            description:
+                - The public IP allocation method.
+                - Possible values are: 'static' and 'dynamic'.
+            returned: always
+            type: str
+        version:
+            description:
+                - The public IP address version.
+                - Possible values are: 'ipv4' and 'ipv6'
+            returned: always
+            type: str
+        dns_settings:
+            description:
+                - The FQDN of the DNS record associated with the public IP address.
+            returned: always
+            type: complex
+        ip_tags:
+            description:
+                - The list of tags associated with the public IP address.
+            returned: always
+            type: complex
+        ip_address:
+            description:
+                - The Public IP Prefix this Public IP Address should be allocated from.
+            returned: always
+            type: str
+        idle_timeout:
+            description:
+                - The idle timeout of the public IP address.
+            returned: always
+            type: int
+        provisioning_state:
+            description:
+                - he provisioning state of the PublicIP resource.
+                - Possible values are: 'Updating', 'Deleting', and 'Failed'.
+            returned: always
+            type: str
+        etag:
+            description:
+                - A unique read-only string that changes whenever the resource is updated.
+            returned: always
+            type: str
+        sku:
+            description:
+                - The public IP address SKU.
+            returned: always
+            type: str
 '''
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -170,8 +251,8 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
             type=pip.type,
             location=pip.location,
             tags=pip.tags,
-            allocation_method=pip.public_ip_allocation_method,
-            version=pip.public_ip_address_version,
+            allocation_method=pip.public_ip_allocation_method.lower(),
+            version=pip.public_ip_address_version.lower(),
             dns_settings=dict(),
             ip_tags=dict(),
             ip_address=pip.ip_address,
