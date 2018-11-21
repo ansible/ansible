@@ -32,7 +32,7 @@ short_description: CLI command to create/delete/modify a vrouter.
 deprecated:
   removed_in: '2.12'
   why: Doesn't support latest Pluribus Networks netvisor
-  alternative: Latest modules will be pushed in ansible 2.9 instead.
+  alternative: Latest modules will be pushed in Ansible 2.9 instead.
 description:
   - Execute vrouter-create, vrouter-delete, vrouter-modify command.
   - Each fabric, cluster, standalone switch, or virtual network (VNET) can

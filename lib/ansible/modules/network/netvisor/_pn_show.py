@@ -32,7 +32,7 @@ short_description: Run show commands on nvOS device.
 deprecated:
   removed_in: '2.12'
   why: Doesn't support latest Pluribus Networks netvisor
-  alternative: Latest modules will be pushed in ansible 2.9 instead.
+  alternative: Latest modules will be pushed in Ansible 2.9 instead.
 description:
   - Execute show command in the nodes and returns the results
     read from the device.
