@@ -446,6 +446,7 @@ def flatten(mylist, levels=None):
 
     return ret
 
+
 def subelements(obj, subelements, skip_missing=False):
     '''Accepts a dict or list of dicts, and a dotted accessor and produces a product
     of the element and the results of the dotted accessor
