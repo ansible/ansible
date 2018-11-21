@@ -60,7 +60,7 @@ EXAMPLES = '''
     msg: "new root password is {{ root.password }}"
 # reboot the virtual machine to activate the new password
 - local_action:
-    cs_instance
+    cs_instance:
       name: myvirtualmachine
       state: restarted
   when: root is changed
