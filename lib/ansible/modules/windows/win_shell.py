@@ -41,6 +41,11 @@ options:
       - Change the shell used to execute the command (eg, C(cmd)).
       - The target shell must accept a C(/c) parameter followed by the raw command line to be executed.
     type: path
+  extra_exec_args:
+    description:
+      - Additional options used to launch the shell
+      - Useful for powershell to add the -noprofile option
+    version_added: '2.8'
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.

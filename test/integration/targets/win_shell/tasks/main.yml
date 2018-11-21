@@ -257,3 +257,37 @@
     - nonascii_output.stdout_lines|count == 1
     - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
     - nonascii_output.stderr == ''
+
+- name: execute a cmd.exe shell task
+  win_shell: 'Echo hello from Ansible'
+  args:
+    executable: cmd.exe
+  register: shellout
+
+- name: validate result
+  assert:
+    that:
+    - shellout is successful
+    - shellout is changed
+    - shellout.cmd == 'Echo hello from Ansible'
+    - shellout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+    - shellout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - shellout.rc == 0
+    - shellout.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - shellout.stdout == "hello from Ansible\r\n"
+    - shellout.stdout_lines == ["hello from Ansible"]
+
+- name: execute a powershell with extra_exec_args
+  win_shell: "[System.Environment]::CommandLine"
+  args:
+    extra_exec_args: -noprofile
+  register: shellout
+
+- name: validate result
+  assert:
+    that:
+    - shellout is successful
+    - shellout is changed
+    - shellout.cmd == "[System.Environment]::CommandLine"
+    - shellout.rc == 0
+    - shellout.stdout is match('^powershell.exe -noprofile -noninteractive -encodedcommand')
