@@ -37,13 +37,14 @@ $module.Diff.before = ""
 $module.Diff.after = ""
 
 Add-CSharpType -AnsibleModule $module -References @'
-using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Text;
 
 namespace Ansible.MappedDrive
 {
@@ -99,8 +100,28 @@ namespace Ansible.MappedDrive
         public enum TokenInformationClass
         {
             TokenUser = 1,
+            TokenPrivileges = 3,
             TokenElevationType = 18,
             TokenLinkedToken = 19,
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LUID
+        {
+            public UInt32 LowPart;
+            public Int32 HighPart;
+
+            public static explicit operator UInt64(LUID l)
+            {
+                return (UInt64)((UInt64)l.HighPart << 32) | (UInt64)l.LowPart;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LUID_AND_ATTRIBUTES
+        {
+            public LUID Luid;
+            public UInt32 Attributes;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -121,6 +142,14 @@ namespace Ansible.MappedDrive
         {
             public IntPtr Sid;
             public UInt32 Attributes;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TOKEN_PRIVILEGES
+        {
+            public UInt32 PrivilegeCount;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+            public LUID_AND_ATTRIBUTES[] Privileges;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -150,6 +179,13 @@ namespace Ansible.MappedDrive
 
         [DllImport("kernel32.dll")]
         public static extern SafeNativeHandle GetCurrentProcess();
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool LookupPrivilegeNameW(
+            string lpSystemName,
+            ref NativeHelpers.LUID lpLuid,
+            StringBuilder lpName,
+            ref UInt32 cchName);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern SafeNativeHandle OpenProcess(
@@ -368,14 +404,8 @@ namespace Ansible.MappedDrive
             using (hToken)
             {
                 // Check the elevation type of the current token, only need to impersonate if it's a Full token
-                UInt32 tokenLength;
-                using (SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer(sizeof(int)))
+                using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenElevationType))
                 {
-                    if (!NativeMethods.GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenElevationType,
-                        tokenInfo, sizeof(int), out tokenLength))
-                    {
-                        throw new Win32Exception("GetTokenInformation(TokenElevationType) failed");
-                    }
                     NativeHelpers.TokenElevationType tet = (NativeHelpers.TokenElevationType)Marshal.ReadInt32(tokenInfo.DangerousGetHandle());
 
                     // If we don't have a Full token, we don't need to get the limited one to set a mapped drive
@@ -387,21 +417,9 @@ namespace Ansible.MappedDrive
                 // and we can get that from impersonating a SYSTEM account token. Without this privilege we only get
                 // an SecurityIdentification token which won't work for what we need
                 using (SafeNativeHandle systemToken = GetSystemToken())
-                {
-                    using (Impersonation systemImpersonation = new Impersonation(systemToken))
-                    {
-                        tokenLength = 0;
-                        NativeHelpers.TokenInformationClass tokenClass = NativeHelpers.TokenInformationClass.TokenLinkedToken;
-                        NativeMethods.GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength);
-                        using (SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength))
-                        {
-                            if (!NativeMethods.GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
-                                throw new Win32Exception("GetTokenInformation(TokenLinkedToken) failed");
-
-                            return new SafeNativeHandle(Marshal.ReadIntPtr(tokenInfo.DangerousGetHandle()));
-                        }
-                    }
-                }
+                using (Impersonation systemImpersonation = new Impersonation(systemToken))
+                using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenLinkedToken))
+                    return new SafeNativeHandle(Marshal.ReadIntPtr(tokenInfo.DangerousGetHandle()));
             }
         }
 
@@ -423,7 +441,14 @@ namespace Ansible.MappedDrive
                             continue;
 
                         if ("S-1-5-18" == GetTokenUserSID(hToken))
-                            return hToken;
+                        {
+                            // To get the TokenLinkedToken we need the SeTcbPrivilege, not all SYSTEM tokens have this
+                            // assigned so we check before trying again
+                            List<string> actualPrivileges = GetTokenPrivileges(hToken);
+                            if (actualPrivileges.Contains("SeTcbPrivilege"))
+                                return hToken;
+                        }
+
                         hToken.Dispose();
                     }
                 }
@@ -431,26 +456,54 @@ namespace Ansible.MappedDrive
             throw new InvalidOperationException("Failed to get a copy of the SYSTEM token required to de-elevate the current user's token");
         }
 
+        private static List<string> GetTokenPrivileges(SafeNativeHandle hToken)
+        {
+            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenPrivileges))
+            {
+                NativeHelpers.TOKEN_PRIVILEGES tokenPrivileges = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+                    tokenInfo.DangerousGetHandle(), typeof(NativeHelpers.TOKEN_PRIVILEGES));
+
+                NativeHelpers.LUID_AND_ATTRIBUTES[] luidAndAttributes = new NativeHelpers.LUID_AND_ATTRIBUTES[tokenPrivileges.PrivilegeCount];
+                PtrToStructureArray(luidAndAttributes, IntPtr.Add(tokenInfo.DangerousGetHandle(), Marshal.SizeOf(tokenPrivileges.PrivilegeCount)));
+
+                return luidAndAttributes.Select(x => GetPrivilegeName(x.Luid)).ToList();
+            }
+        }
+
         private static string GetTokenUserSID(SafeNativeHandle hToken)
         {
-            NativeHelpers.TokenInformationClass tokenClass = NativeHelpers.TokenInformationClass.TokenUser;
-            UInt32 tokenLength;
-            if (!NativeMethods.GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength))
+            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenUser))
             {
-                int lastErr = Marshal.GetLastWin32Error();
-                if (lastErr != 122)  // ERROR_INSUFFICIENT_BUFFER
-                    throw new Win32Exception(lastErr, "GetTokenInformation(TokenUser) failed to get buffer length");
-            }
-
-            using (SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength))
-            {
-                if (!NativeMethods.GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
-                    throw new Win32Exception("GetTokenInformation(TokenUser) failed");
-
                 NativeHelpers.TOKEN_USER tokenUser = (NativeHelpers.TOKEN_USER)Marshal.PtrToStructure(tokenInfo.DangerousGetHandle(),
                     typeof(NativeHelpers.TOKEN_USER));
                 return new SecurityIdentifier(tokenUser.User.Sid).Value;
             }
+        }
+
+        private static SafeMemoryBuffer GetTokenInformation(SafeNativeHandle hToken, NativeHelpers.TokenInformationClass tokenClass)
+        {
+            UInt32 tokenLength;
+            bool res = NativeMethods.GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength);
+            if (!res && tokenLength == 0)  // res will be false due to insufficient buffer size, we ignore if we got the buffer length
+                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed to get buffer length", tokenClass.ToString()));
+
+            SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength);
+            if (!NativeMethods.GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
+                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed", tokenClass.ToString()));
+
+            return tokenInfo;
+        }
+
+        private static string GetPrivilegeName(NativeHelpers.LUID luid)
+        {
+            UInt32 nameLen = 0;
+            NativeMethods.LookupPrivilegeNameW(null, ref luid, null, ref nameLen);
+
+            StringBuilder name = new StringBuilder((int)(nameLen + 1));
+            if (!NativeMethods.LookupPrivilegeNameW(null, ref luid, name, ref nameLen))
+                throw new Win32Exception("LookupPrivilegeNameW() failed");
+
+            return name.ToString();
         }
 
         private static void PtrToStructureArray<T>(T[] array, IntPtr ptr)
