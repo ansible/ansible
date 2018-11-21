@@ -344,7 +344,7 @@
       - facts.webapps[0].ftp_publish_url != ''
 
 - name: Create a webapp slot (Check mode)
-  azure_rm_webapp_slot:
+  azure_rm_webappslot:
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
@@ -360,7 +360,7 @@
       - output.changed
 
 - name: Create a webapp slot
-  azure_rm_webapp_slot:
+  azure_rm_webappslot:
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
@@ -375,7 +375,7 @@
       - output.changed
 
 - name: Update webapp slot (idempotence)
-  azure_rm_webapp_slot:
+  azure_rm_webappslot:
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
@@ -389,7 +389,7 @@
       - not output.changed
 
 - name: Update webapp slot
-  azure_rm_webapp_slot:
+  azure_rm_webappslot:
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
@@ -406,7 +406,7 @@
       - output.changed
 
 - name: Swap webapp slot
-  azure_rm_webapp_slot:
+  azure_rm_webappslot:
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
@@ -420,7 +420,7 @@
       - output.changed
 
 - name: Stop webapp slot
-  azure_rm_webapp_slot:
+  azure_rm_webappslot:
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
@@ -433,7 +433,7 @@
       - output.changed
 
 - name: delete slot
-  azure_rm_webapp_slot:
+  azure_rm_webappslot:
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
