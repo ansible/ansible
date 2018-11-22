@@ -110,6 +110,8 @@ options:
             'load_balance_policy': 'loadbalance_srcid',
             'inbound_policy': False,
             'rolling_order': False
+            'active_uplinkport': [],
+            'standby_uplinkport': [],
         }
     port_policy:
         description:
