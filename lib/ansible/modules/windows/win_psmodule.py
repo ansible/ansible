@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_psmodule
 version_added: "2.4"
@@ -82,7 +82,7 @@ author:
 - Daniele Lazzari (@dlazz)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
 - name: Add a PowerShell module
   win_psmodule:
