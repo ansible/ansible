@@ -836,7 +836,7 @@
 
 
 
-    - name: scale down multifunction-test service
+    - name: scale down scheduling_strategy service
       ecs_service:
         name: "{{ ecs_service_name }}-replica"
         cluster: "{{ ecs_cluster_name }}"
@@ -910,7 +910,7 @@
         <<: *aws_connection_info
       ignore_errors: yes
 
-    - name: remove mft ecs service
+    - name: remove scheduling_strategy ecs service
       ecs_service:
         state: absent
         cluster: "{{ ecs_cluster_name }}"
