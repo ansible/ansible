@@ -109,9 +109,9 @@ options:
             'notify_switches': True,
             'load_balance_policy': 'loadbalance_srcid',
             'inbound_policy': False,
-            'rolling_order': False
+            'rolling_order': False,
             'active_uplinkport': [],
-            'standby_uplinkport': [],
+            'standby_uplinkport': []
         }
     port_policy:
         description:
