@@ -35,7 +35,7 @@ notes:
     - currently, public namespaces have not been tested.
 version_added: "2.8"
 author:
-    - "tad merchant @ezmac"
+    - "tad merchant (@ezmac)"
 
 requirements: [ json, botocore, boto3 ]
 options:
