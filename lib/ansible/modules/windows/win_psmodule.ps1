@@ -21,8 +21,7 @@ $skip_publisher_check = Get-AnsibleParam -obj $params -name "skip_publisher_chec
 $allow_prerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
-$result = @{changed = $false
-            output = ""}
+$result = @{changed = $false}
 
 Function Install-NugetProvider {
     Param(
@@ -147,10 +146,7 @@ Function Install-PsModule {
 
     $ExistingModuleBefore = Get-PsModule -Name $Name -RequiredVersion $RequiredVersion -MinimumVersion $MinimumVersion -MaximumVersion $MaximumVersion
 
-    if ( $ExistingModuleBefore.Exists ) {
-        $result.output = "Module $($Name) already present in the version $($($ExistingModuleBefore.Version).ToString())."
-    }
-    else {
+    if ( -not $ExistingModuleBefore.Exists ) {
         try {
             # Install NuGet provider if needed.
             Install-NugetProvider -CheckMode $CheckMode
@@ -182,12 +178,6 @@ Function Install-PsModule {
             }
 
             Install-Module @ht -ErrorVariable ErrorDetails | out-null
-
-            $ExistingModuleAfter = Get-PsModule -Name $Name
-
-            $VersionInstalled = Compare-Object -ReferenceObject $ExistingModuleBefore.Versions -DifferenceObject $ExistingModuleAfter.Versions -PassThru
-
-            $result.output = "Module $($Name) installed in the version $($($VersionInstalled.GetEnumerator() -Join ',').Trim().Replace(' ',''))."
 
             $result.changed = $true
         }
@@ -247,24 +237,13 @@ Function Remove-PsModule {
 
                 Uninstall-Module @ht -ErrorVariable ErrorDetails | out-null
 
-                $ExistingModuleAfter = Get-PsModule -Name $Name
-
-                $VersionUninstalled = Compare-Object -ReferenceObject $ExistingModuleAfter.Versions -DifferenceObject $ExistingModuleBefore.Versions -PassThru
-
-                $result.output = "The version $($($VersionUninstalled.GetEnumerator() -Join ',').Trim().Replace(' ','')) of the module $($Name) uninstalled."
                 $result.changed = $true
-            }
-            else {
-                $result.output = "Module $($Name) already absent."
             }
         }
         catch{
             $ErrorMessage = "Problems removing $($Name) module: $($ErrorDetails.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
-    }
-    else{
-        $result.output = "Module $($Name) already absent."
     }
 }
 

@@ -13,4 +13,4 @@
   block:
 
     - name: run all tasks
-      include: test.yml
+      include: tests.yml
