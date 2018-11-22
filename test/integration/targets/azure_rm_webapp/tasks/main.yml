@@ -394,7 +394,7 @@
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
-    framework:
+    frameworks:
       name: "node"
       version: "10.1"
     app_settings:
