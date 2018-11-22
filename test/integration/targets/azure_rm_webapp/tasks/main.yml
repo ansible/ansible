@@ -425,7 +425,7 @@
     resource_group: "{{ resource_group }}"
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
-    app_ state: stopped
+    app_state: stopped
   register: output
 
 - name: Assert stopped
@@ -439,3 +439,9 @@
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
     state: absent
+  register: output
+
+- name: Assert deletion
+  assert:
+    that:
+      - output.changed
