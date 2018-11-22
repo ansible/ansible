@@ -432,16 +432,3 @@
   assert:
     that:
       - output.changed
-
-- name: delete slot
-  azure_rm_webappslot:
-    resource_group: "{{ resource_group }}"
-    webapp_name: "{{ win_app_name }}13"
-    name: "{{ slot1_name }}"
-    state: absent
-  register: output
-
-- name: Assert deletion
-  assert:
-    that:
-      - output.changed
