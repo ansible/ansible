@@ -20,8 +20,8 @@ DOCUMENTATION = '''
     version_added: "2.7"
     description:
       - Use this callback when you need a kind of progress bar on a large environments.
-      - You will know how many tasks has the playbook to run, and wich one is actually running.
-      - You will know how many hosts may run a task, and wich of them is actually running.
+      - You will know how many tasks has the playbook to run, and which one is actually running.
+      - You will know how many hosts may run a task, and which of them is actually running.
     extends_documentation_fragment:
       - default_callback
     requirements:
