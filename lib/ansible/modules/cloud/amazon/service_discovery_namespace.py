@@ -29,7 +29,7 @@ notes:
      - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/servicediscovery.html
 version_added: "2.8"
 author:
-    - "tad merchant @ezmac"
+    - "Tad Merchant (@ezmac)"
 
 requirements: [ json, botocore, boto3 ]
 options:
