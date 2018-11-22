@@ -30,10 +30,6 @@ notes:
 - If become or CredSSP is not available, the I(username) and I(password)
   options can be used for the initial authentication but these are not
   persisted.
-- To create a system wide mount, use become with the U(SYSTEM) account.
-- A system wide mount will always show as disconnected in Windows Explorer and
-  still relies on the user's credentials or credential vault for further
-  authentication if needed.
 options:
   letter:
     description:
@@ -120,15 +116,6 @@ EXAMPLES = r'''
     state: present
     username: '{{ ansible_user }}'
     password: '{{ ansible_password }}'
-
-- name: Create a system wide mapped drive
-  win_mapped_drive:
-    letter: S
-    path: \\SERVER\C$
-    state: present
-  become: yes
-  become_method: runas
-  become_user: SYSTEM
 '''
 
 RETURN = r'''
