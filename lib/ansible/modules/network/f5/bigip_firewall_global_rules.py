@@ -88,7 +88,6 @@ description:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
