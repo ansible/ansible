@@ -1,4 +1,4 @@
-. _communication:
+.. _communication:
 
 *************
 Communicating
