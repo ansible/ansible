@@ -395,8 +395,8 @@
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
     frameworks:
-      name: "node"
-      version: "10.1"
+      - name: "node"
+        version: "10.1"
     app_settings:
         testkey: testvalue2
   register: output
