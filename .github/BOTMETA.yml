@@ -290,7 +290,9 @@ files:
   $modules/packaging/os/rhn_channel.py: alikins
   $modules/packaging/os/rhn_register.py: $team_rhn
   $modules/packaging/os/snap.py: angristan
-  $modules/packaging/os/yum.py: $team_ansible kustodian
+  $modules/packaging/os/yum.py:
+    maintainers: $team_ansible kustodian
+    ignored: skvidal
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan
   $modules/packaging/os/zypper_repository.py: robinro
