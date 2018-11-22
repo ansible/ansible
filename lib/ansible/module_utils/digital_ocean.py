@@ -128,7 +128,7 @@ class DigitalOceanHelper:
         status_code = None
         response = None
         while has_next or status_code != expected_status_code:
-            required_url = "{0}page={1}&per_page={2}".format(base_url, page, data_per_page)
+            required_url = "{0}?page={1}&per_page={2}".format(base_url, page, data_per_page)
             response = self.get(required_url)
             status_code = response.status_code
             # stop if any error during pagination

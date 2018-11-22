@@ -84,7 +84,7 @@ def core(module):
     tag_name = module.params.get('tag_name', None)
     rest = DigitalOceanHelper(module)
 
-    base_url = 'tags?'
+    base_url = 'tags'
     if tag_name is not None:
         response = rest.get("%s/%s" % (base_url, tag_name))
         status_code = response.status_code
