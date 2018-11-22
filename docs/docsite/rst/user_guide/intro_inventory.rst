@@ -43,6 +43,7 @@ and deciding what systems you are controlling at what times and for what purpose
 A YAML version would look like:
 
 .. code-block:: yaml
+
   ---
   all:
     hosts:
@@ -83,6 +84,7 @@ In INI:
 In YAML:
 
 .. code-block:: yaml
+
     ---
     ...
       hosts:
@@ -143,6 +145,7 @@ As described above, it is easy to assign variables to hosts that will be used la
 The YAML version:
 
 .. code-block:: yaml
+
     ---
     atlanta:
       host1:
@@ -174,6 +177,7 @@ The INI way:
 The YAML version:
 
 .. code-block:: yaml
+
     ---
     atlanta:
       hosts:
@@ -221,6 +225,7 @@ You can apply variables using ``:vars`` or ``vars:``:
    northwest
 
 .. code-block:: yaml
+
   ---
   all:
     children:
