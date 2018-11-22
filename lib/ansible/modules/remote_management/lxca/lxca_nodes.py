@@ -229,7 +229,7 @@ def execute_module(module):
     try:
         with connection_object(module) as lxca_con:
             result = FUNC_DICT[module.params['command_options']](module, lxca_con)
-            module.exit_json(changed=True,
+            module.exit_json(changed=False,
                              msg=SUCCESS_MSG % module.params['command_options'],
                              result=result)
     except Exception as exception:
