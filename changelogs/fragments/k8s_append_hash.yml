@@ -1,0 +1,2 @@
+minor_changes:
+  - k8s - append_hash parameter adds a hash to the name of ConfigMaps and Secrets for easier immutable resources

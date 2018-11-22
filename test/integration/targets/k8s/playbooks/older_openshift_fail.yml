@@ -31,7 +31,7 @@
       assert:
         that:
           - k8s_append_hash is failed
-          - "k8s_append_hash.msg == 'openshift >= 0.7.FIXME is required for append_hash'"
+          - "k8s_append_hash.msg == 'openshift >= 0.7.2 is required for append_hash'"
 
     # merge_type
     - include_role:
@@ -58,4 +58,4 @@
       assert:
         that:
           - k8s_validate is failed
-          - "k8s_validate.msg == 'openshift >= 0.7.FIXME is required for validate'"
+          - "k8s_validate.msg == 'openshift >= 0.8.0 is required for validate'"

@@ -278,15 +278,16 @@
         - testing5
       register: k8s_facts
 
+
     - name: Resources are terminating if still in results
       assert:
         that: not item.resources or item.resources[0].status.phase == "Terminating"
       loop: "{{ k8s_facts.results }}"
 
     - include_tasks: crd.yml
+    - include_tasks: append_hash.yml
 
   always:
-
     - name: Delete all namespaces
       k8s:
         state: absent
