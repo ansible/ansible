@@ -28,7 +28,7 @@ ansible-playbook -v playbooks/validate_installed.yml "$@"
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/openshift-0.6.0"
 source "${MYTMPDIR}/openshift-0.6.0/bin/activate"
 $PYTHON -m pip install openshift==0.6.0 kubernetes==6.0.0
-ansible-playbook -v playbooks/merge_type_fail.yml "$@"
+ansible-playbook -v playbooks/older_openshift_fail.yml "$@"
 
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/openshift-recent"
