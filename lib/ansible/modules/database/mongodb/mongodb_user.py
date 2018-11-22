@@ -341,6 +341,9 @@ def main():
             name=dict(required=True, aliases=['user']),
             password=dict(aliases=['pass'], no_log=True),
             ssl=dict(default=False, type='bool'),
+            ssl_certfile=dict(default=None),
+            ssl_keyfile=dict(default=None),
+            ssl_ca_certs=dict(default=None),
             roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),
             update_password=dict(default="always", choices=["always", "on_create"]),
@@ -363,6 +366,9 @@ def main():
     user = module.params['name']
     password = module.params['password']
     ssl = module.params['ssl']
+    ssl_certfile = module.params['ssl_certfile']
+    ssl_keyfile = module.params['ssl_keyfile']
+    ssl_ca_certs = module.params['ssl_ca_certs']
     roles = module.params['roles'] or []
     state = module.params['state']
     update_password = module.params['update_password']
@@ -379,6 +385,12 @@ def main():
         if ssl:
             connection_params["ssl"] = ssl
             connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
+            if ssl_certfile:
+                connection_params['ssl_certfile'] = ssl_certfile
+            if ssl_keyfile:
+                connection_params['ssl_keyfile'] = ssl_keyfile
+            if ssl_ca_certs:
+                connection_params['ssl_ca_certs'] = ssl_ca_certs
 
         client = MongoClient(**connection_params)
 
