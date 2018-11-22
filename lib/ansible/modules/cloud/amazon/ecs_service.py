@@ -125,7 +125,6 @@ options:
         description:
           - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.9.0.
         required: false
-        default: 30
         version_added: 2.8
 extends_documentation_fragment:
     - aws
@@ -482,7 +481,7 @@ def main():
             assign_public_ip=dict(type='bool'),
         )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
-        health_check_grace_period_seconds=dict(required=False, type='int', default=30)
+        health_check_grace_period_seconds=dict(required=False, type='int')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
