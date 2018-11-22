@@ -83,6 +83,7 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 
 * ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+* ``netvisor``
 
 
 Noteworthy module changes
