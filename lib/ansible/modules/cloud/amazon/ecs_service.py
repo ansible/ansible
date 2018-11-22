@@ -123,7 +123,7 @@ options:
         choices: ["EC2", "FARGATE"]
     health_check_grace_period_seconds:
         description:
-          - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.9.0.
+          - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.8.20.
         required: false
         version_added: 2.8
 extends_documentation_fragment:
@@ -456,7 +456,7 @@ class EcsServiceManager:
     def health_check_setable(self, params):
         load_balancers = params.get('loadBalancers', [])
         # check if botocore (and thus boto3) is new enough for using the healthCheckGracePeriodSeconds parameter
-        return len(load_balancers) > 0 and self.module.botocore_at_least('1.9.0')
+        return len(load_balancers) > 0 and self.module.botocore_at_least('1.8.20')
 
 
 def main():
