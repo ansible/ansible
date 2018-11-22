@@ -524,34 +524,51 @@
           - ecs_service_creation_hcgp2.changed
           - "{{ecs_service_creation_hcgp2.service.healthCheckGracePeriodSeconds}} == 30"
 
-    - name: update ecs_service using service_registries
+# until ansible supports service registries, this test can't run.
+#   - name: update ecs_service using service_registries
+#     ecs_service:
+#       name: "{{ ecs_service_name }}-service-registries"
+#       cluster: "{{ ecs_cluster_name }}"
+#       load_balancers:
+#         - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
+#           containerName: "{{ ecs_task_name }}"
+#           containerPort: "{{ ecs_task_container_port }}"
+#       service_registries:
+#         - containerName: "{{ ecs_task_name }}"
+#           containerPort: "{{ ecs_task_container_port }}"
+#           ### TODO: Figure out how to get a service registry ARN without a service registry module.
+#           registryArn: "{{ ecs_task_service_registry_arn }}"
+#       task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+#       desired_count: 1
+#       healthcheck_grace_period: 30
+#       state: present
+#       <<: *aws_connection_info
+#     register: ecs_service_creation_sr
+#     ignore_errors: yes
+
+#   - name: dump sr output
+#     debug: var=ecs_service_creation_sr
+
+#   - name: check that module returns success
+#     assert:
+#       that:
+#         - ecs_service_creation_sr.changed
+
+    - name: update ecs_service using REPLICA scheduling_strategy
       ecs_service:
-        name: "{{ ecs_service_name }}-service-registries"
+        name: "{{ ecs_service_name }}-replica"
         cluster: "{{ ecs_cluster_name }}"
         load_balancers:
           - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
-        service_registries:
-          - containerName: "{{ ecs_task_name }}"
-            containerPort: "{{ ecs_task_container_port }}"
-            ### TODO: Figure out how to get a service registry ARN without a service registry module.
-            registryArn: "{{ ecs_task_service_registry_arn }}"
+        scheduling_strategy: "REPLICA"
         task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
         desired_count: 1
         healthcheck_grace_period: 30
         state: present
         <<: *aws_connection_info
-      register: ecs_service_creation_sr
-      ignore_errors: yes
-
-    - name: dump sr output
-      debug: var=ecs_service_creation_sr
-
-    - name: check that module returns success
-      assert:
-        that:
-          - ecs_service_creation_sr.changed
+      register: ecs_service_creation_replica
 
     - name: obtain facts for all ECS services in the cluster
       ecs_service_facts:
@@ -817,9 +834,11 @@
       ignore_errors: yes
       register: ecs_service_scale_down
 
-    - name: scale down service_registries service
+
+
+    - name: scale down multifunction-test service
       ecs_service:
-        name: "{{ ecs_service_name }}-service-registries"
+        name: "{{ ecs_service_name }}-replica"
         cluster: "{{ ecs_cluster_name }}"
         state: present
         load_balancers:
@@ -831,6 +850,25 @@
         <<: *aws_connection_info
       ignore_errors: yes
       register: ecs_service_scale_down
+
+
+# until ansible supports service registries, the test for it can't run and this
+# scale down is not needed
+#   - name: scale down service_registries service
+#     ecs_service:
+#       name: "{{ ecs_service_name }}-service-registries"
+#       cluster: "{{ ecs_cluster_name }}"
+#       state: present
+#       load_balancers:
+#         - targetGroupArn: "{{ elb_target_group_instance.target_group_arn }}"
+#           containerName: "{{ ecs_task_name }}"
+#           containerPort: "{{ ecs_task_container_port }}"
+#       task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
+#       desired_count: 0
+#       <<: *aws_connection_info
+#     ignore_errors: yes
+#     register: ecs_service_scale_down
+
     - name: scale down Fargate ECS service
       ecs_service:
         state: present
@@ -872,13 +910,23 @@
         <<: *aws_connection_info
       ignore_errors: yes
 
-    - name: remove service_registries ecs service
+    - name: remove mft ecs service
       ecs_service:
         state: absent
         cluster: "{{ ecs_cluster_name }}"
-        name: "{{ ecs_service_name }}-service-registries"
+        name: "{{ ecs_service_name }}-replica"
         <<: *aws_connection_info
       ignore_errors: yes
+
+# until ansible supports service registries, the test for it can't run and this
+# removal is not needed
+#   - name: remove service_registries ecs service
+#     ecs_service:
+#       state: absent
+#       cluster: "{{ ecs_cluster_name }}"
+#       name: "{{ ecs_service_name }}-service-registries"
+#       <<: *aws_connection_info
+#     ignore_errors: yes
 
     - name: remove fargate ECS service 
       ecs_service:
@@ -888,7 +936,7 @@
         <<: *aws_connection_info
       ignore_errors: yes
       register: ecs_fargate_service_network_with_awsvpc
- 
+
     - name: remove ecs task definition
       ecs_taskdefinition:
         containers: "{{ ecs_task_containers }}"
