@@ -29,6 +29,8 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 from ansible.module_utils.common.dict_transformations import dict_merge
 
+from distutils.version import LooseVersion
+
 
 try:
     import yaml
@@ -42,6 +44,12 @@ try:
     HAS_KUBERNETES_VALIDATE = True
 except ImportError:
     HAS_KUBERNETES_VALIDATE = False
+
+try:
+    from openshift.helper.hashes import generate_hash
+    HAS_K8S_CONFIG_HASH = True
+except ImportError:
+    HAS_K8S_CONFIG_HASH = False
 
 
 class KubernetesRawModule(KubernetesAnsibleModule):
@@ -62,6 +70,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         argument_spec['wait'] = dict(type='bool', default=False)
         argument_spec['wait_timeout'] = dict(type='int', default=120)
         argument_spec['validate'] = dict(type='dict', default=None, options=self.validate_spec)
+        argument_spec['append_hash'] = dict(type='bool', default=False)
         return argument_spec
 
     def __init__(self, *args, **kwargs):
@@ -83,6 +92,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         if self.params['validate']:
             if LooseVersion(self.openshift_version) < LooseVersion("0.8.0"):
                 self.fail_json(msg="openshift >= 0.8.0 is required for validate")
+        self.append_hash = self.params.get('append_hash')
+        if self.append_hash:
+            if not HAS_K8S_CONFIG_HASH:
+                self.fail_json(msg="openshift >= 0.7.2 is required for append_hash")
         if self.params['merge_type']:
             if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
                 self.fail_json(msg="openshift >= 0.6.2 is required for merge_type")
@@ -96,7 +109,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 self.resource_definitions = resource_definition
             else:
                 self.resource_definitions = [resource_definition]
-        src = self.params.pop('src')
+        src = self.params.get('src')
         if src:
             self.resource_definitions = self.load_resource_definitions(src)
 
@@ -181,7 +194,12 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             return result
 
         try:
-            existing = resource.get(name=name, namespace=namespace)
+            # ignore append_hash for resources other than ConfigMap and Secret
+            if self.append_hash and definition['kind'] in ['ConfigMap', 'Secret']:
+                name = '%s-%s' % (name, generate_hash(definition))
+                definition['metadata']['name'] = name
+            params = dict(name=name, namespace=namespace)
+            existing = resource.get(**params)
         except NotFoundError:
             # Remove traceback so that it doesn't show up in later failures
             try:
@@ -207,7 +225,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 # Delete the object
                 if not self.check_mode:
                     try:
-                        k8s_obj = resource.delete(name, namespace=namespace)
+                        k8s_obj = resource.delete(**params)
                         result['result'] = k8s_obj.to_dict()
                     except DynamicApiError as exc:
                         self.fail_json(msg="Failed to delete object: {0}".format(exc.body),
@@ -256,7 +274,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     k8s_obj = definition
                 else:
                     try:
-                        k8s_obj = resource.replace(definition, name=name, namespace=namespace).to_dict()
+                        k8s_obj = resource.replace(definition, name=name, namespace=namespace, append_hash=self.append_hash).to_dict()
                     except DynamicApiError as exc:
                         msg = "Failed to replace object: {0}".format(exc.body)
                         if self.warnings:
