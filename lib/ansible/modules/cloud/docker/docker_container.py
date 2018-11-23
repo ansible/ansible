@@ -2293,7 +2293,7 @@ class ContainerManager(DockerBaseClass):
                 if image_different:
                     self.diff['image_different'] = True
                 self.log("differences")
-                self.log(differences, pretty_print=True)
+                self.log(differences.get_legacy_docker_container_diffs(), pretty_print=True)
                 image_to_use = self.parameters.image
                 if not image_to_use and container and container.Image:
                     image_to_use = container.Image
