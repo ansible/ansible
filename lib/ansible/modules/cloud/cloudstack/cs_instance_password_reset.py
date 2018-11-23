@@ -92,22 +92,23 @@ from ansible.module_utils.cloudstack import (
     cs_argument_spec
 )
 
+
 class AnsibleCloudStackPasswordReset(AnsibleCloudStack):
 
     def __init__(self, module):
         super(AnsibleCloudStackPasswordReset, self).__init__(module)
         self.returns = {
-            'password':     'password',
+            'password': 'password',
         }
         self.password = None
 
-
     def reset_password(self):
-        args                = {}
-        args['domainid']    = self.get_domain('id')
-        args['account']     = self.get_account('name')
-        args['projectid']   = self.get_project('id')
-        args['id']          = self.get_vm('id')
+        args = {
+            'domainid': self.get_domain(key='id')
+            'account': self.get_account(key='name')
+            'projectid': self.get_project(key='id')
+            'id': self.get_vm(key='id')
+        }
 
         res = None
         self.result['changed'] = True
@@ -127,10 +128,10 @@ class AnsibleCloudStackPasswordReset(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        vm = dict(required=True),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
+        vm=dict(required=True),
+        domain=dict(default=None),
+        account=dict(default=None),
+        project=dict(default=None),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -142,9 +143,10 @@ def main():
 
     acs_password = AnsibleCloudStackPasswordReset(module)
     password = acs_password.reset_password()
-    result = acs_password.get_result({'password':password})
+    result = acs_password.get_result({'password': password})
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
