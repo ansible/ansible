@@ -158,7 +158,7 @@ def main():
 
     state = module.params['state']
     user_name = module.params['user_name']
-    user_password = module.params['user_password']
+    user_password = module.params['user_password'] or ''
     admin = module.params['admin']
     influxdb = influx.InfluxDb(module)
     client = influxdb.connect_to_influxdb()
