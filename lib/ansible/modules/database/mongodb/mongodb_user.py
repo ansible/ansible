@@ -256,10 +256,13 @@ def user_add(module, client, db_name, user, password, roles):
     # without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
 
-    if roles is None:
-        db.add_user(user, password, False)
+    if LooseVersion(PyMongoVersion) < LooseVersion('4.0'):
+        if roles is None:
+            db.add_user(user, password, False)
+        else:
+            db.add_user(user, password, None, roles=roles)
     else:
-        db.add_user(user, password, None, roles=roles)
+        db.command("createUser", user, pwd=password, roles=roles)
 
 
 def user_remove(module, client, db_name, user):
@@ -268,7 +271,10 @@ def user_remove(module, client, db_name, user):
         if module.check_mode:
             module.exit_json(changed=True, user=user)
         db = client[db_name]
-        db.remove_user(user)
+        if LooseVersion(PyMongoVersion) < LooseVersion('4.0'):
+            db.remove_user(user)
+        else:
+            db.command("dropUser", user)
     else:
         module.exit_json(changed=False, user=user)
 
