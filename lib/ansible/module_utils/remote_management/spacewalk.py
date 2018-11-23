@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2018, Davide Blasi <davegarath () gmail.com>
+# Copyright: (c) 2018, Davide Blasi (@davegarath)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -35,7 +35,6 @@ def spacewalk_argument_spec():
 
 
 class Channel(object):
-
     def __init__(self, module):
         self.module = module
         self.client, self.session = connect_to_api(module)
@@ -54,7 +53,7 @@ class Channel(object):
                 channel_detail['last_modified'] = str(channel_detail['last_modified'])
                 if 'yumrepo_last_sync' in channel_detail:
                     channel_detail['yumrepo_last_sync'] = str(channel_detail['yumrepo_last_sync'])
-                channel = {**channel, **channel_detail}
+                channel.update(channel_detail)
                 self.channels['spacewalk_channels'][label] = channel
 
         ansible_facts = self.channels
@@ -87,7 +86,7 @@ class Channel(object):
         try:
             res = self.client.channel.software.create(self.session, ch_label, ch_name, ch_summary, ch_archLabel, ch_parentLabel, ch_checksumType, ch_gpgKey)
         except Exception as generic_exception:
-            self.module.fail_json(channel=label, action='Create', msg='Error creating channel: %s' % generic_exception)
+            self.module.fail_json(ch_channel=label, action='Create', msg='Error creating channel: %s' % generic_exception)
 
     def delete_channel(self, ch_label):
         try:
@@ -164,7 +163,7 @@ class Repository(object):
             for repository in repositories:
                 label = repository.pop('label')
                 repository_detail = self.get_repository_detail(label)
-                repository = {**repository, **repository_detail}
+                repository.update(repository_detail)
                 self.repositories['spacewalk_repositories'][label] = repository
 
         ansible_facts = self.repositories

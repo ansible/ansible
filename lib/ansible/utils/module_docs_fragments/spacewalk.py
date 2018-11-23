@@ -8,24 +8,26 @@ class ModuleDocFragment(object):
 options:
     url:
       description:
-      - The full URL to the Spacewalk API.
+      - The full URL to the Spacewalk API such as
+      - C(https://spacewalk.example.net/rpc/api)
+      - you can use eviroment variable C(SPACEWALK_URL)
       type: str
       required: true
     login:
       description:
       - Spacewalk login.
+      - you can use eviroment variable C(SPACEWALK_LOGIN)
       type: str
       required: true
     password:
       description:
       - Spacewalk password.
+      - you can use eviroment variable C(SPACEWALK_PASSWORD)
       required: true
     validate_certs:
       description:
-      - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
-      - If the value is not specified in the task, the value of environment variable C(SPACEWALK_VALIDATE_CERTS) will be used instead.
-      - Environment variable supported added in version 2.6.
       - If set to C(yes), please make sure Python >= 2.7.9 is installed on the given machine.
+      - you can use eviroment variable C(SPACEWALK_VALIDATE_CERTS)
       type: bool
       default: 'yes'
 '''

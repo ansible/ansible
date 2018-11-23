@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 # Copyright: (c) 2018, Davide Blasi (@davegarath)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -12,17 +15,16 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: spacewalk_swchannel_facts
-short_description: This module can be used to gather facts about all channels in spacewalk
+short_description: Gather facts about all channels in spacewalk
 description:
   - "Gather facts about all channels in spacewalk"
-version_added: "2.7"
+version_added: "2.8"
 author:
   - Davide Blasi (@davegarath)
 extends_documentation_fragment: spacewalk.documentation
 '''
 
 EXAMPLES = '''
-# Pass in a message
 - name: Get all channels in spacewalk
   spacewalk_swchannel_facts:
       url: "{{ spacewalk_url_api }}"
@@ -30,6 +32,8 @@ EXAMPLES = '''
       password: "{{ spacewalk_passowrd }}"
   delegate_to: localhost
   register: channels
+
+- debug: var=channels
 '''
 
 RETURN = '''
