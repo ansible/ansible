@@ -130,7 +130,9 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP and CDP neighbors from the device
+  description:
+    - The list of LLDP and CDP neighbors from the device. If both,
+      CDP and LLDP neighbor data is present on one port, CDP is preferred.
   returned: when interfaces is configured
   type: dict
 
@@ -173,6 +175,7 @@ import re
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
 from ansible.module_utils.network.nxos.nxos import get_capabilities, get_interface_type
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six import string_types, iteritems
@@ -488,7 +491,7 @@ class Interfaces(FactsBase):
             data = [data]
 
         for item in data:
-            local_intf = item['l_port_id']
+            local_intf = normalize_interface(item['l_port_id'])
             objects[local_intf] = list()
             nbor = dict()
             nbor['port'] = item['port_id']
@@ -632,34 +635,20 @@ class Interfaces(FactsBase):
 
     def populate_neighbors(self, data):
         objects = dict()
-        if isinstance(data, str):
-            # if there are no neighbors the show command returns
-            # ERROR: No neighbour information
-            if data.startswith('ERROR'):
-                return dict()
+        # if there are no neighbors the show command returns
+        # ERROR: No neighbour information
+        if data.startswith('ERROR'):
+            return dict()
 
-            regex = re.compile(r'(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
+        regex = re.compile(r'(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
 
-            for item in data.split('\n')[4:-1]:
-                match = regex.match(item)
-                if match:
-                    nbor = {'host': match.group(1), 'port': match.group(3)}
-                    if match.group(2) not in objects:
-                        objects[match.group(2)] = []
-                    objects[match.group(2)].append(nbor)
-
-        elif isinstance(data, dict):
-            data = data['TABLE_nbor']['ROW_nbor']
-            if isinstance(data, dict):
-                data = [data]
-
-            for item in data:
-                local_intf = item['l_port_id']
+        for item in data.split('\n')[4:-1]:
+            match = regex.match(item)
+            if match:
+                nbor = {'host': match.group(1), 'port': match.group(3)}
+                local_intf = normalize_interface(match.group(2))
                 if local_intf not in objects:
-                    objects[local_intf] = list()
-                nbor = dict()
-                nbor['port'] = item['port_id']
-                nbor['host'] = item['chassis_id']
+                    objects[local_intf] = []
                 objects[local_intf].append(nbor)
 
         return objects
