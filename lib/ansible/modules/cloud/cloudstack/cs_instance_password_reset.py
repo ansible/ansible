@@ -104,11 +104,11 @@ class AnsibleCloudStackPasswordReset(AnsibleCloudStack):
 
     def reset_password(self):
         args = {
-            'domainid': self.get_domain(key='id')
-            'account': self.get_account(key='name')
-            'projectid': self.get_project(key='id')
+            'domainid': self.get_domain(key='id'),
+            'account': self.get_account(key='name'),
+            'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
-            'id': self.get_vm(key='id')
+            'id': self.get_vm(key='id'),
         }
 
         res = None
