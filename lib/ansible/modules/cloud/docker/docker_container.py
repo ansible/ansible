@@ -1854,6 +1854,9 @@ class Container(DockerBaseClass):
 
         differences = DifferenceTracker()
         for key, value in config_mapping.items():
+            minimal_version = self.parameters.client.option_minimal_versions.get(key, {})
+            if not minimal_version.get('supported', True):
+                continue
             compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
             self.log('check differences %s %s vs %s (%s)' % (key, getattr(self.parameters, key), str(value), compare))
             if getattr(self.parameters, key, None) is not None:
