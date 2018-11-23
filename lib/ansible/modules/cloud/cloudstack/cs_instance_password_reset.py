@@ -107,6 +107,7 @@ class AnsibleCloudStackPasswordReset(AnsibleCloudStack):
             'domainid': self.get_domain(key='id')
             'account': self.get_account(key='name')
             'projectid': self.get_project(key='id')
+            'zoneid': self.get_zone(key='id'),
             'id': self.get_vm(key='id')
         }
 
@@ -132,6 +133,7 @@ def main():
         domain=dict(default=None),
         account=dict(default=None),
         project=dict(default=None),
+        zone=dict(default=None),
         poll_async=dict(type='bool', default=True),
     ))
 
