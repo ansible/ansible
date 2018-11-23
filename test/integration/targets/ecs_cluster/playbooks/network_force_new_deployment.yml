@@ -46,8 +46,6 @@
             that:
               - ecs_service_creation.changed
 
-
-
         - name: create ecs_service using force_new_deployment
           ecs_service:
             name: "{{ resource_prefix }}"
