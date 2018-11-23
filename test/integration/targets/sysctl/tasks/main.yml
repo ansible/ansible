@@ -61,19 +61,19 @@
 
 - name: Set vm.swappiness to 5 again
   sysctl:
-      name: vm.swappiness
-      value: 5
-      state: present
-      reload: no
-      sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+    name: vm.swappiness
+    value: 5
+    state: present
+    reload: no
+    sysctl_file: "{{ output_dir_test }}/sysctl.conf"
   register: sysctl_test1
 
 - name: validate results
   assert:
-      that:
-        - sysctl_test0 is changed
-        - sysctl_test1 is not changed
-        - 'sysctl_content0.stdout_lines[sysctl_content0.stdout_lines.index("vm.swappiness = 5")] == "vm.swappiness = 5"'
+    that:
+      - sysctl_test0 is changed
+      - sysctl_test1 is not changed
+      - 'sysctl_content0.stdout_lines[sysctl_content0.stdout_lines.index("vm.swappiness = 5")] == "vm.swappiness = 5"'
 
 - name: Remove kernel.panic
   sysctl:
