@@ -117,23 +117,6 @@ EXAMPLES = '''
         - my_security_group
   register: task_output
 
-- name: Start a task
-  ecs_task:
-      operation: start
-      cluster: console-sample-app-static-cluster
-      task_definition: console-sample-app-static-taskdef
-      task: "arn:aws:ecs:us-west-2:172139249013:task/3f8353d1-29a8-4689-bbf6-ad79937ffe8a"
-      container_instances:
-      - arn:aws:ecs:us-west-2:172139249013:container-instance/79c23f22-876c-438a-bddf-55c98a3538a8
-      started_by: ansible_user
-      network_configuration:
-        subnets:
-        - subnet-abcd1234
-        security_groups:
-        - sg-aaaa1111
-        - my_security_group
-  register: task_output
-
 - name: Stop a task
   ecs_task:
       operation: stop
