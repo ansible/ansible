@@ -406,7 +406,7 @@ class EcsServiceManager:
             params['networkConfiguration'] = network_configuration
         if launch_type:
             params['launchType'] = launch_type
-        if self.health_check_setable(params):
+        if self.health_check_setable(params) and health_check_grace_period_seconds is not None:
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
