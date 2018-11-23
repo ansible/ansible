@@ -122,6 +122,12 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  check_commit:
+    description:
+      - This argument will check correctness of syntax; do not apply changes.
+    type: bool
+    default: 'no'
+    version_added: "2.8"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -156,6 +162,10 @@ EXAMPLES = """
       - set vlans vlan01 vlan-id 1
       - set interfaces irb unit 10 family inet address 10.0.0.1/24
       - set vlans vlan01 l3-interface irb.10
+
+- name: Check correctness of commit configuration
+  junos_config:
+    check_commit: yes
 
 - name: rollback the configuration to id 10
   junos_config:
@@ -313,6 +323,7 @@ def main():
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
         confirm_commit=dict(type='bool', default=False),
+        check_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
@@ -390,6 +401,12 @@ def main():
 
                     if module._diff:
                         result['diff'] = {'prepared': diff}
+
+        elif module.params['check_commit']:
+            kwargs = {
+                'check': True
+            }
+            commit_configuration(module, **kwargs)
 
         elif module.params['confirm_commit']:
             with locked_config(module):
