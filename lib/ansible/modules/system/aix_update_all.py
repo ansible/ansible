@@ -1,16 +1,27 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.0'}
+# Copyright: (c) 2018, Joris Weijters (@molekuul)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-DOCUMENTATION = '''
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
+
+
+
+DOCUMENTATION = r'''
 ---
 author: "Bob ter Hark (@krahb)"
 module: 'aix_update_all'
 short_description: Update all
+version_added: '2.10'
 description:
     - Updates all
 options:
@@ -32,7 +43,7 @@ requirements: [ 'os', 're', 'tempfile', 'shutil', 'glob' ]
 '''
 
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Synchronize ALL rpms from the NIM_MASTER in the standard share
 - name: Install All rpms
   aix_update_all:
@@ -45,8 +56,7 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
-'''
+RETURN = r'''  '''
 
 # Import necessary libraries
 import re
@@ -72,7 +82,7 @@ def nim_master(module):
                         (l for l in open(
                             file, 'r') if l.startswith('export')))))
     except IOError as e:
-        module.fail_json(msg="could not determine NIM_MASTER", rc=rc, err=e)
+             module.fail_json(msg="could not determine NIM_MASTER", rc=rc, err=e)
     return niminfo['NIM_MASTER_HOSTNAME']
 
 
@@ -201,3 +211,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
