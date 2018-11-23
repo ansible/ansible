@@ -728,7 +728,7 @@ def main():
                 (user_groups, changed) = set_users_groups(
                     module, iam, name, groups, been_updated, new_name)
             module.exit_json(
-                user_meta=meta, groups=user_groups, keys=keys, changed=changed)
+                user_meta=meta, groups=user_groups, user_name=meta['created_user']['user_name'], keys=keys, changed=changed)
 
         elif state in ['present', 'update'] and user_exists:
             if update_pw == 'on_create':
