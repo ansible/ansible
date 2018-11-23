@@ -253,7 +253,7 @@ class MerakiModule(object):
         """Encodes key value pairs for URL"""
         param_string = "?"
         for i, (k, v) in enumerate(params.items()):
-            if i == len(params)-1:
+            if i == len(params) - 1:
                 param_string += "{0}={1}".format(k, v)
             else:
                 param_string += "{0}={1}%".format(k, v)
