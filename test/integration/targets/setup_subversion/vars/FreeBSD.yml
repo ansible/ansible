@@ -1,0 +1,11 @@
+---
+subversion_packages:
+- apache24
+- mod_dav_svn
+- subversion
+apache_listen_conf_path: /usr/local/etc/apache24/httpd.conf
+apache_conf_path: /usr/local/etc/apache24/modules.d/220_subversion.conf
+apache_module_path: libexec/apache24
+apache_user: www
+apache_group: www
+apache_service: apache24

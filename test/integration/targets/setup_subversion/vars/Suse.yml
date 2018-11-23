@@ -1,0 +1,10 @@
+---
+subversion_packages:
+- subversion
+- subversion-server
+apache_listen_conf_path: /etc/apache2/httpd.conf
+apache_conf_path: /etc/apache2/conf.d/subversion.conf
+apache_module_path: /usr/lib64/apache2
+apache_user: wwwrun
+apache_group: www
+apache_service: apache2

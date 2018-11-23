@@ -1,0 +1,9 @@
+---
+subversion_packages:
+- subversion
+- libapache2-svn
+apache_listen_conf_path: /etc/apache2/ports.conf
+apache_conf_path: /etc/apache2/sites-enabled/subversion.conf
+apache_user: www-data
+apache_group: www-data
+apache_service: apache2

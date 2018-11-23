@@ -19,16 +19,8 @@
 - name: set where to extract the repo
   set_fact: checkout_dir={{ output_dir }}/svn
 
-- name: set what repo to use
-  set_fact: repo=https://github.com/jimi-c/test_role
-
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
-
-- name: install subversion
-  package:
-    name: subversion
-  when: ansible_distribution != "MacOSX"
 
 - name: verify that subversion is installed so this test can continue
   shell: which svn
@@ -36,7 +28,9 @@
 # checks out every branch so using a small repo
 
 - name: initial checkout
-  subversion: repo={{ repo }} dest={{ checkout_dir }}
+  subversion:
+    repo: '{{ subversion_repo_url }}'
+    dest: '{{ checkout_dir }}'
   register: subverted
 
 - debug: var=subverted
@@ -58,12 +52,14 @@
   assert:
     that:
       - "'after' in subverted"
-      - "subverted.after.1 == 'URL: https://github.com/jimi-c/test_role'"
+      - "subverted.after.1 == 'URL: ' ~ subversion_repo_url"
       - "not subverted.before"
       - "subverted.changed"
 
 - name: repeated checkout
-  subversion: repo={{ repo }} dest={{ checkout_dir }}
+  subversion:
+    repo: '{{ subversion_repo_url }}'
+    dest: '{{ checkout_dir }}'
   register: subverted2
 
 - name: verify on a reclone things are marked unchanged
@@ -90,14 +86,26 @@
       - "trunk.stat.isdir"
       - "branches.stat.isdir"
 
+- name: remove checked out repo
+  file:
+    path: '{{ checkout_dir }}'
+    state: absent
+
 - name: checkout with quotes in username
-  subversion: repo={{ repo }} dest={{ checkout_dir }} username="quoteme'''"
+  subversion:
+    repo: '{{ subversion_repo_auth_url }}'
+    dest: '{{ checkout_dir }}'
+    username: '{{ subversion_username }}'
+    password: '{{ subversion_password }}'
   register: subverted3
 
 - debug: var=subverted3
 
 - name: checkout with export
-  subversion: repo={{ repo }} dest={{ output_dir }}/svn-export export=True
+  subversion:
+    repo: '{{ subversion_repo_url }}'
+    dest: '{{ output_dir }}/svn-export'
+    export: True
   register: subverted4
 
 - name: check for tags
