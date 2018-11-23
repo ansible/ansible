@@ -89,7 +89,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         self.name = self.params.get('name')
         self.namespace = self.params.get('namespace')
         resource_definition = self.params.get('resource_definition')
-        if self.params['validate']:
+        validate = self.params.get('validate')
+        if validate:
             if LooseVersion(self.openshift_version) < LooseVersion("0.8.0"):
                 self.fail_json(msg="openshift >= 0.8.0 is required for validate")
         self.append_hash = self.params.get('append_hash')
@@ -182,8 +183,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         name = definition['metadata'].get('name')
         namespace = definition['metadata'].get('namespace')
         existing = None
-        wait = self.params['wait']
-        wait_timeout = self.params['wait_timeout']
+        wait = self.params.get('wait')
+        wait_timeout = self.params.get('wait_timeout')
 
         self.remove_aliases()
 
