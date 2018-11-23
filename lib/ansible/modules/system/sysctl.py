@@ -36,6 +36,11 @@ options:
             - Whether the entry should be present or absent in the sysctl file.
         choices: [ "present", "absent" ]
         default: present
+    no_extra_spaces:
+        description:
+           - Do not insert spaces before and after '=' symbol
+        type: bool
+        default: 'no'
     ignoreerrors:
         description:
             - Use this option to ignore errors about unknown keys.
@@ -94,6 +99,13 @@ EXAMPLES = '''
     sysctl_set: yes
     state: present
     reload: yes
+
+# Set vm.overcommit_memory to 1 without extra spaces in /etc/sysctl.conf
+- sysctl:
+    name: vm.overcommit_memory
+    value: 1
+    no_extra_spaces: yes
+    sysctl_file: /etc/sysctl.conf
 '''
 
 # ==============================================================
@@ -316,6 +328,11 @@ class SysctlModule(object):
     def fix_lines(self):
         checked = []
         self.fixed_lines = []
+        if self.args['no_extra_spaces']:
+            key_value_separator = "="
+        else:
+            key_value_separator = " = "
+
         for line in self.file_lines:
             if not line.strip() or line.strip().startswith(("#", ";")) or "=" not in line:
                 self.fixed_lines.append(line)
@@ -328,14 +345,14 @@ class SysctlModule(object):
                 checked.append(k)
                 if k == self.args['name']:
                     if self.args['state'] == "present":
-                        new_line = "%s = %s\n" % (k, self.args['value'])
+                        new_line = "{0}{1}{2}\n".format(k, key_value_separator, self.args['value'])
                         self.fixed_lines.append(new_line)
                 else:
-                    new_line = "%s = %s\n" % (k, v)
+                    new_line = "{0}{1}{2}\n".format(k, key_value_separator, v)
                     self.fixed_lines.append(new_line)
 
         if self.args['name'] not in checked and self.args['state'] == "present":
-            new_line = "%s = %s\n" % (self.args['name'], self.args['value'])
+            new_line = "{0}{1}{2}\n".format(self.args['name'], key_value_separator, self.args['value'])
             self.fixed_lines.append(new_line)
 
     # Completely rewrite the sysctl file
@@ -366,6 +383,7 @@ def main():
             name=dict(aliases=['key'], required=True),
             value=dict(aliases=['val'], required=False, type='str'),
             state=dict(default='present', choices=['present', 'absent']),
+            no_extra_spaces=dict(default=False, type='bool'),
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),
