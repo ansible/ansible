@@ -12,8 +12,6 @@ trap 'rm -rf "${MYTMPDIR}"' EXIT
 # but for the python3 tests we need virtualenv to use python3
 PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 
-
-
 # Test graceful failure for older versions of botocore
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-1.7.40"
 source "${MYTMPDIR}/botocore-1.7.40/bin/activate"
