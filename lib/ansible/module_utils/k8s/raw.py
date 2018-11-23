@@ -73,7 +73,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         argument_spec['append_hash'] = dict(type='bool', default=False)
         return argument_spec
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, k8s_kind=None, *args, **kwargs):
         self.client = None
 
         mutually_exclusive = [
@@ -84,7 +84,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                                          mutually_exclusive=mutually_exclusive,
                                          supports_check_mode=True,
                                          **kwargs)
-        self.kind = self.params.get('kind')
+        self.kind = k8s_kind or self.params.get('kind')
         self.api_version = self.params.get('api_version')
         self.name = self.params.get('name')
         self.namespace = self.params.get('namespace')
