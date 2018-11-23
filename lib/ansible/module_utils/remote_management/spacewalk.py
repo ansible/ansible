@@ -44,7 +44,6 @@ class Channel(object):
         """ Get all chennels from spacewalk.
             Fill self.channels for caching pourpose and ready to serves ansible_facts
         """
-        module = self.module
         if not self.channels['spacewalk_channels']:
             channels = self.client.channel.listAllChannels(self.session)
             for channel in channels:
@@ -84,13 +83,13 @@ class Channel(object):
         ch_gpgKey = {'url': ch_gpgurl, 'id': ch_gpgid, 'fingerprint': ch_gpgfingerprint}
 
         try:
-            res = self.client.channel.software.create(self.session, ch_label, ch_name, ch_summary, ch_archLabel, ch_parentLabel, ch_checksumType, ch_gpgKey)
+            self.client.channel.software.create(self.session, ch_label, ch_name, ch_summary, ch_archLabel, ch_parentLabel, ch_checksumType, ch_gpgKey)
         except Exception as generic_exception:
             self.module.fail_json(channel=ch_label, action='Create', msg='Error creating channel: %s' % generic_exception)
 
     def delete_channel(self, ch_label):
         try:
-            res = self.client.channel.software.delete(self.session, ch_label)
+            self.client.channel.software.delete(self.session, ch_label)
         except Exception as generic_exception:
             self.module.fail_json(channel=ch_label, action='Delete', msg='Error deleting channel: %s' % generic_exception)
 
@@ -157,7 +156,6 @@ class Repository(object):
         """ Get all repositories from spacewalk.
             Fill self.repositories for caching pourpose and ready to serves ansible_facts
         """
-        module = self.module
         if not self.repositories['spacewalk_repositories']:
             repositories = self.client.channel.software.listUserRepos(self.session)
             for repository in repositories:

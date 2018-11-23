@@ -55,7 +55,6 @@ channels_facts:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves import xmlrpc_client
 from ansible.module_utils.remote_management.spacewalk import spacewalk_argument_spec, Channel
 
 
