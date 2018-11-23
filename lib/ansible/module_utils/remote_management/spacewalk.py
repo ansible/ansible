@@ -86,7 +86,7 @@ class Channel(object):
         try:
             res = self.client.channel.software.create(self.session, ch_label, ch_name, ch_summary, ch_archLabel, ch_parentLabel, ch_checksumType, ch_gpgKey)
         except Exception as generic_exception:
-            self.module.fail_json(ch_channel=label, action='Create', msg='Error creating channel: %s' % generic_exception)
+            self.module.fail_json(channel=ch_label, action='Create', msg='Error creating channel: %s' % generic_exception)
 
     def delete_channel(self, ch_label):
         try:
