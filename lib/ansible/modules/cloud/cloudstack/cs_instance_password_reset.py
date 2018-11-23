@@ -130,10 +130,10 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         vm=dict(required=True),
-        domain=dict(default=None),
-        account=dict(default=None),
-        project=dict(default=None),
-        zone=dict(default=None),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        zone=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 
