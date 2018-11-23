@@ -10,10 +10,10 @@
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 
-$name = Get-AnsibleParam -obj $params -name "name" -type "str" -aliases "repository" -failifempty $true
-$url = Get-AnsibleParam -obj $params -name "source_location" -type "str" -aliases "url"
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
-$installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
+$installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -default "trusted" -validateset "trusted", "untrusted"
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $result = @{"changed" = $false}
@@ -23,20 +23,22 @@ Function Install-Repository {
         [Parameter(Mandatory=$true)]
         [String]$Name,
         [Parameter(Mandatory=$true)]
-        [String]$Url,
+        [String]$SourceLocation,
         [String]$InstallationPolicy,
         [Bool]$CheckMode
     )
-        try {
-            if (-not $CheckMode) {
-               Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy $InstallationPolicy
-            }
-            $result.changed = $true
+
+    try {
+        if (-not $CheckMode) {
+            Register-PSRepository -Name $Name -SourceLocation $SourceLocation -InstallationPolicy $InstallationPolicy
         }
-        catch {
-            $ErrorMessage = "Problems adding $($Name) repository: $($_.Exception.Message)"
-            Fail-Json $result $ErrorMessage
-        }
+        $result.changed = $true
+    }
+    catch {
+        $ErrorMessage = "Problems adding $($Name) repository: $($_.Exception.Message)"
+        Fail-Json $result $ErrorMessage
+    }
+
 }
 
 Function Remove-Repository {
@@ -45,9 +47,10 @@ Function Remove-Repository {
         [String]$Name,
         [Bool]$CheckMode
     )
-    $ReposNames = $Repos.Name
+    $Repo = Get-PSRepository -Name $Name -ErrorAction Ignore
 
-    if ($ReposNames -contains $Name){
+    if ( $null -ne $Repo) {
+
         try {
             if (-not $CheckMode) {
                 Unregister-PSRepository -Name $Name
@@ -80,25 +83,16 @@ Function Set-Repository {
     }
 }
 
-$Repos = Get-PSRepository
-
 if ($state -eq "present") {
-    if ( $installationpolicy ) {
-        $installationpolicy_internal = $installationpolicy
-    }
-    else {
-        $installationpolicy_internal = "Trusted"
-    }
 
-    $ReposSourceLocations = $Repos.SourceLocation
-    # If repository isn't already present, try to register it.
-    if ($ReposSourceLocations -notcontains $Url){
-        Install-Repository -Name $name -Url $url -InstallationPolicy $installationpolicy_internal -CheckMode $check_mode
+    $Repo = Get-PSRepository -Name $name -ErrorAction Ignore
+
+    if ($null -eq $Repo){
+        Install-Repository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy -CheckMode $check_mode
     }
     else {
-        $ExistingInstallationPolicy = $($Repos | Where-Object { $_.Name -eq $Name }).InstallationPolicy
-        if ( $ExistingInstallationPolicy -ne $installationpolicy_internal ) {
-            Set-Repository -Name $Name -InstallationPolicy $installationpolicy_internal -CheckMode $check_mode
+        if ( $Repo.InstallationPolicy -ne $installationpolicy ) {
+            Set-Repository -Name $name -InstallationPolicy $installationpolicy -CheckMode $check_mode
         }
     }
 }

@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_psrepository
 version_added: "2.8"
@@ -23,15 +23,11 @@ options:
   name:
     description:
       - Name of the repository to work with.
-    aliases:
-      - repository
     required: yes
-  source_location:
+  source:
     description:
       - Specifies the URI for discovering and installing modules from this repository.
-    aliases:
-      - url
-    required: yes
+        URI can be a NuGet server feed (most common situation), HTTP, HTTPS, FTP or local folder location.
   state:
     description:
       - If C(present) a new repository is added or existing updated.
@@ -45,28 +41,24 @@ options:
     default: trusted
 notes:
   - The PowerShellGet module (version 1.6.0 or newer) and the NuGet package provider (version 2.8.5.201 or newer) are required.
+    To update the NuGet package provider use the command `Install-PackageProvider -Name NuGet -RequiredVersion 2.8.5.201 -Force`.
   - You can't use M(win_psrepository) to re-register (add) removed PSGallery, use the command `Register-PSRepository -Default` instead.
 author:
 - Wojciech Sciesinski (@it-praktyk)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
 - name: Add a PowerShell module and register a repository
   win_psrepository:
     name: MyRepository
-    source_location: https://myrepo.com
+    url: https://myrepo.com
     state: present
 
 - name: Remove a PowerShell repository
   win_psrepository:
     name: MyRepository
     state: absent
-
-- name: Set InstallationPolicy to trusted
-  win_psrepository:
-    name: PSGallery
-    installation_policy: trusted
 '''
 
 RETURN = r'''

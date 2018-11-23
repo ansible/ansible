@@ -11,7 +11,7 @@
 - name: check setting of InstallationPolicy
   win_psrepository:
     name: PSGallery
-    source_location: "{{ PSGallery_url }}"
+    source: "{{ PSGallery_url }}"
     installation_policy: trusted
   register: change_installation_policy_1
 
@@ -29,7 +29,7 @@
 - name: check idempotency setting of InstallationPolicy
   win_psrepository:
     name: PSGallery
-    source_location: "{{ PSGallery_url }}"
+    source: "{{ PSGallery_url }}"
     installation_policy: trusted
   register: change_installation_policy_2
 
@@ -41,37 +41,29 @@
 - name: check adding of repository
   win_psrepository:
     name: "{{ repository_name }}"
-    source_location: "{{ repository_sourcelocation }}"
+    source: "{{ repository_sourcelocation }}"
     state: present
   register: adding_repository_1
 
-- name: get result of adding of repository 1 - 1
-  win_shell: '((Get-PSRepository -Name {{ repository_name }} | Measure-Object).Count -eq 1)'
+- name: get result of adding of repository 1
+  win_shell: |
+    $repo = Get-PSRepository -Name {{ repository_name|quote }} -ErrorAction Stop
+    $repo.SourceLocation
+    $repo.InstallationPolicy
   changed_when: false
-  register: result_adding_repository_1_1
-
-- name: get result of adding of repository 1 - 2
-  win_shell: '(Get-PSRepository -Name {{ repository_name }}).SourceLocation'
-  changed_when: false
-  register: result_adding_repository_1_2
-
-- name: get result of adding of repository 1 - 3
-  win_shell: '(Get-PSRepository -Name {{ repository_name }}).InstallationPolicy'
-  changed_when: false
-  register: result_adding_repository_1_3
+  register: result_adding_repository_1
 
 - name: test adding of repository
   assert:
       that:
         - "adding_repository_1 is changed"
-        - "'{{ result_adding_repository_1_1.stdout | trim }}' == 'True'"
-        - "'{{ result_adding_repository_1_2.stdout | trim }}' == '{{ repository_sourcelocation }}'"
-        - "'{{ result_adding_repository_1_3.stdout | trim }}' == 'Trusted'"
+        - "'{{ result_adding_repository_1.stdout_lines[0] }}' == '{{ repository_sourcelocation }}'"
+        - "'{{ result_adding_repository_1.stdout_lines[1] }}' == 'Trusted'"
 
 - name: check idempotency adding of repository
   win_psrepository:
     name: "{{ repository_name }}"
-    source_location: "{{ repository_sourcelocation }}"
+    source: "{{ repository_sourcelocation }}"
     state: present
   register: adding_repository_2
 
@@ -111,7 +103,7 @@
 - name: check adding of repository - 3
   win_psrepository:
     name: "{{ repository_name }}"
-    source_location: "{{ repository_sourcelocation }}"
+    source: "{{ repository_sourcelocation }}"
     installation_policy: untrusted
     state: present
   register: adding_repository_3
