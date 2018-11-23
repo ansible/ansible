@@ -234,7 +234,7 @@ EXAMPLES = R'''
 #     type: TXT
 #     ttl: 60
 #     # Note: route53 requires TXT entries to be enclosed in quotes
-#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value }}"
+#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
 #     when: sample_com_challenge is changed
 #
 # Alternative way:
@@ -246,7 +246,7 @@ EXAMPLES = R'''
 #     ttl: 60
 #     # Note: item.value is a list of TXT entries, and route53
 #     # requires every entry to be enclosed in quotes
-#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\'\\1\'' ) | list }}"
+#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\"\\1\"' ) | list }}"
 #     with_dict: sample_com_challenge.challenge_data_dns
 #     when: sample_com_challenge is changed
 
