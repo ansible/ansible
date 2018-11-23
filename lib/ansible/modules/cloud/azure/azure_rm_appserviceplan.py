@@ -160,7 +160,7 @@ def appserviceplan_to_dict(plan):
         is_linux=plan.reserved,
         provisioning_state=plan.provisioning_state,
         status=plan.status,
-        target_woker_count=plan.target_woker_count,
+        target_worker_count=plan.target_worker_count,
         sku=dict(
             name=plan.sku.name,
             size=plan.sku.size,
