@@ -724,7 +724,6 @@ lib/ansible/modules/packaging/os/opkg.py E322
 lib/ansible/modules/packaging/os/opkg.py E324
 lib/ansible/modules/packaging/os/opkg.py E326
 lib/ansible/modules/packaging/os/opkg.py E336
-lib/ansible/modules/packaging/os/package_facts.py E324
 lib/ansible/modules/packaging/os/package_facts.py E326
 lib/ansible/modules/packaging/os/pacman.py E326
 lib/ansible/modules/packaging/os/pacman.py E336
