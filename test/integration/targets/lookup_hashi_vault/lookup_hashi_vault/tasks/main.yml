@@ -99,10 +99,10 @@
             - name: setup token auth
               import_tasks: token_setup.yml
 
-            - import_tasks: tests.yml
-              vars:
-                auth_type: approle
-              when: ansible_distribution != 'RedHat' or ansible_distribution_major_version is version('7', '>')
+        - import_tasks: tests.yml
+          vars:
+            auth_type: approle
+          when: ansible_distribution != 'RedHat' or ansible_distribution_major_version is version('7', '>')
 
         - import_tasks: tests.yml
           vars:
