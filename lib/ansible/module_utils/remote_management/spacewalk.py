@@ -92,7 +92,7 @@ class Channel(object):
         try:
             res = self.client.channel.software.delete(self.session, ch_label)
         except Exception as generic_exception:
-            self.module.fail_json(channel=label, action='Delete', msg='Error deleting channel: %s' % generic_exception)
+            self.module.fail_json(channel=ch_label, action='Delete', msg='Error deleting channel: %s' % generic_exception)
 
     def channel_comparison(self, label):
         """ Compare playbook inputs with channel in spacewalk and return the differences
@@ -275,8 +275,6 @@ class Repository(object):
 
 
 def connect_to_api(module, disconnect_atexit=True):
-    """
-    """
     url = module.params['url']
     login = module.params['login']
     password = module.params['password']
