@@ -1,0 +1,2 @@
+minor_changes:
+- proxmox_kvm - fix exception.
