@@ -31,6 +31,7 @@ from functools import partial
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback
 
 try:
     from infoblox_client.connector import Connector
@@ -58,8 +59,8 @@ NIOS_NSGROUP = 'nsgroup'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(),
-    'username': dict(),
-    'password': dict(no_log=True),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssl_verify': dict(type='bool', default=False),
     'silent_ssl_warnings': dict(type='bool', default=True),
     'http_request_timeout': dict(type='int', default=10),
