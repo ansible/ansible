@@ -22,16 +22,17 @@
 DOCUMENTATION = '''
 ---
 module: cs_instance_password_reset
-short_description: Allows resetting VM root passwords on Apache CloudStack based clouds.
+short_description: Allows resetting VM the default passwords on Apache CloudStack based clouds.
 description:
-    - Reset the root password on a virtual machine.
-    - Requires cloud-init installed in the virtual machine.
+    - Resets the default user account's password on an instance.
+    - Requires cloud-init to be installed in the virtual machine.
+    - The passwordenabled flag must be set on the template associated with the VM.
 version_added: '2.8'
 author: "Gregor Riepl (@onitake)"
 options:
   vm:
     description:
-      - Name of the virtual machine to reset the root password on.
+      - Name of the virtual machine to reset the password on.
     required: true
   domain:
     description:
@@ -42,6 +43,10 @@ options:
   project:
     description:
       - Name of the project the virtual machine belongs to.
+  zone:
+    description:
+      - Name of the zone in which the instance is deployed.
+      - If not set, the default zone is used.
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -53,16 +58,16 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 - name: reset and get the root password
   local_action:
-    cs_instance_password_reset:
-      name: myvirtualmachine
+    module: cs_instance_password_reset
+    name: myvirtualmachine
   register: root
 - debug:
     msg: "new root password is {{ root.password }}"
 - name: reboot the virtual machine to activate the new password
   local_action:
-    cs_instance:
-      name: myvirtualmachine
-      state: restarted
+    module: cs_instance
+    name: myvirtualmachine
+    state: restarted
   when: root is changed
 '''
 
@@ -74,7 +79,7 @@ id:
   type: string
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 password:
-  description: The new root password.
+  description: The new default password.
   returned: success
   type: string
   sample: ahQu5nuNge3keesh
