@@ -2743,7 +2743,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Helper function to detect whether any specified network uses ipv4_address or ipv6_address
         def detect_ipvX_address_usage():
             for network in self.module.params.get("networks") or []:
-                if 'ipv4_address' in network or 'ipv6_address' in network:
+                if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
                     return True
             return False
 
