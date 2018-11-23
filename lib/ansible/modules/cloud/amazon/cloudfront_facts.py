@@ -531,6 +531,10 @@ class CloudFrontServiceManager:
 
 def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
     facts[distribution_id].update(details)
+    # also have a fixed key for accessing results/details returned
+    facts['result'] = details
+    facts['result']['DistributionId'] = distribution_id
+
     for alias in aliases:
         facts[alias].update(details)
     return facts
