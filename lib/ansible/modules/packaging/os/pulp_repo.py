@@ -47,7 +47,7 @@ options:
     required: false
     type: bool
     default: 'no'
-    version_added: "2.7"
+    version_added: "2.8"
   importer_ssl_ca_cert:
     description:
       - CA certificate string used to validate the feed source SSL certificate.
@@ -85,13 +85,13 @@ options:
       - Proxy username for the pulp repository importer.
     required: false
     default: null
-    version_added: "2.7"
+    version_added: "2.8"
   proxy_password:
     description:
       - Proxy password for the pulp repository importer.
     required: false
     default: null
-    version_added: "2.7"
+    version_added: "2.8"
   publish_distributor:
     description:
       - Distributor to use when state is C(publish). The default is to
@@ -115,7 +115,7 @@ options:
     required: false
     type: bool
     default: 'no'
-    version_added: "2.7"
+    version_added: "2.8"
   serve_http:
     description:
       - Make the repo available over HTTP.
