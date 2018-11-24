@@ -532,7 +532,8 @@ class Ec2Metadata(object):
         data = self.fix_invalid_varnames(data)
 
         # Maintain old key for backwards compatibility
-        data['ansible_ec2_placement_region'] = data['ansible_ec2_instance_identity_document_region']
+        if 'ansible_ec2_instance_identity_document_region' in data:
+            data['ansible_ec2_placement_region'] = data['ansible_ec2_instance_identity_document_region']
         return data
 
 
