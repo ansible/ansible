@@ -194,6 +194,9 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
+        # Match lines of `pacman -Qu` output of the form:
+        #   (package name) (before version-release) -> (after version-release)
+        # e.g., "ansible 2.7.1-1 -> 2.7.2-1"
         regex = re.compile(r'([\w+\-.@]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
         for p in data:
             m = regex.search(p)
