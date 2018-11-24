@@ -41,6 +41,7 @@ options:
            - Do not insert spaces before and after '=' symbol
         type: bool
         default: 'no'
+        version_added: 2.8
     ignoreerrors:
         description:
             - Use this option to ignore errors about unknown keys.
