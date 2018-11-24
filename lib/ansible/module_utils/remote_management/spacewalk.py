@@ -41,8 +41,9 @@ class Channel(object):
         self.channels = {'spacewalk_channels': {}}
 
     def get_all_channels(self):
-        """ Get all chennels from spacewalk.
-            Fill self.channels for caching pourpose and ready to serves ansible_facts
+        """
+        Get all chennels from spacewalk.
+        Fill self.channels for caching pourpose and ready to serves ansible_facts
         """
         if not self.channels['spacewalk_channels']:
             channels = self.client.channel.listAllChannels(self.session)
@@ -59,7 +60,8 @@ class Channel(object):
         return ansible_facts
 
     def get_channel_id(self, channel_label):
-        """ Return integer channel_id passing channel label
+        """
+        Return integer channel_id passing channel label
         """
         if not self.channels['spacewalk_channels']:
             self.get_all_channels()
@@ -94,7 +96,8 @@ class Channel(object):
             self.module.fail_json(channel=ch_label, action='Delete', msg='Error deleting channel: %s' % generic_exception)
 
     def channel_comparison(self, label):
-        """ Compare playbook inputs with channel in spacewalk and return the differences
+        """
+        Compare playbook inputs with channel in spacewalk and return the differences
         """
         changes = {}
         key_map = {'name': 'name',
@@ -131,7 +134,7 @@ class Channel(object):
 
         for key in tochange:
             if key == 'parent_channel_label' or key == 'arch_label':
-                self.module.warn("Found different %s in channel %s but cannot be changed. "
+                self.module.warn("Found different '%s' in channel '%s' but cannot be changed. "
                                  "You have to delete and recreate the channel if you want this change." % (key, label))
                 continue
             changes[key] = tochange[key]['new_value']
@@ -153,8 +156,9 @@ class Repository(object):
         self.repositories = {'spacewalk_repositories': {}}
 
     def get_all_repositories(self):
-        """ Get all repositories from spacewalk.
-            Fill self.repositories for caching pourpose and ready to serves ansible_facts
+        """
+        Get all repositories from spacewalk.
+        Fill self.repositories for caching pourpose and ready to serves ansible_facts
         """
         if not self.repositories['spacewalk_repositories']:
             repositories = self.client.channel.software.listUserRepos(self.session)
@@ -168,7 +172,8 @@ class Repository(object):
         return ansible_facts
 
     def get_repository_id(self, repository_label):
-        """ Return integer repository_id passing repository label
+        """
+        Return integer repository_id passing repository label
         """
         if not self.repositories['spacewalk_repositories']:
             self.get_all_repositories()
@@ -177,7 +182,8 @@ class Repository(object):
             return self.repositories['spacewalk_repositories'][repository_label]['id']
 
     def get_repository_byurl(self, repository_url):
-        """ Return integer repository_id passing repository url
+        """
+        Return integer repository_id passing repository url
         """
         if not self.repositories['spacewalk_repositories']:
             self.get_all_repositories()
