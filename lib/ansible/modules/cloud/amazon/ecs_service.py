@@ -82,6 +82,12 @@ options:
           - The number of times to check that the service is available
         required: false
         default: 10
+    force_new_deployment:
+        description:
+          - Force deployment of service even if there are no changes
+        required: false
+        version_added: 2.8
+        type: bool
     deployment_configuration:
         description:
           - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
@@ -412,18 +418,20 @@ class EcsServiceManager:
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       desired_count, deployment_configuration, network_configuration, health_check_grace_period_seconds):
+                       desired_count, deployment_configuration, network_configuration,
+                       health_check_grace_period_seconds, force_new_deployment):
         params = dict(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration
-        )
+            deploymentConfiguration=deployment_configuration)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
         if self.health_check_setable(params):
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
+        if force_new_deployment:
+            params['forceNewDeployment'] = force_new_deployment
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
 
@@ -472,6 +480,7 @@ def main():
         role=dict(required=False, default='', type='str'),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10),
+        force_new_deployment=dict(required=False, default=False, type='bool'),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
@@ -513,6 +522,9 @@ def main():
     if module.params['launch_type']:
         if not module.botocore_at_least('1.8.4'):
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+    if module.params['force_new_deployment']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use force_new_deployment')
 
     if module.params['state'] == 'present':
 
@@ -520,7 +532,9 @@ def main():
         update = False
 
         if existing and 'status' in existing and existing['status'] == "ACTIVE":
-            if service_mgr.is_matching_service(module.params, existing):
+            if module.params['force_new_deployment']:
+                update = True
+            elif service_mgr.is_matching_service(module.params, existing):
                 matching = True
                 results['service'] = existing
             else:
@@ -552,8 +566,8 @@ def main():
                                                           module.params['desired_count'],
                                                           deploymentConfiguration,
                                                           network_configuration,
-                                                          module.params['health_check_grace_period_seconds']
-                                                          )
+                                                          module.params['health_check_grace_period_seconds'],
+                                                          module.params['force_new_deployment'])
                 else:
                     try:
                         response = service_mgr.create_service(module.params['name'],
