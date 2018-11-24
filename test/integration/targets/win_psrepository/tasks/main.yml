@@ -3,10 +3,11 @@
 # Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+---
+
 - name: get PowerShell version
   win_shell: '$PSVersionTable.PSVersion.Major'
   register: powershell_major_version
-
 
 - name: Perform integration tests for Powershell 5+
   when: powershell_major_version.stdout | int >= 5
