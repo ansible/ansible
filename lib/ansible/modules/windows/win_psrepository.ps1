@@ -9,12 +9,12 @@
 # win_psrepository (Windows PowerShell repositories Additions/Removals/Updates)
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
 $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -default "trusted" -validateset "trusted", "untrusted"
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $result = @{"changed" = $false}
 

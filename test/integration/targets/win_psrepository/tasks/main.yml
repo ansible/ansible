@@ -7,9 +7,37 @@
   win_shell: '$PSVersionTable.PSVersion.Major'
   register: powershell_major_version
 
+
 - name: Perform integration tests for Powershell 5+
   when: powershell_major_version.stdout | int >= 5
   block:
 
-    - name: run all tasks
+    - name: get NuGet version
+      win_shell: '(Get-PackageProvider -Name NuGet).Version -lt [Version]"2.8.5.201"'
+      register: install_nuget
+
+    - name: install updated NuGet version
+      win_shell: 'Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force'
+      when: install_nuget | bool
+
+    - name: set initial state
+      win_shell: "{{ item }}"
+      with_items:
+        - 'Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted -ErrorAction Ignore'
+        - 'Unregister-PSRepository -Name MyGet -ErrorAction Ignore'
+
+    - name: run all tests
       include: tests.yml
+      vars:
+        in_check_mode: no
+
+    - name: set initial state
+      win_shell: "{{ item }}"
+      with_items:
+        - 'Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted -ErrorAction Ignore'
+        - 'Unregister-PSRepository -Name MyGet -ErrorAction Ignore'
+
+    - name: run all tests
+      import_tasks: tests.yml
+      vars:
+        in_check_mode: yes
