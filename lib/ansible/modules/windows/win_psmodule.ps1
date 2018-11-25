@@ -9,6 +9,7 @@
 # win_psmodule (Windows PowerShell modules Additions/Removals/Updates)
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $required_version = Get-AnsibleParam -obj $params -name "required_version" -type "str"
@@ -19,7 +20,6 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool" -default $false
 $skip_publisher_check = Get-AnsibleParam -obj $params -name "skip_publisher_check" -type "bool" -default $false
 $allow_prerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $result = @{changed = $false}
 
@@ -214,7 +214,6 @@ Function Remove-PsModule {
             $ht = @{
                 Name = $Name
                 Confirm = $false
-                WhatIf = $CheckMode
                 Force = $true
             }
 
@@ -234,9 +233,10 @@ Function Remove-PsModule {
             }
 
             if ( $ExistingModuleBefore.Exists) {
-
-                Uninstall-Module @ht -ErrorVariable ErrorDetails | out-null
-
+                # The Force parameter overwrite the WhatIf parameter
+                if ( -not $CheckMode ) {
+                    Uninstall-Module @ht -ErrorVariable ErrorDetails | out-null
+                }
                 $result.changed = $true
             }
         }
