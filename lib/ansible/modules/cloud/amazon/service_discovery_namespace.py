@@ -58,7 +58,6 @@ options:
              - if wait is false, this returns an operation ID
              - if wait is true, returns the namespace
         default: True
-
     creator_request_id:
         description:
             A unique string that identifies the request and that allows failed CreateService
@@ -80,7 +79,6 @@ EXAMPLES = '''
       name: "my-namespace"
       state: present
       type: "DNS_PRIVATE"
-
 '''
 
 RETURN = '''
@@ -121,7 +119,8 @@ namespace:
                 dns_properties:
                     type: complex
                     returned: always
-                    description: A complex type that contains the ID for the hosted zone that Route 53 creates when you create a namespace.
+                    description: A complex type that contains the ID for the hosted zone that Route 53 creates
+                                 when you create a namespace.
                     contains:
                         hosted_zone_id:
                             type: string
@@ -227,7 +226,7 @@ class ServiceDiscoveryNamespace:
 
     def create_public_dns_namespace(self, name, description, creator_request_id, wait):
         params = dict(Name=name)
-        # Createor request id and description are optional; only include if given
+        # Creator request id and description are optional; only include if given
         if creator_request_id:
             params['CreatorRequestId'] = creator_request_id
         if description:
@@ -250,9 +249,8 @@ class ServiceDiscoveryNamespace:
             return response
 
     def create_private_dns_namespace(self, name, description, creator_request_id, vpc_id, wait):
-        params = dict(Name=name,
-                      Vpc=vpc_id)
-        # Createor request id and description are optional; only include if given
+        params = dict(Name=name, Vpc=vpc_id)
+        # Creator request id and description are optional; only include if given
         if creator_request_id:
             params['CreatorRequestId'] = creator_request_id
         if description:
@@ -293,7 +291,6 @@ class ServiceDiscoveryNamespace:
                 if 'createdAt' in e:
                     e['createdAt'] = str(e['createdAt'])
         return service
-
 
 def main():
     argument_spec = ec2_argument_spec()
