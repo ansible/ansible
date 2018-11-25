@@ -291,6 +291,7 @@ if (($null -ne $appParameters) -and ($null -ne $appArguments)) {
     Fail-Json $result "'app_parameters' and 'arguments' are mutually exclusive but have both been set."
 }
 
+# Backward compatibility for old parameters style. Remove the block bellow in 2.12
 if ($null -ne $appParameters) {
     Add-DeprecationWarning -obj $result -message "The parameter 'app_parameters' will be removed soon, use 'arguments' instead." -version 2.12
 
@@ -312,7 +313,6 @@ if ($null -ne $appParameters) {
     $appArguments = @($appParamsArray)
 
     # The rest of the code should use only the new $appArguments variable
-    Remove-Variable -name 'appParameters'
 }
 
 if ($state -ne 'absent') {
