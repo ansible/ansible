@@ -379,7 +379,6 @@ def present_strategy(compute_api, wished_server):
             return changed, {"status": "Server %s attributes would be changed." % target_server["id"]}
 
         target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
-        target_server = server_change_ip_attribute(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     return changed, target_server
 
@@ -443,7 +442,6 @@ def running_strategy(compute_api, wished_server):
             return changed, {"status": "Server %s attributes would be changed before running it." % target_server["id"]}
 
         target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
-        target_server = server_change_ip_attribute(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     current_state = fetch_state(compute_api=compute_api, server=target_server)
     if current_state not in ("running", "starting"):
@@ -488,7 +486,6 @@ def stop_strategy(compute_api, wished_server):
                 "status": "Server %s attributes would be changed before stopping it." % target_server["id"]}
 
         target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
-        target_server = server_change_ip_attribute(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
 
@@ -535,7 +532,6 @@ def restart_strategy(compute_api, wished_server):
                 "status": "Server %s attributes would be changed before rebooting it." % target_server["id"]}
 
         target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
-        target_server = server_change_ip_attribute(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     changed = True
     if compute_api.module.check_mode:
@@ -659,14 +655,6 @@ def server_change_ip_attribute(compute_api, target_server, wished_server):
         # Attach the new IP to the current server
         compute_api.patch(path="ips/%s" % wished_server["public_ip"], data={"server": target_server["id"]})
 
-    # Get modified server information
-    response = compute_api.get(path="servers/%s" % target_server["id"])
-    try:
-        target_server = response.json["server"]
-    except KeyError:
-        compute_api.module.fail_json(msg="Error in getting the server information from: %s" % response.json)
-    return target_server
-
 
 def server_change_attributes(compute_api, target_server, wished_server):
     compute_api.module.debug("Starting patching server attributes")
@@ -690,14 +678,16 @@ def server_change_attributes(compute_api, target_server, wished_server):
         msg = 'Error during server attributes patching: (%s) %s' % (response.status_code, response.json)
         compute_api.module.fail_json(msg=msg)
 
+    server_change_ip_attribute(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
+
     try:
-        target_server = response.json["server"]
+        target_server_updated = response.json["server"]
     except KeyError:
         compute_api.module.fail_json(msg="Error in getting the server information from: %s" % response.json)
 
-    wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
+    wait_to_complete_state_transition(compute_api=compute_api, server=target_server_updated)
 
-    return target_server
+    return target_server_updated
 
 
 def core(module):
