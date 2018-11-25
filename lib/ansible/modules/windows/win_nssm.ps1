@@ -288,7 +288,7 @@ function Stop-NssmService {
 }
 
 if (($null -ne $appParameters) -and ($null -ne $appArguments)) {
-    Fail-Json $result "Use either 'app_parameters' or 'arguments', but not both."
+    Fail-Json $result "'app_parameters' and 'arguments' are mutually exclusive but have both been set."
 }
 
 if ($null -ne $appParameters) {

@@ -63,14 +63,15 @@ options:
   app_parameters:
     description:
       - A string representing a dictionary of parameters to be passed to the application when it starts.
-      - DEPRECATED since v2.8, please use C(arguments) instead.
-      - Use either this or C(arguments), not both.
+      - DEPRECATED since v2.8, please use I(arguments) instead.
+      - This is mutually exclusive with I(arguments).
     type: str
   arguments:
     description:
       - Parameters to be passed to the application when it starts.
       - This can be either a simple string or a list.
-      - Use either this or C(app_parameters), not both.
+      - This parameter was renamed from I(app_parameters_free_form) in 2.8.
+      - This is mutually exclusive with I(app_parameters).
     aliases: [ app_parameters_free_form ]
     type: str
     version_added: "2.3"
