@@ -793,7 +793,7 @@ def cryptography_get_csr_domains(module, csr_filename):
     return domains
 
 
-def cryptography_get_cert_days(module, cert_file):
+def cryptography_get_cert_days(module, cert_file, now=None):
     '''
     Return the days the certificate in cert_file remains valid and -1
     if the file was not found. If cert_file contains more than one
@@ -806,7 +806,8 @@ def cryptography_get_cert_days(module, cert_file):
         cert = cryptography.x509.load_pem_x509_certificate(read_file(cert_file), _cryptography_backend)
     except Exception as e:
         raise ModuleFailException('Cannot parse certificate {0}: {1}'.format(cert_file, e))
-    now = datetime.datetime.now()
+    if now is None:
+        now = datetime.datetime.now()
     return (cert.not_valid_after - now).days
 
 
