@@ -371,19 +371,7 @@ EXAMPLES = '''
 
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
-
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, no higher version so far),
-    # it does not support the 'hostinterface' api calls,
-    # so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
-    class ZabbixAPIExtends(ZabbixAPI):
-        hostinterface = None
-
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-            self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
-
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
@@ -595,7 +583,7 @@ class Action(object):
     def _construct_parameters(self, **kwargs):
         return {
             'name': kwargs['name'],
-            'eventsource': map_to_int([
+            'eventsource': to_numeric_value([
                 'trigger',
                 'discovery',
                 'auto_registration',
@@ -611,7 +599,7 @@ class Action(object):
             'operations': kwargs['operations'],
             'recovery_operations': kwargs.get('recovery_operations'),
             'acknowledge_operations': kwargs.get('acknowledge_operations'),
-            'status': map_to_int([
+            'status': to_numeric_value([
                 'enabled',
                 'disabled'], kwargs['status'])
         }
@@ -658,7 +646,7 @@ class Operations(object):
 
     def _construct_operationtype(self, operation):
         try:
-            return map_to_int([
+            return to_numeric_value([
                 "send_message",
                 "remote_command",
                 "add_host",
@@ -672,7 +660,7 @@ class Operations(object):
                 "set_host_inventory_mode"], operation['type']
             )
         except Exception as e:
-            self._module.fail_json(msg="Unsupperted value '%s' for operation type." % operation['type'])
+            self._module.fail_json(msg="Unsupported value '%s' for operation type." % operation['type'])
 
     def _construct_opmessage(self, operation):
         try:
@@ -698,27 +686,27 @@ class Operations(object):
         if operation.get('send_to_groups') is None:
             return None
         return [{
-            'usrgripid': self._zapi_wrapper.get_usergroup_by_usergroup_name(_group)['usrgripid']
+            'usrgrpid': self._zapi_wrapper.get_usergroup_by_usergroup_name(_group)['usrgrpid']
         } for _group in operation.get('send_to_groups')]
 
     def _construct_opcommand(self, operation):
         try:
             return {
-                'type': map_to_int([
+                'type': to_numeric_value([
                     'custom_script',
                     'ipmi',
                     'ssh',
                     'telnet',
                     'global_script'], operation.get('command_type', 'custom_script')),
                 'command': operation.get('command'),
-                'execute_on': map_to_int([
+                'execute_on': to_numeric_value([
                     'agent',
                     'server',
                     'proxy'], operation.get('execute_on', 'server')),
                 'scriptid': self._zapi_wrapper.get_script_by_script_name(
                     operation.get('script_name')
                 ).get('scriptid'),
-                'authtype': map_to_int([
+                'authtype': to_numeric_value([
                     'password',
                     'private_key'
                 ], operation.get('ssh_auth_type', 'password')),
@@ -800,7 +788,7 @@ class Operations(object):
 class RecoveryOperations(Operations):
     def _construct_operationtype(self, operation):
         try:
-            return map_to_int([
+            return to_numeric_value([
                 "send_message",
                 "remote_command",
                 None,
@@ -847,7 +835,7 @@ class RecoveryOperations(Operations):
 class AcknowledgeOperations(Operations):
     def _construct_operationtype(self, operation):
         try:
-            return map_to_int([
+            return to_numeric_value([
                 "send_message",
                 "remote_command",
                 None,
@@ -910,7 +898,7 @@ class Filter(object):
 
     def _construct_conditiontype(self, _condition):
         try:
-            return map_to_int([
+            return to_numeric_value([
                 "host_group",
                 "host",
                 "trigger",
@@ -940,11 +928,11 @@ class Filter(object):
                 "event_tag_value"], _condition['type']
             )
         except Exception as e:
-            self._module.fail_json(msg="Unsupperted value '%s' for condition type." % _condition['type'])
+            self._module.fail_json(msg="Unsupported value '%s' for condition type." % _condition['type'])
 
     def _construct_operator(self, _condition):
         try:
-            return map_to_int([
+            return to_numeric_value([
                 "=",
                 "<>",
                 "like",
@@ -955,7 +943,7 @@ class Filter(object):
                 "not in"], _condition['operator']
             )
         except Exception as e:
-            self._module.fail_json(msg="Unsupperted value '%s' for operator." % _condition['operator'])
+            self._module.fail_json(msg="Unsupported value '%s' for operator." % _condition['operator'])
 
     def _construct_value(self, conditiontype, value):
         try:
@@ -971,7 +959,7 @@ class Filter(object):
             # Trigger name: return as is
             # Trigger severity
             if conditiontype == '4':
-                return map_to_int([
+                return to_numeric_value([
                     "not classified",
                     "information",
                     "warning",
@@ -982,7 +970,7 @@ class Filter(object):
 
             # Trigger value
             if conditiontype == '5':
-                return map_to_int([
+                return to_numeric_value([
                     "ok",
                     "problem"], value or "ok"
                 )
@@ -990,7 +978,7 @@ class Filter(object):
             # Host IP: return as is
             # Discovered service type
             if conditiontype == '8':
-                return map_to_int([
+                return to_numeric_value([
                     "SSH",
                     "LDAP",
                     "SMTP",
@@ -1011,7 +999,7 @@ class Filter(object):
             # Discovered service port: return as is
             # Discovery status
             if conditiontype == '10':
-                return map_to_int([
+                return to_numeric_value([
                     "up",
                     "down",
                     "discovered",
@@ -1026,13 +1014,13 @@ class Filter(object):
             if conditiontype == '20':
                 return self._zapi_wrapper.get_proxy_by_proxy_name(value)['proxyid']
             if conditiontype == '21':
-                return map_to_int([
+                return to_numeric_value([
                     "pchldrfor0",
                     "host",
                     "service"], value
                 )
             if conditiontype == '23':
-                return map_to_int([
+                return to_numeric_value([
                     "item in not supported state",
                     "item in normal state",
                     "LLD rule in not supported state",
@@ -1043,7 +1031,7 @@ class Filter(object):
             return value
         except Exception as e:
             self._module.fail_json(
-                msg="""Unsupperted value '%s' for specified condition type.
+                msg="""Unsupported value '%s' for specified condition type.
                        Check out Zabbix API documetation for supported values for
                        condition type '%s' at
                        https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition""" % (value, conditiontype)
@@ -1083,7 +1071,7 @@ def convert_unicode_to_str(data):
         return str(data)
 
 
-def map_to_int(strs, value):
+def to_numeric_value(strs, value):
     """ Convert string values to integers"""
     strs = [s.lower() if isinstance(s, str) else s for s in strs]
     value = value.lower()
@@ -1200,8 +1188,8 @@ def main():
     acknowledge_operations = module.params['acknowledge_operations']
 
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user,
+                        passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
@@ -1214,7 +1202,6 @@ def main():
     ops = Operations(module, zbx, zapi_wrapper)
     recovery_ops = RecoveryOperations(module, zbx, zapi_wrapper)
     acknowledge_ops = AcknowledgeOperations(module, zbx, zapi_wrapper)
-
     fltr = Filter(module, zbx, zapi_wrapper)
 
     if action_exists:
@@ -1229,12 +1216,12 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
-                default_message = default_message,
-                default_subject = default_subject,
-                recovery_default_message = recovery_default_message,
-                recovery_default_subject = recovery_default_subject,
-                acknowledge_default_message = acknowledge_default_message,
-                acknowledge_default_subject = acknowledge_default_subject,
+                default_message=default_message,
+                default_subject=default_subject,
+                recovery_default_message=recovery_default_message,
+                recovery_default_subject=recovery_default_subject,
+                acknowledge_default_message=acknowledge_default_message,
+                acknowledge_default_subject=acknowledge_default_subject,
                 operations=ops.construct_the_data(operations),
                 recovery_operations=recovery_ops.construct_the_data(recovery_operations),
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
@@ -1258,12 +1245,12 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
-                default_message = default_message,
-                default_subject = default_subject,
-                recovery_default_message = recovery_default_message,
-                recovery_default_subject = recovery_default_subject,
-                acknowledge_default_message = acknowledge_default_message,
-                acknowledge_default_subject = acknowledge_default_subject,
+                default_message=default_message,
+                default_subject=default_subject,
+                recovery_default_message=recovery_default_message,
+                recovery_default_subject=recovery_default_subject,
+                acknowledge_default_message=acknowledge_default_message,
+                acknowledge_default_subject=acknowledge_default_subject,
                 operations=ops.construct_the_data(operations),
                 recovery_operations=recovery_ops.construct_the_data(recovery_operations),
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
