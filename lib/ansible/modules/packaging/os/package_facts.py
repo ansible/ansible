@@ -21,9 +21,9 @@ options:
     description:
       - The package manager used by the system so we can query the package information.
       - Since 2.8 this is a list and can support multiple package managers per system.
-      - The 'portage' option was added in version 2.8.
+      - The 'portage', 'pkg' and 'pip' options were added in version 2.8.
     default: ['auto']
-    choices: ["auto", "rpm", "apt", "portage"]
+    choices: ["auto", "rpm", "apt", "portage", "pkg", "pip"]
     required: False
     type: list
 version_added: "2.5"
@@ -145,7 +145,9 @@ ansible_facts:
         }
 '''
 
+import json
 import sys
+
 from abc import abstractmethod
 
 from ansible.module_utils.basic import AnsibleModule
@@ -217,22 +219,6 @@ class CLIMgr(PkgMgr):
         return bool(self.cli)
 
 
-class RPM(LibMgr):
-
-    name = 'rpm'
-    LIB = 'rpm'
-
-    def list_installed(self):
-        return self.lib.TransactionSet().dbMatch()
-
-    def get_package_details(self, package):
-        return dict(name=package[self.lib.RPMTAG_NAME],
-                    version=package[self.lib.RPMTAG_VERSION],
-                    release=package[self.lib.RPMTAG_RELEASE],
-                    epoch=package[self.lib.RPMTAG_EPOCH],
-                    arch=package[self.lib.RPMTAG_ARCH],)
-
-
 class APT(LibMgr):
 
     name = 'apt'
@@ -249,7 +235,70 @@ class APT(LibMgr):
 
     def get_package_details(self, package):
         ac_pkg = self._cache[package].installed
-        return dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture)
+        return dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture, category=ac_pkg.section, origin=ac_pkg.origins[0].origin)
+
+
+class PIP(CLIMgr):
+
+    name = 'pip'
+    CLI = 'pip'
+
+    def list_installed(self):
+        rc, out, err = self.m.run_command([self.cli, 'list', '-l', '--format=json'])
+        if rc != 0:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return json.loads(out)
+
+    def get_package_details(self, package):
+        return package
+
+
+class PKG(CLIMgr):
+
+    name = 'pkg'
+    CLI = 'pkg'
+    atoms = ['name', 'version', 'origin', 'installed', 'automatic', 'arch', 'category', 'prefix', 'vital']
+
+    def list_installed(self):
+        rc, out, err = self.m.run_command([self.cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return out.splitlines()
+
+    def get_package_details(self, package):
+
+        pkg = {}
+        fields = package.split('\t')
+        for i, value in enumerate(fields):
+            pkg[self.atoms[i]] = value
+
+        if 'arch' in pkg:
+            try:
+                pkg['arch'] = pkg['arch'].split(':')[2]
+            except IndexError:
+                pass
+
+        if 'automatic' in pkg:
+            pkg['automatic'] = bool(pkg['automatic'])
+
+        if 'category' in pkg:
+            pkg['category'] = pkg['category'].split('/',1)[0]
+
+        if 'version' in pkg:
+            if ',' in pkg['version']:
+                pkg['version'], pkg['port_epoch'] = pkg['version'].split(',',1)
+            else:
+                pkg['port_epoch'] = 0
+
+            if '_' in pkg['version']:
+                pkg['version'], pkg['revision'] = pkg['version'].split('_', 1)
+            else:
+                pkg['revision'] = 0
+
+        if 'vital' in pkg:
+            pkg['vital'] = bool(pkg['vital'])
+
+        return pkg
 
 
 class PORTAGE(CLIMgr):
@@ -273,13 +322,29 @@ class PORTAGE(CLIMgr):
         return pkg
 
 
+class RPM(LibMgr):
+
+    name = 'rpm'
+    LIB = 'rpm'
+
+    def list_installed(self):
+        return self.lib.TransactionSet().dbMatch()
+
+    def get_package_details(self, package):
+        return dict(name=package[self.lib.RPMTAG_NAME],
+                    version=package[self.lib.RPMTAG_VERSION],
+                    release=package[self.lib.RPMTAG_RELEASE],
+                    epoch=package[self.lib.RPMTAG_EPOCH],
+                    arch=package[self.lib.RPMTAG_ARCH],)
+
+
 def main():
 
     me = sys.modules[__name__]
 
     # get supported pkg managers
     #  TODO: make this dynamic PKG_MANAGERS = [getattr(x, 'name') for x in inspect.getmembers(me) if inspect.isclass(x) and hasattr(x, 'name')]
-    PKG_MANAGERS = ['apt', 'rpm', 'portage']
+    PKG_MANAGERS = ['apt', 'rpm', 'portage', 'pkg', 'pip']
 
     # start work
     module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'default': ['auto']}), supports_check_mode=True)
