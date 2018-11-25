@@ -380,6 +380,9 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class Zapi(object):
+    """
+    A simple wrapper over the Zabbix API
+    """
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
@@ -575,6 +578,9 @@ class Zapi(object):
 
 
 class Action(object):
+    """
+    Restructures the user defined action data to fit the Zabbix API requirements
+    """
     def __init__(self, module, zbx, zapi_wrapper):
         self._module = module
         self._zapi = zbx
@@ -639,6 +645,9 @@ class Action(object):
 
 
 class Operations(object):
+    """
+    Restructures the user defined operation data to fit the Zabbix API requirements
+    """
     def __init__(self, module, zbx, zapi_wrapper):
         self._module = module
         # self._zapi = zbx
@@ -786,6 +795,9 @@ class Operations(object):
 
 
 class RecoveryOperations(Operations):
+    """
+    Restructures the user defined recovery operations data to fit the Zabbix API requirements
+    """
     def _construct_operationtype(self, operation):
         try:
             return to_numeric_value([
@@ -833,6 +845,9 @@ class RecoveryOperations(Operations):
 
 
 class AcknowledgeOperations(Operations):
+    """
+    Restructures the user defined acknowledge operations data to fit the Zabbix API requirements
+    """
     def _construct_operationtype(self, operation):
         try:
             return to_numeric_value([
@@ -880,6 +895,9 @@ class AcknowledgeOperations(Operations):
 
 
 class Filter(object):
+    """
+    Restructures the user defined filter conditions to fit the Zabbix API requirements
+    """
     def __init__(self, module, zbx, zapi_wrapper):
         self._module = module
         self._zapi = zbx
@@ -1061,6 +1079,7 @@ class Filter(object):
 
 
 def convert_unicode_to_str(data):
+    """Converts unicode objects to strings in dictionary"""
     if isinstance(data, dict):
         return dict(map(convert_unicode_to_str, data.items()))
     elif isinstance(data, (list, tuple, set)):
@@ -1072,7 +1091,7 @@ def convert_unicode_to_str(data):
 
 
 def to_numeric_value(strs, value):
-    """ Convert string values to integers"""
+    """Converts string values to integers"""
     strs = [s.lower() if isinstance(s, str) else s for s in strs]
     value = value.lower()
     tmp_dict = dict(zip(strs, list(range(len(strs)))))
@@ -1080,6 +1099,11 @@ def to_numeric_value(strs, value):
 
 
 def compare_lists(l1, l2, diff_dict):
+    """
+    Compares l1 and l2 lists and adds the items that are different 
+    to the diff_dict dictionary.
+    Used in recursion with compare_dictionaries() function.
+    """
     if len(l1) != len(l2):
         diff_dict.append(l1)
         return diff_dict
@@ -1096,6 +1120,11 @@ def compare_lists(l1, l2, diff_dict):
 
 
 def compare_dictionaries(d1, d2, diff_dict):
+    """
+    Compares d1 and d2 dictionaries and adds the items that are different 
+    to the diff_dict dictionary.
+    Used in recursion with compare_lists() function.
+    """
     for k, v in d1.items():
         if k not in d2:
             diff_dict[k] = v
@@ -1121,6 +1150,7 @@ def compare_dictionaries(d1, d2, diff_dict):
 
 
 def cleanup_data(obj):
+    """Removes the None values from the object and returns the object"""
     if isinstance(obj, (list, tuple, set)):
         return type(obj)(cleanup_data(x) for x in obj if x is not None)
     elif isinstance(obj, dict):
