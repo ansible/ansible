@@ -154,7 +154,7 @@ function Update-NssmServiceParameter {
     )
 
     if($null -eq $arguments) { return }
-    $arguments = @($arguments | where { $_ -ne '' })
+    $arguments = @($arguments | Where-Object { $_ -ne '' })
 
     $nssm_result = Get-NssmServiceParameter -service $service -parameter $parameter
 
@@ -164,7 +164,7 @@ function Update-NssmServiceParameter {
         Fail-Json -obj $result -message "Error retrieving $parameter for service ""$service"""
     }
 
-    $current_values = @($nssm_result.stdout.split("`n`r") | where { $_ -ne '' })
+    $current_values = @($nssm_result.stdout.split("`n`r") | Where-Object { $_ -ne '' })
 
     if (-not $compare.Invoke($current_values,$arguments)) {
         if ($PSCmdlet.ShouldProcess($service, "Update '$parameter' parameter")) {
@@ -194,7 +194,7 @@ function Test-NssmServiceExists {
         [string]$service
     )
 
-    return [bool](Get-Service "$service" -ErrorAction SilentlyContinue)
+    return [bool](Get-Service -Name $service -ErrorAction SilentlyContinue)
 }
 
 function Invoke-NssmStart {
@@ -294,16 +294,16 @@ if (($null -ne $appParameters) -and ($null -ne $appArguments)) {
 if ($null -ne $appParameters) {
     Add-DeprecationWarning -obj $result -message "The parameter 'app_parameters' will be removed soon, use 'arguments' instead." -version 2.12
 
-	if ($appParameters -isnot [string]) {
-	    Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
-	}
+    if ($appParameters -isnot [string]) {
+        Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
+    }
 
     # Convert dict-as-string form to list
     $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
     $appParametersHash = ConvertFrom-StringData -StringData $escapedAppParameters
 
     $appParamsArray = @()
-    $appParametersHash.GetEnumerator() | foreach {
+    $appParametersHash.GetEnumerator() | Foreach-Object {
         if ($_.Name -ne "_") {
             $appParamsArray += $_.Name
         }
@@ -386,7 +386,7 @@ if ($state -eq 'absent') {
         Update-NssmServiceParameter -parameter "AppDirectory" -value $appDirectory @common_params
 
 
-        if (($null -ne $appArguments)) {
+        if ($null -ne $appArguments) {
             $singleLineParams = ""
             if ($appArguments -is [array]) {
                 $singleLineParams = Argv-ToString -arguments $appArguments
