@@ -39,8 +39,9 @@ $Payload.async_results_path = $results_path
 $Payload.actions = $Payload.actions[1..99]
 $payload_json = ConvertTo-Json -InputObject $Payload -Depth 99 -Compress
 
+#
 $exec_wrapper = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.exec_wrapper))
-$exec_wrapper = $exec_wrapper.Replace("`$json_raw = ''", "`$json_raw = @'`r`n$payload_json`r`n'@")
+$exec_wrapper += "`0`0`0`0" + $payload_json
 $payload_bytes = [System.Text.Encoding]::UTF8.GetBytes($exec_wrapper)
 $pipe_name = "ansible-async-$jid-$([guid]::NewGuid())"
 
@@ -77,7 +78,9 @@ $bootstrap_wrapper = {
         $pipe.Close()
     }
     $exec = [System.Text.Encoding]::UTF8.GetString($input_bytes)
-    $exec = [ScriptBlock]::Create($exec)
+    $exec_parts = $exec.Split(@("`0`0`0`0"), 2, [StringSplitOptions]::RemoveEmptyEntries)
+    Set-Variable -Name json_raw -Value $exec_parts[1]
+    $exec = [ScriptBlock]::Create($exec_parts[0])
     &$exec
 }
 

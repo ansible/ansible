@@ -1,4 +1,8 @@
 ---
+- name: fetch current target date/time for log filtering
+  raw: '[datetime]::now | Out-String'
+  register: test_starttime
+
 - name: test normal module execution
   test_fail:
   register: normal
@@ -180,7 +184,7 @@
 
 - set_fact:
     become_test_username: ansible_become_test
-    gen_pw: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+    gen_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
 
 - name: create unprivileged user
   win_user:
@@ -248,3 +252,15 @@
     that:
     - not common_functions_res is failed
     - common_functions_res.msg == "good"
+
+- name: get PS events containing module args or envvars created since test start
+  raw: |
+    $dt=[datetime]"{{ test_starttime.stdout|trim }}"
+    (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
+    ? { $_.TimeCreated -ge $dt -and $_.Message -match "test_fail|fail_module|hyphen-var" }).Count
+  register: ps_log_count
+
+- name: assert no PS events contain module args or envvars
+  assert:
+    that:
+    - ps_log_count.stdout | int == 0
