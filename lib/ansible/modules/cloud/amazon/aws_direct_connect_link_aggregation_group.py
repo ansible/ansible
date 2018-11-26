@@ -50,12 +50,14 @@ options:
     description:
       - This allows the minimum number of links to be set to 0, any hosted connections disassociated,
         and any virtual interfaces associated to the LAG deleted.
+    type: bool
   connection_id:
     description:
       - A connection ID to link with the link aggregation group upon creation.
   delete_with_disassociation:
     description:
       - To be used with I(state=absent) to delete connections after disassociating them with the LAG.
+    type: bool
   wait:
     description:
       - Whether or not to wait for the operation to complete. May be useful when waiting for virtual interfaces

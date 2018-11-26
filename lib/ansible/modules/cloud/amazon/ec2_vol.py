@@ -50,6 +50,7 @@ options:
     description:
       - Enable encryption at rest for this volume.
     default: 'no'
+    type: bool
     version_added: "1.8"
   kms_key_id:
     description:

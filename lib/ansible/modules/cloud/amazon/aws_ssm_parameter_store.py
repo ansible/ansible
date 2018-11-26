@@ -20,7 +20,7 @@ options:
     required: true
   description:
     description:
-      - parameter key desciption.
+      - parameter key description.
     required: false
   value:
     description:
@@ -42,7 +42,7 @@ options:
   decryption:
     description:
       - Work with SecureString type to get plain text secrets
-      - Boolean
+    type: bool
     required: false
     default: True
   key_id:

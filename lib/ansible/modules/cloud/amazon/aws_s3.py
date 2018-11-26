@@ -52,6 +52,7 @@ options:
       - When set for PUT mode, asks for server-side encryption.
     default: True
     version_added: "2.0"
+    type: bool
   encryption_mode:
     description:
       - What encryption mode to use if C(encrypt) is set
@@ -145,6 +146,7 @@ options:
       - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
     default: false
     version_added: "2.2"
+    type: bool
   src:
     description:
       - The source file path when performing a PUT operation.
@@ -155,6 +157,7 @@ options:
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
         ignore_nonexistent_bucket: True."
     version_added: "2.3"
+    type: bool
   encryption_kms_key_id:
     description:
       - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)

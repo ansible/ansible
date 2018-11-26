@@ -47,7 +47,8 @@ options:
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.
-            Defaults to false.
+        default: False
+        type: bool
 '''
 
 EXAMPLES = '''
