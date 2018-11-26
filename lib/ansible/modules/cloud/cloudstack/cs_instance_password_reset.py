@@ -65,18 +65,23 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: reset and get the root password
-  local_action:
-    module: cs_instance_password_reset
-    name: myvirtualmachine
-  register: root
-- debug:
-    msg: "new root password is {{ root.password }}"
-- name: reboot the virtual machine to activate the new password
+- name: stop the virtual machine before resetting the password
   local_action:
     module: cs_instance
     name: myvirtualmachine
-    state: restarted
+    state: stopped
+- name: reset and get new default password
+  local_action:
+    module: cs_instance_password_reset
+    vm: myvirtualmachine
+  register: root
+- debug:
+    msg: "new default password is {{ root.password }}"
+- name: boot the virtual machine to activate the new password
+  local_action:
+    module: cs_instance
+    name: myvirtualmachine
+    state: started
   when: root is changed
 '''
 
