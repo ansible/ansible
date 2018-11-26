@@ -144,21 +144,27 @@ ansible_facts:
           }
         }
 '''
-
 import json
 import sys
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
-from ansible.module_utils.basic import AnsibleModule
- from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import AnsibleModule, get_all_subclasses
+from ansible.module_utils._text import to_native, to_text
 
 
-class PkgMgr:
+class TestFailed(Exception):
+    pass
 
-    def __init__(self, module):
 
-        self.m = module
+class PkgMgr(object):
+
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+
+        if not self.test():
+            raise TestFailed("Test failed to pass")
 
     @abstractmethod
     def test(self):
@@ -173,7 +179,7 @@ class PkgMgr:
     @abstractmethod
     def get_package_details(self, package):
         ''' This takes a 'package' item and returns a dictionary with the package information, name and version are minimal requirements '''
-        raise NotImplementedError
+        pass
 
     def get_packages(self):
         ''' Take all of the above and return a dictionary of lists of dictionaries (package = list of installed versions) '''
@@ -181,7 +187,7 @@ class PkgMgr:
         installed_packages = {}
         for package in self.list_installed():
             package_details = self.get_package_details(package)
-            package_details['source'] = self.name
+            package_details['source'] = self.__class__.__name__.lower()
             name = package_details['name']
             if name not in installed_packages:
                 installed_packages[name] = [package_details]
@@ -194,10 +200,10 @@ class LibMgr(PkgMgr):
 
     LIB = None
 
-    def __init__(self, module):
+    def __init__(self):
 
-        super(LibMgr, self).__init__(module)
         self.lib = None
+        super(LibMgr, self).__init__()
 
     def test(self):
         found = False
@@ -213,42 +219,44 @@ class CLIMgr(PkgMgr):
 
     CLI = None
 
-    def __init__(self, module):
+    def __init__(self):
 
-        super(CLIMgr, self).__init__(module)
         self.cli = None
+        super(CLIMgr, self).__init__()
 
     def test(self):
-        self.cli = self.m.get_bin_path(self.CLI, False)
+        global module
+        self.cli = module.get_bin_path(self.CLI, False)
         return bool(self.cli)
 
 
 class APT(LibMgr):
 
-    name = 'apt'
     LIB = 'apt'
 
-    def test(self):
-        works = super(APT, self).test()
-        if works:
-            self._cache = self.lib.Cache()
-        return works
+    @property
+    def pkg_cache(self):
+        if self._cache:
+            return self._cache
+
+        self._cache = self.lib.Cache()
+        return self._cache
 
     def list_installed(self):
-        return [pk for pk in self._cache.keys() if self._cache[pk].is_installed]
+        return [pk for pk in self.pkg_cache.keys() if self.pkg_cache[pk].is_installed]
 
     def get_package_details(self, package):
-        ac_pkg = self._cache[package].installed
+        ac_pkg = self.pkg_cache[package].installed
         return dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture, category=ac_pkg.section, origin=ac_pkg.origins[0].origin)
 
 
 class PIP(CLIMgr):
 
-    name = 'pip'
     CLI = 'pip'
 
     def list_installed(self):
-        rc, out, err = self.m.run_command([self.cli, 'list', '-l', '--format=json'])
+        global module
+        rc, out, err = module.run_command([self.cli, 'list', '-l', '--format=json'])
         if rc != 0:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return json.loads(out)
@@ -259,12 +267,11 @@ class PIP(CLIMgr):
 
 class PKG(CLIMgr):
 
-    name = 'pkg'
     CLI = 'pkg'
     atoms = ['name', 'version', 'origin', 'installed', 'automatic', 'arch', 'category', 'prefix', 'vital']
 
     def list_installed(self):
-        rc, out, err = self.m.run_command([self.cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
+        rc, out, err = module.run_command([self.cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
@@ -304,12 +311,11 @@ class PKG(CLIMgr):
 
 class PORTAGE(CLIMgr):
 
-    name = 'portage'
     CLI = 'qlist'
     atoms = ['category', 'name', 'version', 'ebuild_revision', 'slots', 'prefixes', 'sufixes']
 
     def list_installed(self):
-        rc, out, err = self.m.run_command(' '.join([self.cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
+        rc, out, err = module.run_command(' '.join([self.cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
         if rc != 0 or err:
             raise RuntimeError("Unable to list packages rc=%s : %s" % (rc, to_native(err)))
         return out.splitlines()
@@ -320,7 +326,6 @@ class PORTAGE(CLIMgr):
 
 class RPM(LibMgr):
 
-    name = 'rpm'
     LIB = 'rpm'
 
     def list_installed(self):
@@ -336,41 +341,49 @@ class RPM(LibMgr):
 
 def main():
 
-    me = sys.modules[__name__]
-
     # get supported pkg managers
-    #  TODO: make this dynamic PKG_MANAGERS = [getattr(x, 'name') for x in inspect.getmembers(me) if inspect.isclass(x) and hasattr(x, 'name')]
-    PKG_MANAGERS = ['apt', 'rpm', 'portage', 'pkg', 'pip']
+    PKG_MANAGERS = dict([(obj.__name__.lower(), obj) for obj in get_all_subclasses(PkgMgr) if obj not in(CLIMgr, LibMgr)])
 
     # start work
+    global module
     module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'default': ['auto']}), supports_check_mode=True)
     packages = {}
-    results = {'errors': []}
-    package_managers = module.params['manager']
+    results = {'warnings': []}
+    managers = module.params['manager']
 
-    if 'auto' in package_managers:
-        package_managers.extend(PKG_MANAGERS)
-        package_managers.remove('auto')
+    if 'auto' in managers:
+        # keep order from user, we do dedupe below
+        managers.extend(PKG_MANAGERS.keys())
+        managers.remove('auto')
 
-    unsupported = set(package_managers).difference(set(PKG_MANAGERS))
+    unsupported = set(managers).difference(set(PKG_MANAGERS.keys()))
     if unsupported:
         module.fail_json(msg='Unsupported package managers requested: %s' % (', '.join(unsupported)))
 
     found = 0
-    for pkgmgr in package_managers:
+    seen = set()
+    for pkgmgr in managers:
+
+        # dedupe as per above
+        if pkgmgr in seen:
+            continue
+        seen.add(pkgmgr)
         try:
-            manager = getattr(me, pkgmgr.upper())(module)
-            if manager.test():
+            try:
+                # manager throws TestFailed exception on init (calls self.test) if not usable.
+                manager = PKG_MANAGERS[pkgmgr]
                 found += 1
-                packages.update(manager.get_packages())
+                packages.update(manager().get_packages())
+            except TestFailed:
+                continue
         except Exception as e:
             from traceback import format_tb
-            results['errors'].append({'msg': 'Failed to retrieve packages: %s' % to_text(e), 'exception': format_tb(sys.exc_info()[2])})
+            results['warnings'].append({'msg': 'Failed to retrieve packages: %s' % to_text(e), 'exception': format_tb(sys.exc_info()[2])})
 
     if found == 0:
-        module.fail_json(msg='Could not detect a supported package manager')
-    elif not packages and results['errors']:
-        module.fail_json(msg="Failed to retrive packages, see 'errors' for details'", errors=results['errors'])
+        module.fail_json(msg='Could not detect a supported package manager from the supplied list: %s' % managers)
+    elif not packages and results['warnings']:
+        module.fail_json(msg="Failed to retrive packages, see 'errors' for details'", errors=results['warnings'])
 
     results['ansible_facts'] = {}
     # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
