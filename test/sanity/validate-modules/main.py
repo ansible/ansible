@@ -1347,6 +1347,8 @@ class ModuleValidator(Validator):
             mod_version_added = StrictVersion('0.0')
 
         if self.base_branch and 'stable-' in self.base_branch:
+            metadata.pop('metadata_version', None)
+            metadata.pop('version', None)
             if metadata != existing_metadata:
                 self.reporter.error(
                     path=self.object_path,
