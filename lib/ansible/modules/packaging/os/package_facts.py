@@ -235,6 +235,21 @@ class CLIMgr(PkgMgr):
         return bool(self.cli)
 
 
+class RPM(LibMgr):
+
+    LIB = 'rpm'
+
+    def list_installed(self):
+        return self.lib.TransactionSet().dbMatch()
+
+    def get_package_details(self, package):
+        return dict(name=package[self.lib.RPMTAG_NAME],
+                    version=package[self.lib.RPMTAG_VERSION],
+                    release=package[self.lib.RPMTAG_RELEASE],
+                    epoch=package[self.lib.RPMTAG_EPOCH],
+                    arch=package[self.lib.RPMTAG_ARCH],)
+
+
 class APT(LibMgr):
 
     LIB = 'apt'
@@ -253,21 +268,6 @@ class APT(LibMgr):
     def get_package_details(self, package):
         ac_pkg = self.pkg_cache[package].installed
         return dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture, category=ac_pkg.section, origin=ac_pkg.origins[0].origin)
-
-
-class RPM(LibMgr):
-
-    LIB = 'rpm'
-
-    def list_installed(self):
-        return self.lib.TransactionSet().dbMatch()
-
-    def get_package_details(self, package):
-        return dict(name=package[self.lib.RPMTAG_NAME],
-                    version=package[self.lib.RPMTAG_VERSION],
-                    release=package[self.lib.RPMTAG_RELEASE],
-                    epoch=package[self.lib.RPMTAG_EPOCH],
-                    arch=package[self.lib.RPMTAG_ARCH],)
 
 
 class PKG(CLIMgr):
