@@ -278,7 +278,7 @@ def main():
     argument_spec = dict(
         action=dict(type='str', default='export',
                     choices=['parse', 'export']),
-        ca_certificates=dict(type='list'),
+        ca_certificates=dict(type='list', elements='path'),
         certificate_path=dict(type='path'),
         force=dict(type='bool', default=False),
         friendly_name=dict(type='str', aliases=['name']),

@@ -281,8 +281,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             input_chain=dict(required=True, type='str'),
-            root_certificates=dict(required=True, type='list'),
-            intermediate_certificates=dict(required=False, type='list', default=[]),
+            root_certificates=dict(required=True, type='list', elements='path'),
+            intermediate_certificates=dict(required=False, type='list', elements='path', default=[]),
         ),
         supports_check_mode=True,
     )
