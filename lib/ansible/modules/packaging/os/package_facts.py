@@ -154,17 +154,16 @@ import json
 
 from abc import ABCMeta, abstractmethod
 
-from ansible.module_utils.basic import AnsibleModule, get_all_subclasses
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import AnsibleModule, get_all_subclasses
+from ansible.module_utils.six import with_metaclass
 
 
 class TestFailed(Exception):
     pass
 
 
-class PkgMgr(object):
-
-    __metaclass__ = ABCMeta
+class PkgMgr(with_metaclass(ABCMeta, object)):
 
     def __init__(self):
 
@@ -343,20 +342,26 @@ class PIP(CLIMgr):
     def get_package_details(self, package):
         return package
 
+
 class PIP2(PIP):
     CLI = 'pip2'
+
 
 class PIP3(PIP):
     CLI = 'pip3'
 
+
 class PIP35(PIP):
     CLI = 'pip3.5'
+
 
 class PIP36(PIP):
     CLI = 'pip3.6'
 
+
 class PIP37(PIP):
     CLI = 'pip3.7'
+
 
 def main():
 
