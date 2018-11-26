@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_container - fix idempotency problems with docker-py caused by previous ``init`` idempotency fix."
+- "docker_container - fix interplay of docker-py version check with argument_spec validation improvements."
