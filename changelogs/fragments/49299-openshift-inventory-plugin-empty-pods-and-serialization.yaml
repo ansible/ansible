@@ -1,0 +1,4 @@
+---
+bugfixes:
+- Convert hostvars data in OpenShift inventory plugin to be serializable by ansible-inventory
+- Fix error in OpenShift inventory plugin when a pod has errored and is empty
