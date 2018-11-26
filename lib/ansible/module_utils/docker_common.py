@@ -680,10 +680,7 @@ class DifferenceTracker(object):
         for item in self._diff:
             before[item['name']] = item['active']
             after[item['name']] = item['parameter']
-        return (
-            jsonify(before, sort_keys=True, indent=2),
-            jsonify(after, sort_keys=True, indent=2),
-        )
+        return before, after
 
     def get_legacy_docker_container_diffs(self):
         '''
