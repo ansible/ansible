@@ -14,90 +14,45 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent"
-$installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -default "trusted" -validateset "trusted", "untrusted"
+$installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" -type "str" -validateset "trusted", "untrusted"
 
 $result = @{"changed" = $false}
 
-Function Install-Repository {
-    Param(
-        [Parameter(Mandatory=$true)]
-        [String]$Name,
-        [Parameter(Mandatory=$true)]
-        [String]$SourceLocation,
-        [String]$InstallationPolicy,
-        [Bool]$CheckMode
-    )
-
-    try {
-        if (-not $CheckMode) {
-            Register-PSRepository -Name $Name -SourceLocation $SourceLocation -InstallationPolicy $InstallationPolicy
+$Repo = Get-PSRepository -Name $name -ErrorAction Ignore
+if ($state -eq "present") {
+    if ($null -eq $Repo){
+        if ($null -eq $installationpolicy) {
+            $installationpolicy = "trusted"
+        }
+        if (-not $check_mode) {
+            Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
         }
         $result.changed = $true
     }
-    catch {
-        $ErrorMessage = "Problems adding $($Name) repository: $($_.Exception.Message)"
-        Fail-Json $result $ErrorMessage
-    }
+    else {
+        $changed_properties = @{}
 
-}
+        if ($Repo.SourceLocation -ne $source) {
+            $changed_properties.SourceLocation = $source
+        }
 
-Function Remove-Repository {
-    Param(
-        [Parameter(Mandatory=$true)]
-        [String]$Name,
-        [Bool]$CheckMode
-    )
-    $Repo = Get-PSRepository -Name $Name -ErrorAction Ignore
+        if ($null -ne $installationpolicy -and $Repo.InstallationPolicy -ne $installationpolicy) {
+            $changed_properties.InstallationPolicy = $installationpolicy
+        }
 
-    if ( $null -ne $Repo) {
-
-        try {
-            if (-not $CheckMode) {
-                Unregister-PSRepository -Name $Name
+        if ($changed_properties.Count -gt 0) {
+            if (-not $check_mode) {
+                Set-PSRepository -Name $name @changed_properties
             }
             $result.changed = $true
         }
-        catch {
-            $ErrorMessage = "Problems removing $($Name) repository: $($_.Exception.Message)"
-            Fail-Json $result $ErrorMessage
-        }
     }
 }
-
-Function Set-Repository {
-    Param(
-        [Parameter(Mandatory=$true)]
-        [String]$Name,
-        [String]$InstallationPolicy,
-        [Bool]$CheckMode
-    )
-    try {
-        if (-not $CheckMode) {
-            Set-PSRepository -Name $Name -InstallationPolicy $InstallationPolicy
-        }
-        $result.changed = $true
+elseif ($state -eq "absent" -and $null -ne $Repo) {
+    if (-not $check_mode) {
+        Unregister-PSRepository -Name $name
     }
-    catch {
-        $ErrorMessage = "Problems changing the InstallationPolicy for $($Name) repository: $($_.Exception.Message)"
-        Fail-Json $result $ErrorMessage
-    }
+    $result.changed = $true
 }
 
-if ($state -eq "present") {
-
-    $Repo = Get-PSRepository -Name $name -ErrorAction Ignore
-
-    if ($null -eq $Repo){
-        Install-Repository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy -CheckMode $check_mode
-    }
-    else {
-        if ( $Repo.InstallationPolicy -ne $installationpolicy ) {
-            Set-Repository -Name $name -InstallationPolicy $installationpolicy -CheckMode $check_mode
-        }
-    }
-}
-elseif ($state -eq "absent") {
-    Remove-Repository -Name $name -CheckMode $check_mode
-}
-
-Exit-Json $result
+Exit-Json -obj $result

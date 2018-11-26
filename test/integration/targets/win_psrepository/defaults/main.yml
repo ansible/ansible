@@ -1,5 +1,4 @@
 ---
-PSGallery_url: https://www.powershellgallery.com/api/v2
-
-repository_name: MyGet
+repository_name: My Get
 repository_sourcelocation: https://www.myget.org/F/powershellgetdemo/api/v2
+repository_sourcelocation2: '{{ win_output_dir }}'

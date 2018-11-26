@@ -5,172 +5,196 @@
 
 ---
 
-- name: "check setting of InstallationPolicy - check mode: {{ in_check_mode }}"
-  win_psrepository:
-    name: PSGallery
-    source: "{{ PSGallery_url }}"
-    installation_policy: trusted
-  check_mode: "{{ in_check_mode }}"
-  register: change_installation_policy_1
-
-- name: "get result of setting of InstallationPolicy - check mode: {{ in_check_mode }}"
-  win_shell: '(Get-PSRepository -Name PSGallery).InstallationPolicy'
-  changed_when: false
-  register: result_change_installation_policy_1
-
-- name: "test setting of InstallationPolicy - check mode: {{ in_check_mode }}"
-  assert:
-    that:
-      - "change_installation_policy_1 is changed"
-      - "'{{ result_change_installation_policy_1.stdout | trim }}' == 'Trusted'"
-  when: not in_check_mode
-
-- name: "test setting of InstallationPolicy - check mode: {{ in_check_mode }}"
-  assert:
-    that:
-      - "change_installation_policy_1 is changed"
-      - "'{{ result_change_installation_policy_1.stdout | trim }}' == 'Untrusted'"
-  when: in_check_mode
-
-- name: "check idempotency setting of InstallationPolicy - check mode: {{ in_check_mode }}"
-  win_psrepository:
-    name: PSGallery
-    source: "{{ PSGallery_url }}"
-    installation_policy: trusted
-  register: change_installation_policy_2
-  when: not in_check_mode
-
-- name: "test idempotency setting of InstallationPolicy - check mode: {{ in_check_mode }}"
-  assert:
-    that:
-      - "change_installation_policy_2 is not changed"
-  when: not in_check_mode
-
-- name: "check adding of repository 1 - check mode: {{ in_check_mode }}"
+- name: check adding of repository defaults - check mode
   win_psrepository:
     name: "{{ repository_name }}"
     source: "{{ repository_sourcelocation }}"
     state: present
-  check_mode: "{{ in_check_mode }}"
-  register: adding_repository_1
+  check_mode: True
+  register: adding_repository_check
 
-- name: "get result of adding of repository 1 - check mode: {{ in_check_mode }}"
+- name: get result of adding repository defaults - check mode
+  win_shell: (Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction ignore | Measure-Object).Count
+  changed_when: false
+  register: result_adding_repository_check
+
+- name: test adding repository defaults - check mode
+  assert:
+    that:
+      - adding_repository_check is changed
+      - result_adding_repository_check.stdout_lines[0] == '0'
+
+- name: check adding repository defaults
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source: "{{ repository_sourcelocation }}"
+    state: present
+  register: adding_repository
+
+- name: get result of adding repository defaults
   win_shell: |
-    $repo = Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction Ignore
+    $repo = Get-PSRepository -Name {{ repository_name | quote }}
     ($repo | Measure-Object).Count
     $repo.SourceLocation
     $repo.InstallationPolicy
-  changed_when: false
-  register: result_adding_repository_1
+  register: result_adding_repository
 
-- name: "test adding of repository 1 - check mode: {{ in_check_mode }}"
+- name: test adding repository defaults
   assert:
     that:
-      - "adding_repository_1 is changed"
-      - "'{{ result_adding_repository_1.stdout_lines[0] }}' == '1'"
-      - "'{{ result_adding_repository_1.stdout_lines[1] }}' == '{{ repository_sourcelocation }}'"
-      - "'{{ result_adding_repository_1.stdout_lines[2] }}' == 'Trusted'"
-  when: not in_check_mode
+    - adding_repository is changed
+    - result_adding_repository.stdout_lines[0] == '1'
+    - result_adding_repository.stdout_lines[1] == repository_sourcelocation
+    - result_adding_repository.stdout_lines[2] == 'Trusted'
 
-- name: "test adding of repository 1 - check mode: {{ in_check_mode }}"
-  assert:
-    that:
-      - "adding_repository_1 is changed"
-      - "'{{ result_adding_repository_1.stdout_lines[0] }}' == '0'"
-  when: in_check_mode
-
-- name: "check idempotency adding of repository - check mode: {{ in_check_mode }}"
+- name: check adding repository defaults - idempotent
   win_psrepository:
     name: "{{ repository_name }}"
     source: "{{ repository_sourcelocation }}"
     state: present
-  register: adding_repository_2
-  when: not in_check_mode
+  register: adding_repository_again
 
-- name: "test idempotency adding of repository - check mode: {{ in_check_mode }}"
+- name: test check adding repository defaults - idempotent
   assert:
     that:
-      - "adding_repository_2 is not changed"
-  when: not in_check_mode
+    - adding_repository_again is not changed
 
-- name: "check removing of repository - check mode: {{ in_check_mode }}"
-  win_psrepository:
-    name: "{{ repository_name }}"
-    state: absent
-  register: removing_repository_1
-  when: not in_check_mode
-
-- name: "get result removing of repository - check mode: {{ in_check_mode }}"
-  win_shell: '((Get-PSRepository -Name {{ repository_name }} -ErrorAction Ignore | Measure-Object).Count -eq 0)'
-  changed_when: false
-  register: result_removing_repository_1
-  when: not in_check_mode
-
-- name: "test removing of repository - check mode: {{ in_check_mode }}"
-  assert:
-    that:
-      - "removing_repository_1 is changed"
-      - "'{{ result_removing_repository_1.stdout | trim }}' == 'True'"
-  when: not in_check_mode
-
-- name: "check removing of repository - check mode: {{ in_check_mode }}"
-  win_psrepository:
-    name: "PSGallery"
-    state: absent
-  check_mode: "{{ in_check_mode }}"
-  register: removing_repository_2
-  when: in_check_mode
-
-- name: "get result removing  of repository - check mode: {{ in_check_mode }}"
-  win_shell: '((Get-PSRepository -Name PSGallery -ErrorAction Ignore | Measure-Object).Count -eq 1)'
-  changed_when: false
-  register: result_removing_repository_2
-  when: in_check_mode
-
-- name: "test removing of repository - check mode: {{ in_check_mode }}"
-  assert:
-    that:
-      - "removing_repository_2 is changed"
-      - "'{{ result_removing_repository_2.stdout | trim }}' == 'True'"
-  when: in_check_mode
-
-- name: "check idempotency removing of repository - check mode: {{ in_check_mode }}"
-  win_psrepository:
-    name: "{{ repository_name }}"
-    state: absent
-  register: removing_repository_3
-  when: not in_check_mode
-
-- name: "test idempotency removing of repository - check mode: {{ in_check_mode }}"
-  assert:
-    that:
-      - "removing_repository_3 is not changed"
-  when: not in_check_mode
-
-- name: "check adding of repository - 3 - check mode: {{ in_check_mode }}"
+- name: change InstallationPolicy - check mode
   win_psrepository:
     name: "{{ repository_name }}"
     source: "{{ repository_sourcelocation }}"
     installation_policy: untrusted
-    state: present
-  check_mode: "{{ in_check_mode }}"
-  register: adding_repository_3
+  check_mode: True
+  register: change_installation_policy_check
 
-- name: "get result of adding of repository 3 - check mode: {{ in_check_mode }}"
-  win_shell: |
-    $repo = Get-PSRepository -Name {{ repository_name|quote }} -ErrorAction Ignore
-    ($repo | Measure-Object).Count
-    $repo.SourceLocation
-    $repo.InstallationPolicy
+- name: get result of change InstallationPolicy - check mode
+  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }}).InstallationPolicy'
   changed_when: false
-  register: result_adding_repository_3
-  when: not in_check_mode
+  register: result_change_installation_policy_check
 
-- name: "test adding of repository - check mode: {{ in_check_mode }}"
+- name: test change InstallationPolicy - check mode
   assert:
     that:
-      - "adding_repository_3 is changed"
-      - "'{{ result_adding_repository_3.stdout_lines[0] }}' == '1'"
-      - "'{{ result_adding_repository_3.stdout_lines[1] }}' == '{{ repository_sourcelocation }}'"
-      - "'{{ result_adding_repository_3.stdout_lines[2] }}' == 'Untrusted'"
-  when: not in_check_mode
+    - change_installation_policy_check is changed
+    - result_change_installation_policy_check.stdout | trim == 'Trusted'
+
+- name: change InstallationPolicy
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source: "{{ repository_sourcelocation }}"
+    installation_policy: untrusted
+  register: change_installation_policy
+
+- name: get result of change InstallationPolicy
+  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }}).InstallationPolicy'
+  changed_when: false
+  register: result_change_installation_policy
+
+- name: test change InstallationPolicy
+  assert:
+    that:
+    - change_installation_policy is changed
+    - result_change_installation_policy.stdout | trim == 'Untrusted'
+
+- name: change InstallationPolicy - idempotent
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source: "{{ repository_sourcelocation }}"
+    installation_policy: untrusted
+  register: change_installation_policy_again
+
+- name: test change InstallationPolicy - idempotent
+  assert:
+    that:
+    - change_installation_policy_again is not changed
+
+- name: change source - check mode
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source: "{{ repository_sourcelocation2 }}"
+    state: present
+  check_mode: True
+  register: change_source_check
+
+- name: get result of change source - check mode
+  win_shell: |
+      $repo = Get-PSRepository -Name {{ repository_name | quote }}
+      $repo.SourceLocation
+      $repo.InstallationPolicy
+  changed_when: False
+  register: result_change_source_check
+
+- name: test change source - check mode
+  assert:
+    that:
+    - change_source_check is changed
+    - result_change_source_check.stdout_lines[0] == repository_sourcelocation
+    - result_change_source_check.stdout_lines[1] == 'Untrusted'
+
+- name: change source
+  win_psrepository:
+    name: "{{ repository_name }}"
+    source: "{{ repository_sourcelocation2 }}"
+    state: present
+  register: change_source
+
+- name: get result of change source
+  win_shell: |
+      $repo = Get-PSRepository -Name {{ repository_name | quote }}
+      $repo.SourceLocation
+      $repo.InstallationPolicy
+  changed_when: False
+  register: result_change_source
+
+- name: test change source
+  assert:
+    that:
+    - change_source is changed
+    - result_change_source.stdout_lines[0] == repository_sourcelocation2
+    - result_change_source.stdout_lines[1] == 'Untrusted'
+
+- name: remove repository - check mode
+  win_psrepository:
+    name: "{{ repository_name }}"
+    state: absent
+  check_mode: True
+  register: removing_repository_check
+
+- name: get result of remove repository - check mode
+  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction Ignore | Measure-Object).Count'
+  changed_when: false
+  register: result_removing_repository_check
+
+- name: test remove repository - check mode
+  assert:
+    that:
+    - removing_repository_check is changed
+    - result_removing_repository_check.stdout | trim == '1'
+
+- name: remove repository
+  win_psrepository:
+    name: "{{ repository_name }}"
+    state: absent
+  register: removing_repository
+
+- name: get result of remove repository
+  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction Ignore | Measure-Object).Count'
+  changed_when: false
+  register: result_removing_repository
+
+- name: test remove repository
+  assert:
+    that:
+    - removing_repository is changed
+    - result_removing_repository.stdout | trim == '0'
+
+- name: remove repository - idempotent
+  win_psrepository:
+    name: "{{ repository_name }}"
+    state: absent
+  register: remove_repository_again
+
+- name: test remove repository - idempotent
+  assert:
+    that:
+    - remove_repository_again is not changed

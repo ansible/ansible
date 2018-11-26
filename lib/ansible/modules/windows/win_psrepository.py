@@ -18,7 +18,7 @@ module: win_psrepository
 version_added: "2.8"
 short_description: Adds, removes or updates a Windows PowerShell repository.
 description:
-  - This module helps to install, remove and update Windows PowerShell repository on Windows-based systems.
+  - This module helps to add, remove and update Windows PowerShell repository on Windows-based systems.
 options:
   name:
     description:
@@ -27,32 +27,35 @@ options:
   source:
     description:
       - Specifies the URI for discovering and installing modules from this repository.
-        URI can be a NuGet server feed (most common situation), HTTP, HTTPS, FTP or local folder location.
+      - A URI can be a NuGet server feed (most common situation), HTTP, HTTPS, FTP or file location.
   state:
     description:
-      - If C(present) a new repository is added or existing updated.
+      - If C(present) a new repository is added or updated.
       - If C(absent) a repository is removed.
     choices: [ absent, present ]
     default: present
   installation_policy:
     description:
-      - Set's the C(InstallationPolicy) of a repository.
+      - Sets the C(InstallationPolicy) of a repository.
+      - Will default to C(trusted) when creating a new repository.
     choices: [ trusted, untrusted ]
-    default: trusted
 notes:
   - The PowerShellGet module (version 1.6.0 or newer) and the NuGet package provider (version 2.8.5.201 or newer) are required.
-    To update the NuGet package provider use the command `Install-PackageProvider -Name NuGet -RequiredVersion 2.8.5.201 -Force`.
-  - You can't use M(win_psrepository) to re-register (add) removed PSGallery, use the command `Register-PSRepository -Default` instead.
+  - See the examples on how to update the NuGet package provider.
+  - You can't use M(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
 author:
 - Wojciech Sciesinski (@it-praktyk)
 '''
 
 EXAMPLES = r'''
 ---
+- name: Ensure the required NuGet package provider version is installed
+  win_shell: Install-PackageProvider -Name NuGet -RequiredVersion 2.8.5.201 -Force
+
 - name: Add a PowerShell module and register a repository
   win_psrepository:
     name: MyRepository
-    url: https://myrepo.com
+    source: https://myrepo.com
     state: present
 
 - name: Remove a PowerShell repository

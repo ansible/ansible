@@ -25,24 +25,17 @@
           Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
         }
 
-    - name: set initial state
-      win_shell: "{{ item }}"
-      with_items:
-        - 'Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted -ErrorAction Ignore'
-        - 'Unregister-PSRepository -Name MyGet -ErrorAction Ignore'
+    - name: ensure test repository is deleted
+      win_psrepository:
+        name: '{{ repository_name }}'
+        state: absent
 
     - name: run all tests
-      include: tests.yml
-      vars:
-        in_check_mode: no
+      include_tasks: tests.yml
 
-    - name: set initial state
-      win_shell: "{{ item }}"
-      with_items:
-        - 'Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted -ErrorAction Ignore'
-        - 'Unregister-PSRepository -Name MyGet -ErrorAction Ignore'
+  always:
 
-    - name: run all tests
-      import_tasks: tests.yml
-      vars:
-        in_check_mode: yes
+  - name: ensure test repository is deleted after tests run
+    win_psrepository:
+      name: '{{ repository_name }}'
+      state: absent
