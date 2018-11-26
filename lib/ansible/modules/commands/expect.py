@@ -52,6 +52,7 @@ options:
     description:
       - Whether or not to echo out your response strings.
     default: false
+    type: bool
 requirements:
   - python >= 2.6
   - pexpect >= 3.3

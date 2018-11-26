@@ -98,6 +98,7 @@ options:
   allowas_in:
     description:
       - Activate allowas-in property
+    type: bool
   allowas_in_max:
     description:
       - Max-occurrences value for allowas_in. Valid values are

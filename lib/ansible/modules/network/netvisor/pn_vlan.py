@@ -70,6 +70,7 @@ options:
     description:
       - Specify if you want to collect statistics for a VLAN. Statistic
         collection is enabled by default.
+    type: bool
   pn_ports:
     description:
       - Specifies the switch network data port number, list of ports, or range
