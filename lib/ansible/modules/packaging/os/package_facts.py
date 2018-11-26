@@ -145,7 +145,6 @@ ansible_facts:
         }
 '''
 import json
-import sys
 
 from abc import ABCMeta, abstractmethod
 
@@ -375,15 +374,15 @@ def main():
                 found += 1
                 packages.update(manager().get_packages())
             except TestFailed:
+                if pkgmgr in module.params['manager']:
+                    module.warn('Requested package manager %s was not usable by this module' % pkgmgr)
                 continue
         except Exception as e:
-            from traceback import format_tb
-            results['warnings'].append({'msg': 'Failed to retrieve packages: %s' % to_text(e), 'exception': format_tb(sys.exc_info()[2])})
+            if pkgmgr in module.params['manager']:
+                module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
 
     if found == 0:
-        module.fail_json(msg='Could not detect a supported package manager from the supplied list: %s' % managers)
-    elif not packages and results['warnings']:
-        module.fail_json(msg="Failed to retrive packages, see 'errors' for details'", errors=results['warnings'])
+        module.fail_json(msg='Could not detect a supported package manager from the following list: %s' % managers)
 
     results['ansible_facts'] = {}
     # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
