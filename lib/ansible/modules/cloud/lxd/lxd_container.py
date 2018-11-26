@@ -62,8 +62,9 @@ options:
                     "mode": "pull",
                     "server": "https://images.linuxcontainers.org",
                     "protocol": "lxd",
-                    "alias": "ubuntu/xenial/amd64" }).
-            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)'
+                    "alias": "ubuntu/xenial/amd64" }).'
+          - 'See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1) for complete API documentation.'
+          - 'Note that C(protocol) accepts two choices: C(lxd) or C(simplestreams)'
         required: false
     state:
         choices:
@@ -151,7 +152,7 @@ EXAMPLES = '''
           type: image
           mode: pull
           server: https://images.linuxcontainers.org
-          protocol: lxd
+          protocol: lxd # if you get a 404, try setting protocol: simplestreams
           alias: ubuntu/xenial/amd64
         profiles: ["default"]
         wait_for_ipv4_addresses: true
