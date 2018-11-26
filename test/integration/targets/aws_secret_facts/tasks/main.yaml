@@ -6,7 +6,7 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         region: "{{ aws_region }}"
-        #security_token: "{{ security_token }}"
+        security_token: "{{ security_token | omit() }}"
     no_log: true
 
   - name: add secret to AWS Secrets Manager

@@ -152,11 +152,14 @@ def main():
             'suffix': dict(type='str'),
             'regex': dict(type='str'),
         },
+        mutually_exclusive=[
+            ['name', 'prefix', 'suffix', 'regex']
+        ],
         supports_check_mode=True,
     )
 
     result = {
-        'changed': True,
+        'changed': False,
         'desired_secrets': []
     }
 
