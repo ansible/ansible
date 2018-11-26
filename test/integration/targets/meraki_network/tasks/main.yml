@@ -85,7 +85,9 @@
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetworkCombined
-      type: combined
+      types:
+        - appliance
+        - switch
       timezone: America/Chicago
       disable_my_meraki: yes
     delegate_to: localhost

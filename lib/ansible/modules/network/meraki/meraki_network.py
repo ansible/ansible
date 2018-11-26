@@ -47,6 +47,7 @@ options:
         description:
         - Type of network device network manages.
         - Required when creating a network.
+        - As of Ansible 2.8, combined type has moved to the types parameter.
         choices: [appliance, switch, wireless]
         aliases: [net_type]
     types:
@@ -200,7 +201,7 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(
         net_id=dict(type='str'),
-        type=dict(type='str', choices=['wireless', 'switch', 'appliance', 'combined'], aliases=['net_type']),
+        type=dict(type='str', choices=['wireless', 'switch', 'appliance'], aliases=['net_type']),
         types=dict(type='list', aliases=['net_types']),
         tags=dict(type='str'),
         timezone=dict(type='str'),
