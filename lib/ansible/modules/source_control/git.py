@@ -187,7 +187,7 @@ EXAMPLES = '''
 
 # Example read-write git checkout from github
 - git:
-    repo: ssh://git@github.com/mylogin/hello.git
+    repo: git@github.com:mylogin/hello.git
     dest: /home/mylogin/hello
 
 # Example just ensuring the repo checkout exists
