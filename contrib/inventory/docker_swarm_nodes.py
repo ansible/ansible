@@ -82,5 +82,6 @@ class SwarmNodesInventory(object):
 
         self.docker_host = config.get('swarm', 'docker_host')
 
+
 if __name__ == "__main__":
     SwarmNodesInventory()
