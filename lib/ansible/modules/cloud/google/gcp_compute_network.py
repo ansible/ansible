@@ -234,7 +234,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -258,29 +258,9 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.patch(link, resource_to_request(module)))
-
-
-def update_fields(module, request, response):
-    if response.get('routingConfig') != request.get('routingConfig'):
-        routing_config_update(module, request, response)
-
-
-def routing_config_update(module, request, response):
-    auth = GcpSession(module, 'compute')
-    auth.patch(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/subnetworks/{name}"
-        ]).format(**module.params),
-        {
-            u'routingConfig': NetworkRoutingconfigArray(module.params.get('routing_config', []), module).to_request()
-        }
-    )
 
 
 def delete(module, link, kind):
