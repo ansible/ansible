@@ -280,9 +280,7 @@ def _create_powershell_wrapper(b_module_data, module_args, environment,
         exec_manifest['csharp_utils'][name] = b64_data
     exec_manifest['csharp_utils_module'] = list(finder.cs_utils_module.keys())
 
-    # FUTURE: smuggle this back as a dict instead of serializing here;
-    # the connection plugin may need to modify it
     b_json = to_bytes(json.dumps(exec_manifest))
-    b_data = exec_wrapper.replace(b"$json_raw = ''",
-                                  b"$json_raw = @'\r\n%s\r\n'@" % b_json)
+    # delimit the payload JSON from the wrapper to keep sensitive contents out of scriptblocks (which can be logged)
+    b_data = exec_wrapper + b'\0\0\0\0' + b_json
     return b_data
