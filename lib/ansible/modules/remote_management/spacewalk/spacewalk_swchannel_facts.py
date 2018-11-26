@@ -50,7 +50,7 @@ channels_facts:
       description: The label name of the channel
       type: string
       sample: "centos5-centos5-x86_64"
-    name: 
+    name:
       description: The channel name
       type: string
       sample: "CentOS 5 Alt.ru (x86_64)"
@@ -70,7 +70,7 @@ channels_facts:
       description: The label of the parent channel. Default empty
       type: string
       sample: "centos5-x86_64"
-    checksum_label: 
+    checksum_label:
       description: The checksum Type. Could be 'sha1'(Default) 'sha256', 'sha512'
       type: string
       sample: "sha1"
@@ -105,12 +105,12 @@ channels_facts:
     contentSources:
       description: List of repositories associated to this channel
       type: complex
-      contains: 
+      contains:
         id:
           description: The id of reposity
           type: int
           sample: 521
-        label: 
+        label:
           description: The label of reposity associated to the channel
           type: string
           sample: "External yum repo - CentOS 5 Alt.ru (x86_64)"
@@ -118,7 +118,7 @@ channels_facts:
           description: The URL of repository
           type: string
           sample: "http://centos.alt.ru/repository/centos/5/x86_64/"
-        type: 
+        type:
           description: The repository type (could be yum(Defaul), dnf or deb)
           type: string
           sample: "yum"
@@ -134,7 +134,7 @@ channels_facts:
       description: Datetime when the channel will be in EOL
       type: string
       sample: ""
-    yumrepo_last_sync: 
+    yumrepo_last_sync:
       description: Datetime of the last sync of the repositories
       type: string
       sample: "20181124T08:00:05"
@@ -142,7 +142,7 @@ channels_facts:
       description: Number of packages handled by the channel
       type: int
       sample: 0
-    provider_name: 
+    provider_name:
       description: The organization where the channel lives
       type: string
       sample: "Spacewalk Default Organization"
@@ -151,7 +151,7 @@ channels_facts:
       type: int
       sample: 0
     support_policy:
-      description: 
+      description:
       type: string
       sample: ""
 '''
