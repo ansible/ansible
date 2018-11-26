@@ -1,0 +1,2 @@
+bugfixes:
+  - "pip module - fix setuptools/distutils replacement (https://github.com/ansible/ansible/issues/47198)"
