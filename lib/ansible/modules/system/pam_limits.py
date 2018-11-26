@@ -188,8 +188,13 @@ def main():
     if use_max and use_min:
         module.fail_json(msg="Cannot use use_min and use_max at the same time.")
 
-    if not (value in ['unlimited', 'infinity', '-1'] or value.isdigit()):
+    if limit_item not in ['priority', 'nice'] and (not (value in ['unlimited', 'infinity', '-1'] or value.isdigit())):
         module.fail_json(msg="Argument 'value' can be one of 'unlimited', 'infinity', '-1' or positive number. Refer to manual pages for more details.")
+    try:
+        if limit_item in ['priority', 'nice'] and (not value.lstrip('-').isdigit() or int(value) not in range(-20, 20)):
+            module.fail_json(msg="Argument 'value' can be an integer included in the range [-20,19]. Refer to manual pages for more details.")
+    except ValueError:
+        module.fail_json(msg="Argument 'value' doesn't contain a valid value. Refer to manual pages for more details.")
 
     # Backup
     if backup:
@@ -239,7 +244,9 @@ def main():
         line_item = line_fields[2]
         actual_value = line_fields[3]
 
-        if not (actual_value in ['unlimited', 'infinity', '-1'] or actual_value.isdigit()):
+        if limit_item not in ['priority', 'nice'] and (not (actual_value in ['unlimited', 'infinity', '-1'] or actual_value.isdigit())):
+            module.fail_json(msg="Invalid configuration of '%s'. Current value of %s is unsupported." % (limits_conf, line_item))
+        if limit_item in ['priority', 'nice'] and (not value.lstrip('-').isdigit() or int(value) not in range(-20, 20)):
             module.fail_json(msg="Invalid configuration of '%s'. Current value of %s is unsupported." % (limits_conf, line_item))
 
         # Found the line
@@ -250,22 +257,23 @@ def main():
                 nf.write(line)
                 continue
 
-            actual_value_unlimited = actual_value in ['unlimited', 'infinity', '-1']
-            value_unlimited = value in ['unlimited', 'infinity', '-1']
+            unlimited_values = [] if limit_item in ['priority', 'nice'] else ['unlimited', 'infinity', '-1']
+            actual_value_unlimited = actual_value in unlimited_values
+            value_unlimited = value in unlimited_values
 
             if use_max:
-                if value.isdigit() and actual_value.isdigit():
-                    new_value = str(max(int(value), int(actual_value)))
-                elif actual_value_unlimited:
+                if actual_value_unlimited:
                     new_value = actual_value
+                elif value.lstrip('-').isdigit() and actual_value.lstrip('-').isdigit():
+                    new_value = str(max(int(value), int(actual_value)))
                 else:
                     new_value = value
 
             if use_min:
-                if value.isdigit() and actual_value.isdigit():
-                    new_value = str(min(int(value), int(actual_value)))
-                elif value_unlimited:
+                if value_unlimited:
                     new_value = actual_value
+                elif value.lstrip('-').isdigit() and actual_value.lstrip('-').isdigit() and not actual_value_unlimited:
+                    new_value = str(min(int(value), int(actual_value)))
                 else:
                     new_value = value
 
