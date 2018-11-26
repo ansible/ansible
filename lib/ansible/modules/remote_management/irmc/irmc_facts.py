@@ -3,7 +3,7 @@
 # FUJITSU LIMITED
 # Copyright 2018 FUJITSU LIMITED
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
@@ -22,7 +22,7 @@ short_description: get or set PRIMERGY server and iRMC facts
 
 description:
     - Ansible module to get or set basic iRMC and PRIMERGY server data via iRMC RedFish interface.
-    - For more iRMC modules see https://github.com/FujitsuPrimergy/fujitsu-ansible-irmc-integration
+    - For more iRMC modules see https://github.com/FujitsuPrimergy/fujitsu-ansible-irmc-integration.
 
 requirements:
     - The module needs to run locally.
@@ -30,7 +30,7 @@ requirements:
     - Python >= 2.6
     - Python module 'future'
 
-version_added: "2.4"
+version_added: "2.8"
 
 author:
     - Fujitsu Server PRIMERGY (@FujitsuPrimergy)
@@ -47,10 +47,11 @@ options:
         required:    true
     validate_certs:
         description: Evaluate SSL certificate (set to false for self-signed certificate).
+        type:        bool
         required:    false
         default:     true
     command:
-        description: Get or set server facts.
+        description: How to access server facts.
         required:    false
         default:     get
         choices:     ['get', 'set']
@@ -103,7 +104,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-# facts returned by command "get":
+# facts returned by "get":
     hardware.ethernetinterfaces:
         description:
              dict with total number (count)
@@ -264,8 +265,8 @@ RETURN = '''
                 "uuid": "11223344-5566-cafe-babe-deadbeef1234"
             }
 
-# For command "set":
-    Default return values:
+# Returned by "get":
+    Return values: Default
 '''
 
 
@@ -324,7 +325,7 @@ def irmc_facts(module):
         module.exit_json(**result)
 
     # Set iRMC OEM system data
-    body = setup_facts(module.params)
+    body = setup_oem_data(module.params)
     etag = get_irmc_json(oemdata.json(), "@odata.etag")
     status, patch, msg = irmc_redfish_patch(module, "redfish/v1/Systems/0/Oem/ts_fujitsu/System/",
                                             json.dumps(body), etag)
@@ -440,7 +441,7 @@ def add_irmc_hw_info(module, result):
     return result
 
 
-def setup_facts(data):
+def setup_oem_data(data):
     body = dict()
     if data['asset_tag'] is not None:
         body['AssetTag'] = data['asset_tag']

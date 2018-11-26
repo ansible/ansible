@@ -6,8 +6,6 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-from builtins import str
-
 import time
 import traceback
 import json
