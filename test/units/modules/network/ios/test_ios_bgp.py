@@ -80,6 +80,7 @@ class TestIosBgpModule(TestIosModule):
                                               'neighbor 192.168.0.100 ebgp-multihop 5',
                                               'neighbor 192.168.0.101 remote-as 65535',
                                               'neighbor 192.168.0.101 description Neighbor1'])
+        
     def test_ios_bgp_neighbors_unchanged(self):
         set_module_args(dict(bgp_as='65535', neighbors=[dict(neighbor='2.2.2.2', remote_as='500',
                                                              timers=dict(keepalive=300, holdtime=350,
@@ -88,11 +89,10 @@ class TestIosBgpModule(TestIosModule):
 
     def test_ios_bgp_address_families(self):
         set_module_args(dict(bgp_as='65535', address_families=[dict(name='ipv4', cast='unicast',
-                                                                    networks=[dict(network='12.0.0.0', route_map='RMAP2')],
                                                                     redistribute=[dict(protocol='eigrp', id='65', metric='100')]
                                                                     )]))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['router bgp 65535', 'address-family ipv4', 'redistribute eigrp 65 metric 100',
+        self.assertEqual(result['commands'], ['router bgp 65535', 'address-family ipv4',
                                               'network 12.0.0.0 route-map RMAP2',
                                               'exit-address-family'])
 
