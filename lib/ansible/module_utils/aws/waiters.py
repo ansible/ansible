@@ -204,43 +204,19 @@ eks_data = {
     }
 }
 
-
-neptune_data = {
+rds_data = {
     "version": 2,
     "waiters": {
-        "DBSubnetGroupAvailable": {
-            "delay": 5,
-            "maxAttempts": 25,
-            "operation": "DescribeDBSubnetGroups",
+        "DBInstanceStopped": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "DescribeDBInstances",
             "acceptors": [
                 {
-                    "matcher": "path",
-                    "expected": True,
-                    "argument": "DBSubnetGroups[0].SubnetGroupStatus == 'Complete'",
-                    "state": "success"
-                },
-                {
-                    "matcher": "error",
-                    "expected": "DBSubnetGroupNotFoundFault",
-                    "state": "retry"
-                },
-            ]
-        },
-        "DBSubnetGroupDeleted": {
-            "delay": 5,
-            "maxAttempts": 25,
-            "operation": "DescribeDBSubnetGroups",
-            "acceptors": [
-                {
-                    "matcher": "path",
-                    "expected": True,
-                    "argument": "DBSubnetGroups[0]",
-                    "state": "retry"
-                },
-                {
-                    "matcher": "error",
-                    "expected": "DBSubnetGroupNotFoundFault",
-                    "state": "success"
+                    "state": "success",
+                    "matcher": "pathAll",
+                    "argument": "DBInstances[].DBInstanceStatus",
+                    "expected": "stopped"
                 },
             ]
         }
@@ -290,6 +266,9 @@ def neptune_model(name):
     neptune_models = core_waiter.WaiterModel(waiter_config=neptune_data)
     return neptune_models.get_waiter(name)
 
+def rds_model(name):
+    rds_models = core_waiter.WaiterModel(waiter_config=rds_data)
+    return rds_models.get_waiter(name)
 
 def rds_model(name):
     rds_models = core_waiter.WaiterModel(waiter_config=rds_data)
