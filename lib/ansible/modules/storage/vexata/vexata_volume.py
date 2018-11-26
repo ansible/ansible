@@ -89,12 +89,20 @@ def get_volume(module, array):
         module.fail_json(msg='Error while attempting to retrieve volumes.')
 
 
+def validate_size(module, err_msg):
+    size = module.params.get('size', False)
+    if not size:
+        module.fail_json(msg=err_msg)
+    size = size_to_MiB(size)
+    if size <= 0:
+        module.fail_json(msg='Invalid volume size, must be <integer>[MGT].')
+    return size
+
+
 def create_volume(module, array):
     """"Create a new volume."""
     changed = False
-    size = size_to_MiB(module.params['size'])
-    if size <= 0:
-        module.fail_json(msg='Invalid volume size, must be <integer>[MGT].')
+    size = validate_size(module, err_msg='Size is required to create volume.')
     if module.check_mode:
         module.exit_json(changed=changed)
 
@@ -116,9 +124,7 @@ def create_volume(module, array):
 def update_volume(module, array, volume):
     """Expand the volume size."""
     changed = False
-    if not module.params.get('size', False):
-        module.fail_json(msg='Size is required to update volume')
-    size = size_to_MiB(module.params['size'])
+    size = validate_size(module, err_msg='Size is required to update volume')
     prev_size = volume['volSize']
     if size <= prev_size:
         module.log(msg='Volume expanded size needs to be larger '
@@ -174,17 +180,14 @@ def main():
                            required_together=required_together())
 
     state = module.params['state']
-    size = module.params['size']
-    if size and size_to_MiB(size) < 0:
-        module.fail_json(msg='Volume size should be in M, G, T units')
-
     array = get_array(module)
     volume = get_volume(module, array)
 
-    if state == 'present' and size and not volume:
-        create_volume(module, array)
-    elif state == 'present' and size and volume:
-        update_volume(module, array, volume)
+    if state == 'present':
+        if not volume:
+            create_volume(module, array)
+        else:
+            update_volume(module, array, volume)
     elif state == 'absent' and volume:
         delete_volume(module, array, volume)
     else:
