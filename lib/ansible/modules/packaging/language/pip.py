@@ -513,8 +513,8 @@ class Package:
             name_string = separator.join((name_string, version_string))
         try:
             self._requirement = Requirement.parse(name_string)
-            # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
-            if self._requirement.project_name == "distribute":
+            # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
+            if self._requirement.project_name == "distribute" and "setuptools" in name_string:
                 self.package_name = "setuptools"
                 self._requirement.project_name = "setuptools"
             else:

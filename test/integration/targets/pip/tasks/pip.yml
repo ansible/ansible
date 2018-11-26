@@ -499,3 +499,15 @@
   pip:
     name: "{{ pip_test_packages }}"
     state: absent
+
+# https://github.com/ansible/ansible/issues/47198
+- name: try to remove distribute
+  pip:
+    state: "absent"
+    name: "distribute"
+  ignore_errors: yes
+  register: remove_distribute
+
+- name: inspect the cmd
+  assert:
+    that: "'distribute' in remove_distribute.cmd"
