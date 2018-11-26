@@ -17,7 +17,7 @@ version_added: "2.8"
 author: "Sumit Jaiswal (@sjaiswal)"
 short_description: Configure Infoblox NIOS DHCP Fixed Address
 description:
-  - A fixed address is a specific IP address that a DHCP server 
+  - A fixed address is a specific IP address that a DHCP server
     always assigns when a lease request comes from a particular
     MAC address of the clien.
   - Supports both IPV4 and IPV6 internet protocols
@@ -27,9 +27,8 @@ extends_documentation_fragment: nios
 options:
   name:
     description:
-      - Specifies the fully qualified hostname to add or remove from
-        the system. User can also update the hostname as it is possible
-        to pass a dict containing I(new_name), I(old_name). See examples.
+      - Specifies the hostname with which fixed DHCP ip-address is stored
+        for respective mac.
     required: false
   ipaddr:
     description:
@@ -41,12 +40,10 @@ options:
     required: true
   network:
     description:
-      - Specifies the network to add or remove from the system.  The value
-        should use CIDR notation.
+      - Specifies the network range in which ipaddr exists.
     required: true
     aliases:
-      - name
-      - cidr
+      - network
   network_view:
     description:
       - Configures the name of the network view to associate with this
@@ -195,6 +192,7 @@ def options(module):
         options.append(opt)
     return options
 
+
 def validate_ip_addr_type(ip, arg_spec, module):
     '''This function will check if the argument ip is type v4/v6 and return appropriate infoblox network type
     '''
@@ -208,6 +206,7 @@ def validate_ip_addr_type(ip, arg_spec, module):
         arg_spec['ipv6addr'] = arg_spec.pop('ipaddr')
         module.params['ipv6addr'] = module.params.pop('ipaddr')
         return NIOS_IPV6_FIXED_ADDRESS, arg_spec, module
+
 
 def main():
     ''' Main entry point for module execution
