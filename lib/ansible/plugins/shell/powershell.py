@@ -44,6 +44,7 @@ import base64
 import os
 import re
 import shlex
+import pkgutil
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
@@ -78,8 +79,10 @@ begin {
     # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
     # exec runspace, capture output, cleanup, return module output
 
-    # NB: do not adjust the following line- it is replaced when doing non-streamed module output
-    $json_raw = ''
+    # only init and stream in $json_raw if it wasn't set by the enclosing scope
+    if (-not $(Get-Variable "json_raw" -ErrorAction SilentlyContinue)) {
+        $json_raw = ''
+    }
 }
 process {
     $input_as_string = [string]$input
@@ -929,9 +932,11 @@ namespace AnsibleBecome
 $become_exec_wrapper = {
     chcp.com 65001 > $null
     $ProgressPreference = "SilentlyContinue"
-    $exec_wrapper_str = [System.Console]::In.ReadToEnd()
-    $exec_wrapper = [ScriptBlock]::Create($exec_wrapper_str)
-    &$exec_wrapper
+    $raw = [System.Console]::In.ReadToEnd()
+    $split_parts = $raw.Split(@("`0`0`0`0"), 0)
+    If (-not $split_parts.Length -eq 2) { throw "invalid payload" }
+    $json_raw = $split_parts[1]
+    &([ScriptBlock]::Create($split_parts[0]))
 }
 
 $exec_wrapper = {
@@ -955,10 +960,9 @@ $exec_wrapper = {
     # stream JSON including become_pw, ps_module_payload, bin_module_payload, become_payload, write_payload_path, preserve directives
     # exec runspace, capture output, cleanup, return module output. Do not change this as it is set become before being passed to the
     # become process.
-    $json_raw = ""
 
-    If (-not $json_raw) {
-        Write-Error "no input given" -Category InvalidArgument
+    if (-not $(Get-Variable "json_raw" -ErrorAction SilentlyContinue)) {
+        Write-Error "no payload supplied" -Category InvalidArgument
     }
 
     $payload = ConvertTo-HashtableFromPsCustomObject -myPsObject (ConvertFrom-Json $json_raw)
@@ -1095,7 +1099,7 @@ Function Run($payload) {
     # wrapper which calls our read wrapper passed through stdin. Cannot use 'powershell -' as
     # the $ErrorActionPreference is always set to Stop and cannot be changed
     $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
-    $exec_wrapper = $exec_wrapper.ToString().Replace('$json_raw = ""', "`$json_raw = '$payload_string'")
+    $exec_wrapper = $exec_wrapper.ToString() + "`0`0`0`0" + $payload_string
     $rc = 0
 
     $exec_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($become_exec_wrapper.ToString()))
@@ -1584,9 +1588,11 @@ class ShellModule(ShellBase):
         return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
+        bootstrap_wrapper = pkgutil.get_data("ansible.executor.powershell", "bootstrap_wrapper.ps1")
+
         # pipelining bypass
         if cmd == '':
-            return '-'
+            return self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
 
         # non-pipelining
 
@@ -1594,8 +1600,11 @@ class ShellModule(ShellBase):
         cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
             if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
+                # we're running a module via the bootstrap wrapper
                 cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
-            cmd_parts.insert(0, '&')
+            wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper,
+                                                                               strict_mode=False, preserve_rc=False)
+            return wrapper_cmd
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
         elif not shebang:
