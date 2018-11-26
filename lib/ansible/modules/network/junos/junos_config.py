@@ -125,7 +125,7 @@ options:
   check_commit:
     description:
       - This argument will check correctness of syntax; do not apply changes.
-    note: This argument can be used to confirm verified configuration done via commit confirmed operation
+      - Note that this argument can be used to confirm verified configuration done via commit confirmed operation
     type: bool
     default: 'no'
     version_added: "2.8"
