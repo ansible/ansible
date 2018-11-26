@@ -34,6 +34,7 @@ options:
     description:
     - Regex pattern that can be used to identify a specific secret or set of secrets.
 notes:
+  - Each lookup option is mutually exclusive.
   - Leaving all parameters empty will cause the module to look up the information of all secrets stored
     in Secrets Manager.
 extends_documentation_fragment:
