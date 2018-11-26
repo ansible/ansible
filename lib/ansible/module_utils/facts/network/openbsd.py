@@ -36,6 +36,30 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork):
         current_if['macaddress'] = words[1]
         current_if['type'] = 'ether'
 
+    def get_media_select(self, media_string):
+        last = media_string.find('(')
+        media_select = media_string[:last].rstrip() if last != -1 else media_string
+        return media_select
+
+    def get_media_type_and_options(self, media_string):
+        first = media_string.find('(') + 1
+        media_type_opts = media_string[first::].rstrip(')') if first else ''
+        return media_type_opts
+
+    def parse_media_line(self, words, current_if, ips):
+        # not sure if this is useful - we also drop information
+        current_if['media'] = words[1]
+
+        media_string = ' '.join(words[2:])
+        if len(words) > 2:
+            current_if['media_select'] = self.get_media_select(media_string)
+
+        if len(words) > 3:
+            media_type_opts_list = self.get_media_type_and_options(media_string).split(' ')
+            current_if['media_type'] = media_type_opts_list[0]
+            if len(media_type_opts_list) > 1:
+                current_if['media_options'] = media_type_opts_list[1].split(',')
+
 
 class OpenBSDNetworkCollector(NetworkCollector):
     _fact_class = OpenBSDNetwork
