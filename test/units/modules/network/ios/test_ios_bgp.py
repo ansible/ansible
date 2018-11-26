@@ -102,4 +102,3 @@ class TestIosBgpModule(TestIosModule):
                                                                     redistribute=[dict(protocol='ospf', id='145', metric='120',
                                                                                        route_map='RMAP2')])]))
         self.execute_module()
-        
