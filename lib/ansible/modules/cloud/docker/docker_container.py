@@ -1438,6 +1438,9 @@ class Container(DockerBaseClass):
 
         differences = []
         for key, value in config_mapping.items():
+            minimal_version = self.parameters.client.option_minimal_versions.get(key, {})
+            if not minimal_version.get('supported', True):
+                continue
             compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
             self.log('check differences %s %s vs %s (%s)' % (key, getattr(self.parameters, key), str(value), compare))
             if getattr(self.parameters, key, None) is not None:
@@ -2223,7 +2226,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Helper function to detect whether any specified network uses ipv4_address or ipv6_address
         def detect_ipvX_address_usage():
             for network in self.module.params.get("networks") or []:
-                if 'ipv4_address' in network or 'ipv6_address' in network:
+                if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
                     return True
             return False
 
