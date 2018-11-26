@@ -53,6 +53,7 @@ Working with the Ansible repo
 * I'm using an older version of Ansible and want a bug fixed in my version that's already been fixed on the ``devel`` branch. How do I :ref:`backport a bugfix PR <backport_process>`?
 * I have an open pull request with a failing test. How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?
 * I'm ready to step up as a module maintainer. What are the :ref:`guidelines for maintainers <maintainers>`?
+* A module I maintain is obsolete. How do I :ref:`deprecate a module <deprecating_modules>`?
 
 Traditional Table of Contents
 =============================
