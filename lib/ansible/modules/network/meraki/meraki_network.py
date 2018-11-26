@@ -47,8 +47,14 @@ options:
         description:
         - Type of network device network manages.
         - Required when creating a network.
-        choices: [appliance, combined, switch, wireless]
+        choices: [appliance, switch, wireless]
         aliases: [net_type]
+    types:
+        description:
+        - Type of network device network manages.
+        - Identical to type, but used when multiple network types are needed in a single network.
+        aliases: ['net_types']
+        version_added: '2.8'
     tags:
         description:
         - Comma delimited list of tags to assign to network.
@@ -89,6 +95,18 @@ EXAMPLES = r'''
     org_name: YourOrg
     net_name: MyNet
     type: switch
+    timezone: America/Chicago
+    tags: production, chicago
+  delegate_to: localhost
+- name: Create combined network named MyNet in the YourOrg organization
+  meraki_network:
+    auth_key: abc12345
+    state: present
+    org_name: YourOrg
+    net_name: MyNet
+    types:
+      - switch
+      - appliance
     timezone: America/Chicago
     tags: production, chicago
   delegate_to: localhost
@@ -164,6 +182,16 @@ def construct_tags(tags):
     return None
 
 
+def list_to_string(data):
+    new_string = str()
+    for i, item in enumerate(data):
+        if i == len(new_string) - 1:
+            new_string += i
+        else:
+            new_string = "{0}{1} ".format(new_string, item)
+    return new_string
+
+
 def main():
 
     # define the available arguments/parameters that a user can pass to
@@ -173,6 +201,7 @@ def main():
     argument_spec.update(
         net_id=dict(type='str'),
         type=dict(type='str', choices=['wireless', 'switch', 'appliance', 'combined'], aliases=['net_type']),
+        types=dict(type='list', aliases=['net_types']),
         tags=dict(type='str'),
         timezone=dict(type='str'),
         net_name=dict(type='str', aliases=['name', 'network']),
@@ -220,8 +249,8 @@ def main():
             payload['name'] = meraki.params['net_name']
         if meraki.params['type']:
             payload['type'] = meraki.params['type']
-            if meraki.params['type'] == 'combined':
-                payload['type'] = 'switch wireless appliance'
+        elif meraki.params['types']:
+            payload['type'] = list_to_string(meraki.params['types'])
         if meraki.params['tags']:
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
