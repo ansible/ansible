@@ -36,7 +36,7 @@ Going deeper
 * I think Ansible is broken. How do I :ref:`report a bug <reporting_bugs>`?
 * I need functionality Ansible doesn't offer. How do I :ref:`request a feature <request_features>`?
 * I'm waiting for a particular feature. How do I see what's :ref:`planned for future Ansible Releases <roadmaps>`?
-* I have a specific Ansible interest or expertise (for example, VMWare, linode, etc.). How do I get involved in a :ref:`working group <working_group_list>`?
+* I have a specific Ansible interest or expertise (for example, VMware, Linode, etc.). How do I get involved in a :ref:`working group <working_group_list>`?
 * I'd like to participate in conversations about features and fixes. How do I review GitHub issues and pull requests?
 * I found a typo or another problem on docs.ansible.com. How can I :ref:`improve the documentation <community_documentation_contributions>`?
 
@@ -44,12 +44,12 @@ Going deeper
 Working with the Ansible repo
 =============================
 
-* I want to :ref:`set up my Python development environment <environment_setup>`.
+* I want to code my first changes to Ansible. How do I :ref:`set up my Python development environment <environment_setup>`?
 * I'd like to get more efficient as a developer. How can I find :ref:`editors, linters, and other tools <other_tools_and_programs>` that will support my Ansible development efforts?
-* I need guidance on :ref:`coding in Ansible <developer_guide>`.
+* I want my PR to meet Ansible's guidelines. Where can I find  guidance on :ref:`coding in Ansible <developer_guide>`?
 * I want to :ref:`understand the development cycle <community_development_process>`.
-* I'd like to :ref:`contribute a group of related modules <developing_modules_in_groups>`.
-* I want to :ref:`rebase my Pull Request <rebase_guide>`.
+* I'd like to connect Ansible to a new API or other resource. How do I :ref:`contribute a group of related modules <developing_modules_in_groups>`?
+* My pull request is marked ``needs_rebase``. How do I :ref:`rebase my PR <rebase_guide>`?
 * I'm using an older version of Ansible and want a bug fixed in my version that's already been fixed on the ``devel`` branch. How do I :ref:`backport a bugfix PR <backport_process>`?
 * I have an open pull request with a failing test. How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?
 * I'm ready to step up as a module maintainer. What are the :ref:`guidelines for maintainers <maintainers>`?
