@@ -1,11 +1,12 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Davide Blasi (@davegarath)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import atexit
 import ssl
 
 from ansible.module_utils.basic import env_fallback
@@ -37,8 +38,15 @@ def spacewalk_argument_spec():
 class Channel(object):
     def __init__(self, module):
         self.module = module
-        self.client, self.session = connect_to_api(module)
         self.channels = {'spacewalk_channels': {}}
+        self.client, self.session = connect_to_api(module)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, extype, exvalue, tb):
+        self.client.auth.logout(self.session)
+        return True
 
     def get_all_channels(self):
         """
@@ -152,8 +160,15 @@ class Repository(object):
 
     def __init__(self, module):
         self.module = module
-        self.client, self.session = connect_to_api(module)
         self.repositories = {'spacewalk_repositories': {}}
+        self.client, self.session = connect_to_api(module)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, extype, exvalue, tb):
+        self.client.auth.logout(self.session)
+        return True
 
     def get_all_repositories(self):
         """
@@ -278,7 +293,7 @@ class Repository(object):
         self.module.fail_json(repository=label, action='Update', msg='Error Change not implemented yet: %s' % changes)
 
 
-def connect_to_api(module, disconnect_atexit=True):
+def connect_to_api(module):
     url = module.params['url']
     login = module.params['login']
     password = module.params['password']
@@ -318,14 +333,7 @@ def connect_to_api(module, disconnect_atexit=True):
     except Exception as generic_exc:
         module.fail_json(msg="Login invalid while connecting to Spacewalk URL: %s : %s" % (url, generic_exc))
 
-    if disconnect_atexit:
-        atexit.register(spacelk_logout, client, session)
-
     return (client, session)
-
-
-def spacelk_logout(client, session):
-    client.auth.logout(session)
 
 
 class AlreadyExists(Exception):
