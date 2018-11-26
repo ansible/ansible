@@ -1,42 +1,102 @@
+- name: Prepare dummy parameter values
+  set_fact:
+    gateway_ip_address: 1.2.3.4
+    peer_asn: 65000
+    bgp_peering_address: 169.254.53.201
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+
 - name: Create local network gateway
   azure_rm_localnetworkgateway:
-    name: test-local-network-gateway
+    name: lgw{{ rpfx }}
     local_address_prefixes:
       - 10.1.0.0/16
       - 172.100.0.0/16
-    gateway_ip_address: 35.200.187.67
+    gateway_ip_address: "{{ gateway_ip_address }}"
     tags:
       testing: testing
       delete: on-exit
-    resource_group: "{{ resource_group }}"
-
-- name: Update local network gateway with bgp settings
-  azure_rm_localnetworkgateway:
-    name: test-local-network-gateway
-    local_address_prefixes:
-      - 10.1.0.0/16
-      - 172.100.0.0/16
-    gateway_ip_address: 35.200.187.67
-    bgp_settings:
-      asn: 65000
-      bgp_peering_address: 169.254.53.201
     resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
     that: output.changed
 
+- name: Create local network gateway(check-mode)
+  azure_rm_localnetworkgateway:
+    name: lgw{{ rpfx }}
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    gateway_ip_address: "{{ gateway_ip_address }}"
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  check_mode: yes
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Re-create local network gateway
+  azure_rm_localnetworkgateway:
+    name: lgw{{ rpfx }}
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    gateway_ip_address: "{{ gateway_ip_address }}"
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: output.changed == false
+
+- name: Update local network gateway with bgp settings
+  azure_rm_localnetworkgateway:
+    name: lgw{{ rpfx }}
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    gateway_ip_address: "{{ gateway_ip_address }}"
+    bgp_settings:
+      asn: "{{ peer_asn }}"
+      bgp_peering_address: "{{ bgp_peering_address }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Re-create local network gateway with bgp settings
+  azure_rm_localnetworkgateway:
+    name: lgw{{ rpfx }}
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    gateway_ip_address: "{{ gateway_ip_address }}"
+    bgp_settings:
+      asn: "{{ peer_asn }}"
+      bgp_peering_address: "{{ bgp_peering_address }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: output.changed == false
+
 - name: Update local network gateway with address prefixes and tags
   azure_rm_localnetworkgateway:
-    name: test-local-network-gateway
+    name: lgw{{ rpfx }}
     local_address_prefixes:
       - 10.1.0.0/16
       - 172.100.0.0/16
       - 10.107.0.0/16
-    gateway_ip_address: 35.200.187.67
+    gateway_ip_address: "{{ gateway_ip_address }}"
     bgp_settings:
-      asn: 65000
-      bgp_peering_address: 169.254.53.201
+      asn: "{{ peer_asn }}"
+      bgp_peering_address: "{{ bgp_peering_address }}"
     resource_group: "{{ resource_group }}"
     tags:
       testing2: testing2
@@ -47,17 +107,19 @@
 
 - name: Catch required argument gateway_ip_address
   azure_rm_localnetworkgateway:
-    name: test-local-network-gateway
+    name: lgw{{ rpfx }}
     resource_group: "{{ resource_group }}"
-    gateway_ip_address: 35.200.187.67
+    gateway_ip_address: "{{ gateway_ip_address }}"
   register: output
   ignore_errors: yes
 
 - assert:
-    that: output.failed
+    that:
+      - "'missing: gateway_ip_address' in output.msg"
+      - output.changed == false
 
 - name: Delete local network gateway
   azure_rm_localnetworkgateway:
-    name: test-local-network-gateway
+    name: lgw{{ rpfx }}
     resource_group: "{{ resource_group }}"
     state: absent
