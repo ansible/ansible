@@ -290,4 +290,3 @@ class LookupModule(LookupBase):
             ret.append(value)
 
         return ret
-
