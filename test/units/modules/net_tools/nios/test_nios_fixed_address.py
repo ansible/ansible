@@ -63,7 +63,7 @@ class TestNiosNetworkModule(TestNiosModule):
         test_object = None
         test_spec = {
             "name": {},
-            "ipaddr" : {"ib_req": True},
+            "ipaddr": {"ib_req": True},
             "mac": {"ib_req": True},
             "network": {"ib_req": True},
             "network_view": {},
@@ -87,7 +87,7 @@ class TestNiosNetworkModule(TestNiosModule):
                 "comment": "test comment",
                 "name": "test_fa",
                 "_ref": "network/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
-                "ipaddr" : "192.168.10.1",
+                "ipaddr": "192.168.10.1",
                 "mac": "08:6d:41:e8:fd:e8",
                 "network": "192.168.10.0/24",
                 "network_view": "default",
@@ -97,7 +97,7 @@ class TestNiosNetworkModule(TestNiosModule):
 
         test_spec = {
             "name": {},
-            "ipaddr" : {"ib_req": True},
+            "ipaddr": {"ib_req": True},
             "mac": {"ib_req": True},
             "network": {"ib_req": True},
             "network_view": {},
@@ -129,7 +129,7 @@ class TestNiosNetworkModule(TestNiosModule):
 
         test_spec = {
             "name": {},
-            "ipaddr" : {"ib_req": True},
+            "ipaddr": {"ib_req": True},
             "mac": {"ib_req": True},
             "network": {"ib_req": True},
             "network_view": {},
@@ -151,7 +151,7 @@ class TestNiosNetworkModule(TestNiosModule):
 
         test_spec = {
             "name": {},
-            "ipaddr" : {"ib_req": True},
+            "ipaddr": {"ib_req": True},
             "mac": {"ib_req": True},
             "network": {"ib_req": True},
             "network_view": {},
@@ -186,7 +186,7 @@ class TestNiosNetworkModule(TestNiosModule):
 
         test_spec = {
             "name": {},
-            "ipaddr" : {"ib_req": True},
+            "ipaddr": {"ib_req": True},
             "mac": {"ib_req": True},
             "network": {"ib_req": True},
             "network_view": {},
