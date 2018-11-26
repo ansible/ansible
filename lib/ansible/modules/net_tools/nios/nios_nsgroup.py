@@ -16,7 +16,9 @@ DOCUMENTATION = '''
 module: nios_nsgroup
 short_description: Configure InfoBlox DNS Nameserver Groups
 extends_documentation_fragment: nios
-author: Sumit Jaiswal (@sjaiswal)
+author: 
+  - Erich Birngruber (@ebirn)
+  - Sumit Jaiswal (@sjaiswal)
 version_added: "2.8"
 description:
   - Adds and/or removes nameserver groups form Infoblox NIOS servers.
