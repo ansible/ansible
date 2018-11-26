@@ -151,10 +151,10 @@ import sys
 from abc import abstractmethod
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
+ from ansible.module_utils._text import to_native, to_text
 
 
-class PkgMgr(object):
+class PkgMgr:
 
     def __init__(self, module):
 
@@ -169,8 +169,8 @@ class PkgMgr(object):
         pass
 
     @abstractmethod
-    def get_package_details(self):
-        pass
+    def get_package_details(self, package):
+        raise NotImplementedError
 
     def get_packages(self):
 
@@ -310,7 +310,7 @@ class PORTAGE(CLIMgr):
     def list_installed(self):
         rc, out, err = self.m.run_command(' '.join([self.cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
         if rc != 0 or err:
-            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+            raise RuntimeError("Unable to list packages rc=%s : %s" % (rc, to_native(err)))
         return out.splitlines()
 
     def get_package_details(self, package):
