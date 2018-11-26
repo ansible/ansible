@@ -27,6 +27,10 @@
     service_offering: "{{ cs_common_service_offering }}"
     zone: "{{ cs_common_zone_adv }}"
     state: started
+  register: testvm_nopass
+  until: testvm_nopass is success
+  retries: 12
+  delay: 10
 - name: stop test VM
   cs_instance:
     name: test-nopassword
