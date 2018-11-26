@@ -1,0 +1,158 @@
+---
+- debug: msg="START ios_bgp.yaml cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Make sure BGP is not configured before running tests - SetUp
+  ios_config: &rm_config
+    lines:
+      - no router bgp 65535
+      - no router bgp 65536
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: Configure BGP process and Router ID
+  ios_bgp: &bgp_rid
+    bgp_as: 65535
+    router_id: 192.168.0.1
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"router bgp 65535" in result.commands'
+      - '"bgp router-id 192.168.0.1" in result.commands'
+
+- name: Configure BGP process and Router ID again (idempotent)
+  ios_bgp: *bgp_rid
+  register: result
+
+- assert: &false
+    that:
+      - 'result.changed == false'
+
+- name: Replace existing BGP configuration
+  ios_bgp:
+    bgp_as: 65536
+    state: replace
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no router bgp 65535" in result.commands'
+      - '"router bgp 65536" in result.commands'
+
+- name: Configure IBGP and EBGP Neighbors
+  ios_bgp: &bgp_nbr
+    bgp_as: 65536
+    neighbors:
+      - neighbor: 192.168.0.100
+        remote_as: 65536
+        ebgp_multihop: 5
+
+      - neighbor: 192.168.0.101
+        remote_as: 65536
+        route_reflector_client: True
+        description: RRC_Neighbor
+
+      - neighbor: 192.168.0.102
+        remote_as: 500
+        timers:
+          keepalive: 300
+          holdtime: 350
+          min_neighbor_holdtime: 330
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"router bgp 65536" in result.commands'
+      - '"neighbor 192.168.0.100 remote-as 65536" in result.commands'
+      - '"neighbor 192.168.0.100 ebgp-multihop 5" in result.commands'
+      - '"neighbor 192.168.0.101 remote-as 65536" in result.commands'
+      - '"neighbor 192.168.0.101 route-reflector-client" in result.commands'
+      - '"neighbor 192.168.0.101 description RRC_Neighbor" in result.commands'
+      - '"neighbor 192.168.0.102 remote-as 500" in result.commands'
+      - '"neighbor 192.168.0.102 timers 300 350 330" in result.commands'
+
+- name: Configure IBGP and EBGP Neighbors (idempotent)
+  ios_bgp: *bgp_nbr
+  register: result
+
+- assert: *false
+
+- name: Configure BGP Networks
+  ios_bgp: &bgp_net
+    bgp_as: 65536
+    networks:
+      - network: 10.0.0.0
+        route_map: RMAP1
+
+      - network: 11.0.0.0
+        mask: 255.255.255.0
+        route_map: RMAP2
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"router bgp 65536" in result.commands'
+      - '"network 10.0.0.0 route-map RMAP1" in result.commands'
+      - '"network 11.0.0.0 mask 255.255.255.0 route-map RMAP2" in result.commands'
+
+- name: Configure BGP Networks (idempotent)
+  ios_bgp: *bgp_net
+  register: result
+
+- assert: *false
+
+- name: Configure BGP Address Family
+  ios_bgp: &bgp_af
+    bgp_as: 65536
+    address_families:
+      - name: ipv4
+        cast: unicast
+        auto_summary: True
+        synchronization: True
+        networks:
+          - network: 192.168.2.0
+            mask: 255.255.254.0
+        redistribute:
+          - protocol: eigrp
+            id: 451
+            route_map: RMAP_1
+            metric: 20
+          - protocol: ospf
+            id: 358
+            route_map: RMAP_2
+            metric: 10
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"router bgp 65536" in result.commands'
+      - '"address-family ipv4" in result.commands'
+      - '"network 192.168.2.0 mask 255.255.254.0" in result.commands'
+      - '"redistribute eigrp 451 metric 20 route-map RMAP_1" in result.commands'
+      - '"redistribute ospf 358 metric 10 route-map RMAP_2" in result.commands'
+
+- name: Configure BGP Address Family (Idempotent)
+  ios_bgp: *bgp_af
+  register: result
+
+- assert: *false
+
+- name: TearDown
+  ios_config: *rm_config
+  ignore_errors: yes
+
+- debug: msg="END ios_bgp cli/basic.yaml on connection={{ ansible_connection }}"

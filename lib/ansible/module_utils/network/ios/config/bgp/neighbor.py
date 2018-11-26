@@ -84,4 +84,3 @@ class BgpNeighbor(ConfigBase):
         resp = timer.render(self.neighbor, config)
         if resp:
             return resp
-

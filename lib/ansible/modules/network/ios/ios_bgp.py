@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
@@ -48,8 +47,8 @@ options:
       - Enable/Disable logging neighbor up/down and reset reason
     type: bool
   neighbors:
-    description: 
-       - Specifies BGP neighbor related configurations
+    description:
+      - Specifies BGP neighbor related configurations
     suboptions:
       neighbor:
         description:
@@ -61,7 +60,7 @@ options:
         type: int
         required: True
       route_reflector_client:
-        description: 
+        description:
           - Specify a neighbor as a route reflector client
         type: bool
       update_source:
@@ -90,7 +89,7 @@ options:
         suboptions:
           keepalive:
             description:
-              - Frequency (in seconds) with which the Cisco IOS software sends keepalive messages to its peer. 
+              - Frequency (in seconds) with which the Cisco IOS software sends keepalive messages to its peer.
               - The range is from 0 to 65535.
             type: int
             required: True
@@ -133,7 +132,7 @@ options:
         default: present
         choices:
           - present
-          - absent  
+          - absent
   address_families:
     description:
       - Specifies BGP address family related configurations
@@ -144,7 +143,7 @@ options:
         choices:
           - ipv4
           - ipv6
-        required: True 
+        required: True
       cast:
         description:
           - Specifies the type of cast for the address family
@@ -153,6 +152,7 @@ options:
           - unicast
           - multicast
           - labeled-unicast
+        default: unicast
       redistribute:
         description:
           - Specifies the redistribute information from another routing protocol
@@ -160,6 +160,14 @@ options:
           protocol:
             description:
               - Specifies the protocol for configuring redistribute information
+            required: True
+          id:
+            description:
+              - Identifier for the routing protocol for configuring redistribute information
+              - Not valid for protocol - RIP
+          metric:
+            description:
+              - Specifies the metric for redistributed routes
           route_map:
             description:
               - Specifies the route map reference
@@ -190,7 +198,7 @@ options:
             default: present
             choices:
               - present
-              - absent  
+              - absent
       auto_summary:
         description:
           - Enable automatic network number summarization
@@ -198,14 +206,14 @@ options:
       synchronization:
         description:
           - Enable IGP synchronization
-        type: bool    
+        type: bool
       state:
         description:
           - Specifies the state of address family
         default: present
         choices:
           - present
-          - absent  
+          - absent
   state:
     description:
       - Specifies the state of the BGP process configured on the device
@@ -213,6 +221,8 @@ options:
     choices:
       - present
       - absent
+      - replace
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -251,12 +261,16 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.network.ios.config.bgp import get_bgp_as
 from ansible.module_utils.network.ios.config.bgp.process import BgpProcess
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 
 def main():
     """ main entry point for module execution
     """
-    module = AnsibleModule(argument_spec=BgpProcess.argument_spec,
+    argument_spec = BgpProcess.argument_spec
+    argument_spec.update(ios_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     config = get_config(module, flags=['| section bgp'])
@@ -284,6 +298,7 @@ def main():
     result['commands'] = commands
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
