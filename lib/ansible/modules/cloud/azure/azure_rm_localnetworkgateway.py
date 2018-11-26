@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_localnetworkgateway
 
-version_added: "2.7"
+version_added: "2.8"
 
 short_description: Manage Azure local network gateways.
 
@@ -76,10 +76,9 @@ EXAMPLES = '''
         resource_group: testrg
         name: testlocalgw
         local_address_prefixes:
-          - 10.108.0.0/24
-          - 10.109.1.0/29
-          - 10.106.0.0/27
-        gateway_ip_address: 13.71.1.149
+          - 10.1.0.0/16
+          - 172.100.0.0/16
+        gateway_ip_address: 1.2.3.4
         tags:
           common: a
       register: local_network_gateway
@@ -92,34 +91,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-state:
-    description: The current state of the local network gateway.
+id:
+    description: The ID of local network gateway.
     returned: always
-    type: dict
-    example: {
-        "bgp_settings": {
-            "asn": 65000,
-            "bgp_peering_address": "169.254.53.63",
-            "peer_weight": 0
-        },
-        "etag": "W/\"e4e0f965-b04b-11c7-0210-1c1d57c034d2\"",
-        "gateway_ip_address": "35.200.15.12",
-        "id": "/subscriptions/xyz/resourceGroups/test-resource-group/providers/Microsoft.Network/localNetworkGateways/testlgw",
-        "local_network_address_space": {
-            "address_prefixes": [
-                "10.108.0.0/24",
-                "10.108.1.0/24"
-            ]
-        },
-        "location": "centralindia",
-        "name": "testlgw",
-        "provisioning_state": "Succeeded",
-        "resource_guid": "5ad12037-1307-4a23-1f50-ec876d08b26f",
-        "tags": {
-            "foo": "bar"
-        },
-        "type": "Microsoft.Network/localNetworkGateways"
-    }
+    type: str
+    sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Network/localNetworkGateways/xx
 '''
 
 try:
@@ -132,18 +108,10 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
 
 
 bgp_spec = dict(
-    asn=dict(type='int', required=True),
-    bgp_peering_address=dict(required=True),
+    asn=dict(type='int'),
+    bgp_peering_address=dict(),
     peer_weight=dict(type='int', default=0)
 )
-
-
-def bgp_settings_to_dict(bgp_settings):
-    return dict(
-        asn=long(bgp_settings.get('asn')),
-        bgp_peering_address=bgp_settings.get('bgp_peering_address'),
-        peer_weight=bgp_settings.get('peer_weight')
-    )
 
 
 class AzureRMLocalNetworkGateway(AzureRMModuleBase):
@@ -155,13 +123,14 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            local_address_prefixes=dict(type='list'),
-            gateway_ip_address=dict(required=True),
-            bgp_settings=dict(type='dict', default=None, options=bgp_spec),
+            local_address_prefixes=dict(type='list', default=[]),
+            gateway_ip_address=dict(),
+            bgp_settings=dict(type='dict', options=bgp_spec),
         )
 
         required_if = [
-            ('state', 'present', ['gateway_ip_address'])
+            ('state', 'present', ['name', 'gateway_ip_address']),
+            ('state', 'absent', ['name'])
         ]
 
         self.resource_group = None
@@ -172,10 +141,7 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
         self.local_address_prefixes = None
         self.bgp_settings = None
 
-        self.results = dict(
-            changed=False,
-            state=dict()
-        )
+        self.results = dict(changed=False)
 
         super(AzureRMLocalNetworkGateway, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                          supports_check_mode=True,
@@ -186,7 +152,6 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
-
         changed = False
         results = dict()
 
@@ -194,35 +159,31 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
         if not self.location:
             self.location = resource_group.location
 
-        try:
-            lgw = self.network_client.local_network_gateways.get(self.resource_group, self.name)
-            self.check_provisioning_state(lgw, self.state)
-            results = lgw.as_dict()
+        results = self.get_lgw()
+        if not results:
+            changed = True if self.state == 'present' else False
+        else:
             if self.state == 'present':
-                update_tags, results['tags'] = self.update_tags(results['tags'])
+                update_tags, results['tags'] = self.update_tags(results.get('tags', None))
                 if update_tags:
                     changed = True
                 if results['gateway_ip_address'] != self.gateway_ip_address:
                     changed = True
-                self.bgp_settings = bgp_settings_to_dict(self.bgp_settings) if self.bgp_settings else None
-                if self.bgp_settings != results.get('bgp_settings'):
+                bgp_settings = self.bgp_settings if self.bgp_settings else None
+                if bgp_settings != results.get('bgp_settings', None):
                     changed = True
-                self.local_address_prefixes = sorted(self.local_address_prefixes) if self.local_address_prefixes else []
-                if sorted(results['local_network_address_space']['address_prefixes']) != self.local_address_prefixes:
+                if sorted(results['local_network_address_space']['address_prefixes']) != sorted(self.local_address_prefixes):
                     changed = True
-            elif self.state == 'absent':
+            else:
                 self.log("CHANGED: local network gateway exists but requested state is 'absent'")
-                changed = True
-        except CloudError:
-            if self.state == 'present':
-                self.log("CHANGED: VPN Gateway {0} does not exist but requested state is 'present'".format(self.name))
                 changed = True
 
         self.results['changed'] = changed
-        self.results['state'] = results
-
+        self.results['id'] = None
         if self.check_mode:
+            self.results['changed'] = True
             return self.results
+
         if changed:
             if self.state == 'present':
                 lgw_bgp_settings = self.network_models.BgpSettings(
@@ -240,9 +201,10 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
                 )
                 if self.tags:
                     lgw.tags = self.tags
-                self.results['state'] = self.create_or_update_lgw(lgw)
+                lgw = self.create_or_update_lgw(lgw)
+                self.results['id'] = lgw.get('id', None)
             else:
-                self.results['state'] = self.delete_lgw()
+                self.delete_lgw()
         return self.results
 
     def create_or_update_lgw(self, lgw):
@@ -250,16 +212,30 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
             poller = self.network_client.local_network_gateways.create_or_update(self.resource_group, self.name, lgw)
             new_lgw = self.get_poller_result(poller)
             return new_lgw.as_dict()
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error creating or updating local network gateway {0} - {1}".format(self.name, str(exc)))
 
     def delete_lgw(self):
         try:
             poller = self.network_client.local_network_gateways.delete(self.resource_group, self.name)
             self.get_poller_result(poller)
-        except Exception as exc:
+        except CloudError as exc:
             self.fail("Error deleting local network gateway {0} - {1}".format(self.name, str(exc)))
         return True
+
+    def get_lgw(self):
+        lgw = None
+        try:
+            lgw = self.network_client.local_network_gateways.get(resource_group_name=self.resource_group,
+                                                                 local_network_gateway_name=self.name)
+        except CloudError as exc:
+            if exc.status_code == 404:
+                self.log('Local network gateway {0} does not exist.'.format(self.name))
+            else:
+                self.fail("Error getting local network gateway {0} - {1}".format(self.name, str(exc)))
+        if lgw:
+            return lgw.as_dict()
+        return False
 
 
 def main():
