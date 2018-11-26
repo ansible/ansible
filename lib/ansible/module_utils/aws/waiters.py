@@ -204,6 +204,50 @@ eks_data = {
     }
 }
 
+
+neptune_data = {
+    "version": 2,
+    "waiters": {
+        "DBSubnetGroupAvailable": {
+            "delay": 5,
+            "maxAttempts": 25,
+            "operation": "DescribeDBSubnetGroups",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "DBSubnetGroups[0].SubnetGroupStatus == 'Complete'",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBSubnetGroupNotFoundFault",
+                    "state": "retry"
+                },
+            ]
+        },
+        "DBSubnetGroupDeleted": {
+            "delay": 5,
+            "maxAttempts": 25,
+            "operation": "DescribeDBSubnetGroups",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "DBSubnetGroups[0]",
+                    "state": "retry"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "DBSubnetGroupNotFoundFault",
+                    "state": "success"
+                },
+            ]
+        }
+    }
+}
+
+
 rds_data = {
     "version": 2,
     "waiters": {
@@ -224,29 +268,6 @@ rds_data = {
 }
 
 
-<<<<<<< HEAD
-rds_data = {
-    "version": 2,
-    "waiters": {
-        "DBInstanceStopped": {
-            "delay": 20,
-            "maxAttempts": 60,
-            "operation": "DescribeDBInstances",
-            "acceptors": [
-                {
-                    "state": "success",
-                    "matcher": "pathAll",
-                    "argument": "DBInstances[].DBInstanceStatus",
-                    "expected": "stopped"
-                },
-            ]
-        }
-    }
-}
-
-
-=======
->>>>>>> Adding module to manage database subnet groups on AWS Neptune
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
