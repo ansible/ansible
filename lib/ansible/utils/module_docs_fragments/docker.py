@@ -105,4 +105,6 @@ notes:
       C(DOCKER_TLS), C(DOCKER_TLS_VERIFY) and C(DOCKER_TIMEOUT). If you are using docker machine, run the script shipped
       with the product that sets up the environment. It will set these variables for you. See
       U(https://docker-py.readthedocs.io/en/stable/machine/) for more details.
+    - When connecting to Docker daemon with TLS, you might need to install additional Python packages.
+      For the Docker SDK for Python, version 2.4 or newer, this can be done by installing C(docker[tls]) with M(pip).
 '''
