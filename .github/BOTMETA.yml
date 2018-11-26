@@ -48,7 +48,9 @@ files:
   $modules/cloud/amazon/cloudformation.py: ryansb tedder
   $modules/cloud/amazon/cloudfront_facts.py: willthames
   $modules/cloud/amazon/cloudtrail.py: $team_ansible
-  $modules/cloud/amazon/ec2.py: $team_ansible
+  $modules/cloud/amazon/ec2.py:
+    maintainers: $team_ansible
+    ignored: skvidal
   $modules/cloud/amazon/ec2_ami.py: willthames
   $modules/cloud/amazon/ec2_asg.py: $team_ansible s-hertel ryansb
   $modules/cloud/amazon/ec2_group.py: $team_ansible
@@ -114,7 +116,7 @@ files:
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: analbeard
   $modules/cloud/misc/ovirt.py:
-    ignored: vincentvdk
+    ignored: vincentvdk skvidal
     maintainers: joshainglis karmab machacekondra mwperina
   $modules/cloud/misc/virt.py: $team_ansible
   $modules/cloud/misc/xenserver_facts.py:
@@ -180,7 +182,9 @@ files:
     notified: cyberark-bizdev
   $modules/identity/ipa/: $team_ipa
   $modules/identity/keycloak/: eikef
-  $modules/inventory/add_host.py: $team_ansible
+  $modules/inventory/add_host.py:
+    ignored: skvidal
+    maintainers: $team_ansible
   $modules/inventory/group_by.py: $team_ansible
   $modules/messaging/rabbitmq/: $team_rabbitmq
   $modules/monitoring/datadog_event.py:
@@ -323,7 +327,9 @@ files:
   $modules/system/interfaces_file.py: obourdon
   $modules/system/modprobe.py:
     ignored: stygstra
-  $modules/system/mount.py: $team_ansible jtyr
+  $modules/system/mount.py:
+    maintainers: $team_ansible jtyr
+    ignored: skvidal
   $modules/system/ohai.py: $team_ansible
   $modules/system/osx_defaults.py:
     ignored: frenck
