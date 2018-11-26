@@ -125,6 +125,7 @@ options:
   check_commit:
     description:
       - This argument will check correctness of syntax; do not apply changes.
+        NOTE: This argument can be used to confirm verified configuration done via commit confirmed operation
     type: bool
     default: 'no'
     version_added: "2.8"
@@ -403,10 +404,7 @@ def main():
                         result['diff'] = {'prepared': diff}
 
         elif module.params['check_commit']:
-            kwargs = {
-                'check': True
-            }
-            commit_configuration(module, **kwargs)
+            commit_configuration(module, check=True)
 
         elif module.params['confirm_commit']:
             with locked_config(module):
