@@ -370,6 +370,9 @@ def main():
     seen = set()
     for pkgmgr in managers:
 
+        if found and strategy == 'first':
+            break
+
         # dedupe as per above
         if pkgmgr in seen:
             continue
@@ -384,9 +387,6 @@ def main():
                 if pkgmgr in module.params['manager']:
                     module.warn('Requested package manager %s was not usable by this module' % pkgmgr)
                 continue
-
-            if found and strategy == 'first':
-                break
 
         except Exception as e:
             if pkgmgr in module.params['manager']:
