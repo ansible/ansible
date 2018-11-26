@@ -7,6 +7,7 @@ __metaclass__ = type
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Iterable, Mapping
+from ansible.module_utils.common.collections import is_iterable
 
 from ansible.module_utils.six import (
     binary_type,
@@ -48,7 +49,7 @@ def _return_datastructure_name(obj):
         for element in obj.items():
             for subelement in _return_datastructure_name(element[1]):
                 yield subelement
-    elif isinstance(obj, Iterable):
+    elif is_iterable(obj):
         for element in obj:
             for subelement in _return_datastructure_name(element):
                 yield subelement
