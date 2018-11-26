@@ -1,0 +1,2 @@
+minor_changes:
+- Document Path and Port are mutually exclusive parameters in wait_for module.
