@@ -18,7 +18,7 @@ short_description: Access facts for secrets stored in AWS Secrets Manager.
 description:
     - Access facts for secrets stored in AWS Secrets Manager.
 author: "Aaron Smith (@slapula)"
-version_added: "2.7"
+version_added: "2.8"
 requirements: [ 'botocore>=1.10.0', 'boto3' ]
 options:
   name:
