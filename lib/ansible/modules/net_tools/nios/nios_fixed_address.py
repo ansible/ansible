@@ -119,7 +119,7 @@ EXAMPLES = '''
 - name: configure a ipv6 dhcp fixed address
   nios_fixed_address:
     name: ipv6_fixed
-    ipaddr: 192.168.10.1
+    ipaddr: fe80::1/10
     mac: 08:6d:41:e8:fd:e8
     network: fe80::/64
     network_view: default
