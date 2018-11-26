@@ -850,7 +850,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
         module_json = json.dumps(exec_manifest)
 
-        b_module_data = exec_wrapper.replace(b"$json_raw = ''", b"$json_raw = @'\r\n%s\r\n'@" % to_bytes(module_json))
+        # delimit the payload JSON from the wrapper to keep sensitive contents out of scriptblocks (which can be logged)
+        b_module_data = to_bytes(exec_wrapper) + b'\0\0\0\0' + to_bytes(module_json)
 
     elif module_substyle == 'jsonargs':
         module_args_json = to_bytes(json.dumps(module_args))

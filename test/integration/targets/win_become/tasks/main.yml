@@ -1,7 +1,7 @@
 - set_fact:
     become_test_username: ansible_become_test
     become_test_admin_username: ansible_become_admin
-    gen_pw: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+    gen_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
 
 - name: create unprivileged user
   win_user:
@@ -28,6 +28,10 @@
   - SeNetworkLogonRight
   - SeInteractiveLogonRight
   - SeBatchLogonRight
+
+- name: fetch current target date/time for log filtering
+  raw: '[datetime]::now | Out-String'
+  register: test_starttime
 
 - name: execute tests and ensure that test user is deleted regardless of success/failure
   block:
@@ -219,6 +223,7 @@
     assert:
       that:
       - whoami_out is successful
+      - become_test_username in whoami_out.stdout
     when: os_version.stdout_lines[0] == "async"
 
   - name: test failure with string become invalid key
@@ -319,6 +324,18 @@
       - nonascii_output.stdout_lines|count == 1
       - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
       - nonascii_output.stderr == ''
+
+  - name: get PS events containing password or module args created since test start
+    raw: |
+      $dt=[datetime]"{{ test_starttime.stdout|trim }}"
+      (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
+      ? { $_.TimeCreated -ge $dt -and $_.Message -match "{{ gen_pw }}|whoami" }).Count
+    register: ps_log_count
+
+  - name: assert no PS events contain password or module args
+    assert:
+      that:
+      - ps_log_count.stdout | int == 0
 
 # FUTURE: test raw + script become behavior once they're running under the exec wrapper again
 # FUTURE: add standalone playbook tests to include password prompting and play become keywords
