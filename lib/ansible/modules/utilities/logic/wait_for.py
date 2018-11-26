@@ -50,6 +50,7 @@ options:
   port:
     description:
       - Port number to poll.
+      - C(path) and C(port) are mutually exclusive parameters.
   active_connection_states:
     description:
       - The list of TCP connection states which are counted as active connections.
@@ -67,6 +68,7 @@ options:
     version_added: "1.4"
     description:
       - Path to a file on the filesystem that must exist before continuing.
+      - C(path) and C(port) are mutually exclusive parameters.
   search_regex:
     version_added: "1.4"
     description:
@@ -87,7 +89,7 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
-  - Prior to 2.4, testing for the absense of a directory or UNIX socket did not work correctly.
+  - Prior to 2.4, testing for the absence of a directory or UNIX socket did not work correctly.
   - Prior to 2.4, testing for the presence of a file did not work correctly if the remote user did not have read access to that file.
   - Under some circumstances when using mandatory access control, a path may always be treated as being absent even if it exists, but
     can't be modified or created by the remote user either.
