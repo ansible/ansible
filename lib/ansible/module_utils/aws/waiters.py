@@ -287,9 +287,6 @@ def neptune_model(name):
     neptune_models = core_waiter.WaiterModel(waiter_config=neptune_data)
     return neptune_models.get_waiter(name)
 
-def rds_model(name):
-    rds_models = core_waiter.WaiterModel(waiter_config=rds_data)
-    return rds_models.get_waiter(name)
 
 def rds_model(name):
     rds_models = core_waiter.WaiterModel(waiter_config=rds_data)

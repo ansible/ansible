@@ -18,7 +18,7 @@ module: aws_neptune_subnet_group
 short_description: Manage database subnet groups on AWS Neptune.
 description:
     - Create, modify, and destroy database subnet groups on AWS Neptune
-version_added: "2.7"
+version_added: "2.8"
 requirements: [ 'botocore>=1.10.30', 'boto3' ]
 author:
     - "Aaron Smith (@slapula)"
