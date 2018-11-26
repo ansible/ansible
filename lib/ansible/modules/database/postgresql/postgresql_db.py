@@ -460,6 +460,9 @@ def main():
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state in ("dump", "restore"):
+            if not db_exists(cursor, db) and state == "dump":
+                module.fail_json(
+                    msg="database \"{db}\" does not exist".format(db=db))
             method = state == "dump" and db_dump or db_restore
             try:
                 rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
