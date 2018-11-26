@@ -98,11 +98,14 @@ Write-AnsibleLog "INFO - parsed become input, user: '$username', type: '$logon_t
 # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must
 # bootstrap via small wrapper which contains the exec_wrapper passed through the
 # stdin pipe. Cannot use 'powershell -' as the $ErrorActionPreference is always
-# set to Stop and cannot be changed
+# set to Stop and cannot be changed. Also need to split the payload from the wrapper to prevent potentially
+# sensitive content from being logged by the scriptblock logger.
 $bootstrap_wrapper = {
     &chcp.com 65001 > $null
     $exec_wrapper_str = [System.Console]::In.ReadToEnd()
-    $exec_wrapper = [ScriptBlock]::Create($exec_wrapper_str)
+    $split_parts = $exec_wrapper_str.Split(@("`0`0`0`0"), 2, [StringSplitOptions]::RemoveEmptyEntries)
+    Set-Variable -Name json_raw -Value $split_parts[1]
+    $exec_wrapper = [ScriptBlock]::Create($split_parts[0])
     &$exec_wrapper
 }
 $exec_command = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bootstrap_wrapper.ToString()))
@@ -115,8 +118,9 @@ $Payload.actions = $Payload.actions[1..99]
 $Payload.encoded_output = $true
 
 $payload_json = ConvertTo-Json -InputObject $Payload -Depth 99 -Compress
+# delimit the payload JSON from the wrapper to keep sensitive contents out of scriptblocks (which can be logged)
 $exec_wrapper = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.exec_wrapper))
-$exec_wrapper = $exec_wrapper.Replace("`$json_raw = ''", "`$json_raw = @'`r`n$payload_json`r`n'@")
+$exec_wrapper += "`0`0`0`0" + $payload_json
 
 try {
     Write-AnsibleLog "INFO - starting become process '$lp_command_line'" "become_wrapper"
