@@ -26,6 +26,12 @@ options:
     choices: ["auto", "rpm", "apt", "portage", "pkg", "pip"]
     required: False
     type: list
+  strategy:
+    description:
+      - How to query the package managers on the system
+    choices: ['first', 'all']
+    default: 'first'
+    version_added: "2.8"
 version_added: "2.5"
 requirements:
     - For 'portage' support it requires the `qlist` utility, which is part of the 'portage-utils' package.
@@ -249,19 +255,19 @@ class APT(LibMgr):
         return dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture, category=ac_pkg.section, origin=ac_pkg.origins[0].origin)
 
 
-class PIP(CLIMgr):
+class RPM(LibMgr):
 
-    CLI = 'pip'
+    LIB = 'rpm'
 
     def list_installed(self):
-        global module
-        rc, out, err = module.run_command([self.cli, 'list', '-l', '--format=json'])
-        if rc != 0:
-            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
-        return json.loads(out)
+        return self.lib.TransactionSet().dbMatch()
 
     def get_package_details(self, package):
-        return package
+        return dict(name=package[self.lib.RPMTAG_NAME],
+                    version=package[self.lib.RPMTAG_VERSION],
+                    release=package[self.lib.RPMTAG_RELEASE],
+                    epoch=package[self.lib.RPMTAG_EPOCH],
+                    arch=package[self.lib.RPMTAG_ARCH],)
 
 
 class PKG(CLIMgr):
@@ -323,19 +329,19 @@ class PORTAGE(CLIMgr):
         return dict(zip(self.atoms, package.split()))
 
 
-class RPM(LibMgr):
+class PIP(CLIMgr):
 
-    LIB = 'rpm'
+    CLI = 'pip'
 
     def list_installed(self):
-        return self.lib.TransactionSet().dbMatch()
+        global module
+        rc, out, err = module.run_command([self.cli, 'list', '-l', '--format=json'])
+        if rc != 0:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return json.loads(out)
 
     def get_package_details(self, package):
-        return dict(name=package[self.lib.RPMTAG_NAME],
-                    version=package[self.lib.RPMTAG_VERSION],
-                    release=package[self.lib.RPMTAG_RELEASE],
-                    epoch=package[self.lib.RPMTAG_EPOCH],
-                    arch=package[self.lib.RPMTAG_ARCH],)
+        return package
 
 
 def main():
@@ -349,6 +355,7 @@ def main():
     packages = {}
     results = {'warnings': []}
     managers = module.params['manager']
+    strategy = module.params['strategy']
 
     if 'auto' in managers:
         # keep order from user, we do dedupe below
@@ -377,6 +384,10 @@ def main():
                 if pkgmgr in module.params['manager']:
                     module.warn('Requested package manager %s was not usable by this module' % pkgmgr)
                 continue
+
+            if found and strategy == 'first':
+                break
+
         except Exception as e:
             if pkgmgr in module.params['manager']:
                 module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
