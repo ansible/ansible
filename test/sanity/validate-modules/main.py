@@ -930,6 +930,7 @@ class ModuleValidator(Validator):
                     tracebk=trace
                 )
 
+        metadata = None
         if not bool(doc_info['ANSIBLE_METADATA']['value']):
             self.reporter.error(
                 path=self.object_path,
@@ -937,7 +938,6 @@ class ModuleValidator(Validator):
                 msg='No ANSIBLE_METADATA provided'
             )
         else:
-            metadata = None
             if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict):
                 metadata = ast.literal_eval(
                     doc_info['ANSIBLE_METADATA']['value']
@@ -1204,13 +1204,13 @@ class ModuleValidator(Validator):
                     msg='"%s" is listed in DOCUMENTATION.options, but not accepted by the module' % arg
                 )
 
-    def _check_for_new_args(self, doc):
+    def _check_for_new_args(self, doc, metadata):
         if not self.base_branch or self._is_new_module():
             return
 
         with CaptureStd():
             try:
-                existing_doc = get_docstring(self.base_module, fragment_loader, verbose=True)[0]
+                existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(self.base_module, fragment_loader, verbose=True)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -1240,6 +1240,14 @@ class ModuleValidator(Validator):
             )
         except ValueError:
             mod_version_added = StrictVersion('0.0')
+
+        if self.base_branch and 'stable-' in self.base_branch:
+            if metadata != existing_metadata:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=334,
+                    msg=('ANSIBLE_METADATA cannot be changed in a point release for a stable branch')
+                )
 
         options = doc.get('options', {}) or {}
 

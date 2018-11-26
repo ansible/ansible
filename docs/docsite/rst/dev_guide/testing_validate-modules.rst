@@ -118,6 +118,7 @@ Errors
   329       Default value from the argument_spec is not compatible with type defined in the argument_spec
   330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
   332       ``AnsibleModule`` schema validation error
+  334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
   ..
 ---------   -------------------
   **4xx**   **Syntax**
