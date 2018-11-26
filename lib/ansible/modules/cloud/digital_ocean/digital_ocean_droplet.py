@@ -122,6 +122,8 @@ def core(module):
     monitoring = module.params['monitoring']
     volumes = module.params['volumes']
     tags = module.params['tags']
+    id = module.params['id']
+    
 
     rest = DigitalOceanHelper(module)
 
@@ -200,10 +202,19 @@ def core(module):
 def main():
     argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
     argument_spec.update(
-        name=dict(type='str', required=True),
-        region=dict(type='str', required=True),
-        size=dict(type='str', required=True),
-        image=dict(type='int', required=True),
+        id=dict(type='int'),
+        action=dict(type='str', choices=['reboot', 'power-on', 'power-off', 'power-cycle', 'password-reset']),
+        restore=dict(type='str'),
+        resize=dict(type='str'),
+        resize_disk=dict(type='bool'),
+        rebuild=dict(type='str'),
+        rename=dict(type='str'),
+        kernel=dict(type='str'),
+        snapshot=dict(type='str'),
+        name=dict(type='str'),
+        region=dict(type='str'),
+        size=dict(type='str'),
+        image=dict(type='int'),
         ssh_keys=dict(type='list'),
         backups=dict(type='bool'),
         ipv6=dict(type='bool'),
