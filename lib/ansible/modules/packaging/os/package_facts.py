@@ -162,17 +162,21 @@ class PkgMgr:
 
     @abstractmethod
     def test(self):
+        ''' This method is supposed to return True/False if the package manager is installed/usable by this module '''
         pass
 
     @abstractmethod
     def list_installed(self):
+        ''' This method should return a list of installed packages, each list item will be passed to get_package_details '''
         pass
 
     @abstractmethod
     def get_package_details(self, package):
+        ''' This takes a 'package' item and returns a dictionary with the package information, name and version are minimal requirements '''
         raise NotImplementedError
 
     def get_packages(self):
+        ''' Take all of the above and return a dictionary of lists of dictionaries (package = list of installed versions) '''
 
         installed_packages = {}
         for package in self.list_installed():
@@ -267,10 +271,7 @@ class PKG(CLIMgr):
 
     def get_package_details(self, package):
 
-        pkg = {}
-        fields = package.split('\t')
-        for i, value in enumerate(fields):
-            pkg[self.atoms[i]] = value
+        pkg = dict(zip(self.atoms, package.split('\t')))
 
         if 'arch' in pkg:
             try:
@@ -282,11 +283,11 @@ class PKG(CLIMgr):
             pkg['automatic'] = bool(pkg['automatic'])
 
         if 'category' in pkg:
-            pkg['category'] = pkg['category'].split('/',1)[0]
+            pkg['category'] = pkg['category'].split('/', 1)[0]
 
         if 'version' in pkg:
             if ',' in pkg['version']:
-                pkg['version'], pkg['port_epoch'] = pkg['version'].split(',',1)
+                pkg['version'], pkg['port_epoch'] = pkg['version'].split(',', 1)
             else:
                 pkg['port_epoch'] = 0
 
@@ -314,12 +315,7 @@ class PORTAGE(CLIMgr):
         return out.splitlines()
 
     def get_package_details(self, package):
-
-        pkg = {}
-        fields = package.split()
-        for i, value in enumerate(fields):
-            pkg[self.atoms[i]] = value
-        return pkg
+        return dict(zip(self.atoms, package.split()))
 
 
 class RPM(LibMgr):
