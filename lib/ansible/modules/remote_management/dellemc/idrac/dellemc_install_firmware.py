@@ -155,7 +155,6 @@ def run_update_fw_from_nw_share(idrac, module):
         if invalid:
             err = True
             msg['msg'] = message
-            msg['failed'] = True
             return msg, err
 
         upd_share = FileOnShare(remote=module.params['share_name'] + "/" + module.params['catalog_file_name'],
@@ -181,12 +180,11 @@ def run_update_fw_from_nw_share(idrac, module):
                 if module.params['job_wait'] is True:
                     msg['changed'] = True
             else:
-                msg['failed'] = True
+                err = True
 
     except Exception as e:
         err = True
         msg['msg'] = "Error: %s" % str(e)
-        msg['failed'] = True
 
     return msg, err
 
