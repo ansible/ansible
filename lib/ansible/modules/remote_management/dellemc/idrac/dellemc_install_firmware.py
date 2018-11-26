@@ -146,7 +146,6 @@ def run_update_fw_from_nw_share(idrac, module):
 
     msg = {}
     msg['changed'] = False
-    msg['failed'] = False
     msg['msg'] = {}
     err = False
 
