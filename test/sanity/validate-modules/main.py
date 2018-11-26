@@ -803,6 +803,51 @@ class ModuleValidator(Validator):
         doc_info = self._get_docs()
         deprecated = False
         doc = None
+
+        metadata = None
+        if not bool(doc_info['ANSIBLE_METADATA']['value']):
+            self.reporter.error(
+                path=self.object_path,
+                code=314,
+                msg='No ANSIBLE_METADATA provided'
+            )
+        else:
+            if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict):
+                metadata = ast.literal_eval(
+                    doc_info['ANSIBLE_METADATA']['value']
+                )
+            else:
+                # ANSIBLE_METADATA doesn't properly support YAML
+                # we should consider removing it from the spec
+                # Below code kept, incase we change our minds
+
+                # metadata, errors, traces = parse_yaml(
+                #     doc_info['ANSIBLE_METADATA']['value'].s,
+                #     doc_info['ANSIBLE_METADATA']['lineno'],
+                #     self.name, 'ANSIBLE_METADATA'
+                # )
+                # for error in errors:
+                #     self.reporter.error(
+                #         path=self.object_path,
+                #         code=315,
+                #         **error
+                #     )
+                # for trace in traces:
+                #     self.reporter.trace(
+                #         path=self.object_path,
+                #         tracebk=trace
+                #     )
+
+                self.reporter.error(
+                    path=self.object_path,
+                    code=315,
+                    msg='ANSIBLE_METADATA was not provided as a dict, YAML not supported'
+                )
+
+            if metadata:
+                self._validate_docs_schema(metadata, metadata_1_1_schema(deprecated),
+                                           'ANSIBLE_METADATA', 316)
+
         if not bool(doc_info['DOCUMENTATION']['value']):
             self.reporter.error(
                 path=self.object_path,
@@ -873,7 +918,7 @@ class ModuleValidator(Validator):
                     self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
 
                 self._check_version_added(doc)
-                self._check_for_new_args(doc)
+                self._check_for_new_args(doc, metadata)
 
         if not bool(doc_info['EXAMPLES']['value']):
             self.reporter.error(
@@ -929,50 +974,6 @@ class ModuleValidator(Validator):
                     path=self.object_path,
                     tracebk=trace
                 )
-
-        metadata = None
-        if not bool(doc_info['ANSIBLE_METADATA']['value']):
-            self.reporter.error(
-                path=self.object_path,
-                code=314,
-                msg='No ANSIBLE_METADATA provided'
-            )
-        else:
-            if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict):
-                metadata = ast.literal_eval(
-                    doc_info['ANSIBLE_METADATA']['value']
-                )
-            else:
-                # ANSIBLE_METADATA doesn't properly support YAML
-                # we should consider removing it from the spec
-                # Below code kept, incase we change our minds
-
-                # metadata, errors, traces = parse_yaml(
-                #     doc_info['ANSIBLE_METADATA']['value'].s,
-                #     doc_info['ANSIBLE_METADATA']['lineno'],
-                #     self.name, 'ANSIBLE_METADATA'
-                # )
-                # for error in errors:
-                #     self.reporter.error(
-                #         path=self.object_path,
-                #         code=315,
-                #         **error
-                #     )
-                # for trace in traces:
-                #     self.reporter.trace(
-                #         path=self.object_path,
-                #         tracebk=trace
-                #     )
-
-                self.reporter.error(
-                    path=self.object_path,
-                    code=315,
-                    msg='ANSIBLE_METADATA was not provided as a dict, YAML not supported'
-                )
-
-            if metadata:
-                self._validate_docs_schema(metadata, metadata_1_1_schema(deprecated),
-                                           'ANSIBLE_METADATA', 316)
 
         return doc_info, doc
 
