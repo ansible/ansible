@@ -340,11 +340,10 @@ class DnfModule(YumDnf):
         result['nevra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(
             **result)
 
-        # Added for YUM3/YUM4 compat
-        if package.repoid == 'installed':
-            result['yumstate'] = 'installed'
-        else:
+        if package.installtime == 0:
             result['yumstate'] = 'available'
+        else:
+            result['yumstate'] = 'installed'
 
         return result
 
