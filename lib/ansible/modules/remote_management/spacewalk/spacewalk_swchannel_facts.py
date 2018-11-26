@@ -151,7 +151,7 @@ channels_facts:
       type: int
       sample: 0
     support_policy:
-      description:
+      description: policy supported by the channel
       type: string
       sample: ""
 '''
