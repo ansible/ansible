@@ -21,9 +21,9 @@ options:
     description:
       - The package manager used by the system so we can query the package information.
       - Since 2.8 this is a list and can support multiple package managers per system.
-      - The 'portage', 'pkg' and 'pip' options were added in version 2.8.
+      - The 'portage', 'pkg' and pip options were added in version 2.8.
     default: ['auto']
-    choices: ["auto", "rpm", "apt", "portage", "pkg", "pip"]
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pip', 'pip2', 'pip3', 'pip35', 'pip36', 'pip37']
     required: False
     type: list
   strategy:
@@ -343,6 +343,20 @@ class PIP(CLIMgr):
     def get_package_details(self, package):
         return package
 
+class PIP2(PIP):
+    CLI = 'pip2'
+
+class PIP3(PIP):
+    CLI = 'pip3'
+
+class PIP35(PIP):
+    CLI = 'pip3.5'
+
+class PIP36(PIP):
+    CLI = 'pip3.6'
+
+class PIP37(PIP):
+    CLI = 'pip3.7'
 
 def main():
 
