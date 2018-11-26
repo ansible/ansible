@@ -110,6 +110,7 @@ from ansible.module_utils._text import to_native
 
 def core(module):
     state = module.params['state']
+    names = module.params['names']
     name = module.params['name']
     region = module.params['region']
     size = module.params['size']
@@ -123,98 +124,65 @@ def core(module):
     volumes = module.params['volumes']
     tags = module.params['tags']
     id = module.params['id']
+    action = module.params['action']
     
 
     rest = DigitalOceanHelper(module)
 
     if state == 'present':
-        response = rest.get('droplets')
-        status_code = response.status_code
-        resp_json = response.json
-        changed = False
-'''        if status_code == 200 and resp_json['droplet']['name'] == name:
-            changed = False
-        else:
-            # Ensure droplet exists
-            response = rest.post("droplets", data={'name': name})
-            status_code = response.status_code
-            resp_json = response.json
-            if status_code == 201:
-                changed = True
-            elif status_code == 422:
-                changed = False
-            else:
-                module.exit_json(changed=False, data=resp_json)
+        if action is not None:
+            module.fail_json(msg="Implement actions")
+        else: # Assumes droplet isn't created
+            payload = {'name': name,
+                       'region': region,
+                       'size': size,
+                       'image': image,
+                       'ssh_keys': ssh_keys,
+                       }
+            if names:
+                payload['names'] = names
+                del payload['name']
+            if tags:
+                payload['tags'] = tags
+            if volumes:
+                payload['volumes'] = volumes
+            if monitoring is not None:
+                payload['monitoring'] = monitoring
+            if user_data is not None:
+                payload['user_data'] = user_data
+            if private_networking is not None:
+                payload['private_networking'] = private_networking
+            if ipv6 is not None:
+                payload['ipv6'] = ipv6
+            if backups is not None:
+                payload['backups'] = backups
 
-        if resource_id is None:
-            # No resource defined, we're done.
-            module.exit_json(changed=changed, data=resp_json)
-        else:
-            # Check if resource is already tagged or not
-            found = False
-            url = "{0}?tag_name={1}".format(resource_type, name)
-            if resource_type == 'droplet':
-                url = "droplets?tag_name={0}".format(name)
-            response = rest.get(url)
-            status_code = response.status_code
-            resp_json = response.json
-            if status_code == 200:
-                for resource in resp_json['droplets']:
-                    if not found and resource['id'] == int(resource_id):
-                        found = True
-                        break
-                if not found:
-                    # If resource is not tagged, tag a resource
-                    url = "tags/{0}/resources".format(name)
-                    payload = {
-                        'resources': [{
-                            'resource_id': resource_id,
-                            'resource_type': resource_type}]}
-                    response = rest.post(url, data=payload)
-                    if response.status_code == 204:
-                        module.exit_json(changed=True)
-                    else:
-                        module.fail_json(msg="error tagging resource '{0}': {1}".format(resource_id, response.json["message"]))
-                else:
-                    # Already tagged resource
-                    module.exit_json(changed=False)
+            response = rest.post("droplets", data=payload)
+            if response.status_code != 202:
+                module.fail_json(msg="Failed", status_code=response.status_code, response=response.resp_json)
             else:
-                # Unable to find resource specified by user
-                module.fail_json(msg=resp_json['message'])
-'''
-    elif state == 'absent':
-        if resource_id:
-            url = "tags/{0}/resources".format(name)
-            payload = {
-                'resources': [{
-                    'resource_id': resource_id,
-                    'resource_type': resource_type}]}
-            response = rest.delete(url, data=payload)
-        else:
-            url = "tags/{0}".format(name)
-            response = rest.delete(url)
-        if response.status_code == 204:
-            module.exit_json(changed=True)
-        else:
-            module.exit_json(changed=False, data=response.json)
-
+                module.exit_json(changed=True, droplet=response.json)
 
 def main():
     argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
     argument_spec.update(
         id=dict(type='int'),
-        action=dict(type='str', choices=['reboot', 'power-on', 'power-off', 'power-cycle', 'password-reset']),
-        restore=dict(type='str'),
-        resize=dict(type='str'),
-        resize_disk=dict(type='bool'),
-        rebuild=dict(type='str'),
-        rename=dict(type='str'),
+        action=dict(type='str', choices=['reboot',
+                                         'power_on',
+                                         'power_off',
+                                         'power_cycle',
+                                         'password-reset',
+                                         'restore',
+                                         'resize',
+                                         'rebuild',
+                                         'snapshot']),
+        resize_disk=dict(type='str'),
         kernel=dict(type='str'),
-        snapshot=dict(type='str'),
         name=dict(type='str'),
+        names=dict(type='list'),
         region=dict(type='str'),
         size=dict(type='str'),
-        image=dict(type='int'),
+        image=dict(type='str'),
         ssh_keys=dict(type='list'),
         backups=dict(type='bool'),
         ipv6=dict(type='bool'),
@@ -223,7 +191,7 @@ def main():
         monitoring=dict(type='bool'),
         volumes=dict(type='list'),
         tags=dict(type='list'),
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(choices=['present'], default='present'),
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
