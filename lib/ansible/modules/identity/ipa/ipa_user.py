@@ -94,6 +94,11 @@ options:
     - Posix Group ID.
     type: str
     version_added: 2.5
+  homedirectory:
+    description:
+    - Default home directory of the user.
+    version_added: '2.10'
+    type: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 requirements:
@@ -118,6 +123,7 @@ EXAMPLES = r'''
     - ssh-dsa ....
     uidnumber: 1001
     gidnumber: 100
+    homedirectory: /home/pinky
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
@@ -184,7 +190,7 @@ class UserIPAClient(IPAClient):
 
 def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, loginshell=None,
                   mail=None, nsaccountlock=False, sn=None, sshpubkey=None, telephonenumber=None,
-                  title=None, userpassword=None, gidnumber=None, uidnumber=None):
+                  title=None, userpassword=None, gidnumber=None, uidnumber=None, homedirectory=None):
     user = {}
     if displayname is not None:
         user['displayname'] = displayname
@@ -211,6 +217,8 @@ def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, 
         user['gidnumber'] = gidnumber
     if uidnumber is not None:
         user['uidnumber'] = uidnumber
+    if homedirectory is not None:
+        user['homedirectory'] = homedirectory
 
     return user
 
@@ -292,7 +300,8 @@ def ensure(module, client):
                                 sshpubkey=module.params['sshpubkey'], nsaccountlock=nsaccountlock,
                                 telephonenumber=module.params['telephonenumber'], title=module.params['title'],
                                 userpassword=module.params['password'],
-                                gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'))
+                                gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'),
+                                homedirectory=module.params.get('homedirectory'))
 
     update_password = module.params.get('update_password')
     ipa_user = client.user_find(name=name)
@@ -338,7 +347,8 @@ def main():
                          state=dict(type='str', default='present',
                                     choices=['present', 'absent', 'enabled', 'disabled']),
                          telephonenumber=dict(type='list', elements='str'),
-                         title=dict(type='str'))
+                         title=dict(type='str'),
+                         homedirectory=dict(type='str'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
