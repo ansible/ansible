@@ -592,7 +592,6 @@ class Zapi(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to get proxy '%s': %s" % (proxy_name, e))
 
-    # get mediatype by mediatype name
     def get_mediatype_by_mediatype_name(self, mediatype_name):
         """Get mediatype by mediatype name
 
@@ -699,14 +698,14 @@ class Action(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_parameters(self, **kwargs):
-            """Contruct parameters.
+        """Contruct parameters.
 
-            Args:
-                **kwargs: Arbitrary keyword parameters.
+        Args:
+            **kwargs: Arbitrary keyword parameters.
 
-            Returns:
-                dict: dictionary of specified parameters
-            """
+        Returns:
+            dict: dictionary of specified parameters
+        """
         return {
             'name': kwargs['name'],
             'eventsource': to_numeric_value([
@@ -832,14 +831,14 @@ class Operations(object):
             self._module.fail_json(msg="Unsupported value '%s' for operation type." % operation['type'])
 
     def _construct_opmessage(self, operation):
-         """Construct operation message.
+        """Construct operation message.
 
-         Args:
-             operation: operation to construct the message
+        Args:
+            operation: operation to construct the message
 
-         Returns:
-             dict: constructed operation message
-         """
+        Returns:
+            dict: constructed operation message
+        """
         try:
             return {
                 'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
@@ -883,14 +882,14 @@ class Operations(object):
         } for _group in operation.get('send_to_groups')]
 
     def _construct_opcommand(self, operation):
-         """Construct operation command.
+        """Construct operation command.
 
-         Args:
-             operation: operation to construct command
+        Args:
+            operation: operation to construct command
 
-         Returns:
-             list: constructed operation command
-         """
+        Returns:
+            list: constructed operation command
+        """
         try:
             return {
                 'type': to_numeric_value([
