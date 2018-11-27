@@ -1743,6 +1743,103 @@
         - "stat_testcase2_local_follow_false_link_file12.stat.exists"
         - "stat_testcase2_local_follow_false_link_file12.stat.islnk"
 
+## test when src and dest endswith os.sep and dest not exists
+
+- block:
+    - name: execute - Copy the directory on remote with local_follow True
+      copy:
+        remote_src: True
+        src: '{{ remote_dir }}/remote_dir_src/'
+        dest: '{{ remote_dir }}/testcase2_local_follow_true/'
+        local_follow: True
+      register: testcase2
+
+    - name: gather - Stat the testcase2_local_follow_true
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true'
+      register: stat_testcase2_local_follow_true
+    - name: gather - Stat the testcase2_local_follow_true/subdir
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/subdir'
+      register: stat_testcase2_local_follow_true_subdir
+    - name: gather - Stat the testcase2_local_follow_true/file1
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/file1'
+      register: stat_testcase2_local_follow_true_file1
+    - name: gather - Stat the testcase2_local_follow_true/subdir/file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/subdir/file12'
+      register: stat_testcase2_local_follow_true_subdir_file12
+    - name: gather - Stat the testcase2_local_follow_true/link_file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/link_file12'
+      register: stat_testcase2_local_follow_true_link_file12
+
+    - name: assert - remote_dir_src has copied with local_follow True.
+      assert:
+        that:
+        - testcase2 is changed
+        - "stat_testcase2_local_follow_true.stat.isdir"
+        - "stat_testcase2_local_follow_true_subdir.stat.isdir"
+        - "stat_testcase2_local_follow_true_file1.stat.exists"
+        - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase2_local_follow_true_file1.stat.checksum"
+        - "stat_testcase2_local_follow_true_subdir_file12.stat.exists"
+        - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase2_local_follow_true_subdir_file12.stat.checksum"
+        - "stat_testcase2_local_follow_true_link_file12.stat.exists"
+        - "not stat_testcase2_local_follow_true_link_file12.stat.islnk"
+        - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase2_local_follow_true_link_file12.stat.checksum"
+
+### local_follow: False
+    - name: execute - Copy the directory on remote with local_follow False
+      copy:
+        remote_src: True
+        src: '{{ remote_dir }}/remote_dir_src/'
+        dest: '{{ remote_dir }}/testcase2_local_follow_false/'
+        local_follow: False
+      register: testcase2
+
+    - name: execute - Copy the directory on remote with local_follow False
+      copy:
+        remote_src: True
+        src: '{{ remote_dir }}/remote_dir_src/'
+        dest: '{{ remote_dir }}/testcase2_local_follow_false/'
+        local_follow: False
+      register: testcase1
+
+    - name: gather - Stat the testcase2_local_follow_false
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false'
+      register: stat_testcase2_local_follow_false
+    - name: gather - Stat the testcase2_local_follow_false/subdir
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/subdir'
+      register: stat_testcase2_local_follow_false_subdir
+    - name: gather - Stat the testcase2_local_follow_false/file1
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/file1'
+      register: stat_testcase2_local_follow_false_file1
+    - name: gather - Stat the testcase2_local_follow_false/subdir/file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/subdir/file12'
+      register: stat_testcase2_local_follow_false_subdir_file12
+    - name: gather - Stat the testcase2_local_follow_false/link_file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/link_file12'
+      register: stat_testcase2_local_follow_false_link_file12
+
+    - name: assert - remote_dir_src has copied with local_follow True.
+      assert:
+        that:
+        - testcase2 is changed
+        - "stat_testcase2_local_follow_false.stat.isdir"
+        - "stat_testcase2_local_follow_false_subdir.stat.isdir"
+        - "stat_testcase2_local_follow_false_file1.stat.exists"
+        - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase2_local_follow_false_file1.stat.checksum"
+        - "stat_testcase2_local_follow_false_subdir_file12.stat.exists"
+        - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase2_local_follow_false_subdir_file12.stat.checksum"
+        - "stat_testcase2_local_follow_false_link_file12.stat.exists"
+        - "stat_testcase2_local_follow_false_link_file12.stat.islnk"
+
 ## test when src not endswith os.sep and dest isdir
 - block:
 
