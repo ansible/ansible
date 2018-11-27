@@ -1,3 +1,3 @@
 shippable/posix/group2
 destructive
-skip/rhel8.0
+skip/rhel
