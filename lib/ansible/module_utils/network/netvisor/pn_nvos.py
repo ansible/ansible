@@ -8,6 +8,7 @@ __metaclass__ = type
 
 import shlex
 
+
 def pn_cli(module, switch=None, username=None, password=None, switch_local=None):
     """
     Method to generate the cli portion to launch the Netvisor cli.
