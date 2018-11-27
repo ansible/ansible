@@ -125,10 +125,10 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-command:
-  description: The exact flatpak command that was executed
+commands:
+  description: The exact flatpak commands that were executed
   returned: When a flatpak command has been executed
-  type: str
+  type: list
   sample: "/usr/bin/flatpak install --user -y flathub org.gnome.Calculator"
 msg:
   description: Module error message
@@ -161,22 +161,29 @@ OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE = "Unknown option --columns=application"
 
 
 def install_flat(module, binary, remote, name, method):
-    """Add a new flatpak."""
+    """Add one or more new flatpaks."""
     global result
-    apps = " ".join(name)
-    use_remote = True
+    no_remote_apps = []
+    remote_apps = []
 
     for app in name:
 
         if app.startswith('http://') or app.startswith('https://'):
-            use_remote = False
+            no_remote_apps.append(app)
+        else:
+            remote_apps.append(app)
 
-    if use_remote:
-        command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, apps)
-    else:
+    if remote_apps:
+        apps = " ".join(remote_apps)
+        command = "{0} install --{1} -y {2} {3}".format(binary, method,
+                                                        remote, apps)
+        _flatpak_command(module, module.check_mode, command)
+
+    if no_remote_apps:
+        apps = " ".join(no_remote_apps)
         command = "{0} install --{1} -y {2}".format(binary, method, apps)
+        _flatpak_command(module, module.check_mode, command)
 
-    _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
 
