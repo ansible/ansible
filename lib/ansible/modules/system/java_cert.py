@@ -38,7 +38,7 @@ options:
       - Indicator whether to use -trustcacerts option in keytool command or not.
     choices: [ "yes", "no" ]
     default: "no"
-    version_added: "2.7"
+    version_added: "2.8"
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
