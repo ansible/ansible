@@ -1,0 +1,3 @@
+minor_changes:
+  - spotinst - Added Instance Health Check Validation on creation of Elastigroup if "health_check_type" parameter set in playbook 
+  - spotinst - Added "SPOTINST_ACCOUNT_ID" or "ACCOUNT" env var 
