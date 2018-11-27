@@ -222,6 +222,28 @@ is likely the problem. There are several workarounds:
 
   (bash, ksh, and zsh should also be POSIX compatible if you have any of those installed).
 
+Running on z/OS
+---------------
+
+There are a few common errors that one might run into when trying to execute Ansible on z/OS as a target.
+
+* Version 2.7.6 of the open source python port for z/OS will not work with Ansible due to the fact that it represents strings internally as EBCDIC.
+  The later versions (2.7.13 or 3.6.1) should work since they represent strings internally as ascii.  Version 2.7.13 is verified to work.
+
+.. error::
+  /usr/bin/python: EDC5129I No such file or directory
+
+To fix this set the path to the python installation in your inventory like so::
+
+    zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
+
+.. error::
+    EE3501S The module libpython2.7.so was not found.
+
+The open source port of python must be executed from the open source port of gnu bash.  Provided gnu bash was install at /usr/lpp/bash then you could fix this in your inventory like so::
+
+    zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
+
 
 .. _use_roles:
 
