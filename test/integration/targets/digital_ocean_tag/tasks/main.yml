@@ -1,0 +1,15 @@
+---
+- name: Create a new tag
+  digital_ocean_tag:
+    oauth_token: '{{do_api_key}}'
+    name: integration-test
+    state: present
+  register: create_tag
+
+- debug:
+    var: create_tag
+
+- assert:
+    that:
+      - create_tag.changed == True
+      - create_tag.data.tag.name == "integration-test"
