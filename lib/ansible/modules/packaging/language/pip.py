@@ -98,9 +98,12 @@ options:
     description:
       - The system umask to apply before installing the pip package. This is
         useful, for example, when installing on systems that have a very
-        restrictive umask by default (e.g., 0077) and you want to pip install
+        restrictive umask by default (e.g., "0077") and you want to pip install
         packages which are to be used by all users. Note that this requires you
-        to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
+        to specify desired umask mode as an octal string, (e.g., "0022").
+        Specifying the mode as a decimal integer (e.g., 22) will also work, but
+        an octal integer (e.g., 0022) will be converted to decimal (18) before
+        evaluation, which is almost certainly not what was intended.
     version_added: "2.1"
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
