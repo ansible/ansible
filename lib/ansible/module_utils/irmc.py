@@ -21,7 +21,6 @@ except:
     HAS_REQUESTS = False
 
 
-
 def irmc_redfish_get(module, uri):
     if not HAS_REQUESTS:
         return 90, "Python 'requests' module not found.", "iRMC module requires 'requests' Module"
@@ -46,7 +45,7 @@ def irmc_redfish_get(module, uri):
         status = data.status_code
         if status != 200:
             try:
-                msg = "GET request was not successful ({0}): status {1}, '{1}'". \
+                msg = "GET request was not successful ({0}): status {1}, '{2}'". \
                       format(url, status, data.json()['error']['message'])
             except Exception:
                 msg = "GET request was not successful ({0}), status {1}.".format(url, status)
@@ -100,7 +99,7 @@ def irmc_redfish_patch(module, uri, body, etag):
         status = data.status_code
         if status != 200:
             try:
-                msg = "PATCH request was not successful ({0}): status {1}, '{1}'". \
+                msg = "PATCH request was not successful ({0}): status {1}, '{2}'". \
                       format(url, status, data.json()['error']['message'])
             except Exception:
                 msg = "PATCH request was not successful ({0}), status {1}.".format(url, status)
