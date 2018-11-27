@@ -1,0 +1,2 @@
+minor_changes:
+- Fixed typo in ansible-galaxy info command.
