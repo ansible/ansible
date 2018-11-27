@@ -58,78 +58,92 @@ options:
           - Get all cloudfront lists that do not require parameters.
         required: false
         default: false
+        type: bool
     origin_access_identity:
         description:
           - Get information about an origin access identity. Requires I(origin_access_identity_id)
             to be specified.
         required: false
         default: false
+        type: bool
     origin_access_identity_config:
         description:
           - Get the configuration information about an origin access identity. Requires
             I(origin_access_identity_id) to be specified.
         required: false
         default: false
+        type: bool
     distribution:
         description:
           - Get information about a distribution. Requires I(distribution_id) or I(domain_name_alias)
             to be specified.
         required: false
         default: false
+        type: bool
     distribution_config:
         description:
           - Get the configuration information about a distribution. Requires I(distribution_id)
             or I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     invalidation:
         description:
             - Get information about an invalidation. Requires I(invalidation_id) to be specified.
         required: false
         default: false
+        type: bool
     streaming_distribution:
         description:
             - Get information about a specified RTMP distribution. Requires I(distribution_id) or
               I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     streaming_distribution_config:
         description:
             - Get the configuration information about a specified RTMP distribution.
               Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     list_origin_access_identities:
         description:
             - Get a list of cloudfront origin access identities. Requires I(origin_access_identity_id) to be set.
         required: false
         default: false
+        type: bool
     list_distributions:
         description:
             - Get a list of cloudfront distributions.
         required: false
         default: false
+        type: bool
     list_distributions_by_web_acl_id:
         description:
             - Get a list of distributions using web acl id as a filter. Requires I(web_acl_id) to be set.
         required: false
         default: false
+        type: bool
     list_invalidations:
         description:
             - Get a list of invalidations. Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
+        type: bool
     list_streaming_distributions:
         description:
             - Get a list of streaming distributions.
         required: false
         default: false
+        type: bool
     summary:
         description:
             - Returns a summary of all distributions, streaming distributions and origin_access_identities.
               This is the default behaviour if no option is selected.
         required: false
         default: false
+        type: bool
 
 extends_documentation_fragment:
     - aws

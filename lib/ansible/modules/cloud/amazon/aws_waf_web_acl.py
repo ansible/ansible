@@ -51,7 +51,10 @@ options:
         - The I(type) key can be passed as C(rate_based), it defaults to C(regular)
 
     purge_rules:
-        description: Whether to remove rules that aren't passed with C(rules). Defaults to false
+        description:
+        - Whether to remove rules that aren't passed with C(rules).
+        default: False
+        type: bool
 '''
 
 EXAMPLES = '''

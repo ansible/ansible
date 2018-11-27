@@ -81,6 +81,7 @@ options:
     required: false
     default: 'true'
     aliases: []
+    type: bool
   purge_rules_egress:
     version_added: "1.8"
     description:
@@ -88,6 +89,7 @@ options:
     required: false
     default: 'true'
     aliases: []
+    type: bool
   tags:
     version_added: "2.4"
     description:

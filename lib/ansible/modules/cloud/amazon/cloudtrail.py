@@ -42,6 +42,7 @@ options:
     description:
       - Start or stop the CloudTrail logging. If stopped the trail will be paused and will not record events or deliver log files.
     default: true
+    type: bool
     version_added: "2.4"
   s3_bucket_name:
     description:
@@ -57,17 +58,20 @@ options:
     description:
       - Specify whether the trail belongs only to one region or exists in all regions.
     default: false
+    type: bool
     version_added: "2.4"
   enable_log_file_validation:
     description:
       - Specifies whether log file integrity validation is enabled.
       - CloudTrail will create a hash for every log file delivered and produce a signed digest file that can be used to ensure log files have not been tampered.
     version_added: "2.4"
+    type: bool
     aliases: [ "log_file_validation_enabled" ]
   include_global_events:
     description:
       - Record API calls from global services such as IAM and STS.
     default: true
+    type: bool
     aliases: [ "include_global_service_events" ]
   sns_topic_name:
     description:

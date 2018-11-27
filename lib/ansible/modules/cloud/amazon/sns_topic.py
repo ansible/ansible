@@ -63,6 +63,7 @@ options:
         somebody could come back later and confirm the subscription. Sorry.
         Blame Amazon."
     default: 'yes'
+    type: bool
 extends_documentation_fragment:
   - aws
   - ec2

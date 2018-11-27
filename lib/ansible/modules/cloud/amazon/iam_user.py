@@ -33,6 +33,7 @@ options:
       - Detach policies which are not included in managed_policy list
     required: false
     default: false
+    type: bool
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws

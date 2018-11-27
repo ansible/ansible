@@ -95,6 +95,7 @@ options:
     required: false
     default: no
     version_added: "2.4"
+    type: bool
 
 requirements:
   - boto3 >= 1.4.4
