@@ -48,7 +48,7 @@ options:
         default: False
         type: bool
         description:
-            - Should the key be regenerated even it it already exists
+            - Should the key be regenerated even if it already exists
     path:
         required: true
         description:

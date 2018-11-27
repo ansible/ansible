@@ -1,0 +1,126 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create an oracle-ee DB instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: oracle-ee
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ oracle_ee_db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          storage_encrypted: True
+          processor_features: "{{ processor_features }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - 'result.processor_features.coreCount == "{{ processor_features.coreCount }}"'
+            - 'result.processor_features.threadsPerCore == "{{ processor_features.threadsPerCore }}"'
+
+      - name: Check mode - modify the processor features
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: oracle-ee
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ oracle_ee_db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          storage_encrypted: True
+          processor_features: "{{ modified_processor_features }}"
+          apply_immediately: true
+          <<: *aws_connection_info
+        register: result
+        check_mode: True
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Modify the processor features
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: oracle-ee
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ oracle_ee_db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          storage_encrypted: True
+          processor_features: "{{ modified_processor_features }}"
+          apply_immediately: true
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - 'result.pending_modified_values.processor_features.coreCount == "{{ modified_processor_features.coreCount }}"'
+            - 'result.pending_modified_values.processor_features.threadsPerCore == "{{ modified_processor_features.threadsPerCore }}"'
+
+      - name: Check mode - use the default processor features
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          processor_features: {}
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Use the default processor features
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          processor_features: {}
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - 'result.pending_modified_values.processor_features.coreCount == "DEFAULT"'
+            - 'result.pending_modified_values.processor_features.threadsPerCore == "DEFAULT"'
+
+    always:
+
+      - name: Delete the DB instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed

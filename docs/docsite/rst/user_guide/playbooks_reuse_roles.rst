@@ -46,9 +46,9 @@ Other YAML files may be included in certain directories. For example, it is comm
     # roles/example/tasks/main.yml
     - name: added in 2.4, previously you used 'include'
       import_tasks: redhat.yml
-      when: ansible_os_platform|lower == 'redhat'
+      when: ansible_facts['os_family']|lower == 'redhat'
     - import_tasks: debian.yml
-      when: ansible_os_platform|lower == 'debian'
+      when: ansible_facts['os_family']|lower == 'debian'
 
     # roles/example/tasks/redhat.yml
     - yum:
@@ -163,7 +163,7 @@ You can conditionally import a role and execute it's tasks::
       tasks:
       - include_role:
           name: some_role
-        when: "ansible_os_family == 'RedHat'"
+        when: "ansible_facts['os_family'] == 'RedHat'"
 
 
 
@@ -173,9 +173,11 @@ Finally, you may wish to assign tags to the tasks inside the roles you specify. 
 
     - hosts: webservers
       roles:
-        - role: bar
-          tags: ["foo"]
-        # using YAML shorthand, this is equivalent to the above
+        - role: foo
+          tags:
+            - bar
+            - baz
+        # using YAML shorthand, this is equivalent to the above:
         - { role: foo, tags: ["bar", "baz"] }
 
 Or, again, using the newer syntax::
@@ -421,6 +423,6 @@ Read the Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>_ page f
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 

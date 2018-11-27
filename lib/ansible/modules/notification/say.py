@@ -23,6 +23,7 @@ description:
 notes:
    - In 2.5, this module has been renamed from C(osx_say) to M(say).
    - If you like this module, you may also be interested in the osx_say callback plugin.
+   - A list of available voices, with language, can be found by running C(say -v ?) on a OSX host and C(espeak --voices) on a Linux host.
 options:
   msg:
     description:
@@ -32,7 +33,7 @@ options:
     description:
       What voice to use
     required: false
-requirements: [ say or espeak ]
+requirements: [ say or espeak or espeak-ng ]
 author:
     - "Ansible Core Team"
     - "Michael DeHaan (@mpdehaan)"
@@ -68,17 +69,18 @@ def main():
 
     msg = module.params['msg']
     voice = module.params['voice']
+    possibles = ('say', 'espeak', 'espeak-ng')
 
-    executable = module.get_bin_path('say')
-    if not executable:
-        executable = module.get_bin_path('espeak')
-    elif get_platform() != 'Darwin':
+    if get_platform() != 'Darwin':
         # 'say' binary available, it might be GNUstep tool which doesn't support 'voice' parameter
         voice = None
-        module.warn("'say' executable found but system is '%s': ignoring voice parameter" % get_platform())
 
-    if not executable:
-        module.fail_json(msg="Unable to find either 'say' or 'espeak' executable")
+    for possible in possibles:
+        executable = module.get_bin_path(possible)
+        if executable:
+            break
+    else:
+        module.fail_json(msg='Unable to find either %s' % ', '.join(possibles))
 
     if module.check_mode:
         module.exit_json(msg=msg, changed=False)

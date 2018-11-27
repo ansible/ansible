@@ -32,67 +32,79 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_target_ssl_proxy
 description:
-    - Represents a TargetSslProxy resource, which is used by one or more global forwarding
-      rule to route incoming SSL requests to a backend service.
+- Represents a TargetSslProxy resource, which is used by one or more global forwarding
+  rule to route incoming SSL requests to a backend service.
 short_description: Creates a GCP TargetSslProxy
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - An optional description of this resource.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    proxy_header:
-        description:
-            - Specifies the type of proxy header to append before sending data to the backend,
-              either NONE or PROXY_V1. The default is NONE.
-        required: false
-        choices: ['NONE', 'PROXY_V1']
-    service:
-        description:
-            - A reference to BackendService resource.
-        required: true
-    ssl_certificates:
-        description:
-            - A list of SslCertificate resources that are used to authenticate connections between
-              users and the load balancer. Currently, exactly one SSL certificate must be specified.
-        required: true
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - An optional description of this resource.
+    required: false
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  proxy_header:
+    description:
+    - Specifies the type of proxy header to append before sending data to the backend,
+      either NONE or PROXY_V1. The default is NONE.
+    required: false
+    choices:
+    - NONE
+    - PROXY_V1
+  service:
+    description:
+    - A reference to the BackendService resource.
+    - 'This field represents a link to a BackendService resource in GCP. It can be
+      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
+      task and then set this service field to "{{ name-of-resource }}" Alternatively,
+      you can set this service to a dictionary with the selfLink key where the value
+      is the selfLink of your BackendService'
+    required: true
+  ssl_certificates:
+    description:
+    - A list of SslCertificate resources that are used to authenticate connections
+      between users and the load balancer. Currently, exactly one SSL certificate
+      must be specified.
+    required: true
 extends_documentation_fragment: gcp
+notes:
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetSslProxies)'
+- 'Setting Up SSL proxy for Google Cloud Load Balancing: U(https://cloud.google.com/compute/docs/load-balancing/tcp-ssl/)'
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-targetsslproxy'
-      zone: 'us-central1-a'
+      name: "instancegroup-targetsslproxy"
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: instancegroup
+
 - name: create a health check
   gcp_compute_health_check:
-      name: 'healthcheck-targetsslproxy'
+      name: "healthcheck-targetsslproxy"
       type: TCP
       tcp_health_check:
         port_name: service-health
@@ -104,30 +116,27 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: healthcheck
+
 - name: create a backend service
   gcp_compute_backend_service:
-      name: 'backendservice-targetsslproxy'
+      name: "backendservice-targetsslproxy"
       backends:
-        - group: "{{ instancegroup }}"
+      - group: "{{ instancegroup }}"
       health_checks:
-        - "{{ healthcheck.selfLink }}"
-      protocol: 'SSL'
+      - "{{ healthcheck.selfLink }}"
+      protocol: SSL
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: backendservice
+
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: 'sslcert-targetsslproxy'
-      description: |
-        "A certificate for testing. Do not use this certificate in production"
+      name: "sslcert-targetsslproxy"
+      description: A certificate for testing. Do not use this certificate in production
       certificate: |
         -----BEGIN CERTIFICATE-----
         MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
@@ -155,67 +164,64 @@ EXAMPLES = '''
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
       state: present
   register: sslcert
+
 - name: create a target ssl proxy
   gcp_compute_target_ssl_proxy:
-      name: testObject
+      name: "test_object"
       ssl_certificates:
-        - "{{ sslcert }}"
+      - "{{ sslcert }}"
       service: "{{ backendservice }}"
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/compute
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    proxy_header:
-        description:
-            - Specifies the type of proxy header to append before sending data to the backend,
-              either NONE or PROXY_V1. The default is NONE.
-        returned: success
-        type: str
-    service:
-        description:
-            - A reference to BackendService resource.
-        returned: success
-        type: dict
-    ssl_certificates:
-        description:
-            - A list of SslCertificate resources that are used to authenticate connections between
-              users and the load balancer. Currently, exactly one SSL certificate must be specified.
-        returned: success
-        type: list
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+proxyHeader:
+  description:
+  - Specifies the type of proxy header to append before sending data to the backend,
+    either NONE or PROXY_V1. The default is NONE.
+  returned: success
+  type: str
+service:
+  description:
+  - A reference to the BackendService resource.
+  returned: success
+  type: dict
+sslCertificates:
+  description:
+  - A list of SslCertificate resources that are used to authenticate connections between
+    users and the load balancer. Currently, exactly one SSL certificate must be specified.
+  returned: success
+  type: list
 '''
 
 ################################################################################
@@ -245,6 +251,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#targetSslProxy'
 
@@ -254,10 +263,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -278,11 +288,60 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('proxyHeader') != request.get('proxyHeader'):
+        proxy_header_update(module, request, response)
+    if response.get('service') != request.get('service'):
+        service_update(module, request, response)
+    if response.get('sslCertificates') != request.get('sslCertificates'):
+        ssl_certificates_update(module, request, response)
+
+
+def proxy_header_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetSslProxies/{name}/setProxyHeader"
+        ]).format(**module.params),
+        {
+            u'proxyHeader': module.params.get('proxy_header')
+        }
+    )
 
 
-def delete(module, link, kind, fetch):
+def service_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetSslProxies/{name}/setBackendService"
+        ]).format(**module.params),
+        {
+            u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
+        }
+    )
+
+
+def ssl_certificates_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetSslProxies/{name}/setSslCertificates"
+        ]).format(**module.params),
+        {
+            u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')
+        }
+    )
+
+
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -304,9 +363,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -317,9 +376,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/targetSslProxies".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -334,8 +393,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -384,7 +441,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#targetSslProxy')
@@ -396,8 +453,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -407,6 +462,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

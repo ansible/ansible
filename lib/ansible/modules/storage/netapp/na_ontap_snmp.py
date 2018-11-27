@@ -11,11 +11,11 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
-author: "Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)"
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - "Create/Delete SNMP community"
 extends_documentation_fragment:
@@ -35,7 +35,7 @@ options:
     description:
       - "Whether the specified SNMP community should exist or not."
     default: 'present'
-short_description: "Manage NetApp SNMP community"
+short_description: NetApp ONTAP SNMP community
 version_added: "2.6"
 '''
 

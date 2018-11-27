@@ -162,6 +162,9 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
             return int(access_vlan)
 
     def _create_switchport_data(self, if_name, if_data):
+        if self._os_version >= self.ONYX_API_VERSION:
+            if_data = if_data[0]
+
         return {
             'name': if_name,
             'mode': self.get_config_attr(if_data, 'Mode'),
@@ -174,6 +177,7 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
 
     def load_current_config(self):
         # called in base class in run function
+        self._os_version = self._get_os_version()
         self._current_config = dict()
         switchports_config = self._get_switchport_config()
         if not switchports_config:

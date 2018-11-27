@@ -32,637 +32,746 @@ DOCUMENTATION = '''
 ---
 module: gcp_storage_bucket
 description:
-    - The Buckets resource represents a bucket in Google Cloud Storage. There is
-      a single global namespace shared by all buckets. For more information, see
-      Bucket Name Requirements.
-    - Buckets contain objects which can be accessed by their own methods. In
-      addition to the acl property, buckets contain bucketAccessControls, for
-      use in fine-grained manipulation of an existing bucket's access controls.
-    - A bucket is always owned by the project team owners group.
+- The Buckets resource represents a bucket in Google Cloud Storage. There is a single
+  global namespace shared by all buckets. For more information, see Bucket Name Requirements.
+- Buckets contain objects which can be accessed by their own methods. In addition
+  to the acl property, buckets contain bucketAccessControls, for use in fine-grained
+  manipulation of an existing bucket's access controls.
+- A bucket is always owned by the project team owners group.
 short_description: Creates a GCP Bucket
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  acl:
+    description:
+    - Access controls on the bucket.
+    required: false
+    suboptions:
+      bucket:
         description:
-            - Whether the given object should exist in GCP
+        - The name of the bucket.
+        - 'This field represents a link to a Bucket resource in GCP. It can be specified
+          in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
+          task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
+          you can set this bucket to a dictionary with the name key where the value
+          is the name of your Bucket'
         required: true
-        choices: ['present', 'absent']
-        default: 'present'
-    acl:
+      domain:
         description:
-            - Access controls on the bucket.
+        - The domain associated with the entity.
+        required: false
+      email:
+        description:
+        - The email address associated with the entity.
+        required: false
+      entity:
+        description:
+        - 'The entity holding the permission, in one of the following forms: user-userId
+          user-email group-groupId group-email domain-domain project-team-projectId
+          allUsers allAuthenticatedUsers Examples: The user liz@example.com would
+          be user-liz@example.com.'
+        - The group example@googlegroups.com would be group-example@googlegroups.com.
+        - To refer to all members of the Google Apps for Business domain example.com,
+          the entity would be domain-example.com.
+        required: true
+      entity_id:
+        description:
+        - The ID for the entity.
+        required: false
+      id:
+        description:
+        - The ID of the access-control entry.
+        required: false
+      project_team:
+        description:
+        - The project team associated with the entity.
         required: false
         suboptions:
-            bucket:
-                description:
-                    - A reference to Bucket resource.
-                required: true
-            domain:
-                description:
-                    - The domain associated with the entity.
-                required: false
-            email:
-                description:
-                    - The email address associated with the entity.
-                required: false
-            entity:
-                description:
-                    - |
-                      The entity holding the permission, in one of the following
-                      forms:   user-userId   user-email   group-groupId
-                      group-email   domain-domain   project-team-projectId
-                      allUsers   allAuthenticatedUsers Examples:   The user
-                      liz@example.com would be user-liz@example.com.
-                    - The group example@googlegroups.com would be
-                      group-example@googlegroups.com.
-                    - To refer to all members of the Google Apps for Business domain
-                      example.com, the entity would be domain-example.com.
-                required: true
-            entity_id:
-                description:
-                    - The ID for the entity.
-                required: false
-            id:
-                description:
-                    - The ID of the access-control entry.
-                required: false
-            project_team:
-                description:
-                    - The project team associated with the entity.
-                required: false
-                suboptions:
-                    project_number:
-                        description:
-                            - The project team associated with the entity.
-                        required: false
-                    team:
-                        description:
-                            - The team.
-                        required: false
-                        choices: ['editors', 'owners', 'viewers']
-            role:
-                description:
-                    - The access permission for the entity.
-                required: false
-                choices: ['OWNER', 'READER', 'WRITER']
-    cors:
+          project_number:
+            description:
+            - The project team associated with the entity.
+            required: false
+          team:
+            description:
+            - The team.
+            required: false
+            choices:
+            - editors
+            - owners
+            - viewers
+      role:
         description:
-            - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+        - The access permission for the entity.
+        required: false
+        choices:
+        - OWNER
+        - READER
+        - WRITER
+  cors:
+    description:
+    - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+    required: false
+    suboptions:
+      max_age_seconds:
+        description:
+        - The value, in seconds, to return in the Access-Control-Max-Age header used
+          in preflight responses.
+        required: false
+      method:
+        description:
+        - 'The list of HTTP methods on which to include CORS response headers, (GET,
+          OPTIONS, POST, etc) Note: "*" is permitted in the list of methods, and means
+          "any method".'
+        required: false
+      origin:
+        description:
+        - The list of Origins eligible to receive CORS response headers.
+        - 'Note: "*" is permitted in the list of origins, and means "any Origin".'
+        required: false
+      response_header:
+        description:
+        - The list of HTTP headers other than the simple response headers to give
+          permission for the user-agent to share across domains.
+        required: false
+  default_object_acl:
+    description:
+    - Default access controls to apply to new objects when no ACL is provided.
+    required: false
+    version_added: 2.7
+    suboptions:
+      bucket:
+        description:
+        - The name of the bucket.
+        - 'This field represents a link to a Bucket resource in GCP. It can be specified
+          in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
+          task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
+          you can set this bucket to a dictionary with the name key where the value
+          is the name of your Bucket'
+        required: true
+      domain:
+        description:
+        - The domain associated with the entity.
+        required: false
+      email:
+        description:
+        - The email address associated with the entity.
+        required: false
+      entity:
+        description:
+        - 'The entity holding the permission, in one of the following forms: * user-{{userId}}
+          * user-{{email}} (such as "user-liz@example.com") * group-{{groupId}} *
+          group-{{email}} (such as "group-example@googlegroups.com") * domain-{{domain}}
+          (such as "domain-example.com") * project-team-{{projectId}} * allUsers *
+          allAuthenticatedUsers .'
+        required: true
+      entity_id:
+        description:
+        - The ID for the entity.
+        required: false
+      generation:
+        description:
+        - The content generation of the object, if applied to an object.
+        required: false
+      id:
+        description:
+        - The ID of the access-control entry.
+        required: false
+      object:
+        description:
+        - The name of the object, if applied to an object.
+        required: false
+      project_team:
+        description:
+        - The project team associated with the entity.
         required: false
         suboptions:
-            max_age_seconds:
-                description:
-                    - The value, in seconds, to return in the Access-Control-Max-Age
-                      header used in preflight responses.
-                required: false
-            method:
-                description:
-                    - |
-                      The list of HTTP methods on which to include CORS response
-                      headers, (GET, OPTIONS, POST, etc) Note: "*" is permitted in
-                      the list of methods, and means "any method".
-                required: false
-            origin:
-                description:
-                    - The list of Origins eligible to receive CORS response headers.
-                    - |
-                      Note: "*" is permitted in the list of origins, and means "any
-                      Origin".
-                required: false
-            response_header:
-                description:
-                    - The list of HTTP headers other than the simple response
-                      headers to give permission for the user-agent to share across
-                      domains.
-                required: false
-    lifecycle:
+          project_number:
+            description:
+            - The project team associated with the entity.
+            required: false
+          team:
+            description:
+            - The team.
+            required: false
+            choices:
+            - editors
+            - owners
+            - viewers
+      role:
         description:
-            - The bucket's lifecycle configuration.
-            - |
-              See https://developers.google.com/storage/docs/lifecycle for more
-              information.
+        - The access permission for the entity.
+        required: true
+        choices:
+        - OWNER
+        - READER
+  lifecycle:
+    description:
+    - The bucket's lifecycle configuration.
+    - See U(https://developers.google.com/storage/docs/lifecycle) for more information.
+    required: false
+    suboptions:
+      rule:
+        description:
+        - A lifecycle management rule, which is made of an action to take and the
+          condition(s) under which the action will be taken.
         required: false
         suboptions:
-            rule:
+          action:
+            description:
+            - The action to take.
+            required: false
+            suboptions:
+              storage_class:
                 description:
-                    - A lifecycle management rule, which is made of an action to
-                      take and the condition(s) under which the action will be taken.
+                - Target storage class. Required iff the type of the action is SetStorageClass.
                 required: false
-                suboptions:
-                    action:
-                        description:
-                            - The action to take.
-                        required: false
-                        suboptions:
-                            storage_class:
-                                description:
-                                    - Target storage class. Required iff the type of the
-                                      action is SetStorageClass.
-                                required: false
-                            type:
-                                description:
-                                    - Type of the action. Currently, only Delete and
-                                      SetStorageClass are supported.
-                                required: false
-                                choices: ['Delete', 'SetStorageClass']
-                    condition:
-                        description:
-                            - The condition(s) under which the action will be taken.
-                        required: false
-                        suboptions:
-                            age_days:
-                                description:
-                                    - Age of an object (in days). This condition is
-                                      satisfied when an object reaches the specified age.
-                                required: false
-                            created_before:
-                                description:
-                                    - A date in RFC 3339 format with only the date part (for
-                                      instance, "2013-01-15"). This condition is satisfied
-                                      when an object is created before midnight of the
-                                      specified date in UTC.
-                                required: false
-                            is_live:
-                                description:
-                                    - Relevant only for versioned objects.  If the value is
-                                      true, this condition matches live objects; if the
-                                      value is false, it matches archived objects.
-                                required: false
-                                type: bool
-                            matches_storage_class:
-                                description:
-                                    - Objects having any of the storage classes specified by
-                                      this condition will be matched. Values include
-                                      MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE,
-                                      STANDARD, and DURABLE_REDUCED_AVAILABILITY.
-                                required: false
-                            num_newer_versions:
-                                description:
-                                    - Relevant only for versioned objects. If the value is
-                                      N, this condition is satisfied when there are at least
-                                      N versions (including the live version) newer than
-                                      this version of the object.
-                                required: false
-    location:
-        description:
-            - The location of the bucket. Object data for objects in the bucket
-              resides in physical storage within this region. Defaults to US.
-              See the developer's guide for the authoritative list.
-        required: false
-    logging:
-        description:
-            - The bucket's logging configuration, which defines the destination
-              bucket and optional name prefix for the current bucket's logs.
-        required: false
-        suboptions:
-            log_bucket:
+              type:
                 description:
-                    - The destination bucket where the current bucket's logs should
-                      be placed.
+                - Type of the action. Currently, only Delete and SetStorageClass are
+                  supported.
                 required: false
-            log_object_prefix:
+                choices:
+                - Delete
+                - SetStorageClass
+          condition:
+            description:
+            - The condition(s) under which the action will be taken.
+            required: false
+            suboptions:
+              age_days:
                 description:
-                    - A prefix for log object names.
+                - Age of an object (in days). This condition is satisfied when an
+                  object reaches the specified age.
                 required: false
-    metageneration:
-        description:
-            - The metadata generation of this bucket.
-        required: false
-    name:
-        description:
-            - The name of the bucket.
-        required: false
-    owner:
-        description:
-            - The owner of the bucket. This is always the project team's owner
-              group.
-        required: false
-        suboptions:
-            entity:
+              created_before:
                 description:
-                    - The entity, in the form project-owner-projectId.
+                - A date in RFC 3339 format with only the date part (for instance,
+                  "2013-01-15"). This condition is satisfied when an object is created
+                  before midnight of the specified date in UTC.
                 required: false
-            entity_id:
+              is_live:
                 description:
-                    - The ID for the entity.
-                required: false
-    storage_class:
-        description:
-            - The bucket's default storage class, used whenever no storageClass
-              is specified for a newly-created object. This defines how objects
-              in the bucket are stored and determines the SLA and the cost of
-              storage.
-            - Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE,
-              COLDLINE, and DURABLE_REDUCED_AVAILABILITY. If this value is not
-              specified when the bucket is created, it will default to STANDARD.
-              For more information, see storage classes.
-        required: false
-        choices: ['MULTI_REGIONAL', 'REGIONAL', 'STANDARD', 'NEARLINE', 'COLDLINE', 'DURABLE_REDUCED_AVAILABILITY']
-    versioning:
-        description:
-            - The bucket's versioning configuration.
-        required: false
-        suboptions:
-            enabled:
-                description:
-                    - While set to true, versioning is fully enabled for this bucket.
+                - Relevant only for versioned objects. If the value is true, this
+                  condition matches live objects; if the value is false, it matches
+                  archived objects.
                 required: false
                 type: bool
-    website:
-        description:
-            - The bucket's website configuration, controlling how the service
-              behaves when accessing bucket contents as a web site. See the
-              Static Website Examples for more information.
-        required: false
-        suboptions:
-            main_page_suffix:
+              matches_storage_class:
                 description:
-                    - If the requested object path is missing, the service will
-                      ensure the path has a trailing '/', append this suffix, and
-                      attempt to retrieve the resulting object. This allows the
-                      creation of index.html objects to represent directory pages.
+                - Objects having any of the storage classes specified by this condition
+                  will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE,
+                  COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.
                 required: false
-            not_found_page:
+              num_newer_versions:
                 description:
-                    - If the requested object path is missing, and any
-                      mainPageSuffix object is missing, if applicable, the service
-                      will return the named object from this bucket as the content
-                      for a 404 Not Found result.
+                - Relevant only for versioned objects. If the value is N, this condition
+                  is satisfied when there are at least N versions (including the live
+                  version) newer than this version of the object.
                 required: false
-    project:
+  location:
+    description:
+    - The location of the bucket. Object data for objects in the bucket resides in
+      physical storage within this region. Defaults to US. See the developer's guide
+      for the authoritative list.
+    required: false
+  logging:
+    description:
+    - The bucket's logging configuration, which defines the destination bucket and
+      optional name prefix for the current bucket's logs.
+    required: false
+    suboptions:
+      log_bucket:
         description:
-            - A valid API project identifier.
+        - The destination bucket where the current bucket's logs should be placed.
         required: false
-    predefined_default_object_acl:
+      log_object_prefix:
         description:
-            - Apply a predefined set of default object access controls to this
-              bucket.
-            - |
-              Acceptable values are:   - "authenticatedRead": Object owner gets
-              OWNER access, and     allAuthenticatedUsers get READER access.
-            - |
-              - "bucketOwnerFullControl": Object owner gets OWNER access, and
-              project team owners get OWNER access.
-            - |
-              - "bucketOwnerRead": Object owner gets OWNER access, and project
-              team owners get READER access.
-            - |
-              - "private": Object owner gets OWNER access.
-            - |
-              - "projectPrivate": Object owner gets OWNER access, and project
-              team     members get access according to their roles.
-            - |
-              - "publicRead": Object owner gets OWNER access, and allUsers get
-              READER access.
+        - A prefix for log object names.
         required: false
-        choices: ['authenticatedRead', 'bucketOwnerFullControl', 'bucketOwnerRead', 'private', 'projectPrivate', 'publicRead']
+  metageneration:
+    description:
+    - The metadata generation of this bucket.
+    required: false
+  name:
+    description:
+    - The name of the bucket.
+    required: false
+  owner:
+    description:
+    - The owner of the bucket. This is always the project team's owner group.
+    required: false
+    suboptions:
+      entity:
+        description:
+        - The entity, in the form project-owner-projectId.
+        required: false
+      entity_id:
+        description:
+        - The ID for the entity.
+        required: false
+  storage_class:
+    description:
+    - The bucket's default storage class, used whenever no storageClass is specified
+      for a newly-created object. This defines how objects in the bucket are stored
+      and determines the SLA and the cost of storage.
+    - Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY.
+      If this value is not specified when the bucket is created, it will default to
+      STANDARD. For more information, see storage classes.
+    required: false
+    choices:
+    - MULTI_REGIONAL
+    - REGIONAL
+    - STANDARD
+    - NEARLINE
+    - COLDLINE
+    - DURABLE_REDUCED_AVAILABILITY
+  versioning:
+    description:
+    - The bucket's versioning configuration.
+    required: false
+    suboptions:
+      enabled:
+        description:
+        - While set to true, versioning is fully enabled for this bucket.
+        required: false
+        type: bool
+  website:
+    description:
+    - The bucket's website configuration, controlling how the service behaves when
+      accessing bucket contents as a web site. See the Static Website Examples for
+      more information.
+    required: false
+    suboptions:
+      main_page_suffix:
+        description:
+        - If the requested object path is missing, the service will ensure the path
+          has a trailing '/', append this suffix, and attempt to retrieve the resulting
+          object. This allows the creation of index.html objects to represent directory
+          pages.
+        required: false
+      not_found_page:
+        description:
+        - If the requested object path is missing, and any mainPageSuffix object is
+          missing, if applicable, the service will return the named object from this
+          bucket as the content for a 404 Not Found result.
+        required: false
+  project:
+    description:
+    - A valid API project identifier.
+    required: false
+  predefined_default_object_acl:
+    description:
+    - Apply a predefined set of default object access controls to this bucket.
+    - 'Acceptable values are: - "authenticatedRead": Object owner gets OWNER access,
+      and allAuthenticatedUsers get READER access.'
+    - '- "bucketOwnerFullControl": Object owner gets OWNER access, and project team
+      owners get OWNER access.'
+    - '- "bucketOwnerRead": Object owner gets OWNER access, and project team owners
+      get READER access.'
+    - '- "private": Object owner gets OWNER access.'
+    - '- "projectPrivate": Object owner gets OWNER access, and project team members
+      get access according to their roles.'
+    - '- "publicRead": Object owner gets OWNER access, and allUsers get READER access.'
+    required: false
+    choices:
+    - authenticatedRead
+    - bucketOwnerFullControl
+    - bucketOwnerRead
+    - private
+    - projectPrivate
+    - publicRead
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: 'ansible-storage-module'
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
+      name: ansible-storage-module
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    acl:
-        description:
-            - Access controls on the bucket.
-        returned: success
-        type: complex
-        contains:
-            bucket:
-                description:
-                    - A reference to Bucket resource.
-                returned: success
-                type: dict
-            domain:
-                description:
-                    - The domain associated with the entity.
-                returned: success
-                type: str
-            email:
-                description:
-                    - The email address associated with the entity.
-                returned: success
-                type: str
-            entity:
-                description:
-                    - |
-                      The entity holding the permission, in one of the following
-                      forms:   user-userId   user-email   group-groupId
-                      group-email   domain-domain   project-team-projectId
-                      allUsers   allAuthenticatedUsers Examples:   The user
-                      liz@example.com would be user-liz@example.com.
-                    - The group example@googlegroups.com would be
-                      group-example@googlegroups.com.
-                    - To refer to all members of the Google Apps for Business domain
-                      example.com, the entity would be domain-example.com.
-                returned: success
-                type: str
-            entity_id:
-                description:
-                    - The ID for the entity.
-                returned: success
-                type: str
-            id:
-                description:
-                    - The ID of the access-control entry.
-                returned: success
-                type: str
-            project_team:
-                description:
-                    - The project team associated with the entity.
-                returned: success
-                type: complex
-                contains:
-                    project_number:
-                        description:
-                            - The project team associated with the entity.
-                        returned: success
-                        type: str
-                    team:
-                        description:
-                            - The team.
-                        returned: success
-                        type: str
-            role:
-                description:
-                    - The access permission for the entity.
-                returned: success
-                type: str
-    cors:
-        description:
-            - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
-        returned: success
-        type: complex
-        contains:
-            max_age_seconds:
-                description:
-                    - The value, in seconds, to return in the Access-Control-Max-Age
-                      header used in preflight responses.
-                returned: success
-                type: int
-            method:
-                description:
-                    - |
-                      The list of HTTP methods on which to include CORS response
-                      headers, (GET, OPTIONS, POST, etc) Note: "*" is permitted in
-                      the list of methods, and means "any method".
-                returned: success
-                type: list
-            origin:
-                description:
-                    - The list of Origins eligible to receive CORS response headers.
-                    - |
-                      Note: "*" is permitted in the list of origins, and means "any
-                      Origin".
-                returned: success
-                type: list
-            response_header:
-                description:
-                    - The list of HTTP headers other than the simple response
-                      headers to give permission for the user-agent to share across
-                      domains.
-                returned: success
-                type: list
+acl:
+  description:
+  - Access controls on the bucket.
+  returned: success
+  type: complex
+  contains:
+    bucket:
+      description:
+      - The name of the bucket.
+      returned: success
+      type: dict
+    domain:
+      description:
+      - The domain associated with the entity.
+      returned: success
+      type: str
+    email:
+      description:
+      - The email address associated with the entity.
+      returned: success
+      type: str
+    entity:
+      description:
+      - 'The entity holding the permission, in one of the following forms: user-userId
+        user-email group-groupId group-email domain-domain project-team-projectId
+        allUsers allAuthenticatedUsers Examples: The user liz@example.com would be
+        user-liz@example.com.'
+      - The group example@googlegroups.com would be group-example@googlegroups.com.
+      - To refer to all members of the Google Apps for Business domain example.com,
+        the entity would be domain-example.com.
+      returned: success
+      type: str
+    entityId:
+      description:
+      - The ID for the entity.
+      returned: success
+      type: str
     id:
-        description:
-            - The ID of the bucket. For buckets, the id and name properities are
-              the same.
-        returned: success
-        type: str
-    lifecycle:
-        description:
-            - The bucket's lifecycle configuration.
-            - |
-              See https://developers.google.com/storage/docs/lifecycle for more
-              information.
-        returned: success
-        type: complex
-        contains:
-            rule:
-                description:
-                    - A lifecycle management rule, which is made of an action to
-                      take and the condition(s) under which the action will be taken.
-                returned: success
-                type: complex
-                contains:
-                    action:
-                        description:
-                            - The action to take.
-                        returned: success
-                        type: complex
-                        contains:
-                            storage_class:
-                                description:
-                                    - Target storage class. Required iff the type of the
-                                      action is SetStorageClass.
-                                returned: success
-                                type: str
-                            type:
-                                description:
-                                    - Type of the action. Currently, only Delete and
-                                      SetStorageClass are supported.
-                                returned: success
-                                type: str
-                    condition:
-                        description:
-                            - The condition(s) under which the action will be taken.
-                        returned: success
-                        type: complex
-                        contains:
-                            age_days:
-                                description:
-                                    - Age of an object (in days). This condition is
-                                      satisfied when an object reaches the specified age.
-                                returned: success
-                                type: int
-                            created_before:
-                                description:
-                                    - A date in RFC 3339 format with only the date part (for
-                                      instance, "2013-01-15"). This condition is satisfied
-                                      when an object is created before midnight of the
-                                      specified date in UTC.
-                                returned: success
-                                type: str
-                            is_live:
-                                description:
-                                    - Relevant only for versioned objects.  If the value is
-                                      true, this condition matches live objects; if the
-                                      value is false, it matches archived objects.
-                                returned: success
-                                type: bool
-                            matches_storage_class:
-                                description:
-                                    - Objects having any of the storage classes specified by
-                                      this condition will be matched. Values include
-                                      MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE,
-                                      STANDARD, and DURABLE_REDUCED_AVAILABILITY.
-                                returned: success
-                                type: list
-                            num_newer_versions:
-                                description:
-                                    - Relevant only for versioned objects. If the value is
-                                      N, this condition is satisfied when there are at least
-                                      N versions (including the live version) newer than
-                                      this version of the object.
-                                returned: success
-                                type: int
-    location:
-        description:
-            - The location of the bucket. Object data for objects in the bucket
-              resides in physical storage within this region. Defaults to US.
-              See the developer's guide for the authoritative list.
-        returned: success
-        type: str
-    logging:
-        description:
-            - The bucket's logging configuration, which defines the destination
-              bucket and optional name prefix for the current bucket's logs.
-        returned: success
-        type: complex
-        contains:
-            log_bucket:
-                description:
-                    - The destination bucket where the current bucket's logs should
-                      be placed.
-                returned: success
-                type: str
-            log_object_prefix:
-                description:
-                    - A prefix for log object names.
-                returned: success
-                type: str
-    metageneration:
-        description:
-            - The metadata generation of this bucket.
-        returned: success
-        type: int
-    name:
-        description:
-            - The name of the bucket.
-        returned: success
-        type: str
-    owner:
-        description:
-            - The owner of the bucket. This is always the project team's owner
-              group.
-        returned: success
-        type: complex
-        contains:
-            entity:
-                description:
-                    - The entity, in the form project-owner-projectId.
-                returned: success
-                type: str
-            entity_id:
-                description:
-                    - The ID for the entity.
-                returned: success
-                type: str
-    project_number:
-        description:
-            - The project number of the project the bucket belongs to.
-        returned: success
-        type: int
-    storage_class:
-        description:
-            - The bucket's default storage class, used whenever no storageClass
-              is specified for a newly-created object. This defines how objects
-              in the bucket are stored and determines the SLA and the cost of
-              storage.
-            - Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE,
-              COLDLINE, and DURABLE_REDUCED_AVAILABILITY. If this value is not
-              specified when the bucket is created, it will default to STANDARD.
-              For more information, see storage classes.
-        returned: success
-        type: str
-    time_created:
-        description:
-            - The creation time of the bucket in RFC 3339 format.
-        returned: success
-        type: str
-    updated:
-        description:
-            - The modification time of the bucket in RFC 3339 format.
-        returned: success
-        type: str
-    versioning:
-        description:
-            - The bucket's versioning configuration.
-        returned: success
-        type: complex
-        contains:
-            enabled:
-                description:
-                    - While set to true, versioning is fully enabled for this bucket.
-                returned: success
-                type: bool
-    website:
-        description:
-            - The bucket's website configuration, controlling how the service
-              behaves when accessing bucket contents as a web site. See the
-              Static Website Examples for more information.
-        returned: success
-        type: complex
-        contains:
-            main_page_suffix:
-                description:
-                    - If the requested object path is missing, the service will
-                      ensure the path has a trailing '/', append this suffix, and
-                      attempt to retrieve the resulting object. This allows the
-                      creation of index.html objects to represent directory pages.
-                returned: success
-                type: str
-            not_found_page:
-                description:
-                    - If the requested object path is missing, and any
-                      mainPageSuffix object is missing, if applicable, the service
-                      will return the named object from this bucket as the content
-                      for a 404 Not Found result.
-                returned: success
-                type: str
-    project:
-        description:
-            - A valid API project identifier.
-        returned: success
-        type: str
-    predefined_default_object_acl:
-        description:
-            - Apply a predefined set of default object access controls to this
-              bucket.
-            - |
-              Acceptable values are:   - "authenticatedRead": Object owner gets
-              OWNER access, and     allAuthenticatedUsers get READER access.
-            - |
-              - "bucketOwnerFullControl": Object owner gets OWNER access, and
-              project team owners get OWNER access.
-            - |
-              - "bucketOwnerRead": Object owner gets OWNER access, and project
-              team owners get READER access.
-            - |
-              - "private": Object owner gets OWNER access.
-            - |
-              - "projectPrivate": Object owner gets OWNER access, and project
-              team     members get access according to their roles.
-            - |
-              - "publicRead": Object owner gets OWNER access, and allUsers get
-              READER access.
-        returned: success
-        type: str
+      description:
+      - The ID of the access-control entry.
+      returned: success
+      type: str
+    projectTeam:
+      description:
+      - The project team associated with the entity.
+      returned: success
+      type: complex
+      contains:
+        projectNumber:
+          description:
+          - The project team associated with the entity.
+          returned: success
+          type: str
+        team:
+          description:
+          - The team.
+          returned: success
+          type: str
+    role:
+      description:
+      - The access permission for the entity.
+      returned: success
+      type: str
+cors:
+  description:
+  - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+  returned: success
+  type: complex
+  contains:
+    maxAgeSeconds:
+      description:
+      - The value, in seconds, to return in the Access-Control-Max-Age header used
+        in preflight responses.
+      returned: success
+      type: int
+    method:
+      description:
+      - 'The list of HTTP methods on which to include CORS response headers, (GET,
+        OPTIONS, POST, etc) Note: "*" is permitted in the list of methods, and means
+        "any method".'
+      returned: success
+      type: list
+    origin:
+      description:
+      - The list of Origins eligible to receive CORS response headers.
+      - 'Note: "*" is permitted in the list of origins, and means "any Origin".'
+      returned: success
+      type: list
+    responseHeader:
+      description:
+      - The list of HTTP headers other than the simple response headers to give permission
+        for the user-agent to share across domains.
+      returned: success
+      type: list
+defaultObjectAcl:
+  description:
+  - Default access controls to apply to new objects when no ACL is provided.
+  returned: success
+  type: complex
+  contains:
+    bucket:
+      description:
+      - The name of the bucket.
+      returned: success
+      type: dict
+    domain:
+      description:
+      - The domain associated with the entity.
+      returned: success
+      type: str
+    email:
+      description:
+      - The email address associated with the entity.
+      returned: success
+      type: str
+    entity:
+      description:
+      - 'The entity holding the permission, in one of the following forms: * user-{{userId}}
+        * user-{{email}} (such as "user-liz@example.com") * group-{{groupId}} * group-{{email}}
+        (such as "group-example@googlegroups.com") * domain-{{domain}} (such as "domain-example.com")
+        * project-team-{{projectId}} * allUsers * allAuthenticatedUsers .'
+      returned: success
+      type: str
+    entityId:
+      description:
+      - The ID for the entity.
+      returned: success
+      type: str
+    generation:
+      description:
+      - The content generation of the object, if applied to an object.
+      returned: success
+      type: int
+    id:
+      description:
+      - The ID of the access-control entry.
+      returned: success
+      type: str
+    object:
+      description:
+      - The name of the object, if applied to an object.
+      returned: success
+      type: str
+    projectTeam:
+      description:
+      - The project team associated with the entity.
+      returned: success
+      type: complex
+      contains:
+        projectNumber:
+          description:
+          - The project team associated with the entity.
+          returned: success
+          type: str
+        team:
+          description:
+          - The team.
+          returned: success
+          type: str
+    role:
+      description:
+      - The access permission for the entity.
+      returned: success
+      type: str
+id:
+  description:
+  - The ID of the bucket. For buckets, the id and name properities are the same.
+  returned: success
+  type: str
+lifecycle:
+  description:
+  - The bucket's lifecycle configuration.
+  - See U(https://developers.google.com/storage/docs/lifecycle) for more information.
+  returned: success
+  type: complex
+  contains:
+    rule:
+      description:
+      - A lifecycle management rule, which is made of an action to take and the condition(s)
+        under which the action will be taken.
+      returned: success
+      type: complex
+      contains:
+        action:
+          description:
+          - The action to take.
+          returned: success
+          type: complex
+          contains:
+            storageClass:
+              description:
+              - Target storage class. Required iff the type of the action is SetStorageClass.
+              returned: success
+              type: str
+            type:
+              description:
+              - Type of the action. Currently, only Delete and SetStorageClass are
+                supported.
+              returned: success
+              type: str
+        condition:
+          description:
+          - The condition(s) under which the action will be taken.
+          returned: success
+          type: complex
+          contains:
+            ageDays:
+              description:
+              - Age of an object (in days). This condition is satisfied when an object
+                reaches the specified age.
+              returned: success
+              type: int
+            createdBefore:
+              description:
+              - A date in RFC 3339 format with only the date part (for instance, "2013-01-15").
+                This condition is satisfied when an object is created before midnight
+                of the specified date in UTC.
+              returned: success
+              type: str
+            isLive:
+              description:
+              - Relevant only for versioned objects. If the value is true, this condition
+                matches live objects; if the value is false, it matches archived objects.
+              returned: success
+              type: bool
+            matchesStorageClass:
+              description:
+              - Objects having any of the storage classes specified by this condition
+                will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE,
+                COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.
+              returned: success
+              type: list
+            numNewerVersions:
+              description:
+              - Relevant only for versioned objects. If the value is N, this condition
+                is satisfied when there are at least N versions (including the live
+                version) newer than this version of the object.
+              returned: success
+              type: int
+location:
+  description:
+  - The location of the bucket. Object data for objects in the bucket resides in physical
+    storage within this region. Defaults to US. See the developer's guide for the
+    authoritative list.
+  returned: success
+  type: str
+logging:
+  description:
+  - The bucket's logging configuration, which defines the destination bucket and optional
+    name prefix for the current bucket's logs.
+  returned: success
+  type: complex
+  contains:
+    logBucket:
+      description:
+      - The destination bucket where the current bucket's logs should be placed.
+      returned: success
+      type: str
+    logObjectPrefix:
+      description:
+      - A prefix for log object names.
+      returned: success
+      type: str
+metageneration:
+  description:
+  - The metadata generation of this bucket.
+  returned: success
+  type: int
+name:
+  description:
+  - The name of the bucket.
+  returned: success
+  type: str
+owner:
+  description:
+  - The owner of the bucket. This is always the project team's owner group.
+  returned: success
+  type: complex
+  contains:
+    entity:
+      description:
+      - The entity, in the form project-owner-projectId.
+      returned: success
+      type: str
+    entityId:
+      description:
+      - The ID for the entity.
+      returned: success
+      type: str
+projectNumber:
+  description:
+  - The project number of the project the bucket belongs to.
+  returned: success
+  type: int
+storageClass:
+  description:
+  - The bucket's default storage class, used whenever no storageClass is specified
+    for a newly-created object. This defines how objects in the bucket are stored
+    and determines the SLA and the cost of storage.
+  - Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY.
+    If this value is not specified when the bucket is created, it will default to
+    STANDARD. For more information, see storage classes.
+  returned: success
+  type: str
+timeCreated:
+  description:
+  - The creation time of the bucket in RFC 3339 format.
+  returned: success
+  type: str
+updated:
+  description:
+  - The modification time of the bucket in RFC 3339 format.
+  returned: success
+  type: str
+versioning:
+  description:
+  - The bucket's versioning configuration.
+  returned: success
+  type: complex
+  contains:
+    enabled:
+      description:
+      - While set to true, versioning is fully enabled for this bucket.
+      returned: success
+      type: bool
+website:
+  description:
+  - The bucket's website configuration, controlling how the service behaves when accessing
+    bucket contents as a web site. See the Static Website Examples for more information.
+  returned: success
+  type: complex
+  contains:
+    mainPageSuffix:
+      description:
+      - If the requested object path is missing, the service will ensure the path
+        has a trailing '/', append this suffix, and attempt to retrieve the resulting
+        object. This allows the creation of index.html objects to represent directory
+        pages.
+      returned: success
+      type: str
+    notFoundPage:
+      description:
+      - If the requested object path is missing, and any mainPageSuffix object is
+        missing, if applicable, the service will return the named object from this
+        bucket as the content for a 404 Not Found result.
+      returned: success
+      type: str
+project:
+  description:
+  - A valid API project identifier.
+  returned: success
+  type: str
+predefinedDefaultObjectAcl:
+  description:
+  - Apply a predefined set of default object access controls to this bucket.
+  - 'Acceptable values are: - "authenticatedRead": Object owner gets OWNER access,
+    and allAuthenticatedUsers get READER access.'
+  - '- "bucketOwnerFullControl": Object owner gets OWNER access, and project team
+    owners get OWNER access.'
+  - '- "bucketOwnerRead": Object owner gets OWNER access, and project team owners
+    get READER access.'
+  - '- "private": Object owner gets OWNER access.'
+  - '- "projectPrivate": Object owner gets OWNER access, and project team members
+    get access according to their roles.'
+  - '- "publicRead": Object owner gets OWNER access, and allUsers get READER access.'
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -701,6 +810,21 @@ def main():
                 method=dict(type='list', elements='str'),
                 origin=dict(type='list', elements='str'),
                 response_header=dict(type='list', elements='str')
+            )),
+            default_object_acl=dict(type='list', elements='dict', options=dict(
+                bucket=dict(required=True, type='dict'),
+                domain=dict(type='str'),
+                email=dict(type='str'),
+                entity=dict(required=True, type='str'),
+                entity_id=dict(type='str'),
+                generation=dict(type='int'),
+                id=dict(type='str'),
+                object=dict(type='str'),
+                project_team=dict(type='dict', options=dict(
+                    project_number=dict(type='str'),
+                    team=dict(type='str', choices=['editors', 'owners', 'viewers'])
+                )),
+                role=dict(required=True, type='str', choices=['OWNER', 'READER'])
             )),
             lifecycle=dict(type='dict', options=dict(
                 rule=dict(type='list', elements='dict', options=dict(
@@ -746,6 +870,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/devstorage.full_control']
+
     state = module.params['state']
     kind = 'storage#bucket'
 
@@ -755,7 +882,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -793,17 +921,18 @@ def resource_to_request(module):
         u'kind': 'storage#bucket',
         u'project': module.params.get('project'),
         u'predefinedDefaultObjectAcl': module.params.get('predefined_default_object_acl'),
-        u'acl': BucketAclArray(module.params.get('acl', [])).to_request(),
-        u'cors': BucketCorsArray(module.params.get('cors', [])).to_request(),
-        u'lifecycle': BucketLifecycle(module.params.get('lifecycle', {})).to_request(),
+        u'acl': BucketAclArray(module.params.get('acl', []), module).to_request(),
+        u'cors': BucketCorsArray(module.params.get('cors', []), module).to_request(),
+        u'defaultObjectAcl': BucketDefaultobjectaclArray(module.params.get('default_object_acl', []), module).to_request(),
+        u'lifecycle': BucketLifecycle(module.params.get('lifecycle', {}), module).to_request(),
         u'location': module.params.get('location'),
-        u'logging': BucketLogging(module.params.get('logging', {})).to_request(),
+        u'logging': BucketLogging(module.params.get('logging', {}), module).to_request(),
         u'metageneration': module.params.get('metageneration'),
         u'name': module.params.get('name'),
-        u'owner': BucketOwner(module.params.get('owner', {})).to_request(),
+        u'owner': BucketOwner(module.params.get('owner', {}), module).to_request(),
         u'storageClass': module.params.get('storage_class'),
-        u'versioning': BucketVersioning(module.params.get('versioning', {})).to_request(),
-        u'website': BucketWebsite(module.params.get('website', {})).to_request()
+        u'versioning': BucketVersioning(module.params.get('versioning', {}), module).to_request(),
+        u'website': BucketWebsite(module.params.get('website', {}), module).to_request()
     }
     return_vals = {}
     for k, v in request.items():
@@ -813,9 +942,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'storage')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -826,9 +955,9 @@ def collection(module):
     return "https://www.googleapis.com/storage/v1/b?project={project}".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -843,8 +972,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -871,26 +998,28 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'acl': BucketAclArray(response.get(u'acl', [])).from_response(),
-        u'cors': BucketCorsArray(response.get(u'cors', [])).from_response(),
+        u'acl': BucketAclArray(response.get(u'acl', []), module).from_response(),
+        u'cors': BucketCorsArray(response.get(u'cors', []), module).from_response(),
+        u'defaultObjectAcl': BucketDefaultobjectaclArray(module.params.get('default_object_acl', []), module).to_request(),
         u'id': response.get(u'id'),
-        u'lifecycle': BucketLifecycle(response.get(u'lifecycle', {})).from_response(),
+        u'lifecycle': BucketLifecycle(response.get(u'lifecycle', {}), module).from_response(),
         u'location': response.get(u'location'),
-        u'logging': BucketLogging(response.get(u'logging', {})).from_response(),
+        u'logging': BucketLogging(response.get(u'logging', {}), module).from_response(),
         u'metageneration': response.get(u'metageneration'),
         u'name': response.get(u'name'),
-        u'owner': BucketOwner(response.get(u'owner', {})).from_response(),
+        u'owner': BucketOwner(response.get(u'owner', {}), module).from_response(),
         u'projectNumber': response.get(u'projectNumber'),
         u'storageClass': response.get(u'storageClass'),
         u'timeCreated': response.get(u'timeCreated'),
         u'updated': response.get(u'updated'),
-        u'versioning': BucketVersioning(response.get(u'versioning', {})).from_response(),
-        u'website': BucketWebsite(response.get(u'website', {})).from_response()
+        u'versioning': BucketVersioning(response.get(u'versioning', {}), module).from_response(),
+        u'website': BucketWebsite(response.get(u'website', {}), module).from_response()
     }
 
 
 class BucketAclArray(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -916,7 +1045,7 @@ class BucketAclArray(object):
             u'entity': item.get('entity'),
             u'entityId': item.get('entity_id'),
             u'id': item.get('id'),
-            u'projectTeam': BucketProjectTeam(item.get('project_team', {})).to_request(),
+            u'projectTeam': BucketProjectteam(item.get('project_team', {}), self.module).to_request(),
             u'role': item.get('role')
         })
 
@@ -928,13 +1057,14 @@ class BucketAclArray(object):
             u'entity': item.get(u'entity'),
             u'entityId': item.get(u'entityId'),
             u'id': item.get(u'id'),
-            u'projectTeam': BucketProjectTeam(item.get(u'projectTeam', {})).from_response(),
+            u'projectTeam': BucketProjectteam(item.get(u'projectTeam', {}), self.module).from_response(),
             u'role': item.get(u'role')
         })
 
 
-class BucketProjectTeam(object):
-    def __init__(self, request):
+class BucketProjectteam(object):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -954,7 +1084,8 @@ class BucketProjectTeam(object):
 
 
 class BucketCorsArray(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -989,26 +1120,9 @@ class BucketCorsArray(object):
         })
 
 
-class BucketLifecycle(object):
-    def __init__(self, request):
-        if request:
-            self.request = request
-        else:
-            self.request = {}
-
-    def to_request(self):
-        return remove_nones_from_dict({
-            u'rule': BucketRuleArray(self.request.get('rule', [])).to_request()
-        })
-
-    def from_response(self):
-        return remove_nones_from_dict({
-            u'rule': BucketRuleArray(self.request.get(u'rule', [])).from_response()
-        })
-
-
-class BucketRuleArray(object):
-    def __init__(self, request):
+class BucketDefaultobjectaclArray(object):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -1028,19 +1142,109 @@ class BucketRuleArray(object):
 
     def _request_for_item(self, item):
         return remove_nones_from_dict({
-            u'action': BucketAction(item.get('action', {})).to_request(),
-            u'condition': BucketCondition(item.get('condition', {})).to_request()
+            u'bucket': replace_resource_dict(item.get(u'bucket', {}), 'name'),
+            u'domain': item.get('domain'),
+            u'email': item.get('email'),
+            u'entity': item.get('entity'),
+            u'entityId': item.get('entity_id'),
+            u'generation': item.get('generation'),
+            u'id': item.get('id'),
+            u'object': item.get('object'),
+            u'projectTeam': BucketProjectteam(item.get('project_team', {}), self.module).to_request(),
+            u'role': item.get('role')
         })
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({
-            u'action': BucketAction(item.get(u'action', {})).from_response(),
-            u'condition': BucketCondition(item.get(u'condition', {})).from_response()
+            u'bucket': item.get(u'bucket'),
+            u'domain': item.get(u'domain'),
+            u'email': item.get(u'email'),
+            u'entity': item.get(u'entity'),
+            u'entityId': item.get(u'entityId'),
+            u'generation': item.get(u'generation'),
+            u'id': item.get(u'id'),
+            u'object': item.get(u'object'),
+            u'projectTeam': BucketProjectteam(item.get(u'projectTeam', {}), self.module).from_response(),
+            u'role': item.get(u'role')
+        })
+
+
+class BucketProjectteam(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({
+            u'projectNumber': self.request.get('project_number'),
+            u'team': self.request.get('team')
+        })
+
+    def from_response(self):
+        return remove_nones_from_dict({
+            u'projectNumber': self.request.get(u'projectNumber'),
+            u'team': self.request.get(u'team')
+        })
+
+
+class BucketLifecycle(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({
+            u'rule': BucketRuleArray(self.request.get('rule', []), self.module).to_request()
+        })
+
+    def from_response(self):
+        return remove_nones_from_dict({
+            u'rule': BucketRuleArray(self.request.get(u'rule', []), self.module).from_response()
+        })
+
+
+class BucketRuleArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({
+            u'action': BucketAction(item.get('action', {}), self.module).to_request(),
+            u'condition': BucketCondition(item.get('condition', {}), self.module).to_request()
+        })
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({
+            u'action': BucketAction(item.get(u'action', {}), self.module).from_response(),
+            u'condition': BucketCondition(item.get(u'condition', {}), self.module).from_response()
         })
 
 
 class BucketAction(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -1060,7 +1264,8 @@ class BucketAction(object):
 
 
 class BucketCondition(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -1086,7 +1291,8 @@ class BucketCondition(object):
 
 
 class BucketLogging(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -1106,7 +1312,8 @@ class BucketLogging(object):
 
 
 class BucketOwner(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -1126,7 +1333,8 @@ class BucketOwner(object):
 
 
 class BucketVersioning(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -1144,7 +1352,8 @@ class BucketVersioning(object):
 
 
 class BucketWebsite(object):
-    def __init__(self, request):
+    def __init__(self, request, module):
+        self.module = module
         if request:
             self.request = request
         else:
@@ -1161,6 +1370,7 @@ class BucketWebsite(object):
             u'mainPageSuffix': self.request.get(u'mainPageSuffix'),
             u'notFoundPage': self.request.get(u'notFoundPage')
         })
+
 
 if __name__ == '__main__':
     main()

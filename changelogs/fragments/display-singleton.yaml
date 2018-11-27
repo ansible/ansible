@@ -1,0 +1,2 @@
+minor_changes:
+- Display - Add a ``Singleton`` metaclass and apply it to ``Display`` to remove the need of using ``__main__.Display`` as a pseudo singleton

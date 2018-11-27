@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages global configuration of EVPN on HUAWEI CloudEngine switches.
 description:
     - Manages global configuration of EVPN on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Before configuring evpn_overlay_enable=disable, delete other EVPN configurations.
 options:

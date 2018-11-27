@@ -290,5 +290,6 @@ def main():
     elif module.state == 'absent':
         module.state_absent()
 
+
 if __name__ == '__main__':
     main()

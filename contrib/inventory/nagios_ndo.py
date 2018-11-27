@@ -105,4 +105,5 @@ class NagiosNDOInventory(object):
         else:
             sys.exit("Error: Database configuration is missing. See nagios_ndo.ini.")
 
+
 NagiosNDOInventory()

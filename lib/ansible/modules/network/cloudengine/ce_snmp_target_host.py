@@ -28,7 +28,7 @@ short_description: Manages SNMP target host configuration on HUAWEI CloudEngine 
 description:
     - Manages SNMP target host configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     version:
         description:

@@ -32,14 +32,17 @@ options:
     description:
     - The maximum number of seconds to wait for a connection to happen before
       closing and retrying.
+    type: int
     default: 5
   delay:
     description:
     - The number of seconds to wait before starting to poll.
+    type: int
   exclude_hosts:
     description:
     - The list of hosts or IPs to ignore when looking for active TCP
       connections when C(state=drained).
+    type: list
   host:
     description:
     - A resolvable hostname or IP address to wait for.
@@ -52,9 +55,11 @@ options:
     - If C(state) is present or started then it will wait until the file
       exists.
     - If C(state) is absent then it will wait until the file does not exist.
+    type: path
   port:
     description:
     - The port number to poll on C(host).
+    type: int
   search_regex:
     description:
     - Can be used to match a string in a file.
@@ -65,6 +70,7 @@ options:
   sleep:
     description:
     - Number of seconds to sleep between checks.
+    type: int
     default: 1
   state:
     description:
@@ -79,6 +85,7 @@ options:
   timeout:
     description:
     - The maximum number of seconds to wait for.
+    type: int
     default: 300
 author:
 - Jordan Borean (@jborean93)

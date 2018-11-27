@@ -1,0 +1,2 @@
+minor_changes:
+- sns - Ported to boto3 and added support for additional protocols

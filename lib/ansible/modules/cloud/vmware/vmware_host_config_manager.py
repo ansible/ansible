@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_host_config_manager
-short_description: Manage advance configurations about an ESXi host
+short_description: Manage advanced system settings of an ESXi host
 description:
-- This module can be used to manage advance configuration information about an ESXi host when ESXi hostname or Cluster name is given.
+- This module can be used to manage advanced system settings of an ESXi host when ESXi hostname or Cluster name is given.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -31,23 +31,23 @@ options:
   cluster_name:
     description:
     - Name of the cluster.
-    - Settings are applied to every ESXi host system in given cluster.
+    - Settings are applied to every ESXi host in given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
   esxi_hostname:
     description:
     - ESXi hostname.
-    - Settings are applied to this ESXi host system.
+    - Settings are applied to this ESXi host.
     - If C(cluster_name) is not given, this parameter is required.
   options:
     description:
-    - A dictionary of advance configuration parameters.
+    - A dictionary of advanced system settings.
     - Invalid options will cause module to error.
     default: {}
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Manage Log level setting for all ESXi Host in given Cluster
+- name: Manage Log level setting for all ESXi hosts in given Cluster
   vmware_host_config_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -55,8 +55,9 @@ EXAMPLES = r'''
     cluster_name: cluster_name
     options:
         'Config.HostAgent.log.level': 'info'
+  delegate_to: localhost
 
-- name: Manage Log level setting for an ESXi Host
+- name: Manage Log level setting for an ESXi host
   vmware_host_config_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -64,8 +65,9 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     options:
         'Config.HostAgent.log.level': 'verbose'
+  delegate_to: localhost
 
-- name: Manage multiple settings for an ESXi Host
+- name: Manage multiple settings for an ESXi host
   vmware_host_config_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -75,6 +77,7 @@ EXAMPLES = r'''
         'Config.HostAgent.log.level': 'verbose'
         'Annotations.WelcomeMessage': 'Hello World'
         'Config.HostAgent.plugins.solo.enableMob': false
+  delegate_to: localhost
 '''
 
 RETURN = r'''#
@@ -120,6 +123,7 @@ class VmwareConfigManager(PyVmomi):
         return False
 
     def set_host_configuration_facts(self):
+        changed_list = []
         changed = False
         for host in self.hosts:
             option_manager = host.configManager.advancedOption
@@ -161,19 +165,34 @@ class VmwareConfigManager(PyVmomi):
                     if option_value != host_facts[option_key]['value']:
                         change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
                         changed = True
+                        changed_list.append(option_key)
                 else:  # Don't silently drop unknown options. This prevents typos from falling through the cracks.
                     self.module.fail_json(msg="Unknown option %s" % option_key)
             if changed:
-                try:
-                    option_manager.UpdateOptions(changedValue=change_option_list)
-                except vmodl.fault.InvalidArgument as e:
-                    self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
-                                              "contains an invalid value: %s" % to_native(e.msg))
-                except vim.fault.InvalidName as e:
-                    self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
-                                              "objects refers to a non-existent option : %s" % to_native(e.msg))
+                if self.module.check_mode:
+                    changed_suffix = ' would be changed.'
+                else:
+                    changed_suffix = ' changed.'
+                if len(changed_list) > 2:
+                    message = ', '.join(changed_list[:-1]) + ', and ' + str(changed_list[-1])
+                elif len(changed_list) == 2:
+                    message = ' and '.join(changed_list)
+                elif len(changed_list) == 1:
+                    message = changed_list[0]
+                message += changed_suffix
+                if self.module.check_mode is False:
+                    try:
+                        option_manager.UpdateOptions(changedValue=change_option_list)
+                    except (vmodl.fault.SystemError, vmodl.fault.InvalidArgument) as e:
+                        self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
+                                                  "contains an invalid value: %s" % to_native(e.msg))
+                    except vim.fault.InvalidName as e:
+                        self.module.fail_json(msg="Failed to update option/s as one or more OptionValue "
+                                                  "objects refers to a non-existent option : %s" % to_native(e.msg))
+            else:
+                message = 'All settings are already configured.'
 
-        self.module.exit_json(changed=changed)
+        self.module.exit_json(changed=changed, msg=message)
 
 
 def main():
@@ -186,6 +205,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
         ]

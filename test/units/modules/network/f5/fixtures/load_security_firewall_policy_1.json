@@ -1,0 +1,51 @@
+{
+    "kind": "tm:security:firewall:policy:policystate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 2075,
+    "selfLink": "https://localhost/mgmt/tm/security/firewall/policy/~Common~foo?expandSubcollections=true&ver=13.1.0.7",
+    "description": "my description",
+    "rulesReference": {
+        "link": "https://localhost/mgmt/tm/security/firewall/policy/~Common~foo/rules?ver=13.1.0.7",
+        "isSubcollection": true,
+        "items": [
+            {
+                "kind": "tm:security:firewall:policy:rules:rulesstate",
+                "name": "rule1",
+                "fullPath": "rule1",
+                "generation": 2075,
+                "selfLink": "https://localhost/mgmt/tm/security/firewall/policy/~Common~foo/rules/rule1?ver=13.1.0.7",
+                "action": "accept",
+                "ipProtocol": "any",
+                "iruleSampleRate": 1,
+                "log": "no",
+                "status": "enabled"
+            },
+            {
+                "kind": "tm:security:firewall:policy:rules:rulesstate",
+                "name": "rule2",
+                "fullPath": "rule2",
+                "generation": 2075,
+                "selfLink": "https://localhost/mgmt/tm/security/firewall/policy/~Common~foo/rules/rule2?ver=13.1.0.7",
+                "action": "accept",
+                "ipProtocol": "any",
+                "iruleSampleRate": 1,
+                "log": "no",
+                "status": "enabled"
+            },
+            {
+                "kind": "tm:security:firewall:policy:rules:rulesstate",
+                "name": "rule3",
+                "fullPath": "rule3",
+                "generation": 2074,
+                "selfLink": "https://localhost/mgmt/tm/security/firewall/policy/~Common~foo/rules/rule3?ver=13.1.0.7",
+                "action": "accept",
+                "ipProtocol": "any",
+                "iruleSampleRate": 1,
+                "log": "no",
+                "status": "enabled"
+            }
+        ]
+    }
+}

@@ -40,7 +40,6 @@
       that:
         - result.changed == false
 
-
   - name: Configure NXAPI HTTPS & HTTP
     nxos_nxapi: &configure_https_http
       enable_http: yes

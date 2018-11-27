@@ -23,6 +23,7 @@ options:
   expire:
     description:
       - How long in seconds before the notification expires.
+    type: int
     default: 45
   group:
     description:

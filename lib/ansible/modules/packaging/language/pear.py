@@ -24,7 +24,7 @@ description:
     - Manage PHP packages with the pear package manager.
 version_added: 2.0
 author:
-    - "'jonathan.lestrelin' <jonathan.lestrelin@gmail.com>"
+    - Jonathan Lestrelin (@jle64) <jonathan.lestrelin@gmail.com>
 options:
     name:
         description:
@@ -201,10 +201,9 @@ def check_packages(module, packages, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['pkg']),
+            name=dict(aliases=['pkg'], required=True),
             state=dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             executable=dict(default=None, required=False, type='path')),
-        required_one_of=[['name']],
         supports_check_mode=True)
 
     p = module.params

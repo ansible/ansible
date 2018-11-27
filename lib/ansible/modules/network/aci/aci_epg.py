@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -42,7 +42,6 @@ options:
   bd:
     description:
     - Name of the bridge domain being associated with the EPG.
-    required: yes
     aliases: [ bd_name, bridge_domain ]
   priority:
     description:
@@ -91,6 +90,8 @@ EXAMPLES = r'''
     description: Web Intranet EPG
     bd: prod_bd
     preferred_group: yes
+    state: present
+  delegate_to: localhost
 
 - aci_epg:
     host: apic
@@ -104,6 +105,7 @@ EXAMPLES = r'''
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
+  delegate_to: localhost
   with_items:
     - epg: web
       bd: web_bd
@@ -120,6 +122,7 @@ EXAMPLES = r'''
     app_profile: intranet
     epg: web_epg
     state: absent
+  delegate_to: localhost
 
 - name: Query an EPG
   aci_epg:
@@ -130,6 +133,8 @@ EXAMPLES = r'''
     ap: ticketing
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs
   aci_epg:
@@ -137,6 +142,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs with a Specific Name
   aci_epg:
@@ -146,6 +153,8 @@ EXAMPLES = r'''
     validate_certs: no
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs of an App Profile
   aci_epg:
@@ -155,6 +164,8 @@ EXAMPLES = r'''
     validate_certs: no
     ap: ticketing
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -307,20 +318,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         child_classes=['fvRsBd'],
     )
@@ -338,9 +349,13 @@ def main():
                 fwdCtrl=fwd_control,
                 prefGrMemb=preferred_group,
             ),
-            child_configs=[
-                dict(fvRsBd=dict(attributes=dict(tnFvBDName=bd))),
-            ],
+            child_configs=[dict(
+                fvRsBd=dict(
+                    attributes=dict(
+                        tnFvBDName=bd,
+                    ),
+                ),
+            )],
         )
 
         aci.get_diff(aci_class='fvAEPg')

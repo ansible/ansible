@@ -136,6 +136,11 @@ extends_documentation_fragment:
     - docker
 requirements:
     - python >= 2.7
+    - "docker >= 2.6.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       Version 2.1.0 or newer is only available with the C(docker) module."
     - Docker API >= 1.35
 author:
   - Thierry Bouvet (@tbouvet)
@@ -146,7 +151,6 @@ EXAMPLES = '''
 - name: Init a new swarm with default parameters
   docker_swarm:
     state: present
-    advertise_addr: 192.168.1.1
 
 - name: Update swarm configuration
   docker_swarm:
@@ -214,7 +218,7 @@ from time import sleep
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
@@ -325,9 +329,6 @@ class SwarmManager(DockerBaseClass):
             return
 
         try:
-            if self.parameters.advertise_addr is None:
-                self.client.fail(msg="advertise_addr is required to initialize a swarm cluster.")
-
             self.client.init_swarm(
                 advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
                 force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
@@ -474,7 +475,7 @@ def main():
         state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
-        remote_addrs=dict(type='list'),
+        remote_addrs=dict(type='list', elements='str'),
         join_token=dict(type='str'),
         snapshot_interval=dict(type='int'),
         task_history_retention_limit=dict(type='int'),
@@ -503,7 +504,9 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_version='2.6.0',
+        min_docker_api_version='1.35',
     )
 
     results = dict(

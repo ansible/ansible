@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -61,7 +61,7 @@ options:
     type: bool
     default: true
 
-author: tedder
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2
@@ -69,14 +69,14 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: grant user-style access to production secrets
-  kms:
+  aws_kms:
   args:
     mode: grant
     key_alias: "alias/my_production_secrets"
     role_name: "prod-appServerRole-1R5AQG2BSEL6L"
     grant_types: "role,role grant"
 - name: remove access to production secrets from role
-  kms:
+  aws_kms:
   args:
     mode: deny
     key_alias: "alias/my_production_secrets"
@@ -209,7 +209,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
     ret['new_policy'] = policy
     if dry_run:
         # true if changes > 0
-        ret['changed'] = (not len(changes_needed) == 0)
+        ret['changed'] = len(changes_needed) > 0
 
     return ret
 

@@ -26,12 +26,13 @@ author: Remy Leone (@sieben)
 description:
     - This module manages SSH keys on Scaleway account
       U(https://developer.scaleway.com)
+extends_documentation_fragment: scaleway
 
 options:
   state:
     description:
      - Indicate desired state of the SSH key.
-    required: true
+    default: present
     choices:
       - present
       - absent
@@ -39,25 +40,18 @@ options:
     description:
      - The public SSH key as a string to add.
     required: true
-  oauth_token:
+  api_url:
     description:
-     - Scaleway OAuth token.
-    required: true
-  timeout:
-    description:
-    - Timeout for API calls
-    default: 30
-  base_url:
-    description:
-    - Base URL for account API
-    default: "https://account.scaleway.com"
+      - Scaleway API URL
+    default: 'https://account.scaleway.com'
+    aliases: ['base_url']
 '''
 
 EXAMPLES = '''
 - name: "Add SSH key"
   scaleway_sshkey:
     ssh_pub_key: "ssh-rsa AAAA..."
-    state: "Present"
+    state: "present"
 
 - name: "Delete SSH key"
   scaleway_sshkey:
@@ -67,7 +61,7 @@ EXAMPLES = '''
 - name: "Add SSH key with explicit token"
   scaleway_sshkey:
     ssh_pub_key: "ssh-rsa AAAA..."
-    state: "Present"
+    state: "present"
     oauth_token: "6ecd2c9b-6f4f-44d4-a187-61a92078d08c"
 '''
 
@@ -83,9 +77,8 @@ data:
     }
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.scaleway import ScalewayAPI
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.scaleway import scaleway_argument_spec, Scaleway
 
 
 def extract_present_sshkeys(raw_organization_dict):
@@ -105,12 +98,9 @@ def sshkey_user_patch(ssh_lookup):
 
 
 def core(module):
-    api_token = module.params['oauth_token']
     ssh_pub_key = module.params['ssh_pub_key']
     state = module.params["state"]
-    account_api = ScalewayAPI(module,
-                              headers={'X-Auth-Token': api_token},
-                              base_url=module.params["base_url"])
+    account_api = Scaleway(module)
     response = account_api.get('organizations')
 
     status_code = response.status_code
@@ -166,19 +156,14 @@ def core(module):
 
 
 def main():
+    argument_spec = scaleway_argument_spec()
+    argument_spec.update(dict(
+        state=dict(default='present', choices=['absent', 'present']),
+        ssh_pub_key=dict(required=True),
+        api_url=dict(fallback=(env_fallback, ['SCW_API_URL']), default='https://account.scaleway.com', aliases=['base_url']),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            base_url=dict(default='https://account.scaleway.com'),
-            oauth_token=dict(
-                no_log=True,
-                # Support environment variable for Scaleway OAuth Token
-                fallback=(env_fallback, ['SCW_TOKEN', 'SCW_API_KEY', 'SCW_OAUTH_TOKEN']),
-                required=True,
-            ),
-            state=dict(choices=['present', 'absent'], required=True),
-            ssh_pub_key=dict(required=True),
-            timeout=dict(type='int', default=30),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 

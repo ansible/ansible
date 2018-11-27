@@ -37,14 +37,11 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
+from ansible.utils.display import Display
 from ansible.utils.ssh_functions import check_for_controlpersist
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayContext']
@@ -178,8 +175,8 @@ class PlayContext(Base):
 
     # general flags
     _verbosity = FieldAttribute(isa='int', default=0)
-    _only_tags = FieldAttribute(isa='set', default=set())
-    _skip_tags = FieldAttribute(isa='set', default=set())
+    _only_tags = FieldAttribute(isa='set', default=set)
+    _skip_tags = FieldAttribute(isa='set', default=set)
     _force_handlers = FieldAttribute(isa='bool', default=False)
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)

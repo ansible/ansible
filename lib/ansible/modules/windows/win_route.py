@@ -30,6 +30,7 @@ options:
   metric:
     description:
         - Metric used by the static route.
+    type: int
     default: 1
   state:
     description:
@@ -40,7 +41,7 @@ options:
 notes:
   - Works only with Windows 2012 R2 and newer.
 author:
-- Daniele Lazzari
+- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = r'''

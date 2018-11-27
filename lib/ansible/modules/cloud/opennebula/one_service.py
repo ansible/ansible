@@ -693,7 +693,7 @@ def main():
                                ['template_id', 'template_name', 'cardinality'],
                                ['service_id', 'custom_attrs']
                            ],
-                           required_together=['role', 'cardinality'],
+                           required_together=[['role', 'cardinality']],
                            supports_check_mode=True)
 
     auth = get_connection_info(module)

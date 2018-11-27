@@ -89,7 +89,7 @@ You will run into errors because Ansible reads name in this context as a keyword
         - { role: myrole, vars: {name: Justin, othervar: othervalue}, become: True}
 
 
-For a full list of keywords see ::ref::`Playbook Keywords`.
+For a full list of keywords see :ref:`playbook_keywords`.
 
 Migrating from with_X to loop
 -----------------------------
@@ -137,6 +137,21 @@ See :ref:`playbooks_tests` for more information.
 
 Additionally, a script was created to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks. The script can be found at `https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py <https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py>`_.
 
+Ansible fact namespacing
+------------------------
+
+Ansible facts, which have historically been written to names like ``ansible_*``
+in the main facts namespace, have been placed in their own new namespace,
+``ansible_facts.*`` For example, the fact ``ansible_distribution`` is now best
+queried through the variable structure ``ansible_facts.distribution``. 
+
+A new configuration variable, ``inject_facts_as_vars``, has been added to
+ansible.cfg. Its default setting, 'True', keeps the 2.4 behavior of facts
+variables being set in the old ``ansible_*`` locations (while also writing them
+to the new namespace). This variable is expected to be set to 'False' in a
+future release. When ``inject_facts_as_vars`` is set to False, you must
+refer to ansible_facts through the new ``ansible_facts.*`` namespace.
+
 Modules
 =======
 
@@ -154,17 +169,26 @@ Modules removed
 
 The following modules no longer exist:
 
-* :ref:`nxos_mtu <nxos_mtu_module>` use :ref:`nxos_system <nxos_system_module>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface_module>` instead
-* :ref:`cl_interface_policy <cl_interface_policy_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`cl_bridge <cl_bridge_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`cl_img_install <cl_img_install_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`cl_ports <cl_ports_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`cl_license <cl_license_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`cl_interface <cl_interface_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`cl_bond <cl_bond_module>` use :ref:`nclu <nclu_module>` instead
-* :ref:`ec2_vpc <ec2_vpc_module>` use :ref:`ec2_vpc_net <ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_option <ec2_vpc_dhcp_option_module>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl_module>` instead.
-* :ref:`ec2_ami_search <ec2_ami_search_module>` use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead
-* :ref:`docker <docker_module>` use :ref:`docker_container <docker_container_module>` and :ref:`docker_image <docker_image_module>` instead
+* nxos_mtu use :ref:`nxos_system <nxos_system_module>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface_module>` instead
+* cl_interface_policy use :ref:`nclu <nclu_module>` instead
+* cl_bridge use :ref:`nclu <nclu_module>` instead
+* cl_img_install use :ref:`nclu <nclu_module>` instead
+* cl_ports use :ref:`nclu <nclu_module>` instead
+* cl_license use :ref:`nclu <nclu_module>` instead
+* cl_interface use :ref:`nclu <nclu_module>` instead
+* cl_bond use :ref:`nclu <nclu_module>` instead
+* ec2_vpc use :ref:`ec2_vpc_net <ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_option <ec2_vpc_dhcp_option_module>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl_module>` instead.
+* ec2_ami_search use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead
+* docker use :ref:`docker_container <docker_container_module>` and :ref:`docker_image <docker_image_module>` instead
+
+.. note::
+
+    These modules may no longer have documentation in the current release.  Please see the
+    `Ansible 2.4 module documentation
+    <https://docs.ansible.com/ansible/2.4/list_of_all_modules.html>`_ if you need
+    to know how they worked for porting your playbooks.
+
+
 
 Deprecation notices
 -------------------

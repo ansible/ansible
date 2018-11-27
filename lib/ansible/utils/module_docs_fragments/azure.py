@@ -70,6 +70,7 @@ options:
     auth_source:
         description:
             - Controls the source of the credentials to use for authentication.
+            - If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to C(auto) if variable is not defined.
             - C(auto) will follow the default precedence of module parameters -> environment variables -> default profile in credential file
               C(~/.azure/credentials).
             - When set to C(cli), the credentials will be sources from the default Azure CLI profile.
@@ -84,7 +85,6 @@ options:
         - credential_file
         - env
         - msi
-        default: auto
         version_added: 2.5
     api_profile:
         description:

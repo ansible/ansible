@@ -17,8 +17,8 @@
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
-    state: present
     tenant: anstest
+    state: present
   register: tenant_present
 
 - name: ensure ap exists for tests to kick off
@@ -41,6 +41,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     method: post
     path: api/mo/uni/phys-anstest.json
     content: {"physDomP": {"attributes": {}}}
@@ -109,23 +110,23 @@
 - name: present assertions
   assert:
     that:
-      - phys_check_mode_present.changed == true
-      - phys_present.changed == true
+      - phys_check_mode_present is changed
+      - phys_present is changed
       - phys_present.previous == []
       - 'phys_present.sent == {"fvRsDomAtt": {"attributes": {}}}'
       - '"[uni/phys-anstest].json" in phys_present.url'
-      - phys_idempotent.changed == false
+      - phys_idempotent is not changed
       - phys_idempotent.sent == {}
-      - phys_update.changed == true
+      - phys_update is changed
       - 'phys_update.sent == {"fvRsDomAtt": {"attributes": {"instrImedcy": "immediate"}}}'
-      - vmm_present.changed == true
+      - vmm_present is changed
       - 'vmm_present.sent == {"fvRsDomAtt": {"attributes": {"resImedcy": "pre-provision"}}}'
       - '"[uni/vmmp-VMware/dom-anstest].json" in vmm_present.url'
-      - present_missing_params.failed == true
+      - present_missing_params is failed
       - 'present_missing_params.msg == "domain_type is vmm but all of the following are missing: vm_provider"'
-      - invalid_vlan.failed == true
-      - 'invalid_vlan.msg == "Valid VLAN assigments are from 1 to 4096"'
-      - incompatible_params.failed == true
+      - invalid_vlan is failed
+      - invalid_vlan.msg == "Valid VLAN assigments are from 1 to 4096"
+      - incompatible_params is failed
       - incompatible_params.msg == "Domain type 'phys' cannot have a 'vm_provider'"
 
 - name: get domain epg binding
@@ -138,7 +139,7 @@
 - name: query assertions
   assert:
     that:
-      - binding_query.changed == false
+      - binding_query is not changed
       - binding_query.current | length > 1
       - '"class/fvRsDomAtt.json" in binding_query.url'
 
@@ -175,42 +176,42 @@
 - name: absent assertions
   assert:
     that:
-      - epg_domain_check_mode_absent.changed == true
+      - epg_domain_check_mode_absent is changed
       - epg_domain_check_mode_absent.previous != []
-      - epg_domain_absent.changed == true
+      - epg_domain_absent is changed
       - epg_domain_absent.previous == epg_domain_check_mode_absent.previous
-      - epg_vmm_domain_absent.changed == true
-      - idempotency_absent.changed == false
+      - epg_vmm_domain_absent is changed
+      - idempotency_absent is not changed
       - idempotency_absent.previous == []
-      - absent_missing_param.failed == true
+      - absent_missing_param is failed
       - 'absent_missing_param.msg == "state is absent but all of the following are missing: ap, domain, domain_type, epg"'
 
 - name: remove vmm domain - cleanup
   aci_rest:
     <<: *aci_rest_vmm_domain
     method: delete
-  when: vmm_domain_post.changed == true
+  when: vmm_domain_post is changed
 
 - name: remove phys domain - cleanup
   aci_rest:
     <<: *aci_rest_phys_domain
     method: delete
-  when: phys_domain_post.changed == true
+  when: phys_domain_post is changed
 
 - name: remove epg - cleanup
   aci_epg:
     <<: *aci_epg_present
     state: absent
-  when: epg_present.changed == true
+  when: epg_present is changed
 
 - name: remove ap - cleanup
   aci_ap:
     <<: *aci_ap_present
     state: absent
-  when: ap_present.changed == true
+  when: ap_present is changed
 
 - name: remove tenant - cleanup
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

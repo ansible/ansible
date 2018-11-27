@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Sebastian Kornehl <sebastian.kornehl@asideas.de>
+# Copyright: (c) 2015, Sebastian Kornehl <sebastian.kornehl@asideas.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -62,7 +62,6 @@ options:
         description:
             - The number of minutes before a monitor will notify when data stops reporting. Must be at least 2x the monitor timeframe for metric
               alerts or 2 minutes for service checks.
-        required: false
         default: 2x timeframe for metric, 2 minutes for service
     timeout_h:
         description: ["The number of hours of the monitor not reporting data before it will automatically resolve from a triggered state."]
@@ -97,6 +96,9 @@ options:
         description: ["A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
         This gives the host time to fully initialize."]
         version_added: "2.4"
+    evaluation_delay:
+        description: ["Time to delay evaluation (in seconds). It is effective for sparse values."]
+        version_added: "2.7"
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
         version_added: "2.3"
@@ -170,6 +172,7 @@ def main():
             locked=dict(required=False, default=False, type='bool'),
             require_full_window=dict(required=False, default=None, type='bool'),
             new_host_delay=dict(required=False, default=None),
+            evaluation_delay=dict(required=False, default=None),
             id=dict(required=False)
         )
     )
@@ -218,7 +221,7 @@ def _get_monitor(module):
     else:
         monitors = api.Monitor.get_all()
         for monitor in monitors:
-            if monitor['name'] == module.params['name']:
+            if monitor['name'] == _fix_template_vars(module.params['name']):
                 return monitor
     return {}
 
@@ -226,7 +229,9 @@ def _get_monitor(module):
 def _post_monitor(module, options):
     try:
         kwargs = dict(type=module.params['type'], query=module.params['query'],
-                      name=module.params['name'], message=_fix_template_vars(module.params['message']),
+                      name=_fix_template_vars(module.params['name']),
+                      message=_fix_template_vars(module.params['message']),
+                      escalation_message=_fix_template_vars(module.params['escalation_message']),
                       options=options)
         if module.params['tags'] is not None:
             kwargs['tags'] = module.params['tags']
@@ -248,7 +253,9 @@ def _equal_dicts(a, b, ignore_keys):
 def _update_monitor(module, monitor, options):
     try:
         kwargs = dict(id=monitor['id'], query=module.params['query'],
-                      name=module.params['name'], message=_fix_template_vars(module.params['message']),
+                      name=_fix_template_vars(module.params['name']),
+                      message=_fix_template_vars(module.params['message']),
+                      escalation_message=_fix_template_vars(module.params['escalation_message']),
                       options=options)
         if module.params['tags'] is not None:
             kwargs['tags'] = module.params['tags']
@@ -275,7 +282,8 @@ def install_monitor(module):
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
         "require_full_window": module.params['require_full_window'],
-        "new_host_delay": module.params['new_host_delay']
+        "new_host_delay": module.params['new_host_delay'],
+        "evaluation_delay": module.params['evaluation_delay']
     }
 
     if module.params['type'] == "service check":

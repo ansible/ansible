@@ -281,5 +281,6 @@ def main():
 
     logical_device_map(module)
 
+
 if __name__ == "__main__":
     main()

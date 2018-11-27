@@ -18,6 +18,9 @@ module: vmware_vswitch_facts
 short_description: Gathers facts about an ESXi host's vswitch configurations
 description:
 - This module can be used to gather facts about an ESXi host's vswitch configurations when ESXi hostname or Cluster name is given.
+- The vSphere Client shows the value for the number of ports as elastic from vSphere 5.5 and above.
+- Other tools like esxcli might show the number of ports as 1536 or 5632.
+- See U(https://kb.vmware.com/s/article/2064511) for more details.
 version_added: '2.6'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -45,7 +48,8 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
+    delegate_to: localhost
   register: all_hosts_vswitch_facts
 
 - name: Gather firewall facts about ESXi Host
@@ -54,6 +58,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+    delegate_to: localhost
   register: all_vswitch_facts
 '''
 
@@ -66,14 +71,14 @@ hosts_vswitch_facts:
         "10.76.33.218": {
             "vSwitch0": {
                 "mtu": 1500,
-                "num_ports": 1536,
+                "num_ports": 128,
                 "pnics": [
                     "vmnic0"
                 ]
             },
             "vSwitch_0011": {
                 "mtu": 1500,
-                "num_ports": 1536,
+                "num_ports": 128,
                 "pnics": [
                     "vmnic2",
                     "vmnic1"
@@ -88,14 +93,18 @@ from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
 
 
 class VswitchFactsManager(PyVmomi):
+    """Class to gather vSwitch facts"""
     def __init__(self, module):
         super(VswitchFactsManager, self).__init__(module)
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
+        if not self.hosts:
+            self.module.fail_json(msg="Failed to find host system.")
 
     @staticmethod
     def serialize_pnics(vswitch_obj):
+        """Get pnic names"""
         pnics = []
         for pnic in vswitch_obj.pnic:
             # vSwitch contains all PNICs as string in format of 'key-vim.host.PhysicalNic-vmnic0'
@@ -103,20 +112,27 @@ class VswitchFactsManager(PyVmomi):
         return pnics
 
     def gather_vswitch_facts(self):
+        """Gather vSwitch facts"""
         hosts_vswitch_facts = dict()
         for host in self.hosts:
             network_manager = host.configManager.networkSystem
             if network_manager:
                 temp_switch_dict = dict()
                 for available_vswitch in network_manager.networkInfo.vswitch:
-                    temp_switch_dict[available_vswitch.name] = dict(pnics=self.serialize_pnics(available_vswitch),
-                                                                    mtu=available_vswitch.mtu,
-                                                                    num_ports=available_vswitch.numPorts)
+                    temp_switch_dict[available_vswitch.name] = dict(
+                        pnics=self.serialize_pnics(available_vswitch),
+                        mtu=available_vswitch.mtu,
+                        # we need to use the spec to get the ports
+                        # otherwise, the output might be different compared to the vswitch config module
+                        # (e.g. 5632 ports instead of 128)
+                        num_ports=available_vswitch.spec.numPorts
+                    )
                 hosts_vswitch_facts[host.name] = temp_switch_dict
         return hosts_vswitch_facts
 
 
 def main():
+    """Main"""
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
@@ -127,7 +143,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_vswitch_mgr = VswitchFactsManager(module)

@@ -150,7 +150,7 @@
 #        # it would be a good idea to check the events on the host to see the reconnect
 #        # https://github.com/vmware/govmomi/blob/master/govc/USAGE.md#events
 #        # "govc events ..." need to be callable from
-#        # test/utils/docker/vcenter-simulator/flask_control.py
+#        # https://github.com/ansible/vcenter-test-container/flask_control.py
 
 ## Testcase: Remove Host
 #

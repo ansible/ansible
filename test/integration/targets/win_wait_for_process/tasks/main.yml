@@ -1,0 +1,200 @@
+---
+- name: Get powershell version
+  win_shell: $PSVersionTable.PSVersion.Major
+  register: powershell_version
+
+- name: Ensure Spooler service is started
+  win_service:
+    name: Spooler
+    state: started
+
+- name: Wait for non-existing process to not exist
+  win_wait_for_process:
+    process_name_exact:
+    - ansible_foobar
+    timeout: 30
+    state: absent
+  register: absent_nonexisting_process
+
+- assert:
+    that:
+    - absent_nonexisting_process is success
+    - absent_nonexisting_process is not changed
+    - absent_nonexisting_process.elapsed > 0
+    - absent_nonexisting_process.elapsed < 30
+    - absent_nonexisting_process.matched_processes|length == 0
+
+- name: Wait for non-existing process until timeout
+  win_wait_for_process:
+    process_name_exact: ansible_foobar
+    timeout: 30
+    state: present
+  ignore_errors: yes
+  register: present_nonexisting_process
+
+- assert:
+    that:
+    - present_nonexisting_process is failed
+    - present_nonexisting_process is not changed
+    - present_nonexisting_process.elapsed > 30
+    - present_nonexisting_process.msg == 'Timed out while waiting for process(es) to start'
+    - present_nonexisting_process.matched_processes|length == 0
+
+- name: Wait for existing process to exist
+  win_wait_for_process:
+    process_name_exact: spoolsv
+    timeout: 30
+    state: present
+  register: present_existing_process
+
+- assert:
+    that:
+    - present_existing_process is success
+    - present_existing_process is not changed
+    - present_existing_process.elapsed > 0
+    - present_existing_process.elapsed < 30
+    - present_existing_process.matched_processes|length > 0
+
+- name: Wait for existing process until timeout
+  win_wait_for_process:
+    process_name_exact:
+    - spoolsv
+    timeout: 30
+    state: absent
+  ignore_errors: yes
+  register: absent_existing_process
+
+- assert:
+    that:
+    - absent_existing_process is failed
+    - absent_existing_process is not changed
+    - absent_existing_process.elapsed > 30
+    - absent_existing_process.matched_processes|length > 0
+    - absent_existing_process.msg == 'Timeout while waiting for process(es) to stop'
+
+- name: Wait for existing process to exist (using owner)
+  win_wait_for_process:
+    process_name_exact: spoolsv
+    owner: SYSTEM
+    timeout: 30
+    state: present
+  ignore_errors: yes
+  register: present_existing_owner_process
+
+- assert:
+    that:
+    - present_existing_owner_process is success
+    - present_existing_owner_process is not changed
+    - present_existing_owner_process.elapsed > 0
+    - present_existing_owner_process.elapsed < 30
+    - present_existing_owner_process.matched_processes|length > 0
+  when: powershell_version.stdout_lines[0]|int >= 4
+
+- assert:
+    that:
+    - present_existing_owner_process is failed
+    - present_existing_owner_process is not changed
+    - present_existing_owner_process.elapsed == 0
+    - present_existing_owner_process.matched_processes|length == 0
+    - present_existing_owner_process.msg ==  "This version of Powershell does not support filtering processes by 'owner'."
+  when: powershell_version.stdout_lines[0]|int < 4
+
+- name: Wait for Spooler service to stop
+  win_wait_for_process:
+    process_name_exact:
+    - spoolsv
+    timeout: 60
+    state: absent
+  async: 30
+  poll: 0
+  register: spoolsv_process
+
+- name: Stop the Spooler service
+  win_service:
+    name: Spooler
+    force_dependent_services: yes
+    state: stopped
+
+- name: Check on async task
+  async_status:
+    jid: '{{ spoolsv_process.ansible_job_id }}'
+  until: absent_spoolsv_process is finished
+  retries: 20
+  register: absent_spoolsv_process
+
+- assert:
+    that:
+    - absent_spoolsv_process is success
+    - absent_spoolsv_process is not changed
+    - absent_spoolsv_process is finished
+    - absent_spoolsv_process.elapsed > 0
+    - absent_spoolsv_process.elapsed < 30
+    - absent_spoolsv_process.matched_processes|length == 1
+
+- name: Wait for Spooler service to start
+  win_wait_for_process:
+    process_name_exact: spoolsv
+    timeout: 60
+    state: present
+  async: 60
+  poll: 0
+  register: spoolsv_process
+
+- name: Start the spooler service
+  win_service:
+    name: Spooler
+    force_dependent_services: yes
+    state: started
+
+- name: Check on async task
+  async_status:
+    jid: '{{ spoolsv_process.ansible_job_id }}'
+  until: present_spoolsv_process is finished
+  retries: 10
+  register: present_spoolsv_process
+
+- assert:
+    that:
+    - present_spoolsv_process is success
+    - present_spoolsv_process is not changed
+    - present_spoolsv_process is finished
+    - present_spoolsv_process.elapsed > 0
+    - present_spoolsv_process.elapsed < 60
+    - present_spoolsv_process.matched_processes|length == 1
+
+- name: Start a new long-running process
+  win_shell: |
+    Start-Sleep -Seconds 15
+  async: 40
+  poll: 0
+  register: sleep_pid
+
+- name: Wait for PID to start
+  win_wait_for_process:
+    pid: '{{ sleep_pid.ansible_async_watchdog_pid }}'
+    timeout: 20
+    state: present
+  register: present_sleep_pid
+
+- assert:
+    that:
+    - present_sleep_pid is success
+    - present_sleep_pid is not changed
+    - present_sleep_pid.elapsed > 0
+    - present_sleep_pid.elapsed < 15
+    - present_sleep_pid.matched_processes|length == 1
+
+- name: Wait for PID to stop
+  win_wait_for_process:
+    pid: '{{ sleep_pid.ansible_async_watchdog_pid }}'
+    timeout: 20
+    state: absent
+  register: absent_sleep_pid
+
+- assert:
+    that:
+    - absent_sleep_pid is success
+    - absent_sleep_pid is not changed
+    - absent_sleep_pid.elapsed > 0
+    - absent_sleep_pid.elapsed < 15
+    - absent_sleep_pid.matched_processes|length == 1

@@ -246,5 +246,6 @@ def main():
         module.fail_json(msg='Unable to write file {0}: {1}'.format(path,
                                                                     str(e)))
 
+
 if __name__ == '__main__':
     main()

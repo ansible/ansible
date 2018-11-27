@@ -10,5 +10,5 @@ Following is the list of various external documentation and guides which can hel
 * `VMware API and SDK Documentation <https://www.vmware.com/support/pubs/sdk_pubs.html>`_
 * `VCSIM test container image <https://quay.io/repository/ansible/vcenter-test-container>`_
 * `Ansible VMware community wiki page <https://github.com/ansible/community/wiki/VMware>`_
-* `VMware's official Guest Operating system customization matrix <http://partnerweb.vmware.com/programs/guestOS/guest-os-customization-matrix.pdf>`_
-* `VMware Compatibility Guide <http://partnerweb.vmware.com/comp_guide2/search.php>`_
+* `VMware's official Guest Operating system customization matrix <https://partnerweb.vmware.com/programs/guestOS/guest-os-customization-matrix.pdf>`_
+* `VMware Compatibility Guide <https://www.vmware.com/resources/compatibility/search.php>`_

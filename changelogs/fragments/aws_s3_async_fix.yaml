@@ -1,3 +1,0 @@
----
-bugfixes:
-- fix async for the aws_s3 module by adding async support to the action plugin (https://github.com/ansible/ansible/pull/40826)

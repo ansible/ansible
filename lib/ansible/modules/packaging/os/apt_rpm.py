@@ -171,5 +171,6 @@ def main():
     elif p['state'] in ['absent', 'removed']:
         remove_packages(module, packages)
 
+
 if __name__ == '__main__':
     main()

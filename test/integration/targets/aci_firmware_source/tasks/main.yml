@@ -13,7 +13,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     source: aci-msft-pkg-3.1.1i.zip
     state: absent
 
@@ -27,7 +27,7 @@
 #    validate_certs: '{{ aci_validate_certs | default(false) }}'
 #    use_ssl: '{{ aci_use_ssl | default(true) }}'
 #    use_proxy: '{{ aci_use_proxy | default(true) }}'
-#    output_level: info
+#    output_level: '{{ aci_output_level | default("info") }}'
 #    source: aci-msft-pkg-3.1.1i.zip
 #    url: foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
 #    url_protocol: http
@@ -42,7 +42,8 @@
 #- name: Verify add_source
 #  assert:
 #    that:
-#    - cm_add_source.changed == nm_add_source.changed == true
+#    - cm_add_source is changed
+#    - nm_add_source is changed
 #    - 'cm_add_source.sent == nm_add_source.sent == {"firmwareOSource": {"attributes": {"name": "aci-msft-pkg-3.1.1i.zip", "proto": "http", "url": "foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip"}}}'
 #    - 'cm_add_source.proposed == nm_add_source.proposed == {"firmwareOSource": {"attributes": {"name": "aci-msft-pkg-3.1.1i.zip", "proto": "http", "url": "foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip"}}}'
 #    - cm_add_source.current == cm_add_source.previous == nm_add_source.previous == []
@@ -62,7 +63,8 @@
 #- name: Verify add_source_again
 #  assert:
 #    that:
-#    - cm_add_source_again.changed == nm_add_source_again.changed == false
+#    - cm_add_source_again is not changed
+#    - nm_add_source_again is not changed
 
 
 # QUERY ALL SOURCES
@@ -74,6 +76,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_sources
@@ -85,7 +88,8 @@
 - name: Verify query_all_sources
   assert:
     that:
-    - cm_query_all_sources.changed == nm_query_all_sources.changed == false
+    - cm_query_all_sources is not changed
+    - nm_query_all_sources is not changed
     - cm_query_all_sources == nm_query_all_sources
 #    - nm_query_all_sources.current|length >= 1
 
@@ -107,7 +111,8 @@
 #- name: Verify query_source
 #  assert:
 #    that:
-#    - cm_query_source.changed == nm_query_source.changed == false
+#    - cm_query_source is not changed
+#    -  nm_query_source is not changed
 #    - cm_query_source == nm_query_source
 #    - nm_query_source.current.0.infraRsDomP.attributes.dn == 'uni/infra/attentp-test_aep/rsdomP-[uni/phys-phys_dom]'
 #    - nm_query_source.current.0.infraRsDomP.attributes.tCl == 'physDomP'
@@ -127,7 +132,8 @@
 #- name: Verify remove_source
 #  assert:
 #    that:
-#    - cm_remove_source.changed == nm_remove_source.changed == true
+#    - cm_remove_source is changed
+#    - nm_remove_source is changed
 #    - 'cm_remove_source.current == cm_remove_source.previous == nm_remove_source.previous == [{"infraRsDomP": {"attributes": {"dn": "uni/infra/attentp-test_aep/rsdomP-[uni/phys-phys_dom]", "tDn": "uni/phys-phys_dom"}}}]'
 #    - nm_remove_source.current == []
 #
@@ -143,7 +149,8 @@
 #- name: Verify remove_source_again
 #  assert:
 #    that:
-#    - cm_remove_source_again.changed == nm_remove_source_again.changed == false
+#    - cm_remove_source_again is not changed
+#    - nm_remove_source_again is not changed
 
 
 # QUERY NON-EXISTING SOURCE
@@ -163,7 +170,8 @@
 #- name: Verify query_non_source
 #  assert:
 #    that:
-#    - cm_query_non_source.changed == nm_query_non_source.changed == false
+#    - cm_query_non_source is not changed
+#    - nm_query_non_source is not changed
 #    - cm_query_non_source == nm_query_non_source
 #    - nm_query_non_source.current == []
 
@@ -177,7 +185,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     state: present
   ignore_errors: yes
   register: error_on_missing_required_param
@@ -185,5 +193,5 @@
 - name: Verify error_on_missing_required_param
   assert:
     that:
-    - error_on_missing_required_param.failed == true
+    - error_on_missing_required_param is failed
     - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: source, url"'

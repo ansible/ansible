@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -151,6 +151,7 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 
 def main():
     AzureRMResourceGroupFacts()
+
 
 if __name__ == '__main__':
     main()

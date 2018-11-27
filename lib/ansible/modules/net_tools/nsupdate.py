@@ -59,10 +59,11 @@ options:
     zone:
         description:
             - DNS record will be modified on this C(zone).
-        required: true
+            - When omitted DNS will be queried to attempt finding the correct zone.
+            - Starting with Ansible 2.7 this parameter is optional.
     record:
         description:
-            - Sets the DNS record to modify.
+            - Sets the DNS record to modify. When zone is omitted this has to be absolute (ending with a dot).
         required: true
     type:
         description:
@@ -75,7 +76,12 @@ options:
     value:
         description:
             - Sets the record value.
-
+    protocol:
+        description:
+            - Sets the transport protocol (TCP or UDP). TCP is the recommended and a more robust option.
+        default: 'tcp'
+        choices: ['tcp', 'udp']
+        version_added: 2.8
 '''
 
 EXAMPLES = '''
@@ -172,10 +178,27 @@ class RecordManager(object):
     def __init__(self, module):
         self.module = module
 
-        if module.params['zone'][-1] != '.':
-            self.zone = module.params['zone'] + '.'
+        if module.params['zone'] is None:
+            if module.params['record'][-1] != '.':
+                self.module.fail_json(msg='record must be absolute when omitting zone parameter')
+
+            try:
+                self.zone = dns.resolver.zone_for_name(self.module.params['record']).to_text()
+            except (dns.exception.Timeout, dns.resolver.NoNameservers, dns.resolver.NoRootSOA) as e:
+                self.module.fail_json(msg='Zone resolver error (%s): %s' % (e.__class__.__name__, to_native(e)))
+
+            if self.zone is None:
+                self.module.fail_json(msg='Unable to find zone, dnspython returned None')
         else:
             self.zone = module.params['zone']
+
+            if self.zone[-1] != '.':
+                self.zone += '.'
+
+        if module.params['record'][-1] != '.':
+            self.fqdn = module.params['record'] + '.' + self.zone
+        else:
+            self.fqdn = module.params['record']
 
         if module.params['key_name']:
             try:
@@ -194,12 +217,25 @@ class RecordManager(object):
         else:
             self.algorithm = module.params['key_algorithm']
 
+        if self.module.params['type'].lower() == 'txt':
+            self.value = list(map(self.txt_helper, self.module.params['value']))
+        else:
+            self.value = self.module.params['value']
+
         self.dns_rc = 0
+
+    def txt_helper(self, entry):
+        if entry[0] == '"' and entry[-1] == '"':
+            return entry
+        return '"{text}"'.format(text=entry)
 
     def __do_update(self, update):
         response = None
         try:
-            response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            if self.module.params['protocol'] == 'tcp':
+                response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            else:
+                response = dns.query.udp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
             self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
         except (socket_error, dns.exception.Timeout) as e:
@@ -236,7 +272,7 @@ class RecordManager(object):
 
     def create_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
-        for entry in self.module.params['value']:
+        for entry in self.value:
             try:
                 update.add(self.module.params['record'],
                            self.module.params['ttl'],
@@ -253,7 +289,7 @@ class RecordManager(object):
     def modify_record(self):
         update = dns.update.Update(self.zone, keyring=self.keyring, keyalgorithm=self.algorithm)
         update.delete(self.module.params['record'], self.module.params['type'])
-        for entry in self.module.params['value']:
+        for entry in self.value:
             try:
                 update.add(self.module.params['record'],
                            self.module.params['ttl'],
@@ -303,7 +339,7 @@ class RecordManager(object):
         if self.dns_rc == 0:
             if self.module.params['state'] == 'absent':
                 return 1
-            for entry in self.module.params['value']:
+            for entry in self.value:
                 try:
                     update.present(self.module.params['record'], self.module.params['type'], entry)
                 except AttributeError:
@@ -313,11 +349,28 @@ class RecordManager(object):
             response = self.__do_update(update)
             self.dns_rc = dns.message.Message.rcode(response)
             if self.dns_rc == 0:
-                return 1
+                if self.ttl_changed():
+                    return 2
+                else:
+                    return 1
             else:
                 return 2
         else:
             return 0
+
+    def ttl_changed(self):
+        query = dns.message.make_query(self.fqdn, self.module.params['type'])
+
+        try:
+            if self.module.params['protocol'] == 'tcp':
+                lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            else:
+                lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+        except (socket_error, dns.exception.Timeout) as e:
+            self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
+
+        current_ttl = lookup.answer[0].ttl
+        return current_ttl != self.module.params['ttl']
 
 
 def main():
@@ -332,11 +385,12 @@ def main():
             key_name=dict(required=False, type='str'),
             key_secret=dict(required=False, type='str', no_log=True),
             key_algorithm=dict(required=False, default='hmac-md5', choices=tsig_algs, type='str'),
-            zone=dict(required=True, type='str'),
+            zone=dict(required=False, default=None, type='str'),
             record=dict(required=True, type='str'),
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False, default=None, type='list')
+            value=dict(required=False, default=None, type='list'),
+            protocol=dict(required=False, default='tcp', choices=['tcp', 'udp'], type='str')
         ),
         supports_check_mode=True
     )
@@ -363,7 +417,7 @@ def main():
                                 record=module.params['record'],
                                 type=module.params['type'],
                                 ttl=module.params['ttl'],
-                                value=module.params['value'])
+                                value=record.value)
 
         module.exit_json(**result)
 

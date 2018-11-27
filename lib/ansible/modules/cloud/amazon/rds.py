@@ -92,7 +92,8 @@ options:
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
     description:
-      - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate.
+      - Indicates that minor version upgrades should be applied automatically.
+      - Used only when command=create or command=modify or command=restore or command=replicate.
     type: bool
     default: 'no'
   option_group:
@@ -293,7 +294,7 @@ latest_restorable_time:
     returned: when RDS instance exists
     type: string
     sample: "1489707802.0"
-secondary_avaialbility_zone:
+secondary_availability_zone:
     description: the name of the secondary AZ for a DB instance with multi-AZ support
     returned: when RDS instance exists and is multy-AZ
     type: string
@@ -716,8 +717,7 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-        if self.instance.DBName:
-            d['DBName'] = self.instance.DBName
+        d['DBName'] = self.instance.DBName if hasattr(self.instance, 'DBName') else None
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
@@ -748,7 +748,7 @@ class RDS2DBInstance:
             'latest_restorable_time': self.instance['LatestRestorableTime'],
             'status': self.status,
             'availability_zone': self.instance['AvailabilityZone'],
-            'secondary_avaialbility_zone': self.instance['SecondaryAvailabilityZone'],
+            'secondary_availability_zone': self.instance['SecondaryAvailabilityZone'],
             'backup_retention': self.instance['BackupRetentionPeriod'],
             'backup_window': self.instance['PreferredBackupWindow'],
             'maintenance_window': self.instance['PreferredMaintenanceWindow'],
@@ -810,8 +810,7 @@ class RDS2DBInstance:
         else:
             d['endpoint'] = None
             d['port'] = None
-        if self.instance["DBName"]:
-            d['DBName'] = self.instance['DBName']
+        d['DBName'] = self.instance['DBName'] if hasattr(self.instance, 'DBName') else None
         return d
 
 

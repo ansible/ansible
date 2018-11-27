@@ -29,8 +29,8 @@ version_added: "2.3"
 
 author:
     - Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>
-    - Matt Baldwin <baldwin@stackpointcloud.com>
-    - Thibaud Morel l'Horset <teebes@gmail.com>
+    - Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
+    - Thibaud Morel l'Horset (@teebes) <teebes@gmail.com>
 
 options:
   auth_token:
@@ -635,6 +635,7 @@ def main():
     except Exception as e:
         module.fail_json(msg='failed to set device state %s, error: %s' %
                          (state, to_native(e)), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

@@ -143,6 +143,15 @@ extends_documentation_fragment:
 
 requirements:
     - "python >= 2.6"
+    - "docker-py >= 1.8.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
     - "docker-compose >= 1.7.0"
     - "Docker API >= 1.20"
     - "PyYAML >= 3.11"
@@ -1000,23 +1009,31 @@ class ContainerManager(DockerBaseClass):
                     scale=0
                 )
                 containers = service.containers(stopped=True)
-                if len(containers) != self.scale[service.name]:
+                scale = self.parse_scale(service.name)
+                if len(containers) != scale:
                     result['changed'] = True
-                    service_res['scale'] = self.scale[service.name] - len(containers)
+                    service_res['scale'] = scale - len(containers)
                     if not self.check_mode:
                         try:
-                            service.scale(int(self.scale[service.name]))
+                            service.scale(scale)
                         except Exception as exc:
                             self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
                     result['actions'].append(service_res)
         return result
+
+    def parse_scale(self, service_name):
+        try:
+            return int(self.scale[service_name])
+        except ValueError:
+            self.client.fail("Error scaling %s - expected int, got %s",
+                             service_name, str(type(self.scale[service_name])))
 
 
 def main():
     argument_spec = dict(
         project_src=dict(type='path'),
         project_name=dict(type='str',),
-        files=dict(type='list'),
+        files=dict(type='list', elements='path'),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
         definition=dict(type='dict'),
         hostname_check=dict(type='bool', default=False),
@@ -1028,7 +1045,7 @@ def main():
         stopped=dict(type='bool', default=False),
         restarted=dict(type='bool', default=False),
         scale=dict(type='dict'),
-        services=dict(type='list'),
+        services=dict(type='list', elements='str'),
         dependencies=dict(type='bool', default=True),
         pull=dict(type='bool', default=False),
         nocache=dict(type='bool', default=False),
@@ -1044,7 +1061,8 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         mutually_exclusive=mutually_exclusive,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_api_version='1.20',
     )
 
     result = ContainerManager(client).exec_module()

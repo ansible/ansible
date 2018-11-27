@@ -22,9 +22,11 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.cnos import cnos_config
-from .cnos_module import TestCnosModule, load_fixture, set_module_args
+
+from .cnos_module import TestCnosModule, load_fixture
+from units.modules.utils import set_module_args
 
 
 class TestCnosConfigModule(TestCnosModule):

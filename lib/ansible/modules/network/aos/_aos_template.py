@@ -96,6 +96,7 @@ EXAMPLES = '''
     name: "my-template"
     state: present
   register: template
+
 - name: "Save Template into a JSON file 2/3"
   copy:
     content: "{{ template.value | to_nice_json }}"
@@ -271,6 +272,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     aos_template(module)
+
 
 if __name__ == "__main__":
     main()

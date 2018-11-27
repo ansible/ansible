@@ -124,14 +124,14 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       name: http-role
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
     # from Bitbucket, alternative syntax and caveats
-    - src: http://bitbucket.org/willthames/hg-ansible-galaxy
+    - src: https://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
 
-    # from GitLab or other git-based scm
+    # from GitLab or other git-based scm, using git+ssh
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
@@ -165,7 +165,7 @@ Content of the *webserver.yml* file:
     - src: https://github.com/bennojoy/nginx
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
 Dependencies
@@ -245,7 +245,7 @@ use the *--force* option. Force will create the above subdirectories and files, 
 Container Enabled
 =================
 
-If you are creating a Container Enabled role, use the *--container-enabled* option. This will create the same directory structure as above, but populate it
+If you are creating a Container Enabled role, pass ``--type container`` to ``ansible-galaxy init``. This will create the same directory structure as above, but populate it
 with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
 the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
 
@@ -455,7 +455,7 @@ This only removes the role from Galaxy. It does not remove or alter the actual G
 Travis integrations
 -------------------
 
-You can create an integration or connection between a role in Galaxy and `Travis <http://travis-ci.org>`_. Once the connection is established, a build in Travis will
+You can create an integration or connection between a role in Galaxy and `Travis <https://travis-ci.org>`_. Once the connection is established, a build in Travis will
 automatically trigger an import in Galaxy, updating the search index with the latest information about the role.
 
 You create the integration using the ``setup`` command, but before an integration can be created, you must first authenticate using the ``login`` command; you will
@@ -511,7 +511,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
    :ref:`playbooks_reuse_roles`
        All about ansible roles
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

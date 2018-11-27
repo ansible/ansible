@@ -1,0 +1,19 @@
+- name: Set the value of AWX_PROOT_SHOW_PATHS
+  tower_settings:
+    name: "AWX_PROOT_SHOW_PATHS"
+    value: "'/var/lib/awx/projects/', '/tmp'"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Set the value of AWX_PROOT_BASE_PATH
+  tower_settings:
+    name: AWX_PROOT_BASE_PATH
+    value: "/tmp"
+  register: result
+
+- assert:
+    that:
+      - "result.value == '/tmp'"

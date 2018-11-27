@@ -87,6 +87,7 @@ EXAMPLES = '''
     name: "my-rack-type"
     state: present
   register: rack_type
+
 - name: "Save Rack Type into a JSON file 2/3"
   copy:
     content: "{{ rack_type.value | to_nice_json }}"
@@ -254,6 +255,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     rack_type(module)
+
 
 if __name__ == "__main__":
     main()

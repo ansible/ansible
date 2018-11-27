@@ -37,7 +37,7 @@ options:
       - The physical path to the folder in which the new virtual directory is created.
       - The specified folder must already exist.
 author:
-- Henrik Wallström
+- Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''

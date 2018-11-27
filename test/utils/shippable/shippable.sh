@@ -10,6 +10,7 @@ script="${args[0]}"
 test="$1"
 
 docker images ansible/ansible
+docker images quay.io/ansible/*
 docker ps
 
 for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
@@ -22,10 +23,10 @@ if [ -d /home/shippable/cache/ ]; then
     ls -la /home/shippable/cache/
 fi
 
-which python
+command -v python
 python -V
 
-which pip
+command -v pip
 pip --version
 pip list --disable-pip-version-check
 
@@ -85,7 +86,8 @@ function cleanup
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
         # upload coverage report to codecov.io only when using complete on-demand coverage
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ]; then
+        # HACK: Only upload certain results to codecov to avoid overloading it
+        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [[ "$T" =~ /1$ ]] ; then
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"

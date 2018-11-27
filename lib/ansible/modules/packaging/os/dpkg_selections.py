@@ -20,7 +20,8 @@ short_description: Dpkg package selection selections
 description:
     - Change dpkg package selection state via --get-selections and --set-selections.
 version_added: "2.0"
-author: Brian Brazil <brian.brazil@boxever.com>
+author:
+- Brian Brazil (@brian-brazil)  <brian.brazil@boxever.com>
 options:
     name:
         description:

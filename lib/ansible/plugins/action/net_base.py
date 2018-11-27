@@ -28,14 +28,11 @@ from ansible.plugins.action import ActionBase
 from ansible.plugins.action.nxos import ActionModule as _NxosActionModule
 from ansible.plugins.action.eos import ActionModule as _EosActionModule
 from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
 from imp import find_module, load_module
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 _CLI_ONLY_MODULES = frozenset(['junos_netconf', 'iosxr_netconf', 'iosxr_config', 'iosxr_command'])
 _NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
@@ -150,6 +147,8 @@ class ActionModule(ActionBase):
         display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
+
+        connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)

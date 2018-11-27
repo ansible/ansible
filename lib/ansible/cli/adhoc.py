@@ -18,10 +18,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-########################################################
-
-import os
-
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -31,15 +27,10 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.plugins.loader import get_all_plugin_loaders
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
-
-########################################################
 
 class AdHocCLI(CLI):
     ''' is an extra-simple tool/framework/API for doing 'remote things'.
@@ -135,7 +126,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if self.options.module_name.startswith(('include', 'import_')):
+        if self.options.module_name in ('import_playbook',):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)

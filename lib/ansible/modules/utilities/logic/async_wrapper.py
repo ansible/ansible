@@ -8,10 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 import shlex
 import shutil
 import os
@@ -21,6 +18,8 @@ import traceback
 import signal
 import time
 import syslog
+
+from ansible.module_utils._text import to_text
 
 PY3 = sys.version_info[0] == 3
 
@@ -167,7 +166,7 @@ def _run_module(wrapped_cmd, jid, job_path):
         result = {
             "failed": 1,
             "cmd": wrapped_cmd,
-            "msg": str(e),
+            "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
             "stderr": stderr
         }

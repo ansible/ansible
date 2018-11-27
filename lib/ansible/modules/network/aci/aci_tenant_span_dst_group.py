@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -57,6 +57,7 @@ EXAMPLES = r'''
     dst_group: '{{ dst_group }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -196,14 +197,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='spanDestGrp',
             aci_rn='destgrp-{0}'.format(dst_group),
-            filter_target='eq(spanDestGrp.name, "{0}")'.format(dst_group),
             module_object=dst_group,
+            target_filter={'name': dst_group},
         ),
     )
 

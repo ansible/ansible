@@ -30,12 +30,9 @@ from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.dellos10.dellos10 import dellos10_provider_spec
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(_ActionModule):
@@ -60,7 +57,7 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+            command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
             pc.become = provider['authorize'] or False
             if pc.become:
                 pc.become_method = 'enable'
@@ -68,6 +65,7 @@ class ActionModule(_ActionModule):
 
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)

@@ -29,7 +29,7 @@
 - name: assertion test - present
   assert:
     that:
-      - create_check_mode.changed == true
+      - create_check_mode is changed
       - 'create_check_mode.sent == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: create static vlan pool - creation works
@@ -40,7 +40,7 @@
 - name: assertion test - present
   assert:
     that:
-      - create_static.changed == true
+      - create_static is changed
       - create_static.previous == []
       - create_static.sent == create_check_mode.sent
 
@@ -54,7 +54,7 @@
 - name: assertion test - present
   assert:
     that:
-      - create_dynamic.changed == true
+      - create_dynamic is changed
       - create_dynamic.previous == []
       - 'create_dynamic.sent == {"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "name": "anstest"}}}'
 
@@ -66,7 +66,7 @@
 - name: assertion test - present
   assert:
     that:
-      - idempotent_static.changed == false
+      - idempotent_static is not changed
       - 'idempotent_static.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-static", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
       - idempotent_static.sent == {}
 
@@ -78,7 +78,7 @@
 - name: assertion test - present
   assert:
     that:
-      - idempotent_dynamic.changed == false
+      - idempotent_dynamic is not changed
       - 'idempotent_dynamic.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
       - idempotent_dynamic.sent == {}
  
@@ -91,7 +91,7 @@
 - name: assertion test - present
   assert:
     that:
-      - update_static.changed == true
+      - update_static is changed
       - 'update_static.sent == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: update dynamic vlan pool - update works
@@ -103,7 +103,7 @@
 - name: assertion test - present
   assert:
     that:
-      - update_dynamic.changed == true
+      - update_dynamic is changed
       - 'update_dynamic.sent == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: missing param - failure message works
@@ -116,7 +116,7 @@
 - name: assertion test - present
   assert:
     that:
-      - vlan_alloc_fail.failed == true
+      - vlan_alloc_fail is failed
       - "vlan_alloc_fail.msg == 'ACI requires parameter \\'pool_allocation_mode\\' for \\'pool_type\\' of \\'vlan\\' and \\'vsan\\' when parameter \\'pool\\' is provided'"
 
 - name: missing param - failure message works
@@ -129,7 +129,7 @@
 - name: assertion test - present
   assert:
     that:
-      - vlan_pool_fail.failed == true
+      - vlan_pool_fail is failed
       - 'vlan_pool_fail.msg == "state is present but all of the following are missing: pool"'
  
 - name: missing param - failure message works
@@ -142,7 +142,7 @@
 - name: assertion test - present
   assert:
     that:
-      - vlan_pool_type_fail.failed == true
+      - vlan_pool_type_fail is failed
       - 'vlan_pool_type_fail.msg == "missing required arguments: pool_type"'
 
 - name: get all vlan pools - get class works
@@ -156,7 +156,7 @@
 - name: assertion test - query
   assert:
     that:
-      - get_all_pools.changed == false
+      - get_all_pools is not changed
       - get_all_pools.method == "GET"
       - get_all_pools.current | length > 1
 
@@ -169,7 +169,7 @@
 - name: assertion test - query
   assert:
     that:
-      - get_static_pool.changed == false
+      - get_static_pool is not changed
       - get_static_pool.method == "GET"
       - get_static_pool.current | length == 1
       - get_static_pool.current.0.fvnsVlanInstP.attributes.allocMode == "static"
@@ -184,7 +184,7 @@
 - name: assertion test - query
   assert:
     that:
-      - get_dynamic_pool.changed == false
+      - get_dynamic_pool is not changed
       - get_dynamic_pool.method == "GET"
       - get_dynamic_pool.current | length == 1
       - get_dynamic_pool.current.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
@@ -201,7 +201,7 @@
 - name: assertion test - query
   assert:
     that:
-      - vlan_query_pool_type_fail.failed == true
+      - vlan_query_pool_type_fail is failed
       - 'vlan_query_pool_type_fail.msg == "missing required arguments: pool_type"'
 
 - name: delete static vlan pool - deletion works
@@ -212,7 +212,7 @@
 - name: assertion test - absent
   assert:
     that:
-      - delete_static.changed == true
+      - delete_static is changed
       - delete_static.method == "DELETE"
       - delete_static.previous.0.fvnsVlanInstP.attributes.allocMode == "static"
       - delete_static.previous.0.fvnsVlanInstP.attributes.name == "anstest"
@@ -226,7 +226,7 @@
 - name: assertion test - absent
   assert:
     that:
-      - delete_check_mode.changed == true
+      - delete_check_mode is changed
 
 - name: delete dynamic vlan pool - deletion works
   aci_encap_pool:
@@ -236,7 +236,7 @@
 - name: assertion test - absent
   assert:
     that:
-      - delete_dynamic.changed == true
+      - delete_dynamic is changed
       - delete_dynamic.method == "DELETE"
       - delete_dynamic.previous.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
       - delete_dynamic.previous.0.fvnsVlanInstP.attributes.name == "anstest"
@@ -249,7 +249,7 @@
 - name: assertion test - absent
   assert:
     that:
-      - idempotent_delete_static.changed == false
+      - idempotent_delete_static is not changed
       - idempotent_delete_static.previous == []
 
 - name: delete dynamic vlan pool again - idempotency works
@@ -260,5 +260,5 @@
 - name: assertion test - absent
   assert:
     that:
-      - idempotent_delete_dynamic.changed == false
+      - idempotent_delete_dynamic is not changed
       - idempotent_delete_dynamic.previous == []

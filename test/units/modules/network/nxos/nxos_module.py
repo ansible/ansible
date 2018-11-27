@@ -32,6 +32,7 @@ def set_module_args(args):
 
     return _set_module_args(args)
 
+
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 

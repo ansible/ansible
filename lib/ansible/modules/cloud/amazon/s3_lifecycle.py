@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -207,7 +207,7 @@ def create_lifecycle_rule(client, module):
     noncurrent_version_transition_days = module.params.get("noncurrent_version_transition_days")
     noncurrent_version_transitions = module.params.get("noncurrent_version_transitions")
     noncurrent_version_storage_class = module.params.get("noncurrent_version_storage_class")
-    prefix = module.params.get("prefix")
+    prefix = module.params.get("prefix") or ""
     rule_id = module.params.get("rule_id")
     status = module.params.get("status")
     storage_class = module.params.get("storage_class")
@@ -280,7 +280,9 @@ def create_lifecycle_rule(client, module):
     if current_lifecycle_rules:
         # If rule ID exists, use that for comparison otherwise compare based on prefix
         for existing_rule in current_lifecycle_rules:
-            if rule['Filter']['Prefix'] == existing_rule['Filter']['Prefix']:
+            if rule.get('ID') == existing_rule.get('ID') and rule['Filter']['Prefix'] != existing_rule.get('Filter', {}).get('Prefix', ''):
+                existing_rule.pop('ID')
+            elif rule_id is None and rule['Filter']['Prefix'] == existing_rule.get('Filter', {}).get('Prefix', ''):
                 existing_rule.pop('ID')
             if rule.get('ID') == existing_rule.get('ID'):
                 changed_, appended_ = update_or_append_rule(rule, existing_rule, purge_transitions, lifecycle_configuration)
@@ -361,9 +363,9 @@ def merge_transitions(updated_rule, updating_rule):
     # in updating_rule to updated_rule
     updated_transitions = {}
     updating_transitions = {}
-    for transition in updated_rule['Transitions']:
+    for transition in updated_rule.get('Transitions', []):
         updated_transitions[transition['StorageClass']] = transition
-    for transition in updating_rule['Transitions']:
+    for transition in updating_rule.get('Transitions', []):
         updating_transitions[transition['StorageClass']] = transition
     for storage_class, transition in updating_transitions.items():
         if updated_transitions.get(storage_class) is None:
@@ -415,8 +417,9 @@ def destroy_lifecycle_rule(client, module):
     try:
         if lifecycle_obj['Rules']:
             client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration=lifecycle_obj)
-        else:
-            client.delete_lifecycle_configuration(Bucket=name)
+        elif current_lifecycle_rules:
+            changed = True
+            client.delete_bucket_lifecycle(Bucket=name)
     except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e)
     module.exit_json(changed=changed)

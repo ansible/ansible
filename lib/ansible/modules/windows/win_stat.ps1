@@ -1,7 +1,6 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -71,7 +70,13 @@ If ($info -ne $null) {
         # checksum = a file and get_checksum: True
         # md5 = a file and get_md5: True
     }
-    $stat.owner = $info.GetAccessControl().Owner
+    try {
+        $stat.owner = $info.GetAccessControl().Owner
+    } catch {
+        # may not have rights, historical behaviour was to just set to $null
+        # due to ErrorActionPreference being set to "Continue"
+        $stat.owner = $null
+    }
 
     # values that are set according to the type of file
     if ($info.Attributes.HasFlag([System.IO.FileAttributes]::Directory)) {

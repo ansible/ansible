@@ -23,6 +23,7 @@ options:
     description:
       - Path to be used for changing inheritance
     required: yes
+    type: path
   state:
     description:
       - Specify whether to enable I(present) or disable I(absent) ACL inheritance

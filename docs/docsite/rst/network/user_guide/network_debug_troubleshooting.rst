@@ -418,9 +418,8 @@ For example:
 
 Suggestions to resolve:
 
-Options 1:
+Options 1 (Global command timeout setting):
 Increase value of command timeout in configuration file or by setting environment variable.
-Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
 .. code-block:: yaml
 
@@ -433,13 +432,13 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    command_timeout = 30
 
-Option 2:
+Option 2 (Per task command timeout setting):
 Increase command timeout per task basis. All network modules support a
 timeout value that can be set on a per task basis.
 The timeout value controls the amount of time in seconds before the
 task will fail if the command has not returned.
 
-For example:
+For local connection type:
 
 .. FIXME: Detail error here
 
@@ -453,12 +452,25 @@ Suggestions to resolve:
         provider: "{{ cli }}"
         timeout: 30
 
+For network_cli, netconf connection type (applicable from 2.7 onwards):
+
+.. FIXME: Detail error here
+
+Suggestions to resolve:
+
+.. code-block:: yaml
+
+    - name: save running-config
+      ios_command:
+        commands: copy running-config startup-config
+      vars:
+        ansible_command_timeout: 30
+
 Some operations take longer than the default 10 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value form the default 10 seconds to 30
+In this case, changing the timeout value from the default 10 seconds to 30
 seconds will prevent the task from failing before the command completes
 successfully.
-Note: This value should be less than persistent connection idle timeout ie. connect_timeout
 
 Persistent socket connect timeout:
 For example:
@@ -597,6 +609,65 @@ no additional changes necessary.  The network module will now connect to the
 network device by first connecting to the host specified in
 ``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
 
+Using bastion/jump host with netconf connection
+-----------------------------------------------
+
+Enabling jump host setting
+--------------------------
+
+
+Bastion/jump host with netconf connection can be enabled by:
+ - Setting Ansible variable ``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path
+ - Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path
+ - Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>`` under ``netconf_connection`` section
+
+If the configuration variable is set to 1 the proxycommand and other ssh variables are read from
+default ssh config file (~/.ssh/config).
+
+If the configuration variable is set to file path the proxycommand and other ssh variables are read
+from the given custom ssh file path
+
+Example ssh config file (~/.ssh/config)
+---------------------------------------
+
+.. code-block:: ini
+
+  Host jumphost
+    HostName jumphost.domain.name.com
+    User jumphost-user
+    IdentityFile "/path/to/ssh-key.pem"
+    Port 22
+
+  # Note: Due to the way that Paramiko reads the SSH Config file, 
+  # you need to specify the NETCONF port that the host uses.
+  # i.e. It does not automatically use ansible_port
+  # As a result you need either:
+  
+  Host junos01
+    HostName junos01
+    ProxyCommand ssh -W %h:22 jumphost
+    
+  # OR
+  
+  Host junos01
+    HostName junos01
+    ProxyCommand ssh -W %h:830 jumphost
+    
+  # Depending on the netconf port used.
+
+Example Ansible inventory file
+
+.. code-block:: ini
+
+    [junos]
+    junos01
+
+    [junos:vars]
+    ansible_connection=netconf
+    ansible_network_os=junos
+    ansible_user=myuser
+    ansible_ssh_pass=!vault...
+
 
 .. note:: Using ``ProxyCommand`` with passwords via variables
 
@@ -604,3 +675,38 @@ network device by first connecting to the host specified in
    This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
    We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.
+
+Miscellaneous Issues
+====================
+
+
+Intermittent failure while using ``network_cli`` connection type
+----------------------------------------------------------------
+
+If the command prompt received in response is not matched correctly within
+the ``network_cli`` connection plugin the task might fail intermittently with truncated
+response or with the error message ``operation requires privilege escalation``.
+Starting in 2.7.1 a new buffer read timer is added to ensure prompts are matched properly
+and a complete response is send in output. The timer default value is 0.2 seconds and
+can be adjusted on a per task basis or can be set globally in seconds.
+
+Example Per task timer setting
+
+.. code-block:: yaml
+
+  - name: gather ios facts
+    ios_facts:
+      gather_subset: all
+    register: result
+    vars:
+      ansible_buffer_read_timeout: 2
+
+
+To make this a global setting, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   buffer_read_timeout = 2
+
+This timer delay per command executed on remote host can be disabled by setting the value to zero.

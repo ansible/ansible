@@ -26,6 +26,7 @@ class ActionModule(ActionBase):
 
     # We need to be able to modify the inventory
     TRANSFERS_FILES = False
+    _VALID_ARGS = frozenset(('key', 'parents'))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:

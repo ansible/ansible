@@ -28,13 +28,9 @@ from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.cloudengine.ce import ce_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command']
 
@@ -60,7 +56,7 @@ class ActionModule(_ActionModule):
                 pc.port = int(provider['port'] or self._play_context.port or 22)
                 pc.remote_user = provider['username'] or self._play_context.connection_user
                 pc.password = provider['password'] or self._play_context.password
-                pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+                command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
                 self._task.args['provider'] = provider.update(
                     host=pc.remote_addr,
                     port=pc.port,
@@ -71,6 +67,7 @@ class ActionModule(_ActionModule):
                     pc.connection = 'netconf'
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+                connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
                 socket_path = connection.run()
                 display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)

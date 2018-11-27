@@ -1,3 +1,5 @@
 cloud/azure
-posix/ci/cloud/group3/azure
+shippable/azure/group4
 destructive
+disabled
+azure_rm_virtualmachine_scaleset_facts

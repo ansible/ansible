@@ -13,6 +13,18 @@ ALLOW_WORLD_READABLE_TMPFILES:
   type: boolean
   yaml: {key: defaults.allow_world_readable_tmpfiles}
   version_added: "2.1"
+ANSIBLE_CONNECTION_PATH:
+  name: Path of ansible-connection script
+  default: null
+  description:
+    - Specify where to look for the ansible-connection script. This location will be checked before searching $PATH.
+    - If null, ansible will start with the same directory as the ansible script.
+  type: path
+  env: [{name: ANSIBLE_CONNECTION_PATH}]
+  ini:
+  - {key: ansible_connection_path, section: persistent_connection}
+  yaml: {key: persistent_connection.ansible_connection_path}
+  version_added: "2.8"
 ANSIBLE_COW_SELECTION:
   name: Cowsay filter selection
   default: default
@@ -160,9 +172,8 @@ BECOME_ALLOW_SAME_USER:
   type: boolean
   yaml: {key: privilege_escalation.become_allow_same_user}
 AGNOSTIC_BECOME_PROMPT:
-  # TODO: Switch the default to True in either the Ansible 2.6 release or the 2.7 release, whichever happens after the Tower 3.3 release
   name: Display an agnostic become prompt
-  default: False
+  default: True
   type: boolean
   description: Display an agnostic become prompt instead of displaying a prompt containing the command line supplied become method
   env: [{name: ANSIBLE_AGNOSTIC_BECOME_PROMPT}]
@@ -211,6 +222,14 @@ COLOR_CHANGED:
   ini:
   - {key: changed, section: colors}
   yaml: {key: display.colors.changed}
+COLOR_CONSOLE_PROMPT:
+  name: "Color for ansible-console's prompt task status"
+  default: white
+  description: Defines the default color to use for ansible-console
+  env: [{name: ANSIBLE_COLOR_CONSOLE_PROMPT}]
+  ini:
+  - {key: console_prompt, section: colors}
+  version_added: "2.7"
 COLOR_DEBUG:
   name: Color for debug statements
   default: dark gray
@@ -373,7 +392,7 @@ DEFAULT_ASK_SUDO_PASS:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description:
     - This controls whether an Ansible playbook should prompt for a sudo password.
@@ -386,7 +405,7 @@ DEFAULT_ASK_SU_PASS:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description:
     - This controls whether an Ansible playbook should prompt for a su password.
@@ -581,7 +600,7 @@ DEFAULT_GATHERING:
   choices: ['smart', 'explicit', 'implicit']
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
-  default: 'all'
+  default: ['all']
   description:
       - Set the `gather_subset` option for the M(setup) task in the implicit fact gathering.
         See the module documentation for specifics.
@@ -613,7 +632,7 @@ DEFAULT_HANDLER_INCLUDES_STATIC:
   type: boolean
   deprecated:
     why: include itself is deprecated and this setting will not matter in the future
-    version: "2.8"
+    version: "2.12"
     alternatives: none as its already built into the decision between include_tasks and import_tasks
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
@@ -637,20 +656,9 @@ DEFAULT_HOST_LIST:
   default: /etc/ansible/hosts
   description: Comma separated list of Ansible inventory sources
   env:
-    - name: ANSIBLE_HOSTS
-      deprecated:
-        why: The variable is misleading as it can be a list of hosts and/or paths to inventory sources
-        version: "2.8"
-        alternatives: ANSIBLE_INVENTORY
     - name: ANSIBLE_INVENTORY
   expand_relative_paths: True
   ini:
-    - key: hostfile
-      section: defaults
-      deprecated:
-        why: The key is misleading as it can also be a list of hosts, a directory or a list of paths
-        version: "2.8"
-        alternatives: "[defaults]\ninventory=/path/to/file|dir"
     - key: inventory
       section: defaults
   type: pathlist
@@ -1055,7 +1063,7 @@ DEFAULT_SUDO:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Toggle the use of "sudo" for tasks.'
   env: [{name: ANSIBLE_SUDO}]
@@ -1067,7 +1075,7 @@ DEFAULT_SUDO_EXE:
   default: sudo
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'specify an "sudo" executable, otherwise it relies on PATH.'
   env: [{name: ANSIBLE_SUDO_EXE}]
@@ -1078,7 +1086,7 @@ DEFAULT_SUDO_FLAGS:
   default: '-H -S -n'
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Flags to pass to "sudo"'
   env: [{name: ANSIBLE_SUDO_FLAGS}]
@@ -1089,7 +1097,7 @@ DEFAULT_SUDO_USER:
   default:
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'User you become when using "sudo", leaving it blank will use the default configured on the target (normally root)'
   env: [{name: ANSIBLE_SUDO_USER}]
@@ -1100,7 +1108,7 @@ DEFAULT_SU_EXE:
   default: su
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'specify an "su" executable, otherwise it relies on PATH.'
   env: [{name: ANSIBLE_SU_EXE}]
@@ -1111,7 +1119,7 @@ DEFAULT_SU_FLAGS:
   default: ''
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Flags to pass to su'
   env: [{name: ANSIBLE_SU_FLAGS}]
@@ -1126,7 +1134,7 @@ DEFAULT_SU_USER:
   - {key: su_user, section: defaults}
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
 DEFAULT_SYSLOG_FACILITY:
   name: syslog facility
@@ -1147,7 +1155,7 @@ DEFAULT_TASK_INCLUDES_STATIC:
   version_added: "2.1"
   deprecated:
     why: include itself is deprecated and this setting will not matter in the future
-    version: "2.8"
+    version: "2.12"
     alternatives: None, as its already built into the decision between include_tasks and import_tasks
 DEFAULT_TERMINAL_PLUGIN_PATH:
   name: Terminal Plugins Path
@@ -1375,6 +1383,17 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+INVALID_TASK_ATTRIBUTE_FAILED:
+  name: Controls whether invalid attributes for a task result in errors instead of warnings
+  default: True
+  description: If 'false', invalid attributes for a task will result in warnings instead of errors
+  type: boolean
+  env:
+    - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
+  ini:
+    - key: invalid_task_attribute_failed
+      section: defaults
+  version_added: "2.7"
 INVENTORY_ANY_UNPARSED_IS_FAILED:
   name: Controls whether any unparseable inventory source is a fatal error
   default: False
@@ -1389,7 +1408,7 @@ INVENTORY_ANY_UNPARSED_IS_FAILED:
   version_added: "2.7"
 INVENTORY_ENABLED:
   name: Active Inventory plugins
-  default: ['host_list', 'script', 'yaml', 'ini', 'auto']
+  default: ['host_list', 'script', 'yaml', 'ini', 'toml', 'auto']
   description: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
@@ -1405,7 +1424,7 @@ INVENTORY_EXPORT:
   type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
-  default: "{{(BLACKLIST_EXTS + ( '~', '.orig', '.ini', '.cfg', '.retry'))}}"
+  default: "{{(BLACKLIST_EXTS + ( '.orig', '.ini', '.cfg', '.retry'))}}"
   description: List of extensions to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
@@ -1440,21 +1459,9 @@ MAX_FILE_SIZE_FOR_DIFF:
   ini:
   - {key: max_diff_size, section: defaults}
   type: int
-MERGE_MULTIPLE_CLI_TAGS:
-  name: Merge 'tags' options
-  default: True
-  description:
-    - "This allows changing how multiple --tags and --skip-tags arguments are handled on the command line.
-      In Ansible up to and including 2.3, specifying --tags more than once will only take the last value of --tags."
-    - "Setting this config value to True will mean that all of the --tags options will be merged together. The same holds true for --skip-tags."
-  env: [{name: ANSIBLE_MERGE_MULTIPLE_CLI_TAGS}]
-  ini:
-    - {key: merge_multiple_cli_tags, section: defaults}
-  type: bool
-  version_added: "2.3"
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
   env: [{name: NETWORK_GROUP_MODULES}]
   ini:
@@ -1543,6 +1550,13 @@ PLUGIN_FILTERS_CFG:
   ini:
   - key: plugin_filters_cfg
     section: default
+    deprecated:
+      why: Specifying "plugin_filters_cfg" under the "default" section is deprecated
+      version: "2.12"
+      alternatives: the "defaults" section instead
+  - key: plugin_filters_cfg
+    section: defaults
+  type: path
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True
@@ -1595,6 +1609,7 @@ TAGS_RUN:
   env: [{name: ANSIBLE_RUN_TAGS}]
   ini:
   - {key: run, section: tags}
+  version_added: "2.5"
 TAGS_SKIP:
   name: Skip Tags
   default: []
@@ -1603,6 +1618,7 @@ TAGS_SKIP:
   env: [{name: ANSIBLE_SKIP_TAGS}]
   ini:
   - {key: skip, section: tags}
+  version_added: "2.5"
 USE_PERSISTENT_CONNECTIONS:
   name: Persistence
   default: False
@@ -1632,4 +1648,13 @@ YAML_FILENAME_EXTENSIONS:
     - section: defaults
       key: yaml_valid_extensions
   type: list
+NETCONF_SSH_CONFIG:
+  description: This variable is used to enable bastion/jump host with netconf connection. If set to True the bastion/jump
+               host ssh settings should be present in ~/.ssh/config file, alternatively it can be set
+               to custom ssh configuration file path to read the bastion/jump host settings.
+  env: [{name: ANSIBLE_NETCONF_SSH_CONFIG}]
+  ini:
+  - {key: ssh_config, section: netconf_connection}
+  yaml: {key: netconf_connection.ssh_config}
+  default: null
 ...

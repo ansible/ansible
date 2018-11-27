@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = """
 ---
@@ -42,9 +40,11 @@ options:
   type:
     description:
       - Type of database object to set privileges on.
+      - The `default_prives` choice is available starting at version 2.7.
     default: table
     choices: [table, sequence, function, database,
-              schema, language, tablespace, group]
+              schema, language, tablespace, group,
+              default_privs]
   objs:
     description:
       - Comma separated list of database objects to set privileges on.
@@ -227,6 +227,39 @@ EXAMPLES = """
     privs: ALL
     type: database
     role: librarian
+
+# Available since version 2.7
+# ALTER DEFAULT PRIVILEGES ON DATABASE library TO librarian
+# Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
+# ALL_DEFAULT works only with privs=ALL
+# For specific
+- postgresql_privs:
+    db: library
+    objs: ALL_DEFAULT
+    privs: ALL
+    type: default_privs
+    role: librarian
+    grant_option: yes
+
+# Available since version 2.7
+# ALTER DEFAULT PRIVILEGES ON DATABASE library TO reader
+# Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
+# ALL_DEFAULT works only with privs=ALL
+# For specific
+- postgresql_privs:
+    db: library
+    objs: TABLES,SEQUENCES
+    privs: SELECT
+    type: default_privs
+    role: reader
+
+- postgresql_privs:
+    db: library
+    objs: TYPES
+    privs: USAGE
+    type: default_privs
+    role: reader
+
 """
 
 import traceback
@@ -240,12 +273,15 @@ except ImportError:
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier
-from ansible.module_utils._text import to_native, to_text
-
+from ansible.module_utils._text import to_native
 
 VALID_PRIVS = frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',
                          'REFERENCES', 'TRIGGER', 'CREATE', 'CONNECT',
                          'TEMPORARY', 'TEMP', 'EXECUTE', 'USAGE', 'ALL', 'USAGE'))
+VALID_DEFAULT_OBJS = {'TABLES': ('ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'),
+                      'SEQUENCES': ('ALL', 'SELECT', 'UPDATE', 'USAGE'),
+                      'FUNCTIONS': ('ALL', 'EXECUTE'),
+                      'TYPES': ('ALL', 'USAGE')}
 
 
 class Error(Exception):
@@ -255,10 +291,12 @@ class Error(Exception):
 # We don't have functools.partial in Python < 2.5
 def partial(f, *args, **kwargs):
     """Partial function application"""
+
     def g(*g_args, **g_kwargs):
         new_kwargs = kwargs.copy()
         new_kwargs.update(g_kwargs)
         return f(*(args + g_args), **g_kwargs)
+
     g.f = f
     g.args = args
     g.kwargs = kwargs
@@ -410,6 +448,14 @@ class Connection(object):
         self.cursor.execute(query, (groups,))
         return self.cursor.fetchall()
 
+    def get_default_privs(self, schema, *args):
+        query = """SELECT defaclacl
+                   FROM pg_default_acl a
+                   JOIN pg_namespace b ON a.defaclnamespace=b.oid
+                   WHERE b.nspname = %s;"""
+        self.cursor.execute(query, (schema,))
+        return [t[0] for t in self.cursor.fetchall()]
+
     # Manipulating privileges
 
     def manipulate_privs(self, obj_type, privs, objs, roles,
@@ -449,6 +495,8 @@ class Connection(object):
             get_status = self.get_database_acls
         elif obj_type == 'group':
             get_status = self.get_group_memberships
+        elif obj_type == 'default_privs':
+            get_status = partial(self.get_default_privs, schema_qualifier)
         else:
             raise Error('Unsupported database object type "%s".' % obj_type)
 
@@ -462,7 +510,7 @@ class Connection(object):
             for obj in objs:
                 try:
                     f, args = obj.split('(', 1)
-                except:
+                except Exception:
                     raise Error('Illegal function signature: "%s".' % obj)
                 obj_ids.append('"%s"."%s"(%s' % (schema_qualifier, f, args))
         elif obj_type in ['table', 'sequence']:
@@ -474,6 +522,9 @@ class Connection(object):
         # Either group membership or privileges on objects of a certain type
         if obj_type == 'group':
             set_what = ','.join(pg_quote_identifier(i, 'role') for i in obj_ids)
+        elif obj_type == 'default_privs':
+            # We don't want privs to be quoted here
+            set_what = ','.join(privs)
         else:
             # function types are already quoted above
             if obj_type != 'function':
@@ -490,28 +541,112 @@ class Connection(object):
             for_whom = ','.join(pg_quote_identifier(r, 'role') for r in roles)
 
         status_before = get_status(objs)
-        if state == 'present':
-            if grant_option:
-                if obj_type == 'group':
-                    query = 'GRANT %s TO %s WITH ADMIN OPTION'
-                else:
-                    query = 'GRANT %s TO %s WITH GRANT OPTION'
-            else:
-                query = 'GRANT %s TO %s'
-            self.cursor.execute(query % (set_what, for_whom))
 
-            # Only revoke GRANT/ADMIN OPTION if grant_option actually is False.
-            if grant_option is False:
-                if obj_type == 'group':
-                    query = 'REVOKE ADMIN OPTION FOR %s FROM %s'
-                else:
-                    query = 'REVOKE GRANT OPTION FOR %s FROM %s'
-                self.cursor.execute(query % (set_what, for_whom))
-        else:
-            query = 'REVOKE %s FROM %s'
-            self.cursor.execute(query % (set_what, for_whom))
+        query = QueryBuilder(state) \
+            .for_objtype(obj_type) \
+            .with_grant_option(grant_option) \
+            .for_whom(for_whom) \
+            .for_schema(schema_qualifier) \
+            .set_what(set_what) \
+            .for_objs(objs) \
+            .build()
+
+        self.cursor.execute(query)
         status_after = get_status(objs)
         return status_before != status_after
+
+
+class QueryBuilder(object):
+    def __init__(self, state):
+        self._grant_option = None
+        self._for_whom = None
+        self._set_what = None
+        self._obj_type = None
+        self._state = state
+        self._schema = None
+        self._objs = None
+        self.query = []
+
+    def for_objs(self, objs):
+        self._objs = objs
+        return self
+
+    def for_schema(self, schema):
+        self._schema = schema
+        return self
+
+    def with_grant_option(self, option):
+        self._grant_option = option
+        return self
+
+    def for_whom(self, who):
+        self._for_whom = who
+        return self
+
+    def set_what(self, what):
+        self._set_what = what
+        return self
+
+    def for_objtype(self, objtype):
+        self._obj_type = objtype
+        return self
+
+    def build(self):
+        if self._state == 'present':
+            self.build_present()
+        elif self._state == 'absent':
+            self.build_absent()
+        else:
+            self.build_absent()
+        return '\n'.join(self.query)
+
+    def add_default_revoke(self):
+        for obj in self._objs:
+            self.query.append(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                            self._for_whom))
+
+    def add_grant_option(self):
+        if self._grant_option:
+            if self._obj_type == 'group':
+                self.query[-1] += ' WITH ADMIN OPTION;'
+            else:
+                self.query[-1] += ' WITH GRANT OPTION;'
+        else:
+            self.query[-1] += ';'
+            if self._obj_type == 'group':
+                self.query.append('REVOKE ADMIN OPTION FOR {0} FROM {1};'.format(self._set_what, self._for_whom))
+            elif not self._obj_type == 'default_privs':
+                self.query.append('REVOKE GRANT OPTION FOR {0} FROM {1};'.format(self._set_what, self._for_whom))
+
+    def add_default_priv(self):
+        for obj in self._objs:
+            self.query.append(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema, self._set_what,
+                                                                                        obj,
+                                                                                        self._for_whom))
+            self.add_grant_option()
+        self.query.append(
+            'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
+        self.add_grant_option()
+
+    def build_present(self):
+        if self._obj_type == 'default_privs':
+            self.add_default_revoke()
+            self.add_default_priv()
+        else:
+            self.query.append('GRANT {0} TO {1}'.format(self._set_what, self._for_whom))
+            self.add_grant_option()
+
+    def build_absent(self):
+        if self._obj_type == 'default_privs':
+            self.query = []
+            for obj in ['TABLES', 'SEQUENCES', 'TYPES']:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                self._for_whom))
+        else:
+            self.query.append('REVOKE {0} FROM {1};'.format(self._set_what, self._for_whom))
 
 
 def main():
@@ -528,7 +663,8 @@ def main():
                                'schema',
                                'language',
                                'tablespace',
-                               'group']),
+                               'group',
+                               'default_privs']),
             objs=dict(required=False, aliases=['obj']),
             schema=dict(required=False),
             roles=dict(required=True, aliases=['role']),
@@ -539,7 +675,8 @@ def main():
             unix_socket=dict(default='', aliases=['login_unix_socket']),
             login=dict(default='postgres', aliases=['login_user']),
             password=dict(default='', aliases=['login_password'], no_log=True),
-            ssl_mode=dict(default="prefer", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_mode=dict(default="prefer",
+                          choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None)
         ),
         supports_check_mode=True
@@ -547,9 +684,8 @@ def main():
 
     # Create type object as namespace for module params
     p = type('Params', (), module.params)
-
     # param "schema": default, allowed depends on param "type"
-    if p.type in ['table', 'sequence', 'function']:
+    if p.type in ['table', 'sequence', 'function', 'default_privs']:
         p.schema = p.schema or 'public'
     elif p.schema:
         module.fail_json(msg='Argument "schema" is not allowed '
@@ -594,12 +730,25 @@ def main():
                 module.fail_json(msg='Invalid privileges specified: %s' % privs.difference(VALID_PRIVS))
         else:
             privs = None
-
         # objs:
         if p.type == 'table' and p.objs == 'ALL_IN_SCHEMA':
             objs = conn.get_all_tables_in_schema(p.schema)
         elif p.type == 'sequence' and p.objs == 'ALL_IN_SCHEMA':
             objs = conn.get_all_sequences_in_schema(p.schema)
+        elif p.type == 'default_privs':
+            if p.objs == 'ALL_DEFAULT':
+                objs = frozenset(VALID_DEFAULT_OBJS.keys())
+            else:
+                objs = frozenset(obj.upper() for obj in p.objs.split(','))
+                if not objs.issubset(VALID_DEFAULT_OBJS):
+                    module.fail_json(
+                        msg='Invalid Object set specified: %s' % objs.difference(VALID_DEFAULT_OBJS.keys()))
+            # Again, do we have valid privs specified for object type:
+            valid_objects_for_priv = frozenset(obj for obj in objs if privs.issubset(VALID_DEFAULT_OBJS[obj]))
+            if not valid_objects_for_priv == objs:
+                module.fail_json(
+                    msg='Invalid priv specified. Valid object for priv: {0}. Objects: {1}'.format(
+                        valid_objects_for_priv, objs))
         else:
             objs = p.objs.split(',')
 

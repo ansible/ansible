@@ -25,7 +25,10 @@ description:
 notes:
     - Doesn't download the key unless it really needs it.
     - As a sanity check, downloaded key id must match the one specified.
-    - Best practice is to specify the key id and the URL.
+    - "Use full fingerprint (40 characters) key ids to avoid key collisions.
+      To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
+    - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
+    - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option)
 options:
     id:
         description:
@@ -76,13 +79,13 @@ EXAMPLES = '''
 
 - name: Add an Apt signing key, will not download if present
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
 - name: Remove a Apt specific signing key, leading 0x is valid
   apt_key:
-    id: 0x473041FA
+    id: 0x9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     state: absent
 
 # Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
@@ -93,13 +96,13 @@ EXAMPLES = '''
 
 - name: Add an Apt signing key to a specific keyring file
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
 - name: Add Apt signing key on remote server to keyring
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     file: /tmp/apt.gpg
     state: present
 '''
@@ -213,9 +216,9 @@ def download_key(module, url):
 
 def import_key(module, keyring, keyserver, key_id):
     if keyring:
-        cmd = "%s --keyring %s adv --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
     else:
-        cmd = "%s adv --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
     for retry in range(5):
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)

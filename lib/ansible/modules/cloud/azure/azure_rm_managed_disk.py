@@ -145,18 +145,20 @@ except ImportError:
     pass
 
 
+# duplicated in azure_rm_managed_disk_facts
 def managed_disk_to_dict(managed_disk):
-    os_type = None
-    if managed_disk.os_type:
-        os_type = managed_disk.os_type.name
+    create_data = managed_disk.creation_data
     return dict(
         id=managed_disk.id,
         name=managed_disk.name,
         location=managed_disk.location,
         tags=managed_disk.tags,
+        create_option=create_data.create_option.value.lower(),
+        source_uri=create_data.source_uri,
+        source_resource_uri=create_data.source_resource_id,
         disk_size_gb=managed_disk.disk_size_gb,
-        os_type=os_type,
-        storage_account_type=managed_disk.sku.name.value,
+        os_type=managed_disk.os_type.value if managed_disk.os_type else None,
+        storage_account_type=managed_disk.sku.name.value if managed_disk.sku else None,
         managed_by=managed_disk.managed_by
     )
 
@@ -288,7 +290,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
         # prepare the data disk
         params = self.compute_models.ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
-        data_disk = self.compute_models.DataDisk(lun, self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
+        data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
 
@@ -319,7 +321,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
         if self.storage_account_type:
-            storage_account_type = self.compute_models.DiskSku(self.storage_account_type)
+            storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
         disk_params['disk_size_gb'] = self.disk_size_gb
         # TODO: Add support for EncryptionSettings
@@ -382,6 +384,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMManagedDisk()
+
 
 if __name__ == '__main__':
     main()

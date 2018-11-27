@@ -16,12 +16,12 @@ options:
     description:
       - HTTP timeout to Vultr API.
       - The ENV variable C(VULTR_API_TIMEOUT) is used as default, when defined.
-    default: 60
+      - Fallback value is 60 seconds if not specified.
   api_retries:
     description:
       - Amount of retries in case of the Vultr API retuns an HTTP 503 code.
       - The ENV variable C(VULTR_API_RETRIES) is used as default, when defined.
-    default: 5
+      - Fallback value is 5 retries if not specified.
   api_account:
     description:
       - Name of the ini section in the C(vultr.ini) file.
@@ -31,7 +31,7 @@ options:
     description:
       - URL to API endpint (without trailing slash).
       - The ENV variable C(VULTR_API_ENDPOINT) is used as default, when defined.
-    default: "https://api.vultr.com"
+      - Fallback value is U(https://api.vultr.com) if not specified.
   validate_certs:
     description:
       - Validate SSL certs of the Vultr API.

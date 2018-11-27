@@ -51,7 +51,7 @@ class Cliconf(CliconfBase):
     @enable_mode
     def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         if source == 'running':
             cmd = b'show running-config'
@@ -61,7 +61,7 @@ class Cliconf(CliconfBase):
         else:
             cmd = b'show configuration'
             if flags is not None:
-                return self.invalid_params("flags are only supported with running-config")
+                raise ValueError("flags are only supported with running-config")
 
         return self.send_command(cmd)
 
@@ -70,8 +70,8 @@ class Cliconf(CliconfBase):
         for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
             self.send_command(cmd)
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
         result = {}

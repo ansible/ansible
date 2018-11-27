@@ -18,6 +18,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: admin
     certificate_name: admin
     state: absent
@@ -32,6 +33,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: admin
     certificate_name: admin
     certificate: "{{ lookup('file', 'pki/admin.crt') }}"
@@ -55,8 +57,10 @@
 - name: Verify add_cert
   assert:
     that:
-    - cm_add_cert.changed == nm_add_cert.changed == true
-    - cm_add_cert_again.changed == nm_add_cert_again.changed == false
+    - cm_add_cert is changed
+    - nm_add_cert is change
+    - cm_add_cert_again is not changed
+    - nm_add_cert_again is not changed
 
 
 # QUERY ALL USER CERTIFICATES
@@ -69,6 +73,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: admin
     state: query
   check_mode: yes
@@ -81,7 +86,8 @@
 - name: Verify query_all_certs
   assert:
     that:
-    - cm_query_all_certs.changed == nm_query_all_certs.changed == false
+    - cm_query_all_certs is not changed
+    - nm_query_all_certs is not changed
     # NOTE: Order of certs is not stable between calls
     #- cm_query_all_certs == nm_query_all_certs
 
@@ -103,7 +109,8 @@
 - name: Verify query_cert
   assert:
     that:
-    - cm_query_cert.changed == nm_query_cert.changed == false
+    - cm_query_cert is not changed
+    - nm_query_cert is not changed
     - cm_query_cert == nm_query_cert
 
 
@@ -129,5 +136,7 @@
 - name: Verify remove_cert
   assert:
     that:
-    - cm_remove_cert.changed == nm_remove_cert.changed == true
-    - cm_remove_cert_again.changed == nm_remove_cert_again.changed == false
+    - cm_remove_cert is changed
+    - nm_remove_cert is changed
+    - cm_remove_cert_again is not changed
+    - nm_remove_cert_again is not changed

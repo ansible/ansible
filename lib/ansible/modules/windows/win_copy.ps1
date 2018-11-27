@@ -1,5 +1,4 @@
 #!powershell
-# This file is part of Ansible
 
 # Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 # Copyright: (c) 2017, Ansible Project
@@ -183,6 +182,7 @@ Function Extract-Zip($src, $dest) {
             }
         }
     }
+    $archive.Dispose()  # release the handle of the zip file
 }
 
 Function Extract-ZipLegacy($src, $dest) {

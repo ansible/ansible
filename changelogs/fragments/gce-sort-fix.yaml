@@ -1,3 +1,0 @@
----
-bugfixes:
-- gce_net - Fix sorting of allowed ports (https://github.com/ansible/ansible/pull/41567)

@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_api_version
-author: Vilian Atmadzhov (vilian.atmadzhov@paddypowerbetfair.com)
+author: Vilian Atmadzhov (@grastogi23) <vilian.atmadzhov@paddypowerbetfair.com>
 
 short_description: Avi API Version Module
 description:
@@ -84,6 +84,7 @@ def main():
         module.exit_json(changed=False, obj=remote)
     except Exception as e:
         module.fail_json(msg="Unable to get an AVI session. {}".format(e))
+
 
 if __name__ == '__main__':
     main()

@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import re
 import json
 
@@ -27,6 +26,7 @@ from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
@@ -54,7 +54,7 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, filter=None, format=None):
+    def get_config(self, flags=None, format=None):
         if format:
             option_values = self.get_option_values()
             if format not in option_values['format']:
@@ -66,29 +66,20 @@ class Cliconf(CliconfBase):
             out = self.send_command('show configuration commands')
         return out
 
-    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
-        if not candidate:
-            raise ValueError('must provide a candidate config to load')
-
-        if commit not in (True, False):
-            raise ValueError("'commit' must be a bool, got %s" % commit)
-
-        if replace not in (True, False):
-            raise ValueError("'replace' must be a bool, got %s" % replace)
-
         operations = self.get_device_operations()
-        if replace and not operations['supports_replace']:
-            raise ValueError("configuration replace is not supported")
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
-
-        for cmd in chain(['configure'], to_list(candidate)):
-            if not isinstance(cmd, collections.Mapping):
+        requests = []
+        self.send_command('configure')
+        for cmd in to_list(candidate):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             results.append(self.send_command(**cmd))
-
+            requests.append(cmd['command'])
         out = self.get('compare')
         out = to_text(out, errors='surrogate_or_strict')
         diff_config = out if not out.startswith('No changes') else None
@@ -108,18 +99,20 @@ class Cliconf(CliconfBase):
         else:
             self.send_command('exit')
 
-        resp['diff'] = diff_config
-        resp['response'] = results[1:-1]
+        if diff_config:
+            resp['diff'] = diff_config
+        resp['response'] = results
+        resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
 
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:
@@ -131,7 +124,7 @@ class Cliconf(CliconfBase):
     def discard_changes(self):
         self.send_command('exit discard')
 
-    def get_diff(self, candidate=None, running=None, match='line', diff_ignore_lines=None, path=None, replace=None):
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace=None):
         diff = {}
         device_operations = self.get_device_operations()
         option_values = self.get_option_values()
@@ -139,10 +132,10 @@ class Cliconf(CliconfBase):
         if candidate is None and device_operations['supports_generate_diff']:
             raise ValueError("candidate configuration is required to generate diff")
 
-        if match not in option_values['diff_match']:
-            raise ValueError("'match' value %s in invalid, valid values are %s" % (match, ', '.join(option_values['diff_match'])))
+        if diff_match not in option_values['diff_match']:
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (diff_match, ', '.join(option_values['diff_match'])))
 
-        if replace:
+        if diff_replace:
             raise ValueError("'replace' in diff is not supported")
 
         if diff_ignore_lines:
@@ -169,7 +162,7 @@ class Cliconf(CliconfBase):
         else:
             candidate_commands = str(candidate).strip().split('\n')
 
-        if match == 'none':
+        if diff_match == 'none':
             diff['config_diff'] = list(candidate_commands)
             return diff
 
@@ -206,7 +199,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -228,14 +221,14 @@ class Cliconf(CliconfBase):
         return {
             'supports_diff_replace': False,
             'supports_commit': True,
-            'supports_rollback': True,
+            'supports_rollback': False,
             'supports_defaults': False,
             'supports_onbox_diff': True,
             'supports_commit_comment': True,
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': False,
-            'supports_generate_diff': True,
+            'supports_generate_diff': False,
             'supports_replace': False
         }
 

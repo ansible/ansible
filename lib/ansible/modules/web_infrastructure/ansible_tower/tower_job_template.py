@@ -148,6 +148,12 @@ options:
       version_added: 2.7
       type: bool
       default: 'no'
+    survey_spec:
+      description:
+        - JSON/YAML dict formatted survey definition.
+      version_added: 2.8
+      type: dict
+      required: False
     become_enabled:
       description:
         - Activate privilege escalation.
@@ -165,6 +171,10 @@ options:
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
+notes:
+  - JSON for survey_spec can be found in Tower API Documentation. See
+    U(https://docs.ansible.com/ansible-tower/latest/html/towerapi/api_ref.html#/Job_Templates/Job_Templates_job_templates_survey_spec_create)
+    for POST operation payload example.
 '''
 
 
@@ -179,9 +189,11 @@ EXAMPLES = '''
     credential: "Local"
     state: "present"
     tower_config_file: "~/tower_cli.cfg"
+    survey_enabled: yes
+    survey_spec: "{{ lookup('file', 'my_survey.json') }}"
 '''
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
@@ -250,8 +262,7 @@ def update_resources(module, p):
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         description=dict(default=''),
         job_type=dict(choices=['run', 'check', 'scan'], required=True),
@@ -281,16 +292,14 @@ def main():
         ask_inventory=dict(type='bool', default=False),
         ask_credential=dict(type='bool', default=False),
         survey_enabled=dict(type='bool', default=False),
+        survey_spec=dict(type='dict', required=False),
         become_enabled=dict(type='bool', default=False),
         diff_mode_enabled=dict(type='bool', default=False),
         concurrent_jobs_enabled=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     state = module.params.pop('state')
@@ -318,6 +327,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

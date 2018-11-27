@@ -18,7 +18,7 @@ short_description: run, start or stop a task in ecs
 description:
     - Creates or deletes instances of task definitions.
 version_added: "2.0"
-author: Mark Chance(@Java1Guy)
+author: Mark Chance (@Java1Guy)
 requirements: [ json, botocore, boto3 ]
 options:
     operation:

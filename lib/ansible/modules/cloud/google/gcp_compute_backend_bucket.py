@@ -32,112 +32,114 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_backend_bucket
 description:
-    - Backend buckets allow you to use Google Cloud Storage buckets with HTTP(S) load
-      balancing.
-    - An HTTP(S) load balancer can direct traffic to specified URLs to a backend bucket
-      rather than a backend service. It can send requests for static content to a Cloud
-      Storage bucket and requests for dynamic content a virtual machine instance.
+- Backend buckets allow you to use Google Cloud Storage buckets with HTTP(S) load
+  balancing.
+- An HTTP(S) load balancer can direct traffic to specified URLs to a backend bucket
+  rather than a backend service. It can send requests for static content to a Cloud
+  Storage bucket and requests for dynamic content a virtual machine instance.
 short_description: Creates a GCP BackendBucket
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    bucket_name:
-        description:
-            - Cloud Storage bucket name.
-        required: true
+  state:
     description:
-        description:
-            - An optional textual description of the resource; provided by the client when the
-              resource is created.
-        required: false
-    enable_cdn:
-        description:
-            - If true, enable Cloud CDN for this BackendBucket.
-        required: false
-        type: bool
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  bucket_name:
+    description:
+    - Cloud Storage bucket name.
+    required: true
+  description:
+    description:
+    - An optional textual description of the resource; provided by the client when
+      the resource is created.
+    required: false
+  enable_cdn:
+    description:
+    - If true, enable Cloud CDN for this BackendBucket.
+    required: false
+    type: bool
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
 extends_documentation_fragment: gcp
+notes:
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/backendBuckets)'
+- 'Using a Cloud Storage bucket as a load balancer backend: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-bucket)'
 '''
 
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: 'bucket-backendbucket'
+      name: "bucket-backendbucket"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/devstorage.full_control
       state: present
   register: bucket
+
 - name: create a backend bucket
   gcp_compute_backend_bucket:
-      name: testObject
+      name: "test_object"
       bucket_name: "{{ bucket.name }}"
-      description: "A BackendBucket to connect LNB w/ Storage Bucket"
+      description: A BackendBucket to connect LNB w/ Storage Bucket
       enable_cdn: true
-      project: testProject
-      auth_kind: service_account
-      service_account_file: /tmp/auth.pem
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    bucket_name:
-        description:
-            - Cloud Storage bucket name.
-        returned: success
-        type: str
-    creation_timestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional textual description of the resource; provided by the client when the
-              resource is created.
-        returned: success
-        type: str
-    enable_cdn:
-        description:
-            - If true, enable Cloud CDN for this BackendBucket.
-        returned: success
-        type: bool
-    id:
-        description:
-            - Unique identifier for the resource.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
+bucketName:
+  description:
+  - Cloud Storage bucket name.
+  returned: success
+  type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional textual description of the resource; provided by the client when the
+    resource is created.
+  returned: success
+  type: str
+enableCdn:
+  description:
+  - If true, enable Cloud CDN for this BackendBucket.
+  returned: success
+  type: bool
+id:
+  description:
+  - Unique identifier for the resource.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -166,6 +168,9 @@ def main():
         )
     )
 
+    if not module.params['scopes']:
+        module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
+
     state = module.params['state']
     kind = 'compute#backendBucket'
 
@@ -175,10 +180,11 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
-            delete(module, self_link(module), kind, fetch)
+            delete(module, self_link(module), kind)
             fetch = {}
             changed = True
     else:
@@ -198,12 +204,12 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.put(link, resource_to_request(module)))
 
 
-def delete(module, link, kind, fetch):
+def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
 
@@ -224,9 +230,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -237,9 +243,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/backendBuckets".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -254,8 +260,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -303,7 +307,7 @@ def async_op_url(module, extra_data=None):
 def wait_for_operation(module, response):
     op_result = return_if_object(module, response, 'compute#operation')
     if op_result is None:
-        return None
+        return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
     return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#backendBucket')
@@ -315,8 +319,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -326,6 +328,7 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
 
 if __name__ == '__main__':
     main()

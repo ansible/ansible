@@ -129,6 +129,7 @@ class MDTInventory(object):
         parser.add_argument('--host', action='store', help='Get all the variables about a specific instance')
         self.args = parser.parse_args()
 
+
 if __name__ == "__main__":
     # Run the script
     MDTInventory()

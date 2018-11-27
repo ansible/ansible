@@ -117,6 +117,24 @@
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
+- name: Get stat info to check atime later
+  stat: path={{output_dir}}/baz.txt
+  register: file_attributes_result_5_before
+
+- name: updates access time
+  file: path={{output_dir}}/baz.txt access_time=now
+  register: file_attributes_result_5
+
+- name: Get stat info to check atime later
+  stat: path={{output_dir}}/baz.txt
+  register: file_attributes_result_5_after
+
+- name: verify that the file was marked as changed and atime changed
+  assert:
+    that:
+      - "file_attributes_result_5 is changed"
+      - "file_attributes_result_5_after['stat']['atime'] != file_attributes_result_5_before['stat']['atime']"
+
 - name: setup a tmp-like directory for ownership test
   file: path=/tmp/worldwritable mode=1777 state=directory
 

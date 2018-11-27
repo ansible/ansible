@@ -75,6 +75,7 @@ options:
   profiles:
     description:
       - The profile this rule applies to.
+    type: list
     default: domain,private,public
     aliases: [ profile ]
   force:

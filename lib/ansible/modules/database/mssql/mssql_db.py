@@ -61,7 +61,7 @@ notes:
 requirements:
    - python >= 2.7
    - pymssql
-author: Vedit Firat Arig
+author: Vedit Firat Arig (@vedit)
 '''
 
 EXAMPLES = '''

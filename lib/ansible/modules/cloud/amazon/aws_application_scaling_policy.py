@@ -21,8 +21,8 @@ description:
     - Creates, updates or removes a Scaling Policy
 version_added: "2.5"
 author:
-    - Gustavo Maia(@gurumaia)
-    - Chen Leibovich(@chenl87)
+    - Gustavo Maia (@gurumaia)
+    - Chen Leibovich (@chenl87)
 requirements: [ json, botocore, boto3 ]
 options:
     policy_name:
@@ -170,7 +170,7 @@ policy_name:
 policy_type:
     description: The policy type.
     returned: when state present
-    type: string    
+    type: string
 min_capacity:
     description: The minimum value to scale to in response to a scale in event. Required if I(state) is C(present).
     returned: when state present
@@ -197,7 +197,7 @@ step_scaling_policy_configuration:
             type: string
             sample: "ChangeInCapacity, PercentChangeInCapacity, ExactCapacity"
         cooldown:
-            description: The amount of time, in seconds, after a scaling activity completes 
+            description: The amount of time, in seconds, after a scaling activity completes
                 where previous trigger-related scaling activities can influence future scaling events
             returned: when state present and the policy type is StepScaling
             type: int
@@ -251,8 +251,6 @@ creation_time:
     type: string
     sample: '2017-09-28T08:22:51.881000-03:00'
 '''  # NOQA
-
-import traceback
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, ec2_argument_spec
@@ -462,7 +460,18 @@ def main():
                                                         ], type='str'),
         policy_type=dict(required=True, choices=['StepScaling', 'TargetTrackingScaling'], type='str'),
         step_scaling_policy_configuration=dict(required=False, type='dict'),
-        target_tracking_scaling_policy_configuration=dict(required=False, type='dict'),
+        target_tracking_scaling_policy_configuration=dict(
+            required=False,
+            type='dict',
+            options=dict(
+                CustomizedMetricSpecification=dict(type='dict'),
+                DisableScaleIn=dict(type='bool'),
+                PredefinedMetricSpecification=dict(type='dict'),
+                ScaleInCooldown=dict(type='int'),
+                ScaleOutCooldown=dict(type='int'),
+                TargetValue=dict(type='float'),
+            )
+        ),
         minimum_tasks=dict(required=False, type='int'),
         maximum_tasks=dict(required=False, type='int'),
         override_task_capacity=dict(required=False, type=bool)
@@ -471,6 +480,15 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     connection = module.client('application-autoscaling')
+
+    # Remove any target_tracking_scaling_policy_configuration suboptions that are None
+    policy_config_options = [
+        'CustomizedMetricSpecification', 'DisableScaleIn', 'PredefinedMetricSpecification', 'ScaleInCooldown', 'ScaleOutCooldown', 'TargetValue'
+    ]
+    if isinstance(module.params['target_tracking_scaling_policy_configuration'], dict):
+        for option in policy_config_options:
+            if module.params['target_tracking_scaling_policy_configuration'][option] is None:
+                module.params['target_tracking_scaling_policy_configuration'].pop(option)
 
     if module.params.get("state") == 'present':
         # A scalable target must be registered prior to creating a scaling policy

@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'core'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -22,7 +22,7 @@ description:
     using the Infoblox WAPI interface over REST.
   - Updates instances of network view object from Infoblox NIOS servers.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   name:

@@ -30,7 +30,7 @@ description:
    - This module allows you to search for Zabbix host entries.
 version_added: "2.7"
 author:
-    - "(@redwhitemiko)"
+    - "Michael Miko (@redwhitemiko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
@@ -206,6 +206,7 @@ def main():
         module.exit_json(ok=True, hosts=extended_hosts)
     else:
         module.exit_json(ok=False, hosts=[], result="No Host present")
+
 
 if __name__ == '__main__':
     main()

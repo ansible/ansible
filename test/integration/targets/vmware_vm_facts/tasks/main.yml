@@ -50,5 +50,13 @@
   assert:
     that:
       - "{{ item | basename in vm_facts_0001['virtual_machines'].keys()}}"
+      - "vm_facts_0001['virtual_machines'][item | basename]['cluster'] is defined"
+      - "vm_facts_0001['virtual_machines'][item | basename]['esxi_hostname'] is defined"
+      - "vm_facts_0001['virtual_machines'][item | basename]['guest_fullname'] is defined"
+      - "vm_facts_0001['virtual_machines'][item | basename]['ip_address'] is defined"
+      - "vm_facts_0001['virtual_machines'][item | basename]['mac_address'] is defined"
+      - "vm_facts_0001['virtual_machines'][item | basename]['power_state'] is defined"
+      - "vm_facts_0001['virtual_machines'][item | basename]['uuid'] is defined"
+      - "vm_facts_0001['virtual_machines'][item | basename]['vm_network'] is defined"
   with_items:
     - "{{ host_info_result['json'] }}"

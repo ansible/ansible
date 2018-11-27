@@ -5,6 +5,7 @@
 
 import os
 import resource
+import signal
 import sys
 import time
 
@@ -59,6 +60,8 @@ def createDaemon():
    return(0)
 
 if __name__ == "__main__":
+
+   signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
    retCode = createDaemon()
 

@@ -1,0 +1,160 @@
+---
+- name: setup template
+  cs_template:
+    name: "ansible-template-test1"
+    state: absent
+  register: template
+- name: verify setup template
+  assert:
+    that:
+    - template is successful
+
+- name: test download template in check mode
+  cs_template:
+    name: "ansible-template-test1"
+    url: "{{ cs_template_url }}"
+    format: "{{ cs_template_format }}"
+    hypervisor: "{{ cs_template_hypervisor }}"
+    os_type: "{{ cs_template_os_type }}"
+    cross_zones: yes
+  register: template
+  check_mode: yes
+- name: verify test download template in check mode
+  assert:
+    that:
+    - template is changed
+
+- name: test download template
+  cs_template:
+    name: "ansible-template-test1"
+    url: "{{ cs_template_url }}"
+    format: "{{ cs_template_format }}"
+    hypervisor: "{{ cs_template_hypervisor }}"
+    os_type: "{{ cs_template_os_type }}"
+    cross_zones: yes
+  register: template
+- name: verify test download template
+  assert:
+    that:
+    - template is changed
+    - template.name == "ansible-template-test1"
+    - template.display_text == "ansible-template-test1"
+    - template.cross_zones == true
+
+- name: test download template idempotence
+  cs_template:
+    name: "ansible-template-test1"
+    url: "{{ cs_template_url }}"
+    format: "{{ cs_template_format }}"
+    hypervisor: "{{ cs_template_hypervisor }}"
+    os_type: "{{ cs_template_os_type }}"
+    cross_zones: yes
+  register: template
+- name: verify test download template idempotence
+  assert:
+    that:
+    - template is not changed
+    - template.name == "ansible-template-test1"
+    - template.display_text == "ansible-template-test1"
+    - template.cross_zones == true
+
+- name: test update template in check mode
+  cs_template:
+    name: "ansible-template-test1"
+    display_text: "{{ cs_resource_prefix }}-template display_text"
+    url: "{{ cs_template_url }}"
+    format: "{{ cs_template_format }}"
+    hypervisor: "{{ cs_template_hypervisor }}"
+    os_type: "{{ cs_template_os_type }}"
+    is_featured: yes
+    cross_zones: yes
+  register: template
+  check_mode: yes
+- name: verify test update template in check mode
+  assert:
+    that:
+    - template is changed
+    - template.name == "ansible-template-test1"
+    - template.display_text == "ansible-template-test1"
+    - template.cross_zones == true
+    - template.is_featured == false
+
+- name: test update template
+  cs_template:
+    name: "ansible-template-test1"
+    display_text: "{{ cs_resource_prefix }}-template display_text"
+    url: "{{ cs_template_url }}"
+    format: "{{ cs_template_format }}"
+    hypervisor: "{{ cs_template_hypervisor }}"
+    os_type: "{{ cs_template_os_type }}"
+    is_featured: yes
+    cross_zones: yes
+  register: template
+- name: verify test update template
+  assert:
+    that:
+    - template is changed
+    - template.name == "ansible-template-test1"
+    - template.display_text == "{{ cs_resource_prefix }}-template display_text"
+    - template.cross_zones == true
+    - template.is_featured == true
+
+- name: test update template idempotence
+  cs_template:
+    name: "ansible-template-test1"
+    display_text: "{{ cs_resource_prefix }}-template display_text"
+    url: "{{ cs_template_url }}"
+    format: "{{ cs_template_format }}"
+    hypervisor: "{{ cs_template_hypervisor }}"
+    os_type: "{{ cs_template_os_type }}"
+    is_featured: yes
+    cross_zones: yes
+  register: template
+- name: verify test update template idempotence
+  assert:
+    that:
+    - template is not changed
+    - template.name == "ansible-template-test1"
+    - template.display_text == "{{ cs_resource_prefix }}-template display_text"
+    - template.cross_zones == true
+    - template.is_featured == true
+
+- name: test remove template in check mode
+  cs_template:
+    name: "ansible-template-test1"
+    state: absent
+    cross_zones: yes
+  register: template
+  check_mode: yes
+- name: verify test remove template in check mode
+  assert:
+    that:
+    - template is changed
+    - template.name == "ansible-template-test1"
+    - template.display_text == "{{ cs_resource_prefix }}-template display_text"
+    - template.cross_zones == true
+
+- name: test remove template
+  cs_template:
+    name: "ansible-template-test1"
+    state: absent
+    cross_zones: yes
+  register: template
+- name: verify test remove template
+  assert:
+    that:
+    - template is changed
+    - template.name == "ansible-template-test1"
+    - template.display_text == "{{ cs_resource_prefix }}-template display_text"
+    - template.cross_zones == true
+
+- name: test remove template idempotence
+  cs_template:
+    name: "ansible-template-test1"
+    state: absent
+    cross_zones: yes
+  register: template
+- name: verify test remove template idempotence
+  assert:
+    that:
+    - template is not changed

@@ -1,0 +1,17 @@
+# Copyright (c) 2018, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup dns domain
+  vultr_dns_domain:
+    name: "{{ vultr_dns_domain_name }}"
+    server_ip: 10.10.10.10
+  register: result
+- name: verify setup dns domain
+  assert:
+    that:
+    - result is successful
+
+- include_tasks: test_fail_multiple.yml
+
+- include_tasks: record.yml
+  with_items: "{{ vultr_dns_record_items }}"

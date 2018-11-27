@@ -23,14 +23,14 @@ version_added: 2.2
 options:
     token:
         description:
-            - GitHub Personal Access Token for authenticating
+            - GitHub Personal Access Token for authenticating. Mutually exclusive with C(password).
     user:
         description:
             - The GitHub account that owns the repository
         required: true
     password:
         description:
-            - The GitHub account password for the user
+            - The GitHub account password for the user. Mutually exclusive with C(token).
         version_added: "2.4"
     repo:
         description:
@@ -77,6 +77,12 @@ requirements:
 '''
 
 EXAMPLES = '''
+- name: Get latest release of a public repository
+  github_release:
+    user: ansible
+    repo: ansible
+    action: latest_release
+
 - name: Get latest release of testuseer/testrepo
   github_release:
     token: tokenabc1234567890
@@ -149,9 +155,9 @@ def main():
             prerelease=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        required_one_of=(('password', 'token'),),
         mutually_exclusive=(('password', 'token'),),
-        required_if=[('action', 'create_release', ['tag'])],
+        required_if=[('action', 'create_release', ['tag']),
+                     ('action', 'create_release', ['password', 'token'], True)],
     )
 
     if not HAS_GITHUB_API:
@@ -172,14 +178,17 @@ def main():
 
     # login to github
     try:
-        if user and password:
+        if password:
             gh_obj = github3.login(user, password=password)
         elif login_token:
             gh_obj = github3.login(token=login_token)
+        else:
+            gh_obj = github3.GitHub()
 
         # test if we're actually logged in
-        gh_obj.me()
-    except github3.AuthenticationFailed as e:
+        if password or login_token:
+            gh_obj.me()
+    except github3.exceptions.AuthenticationFailed as e:
         module.fail_json(msg='Failed to connect to GitHub: %s' % to_native(e),
                          details="Please check username and password or token "
                                  "for repository %s" % repo)

@@ -86,7 +86,9 @@ requirements:
     - "python >= 2.6"
     - "boto >= 2.9"
 
-author: "Benno Joy (@bennojoy), extended by Lukas Beumer (@nitaco)"
+author:
+- Benno Joy (@bennojoy)
+- Lukas Beumer (@Nitaco)
 
 '''
 
@@ -421,7 +423,7 @@ def main():
     )
 
     if not HAS_BOTO:
-        module.fail_json(msg='boto 2.9+ required for this module')
+        module.fail_json(msg='`boto` 2.9+ is required for this module. Try: pip install `boto` --upgrade')
 
     bucket = module.params.get('bucket')
     obj = module.params.get('object')

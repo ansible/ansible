@@ -37,5 +37,3 @@
 - include_tasks: ambiguous-ref.yml
 - include_tasks: archive.yml
 - include_tasks: separate-git-dir.yml
-  when:
-    - git_version.stdout is version("1.7.5", '>=')

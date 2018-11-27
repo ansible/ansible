@@ -45,7 +45,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ozi Boms @ozboms"
+    - "Ozi Boms (@ozboms)"
 
 '''
 
@@ -196,6 +196,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
 
 def main():
     AzureRMRecordSetFacts()
+
 
 if __name__ == '__main__':
     main()

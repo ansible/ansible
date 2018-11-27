@@ -3,7 +3,7 @@
 The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
 further information see
 [the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
-If you are planning to contribute AWS modules to Ansible then getting in touch with the the working
+If you are planning to contribute AWS modules to Ansible then getting in touch with the working
 group will be a good way to start, especially because a similar module may already be under
 development.
 

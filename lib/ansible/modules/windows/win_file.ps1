@@ -1,7 +1,6 @@
 #!powershell
 
 # Copyright: (c) 2017, Ansible Project
-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -53,12 +52,9 @@ namespace Ansible.Command {
 }
 "@
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 # Used to delete directories and files with logic on handling symbolic links
 function Remove-File($file, $checkmode) {

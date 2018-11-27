@@ -72,7 +72,7 @@ options:
 requirements:
   - "python >= 2.6"
   - pyghmi
-author: "Bulat Gaifullin (gaifullinbf@gmail.com)"
+author: "Bulat Gaifullin (@bgaifullin) <gaifullinbf@gmail.com>"
 '''
 
 RETURN = '''
@@ -181,6 +181,7 @@ def main():
         module.exit_json(changed=True, **response)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

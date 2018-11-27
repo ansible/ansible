@@ -8,15 +8,12 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -25,21 +22,27 @@ try:
     from library.modules.bigip_node import ApiParameters
     from library.modules.bigip_node import ModuleManager
     from library.modules.bigip_node import ArgumentSpec
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_node import Parameters
-        from ansible.modules.network.f5.bigip_node import ModuleParameters
-        from ansible.modules.network.f5.bigip_node import ApiParameters
-        from ansible.modules.network.f5.bigip_node import ModuleManager
-        from ansible.modules.network.f5.bigip_node import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_node import Parameters
+    from ansible.modules.network.f5.bigip_node import ModuleParameters
+    from ansible.modules.network.f5.bigip_node import ApiParameters
+    from ansible.modules.network.f5.bigip_node import ModuleManager
+    from ansible.modules.network.f5.bigip_node import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -95,7 +98,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -114,7 +117,7 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
 
-    def test_create_selfip_idempotent(self, *args):
+    def test_create_node_idempotent(self, *args):
         set_module_args(dict(
             host='10.20.30.40',
             name='mytestserver',
@@ -123,12 +126,12 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        current = Parameters(params=load_fixture('load_ltm_node_3.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_node_3.json'))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
@@ -153,7 +156,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -182,7 +185,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
@@ -214,7 +217,7 @@ class TestManager(unittest.TestCase):
             ],
             partition='Common',
             state='present',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

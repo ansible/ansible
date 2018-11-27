@@ -28,7 +28,7 @@ short_description: Manages base ACL configuration on HUAWEI CloudEngine switches
 description:
     - Manages base ACL configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

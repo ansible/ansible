@@ -1,0 +1,4 @@
+minor_changes:
+ - win_say - Ported code to use Ansible.Basic.
+ - win_say - If requested voice is not found a warning is now displayed.
+ - win_say - Some error messages worded differently now that the module uses generic module parameter validation.

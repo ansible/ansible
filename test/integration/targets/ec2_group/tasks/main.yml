@@ -9,7 +9,13 @@
 # - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
 
 - include: ./credential_tests.yml
-- block:
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  block:
     # ============================================================
     - name: set up aws connection info
       set_fact:
@@ -42,9 +48,13 @@
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
       register: vpc_result
+    #TODO(ryansb): Update CI for VPC peering permissions
+    #- include: ./multi_account.yml
+    - include: ./numeric_protos.yml
     - include: ./rule_group_create.yml
     - include: ./egress_tests.yml
     - include: ./data_validation.yml
+    - include: ./multi_nested_target.yml
 
     # ============================================================
     - name: test state=absent (CHECK MODE)
@@ -288,12 +298,15 @@
               cidr_ipv6: "64:ff9b::/96"
             <<: *aws_connection_info
           check_mode: true
+          diff: true
           register: result
 
         - name: assert state=present (expected changed=true)
           assert:
             that:
                - 'result.changed'
+               - 'result.diff.0.before.ip_permissions == result.diff.0.after.ip_permissions'
+               - 'result.diff.0.before.ip_permissions_egress != result.diff.0.after.ip_permissions_egress'
 
         # ============================================================
         - name: test rules_egress state=present for ipv6 (expected changed=true)
@@ -330,12 +343,14 @@
             vpc_id: '{{ vpc_result.vpc.id }}'
             <<: *aws_connection_info
           check_mode: true
+          diff: true
           register: result
 
         - name: assert group was removed
           assert:
             that:
               - 'result.changed'
+              - 'not result.diff.0.after'
 
         # ============================================================
         - name: test state=absent (expected changed=true)
@@ -405,8 +420,13 @@
           to_port: 8182
           cidr_ip: "1.1.1.1/32"
       check_mode: true
+      diff: true
       register: check_result
 
+    - assert:
+        that:
+          - not check_result.changed
+          - check_result.diff.0.before.ip_permissions.0 == check_result.diff.0.after.ip_permissions.0
 
     # ============================================================
     - name: add same rule to the existing group  (expected changed=false)
@@ -877,12 +897,16 @@
           tag1: test1
           tag2: test2
       check_mode: true
+      diff: true
       register: result
 
     - name: assert that tags were added (expected changed=true)
       assert:
         that:
           - 'result.changed'
+          - 'not result.diff.0.before.tags'
+          - 'result.diff.0.after.tags.tag1 == "test1"'
+          - 'result.diff.0.after.tags.tag2 == "test2"'
 
     # ============================================================
     - name: test adding tags (expected changed=true)
@@ -1090,6 +1114,29 @@
           - 'result.changed'
       when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
 
+    # =========================================================================================
+    - name: add rules without descriptions ready for adding descriptions to existing rules
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        # purge the other rules so assertions work for the subsequent tests for rule descriptions
+        purge_rules_egress: true
+        purge_rules: true
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ipv6: 1001:d00::/24
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+      register: result
+
     # ============================================================
     - name: test adding a rule and egress rule descriptions (expected changed=true)
       ec2_group:
@@ -1163,6 +1210,7 @@
       # compatibility with this feature.
       assert:
         that:
+          - 'result.ip_permissions | length > 0'
           - 'result.changed'
       when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
 

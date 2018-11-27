@@ -84,7 +84,7 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
@@ -96,8 +96,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(),
         description=dict(),
         organization=dict(),
@@ -111,12 +110,9 @@ def main():
         local_path=dict(),
 
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     description = module.params.get('description')
@@ -147,18 +143,18 @@ def main():
                 except (exc.NotFound) as excinfo:
                     module.fail_json(msg='Failed to update project, organization not found: {0}'.format(organization), changed=False)
 
-                if scm_type:
+                if scm_credential:
                     try:
                         cred_res = tower_cli.get_resource('credential')
                         cred = cred_res.get(name=scm_credential)
+                        scm_credential = cred['id']
                     except (exc.NotFound) as excinfo:
                         module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
-                credential = cred['id'] if scm_type else None
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
-                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=credential,
+                                        scm_branch=scm_branch, scm_clean=scm_clean, credential=scm_credential,
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
                                         create_on_missing=True)
@@ -172,6 +168,5 @@ def main():
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

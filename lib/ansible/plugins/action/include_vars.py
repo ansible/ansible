@@ -48,7 +48,7 @@ class ActionModule(ActionBase):
         if not self.ignore_files:
             self.ignore_files = list()
 
-        if isinstance(self.ignore_files, str):
+        if isinstance(self.ignore_files, string_types):
             self.ignore_files = self.ignore_files.split()
 
         elif isinstance(self.ignore_files, dict):
@@ -103,7 +103,7 @@ class ActionModule(ActionBase):
                 raise AnsibleError('{0} is not a valid option in include_vars'.format(arg))
 
         if dirs and files:
-            raise AnsibleError("Your are mixing file only and dir only arguments, these are incompatible")
+            raise AnsibleError("You are mixing file only and dir only arguments, these are incompatible")
 
         # set internal vars from args
         self._set_args()

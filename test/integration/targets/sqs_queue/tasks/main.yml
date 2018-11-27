@@ -73,7 +73,6 @@
           - create_result.policy.Statement.Action == "*"
   always:
     - name: Cleaning up queue
-      echo: "{{ create_result.name }}"
       sqs_queue:
         name: "{{ create_result.name }}"
         state: absent

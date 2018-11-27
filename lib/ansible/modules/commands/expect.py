@@ -77,6 +77,8 @@ EXAMPLES = r'''
     command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
+  # you don't want to show passwords in your logs
+  no_log: true
 
 - name: Generic question with multiple different responses
   expect:

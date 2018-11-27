@@ -30,7 +30,7 @@ options:
   port:
     type: int
     description:
-      - Specifies the port on the remote device to listening for connections
+      - Specifies the port on the remote device that listens for connections
         when establishing the SSH connection.
     default: 830
     ini:
@@ -52,7 +52,7 @@ options:
       - The username used to authenticate to the remote device when the SSH
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
-      - Can be configured form the CLI via the C(--user) or C(-u) options
+      - Can be configured from the CLI via the C(--user) or C(-u) options.
     ini:
       - section: defaults
         key: remote_user
@@ -69,11 +69,11 @@ options:
       - name: ansible_ssh_pass
   private_key_file:
     description:
-      - The private SSH key or certificate file used to to authenticate to the
+      - The private SSH key or certificate file used to authenticate to the
         remote device when first establishing the SSH connection.
     ini:
-     section: defaults
-     key: private_key_file
+      - section: defaults
+        key: private_key_file
     env:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
@@ -81,28 +81,29 @@ options:
   timeout:
     type: int
     description:
-      - Sets the connection time for the communicating with the remote device.
-        This timeout is used as the default timeout value when awaiting a
-        response after issuing a call to a RPC.  If the RPC does not return in
-        timeout seconds, an error is generated.
+      - Sets the connection time, in seconds, for communicating with the
+        remote device.  This timeout is used as the default timeout value when
+        awaiting a response after issuing a call to a RPC.  If the RPC
+        does not return in timeout seconds, an error is generated.
     default: 120
   host_key_auto_add:
-    type: bool
+    type: boolean
     description:
       - By default, Ansible will prompt the user before adding SSH keys to the
-        known hosts file.  Enabling this option, unknown host keys will
+        known hosts file. By enabling this option, unknown host keys will
         automatically be added to the known hosts file.
       - Be sure to fully understand the security implications of enabling this
         option on production systems as it could create a security vulnerability.
-    default: 'no'
+    default: False
     ini:
-      section: paramiko_connection
-      key: host_key_auto_add
+      - section: paramiko_connection
+        key: host_key_auto_add
     env:
       - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
     default: True
-    description: 'TODO: write it'
+    description:
+      -  Enables looking for ssh keys in the usual locations for ssh keys (e.g. :file:`~/.ssh/id_*`).
     env:
       - name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS
     ini:
@@ -132,7 +133,7 @@ options:
       - Configures, in seconds, the amount of time to wait when trying to
         initially establish a persistent connection.  If this value expires
         before the connection to the remote device is completed, the connection
-        will fail
+        will fail.
     default: 30
     ini:
       - section: persistent_connection
@@ -145,13 +146,30 @@ options:
       - Configures, in seconds, the amount of time to wait for a command to
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
-        close
+        close.
     default: 10
     ini:
       - section: persistent_connection
         key: command_timeout
     env:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
+  netconf_ssh_config:
+    description:
+      - This variable is used to enable bastion/jump host with netconf connection. If set to
+        True the bastion/jump host ssh settings should be present in ~/.ssh/config file,
+        alternatively it can be set to custom ssh configuration file path to read the
+        bastion/jump host settings.
+    ini:
+      - section: netconf_connection
+        key: ssh_config
+        version_added: '2.7'
+    env:
+      - name: ANSIBLE_NETCONF_SSH_CONFIG
+    vars:
+      - name: ansible_netconf_ssh_config
+        version_added: '2.7'
 """
 
 import os
@@ -160,9 +178,10 @@ import json
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import NetworkConnectionBase
+from ansible.utils.display import Display
 
 try:
     from ncclient import manager
@@ -172,17 +191,14 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
 NETWORK_OS_DEVICE_PARAM_MAP = {
     "nxos": "nexus",
     "ios": "default",
+    "dellos10": "default",
     "sros": "alu",
     "ce": "huawei"
 }
@@ -198,9 +214,19 @@ class Connection(NetworkConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self._network_os = self._network_os or 'default'
+
+        netconf = netconf_loader.get(self._network_os, self)
+        if netconf:
+            self._sub_plugins.append({'type': 'netconf', 'name': self._network_os, 'obj': netconf})
+            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
+        else:
+            netconf = netconf_loader.get("default", self)
+            self._sub_plugins.append({'type': 'netconf', 'name': 'default', 'obj': netconf})
+            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
+        self.key_filename = None
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Sends the request to the node and returns the reply
@@ -226,8 +252,6 @@ class Connection(NetworkConnectionBase):
             return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def _connect(self):
-        super(Connection, self)._connect()
-
         display.display('ssh connection done, starting ncclient', log_only=True)
 
         allow_agent = True
@@ -235,9 +259,9 @@ class Connection(NetworkConnectionBase):
             allow_agent = False
         setattr(self._play_context, 'allow_agent', allow_agent)
 
-        key_filename = None
-        if self._play_context.private_key_file:
-            key_filename = os.path.expanduser(self._play_context.private_key_file)
+        self.key_filename = self._play_context.private_key_file or self.get_option('private_key_file')
+        if self.key_filename:
+            self.key_filename = str(os.path.expanduser(self.key_filename))
 
         if self._network_os == 'default':
             for cls in netconf_loader.all(class_only=True):
@@ -248,10 +272,10 @@ class Connection(NetworkConnectionBase):
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
 
-        ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
+        ssh_config = self.get_option('netconf_ssh_config')
         if ssh_config in BOOLEANS_TRUE:
             ssh_config = True
-        else:
+        elif ssh_config in BOOLEANS_FALSE:
             ssh_config = None
 
         try:
@@ -260,7 +284,7 @@ class Connection(NetworkConnectionBase):
                 port=self._play_context.port or 830,
                 username=self._play_context.remote_user,
                 password=self._play_context.password,
-                key_filename=str(key_filename),
+                key_filename=self.key_filename,
                 hostkey_verify=self.get_option('host_key_checking'),
                 look_for_keys=self.get_option('look_for_keys'),
                 device_params=device_params,
@@ -269,7 +293,7 @@ class Connection(NetworkConnectionBase):
                 ssh_config=ssh_config
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
         except ImportError as exc:
             raise AnsibleError("connection=netconf is not supported on {0}".format(self._network_os))
 
@@ -280,13 +304,7 @@ class Connection(NetworkConnectionBase):
 
         self._connected = True
 
-        netconf = netconf_loader.get(self._network_os, self)
-        if netconf:
-            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
-        else:
-            netconf = netconf_loader.get("default", self)
-            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        self._implementation_plugins.append(netconf)
+        super(Connection, self)._connect()
 
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 

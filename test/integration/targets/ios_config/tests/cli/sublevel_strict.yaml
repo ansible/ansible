@@ -12,7 +12,6 @@
     parents: ip access-list extended test
     before: no ip access-list extended test
     match: none
-    provider: "{{ cli }}"
 
 - name: configure sub level command using strict match
   ios_config:
@@ -23,7 +22,6 @@
       - permit ip host 192.0.2.4 any log
     parents: ip access-list extended test
     match: strict
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -39,7 +37,6 @@
     parents: ip access-list extended test
     after: exit
     match: strict
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -56,6 +53,5 @@
   ios_config:
     lines: no ip access-list extended test
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/sublevel_strict.yaml on connection={{ ansible_connection }}"

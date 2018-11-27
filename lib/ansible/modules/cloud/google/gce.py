@@ -158,7 +158,9 @@ requirements:
 notes:
   - Either I(instance_names) or I(name) is required.
   - JSON credentials strongly preferred.
-author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>"
+author:
+  - Eric Johnson (@erjohnso) <erjohnso@google.com>
+  - Tom Melendez (@supertom) <supertom@google.com>
 '''
 
 EXAMPLES = '''

@@ -16,6 +16,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     leaf_profile: sw_name_test
     state: absent
 
@@ -64,13 +65,13 @@
 - name: present assertions
   assert:
     that:
-    - sw_leaf_selec_check_mode_present.changed == true
-    - sw_leaf_selec_present.changed == true
+    - sw_leaf_selec_check_mode_present is changed
+    - sw_leaf_selec_present is changed
     - sw_leaf_selec_present.previous == []
-    - 'sw_leaf_selec_present.sent ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}},{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-None"}}}]}}'
-    - sw_leaf_selec_idempotent.changed == false
+    - 'sw_leaf_selec_present.sent ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}}]}}'
+    - sw_leaf_selec_idempotent is not changed
     - sw_leaf_selec_idempotent.sent == {}
-    - sw_leaf_selec_update.changed == true
+    - sw_leaf_selec_update is changed
     - 'sw_leaf_selec_update.sent == {"infraLeafS": {"attributes": {},"children": [{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-anstest_policygroupname"}}}]}}'
 
 - name: Query Specific switch policy leaf profile selector
@@ -83,7 +84,7 @@
 - name: present assertions
   assert:
     that:
-      - binding_query.changed == false
+      - binding_query is not changed
       - binding_query.current | length >= 1
       - '"api/mo/uni/infra/nprof-sw_name_test/leaves-leaf_selector_name-typ-range.json" in binding_query.url'
 
@@ -116,13 +117,13 @@
 - name: absent assertions
   assert:
     that:
-      - sw_leaf_selec_check_mode_absent.changed == true
+      - sw_leaf_selec_check_mode_absent is changed
       - sw_leaf_selec_check_mode_absent.previous != []
-      - sw_leaf_selec_absent.changed == true
+      - sw_leaf_selec_absent is changed
       - sw_leaf_selec_absent.previous == sw_leaf_selec_check_mode_absent.previous
-      - sw_leaf_selec_absent_idempotent.changed == false
+      - sw_leaf_selec_absent_idempotent is not changed
       - sw_leaf_selec_absent_idempotent.previous == []
-      - sw_leaf_selec_absent_missing_param.failed == true
+      - sw_leaf_selec_absent_missing_param is failed
       - 'sw_leaf_selec_absent_missing_param.msg == "state is absent but all of the following are missing: leaf"'
 
 

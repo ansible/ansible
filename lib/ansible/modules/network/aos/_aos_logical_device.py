@@ -87,6 +87,7 @@ EXAMPLES = '''
     name: "my-logical-device"
     state: present
   register: logical_device
+
 - name: "Save Logical Device into a JSON file 2/3"
   copy:
     content: "{{ logical_device.value | to_nice_json }}"
@@ -257,6 +258,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     logical_device(module)
+
 
 if __name__ == "__main__":
     main()

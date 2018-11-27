@@ -7,13 +7,13 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 ---
 module: nios_a_record
-version_added: "2.6"
+version_added: "2.7"
 author: "Blair Rampling (@brampling)"
 short_description: Configure Infoblox NIOS A records
 description:
@@ -21,7 +21,7 @@ description:
     Infoblox NIOS servers.  This module manages NIOS C(record:a) objects
     using the Infoblox WAPI interface over REST.
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   name:
@@ -102,6 +102,17 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
+
+- name: update an A record name
+  nios_a_record:
+    name: {new_name: a_new.ansible.com, old_name: a.ansible.com}
+    ipv4: 192.168.10.1
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
@@ -109,6 +120,7 @@ RETURN = ''' # '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
+from ansible.module_utils.net_tools.nios.api import NIOS_A_RECORD
 
 
 def main():
@@ -139,7 +151,7 @@ def main():
                            supports_check_mode=True)
 
     wapi = WapiModule(module)
-    result = wapi.run('record:a', ib_spec)
+    result = wapi.run(NIOS_A_RECORD, ib_spec)
 
     module.exit_json(**result)
 

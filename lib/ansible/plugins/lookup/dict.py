@@ -38,6 +38,12 @@ tasks:
     debug:
       msg: "{{item.key}}: {{item.value}}"
     with_dict: {a: 1, b: 2, c: 3}
+  # Items from loop can be used in when: statements
+  - name: set_fact when alice in key
+    set_fact:
+      alice_exists: true
+    loop: "{{ lookup('dict', users) }}"
+    when: "'alice' in item.key"
 """
 
 RETURN = """
@@ -46,10 +52,10 @@ RETURN = """
       - list of composed dictonaries with key and value
     type: list
 """
-import collections
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.common._collections_compat import Mapping
 
 
 class LookupModule(LookupBase):
@@ -63,7 +69,7 @@ class LookupModule(LookupBase):
         results = []
         for term in terms:
             # Expect any type of Mapping, notably hostvars
-            if not isinstance(term, collections.Mapping):
+            if not isinstance(term, Mapping):
                 raise AnsibleError("with_dict expects a dict")
 
             results.extend(self._flatten_hash_to_list(term))

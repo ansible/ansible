@@ -25,12 +25,9 @@ from abc import ABCMeta
 
 from ansible import constants as C
 from ansible.module_utils.six import with_metaclass, string_types
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 # Global so that all instances of a PluginLoader will share the caches
 MODULE_CACHE = {}
@@ -67,7 +64,7 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         Sets the _options attribute with the configuration/keyword information for this plugin
 
         :arg task_keys: Dict with playbook keywords that affect this option
-        :arg var_options: Dict with either 'conneciton variables'
+        :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
         '''
         self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)

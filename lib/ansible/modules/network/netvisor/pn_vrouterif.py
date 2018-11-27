@@ -161,6 +161,9 @@ changed:
 
 import shlex
 
+# Ansible boiler-plate
+from ansible.module_utils.basic import AnsibleModule
+
 VROUTER_EXISTS = None
 INTERFACE_EXISTS = None
 NIC_EXISTS = None
@@ -476,8 +479,7 @@ def main():
         cli += ' %s vrouter-name %s nic %s ' % (command, vrouter_name, nic_str)
 
     run_cli(module, cli)
-# Ansible boiler-plate
-from ansible.module_utils.basic import AnsibleModule
+
 
 if __name__ == '__main__':
     main()

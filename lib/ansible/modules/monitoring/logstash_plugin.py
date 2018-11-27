@@ -62,6 +62,13 @@ EXAMPLES = '''
   logstash_plugin:
     state: absent
     name: logstash-filter-multiline
+
+- name: install Logstash plugin with alternate heap size
+  logstash_plugin:
+    state: present
+    name: logstash-input-beats
+  environment:
+    LS_JAVA_OPTS: "-Xms256m -Xmx256m"
 '''
 
 from ansible.module_utils.basic import AnsibleModule

@@ -36,30 +36,30 @@ options:
     description:
       - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances.
         This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on.
-        For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
+        For details, see the description of client token at U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
   group:
     description:
-      - security group (or list of groups) to use with the instance
+      - security group (or list of groups) to use with the instance.
     aliases: [ 'groups' ]
   group_id:
     version_added: "1.1"
     description:
-      - security group id (or list of ids) to use with the instance
+      - security group id (or list of ids) to use with the instance.
   region:
     version_added: "1.2"
     description:
       - The AWS region to use.  Must be specified if ec2_url is not used.
         If not specified then the value of the EC2_REGION environment variable, if any, is used.
-        See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
+        See U(https://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region).
     aliases: [ 'aws_region', 'ec2_region' ]
   zone:
     version_added: "1.2"
     description:
-      - AWS availability zone in which to launch the instance
+      - AWS availability zone in which to launch the instance.
     aliases: [ 'aws_zone', 'ec2_zone' ]
   instance_type:
     description:
-      - instance type to use for the instance, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
+      - instance type to use for the instance, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).
     required: true
   tenancy:
     version_added: "1.9"
@@ -81,14 +81,14 @@ options:
     choices: [ "one-time", "persistent" ]
   image:
     description:
-       - I(ami) ID to use for the instance
+       - I(ami) ID to use for the instance.
     required: true
   kernel:
     description:
-      - kernel I(eki) to use for the instance
+      - kernel I(eki) to use for the instance.
   ramdisk:
     description:
-      - ramdisk I(eri) to use for the instance
+      - ramdisk I(eri) to use for the instance.
   wait:
     description:
       - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for_connection' example for details.
@@ -96,52 +96,52 @@ options:
     default: 'no'
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - how long before wait gives up, in seconds.
     default: 300
   spot_wait_timeout:
     version_added: "1.5"
     description:
-      - how long to wait for the spot instance request to be fulfilled
+      - how long to wait for the spot instance request to be fulfilled.
     default: 600
   count:
     description:
-      - number of instances to launch
+      - number of instances to launch.
     default: 1
   monitoring:
     version_added: "1.1"
     description:
-      - enable detailed monitoring (CloudWatch) for instance
+      - enable detailed monitoring (CloudWatch) for instance.
     type: bool
     default: 'no'
   user_data:
     version_added: "0.9"
     description:
-      - opaque blob of data which is made available to the ec2 instance
+      - opaque blob of data which is made available to the ec2 instance.
   instance_tags:
     version_added: "1.0"
     description:
-      - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'.
   placement_group:
     version_added: "1.3"
     description:
-      - placement group for the instance when using EC2 Clustered Compute
+      - placement group for the instance when using EC2 Clustered Compute.
   vpc_subnet_id:
     version_added: "1.1"
     description:
-      - the subnet ID in which to launch the instance (VPC)
+      - the subnet ID in which to launch the instance (VPC).
   assign_public_ip:
     version_added: "1.5"
     description:
-      - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
+      - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+.
     type: bool
   private_ip:
     version_added: "1.2"
     description:
-      - the private ip address to assign the instance (from the vpc subnet)
+      - the private ip address to assign the instance (from the vpc subnet).
   instance_profile_name:
     version_added: "1.3"
     description:
-      - Name of the IAM instance profile to use. Boto library must be 2.5.0+
+      - Name of the IAM instance profile (i.e. what the EC2 console refers to as an "IAM Role") to use. Boto library must be 2.5.0+.
   instance_ids:
     version_added: "1.3"
     description:
@@ -150,19 +150,19 @@ options:
   source_dest_check:
     version_added: "1.6"
     description:
-      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
+      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers).
+        When initially creating an instance the EC2 API defaults this to True.
     type: bool
-    default: 'yes'
   termination_protection:
     version_added: "2.0"
     description:
-      - Enable or Disable the Termination Protection
+      - Enable or Disable the Termination Protection.
     type: bool
     default: 'no'
   instance_initiated_shutdown_behavior:
     version_added: "2.2"
     description:
-    - Set whether AWS will Stop or Terminate an instance on shutdown. This parameter is ignored when using instance-store
+    - Set whether AWS will Stop or Terminate an instance on shutdown. This parameter is ignored when using instance-store.
       images (which require termination on shutdown).
     default: 'stop'
     choices: [ "stop", "terminate" ]
@@ -184,7 +184,7 @@ options:
   ebs_optimized:
     version_added: "1.6"
     description:
-      - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
+      - whether instance is using optimized EBS volumes, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html).
     default: 'no'
   exact_count:
     version_added: "1.5"
@@ -207,12 +207,12 @@ options:
   spot_launch_group:
     version_added: "2.1"
     description:
-      - Launch group for spot request, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-spot-instances-work.html#spot-launch-group)
+      - Launch group for spot request, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-spot-instances-work.html#spot-launch-group).
 
 author:
     - "Tim Gerla (@tgerla)"
     - "Lester Wade (@lwade)"
-    - "Seth Vidal"
+    - "Seth Vidal (@skvidal)"
 extends_documentation_fragment: aws
 '''
 
@@ -381,14 +381,14 @@ EXAMPLES = '''
       add_host:
         hostname: "{{ item.public_ip }}"
         groupname: launched
-      with_items: "{{ ec2.instances }}"
+      loop: "{{ ec2.instances }}"
 
     - name: Wait for SSH to come up
       delegate_to: "{{ item.public_dns_name }}"
       wait_for_connection:
         delay: 60
         timeout: 320
-      with_items: "{{ ec2.instances }}"
+      loop: "{{ ec2.instances }}"
 
 - name: Configure instance(s)
   hosts: launched
@@ -858,7 +858,7 @@ def await_spot_requests(module, ec2, spot_requests, count):
                     # price, or group constraints in this case, we'll fail
                     # the module if the reason for the state is anything
                     # other than termination by user. Codes are documented at
-                    # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-bid-status.html
+                    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-bid-status.html
                     if sir.status.code == 'instance-terminated-by-user':
                         # do nothing, since the user likely did this on purpose
                         pass
@@ -1055,7 +1055,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     module.fail_json(
                         msg="instance_profile_name parameter requires Boto version 2.5.0 or higher")
 
-            if assign_public_ip:
+            if assign_public_ip is not None:
                 if not boto_supports_associate_public_ip_address(ec2):
                     module.fail_json(
                         msg="assign_public_ip parameter requires Boto version 2.13.0 or higher.")
@@ -1356,8 +1356,6 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
 
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
-    source_dest_check = module.params.get('source_dest_check')
-    termination_protection = module.params.get('termination_protection')
     group_id = module.params.get('group_id')
     group_name = module.params.get('group')
     changed = False
@@ -1387,28 +1385,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
 
             warn_if_public_ip_assignment_changed(module, inst)
 
-            # Check "source_dest_check" attribute
-            try:
-                if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
-                    inst.modify_attribute('sourceDestCheck', source_dest_check)
-                    changed = True
-            except boto.exception.EC2ResponseError as exc:
-                # instances with more than one Elastic Network Interface will
-                # fail, because they have the sourceDestCheck attribute defined
-                # per-interface
-                if exc.code == 'InvalidInstanceID':
-                    for interface in inst.interfaces:
-                        if interface.source_dest_check != source_dest_check:
-                            ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
-                            changed = True
-                else:
-                    module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc())
-
-            # Check "termination_protection" attribute
-            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
-                inst.modify_attribute('disableApiTermination', termination_protection)
-                changed = True
+            changed = (check_source_dest_attr(module, inst, ec2) or
+                       check_termination_protection(module, inst) or changed)
 
             # Check security groups and if we're using ec2-vpc; ec2-classic security groups may not be modified
             if inst.vpc_id and group_name:
@@ -1488,8 +1466,6 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     this method will process the intersection of the two.
     """
 
-    source_dest_check = module.params.get('source_dest_check')
-    termination_protection = module.params.get('termination_protection')
     changed = False
     instance_dict_array = []
 
@@ -1516,28 +1492,8 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
 
             warn_if_public_ip_assignment_changed(module, inst)
 
-            # Check "source_dest_check" attribute
-            try:
-                if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
-                    inst.modify_attribute('sourceDestCheck', source_dest_check)
-                    changed = True
-            except boto.exception.EC2ResponseError as exc:
-                # instances with more than one Elastic Network Interface will
-                # fail, because they have the sourceDestCheck attribute defined
-                # per-interface
-                if exc.code == 'InvalidInstanceID':
-                    for interface in inst.interfaces:
-                        if interface.source_dest_check != source_dest_check:
-                            ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
-                            changed = True
-                else:
-                    module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc())
-
-            # Check "termination_protection" attribute
-            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
-                inst.modify_attribute('disableApiTermination', termination_protection)
-                changed = True
+            changed = (check_source_dest_attr(module, inst, ec2) or
+                       check_termination_protection(module, inst) or changed)
 
             # Check instance state
             if inst.state != state:
@@ -1549,6 +1505,54 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                 changed = True
 
     return (changed, instance_dict_array, instance_ids)
+
+
+def check_termination_protection(module, inst):
+    """
+    Check the instance disableApiTermination attribute.
+
+    module: Ansible module object
+    inst: EC2 instance object
+
+    returns: True if state changed None otherwise
+    """
+
+    termination_protection = module.params.get('termination_protection')
+
+    if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
+        inst.modify_attribute('disableApiTermination', termination_protection)
+        return True
+
+
+def check_source_dest_attr(module, inst, ec2):
+    """
+    Check the instance sourceDestCheck attribute.
+
+    module: Ansible module object
+    inst: EC2 instance object
+
+    returns: True if state changed None otherwise
+    """
+
+    source_dest_check = module.params.get('source_dest_check')
+
+    if source_dest_check is not None:
+        try:
+            if inst.vpc_id is not None and inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+                inst.modify_attribute('sourceDestCheck', source_dest_check)
+                return True
+        except boto.exception.EC2ResponseError as exc:
+            # instances with more than one Elastic Network Interface will
+            # fail, because they have the sourceDestCheck attribute defined
+            # per-interface
+            if exc.code == 'InvalidInstanceID':
+                for interface in inst.interfaces:
+                    if interface.source_dest_check != source_dest_check:
+                        ec2.modify_network_interface_attribute(interface.id, "sourceDestCheck", source_dest_check)
+                        return True
+            else:
+                module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
+                                 exception=traceback.format_exc())
 
 
 def warn_if_public_ip_assignment_changed(module, instance):
@@ -1591,7 +1595,7 @@ def main():
             private_ip=dict(),
             instance_profile_name=dict(),
             instance_ids=dict(type='list', aliases=['instance_id']),
-            source_dest_check=dict(type='bool', default=True),
+            source_dest_check=dict(type='bool', default=None),
             termination_protection=dict(type='bool', default=None),
             state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
             instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),

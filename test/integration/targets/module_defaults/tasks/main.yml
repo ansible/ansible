@@ -87,3 +87,28 @@
       - assert:
           that:
             foo.msg == "Hello world!"
+- name: Module group defaults block
+  module_defaults:
+    group/aws:
+      region: us-east-1
+      aws_secret_key: foobar
+  block:
+    - aws_s3_bucket_facts:
+      ignore_errors: true
+      register: s3
+    - assert:
+        that:
+          - "'Partial credentials' in s3.msg or 'boto3 required' in s3.msg"
+- name: Module group defaults block
+  module_defaults:
+    group/aws:
+      region: us-east-1
+      aws_secret_key: foobar
+      aws_access_key: foobar
+  block:
+    - aws_s3_bucket_facts:
+      ignore_errors: true
+      register: s3
+    - assert:
+        that:
+          - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"

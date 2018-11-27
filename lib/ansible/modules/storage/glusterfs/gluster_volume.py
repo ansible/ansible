@@ -153,6 +153,27 @@ EXAMPLES = """
       - 192.0.2.10
       - 192.0.2.11
   run_once: true
+
+- name: Remove the bricks from gluster volume
+  gluster_volume:
+    state: present
+    name: testvol
+    bricks: /bricks/brick1/b1,/bricks/brick2/b2
+    cluster:
+      - 10.70.42.85
+    force: true
+  run_once: true
+
+- name: Reduce cluster configuration
+  gluster_volume:
+    state: present
+    name: testvol
+    bricks: /bricks/brick3/b1,/bricks/brick4/b2
+    replicas: 2
+    cluster:
+      - 10.70.42.85
+    force: true
+  run_once: true
 """
 
 import re
@@ -243,6 +264,8 @@ def get_volumes():
                     volume['arbiters'] = []
                 value = value[:-10]
                 volume['arbiters'].append(value)
+            elif key.lower() == 'number of bricks':
+                volume['replicas'] = value[-1:]
             if key.lower() != 'bricks' and key.lower()[:5] == 'brick':
                 if 'bricks' not in volume:
                     volume['bricks'] = []
@@ -351,6 +374,57 @@ def add_bricks(name, new_bricks, stripe, replica, force):
     args.extend(new_bricks)
     if force:
         args.append('force')
+    run_gluster(args)
+
+
+def remove_bricks(name, removed_bricks, force):
+    # max-tries=12 with default_interval=10 secs
+    max_tries = 12
+    retries = 0
+    success = False
+    args = ['volume', 'remove-brick', name]
+    args.extend(removed_bricks)
+    # create a copy of args to use for commit operation
+    args_c = args[:]
+    args.append('start')
+    run_gluster(args)
+    # remove-brick operation needs to be followed by commit operation.
+    if not force:
+        module.fail_json(msg="Force option is mandatory.")
+    else:
+        while retries < max_tries:
+            last_brick = removed_bricks[-1]
+            out = run_gluster(['volume', 'remove-brick', name, last_brick, 'status'])
+            for row in out.split('\n')[1:]:
+                if 'completed' in row:
+                    # remove-brick successful, call commit operation.
+                    args_c.append('commit')
+                    out = run_gluster(args_c)
+                    success = True
+                    break
+                else:
+                    time.sleep(10)
+            if success:
+                break
+            retries += 1
+        if not success:
+            # remove-brick still in process, needs to be committed after completion.
+            module.fail_json(msg="Exceeded number of tries, check remove-brick status.\n"
+                                 "Commit operation needs to be followed.")
+
+
+def reduce_config(name, removed_bricks, replicas, force):
+    out = run_gluster(['volume', 'heal', name, 'info'])
+    summary = out.split("\n")
+    for line in summary:
+        if 'Number' in line and int(line.split(":")[1].strip()) != 0:
+            module.fail_json(msg="Operation aborted, self-heal in progress.")
+    args = ['volume', 'remove-brick', name, 'replica', replicas]
+    args.extend(removed_bricks)
+    if force:
+        args.append('force')
+    else:
+        module.fail_json(msg="Force option is mandatory")
     run_gluster(args)
 
 
@@ -465,20 +539,29 @@ def main():
             new_bricks = []
             removed_bricks = []
             all_bricks = []
+            bricks_in_volume = volumes[volume_name]['bricks']
+
             for node in cluster:
                 for brick_path in brick_paths:
                     brick = '%s:%s' % (node, brick_path)
                     all_bricks.append(brick)
-                    if brick not in volumes[volume_name]['bricks']:
+                    if brick not in bricks_in_volume:
                         new_bricks.append(brick)
 
-            # this module does not yet remove bricks, but we check those anyways
-            for brick in volumes[volume_name]['bricks']:
-                if brick not in all_bricks:
-                    removed_bricks.append(brick)
+            if not new_bricks and len(all_bricks) < bricks_in_volume:
+                for brick in bricks_in_volume:
+                    if brick not in all_bricks:
+                        removed_bricks.append(brick)
 
             if new_bricks:
                 add_bricks(volume_name, new_bricks, stripes, replicas, force)
+                changed = True
+
+            if removed_bricks:
+                if replicas and int(replicas) < int(volumes[volume_name]['replicas']):
+                    reduce_config(volume_name, removed_bricks, str(replicas), force)
+                else:
+                    remove_bricks(volume_name, removed_bricks, force)
                 changed = True
 
             # handle quotas
@@ -499,7 +582,7 @@ def main():
         else:
             module.fail_json(msg='failed to create volume %s' % volume_name)
 
-    if action != 'delete' and volume_name not in volumes:
+    if action != 'absent' and volume_name not in volumes:
         module.fail_json(msg='volume not found %s' % volume_name)
 
     if action == 'started':

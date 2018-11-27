@@ -107,7 +107,7 @@ Deprecated
 
 While all items listed here will show a deprecation warning message, they still work as they did in 1.9.x. Please note that they will be removed in 2.2 (Ansible always waits two major releases to remove a deprecated feature).
 
-* Bare variables in ``with_`` loops should instead use the ``"{ {var }}"`` syntax, which helps eliminate ambiguity.
+* Bare variables in ``with_`` loops should instead use the ``"{{ var }}"`` syntax, which helps eliminate ambiguity.
 * The ansible-galaxy text format requirements file. Users should use the YAML format for requirements instead.
 * Undefined variables within a ``with_`` loop's list currently do not interrupt the loop, but they do issue a warning; in the future, they will issue an error.
 * Using dictionary variables to set all task parameters is unsafe and will be removed in a future version. For example::
@@ -332,8 +332,8 @@ As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.
         from ansible.utils import (listify_lookup_plugin_terms, path_dwim, warning)
     except ImportError:
         # ansible-2.0
-        from __main__ import display
-        warning = display.warning
+        from ansible.utils.display import Display
+        warning = Display().warning
 
     class LookupModule(LookupBase):
 

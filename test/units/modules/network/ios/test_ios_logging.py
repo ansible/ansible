@@ -23,7 +23,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ios import ios_logging
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture

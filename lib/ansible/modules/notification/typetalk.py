@@ -19,7 +19,7 @@ module: typetalk
 version_added: "1.6"
 short_description: Send a message to typetalk
 description:
-  - Send a message to typetalk using typetalk API ( http://developers.typetalk.in/ )
+  - Send a message to typetalk using typetalk API
 options:
   client_id:
     description:
@@ -78,7 +78,7 @@ def get_access_token(module, client_id, client_secret):
         'grant_type': 'client_credentials',
         'scope': 'topic.post'
     }
-    res = do_request(module, 'https://typetalk.in/oauth2/access_token', params)
+    res = do_request(module, 'https://typetalk.com/oauth2/access_token', params)
     return json.load(res)['access_token']
 
 
@@ -88,7 +88,7 @@ def send_message(module, client_id, client_secret, topic, msg):
     """
     try:
         access_token = get_access_token(module, client_id, client_secret)
-        url = 'https://typetalk.in/api/v1/topics/%d' % topic
+        url = 'https://typetalk.com/api/v1/topics/%d' % topic
         headers = {
             'Authorization': 'Bearer %s' % access_token,
         }

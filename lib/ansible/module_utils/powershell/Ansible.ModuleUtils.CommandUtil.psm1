@@ -156,6 +156,23 @@ namespace Ansible
                 StringBuilder lpBuffer,
             out IntPtr lpFilePart);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern IntPtr GetConsoleWindow();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool AllocConsole();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool FreeConsole();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetConsoleCP(
+            UInt32 wCodePageID);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetConsoleOutputCP(
+            UInt32 wCodePageID);
+
         [DllImport("shell32.dll", SetLastError = true)]
         static extern IntPtr CommandLineToArgvW(
             [MarshalAs(UnmanagedType.LPWStr)]
@@ -252,6 +269,16 @@ namespace Ansible
             if (environmentString != null)
                 lpEnvironment = Marshal.StringToHGlobalUni(environmentString.ToString());
 
+            // Create console if needed to be inherited by child process
+            bool isConsole = false;
+            if (GetConsoleWindow() == IntPtr.Zero) {
+                isConsole = AllocConsole();
+
+                // Set console input/output codepage to UTF-8
+                SetConsoleCP(65001);
+                SetConsoleOutputCP(65001);
+            }
+
             // Create new process and run
             StringBuilder argument_string = new StringBuilder(lpCommandLine);
             PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
@@ -268,6 +295,11 @@ namespace Ansible
                 out pi))
             {
                 throw new Win32Exception("Failed to create new process");
+            }
+
+            // Destroy console if we created it
+            if (isConsole) {
+                FreeConsole();
             }
 
             // Setup the output buffers and get stdout/stderr
@@ -338,7 +370,6 @@ Function Load-CommandUtils {
 
     # FUTURE: find a better way to get the _ansible_remote_tmp variable
     $original_tmp = $env:TMP
-    $original_temp = $env:TEMP
 
     $remote_tmp = $original_tmp
     $module_params = Get-Variable -Name complex_args -ErrorAction SilentlyContinue
@@ -350,10 +381,8 @@ Function Load-CommandUtils {
     }
 
     $env:TMP = $remote_tmp
-    $env:TEMP = $remote_tmp
     Add-Type -TypeDefinition $process_util
     $env:TMP = $original_tmp
-    $env:TEMP = $original_temp
 }
 
 Function Get-ExecutablePath($executable, $directory) {

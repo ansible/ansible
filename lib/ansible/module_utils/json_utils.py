@@ -23,10 +23,8 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-try:
-    import json
-except ImportError:
-    import simplejson as json
+
+import json
 
 
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any

@@ -17,6 +17,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     protection_group: ansible_test
     state: absent
 
@@ -30,6 +31,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     protection_group: ansible_test
     protection_group_id: 6
     switch_1_id: 3811
@@ -54,9 +56,10 @@
 - name: Verify add_vpc_prot_grp_again
   assert:
     that:
-    - cm_add_vpc_prot_grp.changed == nm_add_vpc_prot_grp.changed == true
-    # FIXME: Not idempotent !
-    #- cm_add_vpc_prot_grp_again.changed == nm_add_vpc_prot_grp_again.changed == false
+    - cm_add_vpc_prot_grp is changed
+    - nm_add_vpc_prot_grp is changed
+    - cm_add_vpc_prot_grp_again is not changed
+    - nm_add_vpc_prot_grp_again is not changed
 
 
 # CHANGE VPC PROTECTION GROUP
@@ -89,13 +92,14 @@
 - name: Verify add_vpc_prot_grp_pol
   assert:
     that:
-    - cm_add_vpc_prot_grp_pol.changed == nm_add_vpc_prot_grp_pol.changed == true
-    # FIXME: Not idempotent !!
-    #- cm_add_vpc_prot_grp_pol_again.changed == nm_add_vpc_prot_grp_pol_again.changed == false
+    - cm_add_vpc_prot_grp_pol is changed
+    - nm_add_vpc_prot_grp_pol is changed
+    - cm_add_vpc_prot_grp_pol_again is not changed
+    - nm_add_vpc_prot_grp_pol_again is not changed
 
 
 # ADD FABRIC NODE AGAIN
-- name: Add vpc protectio group again with no domain policy (check_mode)
+- name: Add vpc protection group again with no domain policy (check_mode)
   aci_switch_policy_vpc_protection_group: *aci_switch_policy_vpc_protection_group_present
   check_mode: yes
   register: cm_add_vpc_prot_grp_again_no_pol
@@ -107,8 +111,8 @@
 - name: Verify add_vpc_prot_grp_again_no_pol
   assert:
     that:
-    # FIXME: Not idempoten !!
-    #- cm_add_vpc_prot_grp_again_no_pol.changed == nm_add_vpc_prot_grp_again_no_pol.changed == false
+    - cm_add_vpc_prot_grp_again_no_pol is not changed
+    - nm_add_vpc_prot_grp_again_no_pol is not changed
 
 
 # QUERY ALL VPC PROTECTION GROUPS
@@ -120,6 +124,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_vpc_prot_grps
@@ -131,7 +136,8 @@
 - name: Verify query_all_vpc_prot_grps
   assert:
     that:
-    - cm_query_all_vpc_prot_grps.changed == nm_query_all_vpc_prot_grps.changed == false
+    - cm_query_all_vpc_prot_grps is not changed
+    - nm_query_all_vpc_prot_grps is not changed
     - cm_query_all_vpc_prot_grps == nm_query_all_vpc_prot_grps
 
 
@@ -152,7 +158,8 @@
 - name: Verify query_vpc_prot_grp
   assert:
     that:
-    - cm_query_vpc_prot_grp.changed == nm_query_vpc_prot_grp.changed == false
+    - cm_query_vpc_prot_grp is not changed
+    - nm_query_vpc_prot_grp is not changed
     - cm_query_vpc_prot_grp == nm_query_vpc_prot_grp
 
 
@@ -178,8 +185,10 @@
 - name: Verify remove_vpc_prot_grp
   assert:
     that:
-    - cm_remove_vpc_prot_grp.changed == nm_remove_vpc_prot_grp.changed == true
-    - cm_remove_vpc_prot_grp_again.changed == nm_remove_vpc_prot_grp_again.changed == false
+    - cm_remove_vpc_prot_grp is changed
+    - nm_remove_vpc_prot_grp is changed
+    - cm_remove_vpc_prot_grp_again is not changed
+    - nm_remove_vpc_prot_grp_again is not changed
 
 
 # QUERY NON-EXISTING LEAF PROFILE
@@ -199,5 +208,6 @@
 - name: Verify query_non_vpc_prot_grp
   assert:
     that:
-    - cm_query_non_vpc_prot_grp.changed == nm_query_non_vpc_prot_grp.changed == false
+    - cm_query_non_vpc_prot_grp is not changed
+    - nm_query_non_vpc_prot_grp is not changed
     - cm_query_non_vpc_prot_grp == nm_query_non_vpc_prot_grp

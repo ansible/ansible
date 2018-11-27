@@ -285,6 +285,7 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['verify'] = validate_certs
 
         if profile_name:
+            boto_params = dict(aws_access_key_id=None, aws_secret_access_key=None, aws_session_token=None)
             boto_params['profile_name'] = profile_name
 
     else:
@@ -552,6 +553,9 @@ def _hashable_policy(policy, policy_list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
     elif isinstance(policy, string_types) or isinstance(policy, binary_type):
+        # convert root account ARNs to just account IDs
+        if policy.startswith('arn:aws:iam::') and policy.endswith(':root'):
+            policy = policy.split(':')[4]
         return [(to_text(policy))]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
@@ -711,7 +715,7 @@ def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
             tag_keys_to_unset.append(key)
 
     for key in set(new_tags_dict.keys()) - set(tag_keys_to_unset):
-        if new_tags_dict[key] != current_tags_dict.get(key):
+        if to_text(new_tags_dict[key]) != current_tags_dict.get(key):
             tag_key_value_pairs_to_set[key] = new_tags_dict[key]
 
     return tag_key_value_pairs_to_set, tag_keys_to_unset

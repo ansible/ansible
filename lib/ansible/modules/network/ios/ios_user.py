@@ -66,6 +66,13 @@ options:
         the username is created.
     default: always
     choices: ['on_create', 'always']
+  password_type:
+    description:
+      - This argument determines whether a 'password' or 'secret' will be
+        configured.
+    default: secret
+    choices: ['secret', 'password']
+    version_added: "2.8"
   privilege:
     description:
       - The C(privilege) argument configures the privilege level of the
@@ -78,6 +85,11 @@ options:
         defining the view name. This argument does not check if the view
         has been configured on the device.
     aliases: ['role']
+  sshkey:
+    description:
+      - Specifies the SSH public key to configure
+        for the given username.  This argument accepts a valid SSH key value.
+    version_added: "2.7"
   nopassword:
     description:
       - Defines the username without assigning
@@ -109,10 +121,19 @@ EXAMPLES = """
   ios_user:
     name: ansible
     nopassword: True
+    sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
     state: present
 
 - name: remove all users except admin
   ios_user:
+    purge: yes
+
+- name: remove all users except admin and these listed users
+  ios_user:
+    aggregate:
+      - name: testuser1
+      - name: testuser2
+      - name: testuser3
     purge: yes
 
 - name: set multiple users to privilege level 15
@@ -143,6 +164,12 @@ EXAMPLES = """
       - name: ansibletest3
     view: network-admin
 
+- name: Add a user specifying password type
+  ios_user:
+    name: ansibletest4
+    configured_password: "{{ new_password }}"
+    password_type: password
+
 - name: Delete users with aggregate
   ios_user:
     aggregate:
@@ -164,7 +191,8 @@ commands:
 from copy import deepcopy
 
 import re
-import json
+import base64
+import hashlib
 
 from functools import partial
 
@@ -189,10 +217,27 @@ def user_del_cmd(username):
     }
 
 
+def sshkey_fingerprint(sshkey):
+    # IOS will accept a MD5 fingerprint of the public key
+    # and is easier to configure in a single line
+    # we calculate this fingerprint here
+    if not sshkey:
+        return None
+    if ' ' in sshkey:
+        # ssh-rsa AAA...== comment
+        keyparts = sshkey.split(' ')
+        keyparts[1] = hashlib.md5(base64.b64decode(keyparts[1])).hexdigest().upper()
+        return ' '.join(keyparts)
+    else:
+        # just the key, assume rsa type
+        return 'ssh-rsa %s' % hashlib.md5(base64.b64decode(sshkey)).hexdigest().upper()
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     state = module.params['state']
     update_password = module.params['update_password']
+    password_type = module.params['password_type']
 
     def needs_update(want, have, x):
         return want.get(x) and (want.get(x) != have.get(x))
@@ -200,12 +245,24 @@ def map_obj_to_commands(updates, module):
     def add(command, want, x):
         command.append('username %s %s' % (want['name'], x))
 
+    def add_ssh(command, want, x=None):
+        command.append('ip ssh pubkey-chain')
+        if x:
+            command.append('username %s' % want['name'])
+            command.append('key-hash %s' % x)
+            command.append('exit')
+        else:
+            command.append('no username %s' % want['name'])
+        command.append('exit')
+
     for update in updates:
         want, have = update
 
         if want['state'] == 'absent':
-            commands.append(user_del_cmd(want['name']))
-            continue
+            if have['sshkey']:
+                add_ssh(commands, want)
+            else:
+                commands.append(user_del_cmd(want['name']))
 
         if needs_update(want, have, 'view'):
             add(commands, want, 'view %s' % want['view'])
@@ -213,9 +270,15 @@ def map_obj_to_commands(updates, module):
         if needs_update(want, have, 'privilege'):
             add(commands, want, 'privilege %s' % want['privilege'])
 
+        if needs_update(want, have, 'sshkey'):
+            add_ssh(commands, want, want['sshkey'])
+
         if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'secret %s' % want['configured_password'])
+                if have and password_type != have['password_type']:
+                    module.fail_json(msg='Can not have both a user password and a user secret.' +
+                                         ' Please choose one or the other.')
+                add(commands, want, '%s %s' % (password_type, want['configured_password']))
 
         if needs_update(want, have, 'nopassword'):
             if want['nopassword']:
@@ -232,16 +295,29 @@ def parse_view(data):
         return match.group(1)
 
 
+def parse_sshkey(data):
+    match = re.search(r'key-hash (\S+ \S+(?: .+)?)$', data, re.M)
+    if match:
+        return match.group(1)
+
+
 def parse_privilege(data):
     match = re.search(r'privilege (\S+)', data, re.M)
     if match:
         return int(match.group(1))
 
 
+def parse_password_type(data):
+    type = None
+    if data and data.split()[-3] in ['password', 'secret']:
+        type = data.split()[-3]
+    return type
+
+
 def map_config_to_obj(module):
     data = get_config(module, flags=['| section username'])
 
-    match = re.findall(r'^username (\S+)', data, re.M)
+    match = re.findall(r'(?:^(?:u|\s{2}u))sername (\S+)', data, re.M)
     if not match:
         return list()
 
@@ -251,11 +327,16 @@ def map_config_to_obj(module):
         regex = r'username %s .+$' % user
         cfg = re.findall(regex, data, re.M)
         cfg = '\n'.join(cfg)
+        sshregex = r'username %s\n\s+key-hash .+$' % user
+        sshcfg = re.findall(sshregex, data, re.M)
+        sshcfg = '\n'.join(sshcfg)
         obj = {
             'name': user,
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
             'configured_password': None,
+            'password_type': parse_password_type(cfg),
+            'sshkey': parse_sshkey(sshcfg),
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
         }
@@ -311,6 +392,7 @@ def map_params_to_obj(module):
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['view'] = get_value('view')
+        item['sshkey'] = sshkey_fingerprint(get_value('sshkey'))
         item['state'] = get_value('state')
         objects.append(item)
 
@@ -339,9 +421,12 @@ def main():
         configured_password=dict(no_log=True),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
+        password_type=dict(default='secret', choices=['secret', 'password']),
 
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
+
+        sshkey=dict(),
 
         state=dict(default='present', choices=['present', 'absent'])
     )
@@ -392,18 +477,13 @@ def main():
 
     result['commands'] = commands
 
-    # the ios cli prevents this by rule so capture it and display
-    # a nice failure message
-    for cmd in commands:
-        if 'no username admin' in cmd:
-            module.fail_json(msg='cannot delete the `admin` account')
-
     if commands:
         if not module.check_mode:
             load_config(module, commands)
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -278,7 +278,7 @@ For other load balancers, you may need to send shell commands to them (like we d
 Continuous Delivery End-To-End
 ``````````````````````````````
 
-Now that you have an automated way to deploy updates to your application, how do you tie it all together? A lot of organizations use a continuous integration tool like `Jenkins <http://jenkins-ci.org/>`_ or `Atlassian Bamboo <https://www.atlassian.com/software/bamboo>`_ to tie the development, test, release, and deploy steps together. You may also want to use a tool like `Gerrit <https://code.google.com/p/gerrit/>`_ to add a code review step to commits to either the application code itself, or to your Ansible playbooks, or both.
+Now that you have an automated way to deploy updates to your application, how do you tie it all together? A lot of organizations use a continuous integration tool like `Jenkins <https://jenkins.io/>`_ or `Atlassian Bamboo <https://www.atlassian.com/software/bamboo>`_ to tie the development, test, release, and deploy steps together. You may also want to use a tool like `Gerrit <https://www.gerritcodereview.com/>`_ to add a code review step to commits to either the application code itself, or to your Ansible playbooks, or both.
 
 Depending on your environment, you might be deploying continuously to a test environment, running an integration test battery against that environment, and then deploying automatically into production.  Or you could keep it simple and just use the rolling-update for on-demand deployment into test or production specifically.  This is all up to you.
 
@@ -296,7 +296,7 @@ This should give you a good idea of how to structure a multi-tier application wi
        An introduction to playbook roles
    :ref:`playbooks_variables`
        An introduction to Ansible variables
-   `Ansible.com: Continuous Delivery <https://www.ansible.com/ansible-continuous-delivery>`_
+   `Ansible.com: Continuous Delivery <https://www.ansible.com/use-cases/continuous-delivery>`_
        An introduction to Continuous Delivery with Ansible
 
 

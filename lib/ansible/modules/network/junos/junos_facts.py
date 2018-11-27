@@ -35,10 +35,10 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected. To maintain backward compatbility old style facts
-        can be retrieved using all value, this reqires junos-eznc to be installed
-        as a prerequisite. Valid value of gather_subset are default, hardware,
-        config, interfaces, ofacts. If C(ofacts) is present in the list it fetches
-        the old style facts (fact keys without 'ansible_' prefix) and it requires
+        can be retrieved by explicilty adding C(ofacts)  to value, this reqires
+        junos-eznc to be installed as a prerequisite. Valid value of gather_subset
+        are default, hardware, config, interfaces, ofacts. If C(ofacts) is present in the
+        list it fetches the old style facts (fact keys without 'ansible_' prefix) and it requires
         junos-eznc library to be installed on control node and the device login credentials
         must be given in C(provider) option.
     required: false
@@ -51,7 +51,7 @@ options:
          only when C(config) value is present in I(gather_subset).
          The I(config_format) should be supported by the junos version running on
          device. This value is not applicable while fetching old style facts that is
-         when value of I(gather_subset) C(all) or C(ofacts) is present in the value.
+         when C(ofacts) value is present in value if I(gather_subset) value.
     required: false
     default: 'text'
     choices: ['xml', 'text', 'set', 'json']
@@ -354,19 +354,23 @@ def main():
     runable_subsets.difference_update(exclude_subsets)
     runable_subsets.add('default')
 
+    # handle fetching old style facts separately
+    runable_subsets.discard('ofacts')
+
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
     instances = list()
     ansible_facts = dict()
 
-    if 'ofacts' in runable_subsets:
+    # fetch old style facts only when explicitly mentioned in gather_subset option
+    if 'ofacts' in gather_subset:
         if HAS_PYEZ:
             ansible_facts.update(OFacts(module).populate())
         else:
             warnings += ['junos-eznc is required to gather old style facts but does not appear to be installed. '
                          'It can be installed using `pip  install junos-eznc`']
-        runable_subsets.remove('ofacts')
+        facts['gather_subset'].append('ofacts')
 
     for key in runable_subsets:
         instances.append(FACT_SUBSETS[key](module))

@@ -1,0 +1,6 @@
+removed_features:
+- win_feature - Removed deprecated 'restart_needed' returned boolean, use standardized 'reboot_required' instead
+- win_package - Removed deprecated 'restart_required' returned boolean, use standardized 'reboot_required' instead
+- win_package - Removed deprecated 'exit_code' returned int, use standardized 'rc' instead
+- win_get_url - Removed deprecated 'win_get_url' returned dictionary, contained values are returned directly
+- win_get_url - Removed deprecated 'skip_certificate_validation' parameter, use standardized 'validate_certs' instead

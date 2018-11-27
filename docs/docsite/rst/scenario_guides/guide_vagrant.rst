@@ -6,7 +6,7 @@ Using Vagrant and Ansible
 Introduction
 ````````````
 
-`Vagrant <http://vagrantup.com/>`_ is a tool to manage virtual machine
+`Vagrant <https://www.vagrantup.com/>`_ is a tool to manage virtual machine
 environments, and allows you to configure and use reproducible work
 environments on top of various virtualization and cloud platforms.
 It also has integration with Ansible as a provisioner for these virtual
@@ -15,7 +15,7 @@ machines, and the two tools work together well.
 This guide will describe how to use Vagrant 1.7+ and Ansible together.
 
 If you're not familiar with Vagrant, you should visit `the documentation
-<http://docs.vagrantup.com/v2/>`_.
+<https://www.vagrantup.com/docs/>`_.
 
 This guide assumes that you already have Ansible installed and working.
 Running from a Git checkout is fine. Follow the :ref:`installation_guide`
@@ -44,7 +44,7 @@ Ansible provisioner to manage a single machine:
 
     # Disable the new default behavior introduced in Vagrant 1.7, to
     # ensure that all Vagrant machines will use the same SSH key pair.
-    # See https://github.com/mitchellh/vagrant/issues/5005
+    # See https://github.com/hashicorp/vagrant/issues/5005
     config.ssh.insert_key = false
 
     config.vm.provision "ansible" do |ansible|
@@ -60,7 +60,7 @@ access.
 
 There are a lot of Ansible options you can configure in your ``Vagrantfile``.
 Visit the `Ansible Provisioner documentation
-<http://docs.vagrantup.com/v2/provisioning/ansible.html>`_ for more
+<https://www.vagrantup.com/docs/provisioning/ansible.html>`_ for more
 information.
 
 .. code-block:: bash
@@ -134,20 +134,20 @@ Advanced Usages
 ```````````````
 
 The "Tips and Tricks" chapter of the `Ansible Provisioner documentation
-<http://docs.vagrantup.com/v2/provisioning/ansible.html>`_ provides detailed information about more advanced Ansible features like:
+<https://www.vagrantup.com/docs/provisioning/ansible.html>`_ provides detailed information about more advanced Ansible features like:
 
   - how to parallely execute a playbook in a multi-machine environment
   - how to integrate a local ``ansible.cfg`` configuration file
 
 .. seealso::
 
-    `Vagrant Home <http://www.vagrantup.com/>`_
+    `Vagrant Home <https://www.vagrantup.com/>`_
         The Vagrant homepage with downloads
-    `Vagrant Documentation <http://docs.vagrantup.com/v2/>`_
+    `Vagrant Documentation <https://www.vagrantup.com/docs/>`_
         Vagrant Documentation
-    `Ansible Provisioner <http://docs.vagrantup.com/v2/provisioning/ansible.html>`_
+    `Ansible Provisioner <https://www.vagrantup.com/docs/provisioning/ansible.html>`_
         The Vagrant documentation for the Ansible provisioner
-    `Vagrant Issue Tracker <https://github.com/mitchellh/vagrant/issues?q=is%3Aopen+is%3Aissue+label%3Aprovisioners%2Fansible>`_
+    `Vagrant Issue Tracker <https://github.com/hashicorp/vagrant/issues?q=is%3Aopen+is%3Aissue+label%3Aprovisioners%2Fansible>`_
         The open issues for the Ansible provisioner in the Vagrant project
     :ref:`working_with_playbooks`
         An introduction to playbooks

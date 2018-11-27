@@ -1,4 +1,4 @@
-posix/ci/group3
+shippable/posix/group3
 destructive
 needs/root
 skip/freebsd

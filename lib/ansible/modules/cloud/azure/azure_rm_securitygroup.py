@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -82,7 +82,7 @@ options:
             source_address_prefix:
                 description:
                   - The CIDR or source IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
+                  - Asterisk C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - If this is an ingress rule, specifies where network traffic originates from.
                   - It can accept string type or a list of string type.
@@ -91,7 +91,7 @@ options:
                 description:
                   - The destination address prefix.
                   - CIDR or destination IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
+                  - Asterisk C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - It can accept string type or a list of string type.
                 default: "*"
@@ -348,6 +348,7 @@ except ImportError:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
+from ansible.module_utils._text import to_native
 
 
 def validate_rule(self, rule, rule_type=None):
@@ -386,6 +387,11 @@ def compare_rules_change(old_list, new_list, purge_list):
             new_list.append(old_rule)
         else:  # one rule is removed
             changed = True
+    # Compare new list and old list is the same? here only compare names
+    if not changed:
+        new_names = [to_native(x['name']) for x in new_list]
+        old_names = [to_native(x['name']) for x in old_list]
+        changed = (set(new_names) != set(old_names))
     return changed, new_list
 
 

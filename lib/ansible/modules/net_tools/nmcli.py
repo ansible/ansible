@@ -53,7 +53,7 @@ options:
         description:
             - This is the type of device or network connection that you wish to create or modify.
             - "type C(generic) is added in version 2.5."
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, generic ]
+        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, vxlan, ipip, generic ]
     mode:
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
@@ -174,7 +174,30 @@ options:
     egress:
         description:
             - This is only used with VLAN - VLAN egress priority mapping
-
+    vxlan_id:
+        description:
+            - This is only used with VXLAN - VXLAN ID.
+        version_added: "2.8"
+    vxlan_remote:
+       description:
+            - This is only used with VXLAN - VXLAN destination IP address.
+       version_added: "2.8"
+    vxlan_local:
+       description:
+            - This is only used with VXLAN - VXLAN local IP address.
+       version_added: "2.8"
+    ip_tunnel_dev:
+        description:
+            - This is only used with IPIP - parent device this IPIP tunnel, can use ifname.
+        version_added: "2.8"
+    ip_tunnel_remote:
+       description:
+            - This is only used with IPIP - IPIP destination IP address.
+       version_added: "2.8"
+    ip_tunnel_local:
+       description:
+            - This is only used with IPIP - IPIP local IP address.
+       version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -434,6 +457,22 @@ EXAMPLES = '''
       type: ethernet
       state: present
 
+# To add VxLan, issue a command as follows:
+  - nmcli:
+      type: vxlan
+      conn_name: vxlan_test1
+      vxlan_id: 16
+      vxlan_local: 192.168.1.2
+      vxlan_remote: 192.168.1.5
+
+# To add ipip, issue a command as follows:
+  - nmcli:
+      type: ipip
+      conn_name: ipip_test1
+      ip_tunnel_dev: eth0
+      ip_tunnel_local: 192.168.1.2
+      ip_tunnel_remote: 192.168.1.5
+
 # nmcli exits with status 0 if it succeeds and exits with a status greater
 # than zero when there is a failure. The following list of status codes may be
 # returned:
@@ -505,7 +544,9 @@ class Nmcli(object):
         12: "ADSL",
         13: "Bridge",
         14: "Generic",
-        15: "Team"
+        15: "Team",
+        16: "VxLan",
+        17: "ipip",
     }
     STATES = {
         0: "Unknown",
@@ -562,6 +603,12 @@ class Nmcli(object):
         self.flags = module.params['flags']
         self.ingress = module.params['ingress']
         self.egress = module.params['egress']
+        self.vxlan_id = module.params['vxlan_id']
+        self.vxlan_local = module.params['vxlan_local']
+        self.vxlan_remote = module.params['vxlan_remote']
+        self.ip_tunnel_dev = module.params['ip_tunnel_dev']
+        self.ip_tunnel_local = module.params['ip_tunnel_local']
+        self.ip_tunnel_remote = module.params['ip_tunnel_remote']
         self.nmcli_bin = self.module.get_bin_path('nmcli', True)
         self.dhcp_client_id = module.params['dhcp_client_id']
 
@@ -627,7 +674,7 @@ class Nmcli(object):
         try:
             proxy = bus.get_object(service_name, "/org/freedesktop/NetworkManager/Settings")
             settings = dbus.Interface(proxy, "org.freedesktop.NetworkManager.Settings")
-        except dbus.Exceptions.DBusException as e:
+        except dbus.exceptions.DBusException as e:
             self.module.fail_json(msg="Unable to read Network Manager settings from DBus system bus: %s" % to_native(e),
                                   details="Please check if NetworkManager is installed and"
                                           " service network-manager is started.")
@@ -1033,10 +1080,10 @@ class Nmcli(object):
 
         params = {'dev': self.vlandev,
                   'id': self.vlanid,
-                  'ip4': self.ip4,
-                  'gw4': self.gw4,
-                  'ip6': self.ip6,
-                  'gw6': self.gw6,
+                  'ip4': self.ip4 or '',
+                  'gw4': self.gw4 or '',
+                  'ip6': self.ip6 or '',
+                  'gw6': self.gw6 or '',
                   'autoconnect': self.bool_to_string(self.autoconnect)
                   }
         for k, v in params.items():
@@ -1048,22 +1095,124 @@ class Nmcli(object):
         cmd = [self.nmcli_bin]
         cmd.append('con')
         cmd.append('mod')
-        cmd.append('con-name')
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vlan%s' % self.vlanid)
 
         params = {'vlan.parent': self.vlandev,
                   'vlan.id': self.vlanid,
-                  'ipv4.address': self.ip4,
-                  'ipv4.gateway': self.gw4,
-                  'ipv4.dns': self.dns4,
-                  'ipv6.address': self.ip6,
-                  'ipv6.gateway': self.gw6,
-                  'ipv6.dns': self.dns6,
+                  'ipv4.address': self.ip4 or '',
+                  'ipv4.gateway': self.gw4 or '',
+                  'ipv4.dns': self.dns4 or '',
+                  'ipv6.address': self.ip6 or '',
+                  'ipv6.gateway': self.gw6 or '',
+                  'ipv6.dns': self.dns6 or '',
                   'autoconnect': self.bool_to_string(self.autoconnect)
                   }
 
         for k, v in params.items():
             cmd.extend([k, v])
 
+        return cmd
+
+    def create_connection_vxlan(self):
+        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'vxlan', 'con-name']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vxlan%s' % self.vxlanid)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append('vxan%s' % self.vxlanid)
+
+        params = {'vxlan.id': self.vxlan_id,
+                  'vxlan.local': self.vxlan_local,
+                  'vxlan.remote': self.vxlan_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+
+        return cmd
+
+    def modify_connection_vxlan(self):
+        cmd = [self.nmcli_bin, 'con', 'mod']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vxlan%s' % self.vxlanid)
+
+        params = {'vxlan.id': self.vxlan_id,
+                  'vxlan.local': self.vxlan_local,
+                  'vxlan.remote': self.vxlan_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+        return cmd
+
+    def create_connection_ipip(self):
+        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'ip-tunnel', 'mode', 'ipip', 'con-name']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('ipip%s' % self.ip_tunnel_dev)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append('ipip%s' % self.ipip_dev)
+
+        if self.ip_tunnel_dev is not None:
+            cmd.append('dev')
+            cmd.append(self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+
+        return cmd
+
+    def modify_connection_ipip(self):
+        cmd = [self.nmcli_bin, 'con', 'mod']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('ipip%s' % self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
         return cmd
 
     def create_connection(self):
@@ -1111,6 +1260,10 @@ class Nmcli(object):
             cmd = self.create_connection_bridge_slave()
         elif self.type == 'vlan':
             cmd = self.create_connection_vlan()
+        elif self.type == 'vxlan':
+            cmd = self.create_connection_vxlan()
+        elif self.type == 'ipip':
+            cmd = self.create_connection_ipip()
         elif self.type == 'generic':
             cmd = self.create_connection_ethernet(conn_type='generic')
 
@@ -1143,6 +1296,10 @@ class Nmcli(object):
             cmd = self.modify_connection_bridge_slave()
         elif self.type == 'vlan':
             cmd = self.modify_connection_vlan()
+        elif self.type == 'vxlan':
+            cmd = self.modify_connection_vxlan()
+        elif self.type == 'ipip':
+            cmd = self.modify_connection_ipip()
         elif self.type == 'generic':
             cmd = self.modify_connection_ethernet(conn_type='generic')
         if cmd:
@@ -1164,7 +1321,7 @@ def main():
             type=dict(required=False, default=None,
                       choices=['ethernet', 'team', 'team-slave', 'bond',
                                'bond-slave', 'bridge', 'bridge-slave',
-                               'vlan', 'generic'],
+                               'vlan', 'vxlan', 'ipip', 'generic'],
                       type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
@@ -1195,7 +1352,7 @@ def main():
             hellotime=dict(required=False, default="2", type='str'),
             maxage=dict(required=False, default="20", type='str'),
             ageingtime=dict(required=False, default="300", type='str'),
-            hairpin=dict(required=False, default=True, type='str'),
+            hairpin=dict(required=False, default=True, type='bool'),
             path_cost=dict(required=False, default="100", type='str'),
             # vlan specific vars
             vlanid=dict(required=False, default=None, type='str'),
@@ -1203,6 +1360,14 @@ def main():
             flags=dict(required=False, default=None, type='str'),
             ingress=dict(required=False, default=None, type='str'),
             egress=dict(required=False, default=None, type='str'),
+            # vxlan specific vars
+            vxlan_id=dict(required=False, default=None, type='str'),
+            vxlan_local=dict(required=False, default=None, type='str'),
+            vxlan_remote=dict(required=False, default=None, type='str'),
+            # ip-tunnel specific vars
+            ip_tunnel_dev=dict(required=False, default=None, type='str'),
+            ip_tunnel_local=dict(required=False, default=None, type='str'),
+            ip_tunnel_remote=dict(required=False, default=None, type='str'),
         ),
         supports_check_mode=True
     )

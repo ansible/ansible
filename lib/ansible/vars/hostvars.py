@@ -19,16 +19,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
-
 from jinja2.runtime import Undefined
 
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.template import Templar
 
 STATIC_VARS = [
     'ansible_version',
     'ansible_play_hosts',
+    'ansible_dependent_role_names',
+    'ansible_play_role_names',
+    'ansible_role_names',
     'inventory_hostname',
     'inventory_hostname_short',
     'inventory_file',
@@ -51,7 +53,7 @@ __all__ = ['HostVars', 'HostVarsVars']
 
 
 # Note -- this is a Mapping, not a MutableMapping
-class HostVars(collections.Mapping):
+class HostVars(Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
     def __init__(self, inventory, variable_manager, loader):
@@ -117,7 +119,7 @@ class HostVars(collections.Mapping):
         return repr(out)
 
 
-class HostVarsVars(collections.Mapping):
+class HostVarsVars(Mapping):
 
     def __init__(self, variables, loader):
         self._vars = variables

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: cobbler_sync
-version_added: '2.6'
+version_added: '2.7'
 short_description: Sync Cobbler
 description:
 - Sync Cobbler to commit changes.

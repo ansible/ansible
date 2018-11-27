@@ -46,6 +46,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
 
 - name: Gather facts about ESXi Host
   vmware_host_config_facts:
@@ -53,9 +54,24 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
 '''
 
-RETURN = r'''#
+RETURN = r'''
+hosts_facts:
+    description:
+    - dict with hostname as key and dict with host config facts
+    returned: always
+    type: dict
+    sample: {
+        "10.76.33.226": {
+            "Annotations.WelcomeMessage": "",
+            "BufferCache.FlushInterval": 30000,
+            "BufferCache.HardMaxDirty": 95,
+            "BufferCache.PerFileHardMaxDirty": 50,
+            "BufferCache.SoftMaxDirty": 15,
+        }
+    }
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -90,7 +106,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_host_config = VmwareConfigFactsManager(module)

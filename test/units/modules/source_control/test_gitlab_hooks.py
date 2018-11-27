@@ -2,13 +2,16 @@
 # Copyright (c) 2018 Marcus Watkins <marwatk@marcuswatkins.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.source_control import gitlab_hooks
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
 
 import pytest
 import json
+
+from units.modules.utils import set_module_args
+
 
 fake_server_state = [
     {
@@ -27,12 +30,6 @@ fake_server_state = [
         "created_at": "2012-10-12T17:04:47Z"
     },
 ]
-
-
-def set_module_args(args):
-    """prepare arguments so that they will be picked up during module creation"""
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 class FakeReader:

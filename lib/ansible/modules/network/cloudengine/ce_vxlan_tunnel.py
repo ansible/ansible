@@ -29,7 +29,7 @@ description:
     - This module offers the ability to set the VNI and mapped to the BD,
       and configure an ingress replication list on HUAWEI CloudEngine devices.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     bridge_domain_id:
         description:
@@ -142,7 +142,6 @@ CE_NC_GET_NVE_INFO = """
       </nvo3Nve>
     </nvo3Nves>
   </nvo3>
-</filter>
 </filter>
 """
 

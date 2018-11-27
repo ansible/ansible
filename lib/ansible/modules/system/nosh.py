@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: nosh
 author:
-    - "Thomas Caravia"
+    - "Thomas Caravia (@tacatac)"
 version_added: "2.5"
 short_description:  Manage services with nosh
 description:
@@ -413,6 +413,7 @@ def main():
         result['status'] = get_service_status(module, service_path)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
