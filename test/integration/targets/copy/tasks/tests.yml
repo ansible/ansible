@@ -1477,10 +1477,6 @@
 - include: dest_in_non_existent_directories_remote_src.yml
   with_items:
     - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
-    - { src: 'subdir', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/subdir/bar.txt' }
-    - { src: 'subdir/', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/bar.txt' }
-    - { src: 'subdir', dest: 'new_sub_dir1/sub_dir2', check: 'new_sub_dir1/sub_dir2/subdir/bar.txt' }
-    - { src: 'subdir/', dest: 'new_sub_dir1/sub_dir2', check: 'new_sub_dir1/sub_dir2/bar.txt' }
 
 # src is a file, dest is file in a non-existent directory: checks that a failure occurs
 # using remote_src
