@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pn_access_list
-author: "Pluribus Networks (devops@pluribusnetworks.com)"
+author: "Pluribus Networks (@amitsi)"
 version_added: "2.8"
 short_description: CLI command to create/delete access-list
 description:
