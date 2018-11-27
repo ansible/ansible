@@ -275,7 +275,7 @@ class InventoryManager(object):
                         display.debug('%s failed to parse %s' % (plugin_name, source))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
                 else:
-                    display.v('%s did not meet %s requirements, check plugin documentation if this is unexpected' % (source, plugin_name))
+                    display.vvv("%s declined parsing %s as it did not pass it's verify_file() method" % (plugin_name, source))
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
