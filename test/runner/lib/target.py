@@ -380,9 +380,9 @@ def analyze_integration_target_dependencies(integration_targets):
     while True:
         changes = 0
 
-        for target_name, dependent_target_names in dependencies.items():
+        for dummy, dependent_target_names in dependencies.items():
             for dependent_target_name in list(dependent_target_names):
-                new_target_names = dependencies.get(dependent_target_name, set())
+                new_target_names = dependencies.get(dependent_target_name)
 
                 if new_target_names:
                     for new_target_name in new_target_names:
