@@ -12,6 +12,8 @@ import types
 
 from jinja2._compat import text_type
 
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
 
 def ansible_native_concat(nodes):
     """Return a native Python type from the list of compiled nodes. If the
@@ -30,8 +32,13 @@ def ansible_native_concat(nodes):
 
     if len(head) == 1:
         out = head[0]
+
+        # TODO send unvaulted data to literal_eval?
+        if isinstance(out, AnsibleVaultEncryptedUnicode):
+            return out.data
+
         # short circuit literal_eval when possible
-        if not isinstance(out, list):  # FIXME is this needed?
+        if not isinstance(out, list):
             return out
     else:
         if isinstance(nodes, types.GeneratorType):
