@@ -1,0 +1,3 @@
+bugfixes:
+  - apt_key - Disable TTY requirement in GnuPG for the module to work correctly
+    when SSH pipelining is enabled (https://github.com/ansible/ansible/pull/48580)
