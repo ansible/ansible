@@ -1737,9 +1737,9 @@ USE_PERSISTENT_CONNECTIONS:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
 VARIABLE_PRECEDENCE:
-  name: Group variable precedence
-  default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']
-  description: Allows to change the group variable precedence merge order.
+  name: Variable precedence
+  default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play', 'hosts_inventory', 'hosts_plugins_inventory', 'hosts_plugins_play']
+  description: Allows to change the variable precedence merge order. Caution, hosts variables will always be loaded after groups variables.
   env: [{name: ANSIBLE_PRECEDENCE}]
   ini:
   - {key: precedence, section: defaults}

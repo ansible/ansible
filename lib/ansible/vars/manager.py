@@ -73,7 +73,8 @@ def preprocess_vars(a):
 
 class VariableManager:
 
-    _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
+    _ALLOWED = frozenset(['hosts_plugins_play', 'hosts_plugins_inventory', 'hosts_inventory', 'plugins_by_group',
+                          'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
     def __init__(self, loader=None, inventory=None, version_info=None):
@@ -285,19 +286,36 @@ class VariableManager:
                     data[group] = combine_vars(data[group], _plugins_play(group))
                 return data
 
+            def hosts_inventory():
+                ''' gets host vars from inventory '''
+                return host.get_vars()
+
+            def hosts_plugins_inventory():
+                ''' gets plugin sources from inventory for hosts '''
+                return _plugins_inventory([host])
+
+            def hosts_plugins_play():
+                ''' gets plugin sources from play for hosts '''
+                return _plugins_play([host])
+
             # Merge groups as per precedence config
             # only allow to call the functions we want exposed
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:
-                    display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                    all_vars = combine_vars(all_vars, locals()[entry]())
+                    if not entry.startswith('hosts'):
+                        display.debug('Calling %s to load vars for %s' % (entry, host.name))
+                        all_vars = combine_vars(all_vars, locals()[entry]())
                 else:
                     display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
-            # host vars, from inventory, inventory adjacent and play adjacent via plugins
-            all_vars = combine_vars(all_vars, host.get_vars())
-            all_vars = combine_vars(all_vars, _plugins_inventory([host]))
-            all_vars = combine_vars(all_vars, _plugins_play([host]))
+            # Then hosts
+            for entry in C.VARIABLE_PRECEDENCE:
+                if entry in self._ALLOWED:
+                    if entry.startswith('hosts'):
+                        display.debug('Calling %s to load vars for %s' % (entry, host.name))
+                        all_vars = combine_vars(all_vars, locals()[entry]())
+                else:
+                    display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # finally, the facts caches for this host, if it exists
             # TODO: cleaning of facts should eventually become part of taskresults instead of vars
