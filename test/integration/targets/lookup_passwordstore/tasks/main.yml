@@ -3,4 +3,4 @@
     - include: "tests.yml"
   when:
     - not (ansible_distribution == 'RedHat')  # requires EPEL
-    - not (ansible_distribution == 'CentOS' and ansible_distribution_version | version_compare('7', '<'))
+    - not (ansible_distribution == 'CentOS' and ansible_distribution_version is version_compare('7', '<'))
