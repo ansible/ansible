@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: nios_nsgroup
 short_description: Configure InfoBlox DNS Nameserver Groups
 extends_documentation_fragment: nios
-author: 
+author:
   - Erich Birngruber (@ebirn)
   - Sumit Jaiswal (@sjaiswal)
 version_added: "2.8"
@@ -61,7 +61,7 @@ options:
         default: false
   grid_secondaries:
     description:
-     - Configures the list of grid member hosts that act as secondary nameservers. 
+     - Configures the list of grid member hosts that act as secondary nameservers.
        This option is required when setting I(use_external_primaries) to C(true).
     suboptions:
       name:
@@ -209,6 +209,19 @@ EXAMPLES = '''
         lead: True
         preferred_primaries: "{{ ext_nameservers }}"
     state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+
+- name: delete infoblox nameserver group
+  nios_nsgroup:
+    name: my-simple-group
+    comment: "this is a simple nameserver group"
+    grid_primary:
+      - name: infoblox-test.example.com
+    state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
