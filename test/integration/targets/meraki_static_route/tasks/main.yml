@@ -62,6 +62,20 @@
       that:
         - query_all.data | length >= 2
 
+  - name: Query single route
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      route_id: '{{create_route.data.id}}'
+    delegate_to: localhost
+    register: query_one
+
+  - assert:
+      that:
+        - query_one.data.name == "Test Route"
+
   # always:
   #   - name: Delete appliance network
   #     meraki_network:

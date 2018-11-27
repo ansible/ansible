@@ -151,7 +151,7 @@ def get_static_routes(meraki, net_id):
 
 
 def get_static_route(meraki, net_id, route_id):
-    path = meraki.construct_path('get_one', net_id=net_id, route_id=route_id)
+    path = meraki.construct_path('get_one', net_id=net_id, custom={'route_id': meraki.params['route_id']})
     r = meraki.request(path, method='GET')
     return r
 
@@ -171,7 +171,7 @@ def main():
         state=dict(type='str', choices=['absent', 'query', 'present']),
         fixed_ip_assignments=dict(type='list'),
         reserved_ip_ranges=dict(type='list'),
-        static_route_id=dict(type='str'),
+        route_id=dict(type='str'),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -229,8 +229,8 @@ def main():
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
 
     if meraki.params['state'] == 'query':
-        if meraki.params['static_route_id'] is not None:
-            meraki.result['data'] = get_static_route(meraki, net_id, meraki.params['static_route_id'])
+        if meraki.params['route_id'] is not None:
+            meraki.result['data'] = get_static_route(meraki, net_id, meraki.params['route_id'])
         else:
             meraki.result['data'] = get_static_routes(meraki, net_id)
     elif meraki.params['state'] == 'present':
@@ -243,8 +243,8 @@ def main():
         if meraki.params['reserved_ip_ranges'] is not None:
             payload['reserved_ip_ranges'] = meraki.params['reserved_ip_ranges']
         update_required = False
-        if meraki.params['static_route_id']:
-            existing_route = get_static_route(meraki, net_id, meraki.params['static_route_id'])
+        if meraki.params['route_id']:
+            existing_route = get_static_route(meraki, net_id, meraki.params['route_id'])
             if meraki.is_update_required(existing_route, payload, optional_ignore=['id']):
                 path = meraki.construct_path('update', net_id=net_id, route_id=existing_route['id'])
                 meraki.result['data'] = meraki.request(path, method="PUT", payload=json.dumps(payload))
@@ -254,7 +254,7 @@ def main():
                 meraki.result['data'] = meraki.request(path, method="POST", payload=json.dumps(payload))
                 meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
-        path = meraki.construct_path('delete', net_id=net_id, route_id=meraki.params['route_id'])
+        path = meraki.construct_path('delete', net_id=net_id, custom={'route_id': meraki.params['route_id']})
         meraki.result['data'] = meraki.request(path, method='DELETE')
         meraki.result['changed'] = True
 
