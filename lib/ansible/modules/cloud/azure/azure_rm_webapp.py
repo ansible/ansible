@@ -708,11 +708,12 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if self.purge_app_settings:
                     to_be_updated = True
                     self.app_settings_strDic.properties = dict()
+                    self.to_do = Actions.UpdateAppSettingss
 
                 # check if app settings changed
                 if self.purge_app_settings or self.is_app_settings_changed():
                     to_be_updated = True
-                    self.to_do = Actions.CreateOrUpdate
+                    self.to_do = Actions.UpdateAppSettings
 
                     if self.app_settings:
                         for key in self.app_settings.keys():
@@ -744,6 +745,10 @@ class AzureRMWebApps(AzureRMModuleBase):
                 response = self.create_update_webapp()
 
                 self.results['id'] = response['id']
+
+            if self.to_do == Actions:UpdateAppSettingss:
+                update_response = self.update_app_settings()
+                self.results = update_response.id
 
         webapp = None
         if old_response:
@@ -960,7 +965,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 resource_group_name=self.resource_group, name=self.name, app_settings=self.app_settings_strDic)
             self.log("Response : {0}".format(response))
 
-            return response.as_dict()
+            return response
         except CloudError as ex:
             self.log("Failed to update application settings for web app {0} in resource group {1}".format(
                 self.name, self.resource_group))

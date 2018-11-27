@@ -116,9 +116,17 @@
       testkey2: "testvalue2"
   register: output
 
+- name: get web app with name
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+  register: output
+
 - name: Assert the web app was updated
   assert:
-    that: output.changed
+    that:
+    - output.changed
+    - output.webapps[0].app_settings | length == 2
 
 - name: get web app with return publishing profile
   azure_rm_webapp_facts:
