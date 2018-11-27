@@ -309,7 +309,7 @@ def irmc_facts(module):
             module.fail_json(msg=msg, status=status, exception=sysdata)
         elif status != 200:
             module.fail_json(msg=msg, status=status)
-        power_state = get_irmc_json(sysdata.json(), "PowerState")
+        power_state = get_irmc_json(sysdata, "PowerState")
 
         # Get iRMC FW data
         status, fwdata, msg = irmc_redfish_get(module, "redfish/v1/Systems/0/Oem/ts_fujitsu/FirmwareInventory")
@@ -326,7 +326,7 @@ def irmc_facts(module):
 
     # Set iRMC OEM system data
     body = setup_oem_data(module.params)
-    etag = get_irmc_json(oemdata.json(), "@odata.etag")
+    etag = get_irmc_json(oemdata, "@odata.etag")
     status, patch, msg = irmc_redfish_patch(module, "redfish/v1/Systems/0/Oem/ts_fujitsu/System/",
                                             json.dumps(body), etag)
     if status < 100:
@@ -349,7 +349,7 @@ def add_system_hw_info(power_state, module, result):
         items = 0
         hw_dict = {}
         hw_dict['devices'] = []
-        for member in get_irmc_json(hwdata.json(), "Members"):
+        for member in get_irmc_json(hwdata, "Members"):
             hw_list = {}
             if get_irmc_json(member, ["Status", "State"]) == "Enabled":
                 if hw == "Memory":
@@ -383,7 +383,7 @@ def add_system_hw_info(power_state, module, result):
         if hw == "Storage":
             hw = "StorageControllers"
         if hw in ("Memory", "Processors"):
-            hw_dict['sockets'] = get_irmc_json(hwdata.json(), "Members@odata.count")
+            hw_dict['sockets'] = get_irmc_json(hwdata, "Members@odata.count")
         result['facts']['hardware'][hw.lower()] = hw_dict
     return result
 
@@ -404,7 +404,7 @@ def add_chassis_hw_info(module, result):
             items = 0
             hw_dict = {}
             hw_dict['devices'] = []
-            for member in get_irmc_json(hwdata.json(), hw):
+            for member in get_irmc_json(hwdata, hw):
                 hw_list = {}
                 if get_irmc_json(member, ["Status", "State"]) == "Enabled":
                     if hw == "PowerSupplies":
@@ -423,7 +423,7 @@ def add_chassis_hw_info(module, result):
                     if hw_list:
                         hw_dict['devices'].append(hw_list)
             hw_dict['count'] = items
-            hw_dict['sockets'] = get_irmc_json(hwdata.json(), "{0}@odata.count".format(hw))
+            hw_dict['sockets'] = get_irmc_json(hwdata, "{0}@odata.count".format(hw))
             result['facts']['hardware'][hw.lower()] = hw_dict
     return result
 
@@ -435,7 +435,7 @@ def add_irmc_hw_info(module, result):
         module.fail_json(msg=msg, status=status, exception=hwdata)
     elif status != 200:
         module.fail_json(msg=msg, status=status)
-    for member in get_irmc_json(hwdata.json(), "Members"):
+    for member in get_irmc_json(hwdata, "Members"):
         result['facts']['irmc']['macaddress'] = "{0}".format(get_irmc_json(member, ["MACAddress"]))
         result['facts']['irmc']['hostname'] = "{0}".format(get_irmc_json(member, ["HostName"]))
     return result
@@ -459,37 +459,37 @@ def setup_oem_data(data):
 def setup_resultdata(data, data2, data3):
     data = {
         'system': {
-            'bios_version': get_irmc_json(data.json(), "BiosVersion"),
-            'idled_state': get_irmc_json(data.json(), "IndicatorLED"),
-            'asset_tag': get_irmc_json(data2.json(), "AssetTag"),
-            'host_name': get_irmc_json(data.json(), "HostName"),
-            'manufacturer': get_irmc_json(data.json(), "Manufacturer"),
-            'model': get_irmc_json(data.json(), "Model"),
-            # 'name': get_irmc_json(data.json(), "Name"),
-            'part_number': get_irmc_json(data.json(), "PartNumber"),
-            'serial_number': get_irmc_json(data.json(), "SerialNumber"),
-            'uuid': get_irmc_json(data.json(), "UUID"),
-            'ip': get_irmc_json(data2.json(), "SystemIP"),
-            'location': get_irmc_json(data2.json(), "Location"),
-            'description': get_irmc_json(data2.json(), "Description"),
-            'contact': get_irmc_json(data2.json(), "Contact"),
-            'helpdesk_message': get_irmc_json(data2.json(), "HelpdeskMessage"),
-            'power_state': get_irmc_json(data.json(), "PowerState"),
-            'memory_size': "{0} GB".format(get_irmc_json(data.json(), ["MemorySummary", "TotalSystemMemoryGiB"])),
-            'health': get_irmc_json(data.json(), ["Status", "HealthRollup"]),
+            'bios_version': get_irmc_json(data, "BiosVersion"),
+            'idled_state': get_irmc_json(data, "IndicatorLED"),
+            'asset_tag': get_irmc_json(data2, "AssetTag"),
+            'host_name': get_irmc_json(data, "HostName"),
+            'manufacturer': get_irmc_json(data, "Manufacturer"),
+            'model': get_irmc_json(data, "Model"),
+            # 'name': get_irmc_json(data, "Name"),
+            'part_number': get_irmc_json(data, "PartNumber"),
+            'serial_number': get_irmc_json(data, "SerialNumber"),
+            'uuid': get_irmc_json(data, "UUID"),
+            'ip': get_irmc_json(data2, "SystemIP"),
+            'location': get_irmc_json(data2, "Location"),
+            'description': get_irmc_json(data2, "Description"),
+            'contact': get_irmc_json(data2, "Contact"),
+            'helpdesk_message': get_irmc_json(data2, "HelpdeskMessage"),
+            'power_state': get_irmc_json(data, "PowerState"),
+            'memory_size': "{0} GB".format(get_irmc_json(data, ["MemorySummary", "TotalSystemMemoryGiB"])),
+            'health': get_irmc_json(data, ["Status", "HealthRollup"]),
         },
         'mainboard': {
-            'manufacturer': get_irmc_json(data.json(), ["Oem", "ts_fujitsu", "MainBoard", "Manufacturer"]),
-            'dnumber': get_irmc_json(data.json(), ["Oem", "ts_fujitsu", "MainBoard", "Model"]),
-            'part_number': get_irmc_json(data.json(), ["Oem", "ts_fujitsu", "MainBoard", "PartNumber"]),
-            'serial_number': get_irmc_json(data.json(), ["Oem", "ts_fujitsu", "MainBoard", "SerialNumber"]),
-            'version': get_irmc_json(data.json(), ["Oem", "ts_fujitsu", "MainBoard", "Version"]),
+            'manufacturer': get_irmc_json(data, ["Oem", "ts_fujitsu", "MainBoard", "Manufacturer"]),
+            'dnumber': get_irmc_json(data, ["Oem", "ts_fujitsu", "MainBoard", "Model"]),
+            'part_number': get_irmc_json(data, ["Oem", "ts_fujitsu", "MainBoard", "PartNumber"]),
+            'serial_number': get_irmc_json(data, ["Oem", "ts_fujitsu", "MainBoard", "SerialNumber"]),
+            'version': get_irmc_json(data, ["Oem", "ts_fujitsu", "MainBoard", "Version"]),
         },
         'irmc': {
-            'fw_version': get_irmc_json(data3.json(), "BMCFirmware"),
-            'fw_builddate': get_irmc_json(data3.json(), "BMCFirmwareBuildDate"),
-            'fw_running': get_irmc_json(data3.json(), "BMCFirmwareRunning"),
-            'sdrr_version': get_irmc_json(data3.json(), "SDRRVersion"),
+            'fw_version': get_irmc_json(data3, "BMCFirmware"),
+            'fw_builddate': get_irmc_json(data3, "BMCFirmwareBuildDate"),
+            'fw_running': get_irmc_json(data3, "BMCFirmwareRunning"),
+            'sdrr_version': get_irmc_json(data3, "SDRRVersion"),
         },
         'hardware': {
         },
