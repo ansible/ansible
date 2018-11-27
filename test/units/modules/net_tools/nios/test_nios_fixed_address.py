@@ -24,12 +24,12 @@ from units.compat.mock import patch, MagicMock, Mock
 from .test_nios_module import TestNiosModule, load_fixture
 
 
-class TestNiosNetworkModule(TestNiosModule):
+class TestNiosFixedAddressModule(TestNiosModule):
 
     module = nios_fixed_address
 
     def setUp(self):
-        super(TestNiosNetworkModule, self).setUp()
+        super(TestNiosFixedAddressModule, self).setUp()
         self.module = MagicMock(name='ansible.modules.net_tools.nios.nios_fixed_address.WapiModule')
         self.module.check_mode = False
         self.module.params = {'provider': None}
@@ -40,7 +40,7 @@ class TestNiosNetworkModule(TestNiosModule):
         self.load_config = self.mock_wapi_run.start()
 
     def tearDown(self):
-        super(TestNiosNetworkModule, self).tearDown()
+        super(TestNiosFixedAddressModule, self).tearDown()
         self.mock_wapi.stop()
         self.mock_wapi_run.stop()
 
