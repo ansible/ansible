@@ -28,18 +28,14 @@ DOCUMENTATION = '''
           Ansible will not wait for other hosts to finish the current task before queuing the next task for a host that has finished.
           Once a host is done with the play, it opens it's slot to a new host that was waiting to start.
           Other than that, it behaves just like the "free" strategy.
-    version_added: "2.0"
+    version_added: "2.7"
     author: Ansible Core Team
 '''
 
 from ansible.plugins.strategy.free import StrategyModule as FreeStrategyModule
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class StrategyModule(FreeStrategyModule):

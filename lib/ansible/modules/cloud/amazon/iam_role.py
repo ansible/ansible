@@ -17,7 +17,7 @@ author: "Rob White (@wimnat)"
 options:
   path:
     description:
-      - The path to the role. For more information about paths, see U(http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
+      - The path to the role. For more information about paths, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
     default: "/"
   name:
     description:
@@ -87,8 +87,7 @@ EXAMPLES = '''
   iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
-    managed_policy:
-      -
+    managed_policy: []
 
 - name: Delete the role
   iam_role:

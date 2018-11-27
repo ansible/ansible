@@ -106,7 +106,7 @@ options:
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
-author: "Ryan Scott Brown @ryansb"
+author: "Ryan Scott Brown (@ryansb)"
 '''
 
 EXAMPLES = """
@@ -177,7 +177,7 @@ def preflight_validation(bin_path, project_path, variables_args=None, plan_file=
     if not os.path.isdir(project_path):
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
-    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path)
+    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path, use_unsafe_shell=True)
     if rc != 0:
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
@@ -246,12 +246,12 @@ def build_plan(bin_path, project_path, variables_args, state_file, targets, plan
 
     command = [bin_path, 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
 
-    for t in (module.params.get('targets') or []):
+    for t in (targets or []):
         command.extend(['-target', t])
 
     command.extend(_state_args(state_file))
 
-    rc, out, err = module.run_command(command + variables_args, cwd=project_path)
+    rc, out, err = module.run_command(command + variables_args, cwd=project_path, use_unsafe_shell=True)
 
     if rc == 0:
         # no changes
@@ -320,7 +320,7 @@ def main():
     for k, v in variables.items():
         variables_args.extend([
             '-var',
-            shlex_quote('{0}={1}'.format(k, v))
+            '{0}={1}'.format(k, v)
         ])
     if variables_file:
         variables_args.extend(['-var-file', variables_file])

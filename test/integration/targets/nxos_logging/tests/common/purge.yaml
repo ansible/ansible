@@ -1,0 +1,114 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_logging purge test"
+
+- name: Purge logging configuration first
+  nxos_logging:
+    purge: true
+    provider: "{{ connection }}"
+
+- block:
+
+    - name: Set up console logging
+      nxos_logging: &clog
+        dest: console
+        dest_level: 0
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - '"logging console 0" in result.commands'
+
+    - name: Set up Logging Timestamp
+      nxos_logging: &ltms
+        timestamp: microseconds
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - '"logging timestamp microseconds" in result.commands'
+
+    - name: Configure monitor with level
+      nxos_logging: &mlog
+        dest: monitor
+        dest_level: 3
+        provider: "{{ connection }}"
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - '"logging monitor 3" in result.commands'
+
+    - name: Configure facility with level
+      nxos_logging: &flog
+        facility: daemon
+        facility_level: 4
+        provider: "{{ connection }}"
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - '"logging level daemon 4" in result.commands'
+
+    - name: Configure logging level virtual-service 7 using nxos_config
+      nxos_config:
+        lines: logging level virtual-service 7
+        provider: "{{ connection }}"
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == true"
+
+    - name: Purge the outliers
+      nxos_logging:
+        purge: yes
+        provider: "{{ connection }}"
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - '"no logging level virtual-service 7" in result.commands'
+
+    - block:
+      - name: Purge the outliers (idempotent)
+        nxos_logging:
+          purge: yes
+          provider: "{{ connection }}"
+        register: result
+
+      - assert:
+          that:
+            - 'result.changed == false'
+      when: imagetag is not search("A8")
+
+    - name: remove logging as collection tearDown
+      nxos_logging: &agg
+        aggregate:
+          - { dest: console, dest_level: 0 }
+          - { dest: monitor, dest_level: 3 }
+          - { timestamp: microseconds }
+          - { facility: daemon, facility_level: 4 }
+        provider: "{{ connection }}"
+        state: absent
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - '"no logging console" in result.commands'
+          - '"no logging timestamp microseconds" in result.commands'
+          - '"no logging level daemon 4" in result.commands'
+          - '"no logging monitor" in result.commands'
+
+  when: ansible_connection != "local"
+
+- debug: msg="END connection={{ ansible_connection }} nxos_logging purge test"

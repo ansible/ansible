@@ -14,11 +14,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_snapshot
-short_description: Manage NetApp Sanpshots
+short_description: NetApp ONTAP manage Snapshots
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create/Modify/Delete ONTAP snapshots
 options:

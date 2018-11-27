@@ -40,13 +40,17 @@ options:
     aliases: [ dest, destfile, name ]
     required: true
   regexp:
-    aliases: [ 'regex' ]
+    aliases: [ regex ]
     description:
-      - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found. Only the last line
-        found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove. Uses Python regular expressions.
-        See U(http://docs.python.org/2/library/re.html).
+      - The regular expression to look for in every line of the file.
+      - For C(state=present), the pattern to replace if found. Only the last line found will be replaced.
+      - For C(state=absent), the pattern of the line(s) to remove.
+      - If the regular expression is not matched, the line will be
+        added to the file in keeping with`insertbefore` or `insertafter`
+        settings.
+      - When modifying a line the regexp should typically match both the initial state of
+        the line as well as its state after replacement by C(line) to ensure idempotence.
+      - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
     description:
@@ -331,7 +335,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             elif insertbefore and insertbefore != 'BOF':
                 # If the line to insert before is at the beginning of the file
                 # use the appropriate index value.
-                if index[1] == 0:
+                if index[1] <= 0:
                     if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
                         msg = 'line replaced'

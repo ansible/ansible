@@ -173,12 +173,12 @@ class LdapAttr(LdapGeneric):
 
         # Normalize values
         if isinstance(self.module.params['values'], list):
-            self.values = map(to_bytes, self.module.params['values'])
+            self.values = list(map(to_bytes, self.module.params['values']))
         else:
             self.values = [to_bytes(self.module.params['values'])]
 
     def add(self):
-        values_to_add = filter(self._is_value_absent, self.values)
+        values_to_add = list(filter(self._is_value_absent, self.values))
 
         if len(values_to_add) > 0:
             modlist = [(ldap.MOD_ADD, self.name, values_to_add)]
@@ -188,7 +188,7 @@ class LdapAttr(LdapGeneric):
         return modlist
 
     def delete(self):
-        values_to_delete = filter(self._is_value_present, self.values)
+        values_to_delete = list(filter(self._is_value_present, self.values))
 
         if len(values_to_delete) > 0:
             modlist = [(ldap.MOD_DELETE, self.name, values_to_delete)]

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -42,7 +42,6 @@ options:
   bd:
     description:
     - Name of the bridge domain being associated with the EPG.
-    required: yes
     aliases: [ bd_name, bridge_domain ]
   priority:
     description:
@@ -350,9 +349,13 @@ def main():
                 fwdCtrl=fwd_control,
                 prefGrMemb=preferred_group,
             ),
-            child_configs=[
-                dict(fvRsBd=dict(attributes=dict(tnFvBDName=bd))),
-            ],
+            child_configs=[dict(
+                fvRsBd=dict(
+                    attributes=dict(
+                        tnFvBDName=bd,
+                    ),
+                ),
+            )],
         )
 
         aci.get_diff(aci_class='fvAEPg')

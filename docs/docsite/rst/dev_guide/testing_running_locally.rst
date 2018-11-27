@@ -1,3 +1,5 @@
+:orphan:
+
 .. _testing_running_locally:
 
 ***************
@@ -40,13 +42,13 @@ Environment Variables
 
 When using environment variables to manipulate tests there some limitations to keep in mind. Environment variables are:
 
-* Not propagated from the host to the test environment when using the ``--docker`` or ``--remote`` options. 
+* Not propagated from the host to the test environment when using the ``--docker`` or ``--remote`` options.
 * Not exposed to the test environment unless whitelisted in ``test/runner/lib/util.py`` in the ``common_environment`` function.
 * Not exposed to the test environment when using the ``--tox`` option unless whitelisted in ``test/runner/tox.ini`` by the ``passenv`` definition.
 
-    Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --tox``. However, using the ``--docker`` option would 
-    require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set 
-    and the tests executed. This is useful for debugging tests inside a container by following the 
+    Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --tox``. However, using the ``--docker`` option would
+    require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set
+    and the tests executed. This is useful for debugging tests inside a container by following the
     :ref:`Debugging AnsibleModule-based modules <debugging_ansiblemodule_based_modules>` instructions.
 
 Interactive Shell
@@ -84,4 +86,3 @@ Reports can be generated in several different formats:
 To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help::
 
    ansible-test coverage --help
-

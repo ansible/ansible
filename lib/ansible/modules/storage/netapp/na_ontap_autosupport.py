@@ -11,11 +11,11 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - "Enable/Disable Autosupport"
 extends_documentation_fragment:
@@ -50,7 +50,7 @@ options:
     description:
       - Specifies whether AutoSupport notification to technical support is enabled.
     type: bool
-short_description: "Manage NetApp Autosupport"
+short_description: "NetApp ONTAP manage Autosupport"
 version_added: "2.7"
 
 """

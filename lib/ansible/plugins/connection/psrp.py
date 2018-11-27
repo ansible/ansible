@@ -164,6 +164,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _common_args
+from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -176,15 +177,12 @@ try:
     from pypsrp.powershell import PowerShell, RunspacePool
     from pypsrp.shell import Process, SignalCode, WinRS
     from pypsrp.wsman import WSMan, AUTH_KWARGS
+    from requests.exceptions import ConnectionError, ConnectTimeout
 except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -243,6 +241,12 @@ class Connection(ConnectionBase):
                     "psrp connection failure during runspace open: %s"
                     % to_native(e)
                 )
+            except (ConnectionError, ConnectTimeout) as e:
+                raise AnsibleConnectionFailure(
+                    "Failed to connect to the host via PSRP: %s"
+                    % to_native(e)
+                )
+
             self._connected = True
         return self
 
@@ -278,6 +282,7 @@ class Connection(ConnectionBase):
             # starting a new interpreter to save on time
             b_command = base64.b64decode(cmd.split(" ")[-1])
             script = to_text(b_command, 'utf-16-le')
+            in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
             display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
         else:
             # in other cases we want to execute the cmd as the script
@@ -546,26 +551,24 @@ if ($bytes_read -gt 0) {
         # TODO: figure out a better way of merging this with the host output
         stdout_list = []
         for output in pipeline.output:
-            # not all pipeline outputs can be casted to a string, we will
-            # create our own output based on the properties if that is the
-            # case+
-            try:
-                output_msg = str(output)
-            except TypeError:
-                if isinstance(output, GenericComplexObject):
-                    obj_lines = output.property_sets
-                    for key, value in output.adapted_properties.items():
-                        obj_lines.append("%s: %s" % (key, value))
-                    for key, value in output.extended_properties.items():
-                        obj_lines.append("%s: %s" % (key, value))
-                    output_msg = "\n".join(obj_lines)
-                else:
-                    output_msg = ""
+            # Not all pipeline outputs are a string or contain a __str__ value,
+            # we will create our own output based on the properties of the
+            # complex object if that is the case.
+            if isinstance(output, GenericComplexObject) and output.to_string is None:
+                obj_lines = output.property_sets
+                for key, value in output.adapted_properties.items():
+                    obj_lines.append(u"%s: %s" % (key, value))
+                for key, value in output.extended_properties.items():
+                    obj_lines.append(u"%s: %s" % (key, value))
+                output_msg = u"\n".join(obj_lines)
+            else:
+                output_msg = to_text(output, nonstring='simplerepr')
+
             stdout_list.append(output_msg)
 
-        stdout = "\r\n".join(stdout_list)
+        stdout = u"\r\n".join(stdout_list)
         if len(self.host.ui.stdout) > 0:
-            stdout += "\r\n" + "".join(self.host.ui.stdout)
+            stdout += u"\r\n" + u"".join(self.host.ui.stdout)
 
         stderr_list = []
         for error in pipeline.streams.error:
@@ -597,4 +600,4 @@ if ($bytes_read -gt 0) {
         self.host.ui.stdout = []
         self.host.ui.stderr = []
 
-        return rc, stdout, stderr
+        return rc, to_bytes(stdout, encoding='utf-8'), to_bytes(stderr, encoding='utf-8')

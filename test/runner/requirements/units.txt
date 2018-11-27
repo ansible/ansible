@@ -10,6 +10,7 @@ pytest
 pytest-mock
 pytest-xdist
 python-memcached
+pyvmomi
 pyyaml
 redis
 requests
@@ -17,6 +18,8 @@ setuptools > 0.6 # pytest-xdist installed via requirements does not work with ve
 unittest2 ; python_version < '2.7'
 netaddr
 ipaddress
+netapp-lib
+solidfire-sdk-python
 
 # requirements for F5 specific modules
 f5-sdk ; python_version >= '2.7'
@@ -33,4 +36,5 @@ xmljson
 pexpect
 
 # requirement for the linode module
-linode-python
+linode-python # APIv3
+linode_api4 ; python_version > '2.6' # APIv4

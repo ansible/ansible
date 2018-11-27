@@ -5,8 +5,8 @@
   cli_config: &rm
     config: |
       interface Loopback999
-      no description
-      no shutdown
+       no description
+       no shutdown
   become: yes
 
 - name: configure device with config

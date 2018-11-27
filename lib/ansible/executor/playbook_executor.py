@@ -30,12 +30,9 @@ from ansible.utils.helpers import pct_to_int
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class PlaybookExecutor:
@@ -224,6 +221,13 @@ class PlaybookExecutor:
         if self._options.syntax:
             display.display("No issues encountered")
             return result
+
+        if self._options.start_at_task and not self._tqm._start_at_done:
+            display.error(
+                "No matching task \"%s\" found. "
+                "Note: --start-at-task can only follow static includes."
+                % self._options.start_at_task
+            )
 
         return result
 

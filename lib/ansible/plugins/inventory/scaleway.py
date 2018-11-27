@@ -86,28 +86,40 @@ import json
 
 from ansible.errors import AnsibleError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
-from ansible.module_utils.scaleway import SCALEWAY_LOCATION
+from ansible.module_utils.scaleway import SCALEWAY_LOCATION, parse_pagination_link
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_native
 
+import ansible.module_utils.six.moves.urllib.parse as urllib_parse
+
 
 def _fetch_information(token, url):
-    try:
-        response = open_url(url,
-                            headers={'X-Auth-Token': token,
-                                     'Content-type': 'application/json'})
-    except Exception as e:
-        raise AnsibleError("Error while fetching %s: %s" % (url, to_native(e)))
+    results = []
+    paginated_url = url
+    while True:
+        try:
+            response = open_url(paginated_url,
+                                headers={'X-Auth-Token': token,
+                                         'Content-type': 'application/json'})
+        except Exception as e:
+            raise AnsibleError("Error while fetching %s: %s" % (url, to_native(e)))
+        try:
+            raw_json = json.loads(response.read())
+        except ValueError:
+            raise AnsibleError("Incorrect JSON payload")
 
-    try:
-        raw_json = json.loads(response.read())
-    except ValueError:
-        raise AnsibleError("Incorrect JSON payload")
+        try:
+            results.extend(raw_json["servers"])
+        except KeyError:
+            raise AnsibleError("Incorrect format from the Scaleway API response")
 
-    try:
-        return raw_json["servers"]
-    except KeyError:
-        raise AnsibleError("Incorrect format from the Scaleway API response")
+        link = response.headers['Link']
+        if not link:
+            return results
+        relations = parse_pagination_link(link)
+        if 'next' not in relations:
+            return results
+        paginated_url = urllib_parse.urljoin(paginated_url, relations['next'])
 
 
 def _build_server_url(api_endpoint):

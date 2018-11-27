@@ -152,7 +152,10 @@ class GcpModule(AnsibleModule):
         kwargs['argument_spec'] = self._merge_dictionaries(
             arg_spec,
             dict(
-                project=dict(required=True, type='str'),
+                project=dict(
+                    required=False,
+                    type='str',
+                    fallback=(env_fallback, ['GCP_PROJECT'])),
                 auth_kind=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_AUTH_KIND']),

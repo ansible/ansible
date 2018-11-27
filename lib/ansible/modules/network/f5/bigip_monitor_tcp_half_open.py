@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -165,25 +165,23 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -194,17 +192,30 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination',
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'destination',
         'description',
     ]
 
     returnables = [
-        'parent', 'ip', 'port', 'interval', 'timeout', 'time_until_up',
+        'parent',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'time_until_up',
         'description',
     ]
 
     updatables = [
-        'destination', 'interval', 'timeout', 'time_until_up', 'description',
+        'destination',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
     ]
 
     @property
@@ -282,11 +293,21 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -374,6 +395,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -581,7 +606,7 @@ class ArgumentSpec(object):
             parent=dict(default='/Common/tcp_half_open'),
             description=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),

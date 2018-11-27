@@ -106,7 +106,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -163,6 +163,7 @@ class AzureRMServers(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
         self.state = None
@@ -213,6 +214,9 @@ class AzureRMServers(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if SQL Server instance has to be deleted or may be updated")
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
                 self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -222,6 +226,7 @@ class AzureRMServers(AzureRMModuleBase):
                 self.results['changed'] = True
                 return self.results
 
+            self.parameters['tags'] = self.tags
             response = self.create_update_sqlserver()
             response.pop('administrator_login_password', None)
 
@@ -267,7 +272,7 @@ class AzureRMServers(AzureRMModuleBase):
             response = self.sql_client.servers.create_or_update(self.resource_group,
                                                                 self.name,
                                                                 self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

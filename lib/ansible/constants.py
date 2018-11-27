@@ -20,8 +20,8 @@ from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_va
 def _warning(msg):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
-        from __main__ import display
-        display.warning(msg)
+        from ansible.utils.display import Display
+        Display().warning(msg)
     except Exception:
         import sys
         sys.stderr.write(' [WARNING] %s\n' % (msg))
@@ -30,8 +30,8 @@ def _warning(msg):
 def _deprecated(msg, version='2.8'):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
     try:
-        from __main__ import display
-        display.deprecated(msg, version=version)
+        from ansible.utils.display import Display
+        Display().deprecated(msg, version=version)
     except Exception:
         import sys
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
@@ -96,7 +96,7 @@ BECOME_MISSING_STRINGS = {
 }  # FIXME: deal with i18n
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
-CONTROLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
+CONTROLLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS = None

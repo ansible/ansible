@@ -38,6 +38,51 @@
     resource_group: "{{ resource_group_secondary }}"
     name: testNetworkSecurityGroup2
 
+- name: Create VMSS (check mode)
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    load_balancer: testLB
+    upgrade_policy: Manual
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+  check_mode: yes
+
+- name: Assert that VMSS can be created
+  assert:
+    that: results.changed
+
+- name: Get VMSS to assert no VMSS is created in check mode
+  azure_rm_virtualmachine_scaleset_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    format: curated
+  register: output_scaleset
+
+- name: Assert no VMSS created in check mode
+  assert:
+    that:
+      - output_scaleset.ansible_facts.azure_vmss | length == 0
+
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
@@ -138,85 +183,6 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}
-    state: absent
-    remove_on_absent: ['all']
-    vm_size: Standard_DS1_v2
-    capacity: 2
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
-
-- name: Create VMSS (check mode)
-  azure_rm_virtualmachine_scaleset:
-    resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}1
-    vm_size: Standard_DS1_v2
-    admin_username: testuser
-    ssh_password_enabled: true
-    admin_password: "Password1234!"
-    capacity: 2
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    load_balancer: testLB
-    upgrade_policy: Manual
-    tier: Standard
-    managed_disk_type: Standard_LRS
-    os_disk_caching: ReadWrite
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
-    data_disks:
-      - lun: 0
-        disk_size_gb: 64
-        caching: ReadWrite
-        managed_disk_type: Standard_LRS
-  register: results
-  check_mode: yes
-
-- name: Assert that VMSS can be created
-  assert:
-    that: results.changed
-
-- name: Create VMSS
-  azure_rm_virtualmachine_scaleset:
-    resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}1
-    vm_size: Standard_DS1_v2
-    admin_username: testuser
-    ssh_password_enabled: true
-    admin_password: "Password1234!"
-    capacity: 2
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    load_balancer: testLB
-    upgrade_policy: Manual
-    tier: Standard
-    managed_disk_type: Standard_LRS
-    os_disk_caching: ReadWrite
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
-    data_disks:
-      - lun: 0
-        disk_size_gb: 64
-        caching: ReadWrite
-        managed_disk_type: Standard_LRS
-  register: results
-
-- name: Assert that VMSS ran
-  assert:
-    that: results.changed
-
-- name: Delete VMSS
-  azure_rm_virtualmachine_scaleset:
-    resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}1
     state: absent
     remove_on_absent: ['all']
@@ -282,51 +248,10 @@
       - 'results.ansible_facts.azure_vmss.properties.virtualMachineProfile.networkProfile.networkInterfaceConfigurations.0.properties.enableAcceleratedNetworking == true'
       - 'results.ansible_facts.azure_vmss.properties.virtualMachineProfile.networkProfile.networkInterfaceConfigurations.0.properties.networkSecurityGroup != {}'
 
-- name: Delete VMSS
+- name: update VMSS with security group in different resource group.
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
-    state: absent
-    remove_on_absent: ['all']
-    vm_size: Standard_D3_v2
-    capacity: 1
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
-
-- name: Create VMSS with security group in different resource group(check mode).
-  azure_rm_virtualmachine_scaleset:
-    resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}3
-    vm_size: Standard_DS1_v2
-    capacity: 1
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    admin_username: testuser
-    ssh_password_enabled: true
-    admin_password: "Password1234!"
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
-    upgrade_policy: Manual
-    security_group:
-      name: testNetworkSecurityGroup2
-      resource_group: "{{ resource_group_secondary }}"
-  register: results
-  check_mode: yes
-
-- name: Assert that VMSS ran
-  assert:
-    that: results.changed
-
-- name: Create VMSS with security group in different resource group.
-  azure_rm_virtualmachine_scaleset:
-    resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}3
     vm_size: Standard_DS1_v2
     capacity: 1
     virtual_network_name: testVnet
@@ -345,7 +270,7 @@
       resource_group: "{{ resource_group_secondary }}"
   register: results
 
-- name: Assert that VMSS ran
+- name: Assert that security group is correct
   assert:
     that:
       - 'results.changed'
@@ -354,7 +279,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}3
+    name: testVMSS{{ rpfx }}2
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2

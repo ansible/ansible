@@ -23,25 +23,22 @@ import textwrap
 import traceback
 import yaml
 
-from collections import Sequence
+import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
-    vars_loader, connection_loader, strategy_loader, inventory_loader, shell_loader, fragment_loader
+from ansible.plugins.loader import action_loader, fragment_loader
+from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class DocCLI(CLI):
@@ -57,18 +54,6 @@ class DocCLI(CLI):
 
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
-
-        self.loader_map = {
-            'cache': cache_loader,
-            'callback': callback_loader,
-            'connection': connection_loader,
-            'lookup': lookup_loader,
-            'strategy': strategy_loader,
-            'vars': vars_loader,
-            'inventory': inventory_loader,
-            'shell': shell_loader,
-            'module': module_loader,
-        }
 
     def parse(self):
 
@@ -90,7 +75,8 @@ class DocCLI(CLI):
         self.parser.add_option("-j", "--json", action="store_true", default=False, dest='json_dump',
                                help='**For internal testing only** Dump json metadata for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                               help='Choose which plugin type (defaults to "module")',
+                               help='Choose which plugin type (defaults to "module"). '
+                                    'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
                                choices=C.DOCUMENTABLE_PLUGINS)
         super(DocCLI, self).parse()
 
@@ -104,7 +90,11 @@ class DocCLI(CLI):
         super(DocCLI, self).run()
 
         plugin_type = self.options.type
-        loader = self.loader_map.get(plugin_type, self.loader_map['module'])
+
+        if plugin_type in C.DOCUMENTABLE_PLUGINS:
+            loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+        else:
+            raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
 
         # add to plugin path from command line
         if self.options.module_path:
@@ -137,12 +127,12 @@ class DocCLI(CLI):
 
         # process all plugins of type
         if self.options.all_plugins:
-            self.args = self.get_all_plugins_of_type(plugin_type)
+            self.args = self.get_all_plugins_of_type(plugin_type, loader)
 
         # dump plugin metadata as JSON
         if self.options.json_dump:
             plugin_data = {}
-            for plugin_type in self.loader_map.keys():
+            for plugin_type in C.DOCUMENTABLE_PLUGINS:
                 plugin_data[plugin_type] = dict()
                 plugin_names = self.get_all_plugins_of_type(plugin_type)
                 for plugin_name in plugin_names:
@@ -171,7 +161,7 @@ class DocCLI(CLI):
         return 0
 
     def get_all_plugins_of_type(self, plugin_type):
-        loader = self.loader_map[plugin_type]
+        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         plugin_list = set()
         paths = loader._get_paths()
         for path in paths:
@@ -181,7 +171,7 @@ class DocCLI(CLI):
 
     def get_plugin_metadata(self, plugin_type, plugin_name):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        loader = self.loader_map[plugin_type]
+        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if filename is None:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
@@ -271,7 +261,7 @@ class DocCLI(CLI):
 
                 return text
             else:
-                if 'removed' in metadata.get('status', []):
+                if 'removed' in metadata['status']:
                     display.warning("%s %s has been removed\n" % (plugin_type, plugin))
                     return
 
@@ -281,7 +271,7 @@ class DocCLI(CLI):
         except Exception as e:
             display.vvv(traceback.format_exc())
             raise AnsibleError(
-                "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, str(e)))
+                "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e)))
 
     def find_plugins(self, path, ptype):
 
@@ -350,11 +340,12 @@ class DocCLI(CLI):
                 if not doc or not isinstance(doc, dict):
                     with open(filename) as f:
                         metadata = extract_metadata(module_data=f.read())
-                    if 'removed' not in metadata[0].get('status', []):
-                        desc = 'UNDOCUMENTED'
-                        display.warning("%s parsing did not produce documentation." % plugin)
-                    else:
-                        continue
+                    if metadata[0]:
+                        if 'removed' not in metadata[0].get('status', []):
+                            display.warning("%s parsing did not produce documentation." % plugin)
+                        else:
+                            continue
+                    desc = 'UNDOCUMENTED'
                 else:
                     desc = self.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
 
@@ -366,7 +357,7 @@ class DocCLI(CLI):
                 else:
                     text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
             except Exception as e:
-                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
         if len(deprecated) > 0:
             text.append("\nDEPRECATED:")
@@ -395,7 +386,7 @@ class DocCLI(CLI):
                 text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
 
             except Exception as e:
-                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
         return "\n".join(text)
 
@@ -519,26 +510,21 @@ class DocCLI(CLI):
                              'community': 'The Ansible Community',
                              'curated': 'A Third Party',
                              }
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
-
-        return []
+        return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
 
     @staticmethod
     def get_metadata_block(doc):
         text = []
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            text.append("METADATA:")
-            text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
 
-            for k in (m for m in doc['metadata'] if m not in ('version', 'metadata_version', 'supported_by')):
-                if isinstance(k, list):
-                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
-                else:
-                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
-            return text
+        text.append("METADATA:")
+        text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
 
-        return []
+        for k in (m for m in doc['metadata'] if m != 'supported_by'):
+            if isinstance(k, list):
+                text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+            else:
+                text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+        return text
 
     def get_man_text(self, doc):
 

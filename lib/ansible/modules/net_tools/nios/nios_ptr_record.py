@@ -8,13 +8,13 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 ---
 module: nios_ptr_record
 version_added: "2.7"
-author: "Trebuchet Clement"
+author: "Trebuchet Clement (@clementtrebuchet)"
 short_description: Configure Infoblox NIOS PTR records
 description:
   - Adds and/or removes instances of PTR record objects from

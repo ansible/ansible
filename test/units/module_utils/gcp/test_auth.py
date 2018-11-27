@@ -20,7 +20,7 @@ import sys
 
 import pytest
 
-from ansible.compat.tests import mock, unittest
+from units.compat import mock, unittest
 from ansible.module_utils.gcp import (_get_gcp_ansible_credentials, _get_gcp_credentials, _get_gcp_environ_var,
                                       _get_gcp_environment_credentials,
                                       _validate_credentials_file)

@@ -34,7 +34,6 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
@@ -44,20 +43,18 @@ from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
 from ansible.module_utils.six.moves import reduce, shlex_quote
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
@@ -178,9 +175,11 @@ def regex_search(value, regex, *args, **kwargs):
             return items
 
 
-def ternary(value, true_val, false_val):
+def ternary(value, true_val, false_val, none_val=None):
     '''  value ? true_val : false_val '''
-    if bool(value):
+    if value is None and none_val is not None:
+        return none_val
+    elif bool(value):
         return true_val
     else:
         return false_val
@@ -259,7 +258,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
     try:
         return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds)
     except AnsibleError as e:
-        reraise(AnsibleFilterError, AnsibleFilterError(str(e), orig_exc=e), sys.exc_info()[2])
+        reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
 
 
 def to_uuid(string):
@@ -438,8 +437,8 @@ def flatten(mylist, levels=None):
             if levels is None:
                 ret.extend(flatten(element))
             elif levels >= 1:
-                levels = int(levels) - 1
-                ret.extend(flatten(element, levels=levels))
+                # decrement as we go down the stack
+                ret.extend(flatten(element, levels=(int(levels) - 1)))
             else:
                 ret.append(element)
         else:
@@ -494,7 +493,7 @@ def subelements(obj, subelements, skip_missing=False):
     return results
 
 
-def dict_to_list_of_dict_key_value_elements(mydict):
+def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='value'):
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
@@ -503,7 +502,7 @@ def dict_to_list_of_dict_key_value_elements(mydict):
 
     ret = []
     for key in mydict:
-        ret.append({'key': key, 'value': mydict[key]})
+        ret.append({key_name: key, value_name: mydict[key]})
     return ret
 
 

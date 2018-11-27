@@ -23,12 +23,9 @@ from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def get_reserved_names(include_private=True):

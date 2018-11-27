@@ -28,7 +28,7 @@ short_description: Copy a file to a remote cloudengine device over SCP on HUAWEI
 description:
     - Copy a file to a remote cloudengine device over SCP on HUAWEI CloudEngine switches.
 author:
-    - Zhou Zhijin (@CloudEngine-Ansible)
+    - Zhou Zhijin (@QijunPan)
 notes:
     - The feature must be enabled with feature scp-server.
     - If the file is already present, no transfer will take place.
@@ -108,9 +108,10 @@ remote_file:
 
 import re
 import os
+import sys
 import time
 from xml.etree import ElementTree
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
 
 try:
@@ -155,7 +156,7 @@ def get_cli_exception(exc=None):
 
     msg = list()
     if not exc:
-        exc = get_exception()
+        exc = sys.exc_info[1]
     if exc:
         errs = str(exc).split("\r\n")
         for err in errs:

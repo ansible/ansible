@@ -22,11 +22,23 @@ author:
   - "Yanis Guenane (@Spredzy)"
   - "Remy Leone (@sieben)"
 extends_documentation_fragment: scaleway
+options:
+  region:
+    version_added: "2.8"
+    description:
+     - Scaleway region to use (for example par1).
+    required: true
+    choices:
+      - ams1
+      - EMEA-NL-EVS
+      - par1
+      - EMEA-FR-PAR1
 '''
 
 EXAMPLES = r'''
 - name: Gather Scaleway volumes facts
   scaleway_volume_facts:
+    region: par1
 '''
 
 RETURN = r'''
@@ -54,8 +66,8 @@ scaleway_volume_facts:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.scaleway import (
-    Scaleway, ScalewayException, scaleway_argument_spec
-)
+    Scaleway, ScalewayException, scaleway_argument_spec,
+    SCALEWAY_LOCATION)
 
 
 class ScalewayVolumeFacts(Scaleway):
@@ -64,10 +76,18 @@ class ScalewayVolumeFacts(Scaleway):
         super(ScalewayVolumeFacts, self).__init__(module)
         self.name = 'volumes'
 
+        region = module.params["region"]
+        self.module.params['api_url'] = SCALEWAY_LOCATION[region]["api_endpoint"]
+
 
 def main():
+    argument_spec = scaleway_argument_spec()
+    argument_spec.update(dict(
+        region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
+    ))
+
     module = AnsibleModule(
-        argument_spec=scaleway_argument_spec(),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 

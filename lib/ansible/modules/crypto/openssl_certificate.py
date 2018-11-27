@@ -521,11 +521,11 @@ class SelfSignedCertificate(Certificate):
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
             if self.notBefore:
-                cert.set_notBefore(self.notBefore)
+                cert.set_notBefore(to_bytes(self.notBefore))
             else:
                 cert.gmtime_adj_notBefore(0)
             if self.notAfter:
-                cert.set_notAfter(self.notAfter)
+                cert.set_notAfter(to_bytes(self.notAfter))
             else:
                 # If no NotAfter specified, expire in
                 # 10 years. 315360000 is 10 years in seconds.
@@ -618,11 +618,11 @@ class OwnCACertificate(Certificate):
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
             if self.notBefore:
-                cert.set_notBefore(self.notBefore.encode())
+                cert.set_notBefore(to_bytes(self.notBefore))
             else:
                 cert.gmtime_adj_notBefore(0)
             if self.notAfter:
-                cert.set_notAfter(self.notAfter.encode())
+                cert.set_notAfter(to_bytes(self.notAfter))
             else:
                 # If no NotAfter specified, expire in
                 # 10 years. 315360000 is 10 years in seconds.
@@ -987,18 +987,18 @@ def main():
             # General properties of a certificate
             privatekey_path=dict(type='path'),
             privatekey_passphrase=dict(type='str', no_log=True),
-            signature_algorithms=dict(type='list'),
+            signature_algorithms=dict(type='list', elements='str'),
             subject=dict(type='dict'),
             subject_strict=dict(type='bool', default=False),
             issuer=dict(type='dict'),
             issuer_strict=dict(type='bool', default=False),
             has_expired=dict(type='bool', default=False),
             version=dict(type='int'),
-            keyUsage=dict(type='list', aliases=['key_usage']),
+            keyUsage=dict(type='list', aliases=['key_usage'], elements='str'),
             keyUsage_strict=dict(type='bool', default=False, aliases=['key_usage_strict']),
-            extendedKeyUsage=dict(type='list', aliases=['extended_key_usage'], ),
+            extendedKeyUsage=dict(type='list', aliases=['extended_key_usage'], elements='str'),
             extendedKeyUsage_strict=dict(type='bool', default=False, aliases=['extended_key_usage_strict']),
-            subjectAltName=dict(type='list', aliases=['subject_alt_name']),
+            subjectAltName=dict(type='list', aliases=['subject_alt_name'], elements='str'),
             subjectAltName_strict=dict(type='bool', default=False, aliases=['subject_alt_name_strict']),
             notBefore=dict(type='str', aliases=['not_before']),
             notAfter=dict(type='str', aliases=['not_after']),

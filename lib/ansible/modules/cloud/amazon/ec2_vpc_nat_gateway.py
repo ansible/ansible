@@ -129,7 +129,7 @@ EXAMPLES = '''
     nat_gateway_id: "{{ item.NatGatewayId }}"
     release_eip: yes
   register: delete_nat_gateway_result
-  with_items: "{{ gateways_to_remove.result }}"
+  loop: "{{ gateways_to_remove.result }}"
 
 - name: Delete nat gateway and wait for deleted status.
   ec2_vpc_nat_gateway:
@@ -151,7 +151,7 @@ EXAMPLES = '''
 
 RETURN = '''
 create_time:
-  description: The ISO 8601 date time formatin UTC.
+  description: The ISO 8601 date time format in UTC.
   returned: In all cases.
   type: string
   sample: "2016-03-05T05:19:20.282000+00:00'"

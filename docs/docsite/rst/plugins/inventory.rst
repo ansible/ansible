@@ -3,7 +3,7 @@
 .. _inventory_plugins:
 
 Inventory Plugins
------------------
+=================
 
 Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either via the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
 
@@ -11,7 +11,7 @@ Inventory plugins allow users to point at data sources to compile the inventory 
 .. _enabling_inventory:
 
 Enabling Inventory Plugins
-++++++++++++++++++++++++++
+--------------------------
 
 Most inventory plugins shipped with Ansible are disabled by default and need to be whitelisted in your
 :ref:`ansible.cfg <ansible_configuration_settings>` file in order to function.  This is how the default whitelist looks in the
@@ -20,7 +20,7 @@ config file that ships with Ansible:
 .. code-block:: ini
 
    [inventory]
-   enable_plugins = host_list, script, yaml, ini
+   enable_plugins = host_list, script, yaml, ini, auto
 
 This list also establishes the order in which each plugin tries to parse an inventory source. Any plugins left out of the list will not be considered, so you can 'optimize' your inventory loading by minimizing it to what you actually use. For example:
 
@@ -33,7 +33,7 @@ This list also establishes the order in which each plugin tries to parse an inve
 .. _using_inventory:
 
 Using Inventory Plugins
-+++++++++++++++++++++++
+-----------------------
 
 The only requirement for using an inventory plugin after it is enabled is to provide an inventory source to parse.
 Ansible will try to use the list of enabled inventory plugins, in order, against each inventory source provided.
@@ -61,7 +61,7 @@ The ``auto`` inventory plugin is enabled by default and works by using the ``plu
       |  |--ec2-98-765-432-10.compute-1.amazonaws.com
       |--@ungrouped:
 
-You can set the default inventory path (via ``inventory`` in the `ansible.cfg` [defaults] section or the :envvar:`ANSIBLE_HOSTS` environment variable) to your inventory source(s). Now running ``ansible-inventory --graph`` should yield the same output as when you passed your YAML configuration source(s) directly. You can add custom inventory plugins to your plugin path to use in the same way.
+You can set the default inventory path (via ``inventory`` in the `ansible.cfg` [defaults] section or the :envvar:`ANSIBLE_INVENTORY` environment variable) to your inventory source(s). Now running ``ansible-inventory --graph`` should yield the same output as when you passed your YAML configuration source(s) directly. You can add custom inventory plugins to your plugin path to use in the same way.
 
 Your inventory source might be a directory of inventory configuration files. The constructed inventory plugin only operates on those hosts already in inventory, so you may want the constructed inventory configuration parsed at a particular point (such as last). Ansible parses the directory recursively, alphabetically. You cannot configure the parsing approach, so name your files to make it work predictably. Inventory plugins that extend constructed features directly can work around that restriction by adding constructed options in addition to the inventory plugin options. Otherwise, you can use ``-i`` with multiple sources to impose a specific order, e.g. ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``.
 
@@ -107,7 +107,7 @@ If a host does not have the variables in the configuration above (i.e. ``tags.Na
 .. _inventory_plugin_list:
 
 Plugin List
-+++++++++++
+-----------
 
 You can use ``ansible-doc -t inventory -l`` to see the list of available plugins. 
 Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentation and examples.

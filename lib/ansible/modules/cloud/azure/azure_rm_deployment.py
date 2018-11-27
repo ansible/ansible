@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -23,7 +23,7 @@ version_added: "2.1"
 description:
      - "Create or destroy Azure Resource Manager template deployments via the Azure SDK for Python.
        You can find some quick start templates in GitHub here https://github.com/azure/azure-quickstart-templates.
-       For more information on Azue resource manager templates see https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/."
+       For more information on Azure Resource Manager templates see https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/."
 
 options:
   resource_group_name:
@@ -491,7 +491,8 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
         if self.append_tags and self.tags:
             try:
-                rg = self.get_resource_group(self.resource_group_name)
+                # fetch the RG directly (instead of using the base helper) since we don't want to exit if it's missing
+                rg = self.rm_client.resource_groups.get(self.resource_group_name)
                 if rg.tags:
                     self.tags = dict(self.tags, **rg.tags)
             except CloudError:

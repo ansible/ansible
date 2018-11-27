@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -105,7 +105,6 @@ try:
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
@@ -116,7 +115,6 @@ except ImportError:
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
 
 
@@ -364,7 +362,7 @@ class ModuleManager(object):
             return True
         raise F5ModuleError(resp.content)
 
-    def read_current_from_device(self):
+    def read_current_from_device(self):  # lgtm [py/similar-function]
         uri = "https://{0}:{1}/mgmt/tm/security/dos/profile/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
@@ -416,12 +414,15 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         exit_json(module, results, client)
     except F5ModuleError as ex:
+        cleanup_tokens(client)
         fail_json(module, ex, client)
 
 

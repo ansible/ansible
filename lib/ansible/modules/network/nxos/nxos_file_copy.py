@@ -191,7 +191,7 @@ def md5sum_check(module, dst, file_system):
 
     local_file = module.params['local_file']
     try:
-        with open(local_file, 'r') as f:
+        with open(local_file, 'rb') as f:
             filecontent = f.read()
     except (OSError, IOError) as exc:
         module.fail_json(msg="Error reading the file: %s" % to_text(exc))
@@ -308,9 +308,12 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
                     child.expect('#')
                     ldir += each + '/'
 
-        command = ('copy scp://' + module.params['remote_scp_server_user'] +
-                   '@' + module.params['remote_scp_server'] + module.params['remote_file'] +
-                   ' ' + file_system + ldir + local + ' vrf management')
+        cmdroot = 'copy scp://'
+        ruser = module.params['remote_scp_server_user'] + '@'
+        rserver = module.params['remote_scp_server']
+        rfile = module.params['remote_file'] + ' '
+        vrf = ' vrf management'
+        command = (cmdroot + ruser + rserver + rfile + file_system + ldir + local + vrf)
 
         child.sendline(command)
         # response could be remote host connection time out,

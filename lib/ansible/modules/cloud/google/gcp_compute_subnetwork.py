@@ -32,77 +32,111 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_subnetwork
 description:
-    - A VPC network is a virtual version of the traditional physical networks that exist
-      within and between physical data centers. A VPC network provides connectivity for
-      your Compute Engine virtual machine (VM) instances, Container Engine containers,
-      App Engine Flex services, and other network-related resources.
-    - Each GCP project contains one or more VPC networks. Each VPC network is a global
-      entity spanning all GCP regions. This global VPC network allows VM instances and
-      other resources to communicate with each other via internal, private IP addresses.
-    - Each VPC network is subdivided into subnets, and each subnet is contained within
-      a single region. You can have more than one subnet in a region for a given VPC network.
-      Each subnet has a contiguous private RFC1918 IP space. You create instances, containers,
-      and the like in these subnets.
-    - When you create an instance, you must create it in a subnet, and the instance draws
-      its internal IP address from that subnet.
-    - Virtual machine (VM) instances in a VPC network can communicate with instances in
-      all other subnets of the same VPC network, regardless of region, using their RFC1918
-      private IP addresses. You can isolate portions of the network, even entire subnets,
-      using firewall rules.
+- A VPC network is a virtual version of the traditional physical networks that exist
+  within and between physical data centers. A VPC network provides connectivity for
+  your Compute Engine virtual machine (VM) instances, Container Engine containers,
+  App Engine Flex services, and other network-related resources.
+- Each GCP project contains one or more VPC networks. Each VPC network is a global
+  entity spanning all GCP regions. This global VPC network allows VM instances and
+  other resources to communicate with each other via internal, private IP addresses.
+- Each VPC network is subdivided into subnets, and each subnet is contained within
+  a single region. You can have more than one subnet in a region for a given VPC network.
+  Each subnet has a contiguous private RFC1918 IP space. You create instances, containers,
+  and the like in these subnets.
+- When you create an instance, you must create it in a subnet, and the instance draws
+  its internal IP address from that subnet.
+- Virtual machine (VM) instances in a VPC network can communicate with instances in
+  all other subnets of the same VPC network, regardless of region, using their RFC1918
+  private IP addresses. You can isolate portions of the network, even entire subnets,
+  using firewall rules.
 short_description: Creates a GCP Subnetwork
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource. This field can be set only at resource creation time.
+    required: false
+  ip_cidr_range:
+    description:
+    - The range of internal addresses that are owned by this subnetwork.
+    - Provide this property when you create the subnetwork. For example, 10.0.0.0/8
+      or 192.168.0.0/16. Ranges must be unique and non-overlapping within a network.
+      Only IPv4 is supported.
+    required: true
+  name:
+    description:
+    - The name of the resource, provided by the client when initially creating the
+      resource. The name must be 1-63 characters long, and comply with RFC1035. Specifically,
+      the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  network:
+    description:
+    - The network this subnet belongs to.
+    - Only networks that are in the distributed mode can have subnetworks.
+    - 'This field represents a link to a Network resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}" Alternatively,
+      you can set this network to a dictionary with the selfLink key where the value
+      is the selfLink of your Network'
+    required: true
+  enable_flow_logs:
+    description:
+    - Whether to enable flow logging for this subnetwork.
+    required: false
+    type: bool
+    version_added: 2.8
+  secondary_ip_ranges:
+    description:
+    - An array of configurations for secondary IP ranges for VM instances contained
+      in this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
+      of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
+    required: false
+    version_added: 2.8
+    suboptions:
+      range_name:
         description:
-            - An optional description of this resource. Provide this property when you create
-              the resource. This field can be set only at resource creation time.
-        required: false
-    ip_cidr_range:
-        description:
-            - The range of internal addresses that are owned by this subnetwork.
-            - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
-              192.168.0.0/16. Ranges must be unique and non-overlapping within a network. Only
-              IPv4 is supported.
+        - The name associated with this subnetwork secondary range, used when adding
+          an alias IP range to a VM instance. The name must be 1-63 characters long,
+          and comply with RFC1035. The name must be unique within the subnetwork.
         required: true
-    name:
+      ip_cidr_range:
         description:
-            - The name of the resource, provided by the client when initially creating the resource.
-              The name must be 1-63 characters long, and comply with RFC1035. Specifically, the
-              name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
+        - The range of IP addresses belonging to this subnetwork secondary range.
+          Provide this property when you create the subnetwork.
+        - Ranges must be unique and non-overlapping with all primary and secondary
+          IP ranges within a network. Only IPv4 is supported.
         required: true
-    network:
-        description:
-            - The network this subnet belongs to.
-            - Only networks that are in the distributed mode can have subnetworks.
-        required: true
-    private_ip_google_access:
-        description:
-            - Whether the VMs in this subnet can access Google services without assigned external
-              IP addresses.
-        required: false
-        type: bool
-    region:
-        description:
-            - URL of the GCP region for this subnetwork.
-        required: true
+  private_ip_google_access:
+    description:
+    - Whether the VMs in this subnet can access Google services without assigned external
+      IP addresses.
+    required: false
+    type: bool
+  region:
+    description:
+    - URL of the GCP region for this subnetwork.
+    required: true
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)"
-    - "Private Google Access: U(https://cloud.google.com/vpc/docs/configure-private-google-access)"
-    - "Cloud Networking: U(https://cloud.google.com/vpc/docs/using-vpc)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)'
+- 'Private Google Access: U(https://cloud.google.com/vpc/docs/configure-private-google-access)'
+- 'Cloud Networking: U(https://cloud.google.com/vpc/docs/using-vpc)'
 '''
 
 EXAMPLES = '''
@@ -123,76 +157,110 @@ EXAMPLES = '''
       network: "{{ network }}"
       ip_cidr_range: 172.16.0.0/16
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource. This field can be set only at resource creation time.
-        returned: success
-        type: str
-    gateway_address:
-        description:
-            - The gateway address for default routes to reach destination addresses outside this
-              subnetwork.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    ip_cidr_range:
-        description:
-            - The range of internal addresses that are owned by this subnetwork.
-            - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
-              192.168.0.0/16. Ranges must be unique and non-overlapping within a network. Only
-              IPv4 is supported.
-        returned: success
-        type: str
-    name:
-        description:
-            - The name of the resource, provided by the client when initially creating the resource.
-              The name must be 1-63 characters long, and comply with RFC1035. Specifically, the
-              name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    network:
-        description:
-            - The network this subnet belongs to.
-            - Only networks that are in the distributed mode can have subnetworks.
-        returned: success
-        type: dict
-    private_ip_google_access:
-        description:
-            - Whether the VMs in this subnet can access Google services without assigned external
-              IP addresses.
-        returned: success
-        type: bool
-    region:
-        description:
-            - URL of the GCP region for this subnetwork.
-        returned: success
-        type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource. This field can be set only at resource creation time.
+  returned: success
+  type: str
+gatewayAddress:
+  description:
+  - The gateway address for default routes to reach destination addresses outside
+    this subnetwork.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+ipCidrRange:
+  description:
+  - The range of internal addresses that are owned by this subnetwork.
+  - Provide this property when you create the subnetwork. For example, 10.0.0.0/8
+    or 192.168.0.0/16. Ranges must be unique and non-overlapping within a network.
+    Only IPv4 is supported.
+  returned: success
+  type: str
+name:
+  description:
+  - The name of the resource, provided by the client when initially creating the resource.
+    The name must be 1-63 characters long, and comply with RFC1035. Specifically,
+    the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+network:
+  description:
+  - The network this subnet belongs to.
+  - Only networks that are in the distributed mode can have subnetworks.
+  returned: success
+  type: dict
+enableFlowLogs:
+  description:
+  - Whether to enable flow logging for this subnetwork.
+  returned: success
+  type: bool
+fingerprint:
+  description:
+  - Fingerprint of this resource. This field is used internally during updates of
+    this resource.
+  returned: success
+  type: str
+secondaryIpRanges:
+  description:
+  - An array of configurations for secondary IP ranges for VM instances contained
+    in this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
+    of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
+  returned: success
+  type: complex
+  contains:
+    rangeName:
+      description:
+      - The name associated with this subnetwork secondary range, used when adding
+        an alias IP range to a VM instance. The name must be 1-63 characters long,
+        and comply with RFC1035. The name must be unique within the subnetwork.
+      returned: success
+      type: str
+    ipCidrRange:
+      description:
+      - The range of IP addresses belonging to this subnetwork secondary range. Provide
+        this property when you create the subnetwork.
+      - Ranges must be unique and non-overlapping with all primary and secondary IP
+        ranges within a network. Only IPv4 is supported.
+      returned: success
+      type: str
+privateIpGoogleAccess:
+  description:
+  - Whether the VMs in this subnet can access Google services without assigned external
+    IP addresses.
+  returned: success
+  type: bool
+region:
+  description:
+  - URL of the GCP region for this subnetwork.
+  returned: success
+  type: str
 '''
 
 ################################################################################
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
 import time
 
@@ -211,6 +279,11 @@ def main():
             ip_cidr_range=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             network=dict(required=True, type='dict'),
+            enable_flow_logs=dict(type='bool'),
+            secondary_ip_ranges=dict(type='list', elements='dict', options=dict(
+                range_name=dict(required=True, type='str'),
+                ip_cidr_range=dict(required=True, type='str')
+            )),
             private_ip_google_access=dict(type='bool'),
             region=dict(required=True, type='str')
         )
@@ -228,7 +301,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -251,9 +325,60 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('ipCidrRange') != request.get('ipCidrRange'):
+        ip_cidr_range_update(module, request, response)
+    if response.get('enableFlowLogs') != request.get('enableFlowLogs') or response.get('secondaryIpRanges') != request.get('secondaryIpRanges'):
+        enable_flow_logs_update(module, request, response)
+    if response.get('privateIpGoogleAccess') != request.get('privateIpGoogleAccess'):
+        private_ip_google_access_update(module, request, response)
+
+
+def ip_cidr_range_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/subnetworks/{name}/expandIpCidrRange"
+        ]).format(**module.params),
+        {
+            u'ipCidrRange': module.params.get('ip_cidr_range')
+        }
+    )
+
+
+def enable_flow_logs_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.patch(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/subnetworks/{name}"
+        ]).format(**module.params),
+        {
+            u'enableFlowLogs': module.params.get('enable_flow_logs'),
+            u'fingerprint': response.get('fingerprint'),
+            u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request()
+        }
+    )
+
+
+def private_ip_google_access_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/subnetworks/{name}/setPrivateIpGoogleAccess"
+        ]).format(**module.params),
+        {
+            u'privateIpGoogleAccess': module.params.get('private_ip_google_access')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -268,6 +393,8 @@ def resource_to_request(module):
         u'ipCidrRange': module.params.get('ip_cidr_range'),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
+        u'enableFlowLogs': module.params.get('enable_flow_logs'),
+        u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
         u'privateIpGoogleAccess': module.params.get('private_ip_google_access'),
         u'region': module.params.get('region')
     }
@@ -279,9 +406,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -292,9 +419,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/subnetworks".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -309,8 +436,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -344,6 +469,9 @@ def response_to_hash(module, response):
         u'ipCidrRange': response.get(u'ipCidrRange'),
         u'name': response.get(u'name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
+        u'enableFlowLogs': response.get(u'enableFlowLogs'),
+        u'fingerprint': response.get(u'fingerprint'),
+        u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(response.get(u'secondaryIpRanges', []), module).from_response(),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),
         u'region': module.params.get('region')
     }
@@ -373,8 +501,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -384,6 +510,39 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+class SubnetworkSecondaryiprangesArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({
+            u'rangeName': item.get('range_name'),
+            u'ipCidrRange': item.get('ip_cidr_range')
+        })
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({
+            u'rangeName': item.get(u'rangeName'),
+            u'ipCidrRange': item.get(u'ipCidrRange')
+        })
 
 
 if __name__ == '__main__':

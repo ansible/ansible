@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 module: ovirt_quota_facts
 short_description: Retrieve facts about one or more oVirt/RHV quotas
 version_added: "2.3"
-author: "Red Hat"
+author: "Maor Lipchuk (@machacekondra)"
 description:
     - "Retrieve facts about one or more oVirt/RHV quotas."
 notes:
@@ -85,9 +85,6 @@ def main():
         name=dict(default=None),
     )
     module = AnsibleModule(argument_spec)
-
-    if module._name == 'ovirt_quotas_facts':
-        module.deprecate("The 'ovirt_quotas_facts' module is being renamed 'ovirt_quota_facts'", version=2.8)
 
     check_sdk(module)
 

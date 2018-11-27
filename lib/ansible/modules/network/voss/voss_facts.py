@@ -129,7 +129,6 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.network.voss.voss import run_commands
-from ansible.module_utils.network.voss.voss import check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -441,9 +440,6 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
-global warnings
-warnings = list()
-
 
 def main():
     """main entry point for module execution
@@ -504,7 +500,7 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    check_args(module, warnings)
+    warnings = list()
 
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 

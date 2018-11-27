@@ -73,7 +73,7 @@ options:
     version_added: 2.6
 author:
 - Amir Moulavi (@amir343) <amir.moulavi@gmail.com>
-- Tim C <defunct@defunct.io>
+- Tim C (@defunctio) <defunct@defunct.io>
 extends_documentation_fragment:
     - aws
     - ec2
@@ -142,6 +142,7 @@ image_id:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
+from ansible.module_utils._text import to_native
 
 try:
     from botocore.exceptions import ClientError, NoCredentialsError, WaiterError, BotoCoreError
@@ -189,6 +190,7 @@ def copy_image(module, ec2):
         if module.params.get('wait'):
             delay = 15
             max_attempts = module.params.get('wait_timeout') // delay
+            image_id = image.get('ImageId')
             ec2.get_waiter('image_available').wait(
                 ImageIds=[image_id],
                 WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
@@ -200,7 +202,7 @@ def copy_image(module, ec2):
     except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e, msg="Could not copy AMI")
     except Exception as e:
-        module.fail_json(msg='Unhandled exception. (%s)' % str(e))
+        module.fail_json(msg='Unhandled exception. (%s)' % to_native(e))
 
 
 def main():

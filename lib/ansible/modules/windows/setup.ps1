@@ -309,6 +309,13 @@ if($gather_subset.Contains('platform')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
 
+    try {
+        $ansible_reboot_pending = Get-PendingRebootStatus
+    } catch {
+        # fails for non-admin users, set to null in this case
+        $ansible_reboot_pending = $null
+    }
+
     $ansible_facts += @{
         ansible_architecture = $win32_os.OSArchitecture
         ansible_domain = $ip_props.DomainName
@@ -320,7 +327,7 @@ if($gather_subset.Contains('platform')) {
         ansible_owner_contact = ([string] $win32_cs.PrimaryOwnerContact)
         ansible_owner_name = ([string] $win32_cs.PrimaryOwnerName)
         # FUTURE: should this live in its own subset?
-        ansible_reboot_pending = (Get-PendingRebootStatus)
+        ansible_reboot_pending = $ansible_reboot_pending
         ansible_system = $osversion.Platform.ToString()
         ansible_system_description = ([string] $win32_os.Description)
         ansible_system_vendor = $win32_cs.Manufacturer
@@ -397,7 +404,8 @@ if($gather_subset.Contains('windows_domain')) {
 
 if($gather_subset.Contains('winrm')) {
 
-    $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
+    $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse -ErrorAction SilentlyContinue | `
+        Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
     if ($winrm_https_listener_parent_paths -isnot [array]) {
        $winrm_https_listener_parent_paths = @($winrm_https_listener_parent_paths)
     }

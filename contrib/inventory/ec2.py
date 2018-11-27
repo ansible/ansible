@@ -159,6 +159,7 @@ import os
 import argparse
 import re
 from time import time
+from copy import deepcopy
 import boto
 from boto import ec2
 from boto import rds
@@ -187,16 +188,16 @@ DEFAULTS = {
     'all_elasticache_replication_groups': 'False',
     'all_instances': 'False',
     'all_rds_instances': 'False',
-    'aws_access_key_id': None,
-    'aws_secret_access_key': None,
-    'aws_security_token': None,
-    'boto_profile': None,
+    'aws_access_key_id': '',
+    'aws_secret_access_key': '',
+    'aws_security_token': '',
+    'boto_profile': '',
     'cache_max_age': '300',
     'cache_path': '~/.ansible/tmp',
     'destination_variable': 'public_dns_name',
     'elasticache': 'True',
     'eucalyptus': 'False',
-    'eucalyptus_host': None,
+    'eucalyptus_host': '',
     'expand_csv_tags': 'False',
     'group_by_ami_id': 'True',
     'group_by_availability_zone': 'True',
@@ -218,19 +219,19 @@ DEFAULTS = {
     'group_by_tag_keys': 'True',
     'group_by_tag_none': 'True',
     'group_by_vpc_id': 'True',
-    'hostname_variable': None,
-    'iam_role': None,
+    'hostname_variable': '',
+    'iam_role': '',
     'include_rds_clusters': 'False',
     'nested_groups': 'False',
-    'pattern_exclude': None,
-    'pattern_include': None,
+    'pattern_exclude': '',
+    'pattern_include': '',
     'rds': 'False',
     'regions': 'all',
     'regions_exclude': 'us-gov-west-1, cn-north-1',
     'replace_dash_in_groups': 'True',
     'route53': 'False',
     'route53_excluded_zones': '',
-    'route53_hostnames': None,
+    'route53_hostnames': '',
     'stack_filters': 'False',
     'vpc_destination_variable': 'ip_address'
 }
@@ -569,7 +570,7 @@ class Ec2Inventory(object):
         return connect_args
 
     def connect_to_aws(self, module, region):
-        connect_args = self.credentials
+        connect_args = deepcopy(self.credentials)
 
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:

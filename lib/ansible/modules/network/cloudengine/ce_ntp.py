@@ -28,7 +28,7 @@ short_description: Manages core NTP configuration on HUAWEI CloudEngine switches
 description:
     - Manages core NTP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 options:
     server:
         description:

@@ -41,12 +41,12 @@ options:
         version_added: '2.7'
 """
 
-import collections
 import json
 import time
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.plugins.cliconf import CliconfBase, enable_mode
@@ -116,7 +116,7 @@ class Cliconf(CliconfBase):
         requests = []
         multiline = False
         for line in to_list(candidate):
-            if not isinstance(line, collections.Mapping):
+            if not isinstance(line, Mapping):
                 line = {'command': line}
 
             cmd = line['command']
@@ -175,7 +175,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'commands' value is required")
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -214,7 +214,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
-        candidate_obj = NetworkConfig(indent=3, ignore_lines=diff_ignore_lines)
+        candidate_obj = NetworkConfig(indent=3)
         candidate_obj.load(candidate)
 
         if running and diff_match != 'none' and diff_replace != 'config':

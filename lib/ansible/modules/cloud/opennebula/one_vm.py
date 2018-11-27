@@ -51,6 +51,7 @@ options:
   api_password:
     description:
       - Password of the user to login into OpenNebula RPC server. If not set
+      - then the value of the C(ONE_PASSWORD) environment variable is used.
   template_name:
     description:
       - Name of VM template to use to create a new instace
@@ -1330,20 +1331,20 @@ def main():
     template_id = None
     if requested_template_id or requested_template_name:
         template_id = get_template_id(module, client, requested_template_id, requested_template_name)
-        if not template_id:
+        if template_id is None:
             if requested_template_id:
                 module.fail_json(msg='There is no template with template_id: ' + str(requested_template_id))
             elif requested_template_name:
                 module.fail_json(msg="There is no template with name: " + requested_template_name)
 
-    if exact_count and not template_id:
+    if exact_count and template_id is None:
         module.fail_json(msg='Option `exact_count` needs template_id or template_name')
 
     if exact_count is not None and not (count_attributes or count_labels):
         module.fail_json(msg='Either `count_attributes` or `count_labels` has to be specified with option `exact_count`.')
     if (count_attributes or count_labels) and exact_count is None:
         module.fail_json(msg='Option `exact_count` has to be specified when either `count_attributes` or `count_labels` is used.')
-    if template_id and state != 'present':
+    if template_id is not None and state != 'present':
         module.fail_json(msg="Only state 'present' is valid for the template")
 
     if memory:
@@ -1371,7 +1372,7 @@ def main():
                                                                                    count_attributes, labels, count_labels, disk_size,
                                                                                    networks, hard, wait, wait_timeout)
         vms = tagged_instances_list
-    elif template_id and state == 'present':
+    elif template_id is not None and state == 'present':
         # Deploy count VMs
         changed, instances_list, tagged_instances_list = create_count_of_vms(module, client, template_id, count,
                                                                              attributes, labels, disk_size, networks, wait, wait_timeout)

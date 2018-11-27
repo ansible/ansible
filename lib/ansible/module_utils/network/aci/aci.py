@@ -461,6 +461,7 @@ class ACIModule(object):
         elif mo is None:
             # Query for all objects of the module's class (filter by properties)
             self.path = 'api/class/{0}.json'.format(obj_class)
+            self.update_qs({'query-target-filter': self.build_filter(obj_class, obj_filter)})
         else:
             # Query for a specific object in the module's class
             self.path = 'api/mo/uni/{0}.json'.format(obj_rn)
@@ -485,6 +486,7 @@ class ACIModule(object):
         elif parent_obj is None and mo is None:
             # Query for all objects of the module's class
             self.path = 'api/class/{0}.json'.format(obj_class)
+            self.update_qs({'query-target-filter': self.build_filter(obj_class, obj_filter)})
         elif parent_obj is None:  # mo is known
             # Query for all objects of the module's class that match the provided ID value
             self.path = 'api/class/{0}.json'.format(obj_class)
@@ -521,6 +523,7 @@ class ACIModule(object):
         elif root_obj is None and parent_obj is None and mo is None:
             # Query for all objects of the module's class
             self.path = 'api/class/{0}.json'.format(obj_class)
+            self.update_qs({'query-target-filter': self.build_filter(obj_class, obj_filter)})
         elif root_obj is None and parent_obj is None:  # mo is known
             # Query for all objects of the module's class matching the provided ID value of the object
             self.path = 'api/class/{0}.json'.format(obj_class)
@@ -808,11 +811,15 @@ class ACIModule(object):
             proposed_config = proposed_child[key]['attributes']
             existing_config = None
 
+            # FIXME: Design causes issues for repeated child_classes
             # get existing dictionary from the list of existing to use for comparison
             for child in existing_children:
                 if child.get(child_class):
                     existing_config = child[key]['attributes']
-                    break
+                    # NOTE: This is an ugly fix
+                    # Return the one that is a subset match
+                    if set(proposed_config.items()).issubset(set(existing_config.items())):
+                        break
 
         return child_class, proposed_config, existing_config
 

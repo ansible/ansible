@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import copy
+import re
+import sys
 
 from ansible import constants as C
 from ansible.module_utils._text import to_text
@@ -28,12 +29,9 @@ from ansible.module_utils.connection import Connection
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.nxos.nxos import nxos_provider_spec
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(_ActionModule):
@@ -117,8 +115,10 @@ class ActionModule(_ActionModule):
                 socket_path = self._connection.socket_path
 
             conn = Connection(socket_path)
+            # Match prompts ending in )# except those with (maint-mode)#
+            config_prompt = re.compile(r'^.*\((?!maint-mode).*\)#$')
             out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+            while config_prompt.match(to_text(out, errors='surrogate_then_replace').strip()):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
                 conn.send_command('exit')
                 out = conn.get_prompt()

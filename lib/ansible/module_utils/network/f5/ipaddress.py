@@ -73,7 +73,7 @@ def ipv6_netmask_to_cidr(mask):
                 break
             count += bit_masks.index(int(w, 16))
         return count
-    except:
+    except Exception:
         return -1
 
 
@@ -91,3 +91,15 @@ def is_valid_ip_interface(address):
         return True
     except ValueError:
         return False
+
+
+def get_netmask(address):
+    addr = ip_network(u'{0}'.format(address))
+    netmask = addr.netmask.compressed
+    return netmask
+
+
+def compress_address(address):
+    addr = ip_network(u'{0}'.format(address))
+    result = addr.compressed.split('/')[0]
+    return result

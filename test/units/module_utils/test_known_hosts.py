@@ -85,19 +85,19 @@ URLS = {
 }
 
 
-@pytest.mark.parametrize('url, is_ssh_url', ((k, v['is_ssh_url']) for k, v in URLS.items()))
+@pytest.mark.parametrize('url, is_ssh_url', ((k, URLS[k]['is_ssh_url']) for k in sorted(URLS)))
 def test_is_ssh_url(url, is_ssh_url):
     assert known_hosts.is_ssh_url(url) == is_ssh_url
 
 
-@pytest.mark.parametrize('url, fqdn, port', ((k, v['get_fqdn'], v['port']) for k, v in URLS.items()))
+@pytest.mark.parametrize('url, fqdn, port', ((k, URLS[k]['get_fqdn'], URLS[k]['port']) for k in sorted(URLS)))
 def test_get_fqdn_and_port(url, fqdn, port):
     assert known_hosts.get_fqdn_and_port(url) == (fqdn, port)
 
 
 @pytest.mark.parametrize('fqdn, port, add_host_key_cmd, stdin',
-                         ((v['get_fqdn'], v['port'], v['add_host_key_cmd'], {})
-                          for v in URLS.values() if v['is_ssh_url']),
+                         ((URLS[k]['get_fqdn'], URLS[k]['port'], URLS[k]['add_host_key_cmd'], {})
+                          for k in sorted(URLS) if URLS[k]['is_ssh_url']),
                          indirect=['stdin'])
 def test_add_host_key(am, mocker, fqdn, port, add_host_key_cmd):
     get_bin_path = mocker.MagicMock()

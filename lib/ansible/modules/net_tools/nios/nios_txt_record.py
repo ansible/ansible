@@ -7,14 +7,14 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 ---
 module: nios_txt_record
 version_added: "2.7"
-author: "Corey Wanless"
+author: "Corey Wanless (@coreywan)"
 short_description: Configure Infoblox NIOS txt records
 description:
   - Adds and/or removes instances of txt record objects from

@@ -39,14 +39,11 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.role.requirement import RoleRequirement
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class GalaxyCLI(CLI):
@@ -361,7 +358,7 @@ class GalaxyCLI(CLI):
                     raise AnsibleError("Invalid role requirements file")
                 f.close()
             except (IOError, OSError) as e:
-                raise AnsibleError('Unable to open %s: %s' % (role_file, str(e)))
+                raise AnsibleError('Unable to open %s: %s' % (role_file, to_native(e)))
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
@@ -397,7 +394,7 @@ class GalaxyCLI(CLI):
             try:
                 installed = role.install()
             except AnsibleError as e:
-                display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
+                display.warning(u"- %s was NOT installed successfully: %s " % (role.name, to_text(e)))
                 self.exit_without_ignore()
                 continue
 
@@ -451,7 +448,7 @@ class GalaxyCLI(CLI):
                 else:
                     display.display('- %s is not installed, skipping.' % role_name)
             except Exception as e:
-                raise AnsibleError("Failed to remove role %s: %s" % (role_name, str(e)))
+                raise AnsibleError("Failed to remove role %s: %s" % (role_name, to_native(e)))
 
         return 0
 

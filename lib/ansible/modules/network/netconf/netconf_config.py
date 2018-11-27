@@ -71,7 +71,6 @@ options:
       option completely replaces the configuration in the C(target) datastore. If the value is none the C(target)
       datastore is unaffected by the configuration in the config option, unless and until the incoming configuration
       data uses the C(operation) operation to request a different operation.
-    default: merge
     choices: ['merge', 'replace', 'none']
     version_added: "2.7"
   confirm:
@@ -100,7 +99,8 @@ options:
     version_added: "2.7"
   save:
     description:
-      - The C(save) argument instructs the module to save the running-config to the startup-config if changed.
+      - The C(save) argument instructs the module to save the configuration in C(target) datastore to the
+        startup-config if changed and if :startup capability is supported by Netconf server.
     default: false
     version_added: "2.4"
   backup:
@@ -123,7 +123,7 @@ options:
   commit:
     description:
       - This boolean flag controls if the configuration changes should be committed or not after editing the
-        candidate datastore. This oprion is supported only if remote Netconf server supports :candidate
+        candidate datastore. This option is supported only if remote Netconf server supports :candidate
         capability. If the value is set to I(False) commit won't be issued after edit-config operation
         and user needs to handle commit or discard-changes explicitly.
     type: bool
@@ -230,7 +230,7 @@ def main():
         source_datastore=dict(aliases=['source']),
         format=dict(choices=['xml', 'text'], default='xml'),
         lock=dict(choices=['never', 'always', 'if-supported'], default='always'),
-        default_operation=dict(choices=['merge', 'replace', 'none'], default='merge'),
+        default_operation=dict(choices=['merge', 'replace', 'none']),
         confirm=dict(type='int', default=0),
         confirm_commit=dict(type='bool', default=False),
         error_option=dict(choices=['stop-on-error', 'continue-on-error', 'rollback-on-error'], default='stop-on-error'),
@@ -275,6 +275,7 @@ def main():
     confirm_commit = module.params['confirm_commit']
     confirm = module.params['confirm']
     validate = module.params['validate']
+    save = module.params['save']
 
     conn = Connection(module._socket_path)
     capabilities = get_capabilities(module)
@@ -298,14 +299,14 @@ def main():
             module.fail_json(msg='neither :candidate nor :writable-running are supported by this netconf server')
 
     # Netconf server capability validation against input options
-    if module.params['save'] and not supports_startup:
-        module.fail_json(msg='cannot copy <running/> to <startup/>, while :startup is not supported')
+    if save and not supports_startup:
+        module.fail_json(msg='cannot copy <%s/> to <startup/>, while :startup is not supported' % target)
 
-    if module.params['confirm_commit'] and not operations.get('supports_confirm_commit', False):
+    if confirm_commit and not operations.get('supports_confirm_commit', False):
         module.fail_json(msg='confirm commit is not supported by Netconf server')
 
-    if confirm_commit or (confirm > 0) and not operations.get('supports_confirm_commit', False):
-        module.fail_json(msg='confirm commit is not supported by this netconf server')
+    if (confirm > 0) and not operations.get('supports_confirm_commit', False):
+        module.fail_json(msg='confirm commit is not supported by this netconf server, given confirm timeout: %d' % confirm)
 
     if validate and not operations.get('supports_validate', False):
         module.fail_json(msg='validate is not supported by this netconf server')
@@ -322,6 +323,7 @@ def main():
 
     result = {'changed': False, 'server_capabilities': capabilities.get('server_capabilities', [])}
     before = None
+    after = None
     locked = False
     try:
         if module.params['backup']:
@@ -329,8 +331,7 @@ def main():
             before = to_text(response, errors='surrogate_then_replace').strip()
             result['__backup__'] = before.strip()
         if validate:
-            if not module.check_mode:
-                conn.validate(target)
+            conn.validate(target)
         if source:
             if not module.check_mode:
                 conn.copy(source, target)
@@ -349,7 +350,7 @@ def main():
                 result['changed'] = True
                 module.exit_json(**result)
 
-            if lock:
+            if execute_lock:
                 conn.lock(target=target)
                 locked = True
             if before is None:
@@ -362,23 +363,30 @@ def main():
                 'error_option': module.params['error_option'],
                 'format': module.params['format'],
             }
+
             conn.edit_config(**kwargs)
+
             if supports_commit and module.params['commit']:
+                after = to_text(conn.get_config(source='candidate'), errors='surrogate_then_replace').strip()
                 if not module.check_mode:
-                    timeout = confirm if confirm > 0 else None
-                    conn.commit(confirmed=confirm_commit, timeout=timeout)
+                    confirm_timeout = confirm if confirm > 0 else None
+                    confirmed_commit = True if confirm_timeout else False
+                    conn.commit(confirmed=confirmed_commit, timeout=confirm_timeout)
                 else:
                     conn.discard_changes()
 
-            after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
+            if after is None:
+                after = to_text(conn.get_config(source='running'), errors='surrogate_then_replace').strip()
 
             sanitized_before = sanitize_xml(before)
             sanitized_after = sanitize_xml(after)
             if sanitized_before != sanitized_after:
                 result['changed'] = True
 
-            if module._diff:
-                if result['changed']:
+            if result['changed']:
+                if save and not module.check_mode:
+                    conn.copy_config(target, 'startup')
+                if module._diff:
                     result['diff'] = {'before': sanitized_before, 'after': sanitized_after}
 
     except ConnectionError as e:

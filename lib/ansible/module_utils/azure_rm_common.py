@@ -14,12 +14,9 @@ import json
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
-try:
-    from ansible.release import __version__ as ANSIBLE_VERSION
-except ImportError:
-    ANSIBLE_VERSION = 'unknown'
 
 AZURE_COMMON_ARGS = dict(
     auth_source=dict(
@@ -58,16 +55,18 @@ AZURE_API_PROFILES = {
     'latest': {
         'ContainerInstanceManagementClient': '2018-02-01-preview',
         'ComputeManagementClient': dict(
-            default_api_version='2017-12-01',
-            resource_skus='2017-09-01',
-            disks='2017-03-30',
-            snapshots='2017-03-30',
-            virtual_machine_run_commands='2017-03-30'
+            default_api_version='2018-10-01',
+            resource_skus='2018-10-01',
+            disks='2018-10-01',
+            snapshots='2018-10-01',
+            virtual_machine_run_commands='2018-10-01'
         ),
-        'NetworkManagementClient': '2017-11-01',
+        'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
-        'WebsiteManagementClient': '2016-08-01'
+        'WebsiteManagementClient': '2016-08-01',
+        'PostgreSQLManagementClient': '2017-12-01',
+        'MySQLManagementClient': '2017-12-01'
     },
 
     '2017-03-09-profile': {
@@ -154,6 +153,7 @@ try:
     from azure.mgmt.marketplaceordering import MarketplaceOrderingAgreements
     from azure.mgmt.trafficmanager import TrafficManagerManagementClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
+    from azure.storage.blob import PageBlobService, BlockBlobService
     from adal.authentication_context import AuthenticationContext
     from azure.mgmt.sql import SqlManagementClient
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
@@ -204,7 +204,7 @@ AZURE_PKG_VERSIONS = {
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '2.1.0'
+        'expected_version': '4.3.1'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
@@ -212,7 +212,7 @@ AZURE_PKG_VERSIONS = {
     },
     'NetworkManagementClient': {
         'package_name': 'network',
-        'expected_version': '1.7.1'
+        'expected_version': '2.2.1'
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
@@ -533,9 +533,13 @@ class AzureRMModuleBase(object):
         try:
             self.log('Create blob service')
             if storage_blob_type == 'page':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_page_blob_service()
+                return PageBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
+                                       account_name=storage_account_name,
+                                       account_key=account_keys.keys[0].value)
             elif storage_blob_type == 'block':
-                return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
+                return BlockBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
+                                        account_name=storage_account_name,
+                                        account_key=account_keys.keys[0].value)
             else:
                 raise Exception("Invalid storage blob type defined.")
         except Exception as exc:
@@ -792,13 +796,13 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-11-01')
+                                                            api_version='2018-08-01')
         return self._network_client
 
     @property
     def network_models(self):
         self.log("Getting network models...")
-        return NetworkManagementClient.models("2017-11-01")
+        return NetworkManagementClient.models("2018-08-01")
 
     @property
     def rm_client(self):
@@ -988,7 +992,7 @@ class AzureRMAuth(object):
                 try:
                     self._cloud_environment = azure_cloud.get_cloud_from_metadata_endpoint(raw_cloud_env)
                 except Exception as e:
-                    self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message), exception=traceback.format_exc(e))
+                    self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message), exception=traceback.format_exc())
 
         if self.credentials.get('subscription_id', None) is None and self.credentials.get('credentials') is None:
             self.fail("Credentials did not include a subscription_id value.")

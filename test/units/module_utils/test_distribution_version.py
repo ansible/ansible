@@ -351,7 +351,64 @@ CPE_NAME="cpe:/o:suse:sles:12:sp1"
             "distribution_version": "12.1",
         }
     },
-
+    {
+        "name": "SLES4SAP 12 SP2",
+        "input": {
+            "/etc/SuSE-release": """
+SUSE Linux Enterprise Server 12 (x86_64)
+VERSION = 12
+PATCHLEVEL = 2
+# This file is deprecated and will be removed in a future service pack or release.
+# Please check /etc/os-release for details about this release.
+""",
+            "/etc/os-release": """
+NAME="SLES_SAP"
+VERSION="12-SP2"
+VERSION_ID="12.2"
+PRETTY_NAME="SUSE Linux Enterprise Server for SAP Applications 12 SP2"
+ID="sles_sap"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:suse:sles_sap:12:sp2"
+            """,
+        },
+        "platform.dist": ['SuSE', '12', 'x86_64'],
+        "result":{
+            "distribution": "SLES_SAP",
+            "distribution_major_version": "12",
+            "distribution_release": "2",
+            "os_family": "Suse",
+            "distribution_version": "12.2",
+        }
+    },
+    {
+        "name": "SLES4SAP 12 SP3",
+        "input": {
+            "/etc/SuSE-release": """
+SUSE Linux Enterprise Server 12 (x86_64)
+VERSION = 12
+PATCHLEVEL = 3
+# This file is deprecated and will be removed in a future service pack or release.
+# Please check /etc/os-release for details about this release.
+""",
+            "/etc/os-release": """
+NAME="SLES"
+VERSION="12-SP3"
+VERSION_ID="12.3"
+PRETTY_NAME="SUSE Linux Enterprise Server 12 SP3"
+ID="sles"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:suse:sles_sap:12:sp3"
+            """,
+        },
+        "platform.dist": ['SuSE', '12', 'x86_64'],
+        "result":{
+            "distribution": "SLES_SAP",
+            "distribution_major_version": "12",
+            "distribution_release": "3",
+            "os_family": "Suse",
+            "distribution_version": "12.3",
+        }
+    },
     {
         "name": "Debian stretch/sid",
         "input": {
@@ -425,6 +482,28 @@ DISTRIB_DESCRIPTION="SteamOS 2.0"
             'distribution_release': u'brewmaster',
             "os_family": "Debian",
             'distribution_version': u'2.0'
+        }
+    },
+    {
+        'name': "Devuan",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux 1 (jessie)"
+NAME="Devuan GNU/Linux"
+VERSION_ID="1"
+VERSION="1 (jessie)"
+ID=devuan
+HOME_URL="http://www.devuan.org/"
+SUPPORT_URL="http://www.devuan.org/support/"
+BUG_REPORT_URL="https://bugs.devuan.org/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': u'Devuan',
+            'distribution_major_version': u'1',
+            'distribution_release': u'jessie',
+            'os_family': 'Debian',
+            'distribution_version': u'1'
         }
     },
     {
@@ -943,7 +1022,7 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
 ]
 
 
-@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x['name'], indirect=['stdin'])
+@pytest.mark.parametrize("stdin, testcase", product([{}], TESTSETS), ids=lambda x: x.get('name'), indirect=['stdin'])
 def test_distribution_version(am, mocker, testcase):
     """tests the distribution parsing code of the Facts class
 

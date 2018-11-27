@@ -94,7 +94,7 @@ options:
     version_added: "2.0"
 author:
     - "Ansible Core Team"
-    - "Johan Wiren"
+    - "Johan Wiren (@johanwiren)"
 '''
 
 EXAMPLES = '''

@@ -32,12 +32,9 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
@@ -278,7 +275,7 @@ class InventoryManager(object):
                         display.debug('%s failed to parse %s' % (plugin_name, source))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
                 else:
-                    display.debug('%s did not meet %s requirements' % (source, plugin_name))
+                    display.v('%s did not meet %s requirements, check plugin documentation if this is unexpected' % (source, plugin_name))
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
@@ -289,7 +286,9 @@ class InventoryManager(object):
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
                         raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
-            display.warning("Unable to parse %s as an inventory source" % source)
+            if source != '/etc/ansible/hosts' or os.path.exists(source):
+                # only warn if NOT using the default and if using it, only if the file is present
+                display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None

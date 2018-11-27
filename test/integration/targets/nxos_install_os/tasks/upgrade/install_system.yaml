@@ -4,9 +4,31 @@
   nxos_install_os:
     system_image_file: "{{ si }}"
     issu: "{{ issu }}"
+    provider: "{{ connection }}"
   register: result
+  when: not force
+
+- name: "Set OS image {{ si }} boot pointers"
+  nxos_config:
+    lines:
+      - no boot nxos
+      - no boot kickstart
+      - no boot system
+      - "boot nxos bootflash:{{ si }}"
+      - copy run start
+    match: line
+    provider: "{{ connection }}"
+  when: force
+
+- name: "Boot image {{ si }} using reload"
+  nxos_command:
+    commands: 'terminal dont-ask ; reload'
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  when: force
 
 - debug: msg=" {{ result['install_state'] }}"
+  when: not force
 
 - name: Wait for device to come back up with new image
   wait_for:

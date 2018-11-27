@@ -75,13 +75,10 @@ from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
@@ -390,7 +387,7 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
     return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
 
-# TODO: mv these classes to a seperate file so we don't pollute vault with 'subprocess' etc
+# TODO: mv these classes to a separate file so we don't pollute vault with 'subprocess' etc
 class FileVaultSecret(VaultSecret):
     def __init__(self, filename=None, encoding=None, loader=None):
         super(FileVaultSecret, self).__init__()
@@ -1033,7 +1030,7 @@ class VaultEditor:
                 with open(filename, "rb") as fh:
                     data = fh.read()
         except Exception as e:
-            raise AnsibleError(str(e))
+            raise AnsibleError(to_native(e))
 
         return data
 

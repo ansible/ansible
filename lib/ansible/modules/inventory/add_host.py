@@ -41,7 +41,7 @@ notes:
       because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
 author:
     - "Ansible Core Team"
-    - "Seth Vidal"
+    - "Seth Vidal (@skvidal)"
 '''
 
 EXAMPLES = '''

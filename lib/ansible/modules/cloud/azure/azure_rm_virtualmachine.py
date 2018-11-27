@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -29,6 +29,10 @@ description:
     - Before Ansible 2.5, this required an image found in the Azure Marketplace which can be discovered with
       M(azure_rm_virtualmachineimage_facts). In Ansible 2.5 and newer, custom images can be used as well, see the
       examples for more details.
+    - If you need to use the I(custom_data) option, many images in the marketplace are not cloud-init ready. Thus, data
+      sent to I(custom_data) would be ignored. If the image you are attempting to use is not listed in
+      U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
+      follow these steps U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
 
 options:
     resource_group:
@@ -133,7 +137,7 @@ options:
             - storage_container
     storage_blob_name:
         description:
-            - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
+            - Name of the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
               the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
         aliases:
             - storage_blob
@@ -144,6 +148,10 @@ options:
             - Standard_LRS
             - Premium_LRS
         version_added: "2.4"
+    os_disk_name:
+        description:
+            - OS disk name
+        version_added: "2.8"
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -706,6 +714,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                  default='ReadOnly'),
             os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
+            os_disk_name=dict(type='str'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
@@ -743,6 +752,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.os_disk_caching = None
         self.os_disk_size_gb = None
         self.managed_disk_type = None
+        self.os_disk_name = None
         self.network_interface_names = None
         self.remove_on_absent = set()
         self.tags = None
@@ -894,12 +904,26 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['caching'] = self.os_disk_caching
 
+                if self.os_disk_name and \
+                   self.os_disk_name != vm_dict['properties']['storageProfile']['osDisk']['name']:
+                    self.log('CHANGED: virtual machine {0} - OS disk name'.format(self.name))
+                    differences.append('OS Disk name')
+                    changed = True
+                    vm_dict['properties']['storageProfile']['osDisk']['name'] = self.os_disk_name
+
                 if self.os_disk_size_gb and \
-                   self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']:
+                   self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk'].get('diskSizeGB'):
                     self.log('CHANGED: virtual machine {0} - OS disk size '.format(self.name))
                     differences.append('OS Disk size')
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB'] = self.os_disk_size_gb
+
+                if self.vm_size and \
+                   self.vm_size != vm_dict['properties']['hardwareProfile']['vmSize']:
+                    self.log('CHANGED: virtual machine {0} - size '.format(self.name))
+                    differences.append('VM size')
+                    changed = True
+                    vm_dict['properties']['hardwareProfile']['vmSize'] = self.vm_size
 
                 update_tags, vm_dict['tags'] = self.update_tags(vm_dict.get('tags', dict()))
                 if update_tags:
@@ -975,7 +999,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         parsed_availability_set = parse_resource_id(self.availability_set)
                         availability_set = self.get_availability_set(parsed_availability_set.get('resource_group', self.resource_group),
                                                                      parsed_availability_set.get('name'))
-                        availability_set_resource = self.compute_models.SubResource(availability_set.id)
+                        availability_set_resource = self.compute_models.SubResource(id=availability_set.id)
 
                     # Get defaults
                     if not self.network_interface_names:
@@ -1020,7 +1044,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         promotion_code=self.plan.get('promotion_code'))
 
                     vm_resource = self.compute_models.VirtualMachine(
-                        self.location,
+                        location=self.location,
                         tags=self.tags,
                         os_profile=self.compute_models.OSProfile(
                             admin_username=self.admin_username,
@@ -1031,7 +1055,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         ),
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
-                                name=self.storage_blob_name,
+                                name=self.os_disk_name if self.os_disk_name else self.storage_blob_name,
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
@@ -1154,46 +1178,46 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     # os disk
                     if not vm_dict['properties']['storageProfile']['osDisk'].get('managedDisk'):
                         managed_disk = None
-                        vhd = self.compute_models.VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk']['vhd']['uri'])
+                        vhd = self.compute_models.VirtualHardDisk(uri=vm_dict['properties']['storageProfile']['osDisk'].get('vhd', {}).get('uri'))
                     else:
                         vhd = None
                         managed_disk = self.compute_models.ManagedDiskParameters(
-                            storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk']['storageAccountType']
+                            storage_account_type=vm_dict['properties']['storageProfile']['osDisk']['managedDisk'].get('storageAccountType')
                         )
 
                     availability_set_resource = None
                     try:
-                        availability_set_resource = self.compute_models.SubResource(vm_dict['properties']['availabilitySet']['id'])
+                        availability_set_resource = self.compute_models.SubResource(id=vm_dict['properties']['availabilitySet'].get('id'))
                     except Exception:
                         # pass if the availability set is not set
                         pass
 
                     vm_resource = self.compute_models.VirtualMachine(
-                        vm_dict['location'],
+                        location=vm_dict['location'],
                         os_profile=self.compute_models.OSProfile(
-                            admin_username=vm_dict['properties']['osProfile']['adminUsername'],
-                            computer_name=vm_dict['properties']['osProfile']['computerName']
+                            admin_username=vm_dict['properties'].get('osProfile', {}).get('adminUsername'),
+                            computer_name=vm_dict['properties'].get('osProfile', {}).get('computerName')
                         ),
                         hardware_profile=self.compute_models.HardwareProfile(
-                            vm_size=vm_dict['properties']['hardwareProfile']['vmSize']
+                            vm_size=vm_dict['properties']['hardwareProfile'].get('vmSize')
                         ),
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
-                                name=vm_dict['properties']['storageProfile']['osDisk']['name'],
+                                name=vm_dict['properties']['storageProfile']['osDisk'].get('name'),
                                 vhd=vhd,
                                 managed_disk=managed_disk,
-                                create_option=vm_dict['properties']['storageProfile']['osDisk']['createOption'],
-                                os_type=vm_dict['properties']['storageProfile']['osDisk']['osType'],
-                                caching=vm_dict['properties']['storageProfile']['osDisk']['caching'],
-                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk']['diskSizeGB']
+                                create_option=vm_dict['properties']['storageProfile']['osDisk'].get('createOption'),
+                                os_type=vm_dict['properties']['storageProfile']['osDisk'].get('osType'),
+                                caching=vm_dict['properties']['storageProfile']['osDisk'].get('caching'),
+                                disk_size_gb=vm_dict['properties']['storageProfile']['osDisk'].get('diskSizeGB')
                             ),
                             image_reference=self.compute_models.ImageReference(
                                 id=vm_dict['properties']['storageProfile']['imageReference']['id'],
                             ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
-                                publisher=vm_dict['properties']['storageProfile']['imageReference']['publisher'],
-                                offer=vm_dict['properties']['storageProfile']['imageReference']['offer'],
-                                sku=vm_dict['properties']['storageProfile']['imageReference']['sku'],
-                                version=vm_dict['properties']['storageProfile']['imageReference']['version']
+                                publisher=vm_dict['properties']['storageProfile']['imageReference'].get('publisher'),
+                                offer=vm_dict['properties']['storageProfile']['imageReference'].get('offer'),
+                                sku=vm_dict['properties']['storageProfile']['imageReference'].get('sku'),
+                                version=vm_dict['properties']['storageProfile']['imageReference'].get('version')
                             ),
                         ),
                         availability_set=availability_set_resource,
@@ -1237,7 +1261,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                         for data_disk in vm_dict['properties']['storageProfile']['dataDisks']:
                             if data_disk.get('managedDisk'):
-                                managed_disk_type = data_disk['managedDisk']['storageAccountType']
+                                managed_disk_type = data_disk['managedDisk'].get('storageAccountType')
                                 data_disk_managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=managed_disk_type)
                                 data_disk_vhd = None
                             else:

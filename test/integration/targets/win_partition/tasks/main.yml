@@ -1,0 +1,28 @@
+---
+- name: Create the temp directory
+  win_file:
+    path: C:\win_partition_tests
+    state: directory
+
+- name: Copy VHDX scripts
+  win_template:
+    src: "{{ item.src }}"
+    dest: C:\win_partition_tests\{{ item.dest }}
+  loop:
+    - { src: vhdx_creation_script.j2, dest: vhdx_creation_script.txt }
+    - { src: vhdx_deletion_script.j2, dest: vhdx_deletion_script.txt }
+
+- name: Create VHD
+  win_command: diskpart.exe /s C:\win_partition_tests\vhdx_creation_script.txt
+
+- name: Run tests
+  block:
+    - include: tests.yml
+  always:
+    - name: Detach disk
+      win_command: diskpart.exe /s C:\win_partition_tests\vhdx_deletion_script.txt
+
+    - name: Cleanup files
+      win_file:
+        path: C:\win_partition_tests
+        state: absent

@@ -198,7 +198,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -345,7 +345,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                         ev = 'AdventureWorksLT'
                     self.parameters["sample_name"] = ev
                 elif key == "zone_redundant":
-                    self.parameters["zone_redundant"] = 'Enabled' if kwargs[key] else 'Disabled'
+                    self.parameters["zone_redundant"] = True if kwargs[key] else False
 
         old_response = None
         response = None
@@ -432,7 +432,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                                                                   server_name=self.server_name,
                                                                   database_name=self.name,
                                                                   parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

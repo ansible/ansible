@@ -130,7 +130,9 @@ ansible_net_interfaces:
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP/CDP neighbors from the remote device
+  description:
+    - The list of LLDP and CDP neighbors from the device. If both,
+      CDP and LLDP neighbor data is present on one port, CDP is preferred.
   returned: when interfaces is configured
   type: dict
 
@@ -173,9 +175,13 @@ import re
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
 from ansible.module_utils.network.nxos.nxos import get_capabilities, get_interface_type
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six import string_types, iteritems
+
+
+g_config = None
 
 
 class FactsBase(object):
@@ -200,6 +206,12 @@ class FactsBase(object):
         except IndexError:
             self.warnings.append('command %s failed, facts for this command will not be populated' % command_string)
             return None
+
+    def get_config(self):
+        global g_config
+        if not g_config:
+            g_config = get_config(self.module)
+        return g_config
 
     def transform_dict(self, data, keymap):
         transform = dict()
@@ -287,7 +299,22 @@ class Config(FactsBase):
 
     def populate(self):
         super(Config, self).populate()
-        self.facts['config'] = get_config(self.module)
+        self.facts['config'] = self.get_config()
+
+
+class Features(FactsBase):
+
+    def populate(self):
+        super(Features, self).populate()
+        data = self.get_config()
+
+        if data:
+            features = []
+            for line in data.splitlines():
+                if line.startswith('feature'):
+                    features.append(line.replace('feature', '').strip())
+
+            self.facts['features_enabled'] = features
 
 
 class Hardware(FactsBase):
@@ -374,6 +401,7 @@ class Interfaces(FactsBase):
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
+        self.facts['neighbors'] = {}
         data = None
 
         data = self.run('show interface', output='json')
@@ -396,16 +424,21 @@ class Interfaces(FactsBase):
                 interfaces = self.parse_interfaces(data)
                 self.populate_ipv6_interfaces(interfaces)
 
-        data = self.run('show lldp neighbors')
+        data = self.run('show lldp neighbors', output='json')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(data)
+            if isinstance(data, dict):
+                self.facts['neighbors'].update(self.populate_structured_neighbors_lldp(data))
+            else:
+                self.facts['neighbors'].update(self.populate_neighbors(data))
 
         data = self.run('show cdp neighbors detail', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['neighbors'] = self.populate_structured_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_structured_neighbors_cdp(data))
             else:
-                self.facts['neighbors'] = self.populate_neighbors_cdp(data)
+                self.facts['neighbors'].update(self.populate_neighbors_cdp(data))
+
+        self.facts['neighbors'].pop(None, None)  # Remove null key
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
@@ -449,6 +482,23 @@ class Interfaces(FactsBase):
                 return ""
         except TypeError:
             return ""
+
+    def populate_structured_neighbors_lldp(self, data):
+        objects = dict()
+        data = data['TABLE_nbor']['ROW_nbor']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
+            local_intf = normalize_interface(item['l_port_id'])
+            objects[local_intf] = list()
+            nbor = dict()
+            nbor['port'] = item['port_id']
+            nbor['sysname'] = item['chassis_id']
+            objects[local_intf].append(nbor)
+
+        return objects
 
     def populate_structured_neighbors_cdp(self, data):
         objects = dict()
@@ -585,34 +635,20 @@ class Interfaces(FactsBase):
 
     def populate_neighbors(self, data):
         objects = dict()
-        if isinstance(data, str):
-            # if there are no neighbors the show command returns
-            # ERROR: No neighbour information
-            if data.startswith('ERROR'):
-                return dict()
+        # if there are no neighbors the show command returns
+        # ERROR: No neighbour information
+        if data.startswith('ERROR'):
+            return dict()
 
-            regex = re.compile(r'(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
+        regex = re.compile(r'(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
 
-            for item in data.split('\n')[4:-1]:
-                match = regex.match(item)
-                if match:
-                    nbor = {'host': match.group(1), 'port': match.group(3)}
-                    if match.group(2) not in objects:
-                        objects[match.group(2)] = []
-                    objects[match.group(2)].append(nbor)
-
-        elif isinstance(data, dict):
-            data = data['TABLE_nbor']['ROW_nbor']
-            if isinstance(data, dict):
-                data = [data]
-
-            for item in data:
-                local_intf = item['l_port_id']
+        for item in data.split('\n')[4:-1]:
+            match = regex.match(item)
+            if match:
+                nbor = {'host': match.group(1), 'port': match.group(3)}
+                local_intf = normalize_interface(match.group(2))
                 if local_intf not in objects:
-                    objects[local_intf] = list()
-                nbor = dict()
-                nbor['port'] = item['port_id']
-                nbor['host'] = item['chassis_id']
+                    objects[local_intf] = []
                 objects[local_intf].append(nbor)
 
         return objects
@@ -630,14 +666,14 @@ class Interfaces(FactsBase):
             fact = dict()
             fact['port'] = self.parse_lldp_port(item)
             fact['sysname'] = self.parse_lldp_sysname(item)
-            facts[local_intf].append(facts)
+            facts[local_intf].append(fact)
 
         return facts
 
     def parse_lldp_intf(self, data):
         match = re.search(r'Interface:\s*(\S+)', data, re.M)
         if match:
-            return match.group(1)
+            return match.group(1).strip(',')
 
     def parse_lldp_port(self, data):
         match = re.search(r'Port ID \(outgoing port\):\s*(\S+)', data, re.M)
@@ -903,6 +939,7 @@ FACT_SUBSETS = dict(
     hardware=Hardware,
     interfaces=Interfaces,
     config=Config,
+    features=Features
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())

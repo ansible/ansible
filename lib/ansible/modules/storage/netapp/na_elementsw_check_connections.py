@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -20,7 +20,7 @@ short_description: NetApp Element Software Check connectivity to MVIP and SVIP.
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Used to test the management connection to the cluster.
 - The test pings the MVIP and SVIP, and executes a simple API method to verify connectivity.

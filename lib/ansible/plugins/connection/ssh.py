@@ -288,13 +288,10 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
@@ -1024,13 +1021,16 @@ class Connection(ConnectionBase):
                     # we pass sudoable=False to disable pty allocation, which
                     # would end up mixing stdout/stderr and screwing with newlines
                     (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
-                    out_file = open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+')
-                    out_file.write(stdout)
-                    out_file.close()
+                    with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
+                        out_file.write(stdout)
                 else:
-                    in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
-                    in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data, sudoable=False)
+                    with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as f:
+                        in_data = to_bytes(f.read(), nonstring='passthru')
+                    if not in_data:
+                        count = ' count=0'
+                    else:
+                        count = ''
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:

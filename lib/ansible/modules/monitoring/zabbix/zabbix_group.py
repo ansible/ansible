@@ -22,8 +22,8 @@ description:
    - Delete existing host groups if they exist.
 version_added: "1.8"
 author:
-    - "(@cove)"
-    - "Tony Minfei Ding"
+    - "Cove (@cove)"
+    - "Tony Minfei Ding (!UNKNOWN)"
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"

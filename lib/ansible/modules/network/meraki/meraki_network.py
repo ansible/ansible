@@ -72,20 +72,20 @@ EXAMPLES = r'''
 - name: List all networks associated to the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: query
+    state: query
     org_name: YourOrg
   delegate_to: localhost
 - name: Query network named MyNet in the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: query
+    state: query
     org_name: YourOrg
     net_name: MyNet
   delegate_to: localhost
 - name: Create network named MyNet in the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: present
+    state: present
     org_name: YourOrg
     net_name: MyNet
     type: switch
@@ -226,7 +226,7 @@ def main():
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
-        if meraki.params['disable_my_meraki']:
+        if meraki.params['disable_my_meraki'] is not None:
             payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
 
     # manipulate or modify the state as needed (this is going to be the

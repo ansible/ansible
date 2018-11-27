@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_webhook
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of Webhook Avi RESTful Object
 description:

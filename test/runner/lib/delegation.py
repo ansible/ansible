@@ -52,6 +52,8 @@ from lib.docker_util import (
     docker_rm,
     docker_run,
     docker_available,
+    docker_network_disconnect,
+    get_docker_networks,
 )
 
 from lib.cloud import (
@@ -115,7 +117,7 @@ def delegate_tox(args, exclude, require, integration_targets):
     :type integration_targets: tuple[IntegrationTarget]
     """
     if args.python:
-        versions = args.python_version,
+        versions = (args.python_version,)
 
         if args.python_version not in SUPPORTED_PYTHON_VERSIONS:
             raise ApplicationError('tox does not support Python version %s' % args.python_version)
@@ -141,7 +143,7 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, os.path.abspath('test/runner/test.py'), options, exclude, require)
+        cmd = generate_command(args, os.path.abspath('bin/ansible-test'), options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -193,7 +195,7 @@ def delegate_docker(args, exclude, require, integration_targets):
         '--docker-util': 1,
     }
 
-    cmd = generate_command(args, '/root/ansible/test/runner/test.py', options, exclude, require)
+    cmd = generate_command(args, '/root/ansible/bin/ansible-test', options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -275,6 +277,34 @@ def delegate_docker(args, exclude, require, integration_targets):
             if isinstance(args, UnitsConfig) and not args.python:
                 cmd += ['--python', 'default']
 
+            # run unit tests unprivileged to prevent stray writes to the source tree
+            # also disconnect from the network once requirements have been installed
+            if isinstance(args, UnitsConfig):
+                writable_dirs = [
+                    '/root/ansible/.pytest_cache',
+                ]
+
+                docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
+                docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)
+
+                docker_exec(args, test_id, ['find', '/root/ansible/test/results/', '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
+
+                docker_exec(args, test_id, ['chmod', '755', '/root'])
+                docker_exec(args, test_id, ['chmod', '644', '/root/ansible/%s' % args.metadata_path])
+
+                docker_exec(args, test_id, ['useradd', 'pytest', '--create-home'])
+
+                docker_exec(args, test_id, cmd + ['--requirements-mode', 'only'], options=cmd_options)
+
+                networks = get_docker_networks(args, test_id)
+
+                for network in networks:
+                    docker_network_disconnect(args, test_id, network)
+
+                cmd += ['--requirements-mode', 'skip']
+
+                cmd_options += ['--user', 'pytest']
+
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:
@@ -304,9 +334,11 @@ def delegate_remote(args, exclude, require, integration_targets):
 
     core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider)
     success = False
+    raw = False
 
     if isinstance(args, ShellConfig):
         use_httptester = args.httptester
+        raw = args.raw
     else:
         use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in integration_targets)
 
@@ -329,12 +361,15 @@ def delegate_remote(args, exclude, require, integration_targets):
             # Windows doesn't need the ansible-test fluff, just run the SSH command
             manage = ManageWindowsCI(core_ci)
             cmd = ['powershell.exe']
+        elif raw:
+            manage = ManagePosixCI(core_ci)
+            cmd = create_shell_command(['bash'])
         else:
             options = {
                 '--remote': 1,
             }
 
-            cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
+            cmd = generate_command(args, 'ansible/bin/ansible-test', options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
@@ -354,6 +389,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             manage = ManagePosixCI(core_ci)
 
         manage.setup()
+
         if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)
 
@@ -364,7 +400,16 @@ def delegate_remote(args, exclude, require, integration_targets):
             manage.ssh(cmd, ssh_options)
             success = True
         finally:
+            download = False
+
             if platform != 'windows':
+                download = True
+
+            if isinstance(args, ShellConfig):
+                if args.raw:
+                    download = False
+
+            if download:
                 manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
                 manage.download('/tmp/results', 'test')
     finally:
@@ -428,6 +473,8 @@ def filter_options(args, argv, options, exclude, require):
             '--changed-from': 1,
             '--changed-path': 1,
             '--metadata': 1,
+            '--exclude': 1,
+            '--require': 1,
         })
     elif isinstance(args, SanityConfig):
         options.update({
@@ -450,6 +497,9 @@ def filter_options(args, argv, options, exclude, require):
             remaining = options[key] - len(parts) + 1
             continue
 
+        yield arg
+
+    for arg in args.delegate_args:
         yield arg
 
     for target in exclude:

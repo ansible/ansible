@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - ec2_group - There can be multiple security groups with the same name in
+    different VPCs. Prior to 2.6 if a target group name was provided, the group
+    matching the name and VPC had highest precedence. Restore this behavior by
+    updated the dictionary with the groups matching the VPC last.

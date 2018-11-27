@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_host_network - Fix type conversion (https://github.com/ansible/ansible/pull/47617).

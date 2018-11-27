@@ -21,6 +21,7 @@
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import open_url
+from ansible.module_utils._text import to_text
 
 import json
 import re
@@ -244,7 +245,7 @@ class JsonRpc(object):
             raise NsoException(
                 'NSO returned HTTP code {0}, expected 200'.format(resp.status), {})
 
-        resp_body = resp.read()
+        resp_body = to_text(resp.read())
         resp_json = json.loads(resp_body)
 
         if 'error' in resp_json:

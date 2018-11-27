@@ -172,7 +172,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
-            # TODO(mordred) Integrate shade's logging with ansible's logging
+            # TODO(mordred) Integrate openstack's logging with ansible's logging
             sdk.enable_logging()
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
@@ -196,7 +196,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            self.cache.set(cache_key, source_data)
+            if self.cache is not None:
+                self.cache.set(cache_key, source_data)
 
         self._populate_from_source(source_data)
 

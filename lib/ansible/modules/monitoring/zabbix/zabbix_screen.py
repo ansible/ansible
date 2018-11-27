@@ -21,8 +21,8 @@ description:
     - This module allows you to create, modify and delete Zabbix screens and associated graph data.
 version_added: "2.0"
 author:
-    - "(@cove)"
-    - "Tony Minfei Ding"
+    - "Cove (@cove)"
+    - "Tony Minfei Ding (!UNKNOWN)"
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"

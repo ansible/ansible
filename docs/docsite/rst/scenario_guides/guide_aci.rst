@@ -67,6 +67,8 @@ For instance ensuring that a specific tenant exists, is done using the following
 
 A complete list of existing ACI modules is available for the latest stable release on the :ref:`list of network modules <network_modules>`. You can also view the `current development version <https://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
 
+If you want to learn how to write your own ACI modules to contribute, look at the :ref:`Developing Cisco ACI modules <aci_dev_guide>` section.
+
 Querying ACI configuration
 ..........................
 
@@ -261,6 +263,7 @@ More information
 ................
 Various resources exist to start learn more about ACI programmability, we recommend the following links:
 
+- :ref:`Developing Cisco ACI modules <aci_dev_guide>`
 - `Jacob McGill: Automating Cisco ACI with Ansible <https://blogs.cisco.com/developer/automating-cisco-aci-with-ansible-eliminates-repetitive-day-to-day-tasks>`_
 - `Cisco DevNet Learning Labs about ACI and Ansible <https://learninglabs.cisco.com/labs/tags/ACI,Ansible>`_
 
@@ -330,7 +333,7 @@ You can automate this by using the following Ansible task:
     
         aaa_user: admin
         certificate_name: admin
-        certificate: "{{ lookup('file', 'pki/admin.crt') }}"  # This wil read the certificate data from a local file
+        certificate: "{{ lookup('file', 'pki/admin.crt') }}"  # This will read the certificate data from a local file
 
 .. note:: Signature-based authentication only works with local users.
 
@@ -563,6 +566,8 @@ You will find our roadmap, an overview of open ACI issues and pull-requests, and
 
    :ref:`List of ACI modules <aci_network_modules>`
        A complete list of supported ACI modules.
+   :ref:`Developing Cisco ACI modules <aci_dev_guide>`
+       A walkthough on how to develop new Cisco ACI modules to contribute back.
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation.
    :ref:`network_guide`

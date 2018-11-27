@@ -144,14 +144,11 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNo
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 AUTHENTICITY_MSG = """
@@ -354,10 +351,10 @@ class Connection(ConnectionBase):
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except Exception as e:
-            msg = str(e)
-            if "PID check failed" in msg:
+            msg = to_text(e)
+            if u"PID check failed" in msg:
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
-            elif "Private key file is encrypted" in msg:
+            elif u"Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     self._play_context.remote_user, self._play_context.remote_addr, port, msg)
                 raise AnsibleConnectionFailure(msg)
@@ -380,10 +377,11 @@ class Connection(ConnectionBase):
             self.ssh.get_transport().set_keepalive(5)
             chan = self.ssh.get_transport().open_session()
         except Exception as e:
-            msg = "Failed to open session"
-            if len(str(e)) > 0:
-                msg += ": %s" % str(e)
-            raise AnsibleConnectionFailure(msg)
+            text_e = to_text(e)
+            msg = u"Failed to open session"
+            if text_e:
+                msg += u": %s" % text_e
+            raise AnsibleConnectionFailure(to_native(msg))
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansible.cfg), and we try

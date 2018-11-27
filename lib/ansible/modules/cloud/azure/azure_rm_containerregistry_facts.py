@@ -68,7 +68,7 @@ registries:
                 - The resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registr
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registr
                     ies/myRegistry"
         name:
             description:
@@ -130,6 +130,10 @@ registries:
                     returned: when registry exists and C(admin_user_enabled) is set
                     type: str
                     sample: pass2value
+        tags:
+            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            type: dict
+            sample: { "tag1": "abc" }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -239,7 +243,14 @@ class AzureRMContainerRegistryFacts(AzureRMModuleBase):
         admin_user_enabled = d['admin_user_enabled']
 
         if self.retrieve_credentials and admin_user_enabled:
-            credentials = self.containerregistry_client.registries.list_credentials(resource_group, name)
+            credentials = self.containerregistry_client.registries.list_credentials(resource_group, name).as_dict()
+            for index in range(len(credentials['passwords'])):
+                password = credentials['passwords'][index]
+                if password['name'] == 'password':
+                    credentials['password'] = password['value']
+                elif password['name'] == 'password2':
+                    credentials['password2'] = password['value']
+            credentials.pop('passwords')
 
         d = {
             'resource_group': resource_group,

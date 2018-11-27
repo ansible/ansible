@@ -21,4 +21,4 @@ __metaclass__ = type
 
 __version__ = '2.8.0.dev0'
 __author__ = 'Ansible, Inc.'
-__codename__ = 'TBD'
+__codename__ = 'How Many More Times'

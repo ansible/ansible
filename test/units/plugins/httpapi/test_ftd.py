@@ -17,24 +17,24 @@
 #
 
 import json
-import os
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from units.compat import mock
+from units.compat import unittest
+from units.compat.builtins import BUILTINS
+from units.compat.mock import mock_open, patch
 
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams
 from ansible.module_utils.network.ftd.fdm_swagger_client import SpecProp, FdmSwaggerParser
-from ansible.module_utils.six import BytesIO, PY3, StringIO
+from ansible.module_utils.six import BytesIO, StringIO
 from ansible.plugins.httpapi.ftd import HttpApi
 
-if PY3:
-    BUILTINS_NAME = 'builtins'
-else:
-    BUILTINS_NAME = '__builtin__'
+EXPECTED_BASE_HEADERS = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+}
 
 
 class FakeFtdHttpApiPlugin(HttpApi):
@@ -66,6 +66,7 @@ class TestFtdHttpApi(unittest.TestCase):
 
         assert 'ACCESS_TOKEN' == self.ftd_plugin.access_token
         assert 'REFRESH_TOKEN' == self.ftd_plugin.refresh_token
+        assert {'Authorization': 'Bearer ACCESS_TOKEN'} == self.ftd_plugin.connection._auth
         expected_body = json.dumps({'grant_type': 'password', 'username': 'foo', 'password': 'bar'})
         self.connection_mock.send.assert_called_once_with(mock.ANY, expected_body, headers=mock.ANY, method=mock.ANY)
 
@@ -79,6 +80,7 @@ class TestFtdHttpApi(unittest.TestCase):
 
         assert 'NEW_ACCESS_TOKEN' == self.ftd_plugin.access_token
         assert 'NEW_REFRESH_TOKEN' == self.ftd_plugin.refresh_token
+        assert {'Authorization': 'Bearer NEW_ACCESS_TOKEN'} == self.ftd_plugin.connection._auth
         expected_body = json.dumps({'grant_type': 'refresh_token', 'refresh_token': 'REFRESH_TOKEN'})
         self.connection_mock.send.assert_called_once_with(mock.ANY, expected_body, headers=mock.ANY, method=mock.ANY)
 
@@ -91,7 +93,8 @@ class TestFtdHttpApi(unittest.TestCase):
 
         self.ftd_plugin.login('foo', 'bar')
 
-        self.connection_mock.send.assert_called_once_with('/testFakeLoginUrl', mock.ANY, headers=mock.ANY, method=mock.ANY)
+        self.connection_mock.send.assert_called_once_with('/testFakeLoginUrl', mock.ANY, headers=mock.ANY,
+                                                          method=mock.ANY)
         self.ftd_plugin.hostvars['token_path'] = temp_token_path
 
     def test_login_raises_exception_when_no_refresh_token_and_no_credentials(self):
@@ -108,6 +111,15 @@ class TestFtdHttpApi(unittest.TestCase):
             self.ftd_plugin.login('foo', 'bar')
 
         assert 'Server returned response without token info during connection authentication' in str(res.exception)
+
+    def test_login_raises_exception_when_http_error(self):
+        self.connection_mock.send.side_effect = HTTPError('http://testhost.com', 400, '', {},
+                                                          StringIO('{"message": "Failed to authenticate user"}'))
+
+        with self.assertRaises(ConnectionError) as res:
+            self.ftd_plugin.login('foo', 'bar')
+
+        assert 'Failed to authenticate user' in str(res.exception)
 
     def test_logout_should_revoke_tokens(self):
         self.ftd_plugin.access_token = 'ACCESS_TOKEN_TO_REVOKE'
@@ -134,7 +146,7 @@ class TestFtdHttpApi(unittest.TestCase):
         assert {ResponseParams.SUCCESS: True, ResponseParams.STATUS_CODE: 200,
                 ResponseParams.RESPONSE: exp_resp} == resp
         self.connection_mock.send.assert_called_once_with('/test/123?at=0', '{"name": "foo"}', method=HTTPMethod.PUT,
-                                                          headers=self._expected_headers())
+                                                          headers=EXPECTED_BASE_HEADERS)
 
     def test_send_request_should_return_empty_dict_when_no_response_data(self):
         self.connection_mock.send.return_value = self._connection_response(None)
@@ -143,7 +155,7 @@ class TestFtdHttpApi(unittest.TestCase):
 
         assert {ResponseParams.SUCCESS: True, ResponseParams.STATUS_CODE: 200, ResponseParams.RESPONSE: {}} == resp
         self.connection_mock.send.assert_called_once_with('/test', None, method=HTTPMethod.GET,
-                                                          headers=self._expected_headers())
+                                                          headers=EXPECTED_BASE_HEADERS)
 
     def test_send_request_should_return_error_info_when_http_error_raises(self):
         self.connection_mock.send.side_effect = HTTPError('http://testhost.com', 500, '', {},
@@ -177,12 +189,16 @@ class TestFtdHttpApi(unittest.TestCase):
     def test_handle_httperror_should_not_retry_on_non_auth_errors(self):
         assert not self.ftd_plugin.handle_httperror(HTTPError('http://testhost.com', 500, '', {}, None))
 
+    def test_handle_httperror_should_not_retry_when_ignoring_http_errors(self):
+        self.ftd_plugin._ignore_http_errors = True
+        assert not self.ftd_plugin.handle_httperror(HTTPError('http://testhost.com', 401, '', {}, None))
+
     @patch('os.path.isdir', mock.Mock(return_value=False))
     def test_download_file(self):
         self.connection_mock.send.return_value = self._connection_response('File content')
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             self.ftd_plugin.download_file('/files/1', '/tmp/test.txt')
 
         open_mock.assert_called_once_with('/tmp/test.txt', 'wb')
@@ -197,7 +213,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = response, response_data
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             self.ftd_plugin.download_file('/files/1', '/tmp/')
 
         open_mock.assert_called_once_with('/tmp/%s' % filename, 'wb')
@@ -210,11 +226,11 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response({'id': '123'})
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             resp = self.ftd_plugin.upload_file('/tmp/test.txt', '/files')
 
         assert {'id': '123'} == resp
-        exp_headers = self._expected_headers()
+        exp_headers = dict(EXPECTED_BASE_HEADERS)
         exp_headers['Content-Length'] = len('--Encoded data--')
         exp_headers['Content-Type'] = 'multipart/form-data'
         self.connection_mock.send.assert_called_once_with('/files', data='--Encoded data--',
@@ -228,7 +244,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response('invalidJsonResponse')
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS_NAME, open_mock):
+        with patch('%s.open' % BUILTINS, open_mock):
             with self.assertRaises(ConnectionError) as res:
                 self.ftd_plugin.upload_file('/tmp/test.txt', '/files')
 
@@ -254,6 +270,44 @@ class TestFtdHttpApi(unittest.TestCase):
         assert 'Specification for TestModel' == self.ftd_plugin.get_model_spec('TestModel')
         assert self.ftd_plugin.get_model_spec('NonExistingTestModel') is None
 
+    @patch.object(FdmSwaggerParser, 'parse_spec')
+    def test_get_model_spec(self, parse_spec_mock):
+        self.connection_mock.send.return_value = self._connection_response(None)
+        operation1 = {'modelName': 'TestModel'}
+        op_model_name_is_none = {'modelName': None}
+        op_without_model_name = {'url': 'testUrl'}
+
+        parse_spec_mock.return_value = {
+            SpecProp.MODEL_OPERATIONS: {
+                'TestModel': {
+                    'testOp1': operation1,
+                    'testOp2': 'spec2'
+                },
+                'TestModel2': {
+                    'testOp10': 'spec10',
+                    'testOp20': 'spec20'
+                }
+            },
+            SpecProp.OPERATIONS: {
+                'testOp1': operation1,
+                'testOp10': {
+                    'modelName': 'TestModel2'
+                },
+                'testOpWithoutModelName': op_without_model_name,
+                'testOpModelNameIsNone': op_model_name_is_none
+            }
+        }
+
+        assert {'testOp1': operation1, 'testOp2': 'spec2'} == self.ftd_plugin.get_operation_specs_by_model_name(
+            'TestModel')
+        assert None is self.ftd_plugin.get_operation_specs_by_model_name(
+            'testOpModelNameIsNone')
+
+        assert None is self.ftd_plugin.get_operation_specs_by_model_name(
+            'testOpWithoutModelName')
+
+        assert self.ftd_plugin.get_operation_specs_by_model_name('nonExistingOperation') is None
+
     @staticmethod
     def _connection_response(response, status=200):
         response_mock = mock.Mock()
@@ -261,10 +315,3 @@ class TestFtdHttpApi(unittest.TestCase):
         response_text = json.dumps(response) if type(response) is dict else response
         response_data = BytesIO(response_text.encode() if response_text else ''.encode())
         return response_mock, response_data
-
-    def _expected_headers(self):
-        return {
-            'Accept': 'application/json',
-            'Authorization': 'Bearer %s' % self.ftd_plugin.access_token,
-            'Content-Type': 'application/json'
-        }

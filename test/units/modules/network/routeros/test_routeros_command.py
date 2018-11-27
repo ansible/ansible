@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.routeros import routeros_command
 from units.modules.utils import set_module_args
 from .routeros_module import TestRouterosModule, load_fixture

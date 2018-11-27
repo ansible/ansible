@@ -46,16 +46,24 @@ function Get-GroupMember {
         [System.DirectoryServices.DirectoryEntry]$Group
     )
 
-    $members = @()
-
-    $current_members = $Group.psbase.Invoke("Members") | ForEach-Object {
-        $bytes = ([ADSI]$_).InvokeGet("objectSID")
-        $sid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList $bytes, 0
-        $adspath = ([ADSI]$_).InvokeGet("ADsPath")
-
-        @{sid = $sid; adspath = $adspath} | Write-Output
+    # instead of using ForEach pipeline we use a standard loop and cast the
+    # object to the ADSI adapter type before using it to get the SID and path
+    # this solves an random issue where multiple casts could fail once the raw
+    # object is invoked at least once
+    $raw_members = $Group.psbase.Invoke("Members")
+    $current_members = [System.Collections.ArrayList]@()
+    foreach ($raw_member in $raw_members) {
+        $raw_member = [ADSI]$raw_member
+        $sid_bytes = $raw_member.InvokeGet("objectSID")
+        $ads_path = $raw_member.InvokeGet("ADsPath")
+        $member_info = @{
+            sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList $sid_bytes, 0
+            adspath = $ads_path
+        }
+        $current_members.Add($member_info) > $null
     }
 
+    $members = @()
     foreach ($current_member in $current_members) {
         $parsed_member = @{
             sid = $current_member.sid

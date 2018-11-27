@@ -1,0 +1,7 @@
+minor_changes:
+- windows async - change default directory from ``$env:TEMP\.ansible_async`` to ``$env:USERPROFILE\.ansible_async`` to match the POSIX standard.
+- windows async - async directory is now controlled by the ``async_dir`` shell option and not ``remote_tmp`` to match the POSIX standard.
+bugfixes:
+- async - fixed issue where the shell option ``async_dir`` was not being used when setting the async directory.
+deprecated_features:
+- async - setting the async directory using ``ANSIBLE_ASYNC_DIR`` as an environment key in a task or play is deprecated and will be removed in Ansible 2.12. Set a var name ``ansible_async_dir`` instead.

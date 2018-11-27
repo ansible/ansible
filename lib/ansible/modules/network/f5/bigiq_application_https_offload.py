@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -233,7 +233,6 @@ servers:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import string_types
 
 try:
@@ -969,8 +968,9 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

@@ -556,3 +556,88 @@
         name: foo
         state: absent
   when: not (ansible_distribution == "Fedora" and ansible_distribution_major_version|int < 26)
+
+# https://github.com/ansible/ansible/issues/47689
+- block:
+    - name: Install foo == 1.0
+      yum:
+        name: "foo == 1.0"
+        state: present
+      register: yum_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: foo
+        state: absent
+
+  when: ansible_pkg_mgr == 'yum'
+
+# https://github.com/ansible/ansible/issues/45250
+- block:
+    - name: Install foo-1.0, foo-bar-1.0, bar-1.0
+      yum:
+        name: "foo-1.0,foo-bar-1.0,bar-1.0"
+        state: present
+
+    - name: Upgrade foo*
+      yum:
+        name: foo*
+        state: latest
+      register: yum_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify update of foo
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('foo-1.1-1')"
+
+    - name: Check foo-bar with rpm
+      shell: rpm -q foo-bar
+      register: rpm_result
+
+    - name: Verify update of foo-bar
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('foo-bar-1.1-1')"
+
+    - name: Check bar with rpm
+      shell: rpm -q bar
+      register: rpm_result
+
+    - name: Verify bar did NOT get updated
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('bar-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "yum_result is changed"
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: foo,foo-bar,bar
+        state: absent

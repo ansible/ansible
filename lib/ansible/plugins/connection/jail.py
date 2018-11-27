@@ -42,12 +42,9 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -158,8 +155,12 @@ class Connection(ConnectionBase):
         out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
+                if not os.fstat(in_file.fileno()).st_size:
+                    count = ' count=0'
+                else:
+                    count = ''
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), stdin=in_file)
                 except OSError:
                     raise AnsibleError("jail connection requires dd command in the jail")
                 try:

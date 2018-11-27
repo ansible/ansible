@@ -18,7 +18,8 @@ DOCUMENTATION = """
         required: True
     notes:
       - Patterns are only supported on files, not directory/paths.
-      - Matching is against local system files.
+      - Matching is against local system files on the Ansible controller.
+        To iterate a list of files on a remote node, use the M(find) module.
       - returns a string list of paths joined by commas, or an empty list if no files match. For a 'true list' pass wantlist=True to the lookup.
 """
 
@@ -37,9 +38,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-  _raw:
+  _list:
     description:
-      - content of file(s)
+      - list of files
 """
 
 import os

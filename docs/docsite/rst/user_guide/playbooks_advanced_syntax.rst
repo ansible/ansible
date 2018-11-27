@@ -1,3 +1,5 @@
+.. _playbooks_advanced_syntax:
+
 Advanced Syntax
 ===============
 
@@ -17,7 +19,7 @@ The documentation covered here is an extension of the documentation that can be 
 Unsafe or Raw Strings
 ~~~~~~~~~~~~~~~~~~~~~
 
-Ansible provides an internal data type for declaring variable values as "unsafe". This means that the data held within the variables value should be treated as unsafe preventing unsafe character subsitition and information disclosure.
+Ansible provides an internal data type for declaring variable values as "unsafe". This means that the data held within the variables value should be treated as unsafe preventing unsafe character substitution and information disclosure.
 
 Jinja2 contains functionality for escaping, or telling Jinja2 to not template data by means of functionality such as ``{% raw %} ... {% endraw %}``, however this uses a more comprehensive implementation to ensure that the value is never templated.
 
@@ -47,7 +49,7 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
     my_unsafe_hash:
         unsafe_key: !unsafe 'unsafe value'
 
- 
+
 
 .. seealso::
 
@@ -57,5 +59,3 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

@@ -20,10 +20,10 @@ DOCUMENTATION = '''
 module: vmware_local_role_manager
 short_description: Manage local roles on an ESXi host
 description:
-    - Manage local roles on an ESXi host
-version_added: "2.5"
+    - This module can be used to manage local roles on an ESXi host.
+version_added: 2.5
 author:
-- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on ESXi 6.5
     - Be sure that the ESXi user used for login, has the appropriate rights to create / delete / edit roles
@@ -31,31 +31,39 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    local_role_name:
-        description:
-            - The local role name to be managed.
-        required: True
-    local_privilege_ids:
-        description:
-            - The list of privileges that role needs to have.
-            - Please see U(https://docs.vmware.com/en/VMware-vSphere/6.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html)
-        default: []
-    state:
-        description:
-            - Indicate desired state of the role.
-            - If the role already exists when C(state=present), the role info is updated.
-        choices: ['present', 'absent']
-        default: present
-    force_remove:
-        description:
-            - If set to C(False) then prevents the role from being removed if any permissions are using it.
-        default: False
-        type: bool
+  local_role_name:
+    description:
+    - The local role name to be managed.
+    required: True
+  local_privilege_ids:
+    description:
+    - The list of privileges that role needs to have.
+    - Please see U(https://docs.vmware.com/en/VMware-vSphere/6.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html)
+    default: []
+  state:
+    description:
+    - Indicate desired state of the role.
+    - If the role already exists when C(state=present), the role info is updated.
+    choices: ['present', 'absent']
+    default: present
+  force_remove:
+    description:
+    - If set to C(False) then prevents the role from being removed if any permissions are using it.
+    default: False
+    type: bool
+  action:
+    description:
+    - This parameter is only valid while updating an existing role with privileges.
+    - C(add) will add the privileges to the existing privilege list.
+    - C(remove) will remove the privileges from the existing privilege list.
+    - C(set) will replace the privileges of the existing privileges with user defined list of privileges.
+    default: set
+    choices: [ add, remove, set ]
+    version_added: 2.8
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example vmware_local_role_manager command from Ansible Playbooks
 - name: Add local role to ESXi
   vmware_local_role_manager:
     hostname: '{{ esxi_hostname }}'
@@ -84,6 +92,35 @@ EXAMPLES = '''
     state: absent
   delegate_to: localhost
 
+- name: Add a privilege to an existing local role
+  vmware_local_role_manager:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    local_role_name: vmware_qa
+    local_privilege_ids: [ 'Folder.Create' ]
+    action: add
+  delegate_to: localhost
+
+- name: Remove a privilege to an existing local role
+  vmware_local_role_manager:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    local_role_name: vmware_qa
+    local_privilege_ids: [ 'Folder.Create' ]
+    action: remove
+  delegate_to: localhost
+
+- name: Set a privilege to an existing local role
+  vmware_local_role_manager:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    local_role_name: vmware_qa
+    local_privilege_ids: [ 'Folder.Create' ]
+    action: set
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -124,6 +161,7 @@ class VMwareLocalRoleManager(PyVmomi):
         self.priv_ids = self.params['local_privilege_ids']
         self.force = not self.params['force_remove']
         self.current_role = None
+        self.action = self.params['action']
 
         if self.content.authorizationManager is None:
             self.module.fail_json(msg="Failed to get local authorization manager settings.",
@@ -166,6 +204,7 @@ class VMwareLocalRoleManager(PyVmomi):
         return desired_role
 
     def state_create_role(self):
+        role_id = None
         try:
             role_id = self.content.authorizationManager.AddAuthorizationRole(name=self.role_name,
                                                                              privIds=self.priv_ids)
@@ -215,24 +254,55 @@ class VMwareLocalRoleManager(PyVmomi):
         self.module.exit_json(**result)
 
     def state_exit_unchanged(self):
-        self.module.exit_json(changed=False)
+        role = self.find_authorization_role()
+        result = dict(changed=False)
+
+        if role:
+            result['role_id'] = role.roleId
+            result['local_role_name'] = role.name
+            result['old_privileges'] = [priv_name for priv_name in role.privilege]
+            result['new_privileges'] = [priv_name for priv_name in role.privilege]
+
+        self.module.exit_json(**result)
 
     def state_update_role(self):
-        current_privileges = set(self.current_role.privilege)
-        # Add system-defined privileges, "System.Anonymous", "System.View", and "System.Read".
-        self.params['local_privilege_ids'].extend(['System.Anonymous', 'System.Read', 'System.View'])
-        desired_privileges = set(self.params['local_privilege_ids'])
+        current_privileges = self.current_role.privilege
 
-        changed_privileges = current_privileges ^ desired_privileges
-        changed_privileges = list(changed_privileges)
+        result = {
+            'changed': False,
+            'old_privileges': current_privileges,
+        }
 
-        if not changed_privileges:
+        changed_privileges = []
+        changed = False
+        if self.action == 'add':
+            # Add to existing privileges
+            for priv in self.params['local_privilege_ids']:
+                if priv not in current_privileges:
+                    changed_privileges.append(priv)
+                    changed = True
+            if changed:
+                changed_privileges.extend(current_privileges)
+        elif self.action == 'set':
+            # Set given privileges
+            # Add system-defined privileges, "System.Anonymous", "System.View", and "System.Read".
+            self.params['local_privilege_ids'].extend(['System.Anonymous', 'System.Read', 'System.View'])
+            changed_privileges = self.params['local_privilege_ids']
+
+            changes_applied = list(set(current_privileges) ^ set(changed_privileges))
+            if changes_applied:
+                changed = True
+        elif self.action == 'remove':
+            # Remove given privileges from existing privileges
+            for priv in self.params['local_privilege_ids']:
+                if priv in current_privileges:
+                    changed = True
+                    current_privileges.remove(priv)
+            if changed:
+                changed_privileges = current_privileges
+
+        if not changed:
             self.state_exit_unchanged()
-
-        # Delete unwanted privileges that are not required
-        for priv in changed_privileges:
-            if priv not in desired_privileges:
-                changed_privileges.remove(priv)
 
         try:
             self.content.authorizationManager.UpdateAuthorizationRole(roleId=self.current_role.roleId,
@@ -256,14 +326,13 @@ class VMwareLocalRoleManager(PyVmomi):
             self.module.fail_json(msg="Failed to update Role %s as current session does not"
                                       " have any privilege to update specified role" % self.role_name,
                                   details=e.msg)
+
         role = self.find_authorization_role()
-        result = {
-            'changed': True,
-            'role_id': role.roleId,
-            'local_role_name': role.name,
-            'new_privileges': role.privilege,
-            'old_privileges': current_privileges,
-        }
+        result['role_id'] = role.roleId,
+        result['changed'] = changed
+        result['local_role_name'] = role.name
+        result['new_privileges'] = [priv_name for priv_name in role.privilege]
+
         self.module.exit_json(**result)
 
 
@@ -272,6 +341,11 @@ def main():
     argument_spec.update(dict(local_role_name=dict(required=True, type='str'),
                               local_privilege_ids=dict(default=[], type='list'),
                               force_remove=dict(default=False, type='bool'),
+                              action=dict(type='str', default='set', choices=[
+                                  'add',
+                                  'set',
+                                  'remove',
+                              ]),
                               state=dict(default='present', choices=['present', 'absent'], type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec,

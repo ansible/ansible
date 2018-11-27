@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - ec2_group - Sanitize the ingress and egress rules before operating on them by flattening any lists
+    within lists describing the target CIDR(s) into a list of strings. Prior to Ansible 2.6 the ec2_group
+    module accepted a list of strings, a list of lists, or a combination of strings and lists within a list.
+    https://github.com/ansible/ansible/pull/45594

@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -40,8 +40,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht house@redhat.com"
-    - "Matt Davis mdavis@redhat.com"
+    - "Chris Houseknecht (@chouseknecht) <house@redhat.com>"
+    - "Matt Davis (@nitzmahone) <mdavis@redhat.com>"
 
 '''
 

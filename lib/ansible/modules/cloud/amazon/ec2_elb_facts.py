@@ -26,7 +26,7 @@ description:
     - Gather facts about EC2 Elastic Load Balancers in AWS
 version_added: "2.0"
 author:
-  - "Michael Schultz (github.com/mjschultz)"
+  - "Michael Schultz (@mjschultz)"
   - "Fernando Jose Pando (@nand0p)"
 options:
   names:
@@ -50,7 +50,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
 - action:
@@ -73,7 +73,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 '''
 

@@ -8,11 +8,11 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 module: na_ontap_gather_facts
-author: Piotr Olczak (polczak@redhat.com)
+author: Piotr Olczak (@dprts) <polczak@redhat.com>
 extends_documentation_fragment:
     - netapp.na_ontap
 short_description: NetApp information gatherer

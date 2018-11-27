@@ -25,6 +25,7 @@ options:
   name:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features.
+      - To list all available features use the PowerShell command C(Get-WindowsFeature).
     required: yes
     type: list
   state:
@@ -136,12 +137,6 @@ feature_result:
             sample: True
 reboot_required:
     description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
-    returned: success
-    type: boolean
-    sample: True
-restart_needed:
-    description: DEPRECATED in Ansible 2.4 (refer to C(reboot_required) instead). True when the target server requires a reboot to complete updates
-                 (no further updates can be installed until after a reboot)
     returned: success
     type: boolean
     sample: True

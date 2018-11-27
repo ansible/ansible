@@ -46,7 +46,7 @@ options:
       - Attribute Yang type.
   attr_data:
     description:
-      - Attribute Yang path and thier correspoding data.
+      - Attribute Yang path and their corresponding data.
   operation:
     description:
       - Operation to be performed on the object.
@@ -67,6 +67,10 @@ options:
       - Attempts to force the auto-commit event to the specified yang object.
     type: bool
     default: 'no'
+requirements:
+    - "cps"
+    - "cps_object"
+    - "cps_utils"
 """
 
 EXAMPLES = """
@@ -86,23 +90,94 @@ EXAMPLES = """
          "if/interfaces/interface/name": "br230",
     }
     operation: "get"
+- name: Modify some attributes in VLAN
+  opx_cps:
+    module_name: "dell-base-if-cmn/if/interfaces/interface"
+    attr_data: {
+         "cps/key_data":
+            { "if/interfaces/interface/name": "br230" },
+         "dell-if/if/interfaces/interface/untagged-ports": ["e101-008-0"],
+    }
+    operation: "set"
+- name: Delete VLAN
+  opx_cps:
+    module_name: "dell-base-if-cmn/if/interfaces/interface"
+    attr_data: {
+         "if/interfaces/interface/name": "br230",
+    }
+    operation: "delete"
 """
 
 RETURN = """
 response:
   description: Output from the CPS transaction.
-  returned: always
+  returned: when a CPS transaction is successfully performed.
+  type: list
+  sample:
+    [{
+        "data": {
+            "base-if-vlan/if/interfaces/interface/id": 230,
+            "cps/object-group/return-code": 0,
+            "dell-base-if-cmn/if/interfaces/interface/if-index": 46,
+            "if/interfaces/interface/name": "br230",
+            "if/interfaces/interface/type": "ianaift:l2vlan"
+        },
+        "key": "target/dell-base-if-cmn/if/interfaces/interface"
+    }]
+candidate:
+  description: CPS input attribute data used to compare with
+               running configuration
+  returned: all CPS operations other than "get"
   type: dict
-  sample: {'...':'...'}
-changed:
-  description: Returns if the CPS transaction was performed.
-  returned: when a CPS traction is performed.
+  sample:
+    {
+        "base-if-vlan/if/interfaces/interface/id": 230,
+        "if/interfaces/interface/name": "br230",
+        "if/interfaces/interface/type": "ianaift:l2vlan"
+    }
+config:
+  description: Returns the CPS Get output i.e. the running configuration
+               before performing the CPS transaction
+  returned: when CPS operations set, delete
   type: dict
-  sample: {'...':'...'}
+  sample:
+    {
+        "base-if-vlan/if/interfaces/interface/id": 230,
+        "dell-base-if-cmn/if/interfaces/interface/if-index": 46,
+        "dell-if/if/interfaces/interface/learning-mode": 1,
+        "dell-if/if/interfaces/interface/mtu": 1532,
+        "dell-if/if/interfaces/interface/phys-address": "",
+        "dell-if/if/interfaces/interface/vlan-type": 1,
+        "if/interfaces/interface/enabled": 0,
+        "if/interfaces/interface/name": "br230",
+        "if/interfaces/interface/type": "ianaift:l2vlan"
+    }
+diff:
+  description: The actual configuration that will be pushed comparing
+               the running configuration and input attributes
+  returned: all CPS operations other than "get"
+  type: dict
+  sample:
+    {
+        "base-if-vlan/if/interfaces/interface/id": 230,
+        "if/interfaces/interface/name": "br230",
+        "if/interfaces/interface/type": "ianaift:l2vlan"
+    }
+db:
+  description: Denotes if CPS DB transaction was performed
+  returned: when db is set to True in module options
+  type: bool
+  sample: True
+commit_event:
+  description: Denotes if auto-commit event is set
+  returned: when commit_event is set to True in module options
+  type: bool
+  sample: True
 """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import dict_diff
 
 try:
     import cps
@@ -136,53 +211,6 @@ def get_config(module):
                 config[key] = val
 
     return config
-
-
-def diff_dict(base_data, compare_with_data):
-    """
-    Wrapper API for gives difference between 2 dicts
-    with base_data as the base reference
-
-    Parameters
-    ----------
-    base_data          : dict
-    compare_with_data  : dict
-
-    Return
-    ------
-    returns difference of 2 input
-
-    Raises
-    ------
-    """
-    planned_set = set(base_data.keys())
-    discovered_set = set(compare_with_data.keys())
-    intersect_set = planned_set.intersection(discovered_set)
-    changed_dict = {}
-    added_set = planned_set - intersect_set
-    # Keys part of added are new and put into changed_dict
-    if added_set:
-        for key in added_set:
-            changed_dict[key] = base_data[key]
-
-    for key in intersect_set:
-        value = base_data[key]
-
-        if isinstance(value, list):
-            p_list = base_data[key] if key in base_data else []
-            d_list = compare_with_data[key] if key in compare_with_data else []
-            set_diff = set(p_list) - set(d_list)
-            if set_diff:
-                changed_dict[key] = list(set_diff)
-        elif isinstance(value, dict):
-            dict_diff = diff_dict(base_data[key],
-                                  compare_with_data[key])
-            if dict_diff:
-                changed_dict[key] = dict_diff
-        else:
-            if compare_with_data[key] != base_data[key]:
-                changed_dict[key] = base_data[key]
-    return changed_dict
 
 
 def convert_cps_raw_list(raw_list):
@@ -335,7 +363,7 @@ def main():
                         candidate.update(val)
                     else:
                         candidate[key] = val
-                diff = diff_dict(candidate, config)
+                diff = dict_diff(config, candidate)
 
             if operation == "delete":
                 if config:

@@ -74,7 +74,10 @@
   azure_rm_autoscale:
     resource_group: "{{ resource_group }}"
     name: "{{ name }}"
-    target: "{{ vmss.ansible_facts.azure_vmss.id }}"
+    target:
+      name: "testVMSS{{ rpfx }}"
+      types: "virtualMachineScaleSets"
+      namespace: "Microsoft.Compute"
     enabled: true
     profiles:
     - count: '1'
