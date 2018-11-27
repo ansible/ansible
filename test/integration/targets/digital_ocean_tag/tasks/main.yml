@@ -13,3 +13,17 @@
     that:
       - create_tag.changed == True
       - create_tag.data.tag.name == "integration-test"
+
+- name: Delete tag
+  digital_ocean_tag:
+    oauth_token: '{{do_api_key}}'
+    name: integration-test
+    state: absent
+  register: delete_tag
+
+- debug:
+    var: delete_tag
+
+- assert:
+    that:
+      - delete_tag.changed == True
