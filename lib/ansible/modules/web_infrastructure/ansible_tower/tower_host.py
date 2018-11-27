@@ -59,6 +59,8 @@ EXAMPLES = '''
     inventory: "Local Inventory"
     state: present
     tower_config_file: "~/tower_cli.cfg"
+    variables:
+      example_var: 123
 '''
 
 
