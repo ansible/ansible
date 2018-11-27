@@ -227,7 +227,7 @@ class WapiModule(WapiBase):
         if ib_obj_ref:
             if len(ib_obj_ref) > 1:
                 for each in ib_obj_ref:
-                    if each['ipv4addr'] == proposed_object['ipv4addr']:
+                    if ('ipv4addr' in each and proposed_object) and each['ipv4addr'] == proposed_object['ipv4addr']:
                         current_object = each
             else:
                 current_object = ib_obj_ref[0]
