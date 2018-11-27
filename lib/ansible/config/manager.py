@@ -46,7 +46,7 @@ def _get_entry(plugin_type, plugin_name, config):
         if plugin_name:
             entry += 'plugin: %s ' % plugin_name
     entry += 'setting: %s ' % config
-    return to_native(entry)
+    return entry
 
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
@@ -426,7 +426,8 @@ class ConfigManager(object):
                 if value is None:
                     if defs[config].get('required', False):
                         if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
-                            raise AnsibleError("No setting was provided for required configuration %s" % _get_entry(plugin_type, plugin_name, config))
+                            raise AnsibleError("No setting was provided for required configuration %s" %
+                                               to_native(_get_entry(plugin_type, plugin_name, config)))
                     else:
                         value = defs[config].get('default')
                         origin = 'default'
@@ -444,13 +445,13 @@ class ConfigManager(object):
                     value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
                 else:
                     raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
-                                              (_get_entry(plugin_type, plugin_name, config), to_native(e)))
+                                              (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
                 self.DEPRECATED.append((config, defs[config].get('deprecated')))
         else:
-            raise AnsibleError('Requested entry (%s) was not defined in configuration.' % _get_entry(plugin_type, plugin_name, config))
+            raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 
         return value, origin
 
