@@ -20,10 +20,17 @@ module: zabbix_action
 
 short_description: Create/Delete/Update Zabbix actions
 
-version_added: "2.4"
+version_added: "2.8"
 
 description:
     - This module allows you to create, modify and delete Zabbix actions.
+
+author:
+    - Ruben Tsirunyan (@rubentsirunyan)
+    - Ruben Harutyunov (@K-DOT)
+
+requirements:
+    - zabbix-api
 
 options:
     name:
@@ -276,9 +283,6 @@ options:
 
 extends_documentation_fragment:
     - zabbix
-
-author:
-    - Ruben Tsirunyan (@rubentsirunyan)
 '''
 
 EXAMPLES = '''
