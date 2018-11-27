@@ -5,6 +5,19 @@
     path: '{{ remote_dir }}/{{ item.dest.split("/")[0] }}'
     state: absent
 
+- name: create subdir
+  file:
+    path: subdir
+    state: directory
+
+- name: create src file
+  file:
+    path: "{{ item }}"
+    state: touch
+  loop:
+    - foo.txt
+    - subdir/bar.txt
+
 - name: Copy file, dest is a nonexistent target directory
   copy:
     src: '{{ item.src }}'

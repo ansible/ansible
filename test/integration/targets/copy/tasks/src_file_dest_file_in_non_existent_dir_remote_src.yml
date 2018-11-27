@@ -3,6 +3,11 @@
     path: '{{ remote_dir }}/{{ dest.split("/")[0] }}'
     state: absent
 
+- name: create src file
+  file:
+    path: foo.txt
+    state: touch
+
 - name: Copy file, dest is a file in non-existing target directory
   copy:
     src: foo.txt
