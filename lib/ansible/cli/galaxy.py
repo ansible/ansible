@@ -276,7 +276,7 @@ class GalaxyCLI(CLI):
             install_info = gr.install_info
             if install_info:
                 if 'version' in install_info:
-                    install_info['intalled_version'] = install_info['version']
+                    install_info['installed_version'] = install_info['version']
                     del install_info['version']
                 role_info.update(install_info)
 
