@@ -77,9 +77,16 @@ class GcpSession(object):
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
-    def post(self, url, body=None):
+    def post(self, url, body=None, headers={}, **kwargs):
+        kwargs.update({'json': body, 'headers': self._merge_dictionaries(headers, self._headers())})
         try:
             return self.session().post(url, json=body, headers=self._headers())
+        except getattr(requests.exceptions, 'RequestException') as inst:
+            self.module.fail_json(msg=inst.message)
+
+    def post_contents(self, url, file_contents=None, headers={}, **kwargs):
+        try:
+            return self.session().post(url, data=file_contents, headers=self._headers())
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
@@ -141,6 +148,11 @@ class GcpSession(object):
         return {
             'User-Agent': "Google-Ansible-MM-{0}".format(self.product)
         }
+
+    def _merge_dictionaries(self, a, b):
+        new = a.copy()
+        new.update(b)
+        return new
 
 
 class GcpModule(AnsibleModule):
