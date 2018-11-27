@@ -53,6 +53,7 @@ options:
     description:
       - Indicates whether the VPN connection uses static routes only. Static routes must be used for devices that don't support BGP.
     default: False
+    type: bool
     required: no
   tunnel_options:
     description:
@@ -108,6 +109,7 @@ options:
   purge_routes:
     description:
       - Whether or not to delete VPN connections routes that are not specified in the task.
+    type: bool
 """
 
 EXAMPLES = """

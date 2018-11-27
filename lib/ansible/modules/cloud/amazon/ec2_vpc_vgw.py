@@ -56,6 +56,7 @@ options:
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - ec2
+  - aws
 '''
 
 EXAMPLES = '''

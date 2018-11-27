@@ -51,6 +51,7 @@ options:
     description:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
         with Ceph in order to provide the same module behaviour where possible.
+    type: bool
     version_added: "2.2"
   requester_pays:
     description:

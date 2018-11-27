@@ -46,6 +46,7 @@ options:
     description:
       - Wait for operation to complete before returning.
     default: true
+    type: bool
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.

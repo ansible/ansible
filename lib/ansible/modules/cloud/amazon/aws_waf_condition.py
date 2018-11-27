@@ -53,7 +53,10 @@ options:
         - I(target_string) is a maximum of 50 bytes.
         - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
     purge_filters:
-        description: Whether to remove existing filters from a condition if not passed in I(filters). Defaults to false.
+        description:
+        - Whether to remove existing filters from a condition if not passed in I(filters).
+        default: False
+        type: bool
     state:
         description: Whether the condition should be C(present) or C(absent).
         choices:

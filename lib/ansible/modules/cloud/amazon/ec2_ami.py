@@ -86,6 +86,7 @@ options:
     description: Whether to remove existing tags that aren't passed in the C(tags) parameter
     version_added: "2.5"
     default: "no"
+    type: bool
   launch_permissions:
     description:
       - Users and groups that should be able to launch the AMI. Expects dictionary with a key of user_ids and/or group_names. user_ids should
@@ -100,6 +101,7 @@ options:
     description:
       - A boolean representing whether enhanced networking with ENA is enabled or not.
     version_added: "2.5"
+    type: bool
   billing_products:
     description:
       - A list of valid billing codes. To be used with valid accounts by aws marketplace vendors.
@@ -654,7 +656,7 @@ def main():
         wait_timeout=dict(default=900, type='int'),
         description=dict(default=''),
         no_reboot=dict(default=False, type='bool'),
-        state=dict(default='present'),
+        state=dict(default='present', choices=['present', 'absent']),
         device_mapping=dict(type='list'),
         tags=dict(type='dict'),
         launch_permissions=dict(type='dict'),

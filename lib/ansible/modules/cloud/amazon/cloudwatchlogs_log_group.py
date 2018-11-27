@@ -52,6 +52,7 @@ options:
         - Whether an existing log group should be overwritten on create.
      default: false
      required: false
+     type: bool
 extends_documentation_fragment:
     - aws
     - ec2
