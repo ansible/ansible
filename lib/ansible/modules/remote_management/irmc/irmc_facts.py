@@ -264,9 +264,6 @@ RETURN = '''
                 "serial_number": "YLVT000098",
                 "uuid": "11223344-5566-cafe-babe-deadbeef1234"
             }
-
-# Returned by "get":
-    Return values: Default
 '''
 
 
