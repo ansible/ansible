@@ -30,9 +30,9 @@
 # Contains LXCA common class
 # Lenovo xClarity Administrator (LXCA)
 
-
+import traceback
 try:
-    import pylxca
+    from pylxca import connect, disconnect
     HAS_PYLXCA = True
 except ImportError:
     HAS_PYLXCA = False
@@ -55,3 +55,41 @@ LXCA_COMMON_ARGS = dict(
     login_password=dict(required=True, no_log=True),
     auth_url=dict(required=True),
 )
+
+
+class connection_object:
+    def __init__(self, module):
+        self.module = module
+
+    def __enter__(self):
+        return setup_conn(self.module)
+
+    def __exit__(self, type, value, traceback):
+        close_conn()
+
+
+def setup_conn(module):
+    """
+    this function create connection to LXCA
+    :param module:
+    :return:  lxca connection
+    """
+    lxca_con = None
+    try:
+        lxca_con = connect(module.params['auth_url'],
+                           module.params['login_user'],
+                           module.params['login_password'],
+                           "True")
+    except Exception as exception:
+        error_msg = '; '.join(exception.args)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
+    return lxca_con
+
+
+def close_conn():
+    """
+    this function close connection to LXCA
+    :param module:
+    :return:  None
+    """
+    disconnect()

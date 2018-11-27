@@ -5,12 +5,12 @@ from units.compat import mock
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 from ansible.modules.remote_management.lxca import lxca_nodes
-from ansible.modules.remote_management.lxca.lxca_nodes import setup_conn
-from ansible.modules.remote_management.lxca.lxca_nodes import close_conn
+from ansible.module_utils.remote_management.lxca.common import setup_conn
+from ansible.module_utils.remote_management.lxca.common import close_conn
 
 
 @pytest.fixture(scope='module')
-@mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.close_conn", autospec=True)
+@mock.patch("ansible.module_utils.remote_management.lxca.common.close_conn", autospec=True)
 def setup_module(close_conn):
     close_conn.return_value = True
 
@@ -34,7 +34,7 @@ class TestMyModule():
                              ],
                              indirect=['patch_ansible_module'])
     @pytest.mark.usefixtures('patch_ansible_module')
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
+    @mock.patch("ansible.module_utils.remote_management.lxca.common.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.execute_module", autospec=True)
     def test_without_required_parameters(self, _setup_conn, _execute_module,
                                          mocker, capfd, setup_module):
@@ -48,7 +48,7 @@ class TestMyModule():
         assert results['failed']
         assert 'missing required arguments' in results['msg']
 
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
+    @mock.patch("ansible.module_utils.remote_management.lxca.common.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.execute_module", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule", autospec=True)
     def test__argument_spec(self, ansible_mod_cls, _execute_module, _setup_conn, setup_module):
@@ -77,7 +77,7 @@ class TestMyModule():
         assert(mock.call(argument_spec=expected_arguments_spec,
                          supports_check_mode=False) == ansible_mod_cls.call_args)
 
-    @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.setup_conn", autospec=True)
+    @mock.patch("ansible.module_utils.remote_management.lxca.common.setup_conn", autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes._nodes_by_uuid",
                 autospec=True)
     @mock.patch("ansible.modules.remote_management.lxca.lxca_nodes.AnsibleModule",

@@ -115,10 +115,8 @@ result:
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.remote_management.lxca.common import LXCA_COMMON_ARGS, has_pylxca
+from ansible.module_utils.remote_management.lxca.common import LXCA_COMMON_ARGS, has_pylxca, connection_object
 try:
-    from pylxca import connect
-    from pylxca import disconnect
     from pylxca import nodes
 except ImportError:
     pass
@@ -127,17 +125,6 @@ except ImportError:
 UUID_REQUIRED = 'UUID of device is required for nodes_by_uuid command.'
 CHASSIS_UUID_REQUIRED = 'UUID of chassis is required for nodes_by_chassis_uuid command.'
 SUCCESS_MSG = "Success %s result"
-
-
-class connection_object:
-    def __init__(self, module):
-        self.module = module
-
-    def __enter__(self):
-        return setup_conn(self.module)
-
-    def __exit__(self, type, value, traceback):
-        close_conn()
 
 
 def _nodes(module, lxca_con):
@@ -176,33 +163,6 @@ def setup_module_object():
     return module
 
 
-def setup_conn(module):
-    """
-    this function create connection to LXCA
-    :param module:
-    :return:  lxca connection
-    """
-    lxca_con = None
-    try:
-        lxca_con = connect(module.params['auth_url'],
-                           module.params['login_user'],
-                           module.params['login_password'],
-                           "True")
-    except Exception as exception:
-        error_msg = '; '.join(exception.args)
-        module.fail_json(msg=error_msg, exception=traceback.format_exc())
-    return lxca_con
-
-
-def close_conn():
-    """
-    this function close connection to LXCA
-    :param module:
-    :return:  None
-    """
-    disconnect()
-
-
 FUNC_DICT = {
     'nodes': _nodes,
     'nodes_by_uuid': _nodes_by_uuid,
@@ -237,19 +197,10 @@ def execute_module(module):
         module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
 
-def run_tasks(module):
-    """
-    This function invoke commands
-    :param module: Ansible module object
-    """
-
-    execute_module(module)
-
-
 def main():
     module = setup_module_object()
     has_pylxca(module)
-    run_tasks(module)
+    execute_module(module)
 
 
 if __name__ == '__main__':
