@@ -182,7 +182,7 @@ def main():
     command_list = module.params['command']
 
     # admin credentials used for authentication
-    creds = {'username': module.params['username'],
+    creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
     # Manager attributes to update
