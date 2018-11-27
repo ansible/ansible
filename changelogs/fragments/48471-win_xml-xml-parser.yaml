@@ -1,0 +1,2 @@
+bugfixes:
+  - win_xml - use New-Object System.Xml.XmlDocument rather than Get-Content for parsing xml (https://github.com/ansible/ansible/issues/48471)
