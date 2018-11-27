@@ -410,4 +410,4 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             predicate = waiter.get(kind, lambda x: True)
         else:
             predicate = _resource_absent
-        return self._wait_for(resource, definition['metadata']['name'], definition['metadata']['namespace'], predicate, timeout, state)
+        return self._wait_for(resource, definition['metadata']['name'], definition['metadata'].get('namespace'), predicate, timeout, state)
