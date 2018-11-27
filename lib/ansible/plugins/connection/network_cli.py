@@ -294,8 +294,11 @@ class Connection(NetworkConnectionBase):
 
         self._play_context = play_context
 
-        self.reset_history()
-        self.disable_response_logging()
+        if hasattr(self, 'reset_history'):
+            self.reset_history()
+        if hasattr(self, 'disable_response_logging'):
+            self.disable_response_logging()
+
         return messages
 
     def _connect(self):
