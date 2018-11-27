@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 # FUJITSU LIMITED
 # Copyright 2018 FUJITSU LIMITED
@@ -6,19 +5,27 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import time
 import traceback
 import json
-import requests
-from requests.auth import HTTPBasicAuth
-from requests.adapters import HTTPAdapter
-import urllib3
-from urllib3.util.retry import Retry
-from urllib3.exceptions import InsecureRequestWarning
-urllib3.disable_warnings(InsecureRequestWarning)
+
+try:
+    import requests
+    from requests.auth import HTTPBasicAuth
+    from requests.adapters import HTTPAdapter
+    import urllib3
+    from urllib3.util.retry import Retry
+    from urllib3.exceptions import InsecureRequestWarning
+    urllib3.disable_warnings(InsecureRequestWarning)
+    HAS_REQUESTS = True
+except:
+    HAS_REQUESTS = False
+
 
 
 def irmc_redfish_get(module, uri):
+    if not HAS_REQUESTS:
+        return 90, "Python 'requests' module not found.", "iRMC module requires 'requests' Module"
+
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json"
@@ -31,7 +38,6 @@ def irmc_redfish_get(module, uri):
     session.mount('https://', HTTPAdapter(max_retries=retries))
 
     msg = "OK"
-    # print("GET {0}".format(url))
     try:
         data = session.get(url, headers=headers, verify=module.params['validate_certs'],
                            auth=HTTPBasicAuth(module.params['irmc_username'], module.params['irmc_password']))
@@ -40,9 +46,12 @@ def irmc_redfish_get(module, uri):
         status = data.status_code
         if status != 200:
             try:
-                msg = "GET request was not successful ({0}): {1}".format(url, data.json()['error']['message'])
+                msg = "GET request was not successful ({0}): status {1}, '{1}'". \
+                      format(url, status, data.json()['error']['message'])
             except Exception:
-                msg = "GET request was not successful ({0}).".format(url)
+                msg = "GET request was not successful ({0}), status {1}.".format(url, status)
+        else:
+            data = data.json()
 
     except Exception as e:
         status = 99
@@ -53,6 +62,9 @@ def irmc_redfish_get(module, uri):
 
 
 def irmc_redfish_patch(module, uri, body, etag):
+    if not HAS_REQUESTS:
+        return 90, "Python 'requests' module not found.", "iRMC access requires 'requests' Module"
+
     etag = str(etag)
     if not etag.isdigit():
         msg = "etag is no number: {0}".format(etag)
@@ -80,8 +92,6 @@ def irmc_redfish_patch(module, uri, body, etag):
     session.mount('https://', HTTPAdapter(max_retries=retries))
 
     msg = "OK"
-    # print("PATCH {0}, {1}".format(url, etag))
-    # print(body)
     try:
         data = session.patch(url, headers=headers, data=body, verify=module.params['validate_certs'],
                              auth=HTTPBasicAuth(module.params['irmc_username'], module.params['irmc_password']))
@@ -90,9 +100,12 @@ def irmc_redfish_patch(module, uri, body, etag):
         status = data.status_code
         if status != 200:
             try:
-                msg = "PATCH request was not successful ({0}): {1}".format(url, data.json()['error']['message'])
+                msg = "PATCH request was not successful ({0}): status {1}, '{1}'". \
+                      format(url, status, data.json()['error']['message'])
             except Exception:
-                msg = "PATCH request was not successful ({0}).".format(url)
+                msg = "PATCH request was not successful ({0}), status {1}.".format(url, status)
+        else:
+            data = data.json()
 
     except Exception as e:
         status = 99
