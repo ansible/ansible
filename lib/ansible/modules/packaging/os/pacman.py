@@ -29,6 +29,7 @@ options:
     name:
         description:
             - Name or list of names of the package(s) or file(s) to install, upgrade, or remove.
+              Can't be used in combination with C(upgrade).
         aliases: [ package, pkg ]
 
     state:
@@ -81,6 +82,7 @@ options:
     upgrade:
         description:
             - Whether or not to upgrade the whole system.
+              Can't be used in combination with C(name).
         default: no
         type: bool
         version_added: "2.0"
@@ -419,6 +421,7 @@ def main():
             update_cache_extra_args=dict(type='str', default=''),
         ),
         required_one_of=[['name', 'update_cache', 'upgrade']],
+        mutually_exclusive=[['name', 'upgrade']],
         supports_check_mode=True,
     )
 
