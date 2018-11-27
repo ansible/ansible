@@ -342,8 +342,9 @@ def analyze_integration_target_dependencies(integration_targets):
     :type integration_targets: list[IntegrationTarget]
     :rtype: dict[str,set[str]]
     """
-    hidden_role_target_names = set(t.name for t in integration_targets if t.type == 'role' and 'hidden/' in t.aliases)
-    normal_role_targets = [t for t in integration_targets if t.type == 'role' and 'hidden/' not in t.aliases]
+    role_targets = [t for t in integration_targets if t.type == 'role']
+    hidden_role_target_names = set(t.name for t in role_targets if 'hidden/' in t.aliases)
+
     dependencies = collections.defaultdict(set)
 
     # handle setup dependencies
@@ -352,7 +353,7 @@ def analyze_integration_target_dependencies(integration_targets):
             dependencies[setup_target_name].add(target.name)
 
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
-    for role_target in normal_role_targets:
+    for role_target in role_targets:
         meta_dir = os.path.join(role_target.path, 'meta')
 
         if not os.path.isdir(meta_dir):
@@ -375,6 +376,23 @@ def analyze_integration_target_dependencies(integration_targets):
                     for hidden_target_name in hidden_role_target_names:
                         if hidden_target_name in meta_line:
                             dependencies[hidden_target_name].add(role_target.name)
+
+    while True:
+        changes = 0
+
+        for dummy, dependent_target_names in dependencies.items():
+            for dependent_target_name in list(dependent_target_names):
+                new_target_names = dependencies.get(dependent_target_name)
+
+                if new_target_names:
+                    for new_target_name in new_target_names:
+                        if new_target_name not in dependent_target_names:
+                            dependent_target_names.add(new_target_name)
+                            changes += 1
+                    dependent_target_names.remove(dependent_target_name)
+
+        if not changes:
+            break
 
     return dependencies
 
