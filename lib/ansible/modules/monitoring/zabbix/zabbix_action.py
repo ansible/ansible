@@ -388,6 +388,15 @@ class Zapi(object):
         self._zapi = zbx
 
     def check_if_action_exists(self, name):
+        """Check if action exists.
+
+        Args:
+            name: Name of the action.
+
+        Returns:
+            The return value. True for success, False otherwise.
+
+        """
         try:
             return self._zapi.action.get({
                 "selectOperations": "extend",
@@ -400,6 +409,15 @@ class Zapi(object):
             self._module.fail_json(msg="Failed to check if action '%s' exists: %s" % (name, e))
 
     def get_action_by_name(self, name):
+        """Get action by name
+
+        Args:
+            name: Name of the action.
+
+        Returns:
+            dict: Zabbix action
+
+        """
         try:
             action_list = self._zapi.action.get({
                 'output': 'extend',
@@ -413,8 +431,16 @@ class Zapi(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to get ID of '%s': %s" % (name, e))
 
-    # get host by host name
     def get_host_by_host_name(self, host_name):
+        """Get host by host name
+
+        Args:
+            host_name: host name.
+
+        Returns:
+            host matching host name
+
+        """
         try:
             host_list = self._zapi.host.get({
                 'output': 'extend',
@@ -428,8 +454,16 @@ class Zapi(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to get host '%s': %s" % (host_name, e))
 
-    # get hostgroup by hostgroup name
     def get_hostgroup_by_hostgroup_name(self, hostgroup_name):
+        """Get host group by host group name
+
+        Args:
+            hostgroup_name: host group name.
+
+        Returns:
+            host group matching host group name
+
+        """
         try:
             hostgroup_list = self._zapi.hostgroup.get({
                 'output': 'extend',
@@ -443,8 +477,16 @@ class Zapi(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to get host group '%s': %s" % (hostgroup_name, e))
 
-    # get template by template name
     def get_template_by_template_name(self, template_name):
+        """Get template by template name
+
+        Args:
+            template_name: template name.
+
+        Returns:
+            template matching template name
+
+        """
         try:
             template_list = self._zapi.template.get({
                 'output': 'extend',
@@ -459,6 +501,15 @@ class Zapi(object):
             self._module.fail_json(msg="Failed to get template '%s': %s" % (template_name, e))
 
     def get_trigger_by_trigger_name(self, trigger_name):
+        """Get trigger by trigger name
+
+        Args:
+            trigger_name: trigger name.
+
+        Returns:
+            trigger matching trigger name
+
+        """
         try:
             trigger_list = self._zapi.trigger.get({
                 'output': 'extend',
@@ -473,6 +524,15 @@ class Zapi(object):
             self._module.fail_json(msg="Failed to get trigger '%s': %s" % (trigger_name, e))
 
     def get_discovery_rule_by_discovery_rule_name(self, discovery_rule_name):
+        """Get discovery rule by discovery rule name
+
+        Args:
+            discovery_rule_name: discovery rule name.
+
+        Returns:
+            discovery rule matching discovery rule name
+
+        """
         try:
             discovery_rule_list = self._zapi.drule.get({
                 'output': 'extend',
@@ -487,6 +547,15 @@ class Zapi(object):
             self._module.fail_json(msg="Failed to get discovery rule '%s': %s" % (discovery_rule_name, e))
 
     def get_discovery_check_by_discovery_check_name(self, discovery_check_name):
+        """Get discovery check  by discovery check name
+
+        Args:
+            discovery_check_name: discovery check name.
+
+        Returns:
+            discovery check matching discovery check name
+
+        """
         try:
             discovery_check_list = self._zapi.dcheck.get({
                 'output': 'extend',
@@ -501,6 +570,15 @@ class Zapi(object):
             self._module.fail_json(msg="Failed to get discovery check '%s': %s" % (discovery_check_name, e))
 
     def get_proxy_by_proxy_name(self, proxy_name):
+        """Get proxy by proxy name
+
+        Args:
+            proxy_name: proxy name.
+
+        Returns:
+            proxy matching proxy name
+
+        """
         try:
             proxy_list = self._zapi.proxy.get({
                 'output': 'extend',
@@ -516,6 +594,15 @@ class Zapi(object):
 
     # get mediatype by mediatype name
     def get_mediatype_by_mediatype_name(self, mediatype_name):
+        """Get mediatype by mediatype name
+
+        Args:
+            mediatype_name: mediatype name
+
+        Returns:
+            mediatype matching mediatype name
+
+        """
         try:
             mediatype_list = self._zapi.mediatype.get({
                 'output': 'extend',
@@ -529,8 +616,16 @@ class Zapi(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to get mediatype '%s': %s" % (mediatype_name, e))
 
-    # get user by user name
     def get_user_by_user_name(self, user_name):
+        """Get user by user name
+
+        Args:
+            user_name: user name
+
+        Returns:
+            user matching user name
+
+        """
         try:
             user_list = self._zapi.user.get({
                 'output': 'extend',
@@ -544,8 +639,16 @@ class Zapi(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to get user '%s': %s" % (user_name, e))
 
-    # get usergroup by usergroup name
     def get_usergroup_by_usergroup_name(self, usergroup_name):
+        """Get usergroup by usergroup name
+
+        Args:
+            usergroup_name: usergroup name
+
+        Returns:
+            usergroup matching usergroup name
+
+        """
         try:
             usergroup_list = self._zapi.usergroup.get({
                 'output': 'extend',
@@ -561,6 +664,15 @@ class Zapi(object):
 
     # get script by script name
     def get_script_by_script_name(self, script_name):
+        """Get script by script name
+
+        Args:
+            script_name: script name
+
+        Returns:
+            script matching script name
+
+        """
         try:
             if script_name is None:
                 return {}
@@ -587,6 +699,14 @@ class Action(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_parameters(self, **kwargs):
+            """Contruct parameters.
+
+            Args:
+                **kwargs: Arbitrary keyword parameters.
+
+            Returns:
+                dict: dictionary of specified parameters
+            """
         return {
             'name': kwargs['name'],
             'eventsource': to_numeric_value([
@@ -611,12 +731,28 @@ class Action(object):
         }
 
     def check_difference(self, **kwargs):
+        """Check difference between action and user specified parameters.
+
+        Args:
+            **kwargs: Arbitrary keyword parameters.
+
+        Returns:
+            dict: dictionary of differences
+        """
         existing_action = convert_unicode_to_str(self._zapi_wrapper.check_if_action_exists(kwargs['name'])[0])
         parameters = convert_unicode_to_str(self._construct_parameters(**kwargs))
         change_parameters = {}
         return cleanup_data(compare_dictionaries(parameters, existing_action, change_parameters))
 
     def update_action(self, **kwargs):
+        """Update action.
+
+        Args:
+            **kwargs: Arbitrary keyword parameters.
+
+        Returns:
+            action: updated action
+        """
         try:
             if self._module.check_mode:
                 self._module.exit_json(msg="Action would be updated if check mode was not specified: %s" % kwargs, changed=True)
@@ -626,6 +762,14 @@ class Action(object):
             self._module.fail_json(msg="Failed to update action '%s': %s" % (kwargs['actionid'], e))
 
     def add_action(self, **kwargs):
+        """Add action.
+
+        Args:
+            **kwargs: Arbitrary keyword parameters.
+
+        Returns:
+            action: added action
+        """
         try:
             if self._module.check_mode:
                 self._module.exit_json(msg="Action would be added if check mode was not specified", changed=True)
@@ -636,6 +780,14 @@ class Action(object):
             self._module.fail_json(msg="Failed to create action '%s': %s" % (kwargs['name'], e))
 
     def delete_action(self, action_id):
+        """Delete action.
+
+        Args:
+            action_id: Action id
+
+        Returns:
+            action: deleted action
+        """
         try:
             if self._module.check_mode:
                 self._module.exit_json(msg="Action would be deleted if check mode was not specified", changed=True)
@@ -654,6 +806,14 @@ class Operations(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_operationtype(self, operation):
+        """Construct operation type.
+
+        Args:
+            operation: operation to construct
+
+        Returns:
+            str: constructed operation
+        """
         try:
             return to_numeric_value([
                 "send_message",
@@ -672,6 +832,14 @@ class Operations(object):
             self._module.fail_json(msg="Unsupported value '%s' for operation type." % operation['type'])
 
     def _construct_opmessage(self, operation):
+         """Construct operation message.
+
+         Args:
+             operation: operation to construct the message
+
+         Returns:
+             dict: constructed operation message
+         """
         try:
             return {
                 'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
@@ -685,6 +853,14 @@ class Operations(object):
             self._module.fail_json(msg="Failed to construct operation message. The error was: %s" % e)
 
     def _construct_opmessage_usr(self, operation):
+        """Construct operation message user.
+
+        Args:
+            operation: operation to construct the message user
+
+        Returns:
+            list: constructed operation message user or None if oprtation not found
+        """
         if operation.get('send_to_users') is None:
             return None
         return [{
@@ -692,6 +868,14 @@ class Operations(object):
         } for _user in operation.get('send_to_users')]
 
     def _construct_opmessage_grp(self, operation):
+        """Construct operation message group.
+
+        Args:
+            operation: operation to construct the message group
+
+        Returns:
+            list: constructed operation message group or None if operation not found
+        """
         if operation.get('send_to_groups') is None:
             return None
         return [{
@@ -699,6 +883,14 @@ class Operations(object):
         } for _group in operation.get('send_to_groups')]
 
     def _construct_opcommand(self, operation):
+         """Construct operation command.
+
+         Args:
+             operation: operation to construct command
+
+         Returns:
+             list: constructed operation command
+         """
         try:
             return {
                 'type': to_numeric_value([
@@ -729,6 +921,14 @@ class Operations(object):
             self._module.fail_json(msg="Failed to construct operation command. The error was: %s" % e)
 
     def _construct_opcommand_hst(self, operation):
+        """Construct operation command host.
+
+        Args:
+            operation: operation to construct command host
+
+        Returns:
+            list: constructed operation command host
+        """
         if operation.get('run_on_hosts') is None:
             return None
         return [{
@@ -736,6 +936,14 @@ class Operations(object):
         } if str(_host) != '0' else {'hostid': '0'} for _host in operation.get('run_on_hosts')]
 
     def _construct_opcommand_grp(self, operation):
+        """Construct operation command group.
+
+        Args:
+            operation: operation to construct command group
+
+        Returns:
+            list: constructed operation command group
+        """
         if operation.get('run_on_groups') is None:
             return None
         return [{
@@ -743,19 +951,51 @@ class Operations(object):
         } for _group in operation.get('run_on_groups')]
 
     def _construct_opgroup(self, operation):
+        """Construct operation group.
+
+        Args:
+            operation: operation to construct group
+
+        Returns:
+            list: constructed operation group
+        """
         return [{
             'groupid': self._zapi_wrapper.get_hostgroup_by_hostgroup_name(_group)['groupid']
         } for _group in operation.get('host_groups', [])]
 
     def _construct_optemplate(self, operation):
+        """Construct operation template.
+
+        Args:
+            operation: operation to construct template
+
+        Returns:
+            list: constructed operation template
+        """
         return [{
             'templateid': self._zapi_wrapper.get_template_by_template_name(_template)['templateid']
         } for _template in operation.get('templates', [])]
 
     def _construct_opinventory(self, operation):
+        """Construct operation inventory.
+
+        Args:
+            operation: operation to construct inventory
+
+        Returns:
+            dict: constructed operation inventory
+        """
         return {'inventory_mode': operation.get('inventory')}
 
     def construct_the_data(self, operations):
+        """Construct the oprtation data using helper methods.
+
+        Args:
+            operation: operation to construct
+
+        Returns:
+            list: constructed operation data
+        """
         constructed_data = []
         for op in operations:
             operation_type = self._construct_operationtype(op)
@@ -799,6 +1039,14 @@ class RecoveryOperations(Operations):
     Restructures the user defined recovery operations data to fit the Zabbix API requirements
     """
     def _construct_operationtype(self, operation):
+        """Construct operation type.
+
+        Args:
+            operation: operation to construct type
+
+        Returns:
+            str: constructed operation type
+        """
         try:
             return to_numeric_value([
                 "send_message",
@@ -818,6 +1066,14 @@ class RecoveryOperations(Operations):
             self._module.fail_json(msg="Unsupported value '%s' for recovery operation type." % operation['type'])
 
     def construct_the_data(self, operations):
+        """Construct the recovery operations data using helper methods.
+
+        Args:
+            operation: operation to construct
+
+        Returns:
+            list: constructed recovery operations data
+        """
         if operations is None:
             return None
         constructed_data = []
@@ -849,6 +1105,14 @@ class AcknowledgeOperations(Operations):
     Restructures the user defined acknowledge operations data to fit the Zabbix API requirements
     """
     def _construct_operationtype(self, operation):
+        """Construct operation type.
+
+        Args:
+            operation: operation to construct type
+
+        Returns:
+            str: constructed operation type
+        """
         try:
             return to_numeric_value([
                 "send_message",
@@ -868,6 +1132,14 @@ class AcknowledgeOperations(Operations):
             self._module.fail_json(msg="Unsupported value '%s' for acknowledge operation type." % operation['type'])
 
     def construct_the_data(self, operations):
+        """Construct the acknowledge operations data using helper methods.
+
+        Args:
+            operation: operation to construct
+
+        Returns:
+            list: constructed acknowledge operations data
+        """
         if operations is None:
             return None
         constructed_data = []
@@ -904,6 +1176,15 @@ class Filter(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_evaltype(self, _eval, _conditions):
+        """Construct the eval type
+
+        Args:
+            _eval: zabbix condition evaluation formula
+            _conditions: list of conditions to check
+
+        Returns:
+            dict: constructed acknowledge operations data
+        """
         if len(_conditions) <= 1:
             return {
                 'evaltype': '0',
@@ -915,6 +1196,14 @@ class Filter(object):
         }
 
     def _construct_conditiontype(self, _condition):
+        """Construct the condition type
+
+        Args:
+            _condition: condition to check
+
+        Returns:
+            str: constructed condition type data
+        """
         try:
             return to_numeric_value([
                 "host_group",
@@ -949,6 +1238,14 @@ class Filter(object):
             self._module.fail_json(msg="Unsupported value '%s' for condition type." % _condition['type'])
 
     def _construct_operator(self, _condition):
+        """Construct operator
+
+        Args:
+            _condition: condition to construct
+
+        Returns:
+            str: constructed operator
+        """
         try:
             return to_numeric_value([
                 "=",
@@ -964,6 +1261,15 @@ class Filter(object):
             self._module.fail_json(msg="Unsupported value '%s' for operator." % _condition['operator'])
 
     def _construct_value(self, conditiontype, value):
+        """Construct operator
+
+        Args:
+            conditiontype: type of condition to construct
+            value: value to construct
+
+        Returns:
+            str: constructed value
+        """
         try:
             # Host group
             if conditiontype == '0':
@@ -1056,6 +1362,16 @@ class Filter(object):
             )
 
     def construct_the_data(self, _formula, _conditions):
+        """Construct the user defined filter conditions to fit the Zabbix API
+        requirements operations data using helper methods.
+
+        Args:
+            _formula:  zabbix condition evaluation formula
+            _conditions: conditions to construct
+
+        Returns:
+            dict: user defined filter conditions
+        """
         if _conditions is None:
             return None
         constructed_data = {}
@@ -1079,7 +1395,13 @@ class Filter(object):
 
 
 def convert_unicode_to_str(data):
-    """Converts unicode objects to strings in dictionary"""
+    """Converts unicode objects to strings in dictionary
+    args:
+        data: unicode object
+
+    Returns:
+        dict: strings in dictionary
+    """
     if isinstance(data, dict):
         return dict(map(convert_unicode_to_str, data.items()))
     elif isinstance(data, (list, tuple, set)):
@@ -1091,7 +1413,13 @@ def convert_unicode_to_str(data):
 
 
 def to_numeric_value(strs, value):
-    """Converts string values to integers"""
+    """Converts string values to integers
+    Args:
+        value: string value
+
+    Returns:
+        int: converted integer
+    """
     strs = [s.lower() if isinstance(s, str) else s for s in strs]
     value = value.lower()
     tmp_dict = dict(zip(strs, list(range(len(strs)))))
@@ -1100,9 +1428,16 @@ def to_numeric_value(strs, value):
 
 def compare_lists(l1, l2, diff_dict):
     """
-    Compares l1 and l2 lists and adds the items that are different 
+    Compares l1 and l2 lists and adds the items that are different
     to the diff_dict dictionary.
     Used in recursion with compare_dictionaries() function.
+    Args:
+        l1: list to compaire
+        l2: list to compaire
+        diff_dict: dict to compaire with
+
+    Returns:
+        dict: items that are different
     """
     if len(l1) != len(l2):
         diff_dict.append(l1)
@@ -1121,9 +1456,16 @@ def compare_lists(l1, l2, diff_dict):
 
 def compare_dictionaries(d1, d2, diff_dict):
     """
-    Compares d1 and d2 dictionaries and adds the items that are different 
+    Compares d1 and d2 dictionaries and adds the items that are different
     to the diff_dict dictionary.
     Used in recursion with compare_lists() function.
+    Args:
+        d1: dictionary to compaire
+        d2: dictionary to compaire
+        diff_dict: dict to compaire with
+
+    Returns:
+        dict: items that are different
     """
     for k, v in d1.items():
         if k not in d2:
@@ -1150,7 +1492,13 @@ def compare_dictionaries(d1, d2, diff_dict):
 
 
 def cleanup_data(obj):
-    """Removes the None values from the object and returns the object"""
+    """Removes the None values from the object and returns the object
+    Args:
+        obj: object to cleanup
+
+    Returns:
+       object: cleaned object
+    """
     if isinstance(obj, (list, tuple, set)):
         return type(obj)(cleanup_data(x) for x in obj if x is not None)
     elif isinstance(obj, dict):
@@ -1161,6 +1509,8 @@ def cleanup_data(obj):
 
 
 def main():
+    """Main ansible module function
+    """
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(type='str', required=True, aliases=['url']),
