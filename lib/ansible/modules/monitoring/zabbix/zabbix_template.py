@@ -397,6 +397,9 @@ class Template(object):
                 'createMissing': True,
                 'updateExisting': True
             },
+            'templateLinkage': {
+                'createMissing': True
+            },
             'templateScreens': {
                 'createMissing': True,
                 'updateExisting': True,
