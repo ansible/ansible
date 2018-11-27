@@ -114,7 +114,7 @@ class TestNiosFixedAddressModule(TestNiosModule):
         self.module.params = {'provider': None, 'state': 'absent', 'name': 'test_fa', 'ipaddr': '192.168.10.1', 'mac': '08:6d:41:e8:fd:e8',
                               'network': '192.168.10.0/24', 'network_view': 'default', 'comment': None, 'extattrs': None}
 
-        ref = "network/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+        ref = "fixedaddress/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
 
         test_object = [{
             "comment": "test comment",
@@ -171,7 +171,7 @@ class TestNiosFixedAddressModule(TestNiosModule):
         self.module.params = {'provider': None, 'state': 'absent', 'name': 'test_fa', 'ipaddr': 'fe80::1/10', 'mac': '08:6d:41:e8:fd:e8',
                               'network': 'fe80::/64', 'network_view': 'default', 'comment': None, 'extattrs': None}
 
-        ref = "ipv6network/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+        ref = "ipv6fixedaddress/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
 
         test_object = [{
             "comment": "test comment",
