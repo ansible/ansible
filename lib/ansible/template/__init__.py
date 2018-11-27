@@ -74,6 +74,11 @@ if C.DEFAULT_JINJA2_NATIVE:
     except ImportError:
         from jinja2 import Environment
         from jinja2.utils import concat as j2_concat
+        from jinja2 import __version__ as j2_version
+        display.warning(
+            'jinja2_native requires Jinja 2.10 and above. '
+            'Version detected: %s. Falling back to default.' % j2_version
+        )
 else:
     from jinja2 import Environment
     from jinja2.utils import concat as j2_concat
