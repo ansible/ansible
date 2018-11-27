@@ -373,6 +373,13 @@ EXAMPLES = '''
           - 'Admin'
 '''
 
+RETURN = '''
+result:
+    description: The result of the operation
+    returned: success
+    type: string
+    sample: 'Action Deleted: Register webservers, ID: 0001'
+'''
 
 try:
     from zabbix_api import ZabbixAPI
