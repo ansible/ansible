@@ -63,7 +63,7 @@ options:
         Specifying the mode as a decimal integer (e.g., 22) will also work, but
         an octal integer (e.g., 0022) will be converted to decimal (18) before
         evaluation, which is almost certainly not what was intended.
-    version_added: "2.7.3"
+    version_added: "2.8"
     required: false
     default: null
   executable:
@@ -150,6 +150,7 @@ import re
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def get_rubygems_path(module):
