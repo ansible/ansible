@@ -28,8 +28,6 @@
 
 
 import os
-import contextlib
-import copy
 import functools
 import json
 import stat
@@ -55,10 +53,8 @@ from requests.packages import urllib3
 from requests.auth import AuthBase, HTTPBasicAuth
 
 from ansible.module_utils.web_infrastructure.ansible_tower import exceptions as exc
-from ansible.module_utils.web_infrastructure.ansible_tower.conf import settings
-from ansible.module_utils.web_infrastructure.ansible_tower.utils import OrderedDict, secho, supports_oauth
+from ansible.module_utils.web_infrastructure.ansible_tower.conf import settings, OrderedDict, supports_oauth
 from ansible.module_utils.web_infrastructure.ansible_tower.constants import CUR_API_VERSION
-
 
 TOWER_DATETIME_FMT = r'%Y-%m-%dT%H:%M:%S.%fZ'
 
@@ -172,32 +168,14 @@ class Client(Session):
                     "ignore", urllib3.exceptions.InsecureRequestWarning)
                 return super(Client, self).request(
                     method, url, *args, verify=verify_ssl, **kwargs)
-        except SSLError as ex:
+        except SSLError:
             # Throw error if verify_ssl not set to false and server
             #  is not using verified certificate.
-            if settings.verbose:
-                display.vvvv('SSL connection failed:')
-                display.vvvv(str(ex))
-            if not settings.host.startswith('http'):
-                secho('Suggestion: add the correct http:// or '
-                      'https:// prefix to the host configuration.',
-                      fg='blue', bold=True)
-            raise exc.ConnectionError(
-                'Could not establish a secure connection. '
-                'Please add the server to your certificate '
-                'authority.\nYou can run this command without verifying SSL '
-                'with the --insecure flag, or permanently disable '
-                'verification by the config setting:\n\n '
-                'tower-cli config verify_ssl false'
-            )
-        except ConnectionError as ex:
+            raise exc.ConnectionError(reason='Could not establish a secure connection. Please add the server to '
+                                             'your certificate authority.')
+        except ConnectionError:
             # Throw error if server can not be reached.
-            if settings.verbose:
-                display.vvvv('Cannot connect to Tower:', fg='yellow', bold=True)
-                display.vvvv(str(ex))
-            raise exc.ConnectionError(
-                'There was a network error of some kind trying to connect to Tower'
-            )
+            raise exc.ConnectionError(reason='Failed to establish a new connection, nodename nor servname provided, or not known')
 
     def get_prefix(self, include_version=True):
         """Return the appropriate URL prefix to prepend to requests,
@@ -304,24 +282,24 @@ class Client(Session):
         # Sanity check: Did the server send back some kind of internal error?
         # If so, bubble this up.
         if r.status_code >= 500:
-            raise exc.ServerError('The Tower server sent back a server error. '
+            raise exc.ServerError(reason='The Tower server sent back a server error. '
                                   'Please try again later.')
 
         # Sanity check: Did we fail to authenticate properly?
         # If so, fail out now; this is always a failure.
         if r.status_code == 401:
-            raise exc.AuthError('Invalid Tower authentication credentials (HTTP 401).')
+            raise exc.AuthError(reason='Invalid Tower authentication credentials (HTTP 401).')
 
         # Sanity check: Did we get a forbidden response, which means that
         # the user isn't allowed to do this? Report that.
         if r.status_code == 403:
-            raise exc.Forbidden("You don't have permission to do that (HTTP 403).")
+            raise exc.Forbidden(reason="You don't have permission to do that (HTTP 403).")
 
         # Sanity check: Did we get a 404 response?
         # Requests with primary keys will return a 404 if there is no response,
         # and we want to consistently trap these.
         if r.status_code == 404:
-            raise exc.NotFound('The requested object could not be found.')
+            raise exc.NotFound(reason='The requested object could not be found.')
 
         # Sanity check: Did we get a 405 response?
         # A 405 means we used a method that isn't allowed. Usually this
@@ -329,20 +307,16 @@ class Client(Session):
         # API sends it as a logic error in a few situations (e.g. trying to
         # cancel a job that isn't running).
         if r.status_code == 405:
-            raise exc.MethodNotAllowed(
-                "The Tower server says you can't make a request with the "
-                "%s method to that URL (%s)." % (method, url),
-            )
+            raise exc.MethodNotAllowed(reason="The Tower server says you can't make a request with the "
+                                              "%s method to that URL (%s)." % (method, url))
 
         # Sanity check: Did we get some other kind of error?
         # If so, write an appropriate error message.
         if r.status_code >= 400:
-            raise exc.BadRequest(
-                'The Tower server claims it was sent a bad request.\n\n'
+            raise exc.BadRequest(reason='The Tower server claims it was sent a bad request.\n\n'
                 '%s %s\nParams: %s\nData: %s\n\nResponse: %s' %
                 (method, url, kwargs.get('params', None),
-                 kwargs.get('data', None), r.content.decode('utf8'))
-            )
+                 kwargs.get('data', None), r.content.decode('utf8')))
 
         # Django REST Framework intelligently prints API keys in the
         # order that they are defined in the models and serializer.
@@ -358,31 +332,6 @@ class Client(Session):
 
         # Return the response object.
         return r.json()
-
-    @property
-    @contextlib.contextmanager
-    def test_mode(self):
-        """Replace the HTTP adapters with a fauxquests.FauxAdapter, which
-        will make the client into a faux client.
-        """
-        # Import this here, because we don't want to require fauxquests
-        # in order for the app to work.
-        from fauxquests.adapter import FauxAdapter
-        with settings.runtime_values(host='20.12.4.21', username='meagan',
-                                     password='This is the best wine.',
-                                     verbose=False, format='json'):
-            adapters = copy.copy(self.adapters)
-            faux_adapter = FauxAdapter(
-                url_pattern=self.get_prefix().rstrip('/') + '%s',
-            )
-
-            try:
-                self.adapters.clear()
-                self.mount('https://', faux_adapter)
-                self.mount('http://', faux_adapter)
-                yield faux_adapter
-            finally:
-                self.adapters = adapters
 
 
 class APIResponse(Response):
