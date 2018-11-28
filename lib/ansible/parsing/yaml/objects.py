@@ -75,7 +75,7 @@ class AnsibleOctal(AnsibleBaseYAMLObject, int):
         return to_text(oct(self).replace('o', ''))
 
     def __repr__(self):
-        return repr(str(self))
+        return repr(self.__str__())
 
 
 # Unicode like object that is not evaluated (decrypted) until it needs to be
