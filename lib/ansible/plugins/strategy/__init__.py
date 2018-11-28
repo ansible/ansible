@@ -368,6 +368,7 @@ class StrategyBase:
                 return self._inventory.get_host(host_name)
 
         def search_handler_blocks_by_name(handler_name, handler_blocks):
+            # iterate in reversed order since last handler loaded with the same name wins
             for handler_block in reversed(handler_blocks):
                 for handler_task in handler_block.block:
                     if handler_task.name:
@@ -394,6 +395,7 @@ class StrategyBase:
             return None
 
         def search_handler_blocks_by_uuid(handler_uuid, handler_blocks):
+            # iterate in reversed order since last handler loaded with the same name wins
             for handler_block in reversed(handler_blocks):
                 for handler_task in handler_block.block:
                     if handler_uuid == handler_task._uuid:
