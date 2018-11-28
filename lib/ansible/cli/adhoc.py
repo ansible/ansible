@@ -81,10 +81,12 @@ class AdHocCLI(CLI):
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
         if self.options.module_name not in ('include_role', 'include_tasks'):
-            if async_val:
-                mytask['async_val'] = async_val
-            if poll:
-                mytask['poll'] = poll
+            mytask['async_val'] = async_val
+            mytask['poll'] = poll
+        elif async_val:
+            mytask['async_val'] = async_val
+        elif poll:
+            mytask['poll'] = poll
 
         return dict(
             name="Ansible Ad-Hoc",
