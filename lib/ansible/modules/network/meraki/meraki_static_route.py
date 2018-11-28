@@ -43,25 +43,15 @@ options:
     org_id:
         description:
         - ID of organization associated to a network.
-    type:
+    name:
         description:
-        - Type of network device network manages.
-        - Required when creating a network.
-        choices: [appliance, combined, switch, wireless]
-        aliases: [net_type]
-    tags:
+        - Descriptive name of the static route.
+    subnet:
         description:
-        - Comma delimited list of tags to assign to network.
-    timezone:
+        - CIDR notation based subnet for static route.
+    gateway_ip:
         description:
-        - Timezone associated to network.
-        - See U(https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a list of valid timezones.
-    disable_my_meraki:
-        description: >
-            - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
-            U[wired.meraki.com](wired.meraki.com))
-        type: bool
-        version_added: '2.7'
+        - IP address of the gateway for the subnet.
 
 author:
     - Kevin Breit (@kbreit)
@@ -242,11 +232,11 @@ def main():
             payload['fixedIpAssignments'] = meraki.params['fixed_ip_assignments']
         if meraki.params['reserved_ip_ranges'] is not None:
             payload['reserved_ip_ranges'] = meraki.params['reserved_ip_ranges']
-        update_required = False
         if meraki.params['route_id']:
             existing_route = get_static_route(meraki, net_id, meraki.params['route_id'])
+            meraki.fail_json(msg="Compare", original=existing_route, payload=payload)
             if meraki.is_update_required(existing_route, payload, optional_ignore=['id']):
-                path = meraki.construct_path('update', net_id=net_id, route_id=existing_route['id'])
+                path = meraki.construct_path('update', net_id=net_id, custom={'route_id': meraki.params['route_id']})
                 meraki.result['data'] = meraki.request(path, method="PUT", payload=json.dumps(payload))
                 meraki.result['changed'] = True
         else:
