@@ -57,11 +57,11 @@ options:
         - Whether to remove existing filters from a condition if not passed in I(filters).
         default: False
         type: bool
-        description: Whether to remove existing filters from a condition if not passed in I(filters). Defaults to false.
     waf_regional:
         description: Wether to use waf_regional module. Defaults to false.
         default: false
         required: no
+        type: bool
         version_added: 2.8
     state:
         description: Whether the condition should be C(present) or C(absent).

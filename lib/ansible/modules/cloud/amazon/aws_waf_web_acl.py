@@ -54,9 +54,8 @@ options:
         - Whether to remove rules that aren't passed with C(rules).
         default: False
         type: bool
-        description: Whether to remove rules that aren't passed with C(rules). Defaults to false
     waf_regional:
-        description: Wether to use waf_regional module. Defaults to true
+        description: Wether to use waf_regional module. Defaults to false.
         default: false
         required: no
         version_added: "2.8"
