@@ -73,7 +73,6 @@ options:
       - Whether the user requires a SSL encrypted connection to connect.
     type: bool
     default: 'no'
-    version_added: "tba"
   sql_log_bin:
     description:
       - Whether binary logging should be enabled or disabled for the connection.
