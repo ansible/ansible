@@ -395,7 +395,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if current_pass_hash[0] != new_pass_hash[0]:
                     if module.check_mode:
                         return True
-                    if not scu.supports_pluggable_auth:
+                    if not scu.supports_pluggable_auth or (scu.vendor == 'mariadb' and scu.version < (10, 2)):
                         cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
                     else:
                         cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
