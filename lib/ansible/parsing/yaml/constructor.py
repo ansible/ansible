@@ -80,7 +80,7 @@ class AnsibleConstructor(SafeConstructor):
 
     def construct_ansible_int(self, node):
         value = self.construct_scalar(node)
-        if value.startswith('0') and not value.startswith('0x'):
+        if len(value) > 1 and value.startswith('0') and not value.startswith('0x'):
             ret = self.construct_yaml_octal(node)
         else:
             ret = self.construct_yaml_int(node)
