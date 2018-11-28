@@ -171,3 +171,31 @@
     that:
       - sysctl_no_value is failed
       - "sysctl_no_value.msg == 'value cannot be None'"
+
+## 
+## sysctl - sysctl_set with ignore_errors and ignoreerrors (to ensure backward compatibility) 
+## 
+
+- name: set value for fictional key with ignore_errors
+  sysctl: 
+    name: k.doesnotexist
+    value: 1 
+    ignore_errors: yes
+  register: sysctl_ignore_errors0
+  
+- name: validate success of set operation with ignore_errors
+  assert: 
+    that: 
+      - sysctl_ignore_errors0 is success
+
+- name: set value for fictional key with ignoreerrors
+  sysctl: 
+    name: k.doesnotexist
+    value: 1 
+    ignoreerrors: yes
+  register: sysctl_ignore_errors1
+  
+- name: validate success of set operation with ignoreerrors
+  assert: 
+    that: 
+      - sysctl_ignore_errors1 is success
