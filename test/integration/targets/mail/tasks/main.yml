@@ -1,0 +1,60 @@
+- name: Install test smtpserver
+  copy:
+    src: smtpserver.py
+    dest: '{{ output_dir }}/smtpserver.py'
+
+- name: Start test smtpserver
+  shell: '{{ ansible_python.executable }} {{ output_dir }}/smtpserver.py 10025'
+  async: 30
+  poll: 0
+  register: smtpserver
+
+- name: Send a test-mail to test smtpserver
+  mail:
+    port: 10025
+    subject: Test mail 1 (smtp)
+    secure: never
+
+- name: Send a test-mail to test smtpserver
+  mail:
+    host: 127.0.0.1
+    port: 10025
+    from: ansible@localhost
+    to: root@localhost
+    subject: Test mail 2 (smtp + body)
+    body: Test body 2
+    secure: never
+
+- name: Send a test-mail to test smtpserver
+  mail:
+    host: 127.0.0.1
+    port: 10025
+    from: ansible@localhost
+    to: root@localhost
+    subject: Test mail 3 (smtp + body + attachment)
+    body: Test body 3
+    attach: /etc/group
+    secure: never
+
+# TODO: Python smtpd has no TLS support
+#- name: Send a test-mail to test smtpserver
+#  mail:
+#    host: 127.0.0.1
+#    port: 10025
+#    from: ansible@localhost
+#    to: root@localhost
+#    subject: Test mail 4 (smtp + starttls + body + attachment)
+#    body: Test body 4
+#    attach: /etc/group
+#    secure: starttls
+
+#- name: Send a test-mail to test smtpserver
+#  mail:
+#    host: 127.0.0.1
+#    port: 10025
+#    from: ansible@localhost
+#    to: root@localhost
+#    subject: Test mail 4 (smtp + tls + body + attachment)
+#    body: Test body 4
+#    attach: /etc/group
+#    secure: always
