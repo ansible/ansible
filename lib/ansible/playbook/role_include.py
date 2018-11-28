@@ -41,7 +41,7 @@ class IncludeRole(TaskInclude):
     """
 
     BASE = ('name', 'role')  # directly assigned
-    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
+    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # used to populate from dict in role
     OTHER_ARGS = ('apply', 'public', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 

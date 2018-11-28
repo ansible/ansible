@@ -48,6 +48,11 @@ options:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
     default: 'yes'
+  handlers_from:
+    description:
+      - File to load from a role's C(handlers/) directory.
+    default: main
+    version_added: '2.8'
 notes:
   - Handlers are made available to the whole play.
   - "Since Ansible 2.7: variables defined in C(vars) and C(defaults) for the role are exposed at playbook parsing time.
