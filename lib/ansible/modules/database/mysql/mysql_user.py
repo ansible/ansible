@@ -68,6 +68,12 @@ options:
     type: bool
     default: no
     version_added: "1.4"
+  require_ssl:
+    description:
+      - Whether the user requires a SSL encrypted connection to connect.
+    type: bool
+    default: 'no'
+    version_added: "tba"
   sql_log_bin:
     description:
       - Whether binary logging should be enabled or disabled for the connection.
@@ -234,38 +240,67 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
 class InvalidPrivsError(Exception):
     pass
 
+
+class ServerCompatUtil(object):
+    def __init__(self, cursor):
+        self.cursor = cursor
+        self.vendor = None
+        self.version = None
+        self._get_server_version()
+
+    @property
+    def mode(self):
+        """Retrieve server mode."""
+        if not hasattr(self, '_mode'):
+            self.cursor.execute('SELECT @@GLOBAL.sql_mode')
+            result = self.cursor.fetchone()
+            mode_str = result[0]
+            if 'ANSI' in mode_str:
+                mode = 'ANSI'
+            else:
+                mode = 'NOTANSI'
+            setattr(self, '_mode', mode)
+        return getattr(self, '_mode')
+
+    def _get_server_version(self):
+        """Retrieve server version."""
+        self.cursor.execute('SELECT VERSION()')
+        result = self.cursor.fetchone()
+        version_str = result[0]
+
+        if 'mariadb' in version_str.lower():
+            self.vendor = 'mariadb'
+        else:
+            self.vendor = 'mysql'
+
+        match = re.match(r'^(\d+)\.(\d+)', version_str)
+        if not match:
+            raise RuntimeError('unable to retrieve valid server version')
+        else:
+            self.version = tuple([int(x) for x in match.groups()])
+
+    @property
+    def supports_pluggable_auth(self):
+        """Returns whether the server supports pluggable authentication."""
+        return self.version >= (5, 5)
+
+    @property
+    def supports_requiressl_priv(self):
+        """Returns whether the server supports the REQUIRE SSL privilege."""
+        return not (self.vendor == 'mysql' and self.version >= (8, 0))
+
+    @property
+    def supports_requiressl_user(self):
+        """Returns whether the server supports the REQUIRE SSL syntax in CREATE USER."""
+        if self.vendor == 'mysql' and self.version >= (5, 7):
+            return True  # mysql 5.7+
+        elif self.vendor == 'mariadb' and self.version >= (10, 2):
+            return True  # mariadb 10.2+
+        return False
+
 # ===========================================
 # MySQL module specific support methods.
 #
-
-
-# User Authentication Management was change in MySQL 5.7
-# This is a generic check for if the server version is less than version 5.7
-def server_version_check(cursor):
-    cursor.execute("SELECT VERSION()")
-    result = cursor.fetchone()
-    version_str = result[0]
-    version = version_str.split('.')
-
-    # Currently we have no facility to handle new-style password update on
-    # mariadb and the old-style update continues to work
-    if 'mariadb' in version_str.lower():
-        return True
-    if int(version[0]) <= 5 and int(version[1]) < 7:
-        return True
-    else:
-        return False
-
-
-def get_mode(cursor):
-    cursor.execute('SELECT @@GLOBAL.sql_mode')
-    result = cursor.fetchone()
-    mode_str = result[0]
-    if 'ANSI' in mode_str:
-        mode = 'ANSI'
-    else:
-        mode = 'NOTANSI'
-    return mode
 
 
 def user_exists(cursor, user, host, host_all):
@@ -278,23 +313,34 @@ def user_exists(cursor, user, host, host_all):
     return count[0] > 0
 
 
-def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_mode):
+def user_add(cursor, user, host, host_all, password, encrypted, new_priv, module):
     # we cannot create users without a proper hostname
     if host_all:
         return False
 
-    if check_mode:
+    if module.check_mode:
         return True
 
+    # check if ssl is required
+    tail = ''
+    scu = getattr(module, '_scu')
+
+    if module.boolean(module.params['require_ssl']) and scu.supports_requiressl_user:
+        tail = ' REQUIRE SSL'
+
     if password and encrypted:
-        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user, host, password))
+        if scu.supports_pluggable_auth:
+            cursor.execute("CREATE USER %s@%s IDENTIFIED WITH mysql_native_password AS %s" + tail,
+                           (user, host, password))
+        else:
+            cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user, host, password))
     elif password and not encrypted:
-        cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user, host, password))
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s" + tail, (user, host, password))
     else:
-        cursor.execute("CREATE USER %s@%s", (user, host))
+        cursor.execute("CREATE USER %s@%s" + tail, (user, host))
     if new_priv is not None:
         for db_table, priv in iteritems(new_priv):
-            privileges_grant(cursor, user, host, db_table, priv)
+            privileges_grant(cursor, user, host, db_table, priv, module)
     return True
 
 
@@ -319,9 +365,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
         # Handle clear text and hashed passwords.
         if bool(password):
             # Determine what user management method server uses
-            old_user_mgmt = server_version_check(cursor)
+            scu = getattr(module, '_scu')
 
-            if old_user_mgmt:
+            if not scu.supports_pluggable_auth:
                 cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user, host))
             else:
                 cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user, host))
@@ -333,7 +379,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if current_pass_hash[0] != encrypted_string:
                         if module.check_mode:
                             return True
-                        if old_user_mgmt:
+                        if not scu.supports_pluggable_auth:
                             cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                         else:
                             cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
@@ -341,7 +387,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 else:
                     module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
             else:
-                if old_user_mgmt:
+                if not scu.supports_pluggable_auth:
                     cursor.execute("SELECT PASSWORD(%s)", (password,))
                 else:
                     cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
@@ -349,7 +395,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if current_pass_hash[0] != new_pass_hash[0]:
                     if module.check_mode:
                         return True
-                    if old_user_mgmt:
+                    if not scu.supports_pluggable_auth:
                         cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
                     else:
                         cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s", (user, host, password))
@@ -378,7 +424,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if db_table not in curr_priv:
                     if module.check_mode:
                         return True
-                    privileges_grant(cursor, user, host, db_table, priv)
+                    privileges_grant(cursor, user, host, db_table, priv, module)
                     changed = True
 
             # If the db.table specification exists in both the user's current privileges
@@ -391,7 +437,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                         return True
                     if not append_privs:
                         privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
-                    privileges_grant(cursor, user, host, db_table, new_priv[db_table])
+                    privileges_grant(cursor, user, host, db_table, new_priv[db_table], module)
                     changed = True
 
     return changed
@@ -509,7 +555,7 @@ def privileges_unpack(priv, mode):
 
     # if we are only specifying something like REQUIRESSL and/or GRANT (=WITH GRANT OPTION) in *.*
     # we still need to add USAGE as a privilege to avoid syntax errors
-    if 'REQUIRESSL' in priv and not set(output['*.*']).difference(set(['GRANT', 'REQUIRESSL'])):
+    if 'REQUIRESSL' in priv and not set(output['*.*']).difference({'GRANT', 'REQUIRESSL'}):
         output['*.*'].append('USAGE')
 
     return output
@@ -530,7 +576,7 @@ def privileges_revoke(cursor, user, host, db_table, priv, grant_option):
     cursor.execute(query, (user, host))
 
 
-def privileges_grant(cursor, user, host, db_table, priv):
+def privileges_grant(cursor, user, host, db_table, priv, module):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
@@ -538,6 +584,9 @@ def privileges_grant(cursor, user, host, db_table, priv):
     query = ["GRANT %s ON %s" % (priv_string, db_table)]
     query.append("TO %s@%s")
     if 'REQUIRESSL' in priv:
+        scu = getattr(module, '_scu')
+        if not scu.supports_requiressl_priv:
+            raise InvalidPrivsError('REQUIRESSL is not supported on this server')
         query.append("REQUIRE SSL")
     if 'GRANT' in priv:
         query.append("WITH GRANT OPTION")
@@ -573,6 +622,7 @@ def main():
             ssl_cert=dict(type='path'),
             ssl_key=dict(type='path'),
             ssl_ca=dict(type='path'),
+            require_ssl = dict(type='bool', default=False)
         ),
         supports_check_mode=True,
     )
@@ -618,16 +668,22 @@ def main():
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")
 
+    # server compat util
+    scu = ServerCompatUtil(cursor)
+    setattr(module, '_scu', scu)
+
     if priv is not None:
         try:
-            mode = get_mode(cursor)
+            mode = scu.mode
         except Exception as e:
             module.fail_json(msg=to_native(e))
-        try:
-            priv = privileges_unpack(priv, mode)
-        except Exception as e:
-            module.fail_json(msg="invalid privileges string: %s" % to_native(e))
+        else:
+            try:
+                priv = privileges_unpack(priv, mode)
+            except Exception as e:
+                module.fail_json(msg="invalid privileges string: %s" % to_native(e))
 
+    changed = False
     if state == "present":
         if user_exists(cursor, user, host, host_all):
             try:
@@ -642,7 +698,7 @@ def main():
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
-                changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
+                changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module)
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e))
     elif state == "absent":
