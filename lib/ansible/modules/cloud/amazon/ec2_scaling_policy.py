@@ -76,7 +76,27 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 # from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info)
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
+
+
+@AWSRetry.jittered_backoff()
+def describe_policies_with_backoff(connection, asg_name, sp_name):
+    return connection.describe_policies(
+        AutoScalingGroupName=asg_name,
+        PolicyNames=[sp_name]
+    )['ScalingPolicies']
+
+
+@AWSRetry.jittered_backoff()
+def put_scaling_policy_with_backoff(connection, sp):
+    return connection.put_scaling_policy(**sp)
+
+
+@AWSRetry.jittered_backoff()
+def delete_policy_with_backoff(connection, asg_name, sp_name):
+    return connection.delete_policy(
+        AutoScalingGroupName=asg_name,
+        PolicyName=sp_name)
 
 
 def create_scaling_policy(connection, module):
@@ -87,10 +107,7 @@ def create_scaling_policy(connection, module):
     min_adjustment_step = module.params.get('min_adjustment_step')
     cooldown = module.params.get('cooldown')
 
-    scaling_policies = connection.describe_policies(
-        AutoScalingGroupName=asg_name,
-        PolicyNames=[sp_name]
-    )['ScalingPolicies']
+    scaling_policies = describe_policies_with_backoff(connection, asg_name, sp_name)
 
     if not scaling_policies:
         sp = dict(
@@ -104,11 +121,8 @@ def create_scaling_policy(connection, module):
             sp['MinAdjustmentStep'] = min_adjustment_step
 
         try:
-            connection.put_scaling_policy(**sp)
-            policy = connection.describe_policies(
-                AutoScalingGroupName=asg_name,
-                PolicyNames=[sp_name]
-            )['ScalingPolicies'][0]
+            put_scaling_policy_with_backoff(connection, sp)
+            policy = describe_policies_with_backoff(connection, asg_name, sp_name)[0]
             module.exit_json(changed=True, **policy)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to update Scaling Policy.",
@@ -145,11 +159,8 @@ def create_scaling_policy(connection, module):
 
         try:
             if changed:
-                connection.put_scaling_policy(**sp)
-                policy = connection.describe_policies(
-                    AutoScalingGroupName=asg_name,
-                    PolicyNames=[sp_name]
-                )['ScalingPolicies'][0]
+                put_scaling_policy_with_backoff(connection, sp)
+                policy = describe_policies_with_backoff(connection, asg_name, sp_name)[0]
             module.exit_json(changed=changed, **policy)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to update Scaling Policy.",
@@ -163,16 +174,11 @@ def delete_scaling_policy(connection, module):
     sp_name = module.params.get('name')
     asg_name = module.params.get('asg_name')
 
-    scaling_policies = connection.describe_policies(
-        AutoScalingGroupName=asg_name,
-        PolicyNames=[sp_name]
-    )['ScalingPolicies']
+    scaling_policies = describe_policies_with_backoff(connection, asg_name, sp_name)
 
     if scaling_policies:
         try:
-            connection.delete_policy(
-                AutoScalingGroupName=asg_name,
-                PolicyName=sp_name)
+            delete_policy_with_backoff(connection, asg_name, sp_name)
             module.exit_json(changed=True)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to delete Scaling Policy.",
