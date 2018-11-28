@@ -42,7 +42,7 @@ options:
          to a given subset.
       - Possible values for this argument include
          C(all), C(hardware), C(config), and C(interfaces).
-      - Specify multiple values to include a larger subset.
+      - Specify a list of values to include a larger subset.
       - Use a value with an initial C(!) to collect all facts except that subset.
     required: false
     default: '!config'
