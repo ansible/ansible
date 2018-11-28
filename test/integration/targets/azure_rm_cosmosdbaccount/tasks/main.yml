@@ -1,15 +1,15 @@
 - name: Prepare random number
   set_fact:
-    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    dbname: "cosmos{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: Create instance of Database Account -- check mode
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
-    name: "cosmos{{ rpfx }}"
+    name: "{{ dbname }}"
     location: eastus
-    locations:
-      - location_name: eastus
+    geo_rep_locations:
+      - name: eastus
         failover_priority: 0
     database_account_offer_type: Standard
   check_mode: yes
@@ -22,12 +22,12 @@
 - name: Create instance of Database Account
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
-    name: "cosmos{{ rpfx }}"
+    name: "{{ dbname }}"
     location: eastus
-    locations:
-      - location_name: eastus
+    geo_rep_locations:
+      - name: eastus
         failover_priority: 0
-      - location_name: westus
+      - name: westus
         failover_priority: 1
     database_account_offer_type: Standard
   register: output
@@ -39,12 +39,12 @@
 - name: Create again instance of Database Account
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
-    name: "cosmos{{ rpfx }}"
+    name: "{{ dbname }}"
     location: eastus
-    locations:
-      - location_name: westus
+    geo_rep_locations:
+      - name: westus
         failover_priority: 1
-      - location_name: eastus
+      - name: eastus
         failover_priority: 0
     database_account_offer_type: Standard
   register: output
@@ -56,12 +56,12 @@
 - name: Create again instance of Database Account -- change something
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
-    name: "cosmos{{ rpfx }}"
+    name: "{{ dbname }}"
     location: eastus
-    locations:
-      - location_name: westus
+    geo_rep_locations:
+      - name: westus
         failover_priority: 1
-      - location_name: eastus
+      - name: eastus
         failover_priority: 0
     database_account_offer_type: Standard
     enable_automatic_failover: yes
@@ -74,7 +74,7 @@
 - name: Delete instance of Database Account -- check mode
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
-    name: "cosmos{{ rpfx }}"
+    name: "{{ dbname }}"
     state: absent
   check_mode: yes
   register: output
@@ -86,7 +86,7 @@
 - name: Delete instance of Database Account
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
-    name: "cosmos{{ rpfx }}"
+    name: "{{ dbname }}"
     state: absent
   register: output
 - name: Assert the state has changed
@@ -94,13 +94,14 @@
     that:
       - output.changed
 
-- name: Delete unexisting instance of Database Account
-  azure_rm_cosmosdbaccount:
-    resource_group: "{{ resource_group }}"
-    name: "cosmos{{ rpfx }}"
-    state: absent
-  register: output
-- name: Assert the state has changed
-  assert:
-    that:
-      - output.changed == false
+# currently disabled as there's a bug in SDK / Service
+#- name: Delete unexisting instance of Database Account
+#  azure_rm_cosmosdbaccount:
+#    resource_group: "{{ resource_group }}"
+#    name: "{{ dbname }}"
+#    state: absent
+#  register: output
+#- name: Assert the state has changed
+#  assert:
+#    that:
+#      - output.changed == false
