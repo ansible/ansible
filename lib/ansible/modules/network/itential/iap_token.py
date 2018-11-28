@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: iap_token
 version_added: "2.8"
-author: "Itential (opensource@itential.com)"
+author: "Itential (@cma0) <opensource@itential.com>"
 short_description: Get token for the Itential Automation Platform
 description:
   - Checks the connection to IAP and retrieves a login token.
@@ -30,7 +30,7 @@ options:
 
   iap_fqdn:
     description:
-      - Provide the fqdn for the Itential Automation Platform
+      - Provide the fqdn or ip-address for the Itential Automation Platform
     required: true
     default: null
 
@@ -48,7 +48,7 @@ options:
 
   https:
     description:
-      - The transport protocol is HyperText Transfer Protocol Secure (HTTPS) for the Itential Automation Platform
+      - Use HTTPS to connect
       - By default using http
     type: bool
     default: False
@@ -106,14 +106,9 @@ def get_token(module):
     # Using fetch url instead of requests
     response, info = fetch_url(module, url, data=json_body, headers=headers)
     response_code = str(info['status'])
-    if info['status'] != 200:
-        if info['status'] >= 400:
-            module.fail_json(msg="Failed to connect to Itential Automation Platform" + response_code)
-        else:
-            module.fail_json(msg="Failed to connect to Itential Automation Platform " + response_code)
+    if info['status'] not in [200, 201]:
+        module.fail_json(msg="Failed to connect to Itential Automation Platform" + response_code)
     response = response.read()
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(changed=True, token=response)
 
 
@@ -129,10 +124,10 @@ def main():
     # supports check mode
     module = AnsibleModule(
         argument_spec=dict(
-            iap_port=dict(type='str', required=True),
+            iap_port=dict(type='int', required=True),
             iap_fqdn=dict(type='str', required=True),
             username=dict(type='str', required=True),
-            password=dict(type='str', required=True),
+            password=dict(type='str', required=True, no_log=True),
             https=(dict(type='bool', default=False))
         )
     )
