@@ -57,7 +57,7 @@ installed version and then clone the git repo.
     git clone https://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
-    # to enable Ansible on login, run the following
+    # To enable Ansible on login, run the following
     echo ". ~/ansible/hacking/env-setup -q' >> ~/.bashrc
 
 Can I use SSH keys to authenticate?
@@ -144,7 +144,7 @@ In addition, the following Ansible Core modules/action-plugins work with Windows
 * set_stats
 * setup
 * slurp
-* template (also: win_tempate)
+* template (also: win_template)
 * wait_for_connection
 
 Can I run Python modules?

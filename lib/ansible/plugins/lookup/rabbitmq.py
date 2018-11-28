@@ -88,22 +88,21 @@ RETURN = """
       routing_key:
         description: The routing_key on the message in the queue.
         type: str
+      headers:
+        description: The headers for the message returned from the queue.
+        type: dict
       json:
         description: If application/json is specified in content_type, json will be loaded into variables.
         type: dict
 
 """
 
+import json
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_native, to_text
-import json
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 try:
     import pika
@@ -111,6 +110,8 @@ try:
     HAS_PIKA = True
 except ImportError:
     HAS_PIKA = False
+
+display = Display()
 
 
 class LookupModule(LookupBase):
@@ -161,7 +162,8 @@ class LookupModule(LookupBase):
                                    'redelivered': method_frame.redelivered,
                                    'exchange': method_frame.exchange,
                                    'delivery_mode': properties.delivery_mode,
-                                   'content_type': properties.content_type
+                                   'content_type': properties.content_type,
+                                   'headers': properties.headers
                                    })
                 if properties.content_type == 'application/json':
                     try:

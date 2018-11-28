@@ -27,12 +27,9 @@ from ansible.inventory.host import Host
 from ansible.plugins.loader import vars_loader
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 INTERNAL_VARS = frozenset(['ansible_diff_mode',
                            'ansible_facts',
@@ -94,6 +91,8 @@ class InventoryCLI(CLI):
         # graph
         self.parser.add_option("-y", "--yaml", action="store_true", default=False, dest='yaml',
                                help='Use YAML format instead of default JSON, ignored for --graph')
+        self.parser.add_option('--toml', action='store_true', default=False, dest='toml',
+                               help='Use TOML format instead of default JSON, ignored for --graph')
         self.parser.add_option("--vars", action="store_true", default=False, dest='show_vars',
                                help='Add vars to graph display, ignored unless used with --graph')
 
@@ -176,6 +175,8 @@ class InventoryCLI(CLI):
             top = self._get_group('all')
             if self.options.yaml:
                 results = self.yaml_inventory(top)
+            elif self.options.toml:
+                results = self.toml_inventory(top)
             else:
                 results = self.json_inventory(top)
             results = self.dump(results)
@@ -193,6 +194,13 @@ class InventoryCLI(CLI):
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
+        elif self.options.toml:
+            from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
+            if not HAS_TOML:
+                raise AnsibleError(
+                    'The python "toml" library is required when using the TOML output format'
+                )
+            results = toml_dumps(stuff)
         else:
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
@@ -385,3 +393,45 @@ class InventoryCLI(CLI):
             return results
 
         return format_group(top)
+
+    def toml_inventory(self, top):
+        seen = set()
+        has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
+
+        def format_group(group):
+            results = {}
+            results[group.name] = {}
+
+            results[group.name]['children'] = []
+            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
+                if subgroup.name == 'ungrouped' and not has_ungrouped:
+                    continue
+                if group.name != 'all':
+                    results[group.name]['children'].append(subgroup.name)
+                results.update(format_group(subgroup))
+
+            if group.name != 'all':
+                for host in sorted(group.hosts, key=attrgetter('name')):
+                    if host.name not in seen:
+                        seen.add(host.name)
+                        host_vars = self._get_host_variables(host=host)
+                        self._remove_internal(host_vars)
+                    else:
+                        host_vars = {}
+                    try:
+                        results[group.name]['hosts'][host.name] = host_vars
+                    except KeyError:
+                        results[group.name]['hosts'] = {host.name: host_vars}
+
+            if self.options.export:
+                results[group.name]['vars'] = self._get_group_variables(group)
+
+            self._remove_empty(results[group.name])
+            if not results[group.name]:
+                del results[group.name]
+
+            return results
+
+        results = format_group(top)
+
+        return results

@@ -24,7 +24,7 @@ yumdnf_argument_spec = dict(
         autoremove=dict(type='bool', default=False),
         bugfix=dict(required=False, type='bool', default=False),
         conf_file=dict(type='str'),
-        disable_excludes=dict(type='str', default=None, choices=['all', 'main', 'repoid']),
+        disable_excludes=dict(type='str', default=None),
         disable_gpg_check=dict(type='bool', default=False),
         disable_plugin=dict(type='list', default=[]),
         disablerepo=dict(type='list', default=[]),
@@ -40,13 +40,11 @@ yumdnf_argument_spec = dict(
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
         # removed==absent, installed==present, these are accepted as aliases
-        state=dict(type='str', default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
+        state=dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed']),
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
-        # this should not be needed, but exists as a failsafe
-        lock_poll=dict(type='int', default=-1),
-        lock_timeout=dict(type='int', default=10),
+        lock_timeout=dict(type='int', default=0),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
     mutually_exclusive=[['name', 'list']],
@@ -88,7 +86,6 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.update_only = self.module.params['update_only']
         self.update_cache = self.module.params['update_cache']
         self.validate_certs = self.module.params['validate_certs']
-        self.lock_poll = self.module.params['lock_poll']
         self.lock_timeout = self.module.params['lock_timeout']
 
         # It's possible someone passed a comma separated string since it used
@@ -98,19 +95,41 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.enablerepo = self.listify_comma_sep_strings_in_list(self.enablerepo)
         self.exclude = self.listify_comma_sep_strings_in_list(self.exclude)
 
+        # Fail if someone passed a space separated string
+        # https://github.com/ansible/ansible/issues/46301
+        if any((' ' in name and '@' not in name and '==' not in name for name in self.names)):
+            module.fail_json(
+                msg='It appears that a space separated string of packages was passed in '
+                    'as an argument. To operate on several packages, pass a comma separated '
+                    'string of packages or a list of packages.'
+            )
+
+        # Sanity checking for autoremove
+        if self.state is None:
+            if self.autoremove:
+                self.state = "absent"
+            else:
+                self.state = "present"
+
+        if self.autoremove and (self.state != "absent"):
+            self.module.fail_json(
+                msg="Autoremove should be used alone or with state=absent",
+                results=[],
+            )
+
         # This should really be redefined by both the yum and dnf module but a
         # default isn't a bad idea
         self.lockfile = '/var/run/yum.pid'
 
     def wait_for_lock(self):
-        '''Poll until the lock is removed if interval is a positive number'''
-        if (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)) and self.lock_timeout > 0:
-            for iteration in range(0, self.lock_timeout):
-                time.sleep(self.lock_poll)
-                if not os.path.isfile(self.lockfile) or not glob.glob(self.lockfile):
-                    break
-            if os.path.isfile(self.lockfile) or glob.glob(self.lockfile):
-                self.module.fail_json(msg='{0} lockfile was not released'.format(self.pkg_mgr_name))
+        '''Poll until the lock is removed if timeout is a positive number'''
+        if (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)):
+            if self.lock_timeout > 0:
+                for iteration in range(0, self.lock_timeout):
+                    time.sleep(1)
+                    if not os.path.isfile(self.lockfile) and not glob.glob(self.lockfile):
+                        return
+            self.module.fail_json(msg='{0} lockfile is held by another process'.format(self.pkg_mgr_name))
 
     def listify_comma_sep_strings_in_list(self, some_list):
         """

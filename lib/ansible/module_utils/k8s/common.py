@@ -148,7 +148,7 @@ class K8sAnsibleMixin(object):
         if auth_set('username', 'password', 'host') or auth_set('api_key', 'host'):
             # We have enough in the parameters to authenticate, no need to load incluster or kubeconfig
             pass
-        elif auth_set('kubeconfig', 'context'):
+        elif auth_set('kubeconfig') or auth_set('context'):
             kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
         else:
             # First try to do incluster config, then kubeconfig
@@ -183,6 +183,8 @@ class K8sAnsibleMixin(object):
 
     def kubernetes_facts(self, kind, api_version, name=None, namespace=None, label_selectors=None, field_selectors=None):
         resource = self.find_resource(kind, api_version)
+        if not resource:
+            return dict(resources=[])
         try:
             result = resource.get(name=name,
                                   namespace=namespace,

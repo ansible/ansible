@@ -136,7 +136,7 @@ def main():
             terms_agreed=dict(required=False, default=False, type='bool'),
             state=dict(required=True, choices=['absent', 'present', 'changed_key'], type='str'),
             allow_creation=dict(required=False, default=True, type='bool'),
-            contact=dict(required=False, type='list', default=[]),
+            contact=dict(required=False, type='list', elements='str', default=[]),
             new_account_key_src=dict(type='path'),
             new_account_key_content=dict(type='str', no_log=True),
             select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
@@ -192,7 +192,8 @@ def main():
             module.exit_json(changed=False, account_uri=account.uri)
         elif state == 'present':
             allow_creation = module.params.get('allow_creation')
-            contact = module.params.get('contact')
+            # Make sure contact is a list of strings (unfortunately, Ansible doesn't do that for us)
+            contact = [str(v) for v in module.params.get('contact')]
             terms_agreed = module.params.get('terms_agreed')
             changed = account.init_account(
                 contact,

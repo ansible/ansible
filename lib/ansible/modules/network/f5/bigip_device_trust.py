@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -77,14 +78,15 @@ author:
 EXAMPLES = r'''
 - name: Add trusts for all peer devices to Active device
   bigip_device_trust:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     peer_server: "{{ item.ansible_host }}"
     peer_hostname: "{{ item.inventory_hostname }}"
     peer_user: "{{ item.bigip_username }}"
     peer_password: "{{ item.bigip_password }}"
-  with_items: hostvars
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  loop: hostvars
   when: inventory_hostname in groups['master']
   delegate_to: localhost
 '''
@@ -107,29 +109,19 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -142,7 +134,12 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'name', 'caDevice', 'device', 'deviceName', 'username', 'password'
+        'name',
+        'caDevice',
+        'device',
+        'deviceName',
+        'username',
+        'password'
     ]
 
     returnables = [
@@ -207,13 +204,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
@@ -272,27 +266,72 @@ class ModuleManager(object):
         return True
 
     def exists(self):
-        result = self.client.api.tm.cm.devices.get_collection()
-        for device in result:
+        uri = "https://{0}:{1}/mgmt/tm/cm/device".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        for device in response['items']:
             try:
-                if device.managementIp == self.want.peer_server:
+                if device['managementIp'] == self.want.peer_server:
                     return True
-            except AttributeError:
+            except KeyError:
                 pass
         return False
 
     def create_on_device(self):
         params = self.want.api_params()
-        self.client.api.tm.cm.add_to_trust.exec_cmd(
-            'run',
-            name='Root',
-            **params
+        params.update({
+            "command": "run",
+            "name": 'Root',
+        })
+        uri = "https://{0}:{1}/mgmt/tm/cm/add-to-trust/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        self.client.api.tm.cm.remove_from_trust.exec_cmd(
-            'run', deviceName=self.want.peer_hostname, name=self.want.peer_hostname
+        params = self.want.api_params()
+        params.update({
+            "command": "run",
+            "deviceName": self.want.peer_hostname,
+            "name": self.want.peer_hostname,
+        })
+        uri = "https://{0}:{1}/mgmt/tm/cm/remove-from-trust/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -324,11 +363,10 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

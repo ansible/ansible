@@ -392,7 +392,7 @@ DEFAULT_ASK_SUDO_PASS:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description:
     - This controls whether an Ansible playbook should prompt for a sudo password.
@@ -405,7 +405,7 @@ DEFAULT_ASK_SU_PASS:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description:
     - This controls whether an Ansible playbook should prompt for a su password.
@@ -632,7 +632,7 @@ DEFAULT_HANDLER_INCLUDES_STATIC:
   type: boolean
   deprecated:
     why: include itself is deprecated and this setting will not matter in the future
-    version: "2.8"
+    version: "2.12"
     alternatives: none as its already built into the decision between include_tasks and import_tasks
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
@@ -656,20 +656,9 @@ DEFAULT_HOST_LIST:
   default: /etc/ansible/hosts
   description: Comma separated list of Ansible inventory sources
   env:
-    - name: ANSIBLE_HOSTS
-      deprecated:
-        why: The variable is misleading as it can be a list of hosts and/or paths to inventory sources
-        version: "2.8"
-        alternatives: ANSIBLE_INVENTORY
     - name: ANSIBLE_INVENTORY
   expand_relative_paths: True
   ini:
-    - key: hostfile
-      section: defaults
-      deprecated:
-        why: The key is misleading as it can also be a list of hosts, a directory or a list of paths
-        version: "2.8"
-        alternatives: "[defaults]\ninventory=/path/to/file|dir"
     - key: inventory
       section: defaults
   type: pathlist
@@ -1074,7 +1063,7 @@ DEFAULT_SUDO:
   default: False
   deprecated:
     why: In favor of Ansible Become, which is a generic framework
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Toggle the use of "sudo" for tasks.'
   env: [{name: ANSIBLE_SUDO}]
@@ -1086,7 +1075,7 @@ DEFAULT_SUDO_EXE:
   default: sudo
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'specify an "sudo" executable, otherwise it relies on PATH.'
   env: [{name: ANSIBLE_SUDO_EXE}]
@@ -1097,7 +1086,7 @@ DEFAULT_SUDO_FLAGS:
   default: '-H -S -n'
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Flags to pass to "sudo"'
   env: [{name: ANSIBLE_SUDO_FLAGS}]
@@ -1108,7 +1097,7 @@ DEFAULT_SUDO_USER:
   default:
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'User you become when using "sudo", leaving it blank will use the default configured on the target (normally root)'
   env: [{name: ANSIBLE_SUDO_USER}]
@@ -1119,7 +1108,7 @@ DEFAULT_SU_EXE:
   default: su
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'specify an "su" executable, otherwise it relies on PATH.'
   env: [{name: ANSIBLE_SU_EXE}]
@@ -1130,7 +1119,7 @@ DEFAULT_SU_FLAGS:
   default: ''
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
   description: 'Flags to pass to su'
   env: [{name: ANSIBLE_SU_FLAGS}]
@@ -1145,7 +1134,7 @@ DEFAULT_SU_USER:
   - {key: su_user, section: defaults}
   deprecated:
     why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.8"
+    version: "2.9"
     alternatives: become
 DEFAULT_SYSLOG_FACILITY:
   name: syslog facility
@@ -1166,7 +1155,7 @@ DEFAULT_TASK_INCLUDES_STATIC:
   version_added: "2.1"
   deprecated:
     why: include itself is deprecated and this setting will not matter in the future
-    version: "2.8"
+    version: "2.12"
     alternatives: None, as its already built into the decision between include_tasks and import_tasks
 DEFAULT_TERMINAL_PLUGIN_PATH:
   name: Terminal Plugins Path
@@ -1419,7 +1408,7 @@ INVENTORY_ANY_UNPARSED_IS_FAILED:
   version_added: "2.7"
 INVENTORY_ENABLED:
   name: Active Inventory plugins
-  default: ['host_list', 'script', 'yaml', 'ini', 'auto']
+  default: ['host_list', 'script', 'yaml', 'ini', 'toml', 'auto']
   description: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
@@ -1435,7 +1424,7 @@ INVENTORY_EXPORT:
   type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
-  default: "{{(BLACKLIST_EXTS + ( '~', '.orig', '.ini', '.cfg', '.retry'))}}"
+  default: "{{(BLACKLIST_EXTS + ( '.orig', '.ini', '.cfg', '.retry'))}}"
   description: List of extensions to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:

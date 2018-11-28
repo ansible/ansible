@@ -18,7 +18,7 @@ description:
  - Can create or delete AWS metric alarms.
  - Metrics you wish to alarm on must already exist.
 version_added: "1.6"
-author: "Zacharie Eakin (@zeekin)"
+author: "Zacharie Eakin (@Zeekin)"
 options:
     state:
         description:

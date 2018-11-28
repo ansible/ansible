@@ -21,8 +21,8 @@ description:
     - Creates, updates or removes a Scaling Policy
 version_added: "2.5"
 author:
-    - Gustavo Maia(@gurumaia)
-    - Chen Leibovich(@chenl87)
+    - Gustavo Maia (@gurumaia)
+    - Chen Leibovich (@chenl87)
 requirements: [ json, botocore, boto3 ]
 options:
     policy_name:
@@ -251,8 +251,6 @@ creation_time:
     type: string
     sample: '2017-09-28T08:22:51.881000-03:00'
 '''  # NOQA
-
-import traceback
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, ec2_argument_spec

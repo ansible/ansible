@@ -12,6 +12,7 @@ lib/ansible/modules/windows/setup.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/setup.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_copy.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_copy.ps1 PSUseDeclaredVarsMoreThanAssignments
+lib/ansible/modules/windows/win_credential.ps1 PSUsePSCredentialType # The Credential parameter is a custom .NET type
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidGlobalVars
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidUsingWMICmdlet
@@ -37,7 +38,6 @@ lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_get_url.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_get_url.ps1 PSUseSupportsShouldProcess
 lib/ansible/modules/windows/win_hotfix.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_iis_webbinding.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_iis_website.ps1 PSAvoidUsingCmdletAliases
@@ -83,3 +83,4 @@ test/integration/targets/win_script/files/test_script.ps1 PSAvoidUsingWriteHost
 test/integration/targets/win_script/files/test_script_creates_file.ps1 PSAvoidUsingCmdletAliases
 test/integration/targets/win_script/files/test_script_with_args.ps1 PSAvoidUsingWriteHost
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 PSAvoidUsingWriteHost
+test/integration/targets/win_csharp_utils/library/ansible_basic_tests.ps1 PSUseDeclaredVarsMoreThanAssignments # test setup requires vars to be set globally and not referenced in the same scope

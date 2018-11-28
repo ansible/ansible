@@ -161,6 +161,10 @@ def install_command_requirements(args, python_version=None):
     :type args: EnvironmentConfig
     :type python_version: str | None
     """
+    if isinstance(args, ShellConfig):
+        if args.raw:
+            return
+
     generate_egg_info(args)
 
     if not args.requirements:
@@ -346,7 +350,7 @@ def command_network_integration(args):
     instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
-        get_coverage_path(args)  # initialize before starting threads
+        get_coverage_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
@@ -514,7 +518,7 @@ def command_windows_integration(args):
     httptester_id = None
 
     if args.windows:
-        get_coverage_path(args)  # initialize before starting threads
+        get_coverage_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
@@ -1631,6 +1635,13 @@ def get_integration_remote_filter(args, targets):
         exclude.append(skip)
         display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
+
+    skip = 'skip/%s/' % args.remote.replace('/', '')
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
+                        % (skip.rstrip('/'), args.remote.replace('/', ' '), ', '.join(skipped)))
 
     python_version = 2  # remotes are expected to default to python 2
 

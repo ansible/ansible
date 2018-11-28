@@ -50,6 +50,7 @@ options:
       - If you want to refresh your catalog from the mirror, set this to (C(yes)).
     required: false
     default: False
+    type: bool
     version_added: "2.1"
 '''
 

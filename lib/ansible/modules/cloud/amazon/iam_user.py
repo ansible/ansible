@@ -13,7 +13,7 @@ short_description: Manage AWS IAM users
 description:
   - Manage AWS IAM users
 version_added: "2.5"
-author: Josh Souza, @joshsouza
+author: Josh Souza (@joshsouza)
 options:
   name:
     description:
@@ -33,6 +33,7 @@ options:
       - Detach policies which are not included in managed_policy list
     required: false
     default: false
+    type: bool
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws

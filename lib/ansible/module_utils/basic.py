@@ -785,6 +785,12 @@ def jsonify(data, **kwargs):
     raise UnicodeError('Invalid unicode encoding encountered')
 
 
+def missing_required_lib(library):
+    hostname = platform.node()
+    return "Failed to import the required Python library (%s) on %s's Python %s. Please read module documentation " \
+           "and install in the appropriate location." % (library, hostname, sys.executable)
+
+
 class AnsibleFallbackNotFound(Exception):
     pass
 
@@ -2689,7 +2695,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2704,7 +2710,7 @@ class AnsibleModule(object):
         :kw data: If given, information to write to the stdin of the command
         :kw binary_data: If False, append a newline to the data.  Default False
         :kw path_prefix: If given, additional path to find the command in.
-            This adds to the PATH environment vairable so helper commands in
+            This adds to the PATH environment variable so helper commands in
             the same directory can also be found
         :kw cwd: If given, working directory to run the command inside
         :kw use_unsafe_shell: See `args` parameter.  Default False
@@ -2732,6 +2738,13 @@ class AnsibleModule(object):
             are expanded before running the command. When ``True`` a string such as
             ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
             ``use_unsafe_shell=False`` no path or variable expansion will be done.
+        :kw pass_fds: When running on python3 this argument
+            dictates which file descriptors should be passed
+            to an underlying ``Popen`` constructor.
+        :kw before_communicate_callback: This function will be called
+            after ``Popen`` object will be created
+            but before communicating to the process.
+            (``Popen`` object will be passed to callback as a first argument)
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2833,6 +2846,8 @@ class AnsibleModule(object):
             stderr=subprocess.PIPE,
             preexec_fn=self._restore_signal_handlers,
         )
+        if PY3 and pass_fds:
+            kwargs["pass_fds"] = pass_fds
 
         # store the pwd
         prev_dir = os.getcwd()
@@ -2855,6 +2870,8 @@ class AnsibleModule(object):
             if self._debug:
                 self.log('Executing: ' + self._clean_args(args))
             cmd = subprocess.Popen(args, **kwargs)
+            if before_communicate_callback:
+                before_communicate_callback(cmd)
 
             # the communication logic here is essentially taken from that
             # of the _communicate() function in ssh.py

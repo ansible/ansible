@@ -33,6 +33,7 @@ options:
       - Force overwrite of already existing key pair if key has changed.
     required: false
     default: true
+    type: bool
     version_added: "2.3"
   state:
     description:
@@ -45,6 +46,7 @@ options:
       - Wait for the specified action to complete before returning. This option has no effect since version 2.5.
     required: false
     default: false
+    type: bool
     version_added: "1.6"
   wait_timeout:
     description:
@@ -186,13 +188,16 @@ def create_key_pair(module, ec2_client, name, key_material, force):
     key = find_key_pair(module, ec2_client, name)
     if key:
         if key_material and force:
-            new_fingerprint = get_key_fingerprint(module, ec2_client, key_material)
-            if key['KeyFingerprint'] != new_fingerprint:
-                if not module.check_mode:
+            if not module.check_mode:
+                new_fingerprint = get_key_fingerprint(module, ec2_client, key_material)
+                if key['KeyFingerprint'] != new_fingerprint:
                     delete_key_pair(module, ec2_client, name, finish_task=False)
                     key = import_key_pair(module, ec2_client, name, key_material)
-                key_data = extract_key_data(key)
-                module.exit_json(changed=True, key=key_data, msg="key pair updated")
+                    key_data = extract_key_data(key)
+                    module.exit_json(changed=True, key=key_data, msg="key pair updated")
+            else:
+                # Assume a change will be made in check mode since a comparison can't be done
+                module.exit_json(changed=True, key=extract_key_data(key), msg="key pair updated")
         key_data = extract_key_data(key)
         module.exit_json(changed=False, key=key_data, msg="key pair already exists")
     else:

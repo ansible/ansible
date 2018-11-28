@@ -26,15 +26,12 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
+from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import remove_internal_keys
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionBase(with_metaclass(ABCMeta, object)):
@@ -1057,7 +1054,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         with open(source, 'rb') as src:
                             src_contents = src.read()
                     except Exception as e:
-                        raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
+                        raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, to_native(e)))
 
                     if b"\x00" in src_contents:
                         diff['src_binary'] = 1

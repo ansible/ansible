@@ -38,6 +38,7 @@ options:
       - Interface link status. If the value is I(True) the interface state will be
         enabled, else if value is I(False) interface will be in disable (shutdown) state.
     default: True
+    type: bool
   speed:
     description:
       - This option configures autoneg and speed/duplex/flowcontrol for the interface

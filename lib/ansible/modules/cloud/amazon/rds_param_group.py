@@ -78,6 +78,7 @@ options:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
     aliases:
       - apply_immediately
+    type: bool
   params:
     description:
       - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3),
@@ -89,8 +90,10 @@ options:
     version_added: "2.4"
   purge_tags:
     description:
-      - Whether or not to remove tags that do not appear in the I(tags) list. Defaults to false.
+      - Whether or not to remove tags that do not appear in the I(tags) list.
     version_added: "2.4"
+    type: bool
+    default: False
 author:
     - "Scott Anderson (@tastychutney)"
     - "Will Thames (@willthames)"
@@ -103,7 +106,7 @@ EXAMPLES = '''
 # Add or change a parameter group, in this case setting auto_increment_increment to 42 * 1024
 - rds_param_group:
       state: present
-      name: norwegian_blue
+      name: norwegian-blue
       description: 'My Fancy Ex Parrot Group'
       engine: 'mysql5.6'
       params:
@@ -115,7 +118,7 @@ EXAMPLES = '''
 # Remove a parameter group
 - rds_param_group:
       state: absent
-      name: norwegian_blue
+      name: norwegian-blue
 '''
 
 RETURN = '''

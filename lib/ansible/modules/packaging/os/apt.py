@@ -109,6 +109,15 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  policy_rc_d:
+    description:
+      - Force the exit code of /usr/sbin/policy-rc.d.
+      - For example, if I(policy_rc_d=101) the installed package will not trigger a service start.
+      - If /usr/sbin/policy-rc.d already exist, it is backed up and restored after the package installation.
+      - If C(null), the /usr/sbin/policy-rc.d isn't created/changed.
+    type: int
+    default: null
+    version_added: "2.8"
   only_upgrade:
     description:
       - Only upgrade a package if it is already installed.
@@ -261,8 +270,10 @@ import datetime
 import fnmatch
 import itertools
 import os
+import shutil
 import re
 import sys
+import tempfile
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -307,6 +318,83 @@ if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
 else:
     PYTHON_APT = 'python3-apt'
+
+
+class PolicyRcD(object):
+    """
+    This class is a context manager for the /usr/sbin/policy-rc.d file.
+    It allow the user to prevent dpkg to start the corresponding service when installing
+    a package.
+    https://people.debian.org/~hmh/invokerc.d-policyrc.d-specification.txt
+    """
+
+    def __init__(self, module):
+        # we need the module for later use (eg. fail_json)
+        self.m = module
+
+        # if policy_rc_d is null then we don't need to modify policy-rc.d
+        if self.m.params['policy_rc_d'] is None:
+            return
+
+        # if the /usr/sbin/policy-rc.d already exist
+        # we will back it up during package installation
+        # then restore it
+        if os.path.exists('/usr/sbin/policy-rc.d'):
+            self.backup_dir = tempfile.mkdtemp(prefix="ansible")
+        else:
+            self.backup_dir = None
+
+    def __enter__(self):
+        """
+        This method will be call when we enter the context, before we call `apt-get …`
+        """
+
+        # if policy_rc_d is null then we don't need to modify policy-rc.d
+        if self.m.params['policy_rc_d'] is None:
+            return
+
+        # if the /usr/sbin/policy-rc.d already exist we back it up
+        if self.backup_dir:
+            try:
+                shutil.move('/usr/sbin/policy-rc.d', self.backup_dir)
+            except:
+                self.m.fail_json(msg="Fail to move /usr/sbin/policy-rc.d to %s" % self.backup_dir)
+
+        # we write /usr/sbin/policy-rc.d so it always exit with code policy_rc_d
+        try:
+            with open('/usr/sbin/policy-rc.d', 'w') as policy_rc_d:
+                policy_rc_d.write('#!/bin/sh\nexit %d\n' % self.m.params['policy_rc_d'])
+
+            os.chmod('/usr/sbin/policy-rc.d', 0o0755)
+        except:
+            self.m.fail_json(msg="Failed to create or chmod /usr/sbin/policy-rc.d")
+
+    def __exit__(self, type, value, traceback):
+        """
+        This method will be call when we enter the context, before we call `apt-get …`
+        """
+
+        # if policy_rc_d is null then we don't need to modify policy-rc.d
+        if self.m.params['policy_rc_d'] is None:
+            return
+
+        if self.backup_dir:
+            # if /usr/sbin/policy-rc.d already exists before the call to __enter__
+            # we restore it (from the backup done in __enter__)
+            try:
+                shutil.move(os.path.join(self.backup_dir, 'policy-rc.d'),
+                            '/usr/sbin/policy-rc.d')
+                os.rmdir(self.tmpdir_name)
+            except:
+                self.m.fail_json(msg="Fail to move back %s to /usr/sbin/policy-rc.d"
+                                     % os.path.join(self.backup_dir, 'policy-rc.d'))
+        else:
+            # if they wheren't any /usr/sbin/policy-rc.d file before the call to __enter__
+            # we just remove the file
+            try:
+                os.remove('/usr/sbin/policy-rc.d')
+            except:
+                self.m.fail_json(msg="Fail to remove /usr/sbin/policy-rc.d (after package manipulation)")
 
 
 def package_split(pkgspec):
@@ -585,7 +673,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
-        rc, out, err = m.run_command(cmd)
+        with PolicyRcD(m):
+            rc, out, err = m.run_command(cmd)
+
         if m._diff:
             diff = parse_diff(out)
         else:
@@ -674,7 +764,10 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             options += " --force-all"
 
         cmd = "dpkg %s -i %s" % (options, " ".join(pkgs_to_install))
-        rc, out, err = m.run_command(cmd)
+
+        with PolicyRcD(m):
+            rc, out, err = m.run_command(cmd)
+
         if "stdout" in retvals:
             stdout = retvals["stdout"] + out
         else:
@@ -734,7 +827,9 @@ def remove(m, pkgspec, cache, purge=False, force=False,
 
         cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
 
-        rc, out, err = m.run_command(cmd)
+        with PolicyRcD(m):
+            rc, out, err = m.run_command(cmd)
+
         if m._diff:
             diff = parse_diff(out)
         else:
@@ -767,7 +862,9 @@ def cleanup(m, purge=False, force=False, operation=None,
 
     cmd = "%s -y %s %s %s %s %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, operation, check_arg)
 
-    rc, out, err = m.run_command(cmd)
+    with PolicyRcD(m):
+        rc, out, err = m.run_command(cmd)
+
     if m._diff:
         diff = parse_diff(out)
     else:
@@ -840,7 +937,9 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if default_release:
         cmd += " -t '%s'" % (default_release,)
 
-    rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
+    with PolicyRcD(m):
+        rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
+
     if m._diff:
         diff = parse_diff(out)
     else:
@@ -917,6 +1016,7 @@ def main():
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
+            policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
@@ -933,6 +1033,7 @@ def main():
             module.fail_json(msg="%s must be installed to use check mode. "
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
+            module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
             module.run_command(['apt-get', 'update'], check_rc=True)
             module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg

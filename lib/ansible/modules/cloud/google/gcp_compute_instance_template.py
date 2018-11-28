@@ -32,361 +32,389 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_instance_template
 description:
-    - Defines an Instance Template resource that provides configuration settings for your
-      virtual machine instances. Instance templates are not tied to the lifetime of an
-      instance and can be used and reused as to deploy virtual machines. You can also
-      use different templates to create different virtual machine configurations. Instance
-      templates are required when you create a managed instance group.
-    - 'Tip: Disks should be set to autoDelete=true so that leftover disks are not left
-      behind on machine deletion.'
+- Defines an Instance Template resource that provides configuration settings for your
+  virtual machine instances. Instance templates are not tied to the lifetime of an
+  instance and can be used and reused as to deploy virtual machines. You can also
+  use different templates to create different virtual machine configurations. Instance
+  templates are required when you create a managed instance group.
+- 'Tip: Disks should be set to autoDelete=true so that leftover disks are not left
+  behind on machine deletion.'
 short_description: Creates a GCP InstanceTemplate
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource.
+    required: false
+  name:
+    description:
+    - Name of the resource. The name is 1-63 characters long and complies with RFC1035.
+    required: true
+  properties:
+    description:
+    - The instance properties for this instance template.
+    required: false
+    suboptions:
+      can_ip_forward:
         description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
+        - Enables instances created based on this template to send packets with source
+          IP addresses other than their own and receive packets with destination IP
+          addresses other than their own. If these instances will be used as an IP
+          gateway or it will be set as the next-hop in a Route resource, specify true.
+          If unsure, leave this set to false.
         required: false
-    name:
+        type: bool
+      description:
         description:
-            - Name of the resource. The name is 1-63 characters long and complies with RFC1035.
-        required: true
-    properties:
+        - An optional text description for the instances that are created from this
+          instance template.
+        required: false
+      disks:
         description:
-            - The instance properties for this instance template.
+        - An array of disks that are associated with the instances that are created
+          from this template.
         required: false
         suboptions:
-            can_ip_forward:
-                description:
-                    - Enables instances created based on this template to send packets with source IP
-                      addresses other than their own and receive packets with destination IP addresses
-                      other than their own. If these instances will be used as an IP gateway or it will
-                      be set as the next-hop in a Route resource, specify true. If unsure, leave this
-                      set to false.
-                required: false
-                type: bool
+          auto_delete:
             description:
+            - Specifies whether the disk will be auto-deleted when the instance is
+              deleted (but not when the disk is detached from the instance).
+            - 'Tip: Disks should be set to autoDelete=true so that leftover disks
+              are not left behind on machine deletion.'
+            required: false
+            type: bool
+          boot:
+            description:
+            - Indicates that this is a boot disk. The virtual machine will use the
+              first partition of the disk for its root filesystem.
+            required: false
+            type: bool
+          device_name:
+            description:
+            - Specifies a unique device name of your choice that is reflected into
+              the /dev/disk/by-id/google-* tree of a Linux operating system running
+              within the instance. This name can be used to reference the device for
+              mounting, resizing, and so on, from within the instance.
+            required: false
+          disk_encryption_key:
+            description:
+            - Encrypts or decrypts a disk using a customer-supplied encryption key.
+            required: false
+            suboptions:
+              raw_key:
                 description:
-                    - An optional text description for the instances that are created from this instance
-                      template.
+                - Specifies a 256-bit customer-supplied encryption key, encoded in
+                  RFC 4648 base64 to either encrypt or decrypt this resource.
                 required: false
-            disks:
+              rsa_encrypted_key:
                 description:
-                    - An array of disks that are associated with the instances that are created from this
-                      template.
+                - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied
+                  encryption key to either encrypt or decrypt this resource.
+                required: false
+              sha256:
+                description:
+                - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
+                  encryption key that protects this resource.
+                required: false
+          index:
+            description:
+            - Assigns a zero-based index to this disk, where 0 is reserved for the
+              boot disk. For example, if you have many disks attached to an instance,
+              each disk would have a unique index number. If not specified, the server
+              will choose an appropriate value.
+            required: false
+          initialize_params:
+            description:
+            - Specifies the parameters for a new disk that will be created alongside
+              the new instance. Use initialization parameters to create boot disks
+              or local SSDs attached to the new instance.
+            required: false
+            suboptions:
+              disk_name:
+                description:
+                - Specifies the disk name. If not specified, the default is to use
+                  the name of the instance.
+                required: false
+              disk_size_gb:
+                description:
+                - Specifies the size of the disk in base-2 GB.
+                required: false
+              disk_type:
+                description:
+                - Reference to a gcompute_disk_type resource.
+                - Specifies the disk type to use to create the instance.
+                - If not specified, the default is pd-standard.
+                required: false
+              source_image:
+                description:
+                - The source image to create this disk. When creating a new instance,
+                  one of initializeParams.sourceImage or disks.source is required.
+                  To create a disk with one of the public operating system images,
+                  specify the image by its family name.
+                required: false
+              source_image_encryption_key:
+                description:
+                - The customer-supplied encryption key of the source image. Required
+                  if the source image is protected by a customer-supplied encryption
+                  key.
+                - Instance templates do not store customer-supplied encryption keys,
+                  so you cannot create disks for instances in a managed instance group
+                  if the source images are encrypted with your own keys.
                 required: false
                 suboptions:
-                    auto_delete:
-                        description:
-                            - Specifies whether the disk will be auto-deleted when the instance is deleted (but
-                              not when the disk is detached from the instance).
-                            - 'Tip: Disks should be set to autoDelete=true so that leftover disks are not left
-                              behind on machine deletion.'
-                        required: false
-                        type: bool
-                    boot:
-                        description:
-                            - Indicates that this is a boot disk. The virtual machine will use the first partition
-                              of the disk for its root filesystem.
-                        required: false
-                        type: bool
-                    device_name:
-                        description:
-                            - Specifies a unique device name of your choice that is reflected into the /dev/disk/by-id/google-*
-                              tree of a Linux operating system running within the instance. This name can be used
-                              to reference the device for mounting, resizing, and so on, from within the instance.
-                        required: false
-                    disk_encryption_key:
-                        description:
-                            - Encrypts or decrypts a disk using a customer-supplied encryption key.
-                        required: false
-                        suboptions:
-                            raw_key:
-                                description:
-                                    - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
-                                      to either encrypt or decrypt this resource.
-                                required: false
-                            rsa_encrypted_key:
-                                description:
-                                    - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
-                                      key to either encrypt or decrypt this resource.
-                                required: false
-                            sha256:
-                                description:
-                                    - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
-                                      that protects this resource.
-                                required: false
-                    index:
-                        description:
-                            - Assigns a zero-based index to this disk, where 0 is reserved for the boot disk.
-                              For example, if you have many disks attached to an instance, each disk would have
-                              a unique index number. If not specified, the server will choose an appropriate value.
-                        required: false
-                    initialize_params:
-                        description:
-                            - Specifies the parameters for a new disk that will be created alongside the new instance.
-                              Use initialization parameters to create boot disks or local SSDs attached to the
-                              new instance.
-                        required: false
-                        suboptions:
-                            disk_name:
-                                description:
-                                    - Specifies the disk name. If not specified, the default is to use the name of the
-                                      instance.
-                                required: false
-                            disk_size_gb:
-                                description:
-                                    - Specifies the size of the disk in base-2 GB.
-                                required: false
-                            disk_type:
-                                description:
-                                    - Reference to a gcompute_disk_type resource.
-                                    - Specifies the disk type to use to create the instance.
-                                    - If not specified, the default is pd-standard.
-                                required: false
-                            source_image:
-                                description:
-                                    - The source image to create this disk. When creating a new instance, one of initializeParams.sourceImage
-                                      or disks.source is required.  To create a disk with one of the public operating
-                                      system images, specify the image by its family name.
-                                required: false
-                            source_image_encryption_key:
-                                description:
-                                    - The customer-supplied encryption key of the source image. Required if the source
-                                      image is protected by a customer-supplied encryption key.
-                                    - Instance templates do not store customer-supplied encryption keys, so you cannot
-                                      create disks for instances in a managed instance group if the source images are
-                                      encrypted with your own keys.
-                                required: false
-                                suboptions:
-                                    raw_key:
-                                        description:
-                                            - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
-                                              to either encrypt or decrypt this resource.
-                                        required: false
-                                    sha256:
-                                        description:
-                                            - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
-                                              that protects this resource.
-                                        required: false
-                    interface:
-                        description:
-                            - Specifies the disk interface to use for attaching this disk, which is either SCSI
-                              or NVME. The default is SCSI.
-                            - Persistent disks must always use SCSI and the request will fail if you attempt to
-                              attach a persistent disk in any other format than SCSI.
-                        required: false
-                        choices: ['SCSI', 'NVME']
-                    mode:
-                        description:
-                            - The mode in which to attach this disk, either READ_WRITE or READ_ONLY. If not specified,
-                              the default is to attach the disk in READ_WRITE mode.
-                        required: false
-                        choices: ['READ_WRITE', 'READ_ONLY']
-                    source:
-                        description:
-                            - Reference to a gcompute_disk resource. When creating a new instance, one of initializeParams.sourceImage
-                              or disks.source is required.
-                            - If desired, you can also attach existing non-root persistent disks using this property.
-                              This field is only applicable for persistent disks.
-                            - Note that for InstanceTemplate, specify the disk name, not the URL for the disk.
-                            - 'This field represents a link to a Disk resource in GCP. It can be specified in
-                              two ways. You can add `register: name-of-resource` to a gcp_compute_disk task and
-                              then set this source field to "{{ name-of-resource }}" Alternatively, you can set
-                              this source to a dictionary with the name key where the value is the name of your
-                              Disk.'
-                        required: false
-                    type:
-                        description:
-                            - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
-                              the default is PERSISTENT.
-                        required: false
-                        choices: ['SCRATCH', 'PERSISTENT']
-            machine_type:
+                  raw_key:
+                    description:
+                    - Specifies a 256-bit customer-supplied encryption key, encoded
+                      in RFC 4648 base64 to either encrypt or decrypt this resource.
+                    required: false
+                  sha256:
+                    description:
+                    - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
+                      encryption key that protects this resource.
+                    required: false
+          interface:
+            description:
+            - Specifies the disk interface to use for attaching this disk, which is
+              either SCSI or NVME. The default is SCSI.
+            - Persistent disks must always use SCSI and the request will fail if you
+              attempt to attach a persistent disk in any other format than SCSI.
+            required: false
+            choices:
+            - SCSI
+            - NVME
+          mode:
+            description:
+            - The mode in which to attach this disk, either READ_WRITE or READ_ONLY.
+              If not specified, the default is to attach the disk in READ_WRITE mode.
+            required: false
+            choices:
+            - READ_WRITE
+            - READ_ONLY
+          source:
+            description:
+            - Reference to a gcompute_disk resource. When creating a new instance,
+              one of initializeParams.sourceImage or disks.source is required.
+            - If desired, you can also attach existing non-root persistent disks using
+              this property. This field is only applicable for persistent disks.
+            - Note that for InstanceTemplate, specify the disk name, not the URL for
+              the disk.
+            - 'This field represents a link to a Disk resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_disk
+              task and then set this source field to "{{ name-of-resource }}" Alternatively,
+              you can set this source to a dictionary with the name key where the
+              value is the name of your Disk'
+            required: false
+          type:
+            description:
+            - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not
+              specified, the default is PERSISTENT.
+            required: false
+            choices:
+            - SCRATCH
+            - PERSISTENT
+      machine_type:
+        description:
+        - Reference to a gcompute_machine_type resource.
+        required: true
+      min_cpu_platform:
+        description:
+        - Specifies a minimum CPU platform for the VM instance. Applicable values
+          are the friendly names of CPU platforms .
+        required: false
+      metadata:
+        description:
+        - The metadata key/value pairs to assign to instances that are created from
+          this template. These pairs can consist of custom metadata or predefined
+          keys.
+        required: false
+      guest_accelerators:
+        description:
+        - List of the type and count of accelerator cards attached to the instance
+          .
+        required: false
+        suboptions:
+          accelerator_count:
+            description:
+            - The number of the guest accelerator cards exposed to this instance.
+            required: false
+          accelerator_type:
+            description:
+            - Full or partial URL of the accelerator type resource to expose to this
+              instance.
+            required: false
+      network_interfaces:
+        description:
+        - An array of configurations for this interface. This specifies how this interface
+          is configured to interact with other network services, such as connecting
+          to the internet. Only one network interface is supported per instance.
+        required: false
+        suboptions:
+          access_configs:
+            description:
+            - An array of configurations for this interface. Currently, only one access
+              config, ONE_TO_ONE_NAT, is supported. If there are no accessConfigs
+              specified, then this instance will have no external internet access.
+            required: false
+            suboptions:
+              name:
                 description:
-                    - Reference to a gcompute_machine_type resource.
+                - The name of this access configuration. The default and recommended
+                  name is External NAT but you can use any arbitrary string you would
+                  like. For example, My external IP or Network Access.
                 required: true
-            metadata:
+              nat_ip:
                 description:
-                    - The metadata key/value pairs to assign to instances that are created from this template.
-                      These pairs can consist of custom metadata or predefined keys.
+                - Specifies the title of a gcompute_address.
+                - An external IP address associated with this instance.
+                - Specify an unused static external IP address available to the project
+                  or leave this field undefined to use an IP from a shared ephemeral
+                  IP address pool. If you specify a static external IP address, it
+                  must live in the same region as the zone of the instance.
+                - 'This field represents a link to a Address resource in GCP. It can
+                  be specified in two ways. You can add `register: name-of-resource`
+                  to a gcp_compute_address task and then set this nat_ip field to
+                  "{{ name-of-resource }}" Alternatively, you can set this nat_ip
+                  to a dictionary with the address key where the value is the address
+                  of your Address'
                 required: false
-            guest_accelerators:
+              type:
                 description:
-                    - List of the type and count of accelerator cards attached to the instance .
-                required: false
-                suboptions:
-                    accelerator_count:
-                        description:
-                            - The number of the guest accelerator cards exposed to this instance.
-                        required: false
-                    accelerator_type:
-                        description:
-                            - Full or partial URL of the accelerator type resource to expose to this instance.
-                        required: false
-            network_interfaces:
+                - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
+                required: true
+                choices:
+                - ONE_TO_ONE_NAT
+          alias_ip_ranges:
+            description:
+            - An array of alias IP ranges for this network interface. Can only be
+              specified for network interfaces on subnet-mode networks.
+            required: false
+            suboptions:
+              ip_cidr_range:
                 description:
-                    - An array of configurations for this interface. This specifies how this interface
-                      is configured to interact with other network services, such as connecting to the
-                      internet. Only one network interface is supported per instance.
+                - The IP CIDR range represented by this alias IP range.
+                - This IP CIDR range must belong to the specified subnetwork and cannot
+                  contain IP addresses reserved by system or used by other network
+                  interfaces. This range may be a single IP address (e.g. 10.2.3.4),
+                  a netmask (e.g. /24) or a CIDR format string (e.g. 10.1.2.0/24).
                 required: false
-                suboptions:
-                    access_configs:
-                        description:
-                            - An array of configurations for this interface. Currently, only one access config,
-                              ONE_TO_ONE_NAT, is supported. If there are no accessConfigs specified, then this
-                              instance will have no external internet access.
-                        required: false
-                        suboptions:
-                            name:
-                                description:
-                                    - The name of this access configuration. The default and recommended name is External
-                                      NAT but you can use any arbitrary string you would like. For example, My external
-                                      IP or Network Access.
-                                required: true
-                            nat_ip:
-                                description:
-                                    - Specifies the title of a gcompute_address.
-                                    - An external IP address associated with this instance.
-                                    - Specify an unused static external IP address available to the project or leave this
-                                      field undefined to use an IP from a shared ephemeral IP address pool. If you specify
-                                      a static external IP address, it must live in the same region as the zone of the
-                                      instance.
-                                    - 'This field represents a link to a Address resource in GCP. It can be specified
-                                      in two ways. You can add `register: name-of-resource` to a gcp_compute_address task
-                                      and then set this nat_ip field to "{{ name-of-resource }}" Alternatively, you can
-                                      set this nat_ip to a dictionary with the address key where the value is the address
-                                      of your Address.'
-                                required: false
-                            type:
-                                description:
-                                    - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
-                                required: true
-                                choices: ['ONE_TO_ONE_NAT']
-                    alias_ip_ranges:
-                        description:
-                            - An array of alias IP ranges for this network interface. Can only be specified for
-                              network interfaces on subnet-mode networks.
-                        required: false
-                        suboptions:
-                            ip_cidr_range:
-                                description:
-                                    - The IP CIDR range represented by this alias IP range.
-                                    - This IP CIDR range must belong to the specified subnetwork and cannot contain IP
-                                      addresses reserved by system or used by other network interfaces. This range may
-                                      be a single IP address (e.g. 10.2.3.4), a netmask (e.g. /24) or a CIDR format string
-                                      (e.g. 10.1.2.0/24).
-                                required: false
-                            subnetwork_range_name:
-                                description:
-                                    - Optional subnetwork secondary range name specifying the secondary range from which
-                                      to allocate the IP CIDR range for this alias IP range. If left unspecified, the
-                                      primary range of the subnetwork will be used.
-                                required: false
-                    name:
-                        description:
-                            - The name of the network interface, generated by the server. For network devices,
-                              these are eth0, eth1, etc .
-                        required: false
-                    network:
-                        description:
-                            - Specifies the title of an existing gcompute_network.  When creating an instance,
-                              if neither the network nor the subnetwork is specified, the default network global/networks/default
-                              is used; if the network is not specified but the subnetwork is specified, the network
-                              is inferred.
-                            - 'This field represents a link to a Network resource in GCP. It can be specified
-                              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
-                              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
-                              set this network to a dictionary with the selfLink key where the value is the selfLink
-                              of your Network.'
-                        required: false
-                    network_ip:
-                        description:
-                            - An IPv4 internal network address to assign to the instance for this network interface.
-                              If not specified by the user, an unused internal IP is assigned by the system.
-                        required: false
-                    subnetwork:
-                        description:
-                            - Reference to a gcompute_subnetwork resource.
-                            - If the network resource is in legacy mode, do not provide this property.  If the
-                              network is in auto subnet mode, providing the subnetwork is optional. If the network
-                              is in custom subnet mode, then this field should be specified.
-                            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-                              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-                              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-                              you can set this subnetwork to a dictionary with the selfLink key where the value
-                              is the selfLink of your Subnetwork.'
-                        required: false
-            scheduling:
+              subnetwork_range_name:
                 description:
-                    - Sets the scheduling options for this instance.
+                - Optional subnetwork secondary range name specifying the secondary
+                  range from which to allocate the IP CIDR range for this alias IP
+                  range. If left unspecified, the primary range of the subnetwork
+                  will be used.
                 required: false
-                suboptions:
-                    automatic_restart:
-                        description:
-                            - Specifies whether the instance should be automatically restarted if it is terminated
-                              by Compute Engine (not terminated by a user).
-                            - You can only set the automatic restart option for standard instances. Preemptible
-                              instances cannot be automatically restarted.
-                        required: false
-                        type: bool
-                    on_host_maintenance:
-                        description:
-                            - Defines the maintenance behavior for this instance. For standard instances, the
-                              default behavior is MIGRATE. For preemptible instances, the default and only possible
-                              behavior is TERMINATE.
-                            - For more information, see Setting Instance Scheduling Options.
-                        required: false
-                    preemptible:
-                        description:
-                            - Defines whether the instance is preemptible. This can only be set during instance
-                              creation, it cannot be set or changed after the instance has been created.
-                        required: false
-                        type: bool
-            service_accounts:
-                description:
-                    - A list of service accounts, with their specified scopes, authorized for this instance.
-                      Only one service account per VM instance is supported.
-                required: false
-                suboptions:
-                    email:
-                        description:
-                            - Email address of the service account.
-                        required: false
-                    scopes:
-                        description:
-                            - The list of scopes to be made available for this service account.
-                        required: false
-            tags:
-                description:
-                    - A list of tags to apply to this instance. Tags are used to identify valid sources
-                      or targets for network firewalls and are specified by the client during instance
-                      creation. The tags can be later modified by the setTags method. Each tag within
-                      the list must comply with RFC1035.
-                required: false
-                suboptions:
-                    fingerprint:
-                        description:
-                            - Specifies a fingerprint for this request, which is essentially a hash of the metadata's
-                              contents and used for optimistic locking.
-                            - The fingerprint is initially generated by Compute Engine and changes after every
-                              request to modify or update metadata. You must always provide an up-to-date fingerprint
-                              hash in order to update or change metadata.
-                        required: false
-                    items:
-                        description:
-                            - An array of tags. Each tag must be 1-63 characters long, and comply with RFC1035.
-                        required: false
+          name:
+            description:
+            - The name of the network interface, generated by the server. For network
+              devices, these are eth0, eth1, etc .
+            required: false
+          network:
+            description:
+            - Specifies the title of an existing gcompute_network. When creating an
+              instance, if neither the network nor the subnetwork is specified, the
+              default network global/networks/default is used; if the network is not
+              specified but the subnetwork is specified, the network is inferred.
+            - 'This field represents a link to a Network resource in GCP. It can be
+              specified in two ways. You can add `register: name-of-resource` to a
+              gcp_compute_network task and then set this network field to "{{ name-of-resource
+              }}" Alternatively, you can set this network to a dictionary with the
+              selfLink key where the value is the selfLink of your Network'
+            required: false
+          network_ip:
+            description:
+            - An IPv4 internal network address to assign to the instance for this
+              network interface. If not specified by the user, an unused internal
+              IP is assigned by the system.
+            required: false
+          subnetwork:
+            description:
+            - Reference to a gcompute_subnetwork resource.
+            - If the network resource is in legacy mode, do not provide this property.
+              If the network is in auto subnet mode, providing the subnetwork is optional.
+              If the network is in custom subnet mode, then this field should be specified.
+            - 'This field represents a link to a Subnetwork resource in GCP. It can
+              be specified in two ways. You can add `register: name-of-resource` to
+              a gcp_compute_subnetwork task and then set this subnetwork field to
+              "{{ name-of-resource }}" Alternatively, you can set this subnetwork
+              to a dictionary with the selfLink key where the value is the selfLink
+              of your Subnetwork'
+            required: false
+      scheduling:
+        description:
+        - Sets the scheduling options for this instance.
+        required: false
+        suboptions:
+          automatic_restart:
+            description:
+            - Specifies whether the instance should be automatically restarted if
+              it is terminated by Compute Engine (not terminated by a user).
+            - You can only set the automatic restart option for standard instances.
+              Preemptible instances cannot be automatically restarted.
+            required: false
+            type: bool
+          on_host_maintenance:
+            description:
+            - Defines the maintenance behavior for this instance. For standard instances,
+              the default behavior is MIGRATE. For preemptible instances, the default
+              and only possible behavior is TERMINATE.
+            - For more information, see Setting Instance Scheduling Options.
+            required: false
+          preemptible:
+            description:
+            - Defines whether the instance is preemptible. This can only be set during
+              instance creation, it cannot be set or changed after the instance has
+              been created.
+            required: false
+            type: bool
+      service_accounts:
+        description:
+        - A list of service accounts, with their specified scopes, authorized for
+          this instance. Only one service account per VM instance is supported.
+        required: false
+        suboptions:
+          email:
+            description:
+            - Email address of the service account.
+            required: false
+          scopes:
+            description:
+            - The list of scopes to be made available for this service account.
+            required: false
+      tags:
+        description:
+        - A list of tags to apply to this instance. Tags are used to identify valid
+          sources or targets for network firewalls and are specified by the client
+          during instance creation. The tags can be later modified by the setTags
+          method. Each tag within the list must comply with RFC1035.
+        required: false
+        suboptions:
+          fingerprint:
+            description:
+            - Specifies a fingerprint for this request, which is essentially a hash
+              of the metadata's contents and used for optimistic locking.
+            - The fingerprint is initially generated by Compute Engine and changes
+              after every request to modify or update metadata. You must always provide
+              an up-to-date fingerprint hash in order to update or change metadata.
+            required: false
+          items:
+            description:
+            - An array of tags. Each tag must be 1-63 characters long, and comply
+              with RFC1035.
+            required: false
 extends_documentation_fragment: gcp
 '''
 
@@ -433,375 +461,390 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource. This identifier is defined by the server.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. The name is 1-63 characters long and complies with RFC1035.
+  returned: success
+  type: str
+properties:
+  description:
+  - The instance properties for this instance template.
+  returned: success
+  type: complex
+  contains:
+    canIpForward:
+      description:
+      - Enables instances created based on this template to send packets with source
+        IP addresses other than their own and receive packets with destination IP
+        addresses other than their own. If these instances will be used as an IP gateway
+        or it will be set as the next-hop in a Route resource, specify true. If unsure,
+        leave this set to false.
+      returned: success
+      type: bool
     description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource. This identifier is defined by the server.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. The name is 1-63 characters long and complies with RFC1035.
-        returned: success
-        type: str
-    properties:
-        description:
-            - The instance properties for this instance template.
-        returned: success
-        type: complex
-        contains:
-            canIpForward:
-                description:
-                    - Enables instances created based on this template to send packets with source IP
-                      addresses other than their own and receive packets with destination IP addresses
-                      other than their own. If these instances will be used as an IP gateway or it will
-                      be set as the next-hop in a Route resource, specify true. If unsure, leave this
-                      set to false.
-                returned: success
-                type: bool
-            description:
-                description:
-                    - An optional text description for the instances that are created from this instance
-                      template.
-                returned: success
-                type: str
-            disks:
-                description:
-                    - An array of disks that are associated with the instances that are created from this
-                      template.
-                returned: success
-                type: complex
-                contains:
-                    autoDelete:
-                        description:
-                            - Specifies whether the disk will be auto-deleted when the instance is deleted (but
-                              not when the disk is detached from the instance).
-                            - 'Tip: Disks should be set to autoDelete=true so that leftover disks are not left
-                              behind on machine deletion.'
-                        returned: success
-                        type: bool
-                    boot:
-                        description:
-                            - Indicates that this is a boot disk. The virtual machine will use the first partition
-                              of the disk for its root filesystem.
-                        returned: success
-                        type: bool
-                    deviceName:
-                        description:
-                            - Specifies a unique device name of your choice that is reflected into the /dev/disk/by-id/google-*
-                              tree of a Linux operating system running within the instance. This name can be used
-                              to reference the device for mounting, resizing, and so on, from within the instance.
-                        returned: success
-                        type: str
-                    diskEncryptionKey:
-                        description:
-                            - Encrypts or decrypts a disk using a customer-supplied encryption key.
-                        returned: success
-                        type: complex
-                        contains:
-                            rawKey:
-                                description:
-                                    - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
-                                      to either encrypt or decrypt this resource.
-                                returned: success
-                                type: str
-                            rsaEncryptedKey:
-                                description:
-                                    - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
-                                      key to either encrypt or decrypt this resource.
-                                returned: success
-                                type: str
-                            sha256:
-                                description:
-                                    - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
-                                      that protects this resource.
-                                returned: success
-                                type: str
-                    index:
-                        description:
-                            - Assigns a zero-based index to this disk, where 0 is reserved for the boot disk.
-                              For example, if you have many disks attached to an instance, each disk would have
-                              a unique index number. If not specified, the server will choose an appropriate value.
-                        returned: success
-                        type: int
-                    initializeParams:
-                        description:
-                            - Specifies the parameters for a new disk that will be created alongside the new instance.
-                              Use initialization parameters to create boot disks or local SSDs attached to the
-                              new instance.
-                        returned: success
-                        type: complex
-                        contains:
-                            diskName:
-                                description:
-                                    - Specifies the disk name. If not specified, the default is to use the name of the
-                                      instance.
-                                returned: success
-                                type: str
-                            diskSizeGb:
-                                description:
-                                    - Specifies the size of the disk in base-2 GB.
-                                returned: success
-                                type: int
-                            diskType:
-                                description:
-                                    - Reference to a gcompute_disk_type resource.
-                                    - Specifies the disk type to use to create the instance.
-                                    - If not specified, the default is pd-standard.
-                                returned: success
-                                type: str
-                            sourceImage:
-                                description:
-                                    - The source image to create this disk. When creating a new instance, one of initializeParams.sourceImage
-                                      or disks.source is required.  To create a disk with one of the public operating
-                                      system images, specify the image by its family name.
-                                returned: success
-                                type: str
-                            sourceImageEncryptionKey:
-                                description:
-                                    - The customer-supplied encryption key of the source image. Required if the source
-                                      image is protected by a customer-supplied encryption key.
-                                    - Instance templates do not store customer-supplied encryption keys, so you cannot
-                                      create disks for instances in a managed instance group if the source images are
-                                      encrypted with your own keys.
-                                returned: success
-                                type: complex
-                                contains:
-                                    rawKey:
-                                        description:
-                                            - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
-                                              to either encrypt or decrypt this resource.
-                                        returned: success
-                                        type: str
-                                    sha256:
-                                        description:
-                                            - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key
-                                              that protects this resource.
-                                        returned: success
-                                        type: str
-                    interface:
-                        description:
-                            - Specifies the disk interface to use for attaching this disk, which is either SCSI
-                              or NVME. The default is SCSI.
-                            - Persistent disks must always use SCSI and the request will fail if you attempt to
-                              attach a persistent disk in any other format than SCSI.
-                        returned: success
-                        type: str
-                    mode:
-                        description:
-                            - The mode in which to attach this disk, either READ_WRITE or READ_ONLY. If not specified,
-                              the default is to attach the disk in READ_WRITE mode.
-                        returned: success
-                        type: str
-                    source:
-                        description:
-                            - Reference to a gcompute_disk resource. When creating a new instance, one of initializeParams.sourceImage
-                              or disks.source is required.
-                            - If desired, you can also attach existing non-root persistent disks using this property.
-                              This field is only applicable for persistent disks.
-                            - Note that for InstanceTemplate, specify the disk name, not the URL for the disk.
-                        returned: success
-                        type: dict
-                    type:
-                        description:
-                            - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
-                              the default is PERSISTENT.
-                        returned: success
-                        type: str
-            machineType:
-                description:
-                    - Reference to a gcompute_machine_type resource.
-                returned: success
-                type: str
-            metadata:
-                description:
-                    - The metadata key/value pairs to assign to instances that are created from this template.
-                      These pairs can consist of custom metadata or predefined keys.
-                returned: success
-                type: dict
-            guestAccelerators:
-                description:
-                    - List of the type and count of accelerator cards attached to the instance .
-                returned: success
-                type: complex
-                contains:
-                    acceleratorCount:
-                        description:
-                            - The number of the guest accelerator cards exposed to this instance.
-                        returned: success
-                        type: int
-                    acceleratorType:
-                        description:
-                            - Full or partial URL of the accelerator type resource to expose to this instance.
-                        returned: success
-                        type: str
-            networkInterfaces:
-                description:
-                    - An array of configurations for this interface. This specifies how this interface
-                      is configured to interact with other network services, such as connecting to the
-                      internet. Only one network interface is supported per instance.
-                returned: success
-                type: complex
-                contains:
-                    accessConfigs:
-                        description:
-                            - An array of configurations for this interface. Currently, only one access config,
-                              ONE_TO_ONE_NAT, is supported. If there are no accessConfigs specified, then this
-                              instance will have no external internet access.
-                        returned: success
-                        type: complex
-                        contains:
-                            name:
-                                description:
-                                    - The name of this access configuration. The default and recommended name is External
-                                      NAT but you can use any arbitrary string you would like. For example, My external
-                                      IP or Network Access.
-                                returned: success
-                                type: str
-                            natIP:
-                                description:
-                                    - Specifies the title of a gcompute_address.
-                                    - An external IP address associated with this instance.
-                                    - Specify an unused static external IP address available to the project or leave this
-                                      field undefined to use an IP from a shared ephemeral IP address pool. If you specify
-                                      a static external IP address, it must live in the same region as the zone of the
-                                      instance.
-                                returned: success
-                                type: dict
-                            type:
-                                description:
-                                    - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
-                                returned: success
-                                type: str
-                    aliasIpRanges:
-                        description:
-                            - An array of alias IP ranges for this network interface. Can only be specified for
-                              network interfaces on subnet-mode networks.
-                        returned: success
-                        type: complex
-                        contains:
-                            ipCidrRange:
-                                description:
-                                    - The IP CIDR range represented by this alias IP range.
-                                    - This IP CIDR range must belong to the specified subnetwork and cannot contain IP
-                                      addresses reserved by system or used by other network interfaces. This range may
-                                      be a single IP address (e.g. 10.2.3.4), a netmask (e.g. /24) or a CIDR format string
-                                      (e.g. 10.1.2.0/24).
-                                returned: success
-                                type: str
-                            subnetworkRangeName:
-                                description:
-                                    - Optional subnetwork secondary range name specifying the secondary range from which
-                                      to allocate the IP CIDR range for this alias IP range. If left unspecified, the
-                                      primary range of the subnetwork will be used.
-                                returned: success
-                                type: str
-                    name:
-                        description:
-                            - The name of the network interface, generated by the server. For network devices,
-                              these are eth0, eth1, etc .
-                        returned: success
-                        type: str
-                    network:
-                        description:
-                            - Specifies the title of an existing gcompute_network.  When creating an instance,
-                              if neither the network nor the subnetwork is specified, the default network global/networks/default
-                              is used; if the network is not specified but the subnetwork is specified, the network
-                              is inferred.
-                        returned: success
-                        type: dict
-                    networkIP:
-                        description:
-                            - An IPv4 internal network address to assign to the instance for this network interface.
-                              If not specified by the user, an unused internal IP is assigned by the system.
-                        returned: success
-                        type: str
-                    subnetwork:
-                        description:
-                            - Reference to a gcompute_subnetwork resource.
-                            - If the network resource is in legacy mode, do not provide this property.  If the
-                              network is in auto subnet mode, providing the subnetwork is optional. If the network
-                              is in custom subnet mode, then this field should be specified.
-                        returned: success
-                        type: dict
-            scheduling:
-                description:
-                    - Sets the scheduling options for this instance.
-                returned: success
-                type: complex
-                contains:
-                    automaticRestart:
-                        description:
-                            - Specifies whether the instance should be automatically restarted if it is terminated
-                              by Compute Engine (not terminated by a user).
-                            - You can only set the automatic restart option for standard instances. Preemptible
-                              instances cannot be automatically restarted.
-                        returned: success
-                        type: bool
-                    onHostMaintenance:
-                        description:
-                            - Defines the maintenance behavior for this instance. For standard instances, the
-                              default behavior is MIGRATE. For preemptible instances, the default and only possible
-                              behavior is TERMINATE.
-                            - For more information, see Setting Instance Scheduling Options.
-                        returned: success
-                        type: str
-                    preemptible:
-                        description:
-                            - Defines whether the instance is preemptible. This can only be set during instance
-                              creation, it cannot be set or changed after the instance has been created.
-                        returned: success
-                        type: bool
-            serviceAccounts:
-                description:
-                    - A list of service accounts, with their specified scopes, authorized for this instance.
-                      Only one service account per VM instance is supported.
-                returned: success
-                type: complex
-                contains:
-                    email:
-                        description:
-                            - Email address of the service account.
-                        returned: success
-                        type: str
-                    scopes:
-                        description:
-                            - The list of scopes to be made available for this service account.
-                        returned: success
-                        type: list
-            tags:
-                description:
-                    - A list of tags to apply to this instance. Tags are used to identify valid sources
-                      or targets for network firewalls and are specified by the client during instance
-                      creation. The tags can be later modified by the setTags method. Each tag within
-                      the list must comply with RFC1035.
-                returned: success
-                type: complex
-                contains:
-                    fingerprint:
-                        description:
-                            - Specifies a fingerprint for this request, which is essentially a hash of the metadata's
-                              contents and used for optimistic locking.
-                            - The fingerprint is initially generated by Compute Engine and changes after every
-                              request to modify or update metadata. You must always provide an up-to-date fingerprint
-                              hash in order to update or change metadata.
-                        returned: success
-                        type: str
-                    items:
-                        description:
-                            - An array of tags. Each tag must be 1-63 characters long, and comply with RFC1035.
-                        returned: success
-                        type: list
+      description:
+      - An optional text description for the instances that are created from this
+        instance template.
+      returned: success
+      type: str
+    disks:
+      description:
+      - An array of disks that are associated with the instances that are created
+        from this template.
+      returned: success
+      type: complex
+      contains:
+        autoDelete:
+          description:
+          - Specifies whether the disk will be auto-deleted when the instance is deleted
+            (but not when the disk is detached from the instance).
+          - 'Tip: Disks should be set to autoDelete=true so that leftover disks are
+            not left behind on machine deletion.'
+          returned: success
+          type: bool
+        boot:
+          description:
+          - Indicates that this is a boot disk. The virtual machine will use the first
+            partition of the disk for its root filesystem.
+          returned: success
+          type: bool
+        deviceName:
+          description:
+          - Specifies a unique device name of your choice that is reflected into the
+            /dev/disk/by-id/google-* tree of a Linux operating system running within
+            the instance. This name can be used to reference the device for mounting,
+            resizing, and so on, from within the instance.
+          returned: success
+          type: str
+        diskEncryptionKey:
+          description:
+          - Encrypts or decrypts a disk using a customer-supplied encryption key.
+          returned: success
+          type: complex
+          contains:
+            rawKey:
+              description:
+              - Specifies a 256-bit customer-supplied encryption key, encoded in RFC
+                4648 base64 to either encrypt or decrypt this resource.
+              returned: success
+              type: str
+            rsaEncryptedKey:
+              description:
+              - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied
+                encryption key to either encrypt or decrypt this resource.
+              returned: success
+              type: str
+            sha256:
+              description:
+              - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
+                encryption key that protects this resource.
+              returned: success
+              type: str
+        index:
+          description:
+          - Assigns a zero-based index to this disk, where 0 is reserved for the boot
+            disk. For example, if you have many disks attached to an instance, each
+            disk would have a unique index number. If not specified, the server will
+            choose an appropriate value.
+          returned: success
+          type: int
+        initializeParams:
+          description:
+          - Specifies the parameters for a new disk that will be created alongside
+            the new instance. Use initialization parameters to create boot disks or
+            local SSDs attached to the new instance.
+          returned: success
+          type: complex
+          contains:
+            diskName:
+              description:
+              - Specifies the disk name. If not specified, the default is to use the
+                name of the instance.
+              returned: success
+              type: str
+            diskSizeGb:
+              description:
+              - Specifies the size of the disk in base-2 GB.
+              returned: success
+              type: int
+            diskType:
+              description:
+              - Reference to a gcompute_disk_type resource.
+              - Specifies the disk type to use to create the instance.
+              - If not specified, the default is pd-standard.
+              returned: success
+              type: str
+            sourceImage:
+              description:
+              - The source image to create this disk. When creating a new instance,
+                one of initializeParams.sourceImage or disks.source is required. To
+                create a disk with one of the public operating system images, specify
+                the image by its family name.
+              returned: success
+              type: str
+            sourceImageEncryptionKey:
+              description:
+              - The customer-supplied encryption key of the source image. Required
+                if the source image is protected by a customer-supplied encryption
+                key.
+              - Instance templates do not store customer-supplied encryption keys,
+                so you cannot create disks for instances in a managed instance group
+                if the source images are encrypted with your own keys.
+              returned: success
+              type: complex
+              contains:
+                rawKey:
+                  description:
+                  - Specifies a 256-bit customer-supplied encryption key, encoded
+                    in RFC 4648 base64 to either encrypt or decrypt this resource.
+                  returned: success
+                  type: str
+                sha256:
+                  description:
+                  - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
+                    encryption key that protects this resource.
+                  returned: success
+                  type: str
+        interface:
+          description:
+          - Specifies the disk interface to use for attaching this disk, which is
+            either SCSI or NVME. The default is SCSI.
+          - Persistent disks must always use SCSI and the request will fail if you
+            attempt to attach a persistent disk in any other format than SCSI.
+          returned: success
+          type: str
+        mode:
+          description:
+          - The mode in which to attach this disk, either READ_WRITE or READ_ONLY.
+            If not specified, the default is to attach the disk in READ_WRITE mode.
+          returned: success
+          type: str
+        source:
+          description:
+          - Reference to a gcompute_disk resource. When creating a new instance, one
+            of initializeParams.sourceImage or disks.source is required.
+          - If desired, you can also attach existing non-root persistent disks using
+            this property. This field is only applicable for persistent disks.
+          - Note that for InstanceTemplate, specify the disk name, not the URL for
+            the disk.
+          returned: success
+          type: dict
+        type:
+          description:
+          - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
+            the default is PERSISTENT.
+          returned: success
+          type: str
+    machineType:
+      description:
+      - Reference to a gcompute_machine_type resource.
+      returned: success
+      type: str
+    minCpuPlatform:
+      description:
+      - Specifies a minimum CPU platform for the VM instance. Applicable values are
+        the friendly names of CPU platforms .
+      returned: success
+      type: str
+    metadata:
+      description:
+      - The metadata key/value pairs to assign to instances that are created from
+        this template. These pairs can consist of custom metadata or predefined keys.
+      returned: success
+      type: dict
+    guestAccelerators:
+      description:
+      - List of the type and count of accelerator cards attached to the instance .
+      returned: success
+      type: complex
+      contains:
+        acceleratorCount:
+          description:
+          - The number of the guest accelerator cards exposed to this instance.
+          returned: success
+          type: int
+        acceleratorType:
+          description:
+          - Full or partial URL of the accelerator type resource to expose to this
+            instance.
+          returned: success
+          type: str
+    networkInterfaces:
+      description:
+      - An array of configurations for this interface. This specifies how this interface
+        is configured to interact with other network services, such as connecting
+        to the internet. Only one network interface is supported per instance.
+      returned: success
+      type: complex
+      contains:
+        accessConfigs:
+          description:
+          - An array of configurations for this interface. Currently, only one access
+            config, ONE_TO_ONE_NAT, is supported. If there are no accessConfigs specified,
+            then this instance will have no external internet access.
+          returned: success
+          type: complex
+          contains:
+            name:
+              description:
+              - The name of this access configuration. The default and recommended
+                name is External NAT but you can use any arbitrary string you would
+                like. For example, My external IP or Network Access.
+              returned: success
+              type: str
+            natIP:
+              description:
+              - Specifies the title of a gcompute_address.
+              - An external IP address associated with this instance.
+              - Specify an unused static external IP address available to the project
+                or leave this field undefined to use an IP from a shared ephemeral
+                IP address pool. If you specify a static external IP address, it must
+                live in the same region as the zone of the instance.
+              returned: success
+              type: dict
+            type:
+              description:
+              - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
+              returned: success
+              type: str
+        aliasIpRanges:
+          description:
+          - An array of alias IP ranges for this network interface. Can only be specified
+            for network interfaces on subnet-mode networks.
+          returned: success
+          type: complex
+          contains:
+            ipCidrRange:
+              description:
+              - The IP CIDR range represented by this alias IP range.
+              - This IP CIDR range must belong to the specified subnetwork and cannot
+                contain IP addresses reserved by system or used by other network interfaces.
+                This range may be a single IP address (e.g. 10.2.3.4), a netmask (e.g.
+                /24) or a CIDR format string (e.g. 10.1.2.0/24).
+              returned: success
+              type: str
+            subnetworkRangeName:
+              description:
+              - Optional subnetwork secondary range name specifying the secondary
+                range from which to allocate the IP CIDR range for this alias IP range.
+                If left unspecified, the primary range of the subnetwork will be used.
+              returned: success
+              type: str
+        name:
+          description:
+          - The name of the network interface, generated by the server. For network
+            devices, these are eth0, eth1, etc .
+          returned: success
+          type: str
+        network:
+          description:
+          - Specifies the title of an existing gcompute_network. When creating an
+            instance, if neither the network nor the subnetwork is specified, the
+            default network global/networks/default is used; if the network is not
+            specified but the subnetwork is specified, the network is inferred.
+          returned: success
+          type: dict
+        networkIP:
+          description:
+          - An IPv4 internal network address to assign to the instance for this network
+            interface. If not specified by the user, an unused internal IP is assigned
+            by the system.
+          returned: success
+          type: str
+        subnetwork:
+          description:
+          - Reference to a gcompute_subnetwork resource.
+          - If the network resource is in legacy mode, do not provide this property.
+            If the network is in auto subnet mode, providing the subnetwork is optional.
+            If the network is in custom subnet mode, then this field should be specified.
+          returned: success
+          type: dict
+    scheduling:
+      description:
+      - Sets the scheduling options for this instance.
+      returned: success
+      type: complex
+      contains:
+        automaticRestart:
+          description:
+          - Specifies whether the instance should be automatically restarted if it
+            is terminated by Compute Engine (not terminated by a user).
+          - You can only set the automatic restart option for standard instances.
+            Preemptible instances cannot be automatically restarted.
+          returned: success
+          type: bool
+        onHostMaintenance:
+          description:
+          - Defines the maintenance behavior for this instance. For standard instances,
+            the default behavior is MIGRATE. For preemptible instances, the default
+            and only possible behavior is TERMINATE.
+          - For more information, see Setting Instance Scheduling Options.
+          returned: success
+          type: str
+        preemptible:
+          description:
+          - Defines whether the instance is preemptible. This can only be set during
+            instance creation, it cannot be set or changed after the instance has
+            been created.
+          returned: success
+          type: bool
+    serviceAccounts:
+      description:
+      - A list of service accounts, with their specified scopes, authorized for this
+        instance. Only one service account per VM instance is supported.
+      returned: success
+      type: complex
+      contains:
+        email:
+          description:
+          - Email address of the service account.
+          returned: success
+          type: str
+        scopes:
+          description:
+          - The list of scopes to be made available for this service account.
+          returned: success
+          type: list
+    tags:
+      description:
+      - A list of tags to apply to this instance. Tags are used to identify valid
+        sources or targets for network firewalls and are specified by the client during
+        instance creation. The tags can be later modified by the setTags method. Each
+        tag within the list must comply with RFC1035.
+      returned: success
+      type: complex
+      contains:
+        fingerprint:
+          description:
+          - Specifies a fingerprint for this request, which is essentially a hash
+            of the metadata's contents and used for optimistic locking.
+          - The fingerprint is initially generated by Compute Engine and changes after
+            every request to modify or update metadata. You must always provide an
+            up-to-date fingerprint hash in order to update or change metadata.
+          returned: success
+          type: str
+        items:
+          description:
+          - An array of tags. Each tag must be 1-63 characters long, and comply with
+            RFC1035.
+          returned: success
+          type: list
 '''
 
 ################################################################################
@@ -855,6 +898,7 @@ def main():
                     type=dict(type='str', choices=['SCRATCH', 'PERSISTENT'])
                 )),
                 machine_type=dict(required=True, type='str'),
+                min_cpu_platform=dict(type='str'),
                 metadata=dict(type='dict'),
                 guest_accelerators=dict(type='list', elements='dict', options=dict(
                     accelerator_count=dict(type='int'),
@@ -1053,8 +1097,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
@@ -1131,11 +1173,12 @@ class InstanceTemplateProperties(object):
             u'description': self.request.get('description'),
             u'disks': InstanceTemplateDisksArray(self.request.get('disks', []), self.module).to_request(),
             u'machineType': self.request.get('machine_type'),
+            u'minCpuPlatform': self.request.get('min_cpu_platform'),
             u'metadata': self.request.get('metadata'),
-            u'guestAccelerators': InstanceTemplateGuestAcceleratorsArray(self.request.get('guest_accelerators', []), self.module).to_request(),
-            u'networkInterfaces': InstanceTemplateNetworkInterfacesArray(self.request.get('network_interfaces', []), self.module).to_request(),
+            u'guestAccelerators': InstanceTemplateGuestacceleratorsArray(self.request.get('guest_accelerators', []), self.module).to_request(),
+            u'networkInterfaces': InstanceTemplateNetworkinterfacesArray(self.request.get('network_interfaces', []), self.module).to_request(),
             u'scheduling': InstanceTemplateScheduling(self.request.get('scheduling', {}), self.module).to_request(),
-            u'serviceAccounts': InstanceTemplateServiceAccountsArray(self.request.get('service_accounts', []), self.module).to_request(),
+            u'serviceAccounts': InstanceTemplateServiceaccountsArray(self.request.get('service_accounts', []), self.module).to_request(),
             u'tags': InstanceTemplateTags(self.request.get('tags', {}), self.module).to_request()
         })
 
@@ -1145,11 +1188,12 @@ class InstanceTemplateProperties(object):
             u'description': self.request.get(u'description'),
             u'disks': InstanceTemplateDisksArray(self.request.get(u'disks', []), self.module).from_response(),
             u'machineType': self.request.get(u'machineType'),
+            u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
             u'metadata': self.request.get(u'metadata'),
-            u'guestAccelerators': InstanceTemplateGuestAcceleratorsArray(self.request.get(u'guestAccelerators', []), self.module).from_response(),
-            u'networkInterfaces': InstanceTemplateNetworkInterfacesArray(self.request.get(u'networkInterfaces', []), self.module).from_response(),
+            u'guestAccelerators': InstanceTemplateGuestacceleratorsArray(self.request.get(u'guestAccelerators', []), self.module).from_response(),
+            u'networkInterfaces': InstanceTemplateNetworkinterfacesArray(self.request.get(u'networkInterfaces', []), self.module).from_response(),
             u'scheduling': InstanceTemplateScheduling(self.request.get(u'scheduling', {}), self.module).from_response(),
-            u'serviceAccounts': InstanceTemplateServiceAccountsArray(self.request.get(u'serviceAccounts', []), self.module).from_response(),
+            u'serviceAccounts': InstanceTemplateServiceaccountsArray(self.request.get(u'serviceAccounts', []), self.module).from_response(),
             u'tags': InstanceTemplateTags(self.request.get(u'tags', {}), self.module).from_response()
         })
 
@@ -1179,9 +1223,9 @@ class InstanceTemplateDisksArray(object):
             u'autoDelete': item.get('auto_delete'),
             u'boot': item.get('boot'),
             u'deviceName': item.get('device_name'),
-            u'diskEncryptionKey': InstanceTemplateDiskEncryptionKey(item.get('disk_encryption_key', {}), self.module).to_request(),
+            u'diskEncryptionKey': InstanceTemplateDiskencryptionkey(item.get('disk_encryption_key', {}), self.module).to_request(),
             u'index': item.get('index'),
-            u'initializeParams': InstanceTemplateInitializeParams(item.get('initialize_params', {}), self.module).to_request(),
+            u'initializeParams': InstanceTemplateInitializeparams(item.get('initialize_params', {}), self.module).to_request(),
             u'interface': item.get('interface'),
             u'mode': item.get('mode'),
             u'source': replace_resource_dict(item.get(u'source', {}), 'name'),
@@ -1193,9 +1237,9 @@ class InstanceTemplateDisksArray(object):
             u'autoDelete': item.get(u'autoDelete'),
             u'boot': item.get(u'boot'),
             u'deviceName': item.get(u'deviceName'),
-            u'diskEncryptionKey': InstanceTemplateDiskEncryptionKey(item.get(u'diskEncryptionKey', {}), self.module).from_response(),
+            u'diskEncryptionKey': InstanceTemplateDiskencryptionkey(item.get(u'diskEncryptionKey', {}), self.module).from_response(),
             u'index': item.get(u'index'),
-            u'initializeParams': InstanceTemplateInitializeParams(self.module.params.get('initialize_params', {}), self.module).to_request(),
+            u'initializeParams': InstanceTemplateInitializeparams(self.module.params.get('initialize_params', {}), self.module).to_request(),
             u'interface': item.get(u'interface'),
             u'mode': item.get(u'mode'),
             u'source': item.get(u'source'),
@@ -1203,7 +1247,7 @@ class InstanceTemplateDisksArray(object):
         })
 
 
-class InstanceTemplateDiskEncryptionKey(object):
+class InstanceTemplateDiskencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -1226,7 +1270,7 @@ class InstanceTemplateDiskEncryptionKey(object):
         })
 
 
-class InstanceTemplateInitializeParams(object):
+class InstanceTemplateInitializeparams(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -1240,7 +1284,7 @@ class InstanceTemplateInitializeParams(object):
             u'diskSizeGb': self.request.get('disk_size_gb'),
             u'diskType': disk_type_selflink(self.request.get('disk_type'), self.module.params),
             u'sourceImage': self.request.get('source_image'),
-            u'sourceImageEncryptionKey': InstanceTemplateSourceImageEncryptionKey(self.request.get('source_image_encryption_key', {}), self.module).to_request()
+            u'sourceImageEncryptionKey': InstanceTemplateSourceimageencryptionkey(self.request.get('source_image_encryption_key', {}), self.module).to_request()
         })
 
     def from_response(self):
@@ -1250,11 +1294,11 @@ class InstanceTemplateInitializeParams(object):
             u'diskType': self.request.get(u'diskType'),
             u'sourceImage': self.request.get(u'sourceImage'),
             u'sourceImageEncryptionKey':
-                InstanceTemplateSourceImageEncryptionKey(self.request.get(u'sourceImageEncryptionKey', {}), self.module).from_response()
+                InstanceTemplateSourceimageencryptionkey(self.request.get(u'sourceImageEncryptionKey', {}), self.module).from_response()
         })
 
 
-class InstanceTemplateSourceImageEncryptionKey(object):
+class InstanceTemplateSourceimageencryptionkey(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -1275,7 +1319,7 @@ class InstanceTemplateSourceImageEncryptionKey(object):
         })
 
 
-class InstanceTemplateGuestAcceleratorsArray(object):
+class InstanceTemplateGuestacceleratorsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -1308,7 +1352,7 @@ class InstanceTemplateGuestAcceleratorsArray(object):
         })
 
 
-class InstanceTemplateNetworkInterfacesArray(object):
+class InstanceTemplateNetworkinterfacesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -1330,8 +1374,8 @@ class InstanceTemplateNetworkInterfacesArray(object):
 
     def _request_for_item(self, item):
         return remove_nones_from_dict({
-            u'accessConfigs': InstanceTemplateAccessConfigsArray(item.get('access_configs', []), self.module).to_request(),
-            u'aliasIpRanges': InstanceTemplateAliasIpRangesArray(item.get('alias_ip_ranges', []), self.module).to_request(),
+            u'accessConfigs': InstanceTemplateAccessconfigsArray(item.get('access_configs', []), self.module).to_request(),
+            u'aliasIpRanges': InstanceTemplateAliasiprangesArray(item.get('alias_ip_ranges', []), self.module).to_request(),
             u'name': item.get('name'),
             u'network': replace_resource_dict(item.get(u'network', {}), 'selfLink'),
             u'networkIP': item.get('network_ip'),
@@ -1340,8 +1384,8 @@ class InstanceTemplateNetworkInterfacesArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({
-            u'accessConfigs': InstanceTemplateAccessConfigsArray(item.get(u'accessConfigs', []), self.module).from_response(),
-            u'aliasIpRanges': InstanceTemplateAliasIpRangesArray(item.get(u'aliasIpRanges', []), self.module).from_response(),
+            u'accessConfigs': InstanceTemplateAccessconfigsArray(item.get(u'accessConfigs', []), self.module).from_response(),
+            u'aliasIpRanges': InstanceTemplateAliasiprangesArray(item.get(u'aliasIpRanges', []), self.module).from_response(),
             u'name': item.get(u'name'),
             u'network': item.get(u'network'),
             u'networkIP': item.get(u'networkIP'),
@@ -1349,7 +1393,7 @@ class InstanceTemplateNetworkInterfacesArray(object):
         })
 
 
-class InstanceTemplateAccessConfigsArray(object):
+class InstanceTemplateAccessconfigsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -1384,7 +1428,7 @@ class InstanceTemplateAccessConfigsArray(object):
         })
 
 
-class InstanceTemplateAliasIpRangesArray(object):
+class InstanceTemplateAliasiprangesArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:
@@ -1440,7 +1484,7 @@ class InstanceTemplateScheduling(object):
         })
 
 
-class InstanceTemplateServiceAccountsArray(object):
+class InstanceTemplateServiceaccountsArray(object):
     def __init__(self, request, module):
         self.module = module
         if request:

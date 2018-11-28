@@ -11,11 +11,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-  - Create/Delete/Initialize/Modify SnapMirror volume/vserver relationships
+  - Create/Delete/Initialize SnapMirror volume/vserver relationships
+  - Modify schedule for a SnapMirror relationship
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_snapmirror
 options:
   state:
@@ -83,6 +84,7 @@ EXAMPLES = """
       na_ontap_snapmirror:
         state: absent
         destination_path: <path>
+        source_hostname: "{{ source_hostname }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -124,7 +126,7 @@ class NetAppONTAPSnapmirror(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             source_vserver=dict(required=False, type='str'),
@@ -159,7 +161,7 @@ class NetAppONTAPSnapmirror(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def snapmirror_get_iter(self):
         """
@@ -222,19 +224,22 @@ class NetAppONTAPSnapmirror(object):
         Delete a SnapMirror relationship
         #1. Quiesce the SnapMirror relationship at destination
         #2. Break the SnapMirror relationship at the source
-        #3. Release the SnapMirror at destination
+        #3. Release the SnapMirror at source
         #4. Delete SnapMirror at destination
         """
         if not self.parameters.get('source_hostname'):
             self.module.fail_json(msg='Missing parameters for delete: Please specify the '
-                                      'source cluster to release the SnapMirror relation')
+                                      'source cluster hostname to release the SnapMirror relation')
         if self.parameters.get('source_username'):
-            self.module.params['username'] = self.parameters['dest_username']
+            self.module.params['username'] = self.parameters['source_username']
         if self.parameters.get('source_password'):
-            self.module.params['password'] = self.parameters['dest_password']
+            self.module.params['password'] = self.parameters['source_password']
+        self.module.params['hostname'] = self.parameters['source_hostname']
         self.source_server = netapp_utils.setup_ontap_zapi(module=self.module)
         self.snapmirror_quiesce()
-        self.snapmirror_break()
+        if self.parameters.get('relationship_type') and \
+                self.parameters.get('relationship_type') not in ['load_sharing', 'vault']:
+            self.snapmirror_break()
         if self.get_destination():
             self.snapmirror_release()
         self.snapmirror_delete()
@@ -325,7 +330,9 @@ class NetAppONTAPSnapmirror(object):
             initialize_zapi = 'snapmirror-initialize'
             if self.parameters.get('relationship_type') and self.parameters['relationship_type'] == 'load_sharing':
                 initialize_zapi = 'snapmirror-initialize-ls-set'
-            options = {'destination-location': self.parameters['destination_path']}
+                options = {'source-location': self.parameters['source_path']}
+            else:
+                options = {'destination-location': self.parameters['destination_path']}
             snapmirror_init = netapp_utils.zapi.NaElement.create_node_with_children(
                 initialize_zapi, **options)
             try:
@@ -411,6 +418,7 @@ class NetAppONTAPSnapmirror(object):
         current = self.snapmirror_get()
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
         modify = self.na_helper.get_modified_attributes(current, self.parameters)
+
         if cd_action == 'create':
             self.snapmirror_create()
         elif cd_action == 'delete':

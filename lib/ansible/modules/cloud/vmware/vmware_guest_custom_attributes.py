@@ -25,7 +25,7 @@ description:
     - This module can be used to add, remove and update custom attributes for the given virtual machine.
 version_added: 2.7
 author:
-    - Jimmy Conner
+    - Jimmy Conner (@cigamit)
     - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.5

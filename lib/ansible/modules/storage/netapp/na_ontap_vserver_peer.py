@@ -11,11 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - Create/Delete vserver peer
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_vserver_peer
 options:
   state:
@@ -54,7 +54,6 @@ version_added: "2.7"
 '''
 
 EXAMPLES = """
-
     - name: Source vserver peer create
       na_ontap_vserver_peer:
         state: present
@@ -66,7 +65,6 @@ EXAMPLES = """
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
         dest_hostname: "{{ netapp_dest_hostname }}"
-
     - name: vserver peer delete
       na_ontap_vserver_peer:
         state: absent
@@ -96,7 +94,7 @@ class NetAppONTAPVserverPeer(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str'),
@@ -122,14 +120,14 @@ class NetAppONTAPVserverPeer(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
             if self.parameters.get('dest_hostname'):
                 self.module.params['hostname'] = self.parameters['dest_hostname']
                 if self.parameters.get('dest_username'):
                     self.module.params['username'] = self.parameters['dest_username']
                 if self.parameters.get('dest_password'):
                     self.module.params['password'] = self.parameters['dest_password']
-                self.dest_server = netapp_utils.setup_ontap_zapi(module=self.module)
+                self.dest_server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def vserver_peer_get_iter(self):
         """

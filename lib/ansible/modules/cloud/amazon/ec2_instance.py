@@ -18,7 +18,7 @@ description:
     - Create and manage AWS EC2 instance
 version_added: "2.5"
 author:
-  - Ryan Scott Brown, @ryansb
+  - Ryan Scott Brown (@ryansb)
 requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:
@@ -33,6 +33,7 @@ options:
     description:
       - Whether or not to wait for the desired state (use wait_timeout to customize this).
     default: true
+    type: bool
   wait_timeout:
     description:
       - How long to wait (in seconds) for the instance to finish booting/terminating.
@@ -69,6 +70,7 @@ options:
       - Delete any tags not specified in the task that are on the instance.
         This means you have to specify all the desired tags on each task affecting an instance.
     default: false
+    type: bool
   image:
     description:
       - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
@@ -136,6 +138,7 @@ options:
     description:
       - Whether to enable termination protection.
         This module will not terminate an instance with termination protection active, it must be turned off first.
+    type: bool
   cpu_credit_specification:
     description:
       - For T2 series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
@@ -161,9 +164,11 @@ options:
   detailed_monitoring:
     description:
       - Whether to allow detailed cloudwatch metrics to be collected, enabling more detailed alerting.
+    type: bool
   ebs_optimized:
     description:
       - Whether instance is should use optimized EBS volumes, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html).
+    type: bool
   filters:
     description:
       - A dict of filters to apply when deciding whether existing instances match and should be altered. Each dict item
@@ -213,6 +218,34 @@ EXAMPLES = '''
     tags:
       Environment: Testing
 
+# start an instance and Add EBS
+- ec2_instance:
+    name: "public-withebs-instance"
+    vpc_subnet_id: subnet-5ca1ab1e
+    instance_type: t2.micro
+    key_name: "prod-ssh-key"
+    security_group: default
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 16
+          delete_on_termination: true
+
+# start an instance with a cpu_options
+- ec2_instance:
+    name: "public-cpuoption-instance"
+    vpc_subnet_id: subnet-5ca1ab1e
+    tags:
+      Environment: Testing
+    instance_type: c4.large
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+    cpu_options:
+        core_count: 1
+        threads_per_core: 1
+
 # start an instance and have it begin a Tower callback on boot
 - ec2_instance:
     name: "tower-callback-test"
@@ -230,6 +263,35 @@ EXAMPLES = '''
     cpu_credit_specification: unlimited
     tags:
       SomeThing: "A value"
+
+# start an instance with ENI (An existing ENI ID is required)
+- ec2_instance:
+    name: "public-eni-instance"
+    key_name: "prod-ssh-key"
+    vpc_subnet_id: subnet-5ca1ab1e
+    network:
+      interfaces:
+        - id: "eni-12345"
+    tags:
+      Env: "eni_on"
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+    instance_type: t2.micro
+    image_id: ami-123456
+
+# add second ENI interface
+- ec2_instance:
+    name: "public-eni-instance"
+    network:
+      interfaces:
+        - id: "eni-12345"
+        - id: "eni-67890"
+    image_id: ami-123456
+    tags:
+      Env: "eni_on"
+    instance_type: t2.micro
 '''
 
 RETURN = '''
@@ -1054,7 +1116,10 @@ def build_top_level_options(params):
         spec['CreditSpecification'] = {'CpuCredits': params.get('cpu_credit_specification')}
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
-    if (params.get('network') or {}).get('ebs_optimized') is not None:
+    if params.get('ebs_optimized') is not None:
+        spec['EbsOptimized'] = params.get('ebs_optimized')
+    elif (params.get('network') or {}).get('ebs_optimized') is not None:
+        # Backward compatibility for workaround described in https://github.com/ansible/ansible/issues/48159
         spec['EbsOptimized'] = params['network'].get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
@@ -1540,6 +1605,9 @@ def main():
     )
 
     if module.params.get('network'):
+        if 'ebs_optimized' in module.params['network']:
+            module.deprecate("network.ebs_optimized is deprecated."
+                             "Use the top level ebs_optimized parameter instead", 2.9)
         if module.params.get('network').get('interfaces'):
             if module.params.get('security_group'):
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_group")
@@ -1589,7 +1657,7 @@ def main():
         module.params['filters'] = filters
 
     if module.params.get('cpu_options') and not module.botocore_at_least('1.10.16'):
-            module.fail_json(msg="cpu_options is only supported with botocore >= 1.10.16")
+        module.fail_json(msg="cpu_options is only supported with botocore >= 1.10.16")
 
     existing_matches = find_instances(ec2, filters=module.params.get('filters'))
     changed = False

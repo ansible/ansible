@@ -3,19 +3,14 @@
 # Copyright: (c) 2017, Dag Wieers (dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
-$ErrorActionPreference = "Stop"
-
-# This module does not use any module parameters, this avoids pslint complaining
-#$params = Parse-Args -arguments $args -supports_check_mode $true
-
-$result = @{
-    changed = $false
-    ansible_facts = @{
-        ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
-    }
+# This modules does not accept any options
+$spec = @{
+    supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 # First try to find the product key from ACPI
 try {
@@ -62,6 +57,9 @@ if (-not $product_key) {
     }
 }
 
-$result.ansible_facts.ansible_os_product_key = $product_key
+$module.Result.ansible_facts = @{
+    ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
+    ansible_os_product_key = $product_key
+}
 
-Exit-Json -obj $result
+$module.ExitJson()

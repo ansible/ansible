@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ipa_service
-author: Cédric Parent
+author: Cédric Parent (@cprh)
 short_description: Manage FreeIPA service
 description:
 - Add and delete an IPA service using IPA API

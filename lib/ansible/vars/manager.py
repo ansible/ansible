@@ -41,16 +41,13 @@ from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
+from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def preprocess_vars(a):
@@ -451,7 +448,24 @@ class VariableManager:
         variables['ansible_playbook_python'] = sys.executable
 
         if play:
-            variables['role_names'] = [r._role_name for r in play.roles]
+            # This is a list of all role names of all dependencies for all roles for this play
+            dependency_role_names = list(set([d._role_name for r in play.roles for d in r.get_all_dependencies()]))
+            # This is a list of all role names of all roles for this play
+            play_role_names = [r._role_name for r in play.roles]
+
+            # ansible_role_names includes all role names, dependent or directly referenced by the play
+            variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
+            # ansible_play_role_names includes the names of all roles directly referenced by this play
+            # roles that are implicitly referenced via dependencies are not listed.
+            variables['ansible_play_role_names'] = play_role_names
+            # ansible_dependent_role_names includes the names of all roles that are referenced via dependencies
+            # dependencies that are also explicitly named as roles are included in this list
+            variables['ansible_dependent_role_names'] = dependency_role_names
+
+            # DEPRECATED: role_names should be deprecated in favor of ansible_role_names or ansible_play_role_names
+            variables['role_names'] = variables['ansible_play_role_names']
+
+            variables['ansible_play_name'] = play.get_name()
 
         if task:
             if task._role:
@@ -489,7 +503,7 @@ class VariableManager:
     def _get_delegated_vars(self, play, task, existing_variables):
         if not hasattr(task, 'loop'):
             # This "task" is not a Task, so we need to skip it
-            return {}
+            return {}, None
 
         # we unfortunately need to template the delegate_to field here,
         # as we're fetching vars before post_validate has been called on
@@ -608,8 +622,7 @@ class VariableManager:
         '''
         Clears the facts for a host
         '''
-        if hostname in self._fact_cache:
-            del self._fact_cache[hostname]
+        self._fact_cache.pop(hostname, None)
 
     def set_host_facts(self, host, facts):
         '''
@@ -619,13 +632,16 @@ class VariableManager:
         if not isinstance(facts, dict):
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts))
 
-        if host.name not in self._fact_cache:
-            self._fact_cache[host.name] = facts
-        else:
+        try:
             try:
+                # this is a cache plugin, not a dictionary
+                self._fact_cache.update({host.name: facts})
+            except TypeError:
+                # this is here for backwards compatibilty for the time cache plugins were not 'dict compatible'
                 self._fact_cache.update(host.name, facts)
-            except KeyError:
-                self._fact_cache[host.name] = facts
+                display.deprecated("Your configured fact cache plugin is using a deprecated form of the 'update' method", version="2.12")
+        except KeyError:
+            self._fact_cache[host.name] = facts
 
     def set_nonpersistent_facts(self, host, facts):
         '''
@@ -635,13 +651,10 @@ class VariableManager:
         if not isinstance(facts, dict):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts))
 
-        if host.name not in self._nonpersistent_fact_cache:
+        try:
+            self._nonpersistent_fact_cache[host.name].update(facts)
+        except KeyError:
             self._nonpersistent_fact_cache[host.name] = facts
-        else:
-            try:
-                self._nonpersistent_fact_cache[host.name].update(facts)
-            except KeyError:
-                self._nonpersistent_fact_cache[host.name] = facts
 
     def set_host_variable(self, host, varname, value):
         '''

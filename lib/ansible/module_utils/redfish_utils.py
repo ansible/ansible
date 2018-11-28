@@ -701,6 +701,15 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
+
+        # First, check if BIOS attribute exists
+        if attr['bios_attr_name'] not in data[u'Attributes']:
+            return {'ret': False, 'msg': "BIOS attribute not found"}
+
+        # Find out if value is already set to what we want. If yes, return
+        if data[u'Attributes'][attr['bios_attr_name']] == attr['bios_attr_value']:
+            return {'ret': True, 'changed': False, 'msg': "BIOS attribute already set"}
+
         set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
 
         # Example: bios_attr = {\"name\":\"value\"}
@@ -709,7 +718,7 @@ class RedfishUtils(object):
         response = self.patch_request(self.root_uri + set_bios_attr_uri, payload, HEADERS)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
 
     def create_bios_config_job(self):
         result = {}
@@ -736,7 +745,7 @@ class RedfishUtils(object):
         data = response['data']
         set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
 
-        payload = {"TargetSettingsURI": set_bios_attr_uri, "RebootJobType": "PowerCycle"}
+        payload = {"TargetSettingsURI": set_bios_attr_uri}
         response = self.post_request(self.root_uri + self.manager_uri + "/" + jobs, payload, HEADERS)
         if response['ret'] is False:
             return response
@@ -744,7 +753,8 @@ class RedfishUtils(object):
         response_output = response['resp'].__dict__
         job_id = response_output["headers"]["Location"]
         job_id = re.search("JID_.+", job_id).group()
-        return {'ret': True, 'msg': 'Config job created', 'job_id': job_id}
+        # Currently not passing job_id back to user but patch is coming
+        return {'ret': True, 'msg': "Config job %s created" % job_id}
 
     def get_fan_inventory(self):
         result = {}

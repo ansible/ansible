@@ -26,13 +26,10 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.utils.display import Display
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayIterator']
@@ -175,10 +172,14 @@ class PlayIterator:
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags = ['always']
         setup_task.args = {
             'gather_subset': gather_subset,
         }
+
+        # Unless play is specifically tagged, gathering should 'always' run
+        if not self._play.tags:
+            setup_task.tags = ['always']
+
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
         if fact_path:

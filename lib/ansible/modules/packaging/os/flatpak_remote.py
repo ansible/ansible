@@ -26,7 +26,7 @@ description:
 - Existing remotes will not be updated.
 - See the M(flatpak) module for managing flatpaks.
 author:
-- John Kwiatkoski (@jaykayy)
+- John Kwiatkoski (@JayKayy)
 - Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak
@@ -120,6 +120,7 @@ stdout:
 
 import subprocess
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_native
 
 
 def add_remote(module, binary, name, flatpakrepo_url, method):
@@ -168,7 +169,7 @@ def _flatpak_command(module, noop, command):
     result['stderr'] = stderr_data
     if result['rc'] != 0:
         module.fail_json(msg="Failed to execute flatpak command", **result)
-    return stdout_data
+    return to_native(stdout_data)
 
 
 def main():
@@ -205,7 +206,7 @@ def main():
     if not binary:
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
-    remote_already_exists = remote_exists(module, binary, bytes(name, 'utf-8'), method)
+    remote_already_exists = remote_exists(module, binary, to_bytes(name), method)
 
     if state == 'present' and not remote_already_exists:
         add_remote(module, binary, name, flatpakrepo_url, method)

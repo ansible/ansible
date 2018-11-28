@@ -39,7 +39,7 @@ options:
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
       - When using state=latest, this can be C('*') which means run C(yum -y update).
       - You can also pass a url or a local path to a rpm file (using state=present).
-        To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
+        To operate on several packages this can accept a comma separated string of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
   exclude:
     description:
@@ -55,8 +55,9 @@ options:
       - C(present) and C(installed) will simply ensure that a desired package is installed.
       - C(latest) will update the specified package if it's not of the latest available version.
       - C(absent) and C(removed) will remove the specified package.
+      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is¬
+        enabled for this module, then C(absent) is inferred.
     choices: [ absent, installed, latest, present, removed ]
-    default: present
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
@@ -175,7 +176,6 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
-    choices: [ all, main, repoid ]
     version_added: "2.7"
   download_only:
     description:
@@ -183,20 +183,11 @@ options:
     default: "no"
     type: bool
     version_added: "2.7"
-  lock_poll:
-    description:
-      - Poll interval to wait for the yum lockfile to be freed.
-      - "By default this is set to -1, if you set it to a positive integer it will enable to polling"
-    required: false
-    default: -1
-    type: int
-    version_added: "2.8"
   lock_timeout:
     description:
-      - Amount of time to wait for the yum lockfile to be freed
-      - This should be set along with C(lock_poll) to enable the lockfile polling.
+      - Amount of time to wait for the yum lockfile to be freed.
     required: false
-    default: 10
+    default: 0
     type: int
     version_added: "2.8"
 notes:
@@ -219,12 +210,16 @@ notes:
     "@development-tools" and environment groups are "@^gnome-desktop-environment".
     Use the "yum group list" command to see which category of group the group
     you want to install falls into.'
+  - 'The yum module does not support clearing yum cache in an idempotent way, so it
+    was decided not to implement it, the only method is to use shell and call the yum
+    command directly, namely "shell: yum clean all"
+    https://github.com/ansible/ansible/pull/31450#issuecomment-352889579'
 # informational: requirements for nodes
 requirements:
 - yum
 author:
     - Ansible Core Team
-    - Seth Vidal
+    - Seth Vidal (@skvidal)
     - Eduard Snesarev (@verm666)
     - Berend De Schouwer (@berenddeschouwer)
     - Abhijeet Kasurde (@Akasurde)
@@ -720,7 +715,7 @@ class YumModule(YumDnf):
                     for item in scheme:
                         os.environ[item + "_proxy"] = re.sub(
                             r"(http://)",
-                            r"\1" + namepass, proxy_url
+                            r"\g<1>" + namepass, proxy_url
                         )
             yield
         except yum.Errors.YumBaseError:
@@ -1084,6 +1079,7 @@ class YumModule(YumDnf):
     @staticmethod
     def parse_check_update(check_update_output):
         updates = {}
+        obsoletes = {}
 
         # remove incorrect new lines in longer columns in output from yum check-update
         # yum line wrapping can move the repo to the next line
@@ -1108,17 +1104,24 @@ class YumModule(YumDnf):
             # ignore irrelevant lines
             # '*' in line matches lines like mirror lists:
             #      * base: mirror.corbina.net
-            # len(line) != 3 could be junk or a continuation
+            # len(line) != 3 or 6 could be junk or a continuation
+            # len(line) = 6 is package obsoletes
             #
             # FIXME: what is  the '.' not in line  conditional for?
 
-            if '*' in line or len(line) != 3 or '.' not in line[0]:
+            if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
             else:
-                pkg, version, repo = line
+                pkg, version, repo = line[0], line[1], line[2]
                 name, dist = pkg.rsplit('.', 1)
                 updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
-        return updates
+
+                if len(line) == 6:
+                    obsolete_pkg, obsolete_version, obsolete_repo = line[3], line[4], line[5]
+                    obsolete_name, obsolete_dist = obsolete_pkg.rsplit('.', 1)
+                    obsoletes.update({obsolete_name: {'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo}})
+
+        return updates, obsoletes
 
     def latest(self, items, repoq):
 
@@ -1131,6 +1134,7 @@ class YumModule(YumDnf):
         pkgs['update'] = []
         pkgs['install'] = []
         updates = {}
+        obsoletes = {}
         update_all = False
         cmd = None
 
@@ -1144,7 +1148,7 @@ class YumModule(YumDnf):
             res['results'].append('Nothing to do here, all packages are up to date')
             return res
         elif rc == 100:
-            updates = self.parse_check_update(out)
+            updates, obsoletes = self.parse_check_update(out)
         elif rc == 1:
             res['msg'] = err
             res['rc'] = rc
@@ -1180,7 +1184,9 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
-                    if not self.is_installed(repoq, envra):
+                    if self.is_installed(repoq, envra):
+                        pkgs['update'].append(spec)
+                    else:
                         pkgs['install'].append(spec)
                     continue
 
@@ -1195,13 +1201,15 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
-                    if not self.is_installed(repoq, envra):
-                        pkgs['install'].append(package)
+                    if self.is_installed(repoq, envra):
+                        pkgs['update'].append(spec)
+                    else:
+                        pkgs['install'].append(spec)
                     continue
 
                 # dep/pkgname  - find it
                 else:
-                    if self.is_installed(repoq, spec) or self.update_only:
+                    if self.is_installed(repoq, spec):
                         pkgs['update'].append(spec)
                     else:
                         pkgs['install'].append(spec)
@@ -1271,10 +1279,16 @@ class YumModule(YumDnf):
                 else:
                     to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
-            res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+            if self.update_only:
+                res['changes'] = dict(installed=[], updated=to_update)
+            else:
+                res['changes'] = dict(installed=pkgs['install'], updated=to_update)
 
             if will_update or pkgs['install']:
                 res['changed'] = True
+
+            if obsoletes:
+                res['obsoletes'] = obsoletes
 
             return res
 
@@ -1282,7 +1296,18 @@ class YumModule(YumDnf):
         if cmd:     # update all
             rc, out, err = self.module.run_command(cmd)
             res['changed'] = True
-        elif pkgs['install'] or will_update:
+        elif self.update_only:
+            if pkgs['update']:
+                cmd = self.yum_basecmd + ['update'] + pkgs['update']
+                lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+                rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
+                out_lower = out.strip().lower()
+                if not out_lower.endswith("no packages marked for update") and \
+                        not out_lower.endswith("nothing to do"):
+                    res['changed'] = True
+            else:
+                rc, out, err = [0, '', '']
+        elif pkgs['install'] or will_update and not self.update_only:
             cmd = self.yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
             lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
@@ -1299,6 +1324,9 @@ class YumModule(YumDnf):
 
         if rc:
             res['failed'] = True
+
+        if obsoletes:
+            res['obsoletes'] = obsoletes
 
         return res
 
@@ -1397,13 +1425,7 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Error setting/accessing repos: %s" % to_native(e))
             except yum.Errors.YumBaseError as e:
                 self.module.fail_json(msg="Error accessing repos: %s" % to_native(e))
-        if self.state in ('installed', 'present'):
-            if self.disable_gpg_check:
-                self.yum_basecmd.append('--nogpgcheck')
-            res = self.install(pkgs, repoq)
-        elif self.state in ('removed', 'absent'):
-            res = self.remove(pkgs, repoq)
-        elif self.state == 'latest':
+        if self.state == 'latest' or self.update_only:
             if self.disable_gpg_check:
                 self.yum_basecmd.append('--nogpgcheck')
             if self.security:
@@ -1411,6 +1433,12 @@ class YumModule(YumDnf):
             if self.bugfix:
                 self.yum_basecmd.append('--bugfix')
             res = self.latest(pkgs, repoq)
+        elif self.state in ('installed', 'present'):
+            if self.disable_gpg_check:
+                self.yum_basecmd.append('--nogpgcheck')
+            res = self.install(pkgs, repoq)
+        elif self.state in ('removed', 'absent'):
+            res = self.remove(pkgs, repoq)
         else:
             # should be caught by AnsibleModule argument_spec
             self.module.fail_json(

@@ -1,3 +1,5 @@
+.. _github_admins:
+
 *************
 GitHub Admins
 *************

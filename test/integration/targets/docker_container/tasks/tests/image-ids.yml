@@ -34,6 +34,7 @@
     image: "{{ image_facts.images[0].Id }}"
     name: "{{ cname }}"
     state: present
+    force_kill: yes
   register: create_1
 
 - name: Create container with hello-world image via ID (idempotent)
@@ -41,6 +42,7 @@
     image: "{{ image_facts.images[0].Id }}"
     name: "{{ cname }}"
     state: present
+    force_kill: yes
   register: create_2
 
 - name: Create container with alpine image via ID
@@ -48,6 +50,7 @@
     image: "{{ image_facts.images[1].Id }}"
     name: "{{ cname }}"
     state: present
+    force_kill: yes
   register: create_3
 
 - name: Create container with alpine image via ID (idempotent)
@@ -55,13 +58,15 @@
     image: "{{ image_facts.images[1].Id }}"
     name: "{{ cname }}"
     state: present
+    force_kill: yes
   register: create_4
 
 - name: Cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:

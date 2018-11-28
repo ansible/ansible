@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: dellos6_config
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Manage Dell EMC Networking OS6 configuration sections
 description:
   - OS6 configurations use a simple block indent file syntax

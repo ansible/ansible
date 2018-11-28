@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -36,7 +36,9 @@ options:
     description:
       - Netmask of the provided virtual address. This value cannot be
         modified after it is set.
-    default: 255.255.255.255
+      - When creating a new virtual address, if this parameter is not specified, the
+        default value is C(255.255.255.255) for IPv4 addresses and
+        C(ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff) for IPv6 addresses.
   connection_limit:
     description:
       - Specifies the number of concurrent connections that the system
@@ -189,6 +191,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -268,31 +271,31 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.ipaddress import compress_address
+    from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.ipaddress import compress_address
+    from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
 class Parameters(AnsibleF5Parameters):
@@ -444,7 +447,7 @@ class Parameters(AnsibleF5Parameters):
     def route_advertisement(self):
         if self._values['route_advertisement'] is None:
             return None
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) <= LooseVersion('13.0.0'):
             if self._values['route_advertisement'] == 'disabled':
                 return 'disabled'
@@ -452,13 +455,6 @@ class Parameters(AnsibleF5Parameters):
                 return 'enabled'
         else:
             return self._values['route_advertisement']
-
-    def to_return(self):
-        result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
 
 
 class ApiParameters(Parameters):
@@ -495,29 +491,11 @@ class ModuleParameters(Parameters):
         if self._values['address'] is None:
             return None
         if is_valid_ip(self._values['address']):
-            return self._values['address']
+            return compress_address(self._values['address'])
         else:
             raise F5ModuleError(
                 "The provided 'address' is not a valid IP address"
             )
-
-    @property
-    def route_domain(self):
-        if self._values['route_domain'] is None:
-            return None
-        try:
-            return int(self._values['route_domain'])
-        except ValueError:
-            try:
-                rd = self.client.api.tm.net.route_domains.route_domain.load(
-                    name=self._values['route_domain'],
-                    partition=self.partition
-                )
-                return int(rd.id)
-            except iControlUnexpectedHTTPError:
-                raise F5ModuleError(
-                    "The specified 'route_domain' was not found."
-                )
 
     @property
     def full_address(self):
@@ -535,9 +513,43 @@ class ModuleParameters(Parameters):
             result = self._values['name']
         return result
 
+    @property
+    def route_domain(self):
+        if self._values['route_domain'] is None:
+            return None
+        try:
+            return int(self._values['route_domain'])
+        except ValueError:
+            uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self._values['partition'], self._values['route_domain'])
+            )
+            resp = self.client.api.get(uri)
+            try:
+                response = resp.json()
+            except ValueError:
+                raise F5ModuleError(
+                    "The specified 'route_domain' was not found."
+                )
+            if resp.status == 404 or 'code' in response and response['code'] == 404:
+                raise F5ModuleError(
+                    "The specified 'route_domain' was not found."
+                )
+
+            return int(response['id'])
+
 
 class Changes(Parameters):
-    pass
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
 
 
 class UsableChanges(Changes):
@@ -547,7 +559,7 @@ class UsableChanges(Changes):
             return None
         if self._values['route_domain'] is None:
             return self._values['address']
-        result = "{0}%{1}".format(self._values['address'], self._values['route_domain'])
+        result = "{0}%{1}".format(self._values['address'], self.route_domain)
         return result
 
     @property
@@ -622,7 +634,7 @@ class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.have = None
+        self.have = ApiParameters()
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.changes = UsableChanges()
 
@@ -652,22 +664,29 @@ class ModuleManager(object):
             return True
         return False
 
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
     def exec_module(self):
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state in ['present', 'enabled', 'disabled']:
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state in ['present', 'enabled', 'disabled']:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
     def should_update(self):
@@ -688,27 +707,41 @@ class ModuleManager(object):
             changed = self.remove()
         return changed
 
-    def read_current_from_device(self):
-        name = self.want.name
-        name = name.replace('%', '%25')
-        resource = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=name,
-            partition=self.want.partition
-        )
-        result = resource.attrs
-        return ApiParameters(params=result)
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the virtual address")
+        return True
 
-    def exists(self):
-        # This addresses cases where the name includes a % sign. The URL in the REST
-        # API escapes a % sign as %25. If you don't do this, you will get errors in
-        # the exists() method.
-        name = self.want.name
-        name = name.replace('%', '%25')
-        result = self.client.api.tm.ltm.virtual_address_s.virtual_address.exists(
-            name=name,
-            partition=self.want.partition
-        )
-        return result
+    def create(self):
+        self._set_changed_options()
+
+        if self.want.traffic_group is None:
+            self.want.update({'traffic_group': '/Common/traffic-group-1'})
+        if self.want.arp is None:
+            self.want.update({'arp': True})
+        if self.want.spanning is None:
+            self.want.update({'spanning': False})
+
+        if self.want.netmask is None:
+            if is_valid_ip(self.want.address, type='ipv4'):
+                self.want.update({'netmask': '255.255.255.255'})
+            else:
+                self.want.update({'netmask': 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'})
+
+        if self.want.arp and self.want.spanning:
+            raise F5ModuleError(
+                "'arp' and 'spanning' cannot both be enabled on virtual address."
+            )
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        if self.exists():
+            return True
+        else:
+            raise F5ModuleError("Failed to create the virtual address")
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -736,63 +769,102 @@ class ModuleManager(object):
         self.update_on_device()
         return True
 
+    def exists(self):
+        # This addresses cases where the name includes a % sign. The URL in the REST
+        # API escapes a % sign as %25. If you don't do this, you will get errors in
+        # the exists() method.
+        name = self.want.name
+        name = name.replace('%', '%25')
+        uri = "https://{0}:{1}/mgmt/tm/ltm/virtual-address/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def read_current_from_device(self):
+        name = self.want.name
+        name = name.replace('%', '%25')
+        uri = "https://{0}:{1}/mgmt/tm/ltm/virtual-address/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
     def update_on_device(self):
         params = self.changes.api_params()
         name = self.want.name
         name = name.replace('%', '%25')
-        resource = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/virtual-address/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def create(self):
-        self._set_changed_options()
-
-        if self.want.traffic_group is None:
-            self.want.update({'traffic_group': '/Common/traffic-group-1'})
-        if self.want.arp is None:
-            self.want.update({'arp': True})
-        if self.want.spanning is None:
-            self.want.update({'spanning': False})
-
-        if self.want.arp and self.want.spanning:
-            raise F5ModuleError(
-                "'arp' and 'spanning' cannot both be enabled on virtual address."
-            )
-        if self.module.check_mode:
-            return True
-        self.create_on_device()
-        if self.exists():
-            return True
-        else:
-            raise F5ModuleError("Failed to create the virtual address")
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.ltm.virtual_address_s.virtual_address.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            address=self.changes.address,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        params['address'] = self.changes.address
+        uri = "https://{0}:{1}/mgmt/tm/ltm/virtual-address/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def remove(self):
-        if self.module.check_mode:
-            return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the virtual address")
-        return True
+        if 'code' in response and response['code'] in [400, 403, 409]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        return response['selfLink']
 
     def remove_from_device(self):
         name = self.want.name
         name = name.replace('%', '%25')
-        resource = self.client.api.tm.ltm.virtual_address_s.virtual_address.load(
-            name=name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/virtual-address/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, name)
         )
-        resource.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
 
 class ArgumentSpec(object):
@@ -805,10 +877,7 @@ class ArgumentSpec(object):
             ),
             name=dict(),
             address=dict(),
-            netmask=dict(
-                type='str',
-                default='255.255.255.255',
-            ),
+            netmask=dict(),
             connection_limit=dict(
                 type='int'
             ),
@@ -871,18 +940,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

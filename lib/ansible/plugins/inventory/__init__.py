@@ -25,6 +25,7 @@ import re
 import string
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import InventoryFileCacheModule
 from ansible.module_utils._text import to_bytes, to_native
@@ -32,12 +33,9 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 _SAFE_GROUP = re.compile("[^A-Za-z0-9_]")
 
@@ -231,6 +229,31 @@ class BaseInventoryPlugin(AnsiblePlugin):
             if k in data:
                 self._options[k] = data.pop(k)
 
+    def _expand_hostpattern(self, hostpattern):
+        '''
+        Takes a single host pattern and returns a list of hostnames and an
+        optional port number that applies to all of them.
+        '''
+        # Can the given hostpattern be parsed as a host with an optional port
+        # specification?
+
+        try:
+            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
+        except Exception:
+            # not a recognizable host pattern
+            pattern = hostpattern
+            port = None
+
+        # Once we have separated the pattern, we expand it into list of one or
+        # more hostnames, depending on whether it contains any [x:y] ranges.
+
+        if detect_range(pattern):
+            hostnames = expand_hostname_range(pattern)
+        else:
+            hostnames = [pattern]
+
+        return (hostnames, port)
+
     def clear_cache(self):
         pass
 
@@ -250,7 +273,7 @@ class Cacheable(object):
     _cache = {}
 
     def get_cache_key(self, path):
-        return "{0}_{1}_{2}".format(self.NAME, self._get_cache_prefix(path), self._get_config_identifier(path))
+        return "{0}_{1}".format(self.NAME, self._get_cache_prefix(path))
 
     def _get_cache_prefix(self, path):
         ''' create predictable unique prefix for plugin/inventory '''
@@ -264,11 +287,6 @@ class Cacheable(object):
         d2 = n.hexdigest()
 
         return 's_'.join([d1[:5], d2[:5]])
-
-    def _get_config_identifier(self, path):
-        ''' create predictable config-specific prefix for plugin/inventory '''
-
-        return hashlib.md5(path.encode()).hexdigest()
 
     def clear_cache(self):
         self._cache = {}

@@ -233,8 +233,9 @@ EXAMPLES = R'''
 #     record: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].record }}"
 #     type: TXT
 #     ttl: 60
+#     state: present
 #     # Note: route53 requires TXT entries to be enclosed in quotes
-#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value }}"
+#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
 #     when: sample_com_challenge is changed
 #
 # Alternative way:
@@ -244,9 +245,10 @@ EXAMPLES = R'''
 #     record: "{{ item.key }}"
 #     type: TXT
 #     ttl: 60
+#     state: present
 #     # Note: item.value is a list of TXT entries, and route53
 #     # requires every entry to be enclosed in quotes
-#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\'\\1\'' ) | list }}"
+#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\"\\1\"' ) | list }}"
 #     loop: "{{ sample_com_challenge.challenge_data_dns | dictsort }}"
 #     when: sample_com_challenge is changed
 

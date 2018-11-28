@@ -42,12 +42,9 @@ from ansible.plugins.loader import module_utils_loader
 # variable to the object and then it never gets updated.
 from ansible.executor import action_write_locks
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
+display = Display()
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
@@ -649,7 +646,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
     elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
             or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
-            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE):
+            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
+            or re.search(b'#AnsibleRequires -CSharpUtil', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:

@@ -34,7 +34,7 @@ options:
     version_added: "1.6"
   volume_size:
     description:
-      - size of volume (in GB) to create.
+      - size of volume (in GiB) to create.
   volume_type:
     description:
       - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS), st1 (Throughput Optimized HDD), sc1 (Cold HDD).
@@ -50,6 +50,7 @@ options:
     description:
       - Enable encryption at rest for this volume.
     default: 'no'
+    type: bool
     version_added: "1.8"
   kms_key_id:
     description:

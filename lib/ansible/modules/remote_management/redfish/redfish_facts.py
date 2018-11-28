@@ -34,16 +34,17 @@ options:
     required: true
     description:
       - Base URI of OOB controller
-  user:
+  username:
     required: true
     description:
       - User for authentication with OOB controller
+    version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
 
-author: "Jose Delarosa (github: jose-delarosa)"
+author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''
@@ -52,7 +53,7 @@ EXAMPLES = '''
       category: Systems
       command: GetCpuInventory
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get fan inventory
@@ -60,13 +61,13 @@ EXAMPLES = '''
       category: Chassis
       command: GetFanInventory
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get default inventory information
     redfish_facts:
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get several inventories
@@ -74,21 +75,21 @@ EXAMPLES = '''
       category: Systems
       command: GetNicInventory,GetPsuInventory,GetBiosAttributes
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get default system inventory and user information
     redfish_facts:
       category: Systems,Accounts
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get default system, user and firmware information
     redfish_facts:
       category: ["Systems", "Accounts", "Update"]
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get all information available in the Manager category
@@ -96,7 +97,7 @@ EXAMPLES = '''
       category: Manager
       command: all
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Get all information available in all categories
@@ -104,7 +105,7 @@ EXAMPLES = '''
       category: all
       command: all
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 '''
 
@@ -147,14 +148,14 @@ def main():
             category=dict(type='list', default=['Systems']),
             command=dict(type='list'),
             baseuri=dict(required=True),
-            user=dict(required=True),
+            username=dict(required=True),
             password=dict(required=True, no_log=True),
         ),
         supports_check_mode=False
     )
 
     # admin credentials used for authentication
-    creds = {'user': module.params['user'],
+    creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
     # Build root URI

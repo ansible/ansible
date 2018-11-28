@@ -68,6 +68,20 @@ options:
             - The str can be the name or resource id of the route table.
             - The dict can contains C(name) and C(resource_group) of the route_table.
         version_added: "2.7"
+    service_endpoints:
+        description:
+            - An array of service endpoints.
+        type: list
+        suboptions:
+            service:
+                description:
+                    - The type of the endpoint service.
+                required: True
+            locations:
+                description:
+                    - A list of locations.
+                type: list
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -169,6 +183,8 @@ def subnet_to_dict(subnet):
         result['route_table']['id'] = subnet.route_table.id
         result['route_table']['name'] = id_keys['routeTables']
         result['route_table']['resource_group'] = id_keys['resourceGroups']
+    if subnet.service_endpoints:
+        result['service_endpoints'] = [{'service': item.service, 'locations': item.locations} for item in subnet.service_endpoints]
     return result
 
 
@@ -183,7 +199,10 @@ class AzureRMSubnet(AzureRMModuleBase):
             virtual_network_name=dict(type='str', required=True, aliases=['virtual_network']),
             address_prefix_cidr=dict(type='str', aliases=['address_prefix']),
             security_group=dict(type='raw', aliases=['security_group_name']),
-            route_table=dict(type='raw')
+            route_table=dict(type='raw'),
+            service_endpoints=dict(
+                type='list'
+            )
         )
 
         required_if = [
@@ -202,6 +221,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.address_prefix_cidr = None
         self.security_group = None
         self.route_table = None
+        self.service_endpoints = None
 
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
@@ -257,6 +277,21 @@ class AzureRMSubnet(AzureRMModuleBase):
                     changed = True
                     results['route_table']['id'] = self.route_table
                     self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table['name']))
+
+                if self.service_endpoints:
+                    oldd = {}
+                    for item in self.service_endpoints:
+                        name = item['service']
+                        oldd[name] = {'service': name, 'locations': item['locations'].sort()}
+                    newd = {}
+                    if 'service_endpoints' in results:
+                        for item in results['service_endpoints']:
+                            name = item['service']
+                            newd[name] = {'service': name, 'locations': item['locations'].sort()}
+                    if newd != oldd:
+                        changed = True
+                        results['service_endpoints'] = self.service_endpoints
+
             elif self.state == 'absent':
                 changed = True
         except CloudError:
@@ -287,9 +322,12 @@ class AzureRMSubnet(AzureRMModuleBase):
                         address_prefix=results['address_prefix']
                     )
                     if results['network_security_group'].get('id'):
-                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(results['network_security_group'].get('id'))
+                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=results['network_security_group'].get('id'))
                     if self.route_table:
                         subnet.route_table = self.network_models.RouteTable(id=self.route_table)
+
+                    if self.service_endpoints:
+                        subnet.service_endpoints = self.service_endpoints
 
                 self.results['state'] = self.create_or_update_subnet(subnet)
             elif self.state == 'absent' and changed:

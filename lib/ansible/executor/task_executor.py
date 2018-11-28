@@ -25,13 +25,10 @@ from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['TaskExecutor']
@@ -42,13 +39,18 @@ def remove_omit(task_args, omit_token):
     Remove args with a value equal to the ``omit_token`` recursively
     to align with now having suboptions in the argument_spec
     '''
-    new_args = {}
 
+    if not isinstance(task_args, dict):
+        return task_args
+
+    new_args = {}
     for i in iteritems(task_args):
         if i[1] == omit_token:
             continue
         elif isinstance(i[1], dict):
             new_args[i[0]] = remove_omit(i[1], omit_token)
+        elif isinstance(i[1], list):
+            new_args[i[0]] = [remove_omit(v, omit_token) for v in i[1]]
         else:
             new_args[i[0]] = i[1]
 
@@ -356,7 +358,13 @@ class TaskExecutor:
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
-            res['_ansible_item_label'] = templar.template(label, cache=False)
+            try:
+                res['_ansible_item_label'] = templar.template(label, cache=False)
+            except AnsibleUndefinedVariable as e:
+                res.update({
+                    'failed': True,
+                    'msg': 'Failed to template loop_control.label: %s' % to_text(e)
+                })
 
             self._final_q.put(
                 TaskResult(
@@ -801,7 +809,7 @@ class TaskExecutor:
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
-                return dict(failed=True, msg="async task did not complete within the requested time")
+                return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val)
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:

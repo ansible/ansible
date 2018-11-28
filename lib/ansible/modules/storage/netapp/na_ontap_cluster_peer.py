@@ -11,11 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - Create/Delete cluster peer relations on ONTAP
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_cluster_peer
 options:
   state:
@@ -57,7 +57,6 @@ version_added: "2.7"
 '''
 
 EXAMPLES = """
-
     - name: Create cluster peer
       na_ontap_cluster_peer:
         state: present
@@ -68,7 +67,6 @@ EXAMPLES = """
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
         dest_hostname: "{{ dest_netapp_hostname }}"
-
     - name: Delete cluster peer
       na_ontap_cluster_peer:
         state: absent
@@ -99,7 +97,7 @@ class NetAppONTAPClusterPeer(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             source_intercluster_lif=dict(required=False, type='str'),
@@ -125,14 +123,14 @@ class NetAppONTAPClusterPeer(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
             # set destination server connection
             self.module.params['hostname'] = self.parameters['dest_hostname']
             if self.parameters.get('dest_username'):
                 self.module.params['username'] = self.parameters['dest_username']
             if self.parameters.get('dest_password'):
                 self.module.params['password'] = self.parameters['dest_password']
-            self.dest_server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.dest_server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def cluster_peer_get_iter(self, cluster):
         """

@@ -93,7 +93,15 @@ foreach ($script in $Scripts) {
 }
 
 Write-AnsibleLog "INFO - start module exec with Invoke() - $ModuleName" "module_wrapper"
+
+# temporarily override the stdout stream and create our own in a StringBuilder
+# we use this to ensure there's always an Out pipe and that we capture the
+# output for things like async or psrp
+$orig_out = [System.Console]::Out
+$sb = New-Object -TypeName System.Text.StringBuilder
+$new_out = New-Object -TypeName System.IO.StringWriter -ArgumentList $sb
 try {
+    [System.Console]::SetOut($new_out)
     $module_output = $ps.Invoke()
 } catch {
     # uncaught exception while executing module, present a prettier error for
@@ -102,6 +110,9 @@ try {
         -ErrorRecord $_.Exception.InnerException.ErrorRecord
     $host.SetShouldExit(1)
     return
+} finally {
+    [System.Console]::SetOut($orig_out)
+    $new_out.Dispose()
 }
 
 # other types of errors may not throw an exception in Invoke but rather just
@@ -114,19 +125,11 @@ if ($ps.InvocationStateInfo.State -eq "Failed" -and $ModuleName -ne "script") {
 }
 
 Write-AnsibleLog "INFO - module exec ended $ModuleName" "module_wrapper"
-$ansible_output = $ps.Runspace.SessionStateProxy.GetVariable("_ansible_output")
-
-# _ansible_output is a special var used by new modules to store the
-# output JSON. If set, we consider the ExitJson and FailJson methods
-# called and assume it contains the JSON we want and the pipeline
-# output won't contain anything of note
-# TODO: should we validate it or use a random variable name?
-# TODO: should we use this behaviour for all new modules and not just
-# ones running under psrp
-if ($null -ne $ansible_output) {
-    Write-AnsibleLog "INFO - using the _ansible_output variable for module output - $ModuleName" "module_wrapper"
-    Write-Output -InputObject $ansible_output.ToString()
-} elseif ($module_output.Count -gt 0) {
+$stdout = $sb.ToString()
+if ($stdout) {
+    Write-Output -InputObject $stdout
+}
+if ($module_output.Count -gt 0) {
     # do not output if empty collection
     Write-AnsibleLog "INFO - using the output stream for module output - $ModuleName" "module_wrapper"
     Write-Output -InputObject ($module_output -join "`r`n")

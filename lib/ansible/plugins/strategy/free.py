@@ -40,13 +40,9 @@ from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class StrategyModule(StrategyBase):
@@ -235,7 +231,7 @@ class StrategyModule(StrategyBase):
                     except AnsibleError as e:
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)
-                        display.warning(str(e))
+                        display.warning(to_text(e))
                         continue
 
                     for new_block in new_blocks:

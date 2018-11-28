@@ -30,12 +30,9 @@ from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['Play']
@@ -195,7 +192,12 @@ class Play(Base, Taggable, Become):
         roles = []
         for ri in role_includes:
             roles.append(Role.load(ri, play=self))
-        return roles
+
+        return self._extend_value(
+            self.roles,
+            roles,
+            prepend=True
+        )
 
     def _load_vars_prompt(self, attr, ds):
         new_ds = preprocess_vars(ds)

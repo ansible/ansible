@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -279,6 +279,33 @@ options:
       - When creating a new virtual server, the default is C(enabled).
     type: bool
     version_added: 2.6
+  source_port:
+    description:
+      - Specifies whether the system preserves the source port of the connection.
+      - When creating a new virtual server, if this parameter is not specified, the default is C(preserve).
+    choices:
+      - preserve
+      - preserve-strict
+      - change
+    version_added: 2.8
+  mirror:
+    description:
+      - Specifies that the system mirrors connections on each member of a redundant pair.
+      - When creating a new virtual server, if this parameter is not specified, the default is C(disabled).
+    type: bool
+    version_added: 2.8
+  mask:
+   description:
+      - Specifies the destination address network mask. This parameter will work with IPv4 and IPv6 tye of addresses.
+      - This is an optional parameter which can be specified when creating or updating virtual server.
+      - If C(destination) is set in CIDR notation format and C(mask) is provided the C(mask) parameter takes precedence.
+      - If catchall destination is specified, i.e. C(0.0.0.0) for IPv4 C(::) for IPv6,
+        mask parameter is set to C(any) or C(any6) respectively.
+      - When the C(destination) is provided not in CIDR notation and C(mask) is not specified, C(255.255.255.255) or
+        C(ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff) is set for IPv4 and IPv6 addresses respectively.
+      - When C(destination) is provided in CIDR notation format and C(mask) is not specified the mask parameter is
+        inferred from C(destination).
+   version_added: 2.8
   ip_protocol:
     description:
       - Specifies a network protocol name you want the system to use to direct traffic
@@ -292,6 +319,7 @@ options:
       - When C(type) is C(dhcp), this module will force the C(ip_protocol) parameter to be C(17) (UDP).
     choices:
       - ah
+      - any
       - bna
       - esp
       - etherip
@@ -360,9 +388,16 @@ options:
           - When specified, the route domain policy overrides the device policy, and
             is overridden by a virtual server policy.
         type: bool
+  ip_intelligence_policy:
+    description:
+      - Specifies the IP intelligence policy applied to the virtual server.
+      - This parameter requires that a valid BIG-IP security module such as ASM or AFM
+        be provisioned.
+    version_added: 2.8
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -607,6 +642,16 @@ port_translation:
   returned: changed
   type: bool
   sample: True
+source_port:
+  description: Specifies whether the system preserves the source port of the connection.
+  returned: changed
+  type: string
+  sample: change
+mirror:
+  description: Specifies that the system mirrors connections on each member of a redundant pair.
+  returned: changed
+  type: bool
+  sample: True
 ip_protocol:
   description: The new value of the IP protocol.
   returned: changed
@@ -627,8 +672,13 @@ security_log_profiles:
   returned: changed
   type: list
   sample: ['/Common/profile1', '/Common/profile2']
+ip_intelligence_policy:
+  description: The new IP Intelligence Policy assigned to the virtual.
+  returned: changed
+  type: string
+  sample: /Common/ip-intelligence
 '''
-
+import os
 import re
 
 from ansible.module_utils.basic import AnsibleModule
@@ -650,10 +700,14 @@ try:
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import mark_managed_by
     from library.module_utils.network.f5.common import only_has_managed_metadata
+    from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_simple_list
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import ip_interface
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
+    from library.module_utils.network.f5.ipaddress import get_netmask
+    from library.module_utils.network.f5.ipaddress import compress_address
+    from library.module_utils.network.f5.icontrol import modules_provisioned
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_VERSION
@@ -668,10 +722,14 @@ except ImportError:
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import mark_managed_by
     from ansible.module_utils.network.f5.common import only_has_managed_metadata
+    from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_simple_list
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import ip_interface
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
+    from ansible.module_utils.network.f5.ipaddress import get_netmask
+    from ansible.module_utils.network.f5.ipaddress import compress_address
+    from ansible.module_utils.network.f5.icontrol import modules_provisioned
 
 
 class Parameters(AnsibleF5Parameters):
@@ -691,6 +749,8 @@ class Parameters(AnsibleF5Parameters):
         'fwStagedPolicy': 'firewall_staged_policy',
         'securityLogProfiles': 'security_log_profiles',
         'securityNatPolicy': 'security_nat_policy',
+        'sourcePort': 'source_port',
+        'ipIntelligencePolicy': 'ip_intelligence_policy',
     }
 
     api_attributes = [
@@ -723,6 +783,10 @@ class Parameters(AnsibleF5Parameters):
         'fwStagedPolicy',
         'securityLogProfiles',
         'securityNatPolicy',
+        'sourcePort',
+        'mirror',
+        'mask',
+        'ipIntelligencePolicy',
     ]
 
     updatables = [
@@ -749,6 +813,10 @@ class Parameters(AnsibleF5Parameters):
         'firewall_staged_policy',
         'security_log_profiles',
         'security_nat_policy',
+        'source_port',
+        'mirror',
+        'mask',
+        'ip_intelligence_policy',
     ]
 
     returnables = [
@@ -779,6 +847,10 @@ class Parameters(AnsibleF5Parameters):
         'firewall_staged_policy',
         'security_log_profiles',
         'security_nat_policy',
+        'source_port',
+        'mirror',
+        'mask',
+        'ip_intelligence_policy',
     ]
 
     profiles_mutex = [
@@ -878,6 +950,19 @@ class Parameters(AnsibleF5Parameters):
         except ValueError:
             raise F5ModuleError(
                 "Specified ip_protocol was neither a number nor in the list of common protocols."
+            )
+
+    @property
+    def source(self):
+        if self._values['source'] is None:
+            return None
+        try:
+            addr = ip_interface(u'{0}'.format(self._values['source']))
+            result = '{0}/{1}'.format(str(addr.ip), addr.network.prefixlen)
+            return result
+        except ValueError:
+            raise F5ModuleError(
+                "The source IP address must be specified in CIDR format: address/prefix"
             )
 
     @property
@@ -1056,25 +1141,12 @@ class ApiParameters(Parameters):
         return result
 
     @property
-    def source(self):
-        if self._values['source'] is None:
-            return None
-        try:
-            addr = ip_interface(u'{0}'.format(self._values['source']))
-            result = '{0}/{1}'.format(str(addr.ip), addr.network.prefixlen)
-            return result
-        except ValueError:
-            raise F5ModuleError(
-                "The source IP address must be specified in CIDR format: address/prefix"
-            )
-
-    @property
     def destination_tuple(self):
-        Destination = namedtuple('Destination', ['ip', 'port', 'route_domain'])
+        Destination = namedtuple('Destination', ['ip', 'port', 'route_domain', 'mask'])
 
         # Remove the partition
         if self._values['destination'] is None:
-            result = Destination(ip=None, port=None, route_domain=None)
+            result = Destination(ip=None, port=None, route_domain=None, mask=None)
             return result
         destination = re.sub(r'^/[a-zA-Z0-9_.-]+/', '', self._values['destination'])
 
@@ -1082,7 +1154,8 @@ class ApiParameters(Parameters):
             result = Destination(
                 ip=destination,
                 port=None,
-                route_domain=None
+                route_domain=None,
+                mask=self.mask
             )
             return result
 
@@ -1112,7 +1185,8 @@ class ApiParameters(Parameters):
             result = Destination(
                 ip=matches.group('ip'),
                 port=port,
-                route_domain=int(matches.group('route_domain'))
+                route_domain=int(matches.group('route_domain')),
+                mask=self.mask
             )
             return result
 
@@ -1127,7 +1201,8 @@ class ApiParameters(Parameters):
             result = Destination(
                 ip=matches.group('ip'),
                 port=None,
-                route_domain=int(matches.group('route_domain'))
+                route_domain=int(matches.group('route_domain')),
+                mask=self.mask
             )
             return result
 
@@ -1142,7 +1217,8 @@ class ApiParameters(Parameters):
             result = Destination(
                 ip=ip,
                 port=int(port),
-                route_domain=None
+                route_domain=None,
+                mask=self.mask
             )
             return result
         elif len(parts) == 2:
@@ -1161,11 +1237,12 @@ class ApiParameters(Parameters):
             result = Destination(
                 ip=ip,
                 port=port,
-                route_domain=None
+                route_domain=None,
+                mask=self.mask
             )
             return result
         else:
-            result = Destination(ip=None, port=None, route_domain=None)
+            result = Destination(ip=None, port=None, route_domain=None, mask=None)
             return result
 
     @property
@@ -1379,7 +1456,7 @@ class ModuleParameters(Parameters):
 
     @property
     def destination(self):
-        addr = self._values['destination'].split("%")[0]
+        addr = self._values['destination'].split("%")[0].split('/')[0]
         if not is_valid_ip(addr):
             raise F5ModuleError(
                 "The provided destination is not a valid IP address"
@@ -1388,27 +1465,37 @@ class ModuleParameters(Parameters):
         return result
 
     @property
-    def destination_tuple(self):
-        Destination = namedtuple('Destination', ['ip', 'port', 'route_domain'])
+    def route_domain(self):
         if self._values['destination'] is None:
-            result = Destination(ip=None, port=None, route_domain=None)
+            return None
+        result = self._values['destination'].split("%")
+        if len(result) > 1:
+            return int(result[1])
+        return None
+
+    @property
+    def destination_tuple(self):
+        Destination = namedtuple('Destination', ['ip', 'port', 'route_domain', 'mask'])
+        if self._values['destination'] is None:
+            result = Destination(ip=None, port=None, route_domain=None, mask=None)
             return result
-        addr = self._values['destination'].split("%")[0]
-        result = Destination(ip=addr, port=self.port, route_domain=self.route_domain)
+        sanitized = self._values['destination'].split("%")[0].split('/')[0]
+        addr = compress_address(u'{0}'.format(sanitized))
+        result = Destination(ip=addr, port=self.port, route_domain=self.route_domain, mask=self.mask)
         return result
 
     @property
-    def source(self):
-        if self._values['source'] is None:
+    def mask(self):
+        if self._values['destination'] is None:
             return None
-        try:
-            addr = ip_interface(u'{0}'.format(self._values['source']))
-            result = '{0}/{1}'.format(str(addr.ip), addr.network.prefixlen)
-            return result
-        except ValueError:
-            raise F5ModuleError(
-                "The source IP address must be specified in CIDR format: address/prefix"
-            )
+        addr = self._values['destination'].split("%")[0]
+        if addr in ['0.0.0.0', '0.0.0.0/any', '0.0.0.0/0']:
+            return 'any'
+        if addr in ['::', '::/0', '::/any6']:
+            return 'any6'
+        if self._values['mask'] is None:
+            return get_netmask(u'{0}'.format(addr))
+        return compress_address(u'{0}'.format(self._values['mask']))
 
     @property
     def port(self):
@@ -1451,9 +1538,10 @@ class ModuleParameters(Parameters):
                 tmp['fullPath'] = fq_name(self.partition, tmp['name'])
                 self._handle_clientssl_profile_nuances(tmp)
             else:
-                tmp['name'] = profile
+                full_path = fq_name(self.partition, profile)
+                tmp['name'] = os.path.basename(profile)
                 tmp['context'] = 'all'
-                tmp['fullPath'] = fq_name(self.partition, tmp['name'])
+                tmp['fullPath'] = full_path
                 self._handle_clientssl_profile_nuances(tmp)
             result.append(tmp)
         mutually_exclusive = [x['name'] for x in result if x in self.profiles_mutex]
@@ -1667,6 +1755,14 @@ class ModuleParameters(Parameters):
         return fq_name(self.partition, self._values['firewall_staged_policy'])
 
     @property
+    def ip_intelligence_policy(self):
+        if self._values['ip_intelligence_policy'] is None:
+            return None
+        if self._values['ip_intelligence_policy'] in ['', 'none']:
+            return ''
+        return fq_name(self.partition, self._values['ip_intelligence_policy'])
+
+    @property
     def security_log_profiles(self):
         if self._values['security_log_profiles'] is None:
             return None
@@ -1714,6 +1810,15 @@ class ModuleParameters(Parameters):
         if result:
             return result
         return None
+
+    @property
+    def mirror(self):
+        result = flatten_boolean(self._values['mirror'])
+        if result is None:
+            return None
+        if result == 'yes':
+            return 'enabled'
+        return 'disabled'
 
 
 class Changes(Parameters):
@@ -1838,6 +1943,14 @@ class UsableChanges(Changes):
 
 
 class ReportableChanges(Changes):
+    @property
+    def mirror(self):
+        if self._values['mirror'] is None:
+            return None
+        elif self._values['mirror'] == 'enabled':
+            return 'yes'
+        return 'no'
+
     @property
     def snat(self):
         if self._values['snat'] is None:
@@ -2128,7 +2241,7 @@ class VirtualServerValidator(object):
             # - udp
             # - sctp
             # - all protocols
-            if self.want.ip_protocol not in [6, 17, 132, 'all']:
+            if self.want.ip_protocol not in [6, 17, 132, 'all', 'any']:
                 raise F5ModuleError(
                     "The 'message-routing' server type does not support the specified 'ip_protocol'."
                 )
@@ -2668,6 +2781,17 @@ class Difference(object):
             )
 
     @property
+    def ip_intelligence_policy(self):
+        if self.want.ip_intelligence_policy is None:
+            return None
+        if self.want.ip_intelligence_policy == '' and self.have.ip_intelligence_policy is not None:
+            return ""
+        if self.want.ip_intelligence_policy == '' and self.have.ip_intelligence_policy is None:
+            return None
+        if self.want.ip_intelligence_policy != self.have.ip_intelligence_policy:
+            return self.want.ip_intelligence_policy
+
+    @property
     def policies(self):
         if self.want.policies is None:
             return None
@@ -2784,11 +2908,14 @@ class ModuleManager(object):
         self.have = ApiParameters(client=self.client)
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.changes = UsableChanges()
+        self.provisioned_modules = []
 
     def exec_module(self):
         changed = False
         result = dict()
         state = self.want.state
+
+        self.provisioned_modules = modules_provisioned(self.client)
 
         if state in ['present', 'enabled', 'disabled']:
             changed = self.present()
@@ -2818,6 +2945,12 @@ class ModuleManager(object):
             module=self.module, client=self.client, have=self.have, want=self.want
         )
         validator.check_update()
+
+        if self.want.ip_intelligence_policy is not None:
+            if not any(x for x in self.provisioned_modules if x in ['afm', 'asm']):
+                raise F5ModuleError(
+                    "AFM must be provisioned to configure an IP Intelligence policy."
+                )
 
         if not self.should_update():
             return False
@@ -2890,6 +3023,12 @@ class ModuleManager(object):
             module=self.module, client=self.client, have=self.have, want=self.want
         )
         validator.check_create()
+
+        if self.want.ip_intelligence_policy is not None:
+            if not any(x for x in self.provisioned_modules if x in ['afm', 'asm']):
+                raise F5ModuleError(
+                    "AFM must be provisioned to configure an IP Intelligence policy."
+                )
 
         self._set_changed_options()
         if self.module.check_mode:
@@ -3027,9 +3166,14 @@ class ArgumentSpec(object):
             ),
             address_translation=dict(type='bool'),
             port_translation=dict(type='bool'),
+            source_port=dict(
+                choices=[
+                    'preserve', 'preserve-strict', 'change'
+                ]
+            ),
             ip_protocol=dict(
                 choices=[
-                    'ah', 'bna', 'esp', 'etherip', 'gre', 'icmp', 'ipencap', 'ipv6',
+                    'ah', 'any', 'bna', 'esp', 'etherip', 'gre', 'icmp', 'ipencap', 'ipv6',
                     'ipv6-auth', 'ipv6-crypt', 'ipv6-icmp', 'isp-ip', 'mux', 'ospf',
                     'sctp', 'tcp', 'udp', 'udplite'
                 ]
@@ -3041,8 +3185,11 @@ class ArgumentSpec(object):
                     'performance-http', 'performance-l4', 'reject', 'stateless', 'dhcp'
                 ]
             ),
+            mirror=dict(type='bool'),
+            mask=dict(),
             firewall_staged_policy=dict(),
             firewall_enforced_policy=dict(),
+            ip_intelligence_policy=dict(),
             security_log_profiles=dict(type='list'),
             security_nat_policy=dict(
                 type='dict',
@@ -3070,8 +3217,9 @@ def main():
         mutually_exclusive=spec.mutually_exclusive
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

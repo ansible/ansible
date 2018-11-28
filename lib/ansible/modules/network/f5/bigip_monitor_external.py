@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'certified'}
@@ -176,6 +177,7 @@ try:
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import compare_dictionary
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -188,6 +190,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -199,18 +202,35 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'defaultsFrom', 'interval', 'timeout', 'destination', 'run', 'args',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'destination',
+        'run',
+        'args',
         'description',
     ]
 
     returnables = [
-        'parent', 'ip', 'port', 'interval', 'timeout', 'variables', 'external_program',
-        'arguments', 'description',
+        'parent',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'variables',
+        'external_program',
+        'arguments',
+        'description',
     ]
 
     updatables = [
-        'destination', 'interval', 'timeout', 'variables', 'external_program',
-        'arguments', 'description',
+        'destination',
+        'interval',
+        'timeout',
+        'variables',
+        'external_program',
+        'arguments',
+        'description',
     ]
 
     @property
@@ -280,6 +300,12 @@ class Parameters(AnsibleF5Parameters):
 
 class ApiParameters(Parameters):
     @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
+    @property
     def variables(self):
         if self._values['variables'] is None:
             return None
@@ -297,6 +323,14 @@ class ApiParameters(Parameters):
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def variables(self):
         if self._values['variables'] is None:
@@ -424,6 +458,10 @@ class Difference(object):
                 variables=result
             )
             return result
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -658,7 +696,7 @@ class ArgumentSpec(object):
             description=dict(),
             arguments=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             external_program=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),

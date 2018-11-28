@@ -52,7 +52,7 @@ class VmwareRestClient(object):
 
     def check_required_library(self):
         """
-        Function to check required libraries
+        Check required libraries
 
         """
         if not HAS_REQUESTS:
@@ -71,7 +71,7 @@ class VmwareRestClient(object):
 
     def connect_to_rest(self):
         """
-        Function to connect to server using username and password
+        Connect to server using username and password
 
         """
         session = requests.Session()
@@ -79,12 +79,14 @@ class VmwareRestClient(object):
 
         username = self.params.get('username', None)
         password = self.params.get('password', None)
+        protocol = self.params.get('protocol', 'https')
+        hostname = self.params.get('hostname')
 
         if not all([self.params.get('hostname', None), username, password]):
             self.module.fail_json(msg="Missing one of the following : hostname, username, password."
                                       " Please read the documentation for more information.")
 
-        vcenter_url = "%(protocol)s://%(hostname)s/api" % self.params
+        vcenter_url = "%s://%s/api" % (protocol, hostname)
 
         # Get request connector
         connector = get_requests_connector(session=session, url=vcenter_url)
@@ -100,7 +102,7 @@ class VmwareRestClient(object):
         try:
             session_id = session_svc.create()
         except OSError as os_err:
-            self.module.fail_json(msg="Failed to login to %s: %s" % (self.params['hostname'],
+            self.module.fail_json(msg="Failed to login to %s: %s" % (hostname,
                                                                      to_native(os_err)))
 
         if session_id is None:
@@ -112,7 +114,7 @@ class VmwareRestClient(object):
         stub_config.connector.set_security_context(session_security_context)
 
         if stub_config is None:
-            self.module.fail_json(msg="Failed to login to %(hostname)s" % self.params)
+            self.module.fail_json(msg="Failed to login to %s" % hostname)
         return stub_config
 
     @staticmethod
@@ -134,3 +136,39 @@ class VmwareRestClient(object):
                                 fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS']),
                                 default=True),
         )
+
+    def get_tags_for_object(self, tag_service, tag_assoc_svc, dobj):
+        """
+        Return list of tag objects associated with an object
+        Args:
+            dobj: Dynamic object
+            tag_service: Tag service object
+            tag_assoc_svc: Tag Association object
+        Returns: List of tag objects associated with the given object
+        """
+        tag_ids = tag_assoc_svc.list_attached_tags(dobj)
+        tags = []
+        for tag_id in tag_ids:
+            tags.append(tag_service.get(tag_id))
+        return tags
+
+    def get_vm_tags(self, tag_service, tag_association_svc, vm_mid=None):
+        """
+        Return list of tag name associated with virtual machine
+        Args:
+            tag_service:  Tag service object
+            tag_association_svc: Tag association object
+            vm_mid: Dynamic object for virtual machine
+
+        Returns: List of tag names associated with the given virtual machine
+
+        """
+        tags = []
+        if vm_mid is None:
+            return tags
+        dynamic_managed_object = DynamicID(type='VirtualMachine', id=vm_mid)
+
+        temp_tags_model = self.get_tags_for_object(tag_service, tag_association_svc, dynamic_managed_object)
+        for t in temp_tags_model:
+            tags.append(t.name)
+        return tags

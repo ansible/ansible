@@ -108,6 +108,11 @@ Noteworthy module changes
 * The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardised
   ``validate_certs`` option instead.
 
+* The ``vmware_local_role_facts`` module now returns a list of dicts instead of a dict of dicts for role information.
+
+* If ``docker_network`` or ``docker_volume`` were called with ``diff: yes``, ``check_mode: yes`` or ``debug: yes``,
+  a return value called ``diff`` was returned of type ``list``. To enable proper diff output, this was changed to
+  type ``dict``; the original ``list`` is returned as ``diff.differences``.
 
 Plugins
 =======
@@ -119,7 +124,28 @@ Plugins
 Porting custom scripts
 ======================
 
-No notable changes.
+Display class
+-------------
+
+As of Ansible 2.8, the ``Display`` class is now a "singleton". Instead of using ``__main__.display`` each file should
+import and instantiate ``ansible.utils.display.Display`` on it's own.
+
+**OLD** In Ansible 2.7 (and earlier) the following was used to access the ``display`` object:
+
+.. code-block:: python
+
+   try:
+       from __main__ import display
+   except ImportError:
+       from ansible.utils.display import Display
+       display = Display()
+
+**NEW** In Ansible 2.8 the following should be used:
+
+.. code-block:: python
+
+   from ansible.utils.display import Display
+   display = Display()
 
 Networking
 ==========

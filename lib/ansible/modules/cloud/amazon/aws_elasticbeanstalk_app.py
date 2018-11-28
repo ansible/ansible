@@ -35,6 +35,7 @@ options:
     description:
       - when set to true, running environments will be terminated before deleting the application
     default: false
+    type: bool
 author:
     - Harpreet Singh (@hsingh)
     - Stephen Granger (@viper233)

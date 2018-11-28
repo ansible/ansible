@@ -123,7 +123,7 @@ options:
     purge_origins:
       description: Whether to remove any origins that aren't listed in I(origins)
       default: false
-
+      type: bool
     default_cache_behavior:
       description:
         - A config element that is a complex object specifying the default cache behavior of the distribution. If not specified, the I(target_origin_id) is
@@ -187,21 +187,21 @@ options:
       description: Whether to remove any cache behaviors that aren't listed in I(cache_behaviors). This switch
         also allows the reordering of cache_behaviors.
       default: false
-
+      type: bool
     custom_error_responses:
       description:
         - A config element that is a I(list[]) of complex custom error responses to be specified for the distribution. This attribute configures custom http
           error messages returned to the user.
           Each custom error response object comprises the attributes
             I(error_code)
-            I(reponse_page_path)
+            I(response_page_path)
             I(response_code)
             I(error_caching_min_ttl)
 
     purge_custom_error_responses:
       description: Whether to remove any custom error responses that aren't listed in I(custom_error_responses)
       default: false
-
+      type: bool
     comment:
       description:
         - A comment that describes the cloudfront distribution. If not specified, it defaults to a

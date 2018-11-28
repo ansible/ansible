@@ -14,9 +14,9 @@ DOCUMENTATION = '''
 module: na_ontap_net_vlan
 short_description: NetApp ONTAP network VLAN
 extends_documentation_fragment:
-    - netapp.ontap
+    - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create or Delete a network VLAN
 options:
@@ -71,7 +71,7 @@ class NetAppOntapVlan(object):
         """
         Initializes the NetAppOntapVlan function
         """
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             parent_interface=dict(required=True, type='str'),
@@ -95,7 +95,7 @@ class NetAppOntapVlan(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
         return
 
     def create_vlan(self):
@@ -154,7 +154,7 @@ class NetAppOntapVlan(object):
         changed = False
         result = None
         results = netapp_utils.get_cserver(self.server)
-        cserver = netapp_utils.setup_ontap_zapi(module=self.module, vserver=results)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_net_vlan", cserver)
         existing_vlan = self.does_vlan_exist()
         if existing_vlan:

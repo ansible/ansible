@@ -28,12 +28,9 @@ from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.loader import cache_loader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class BaseCacheModule(with_metaclass(ABCMeta, object)):
@@ -292,10 +289,18 @@ class FactCache(MutableMapping):
         """ Flush the fact cache of all keys. """
         self._plugin.flush()
 
-    def update(self, key, value):
-        host_cache = self._plugin.get(key)
-        host_cache.update(value)
-        self._plugin.set(key, host_cache)
+    def update(self, host_facts):
+        """ We override the normal update to ensure we always use the 'setter' method """
+        for key in host_facts:
+            try:
+                host_cache = self._plugin.get(key)
+                if host_cache:
+                    host_cache.update(host_facts[key])
+                else:
+                    host_cache = host_facts[key]
+                self._plugin.set(key, host_cache)
+            except KeyError:
+                self._plugin.set(key, host_facts[key])
 
 
 class InventoryFileCacheModule(BaseFileCacheModule):
@@ -314,7 +319,7 @@ class InventoryFileCacheModule(BaseFileCacheModule):
     def validate_cache_connection(self):
         try:
             super(InventoryFileCacheModule, self).validate_cache_connection()
-        except AnsibleError as e:
+        except AnsibleError:
             cache_connection_set = False
         else:
             cache_connection_set = True

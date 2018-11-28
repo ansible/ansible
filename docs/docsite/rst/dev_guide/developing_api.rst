@@ -67,10 +67,10 @@ This example is a simple demonstration that shows how to minimally run a couple 
     # create inventory, use path to host config file as source or hosts in a comma separated string
     inventory = InventoryManager(loader=loader, sources='localhost,')
 
-    # variable manager takes care of merging all the different sources to give you a unifed view of variables available in each context
+    # variable manager takes care of merging all the different sources to give you a unified view of variables available in each context
     variable_manager = VariableManager(loader=loader, inventory=inventory)
 
-    # create datastructure that represents our play, including tasks, this is basically what our YAML loader does internally.
+    # create data structure that represents our play, including tasks, this is basically what our YAML loader does internally.
     play_source =  dict(
             name = "Ansible Play",
             hosts = 'localhost',
@@ -98,7 +98,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
               )
         result = tqm.run(play) # most interesting data for a play is actually sent to the callback's methods
     finally:
-        # we always need to cleanup child procs and the structres we use to communicate with them
+        # we always need to cleanup child procs and the structures we use to communicate with them
         if tqm is not None:
             tqm.cleanup()
 

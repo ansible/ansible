@@ -47,6 +47,7 @@ options:
     version_added: "2.3"
     description: Purge existing subnets that are not found in subnets. Ignored unless the subnets option is supplied.
     default: 'true'
+    type: bool
   purge_tags:
     version_added: "2.5"
     description: Purge existing tags that are not found in route table

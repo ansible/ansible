@@ -279,10 +279,10 @@ allowed_divergence_value:
   type: int
   sample: 25
 description:
-    description: The description of the monitor.
-    returned: changed
-    type: str
-    sample: Important Monitor
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important Monitor
 adaptive_limit:
   description: Absolute number of milliseconds that may not be exceeded by a monitor probe.
   returned: changed
@@ -355,12 +355,13 @@ try:
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from library.module_utils.network.f5.ipaddress import validate_ip_address
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -369,12 +370,13 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from ansible.module_utils.network.f5.ipaddress import validate_ip_address
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -549,10 +551,22 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def manual_resume(self):
         if self._values['manual_resume'] is None:
@@ -605,35 +619,19 @@ class UsableChanges(Changes):
 class ReportableChanges(Changes):
     @property
     def manual_resume(self):
-        if self._values['manual_resume'] is None:
-            return None
-        elif self._values['manual_resume'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['manual_resume'])
 
     @property
     def reverse(self):
-        if self._values['reverse'] is None:
-            return None
-        elif self._values['reverse'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['reverse'])
 
     @property
     def transparent(self):
-        if self._values['transparent'] is None:
-            return None
-        elif self._values['transparent'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['transparent'])
 
     @property
     def adaptive(self):
-        if self._values['adaptive'] is None:
-            return None
-        elif self._values['adaptive'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['adaptive'])
 
 
 class Difference(object):
@@ -700,6 +698,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -958,7 +960,7 @@ class ArgumentSpec(object):
             receive=dict(),
             ip=dict(),
             description=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             manual_resume=dict(type='bool'),
@@ -998,6 +1000,7 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
     )
+
     client = F5RestClient(**module.params)
 
     try:

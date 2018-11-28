@@ -1,0 +1,7 @@
+---
+- include_tasks: test_docker_config.yml
+  # Maximum of 1.30 (docker API version for docker_config) and 1.35 (docker API version for docker_swarm) is 1.35
+  when: docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.35', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_config tests!"
+  when: not(docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.35', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

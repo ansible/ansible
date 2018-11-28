@@ -83,7 +83,6 @@ class DistributionFiles:
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT',
-        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
@@ -269,6 +268,10 @@ class DistributionFiles:
                     else:
                         release = "0"  # no minor number, so it is the first release
                     suse_facts['distribution_release'] = release
+                # Starting with SLES4SAP12 SP3 NAME reports 'SLES' instead of 'SLES_SAP'
+                # According to SuSe Support (SR101182877871) we should use the CPE_NAME to detect SLES4SAP
+                if re.search("^CPE_NAME=.*sles_sap.*$", line):
+                    suse_facts['distribution'] = 'SLES_SAP'
         elif path == '/etc/SuSE-release':
             if 'open' in data.lower():
                 data = data.splitlines()
@@ -374,6 +377,20 @@ class DistributionFiles:
             return False, coreos_facts  # TODO: remove if tested without this
 
         return True, coreos_facts
+
+    def parse_distribution_file_ClearLinux(self, name, data, path, collected_facts):
+        clear_facts = {}
+        if "clearlinux" not in name.lower():
+            return False, clear_facts
+
+        version = re.search('VERSION_ID=(.*)', data)
+        if version:
+            clear_facts['distribution_major_version'] = version.groups()[0]
+            clear_facts['distribution_version'] = version.groups()[0]
+        release = re.search('ID=(.*)', data)
+        if release:
+            clear_facts['distribution_release'] = release.groups()[0]
+        return True, clear_facts
 
 
 class Distribution(object):
@@ -486,8 +503,11 @@ class Distribution(object):
         rc, out, err = self.module.run_command("/usr/bin/oslevel")
         data = out.split('.')
         aix_facts['distribution_major_version'] = data[0]
-        aix_facts['distribution_version'] = data[0]
-        aix_facts['distribution_release'] = data[1]
+        if len(data) > 1:
+            aix_facts['distribution_version'] = '%s.%s' % (data[0], data[1])
+            aix_facts['distribution_release'] = data[1]
+        else:
+            aix_facts['distribution_version'] = data[0]
         return aix_facts
 
     def get_distribution_HPUX(self):

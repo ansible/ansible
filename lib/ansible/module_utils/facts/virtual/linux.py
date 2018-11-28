@@ -114,7 +114,7 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
-        if bios_vendor == 'Amazon EC2':
+        if bios_vendor in ['Amazon EC2', 'Hetzner']:
             virtual_facts['virtualization_type'] = 'kvm'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts

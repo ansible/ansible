@@ -1,0 +1,2 @@
+bugfixes:
+  - reboot - change default reboot time command to prevent hanging on certain systems (https://github.com/ansible/ansible/issues/46562)

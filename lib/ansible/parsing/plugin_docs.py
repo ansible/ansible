@@ -11,12 +11,9 @@ import yaml
 from ansible.module_utils._text import to_text
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def read_docstring(filename, verbose=True, ignore_errors=True):
@@ -68,11 +65,15 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
         data['metadata'] = extract_metadata(module_ast=M)[0]
 
-        # remove version
         if data['metadata']:
+            # remove version
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
+        else:
+            # Add default metadata
+            data['metadata'] = {'supported_by': 'community',
+                                'status': ['preview']}
     except:
         if verbose:
             display.error("unable to parse %s" % filename)

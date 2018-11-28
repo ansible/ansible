@@ -22,7 +22,7 @@ description:
 - Allows users to add or remove flatpaks.
 - See the M(flatpak_remote) module for managing flatpak remotes.
 author:
-- John Kwiatkoski (@jaykayy)
+- John Kwiatkoski (@JayKayy)
 - Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak
@@ -82,7 +82,7 @@ EXAMPLES = r'''
   flatpak:
     name: org.gnome.gedit
     state: present
-  method: user
+    method: user
 
 - name: Install the Gnome Calendar flatpak from the gnome remote system-wide
   flatpak:
@@ -127,6 +127,7 @@ stdout:
 import subprocess
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def install_flat(module, binary, remote, name, method):
@@ -203,7 +204,7 @@ def _flatpak_command(module, noop, command):
     result['stderr'] = stderr_data
     if result['rc'] != 0:
         module.fail_json(msg="Failed to execute flatpak command", **result)
-    return stdout_data
+    return to_native(stdout_data)
 
 
 def main():
