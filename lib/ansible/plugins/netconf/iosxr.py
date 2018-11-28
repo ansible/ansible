@@ -158,7 +158,7 @@ class Netconf(NetconfBase):
             raise ValueError('config value must be provided')
         try:
             resp = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
-                                          error_option=error_option)
+                                      error_option=error_option)
             if remove_ns:
                 response = remove_namespaces(resp)
             else:
