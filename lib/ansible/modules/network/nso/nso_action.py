@@ -57,6 +57,7 @@ options:
      description: >
        If set to true, the task will fail if any output parameters not in
        output_required is present in the output.
+     type: bool
 version_added: "2.5"
 '''
 

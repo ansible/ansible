@@ -123,6 +123,7 @@ options:
     description:
       - Require valid SSL certificates (set to `false` if you'd like to use self-signed certificates)
     default: true
+    type: bool
 
 notes:
   - "Currently this only works with basic-auth."

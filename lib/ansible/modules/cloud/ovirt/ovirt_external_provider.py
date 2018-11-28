@@ -80,6 +80,7 @@ options:
         description:
             - "Specify if the network should be read only."
             - "Applicable if C(type) is I(network)."
+        type: bool
     network_type:
         description:
             - "Type of the external network provider either external (for example OVN) or neutron."

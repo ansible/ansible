@@ -45,6 +45,7 @@ options:
               IP addresses do not persist across reboots.
         required: false
         default: false
+        type: bool
     wait:
         description:
             - Specifies the time in seconds we wait for obtaining address via DHCP.

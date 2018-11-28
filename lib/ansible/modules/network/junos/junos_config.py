@@ -61,6 +61,7 @@ options:
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device.
+    type: bool
   confirm:
     description:
       - The C(confirm) argument will configure a time out value in minutes
@@ -101,7 +102,7 @@ options:
   update:
     description:
       - This argument will decide how to load the configuration
-        data particulary when the candidate configuration and loaded
+        data particularly when the candidate configuration and loaded
         configuration contain conflicting statements. Following are
         accepted values.
         C(merge) combines the data in the loaded configuration with the

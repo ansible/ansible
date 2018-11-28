@@ -42,6 +42,7 @@ options:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         required: false
         default: false
+        type: bool
 '''
 
 EXAMPLES = '''

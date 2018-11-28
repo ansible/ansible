@@ -64,6 +64,7 @@ options:
     description:
       - True if network offering supports persistent networks
       - defaulted to false if not specified
+    type: bool
   keepalive_enabled:
     description:
       - If true keepalive will be turned on in the loadbalancer.

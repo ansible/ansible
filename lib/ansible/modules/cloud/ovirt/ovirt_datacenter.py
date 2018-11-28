@@ -41,6 +41,7 @@ options:
         description:
             - "I(True) if the data center should be local, I(False) if should be shared."
             - "Default value is set by engine."
+        type: bool
     compatibility_version:
         description:
             - "Compatibility version of the data center."
@@ -62,6 +63,7 @@ options:
               that only empty data center can be removed."
         version_added: "2.5"
         default: False
+        type: bool
 
 extends_documentation_fragment: ovirt
 '''

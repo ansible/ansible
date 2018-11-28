@@ -55,6 +55,7 @@ options:
           - Whether or not the container is ephemeral (e.g. true or false).
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
+        type: bool
     source:
         description:
           - 'The source for the container
@@ -92,12 +93,14 @@ options:
             starting or restarting.
         required: false
         default: false
+        type: bool
     force_stop:
         description:
           - If this is true, the C(lxd_container) forces to stop the container
             when it stops or restarts the container.
         required: false
         default: false
+        type: bool
     url:
         description:
           - The unix domain socket path or the https URL for the LXD server.

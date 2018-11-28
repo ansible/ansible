@@ -38,6 +38,7 @@ options:
         default: true
         description:
         - Should https certificates be validated?
+        type: bool
     state:
         description:
             - Whether to ensure the group is present or absent.

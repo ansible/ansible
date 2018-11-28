@@ -46,6 +46,7 @@ options:
   enable_cdn:
     description:
        - If true, enable Cloud CDN for this Backend Service.
+    type: bool
   port_name:
     description:
       - Name of the port on the managed instance group (MIG) that backend

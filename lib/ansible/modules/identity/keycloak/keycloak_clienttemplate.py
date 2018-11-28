@@ -69,6 +69,7 @@ options:
         description:
             - Is the "Full Scope Allowed" feature set for this client template or not.
               This is 'fullScopeAllowed' in the Keycloak REST API.
+        type: bool
 
     protocol_mappers:
         description:

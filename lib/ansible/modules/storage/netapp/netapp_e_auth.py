@@ -26,6 +26,7 @@ options:
         default: true
         description:
         - Should https certificates be validated?
+        type: bool
     name:
       description:
         - The name of the storage array. Note that if more than one storage array with this name is detected, the task will fail and you'll have to use
@@ -38,6 +39,7 @@ options:
     set_admin:
       description:
         - Boolean value on whether to update the admin password. If set to false then the RO account is updated.
+      type: bool
       default: False
     current_password:
       description:

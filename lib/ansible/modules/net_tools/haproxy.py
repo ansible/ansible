@@ -40,6 +40,7 @@ options:
         determined by wait_interval and wait_retries is reached.  Continue only
         after the status changes to 'MAINT'.  This overrides the
         shutdown_sessions option.
+    type: bool
     version_added: "2.4"
   host:
     description:

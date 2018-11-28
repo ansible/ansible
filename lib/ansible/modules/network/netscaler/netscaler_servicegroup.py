@@ -125,14 +125,17 @@ options:
                 Use client's IP address as the source IP address when initiating connection to the server. With the
                 NO setting, which is the default, a mapped IP (MIP) address or subnet IP (SNIP) address is used as
                 the source IP address to initiate server side connections.
+        type: bool
 
     pathmonitor:
         description:
             - "Path monitoring for clustering."
+        type: bool
 
     pathmonitorindv:
         description:
             - "Individual Path monitoring decisions."
+        type: bool
 
     useproxyport:
         description:
