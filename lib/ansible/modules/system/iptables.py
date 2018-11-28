@@ -274,6 +274,7 @@ options:
       - If no chain is specified then the entire table is purged.
       - Ignores all other parameters.
     version_added: "2.2"
+    type: bool
   policy:
     description:
       - Set the policy for the chain to the given target.

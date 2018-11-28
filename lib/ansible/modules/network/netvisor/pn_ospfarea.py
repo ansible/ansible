@@ -75,6 +75,7 @@ options:
       - Enable/disable system information.
     required: false
     default: true
+    type: bool
 """
 
 EXAMPLES = """

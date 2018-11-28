@@ -61,6 +61,7 @@ options:
       - Whether the firewall rule for public port should be created, while creating the new rule.
       - Use M(cs_firewall) for managing firewall rules.
     default: false
+    type: bool
   vm_guest_ip:
     description:
       - VM guest NIC secondary IP address for the port forwarding rule.
@@ -90,6 +91,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).

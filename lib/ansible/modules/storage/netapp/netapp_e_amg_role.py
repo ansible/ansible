@@ -38,6 +38,7 @@ options:
         default: true
         description:
         - Should https certificates be validated?
+        type: bool
     ssid:
         description:
             - The ID of the primary storage array for the async mirror action
@@ -58,6 +59,7 @@ options:
             - Whether to force the role reversal regardless of the online-state of the primary
         required: no
         default: no
+        type: bool
 """
 
 EXAMPLES = """
