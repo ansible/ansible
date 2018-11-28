@@ -1,0 +1,25 @@
+---
+
+- name: Create ssh key
+  digital_ocean_sshkey:
+    name: test-key1
+    ssh_pub_key: "{{ dummy_ssh_pub_key }}"
+    oauth_token: "{{ digitalocean_oauth_token }}"
+  register: result
+
+- name: Verify that SSH key was created
+  assert:
+    that:
+      - "result.changed"
+
+- name: "Delete ssh key"
+  digital_ocean_sshkey:
+    state: "absent"
+    fingerprint: "{{ result.data.ssh_key.fingerprint }}"
+    oauth_token: "{{ digitalocean_oauth_token }}"
+  register: result
+
+- name: Verify that SSH key was deleted
+  assert:
+    that:
+      - "result.changed"
