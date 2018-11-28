@@ -1,0 +1,2 @@
+bugfixes:
+  - pip - Improve documentation for umask option. (https://github.com/ansible/ansible/issues/43256)
