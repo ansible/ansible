@@ -21,9 +21,9 @@ import os
 import stat
 import warnings
 
-import six
-from six.moves import configparser
-from six import StringIO
+import ansible.module_utils.six as six
+from ansible.module_utils.six.moves import configparser
+from ansible.module_utils.six import StringIO
 
 try:
     from collections import OrderedDict  # NOQA
@@ -184,7 +184,7 @@ class Settings(object):
         while os.path.split(local_dir)[1]:
 
             # Switch to parent of this directory
-            local_dir, _ = os.path.split(local_dir)
+            local_dir, dummy = os.path.split(local_dir)
 
             # Sanity check: if this directory corresponds to our global or
             # user directory, skip it.
