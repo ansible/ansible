@@ -80,12 +80,8 @@ class AdHocCLI(CLI):
         mytask = {'action': {'module': self.options.module_name, 'args': parse_kv(self.options.module_args, check_raw=check_raw)}}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        if self.options.module_name not in ('include_role', 'include_tasks'):
+        if self.options.module_name not in ('include_role', 'include_tasks') or any(async_val, poll):
             mytask['async_val'] = async_val
-            mytask['poll'] = poll
-        elif async_val:
-            mytask['async_val'] = async_val
-        elif poll:
             mytask['poll'] = poll
 
         return dict(
