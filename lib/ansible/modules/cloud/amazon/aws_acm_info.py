@@ -14,6 +14,10 @@ description:
   - This module was called C(aws_acm_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 options:
+  certificate_arn:
+    description:
+      - The ARN of the certificate to get infos on
+    version_added: "2.8"
   domain_name:
     description:
       - The domain name of an ACM certificate to limit the search to
@@ -33,14 +37,18 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: obtain all ACM certificates
+- name: Obtain all ACM certificates
   aws_acm_info:
 
-- name: obtain all information for a single ACM certificate
+- name: Obtain infos for a all ACM certificates matching that domain pattern
   aws_acm_info:
     domain_name: "*.example_com"
 
-- name: obtain all certificates pending validation
+- name: Obtain infos for a single ACM certificate by providing ARN
+  aws_acm_info:
+    certificate_arn: "arn:aws:acm:us-east-1:123123000:certificate/57979100-e35a-4eda-a301-1aaaa12312"
+
+- name: Obtain all certificates pending validiation
   aws_acm_info:
     statuses:
     - PENDING_VALIDATION
@@ -266,6 +274,19 @@ def list_certificate_tags_with_backoff(client, certificate_arn):
     return client.list_tags_for_certificate(CertificateArn=certificate_arn)['Tags']
 
 
+def get_certificate(client, module, certificate_arn):
+    try:
+        cert_data = describe_certificate_with_backoff(client, certificate_arn)
+        cert_data.update(get_certificate_with_backoff(client, certificate_arn))
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg="Couldn't obtain certificate info for ARN %s" % certificate_arn,
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+
+    result = camel_dict_to_snake_dict(cert_data)
+    return result
+
+
 def get_certificates(client, module, domain_name=None, statuses=None):
     try:
         all_certificates = list_certificates_with_backoff(client, statuses)
@@ -310,6 +331,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
+            certificate_arn=dict(type='str', default=None),
             domain_name=dict(aliases=['name']),
             statuses=dict(type='list', choices=['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']),
         )
@@ -325,7 +347,14 @@ def main():
     client = boto3_conn(module, conn_type='client', resource='acm',
                         region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    certificates = get_certificates(client, module, domain_name=module.params['domain_name'], statuses=module.params['statuses'])
+    certificates = []
+    certificate_arn = module.params['certificate_arn']
+
+    if certificate_arn:
+        certificates = [get_certificate(client, module, certificate_arn)]
+    else:
+        certificates = get_certificates(client, module, domain_name=module.params['domain_name'], statuses=module.params['statuses'])
+
     module.exit_json(certificates=certificates)
 
 
