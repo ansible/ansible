@@ -24,7 +24,7 @@ DOCUMENTATION = '''
         choices: ['foreman']
       url:
         description: url to foreman
-        default: 'http://localhost:300'
+        default: 'http://localhost:3000'
       user:
         description: foreman authentication user
         required: True
