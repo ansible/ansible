@@ -23,7 +23,7 @@ from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleOctal, AnsibleHex
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleOctal
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
