@@ -67,17 +67,16 @@ EXAMPLES = '''
     cooldown: 300
 '''
 
+import traceback
+
 try:
-    import boto.ec2.autoscale
-    import boto.exception
-    from boto.ec2.autoscale import ScalingPolicy
-    from boto.exception import BotoServerError
+    import botocore
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO
+    pass  # will be detected by imported HAS_BOTO3
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
-                                      get_aws_connection_info)
+# from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info
 
 
 def create_scaling_policy(connection, module):
@@ -88,65 +87,100 @@ def create_scaling_policy(connection, module):
     min_adjustment_step = module.params.get('min_adjustment_step')
     cooldown = module.params.get('cooldown')
 
-    scalingPolicies = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])
+    scaling_policies = connection.describe_policies(
+        AutoScalingGroupName=asg_name,
+        PolicyNames=[sp_name]
+    )['ScalingPolicies']
 
-    if not scalingPolicies:
-        sp = ScalingPolicy(
-            name=sp_name,
-            adjustment_type=adjustment_type,
-            as_name=asg_name,
-            scaling_adjustment=scaling_adjustment,
-            min_adjustment_step=min_adjustment_step,
-            cooldown=cooldown)
+    if not scaling_policies:
+        sp = dict(
+            AutoScalingGroupName=asg_name,
+            PolicyName=sp_name,
+            AdjustmentType=adjustment_type,
+            ScalingAdjustment=scaling_adjustment,
+            Cooldown=cooldown
+        )
+        if adjustment_type == 'PercentChangeInCapacity':
+            sp['MinAdjustmentStep'] = min_adjustment_step
 
         try:
-            connection.create_scaling_policy(sp)
-            policy = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])[0]
-            module.exit_json(changed=True, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment,
-                             cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
-        except BotoServerError as e:
-            module.fail_json(msg=str(e))
+            connection.put_scaling_policy(**sp)
+            policy = connection.describe_policies(
+                AutoScalingGroupName=asg_name,
+                PolicyNames=[sp_name]
+            )['ScalingPolicies'][0]
+            module.exit_json(changed=True, **policy)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Failed to update Scaling Policy.",
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Scaling Policy.",
+                                 exception=traceback.format_exc())
     else:
-        policy = scalingPolicies[0]
+        policy = scaling_policies[0]
         changed = False
+        sp = dict(
+            AutoScalingGroupName=policy['AutoScalingGroupName'],
+            PolicyName=policy['PolicyName'],
+            AdjustmentType=policy['AdjustmentType'],
+            ScalingAdjustment=policy['ScalingAdjustment'],
+            Cooldown=policy['Cooldown']
+        )
+
+        # check attributes
+        for attr in (
+                ('AdjustmentType', 'adjustment_type'),
+                ('ScalingAdjustment', 'scaling_adjustment'),
+                ('Cooldown', 'cooldown')):
+            if policy[attr[0]] != module.params.get(attr[1]):
+                changed = True
+                sp[attr[0]] = module.params.get(attr[1])
 
         # min_adjustment_step attribute is only relevant if the adjustment_type
         # is set to percentage change in capacity, so it is a special case
-        if getattr(policy, 'adjustment_type') == 'PercentChangeInCapacity':
-            if getattr(policy, 'min_adjustment_step') != module.params.get('min_adjustment_step'):
+        if module.params.get('adjustment_type') == 'PercentChangeInCapacity':
+            if policy.get('MinAdjustmentStep') != module.params.get('min_adjustment_step'):
                 changed = True
-
-        # set the min adjustment step in case the user decided to change their
-        # adjustment type to percentage
-        setattr(policy, 'min_adjustment_step', module.params.get('min_adjustment_step'))
-
-        # check the remaining attributes
-        for attr in ('adjustment_type', 'scaling_adjustment', 'cooldown'):
-            if getattr(policy, attr) != module.params.get(attr):
-                changed = True
-                setattr(policy, attr, module.params.get(attr))
+            sp['MinAdjustmentStep'] = module.params.get('min_adjustment_step')
 
         try:
             if changed:
-                connection.create_scaling_policy(policy)
-                policy = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])[0]
-            module.exit_json(changed=changed, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment,
-                             cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
-        except BotoServerError as e:
-            module.fail_json(msg=str(e))
+                connection.put_scaling_policy(**sp)
+                policy = connection.describe_policies(
+                    AutoScalingGroupName=asg_name,
+                    PolicyNames=[sp_name]
+                )['ScalingPolicies'][0]
+            module.exit_json(changed=changed, **policy)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Failed to update Scaling Policy.",
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to update Scaling Policy.",
+                                 exception=traceback.format_exc())
 
 
 def delete_scaling_policy(connection, module):
     sp_name = module.params.get('name')
     asg_name = module.params.get('asg_name')
 
-    scalingPolicies = connection.get_all_policies(as_group=asg_name, policy_names=[sp_name])
+    scaling_policies = connection.describe_policies(
+        AutoScalingGroupName=asg_name,
+        PolicyNames=[sp_name]
+    )['ScalingPolicies']
 
-    if scalingPolicies:
+    if scaling_policies:
         try:
-            connection.delete_policy(sp_name, asg_name)
+            connection.delete_policy(
+                AutoScalingGroupName=asg_name,
+                PolicyName=sp_name)
             module.exit_json(changed=True)
-        except BotoServerError as e:
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Failed to delete Scaling Policy.",
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to delete Scaling Policy.",
+                                 exception=traceback.format_exc())
+        except botocore.exceptions.BotoServerError as e:
             module.exit_json(changed=False, msg=str(e))
     else:
         module.exit_json(changed=False)
@@ -168,17 +202,18 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    connection = boto3_conn(module,
+                            conn_type='client',
+                            resource='autoscaling',
+                            region=region,
+                            endpoint=ec2_url,
+                            **aws_connect_params)
 
     state = module.params.get('state')
-
-    try:
-        connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-        module.fail_json(msg=str(e))
 
     if state == 'present':
         create_scaling_policy(connection, module)
