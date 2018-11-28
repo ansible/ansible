@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: mongodb_shard
-short_description: Add and remove shards from a MongoDB Cluster
+short_description: Add and remove shards from a MongoDB Cluster.
 description:
     -  Add and remove shards from a MongoDB Cluster.
 author: Rhys Campbell (@rhysmeister)
