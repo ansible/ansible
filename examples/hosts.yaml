@@ -8,6 +8,8 @@
 #   - Hosts must be specified in a group's hosts:
 #     and they must be a key (: terminated)
 #   - groups can have children, hosts and vars keys
+#   - groups are unique and global - if you define a group in multiple locations, Ansible aggregates all the data to the global name.
+#   - If you define a group as a child of 2 different groups, it will be the child of both, any hosts and variables assigned will not be dependent on the parents, they will all be associated with the group.
 #   - Anything defined under a host is assumed to be a var
 #   - You can enter hostnames or IP addresses
 #   - A hostname/IP can be a member of multiple groups
