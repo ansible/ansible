@@ -183,6 +183,10 @@
     ignore_errors: yes
   register: sysctl_ignore_errors0
   
+- debug:
+    var: sysctl_ignore_errors0
+    verbosity: 1
+
 - name: validate success of set operation with ignore_errors
   assert: 
     that: 
@@ -195,6 +199,10 @@
     ignoreerrors: yes
   register: sysctl_ignore_errors1
   
+- debug:
+    var: sysctl_ignore_errors1
+    verbosity: 1
+
 - name: validate success of set operation with ignoreerrors
   assert: 
     that: 
