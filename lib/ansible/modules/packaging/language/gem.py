@@ -53,6 +53,19 @@ options:
     type: bool
     default: "yes"
     version_added: "1.3"
+  umask:
+    description:
+      - The system umask to apply before installing the gem package. This is
+        useful, for example, when installing on systems that have a very
+        restrictive umask by default (e.g., "0077") and you want to gem install
+        packages which are to be used by all users. Note that this requires you
+        to specify desired umask mode as an octal string, (e.g., "0022").
+        Specifying the mode as a decimal integer (e.g., 22) will also work, but
+        an octal integer (e.g., 0022) will be converted to decimal (18) before
+        evaluation, which is almost certainly not what was intended.
+    version_added: "2.7.3"
+    required: false
+    default: null
   executable:
     description:
     - Override the path to the gem executable
@@ -124,9 +137,17 @@ EXAMPLES = '''
     name: rake
     gem_source: /path/to/gems/rake-1.0.gem
     state: present
+
+# Install rake while ensuring the umask is 0022 (to ensure other users can use it)
+- gem:
+    name: rake
+    umask: "0022"
+  become: True
 '''
 
+import os
 import re
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -168,7 +189,8 @@ def get_installed_versions(module, remote=False):
     cmd.append('^%s$' % module.params['name'])
 
     environ = get_rubygems_environ(module)
-    (rc, out, err) = module.run_command(cmd, environ_update=environ, check_rc=True)
+    (rc, out, err) = module.run_command(
+        cmd, environ_update=environ, check_rc=True)
     installed_versions = []
     for line in out.splitlines():
         match = re.match(r"\S+\s+\((.+)\)", line)
@@ -265,10 +287,12 @@ def main():
         argument_spec=dict(
             executable=dict(required=False, type='path'),
             gem_source=dict(required=False, type='path'),
-            include_dependencies=dict(required=False, default=True, type='bool'),
+            include_dependencies=dict(
+                required=False, default=True, type='bool'),
             name=dict(required=True, type='str'),
             repository=dict(required=False, aliases=['source'], type='str'),
-            state=dict(required=False, default='present', choices=['present', 'absent', 'latest'], type='str'),
+            state=dict(required=False, default='present', choices=[
+                       'present', 'absent', 'latest'], type='str'),
             user_install=dict(required=False, default=True, type='bool'),
             install_dir=dict(required=False, type='path'),
             pre_release=dict(required=False, default=False, type='bool'),
@@ -277,15 +301,18 @@ def main():
             version=dict(required=False, type='str'),
             build_flags=dict(required=False, type='str'),
             force=dict(required=False, default=False, type='bool'),
+            umask=dict(type='str'),
         ),
         supports_check_mode=True,
-        mutually_exclusive=[['gem_source', 'repository'], ['gem_source', 'version']],
+        mutually_exclusive=[['gem_source', 'repository'],
+                            ['gem_source', 'version']],
     )
 
     if module.params['version'] and module.params['state'] == 'latest':
         module.fail_json(msg="Cannot specify version when state=latest")
     if module.params['gem_source'] and module.params['state'] == 'latest':
-        module.fail_json(msg="Cannot maintain state=latest when installing from local source")
+        module.fail_json(
+            msg="Cannot maintain state=latest when installing from local source")
     if module.params['user_install'] and module.params['install_dir']:
         module.fail_json(msg="install_dir requires user_install=false")
 
@@ -294,23 +321,37 @@ def main():
 
     changed = False
 
-    if module.params['state'] in ['present', 'latest']:
-        if not exists(module):
-            install(module)
-            changed = True
-    elif module.params['state'] == 'absent':
-        if exists(module):
-            uninstall(module)
-            changed = True
+    if module.params['umask'] and not isinstance(module.params['umask'], int):
+        try:
+            module.params['umask'] = int(module.params['umask'], 8)
+        except Exception:
+            module.fail_json(msg="umask must be an octal integer",
+                             details=to_native(sys.exc_info()[1]))
 
-    result = {}
-    result['name'] = module.params['name']
-    result['state'] = module.params['state']
-    if module.params['version']:
-        result['version'] = module.params['version']
-    result['changed'] = changed
+    old_umask = None
+    if module.params['umask'] is not None:
+        old_umask = os.umask(module.params['umask'])
+    try:
+        if module.params['state'] in ['present', 'latest']:
+            if not exists(module):
+                install(module)
+                changed = True
+        elif module.params['state'] == 'absent':
+            if exists(module):
+                uninstall(module)
+                changed = True
 
-    module.exit_json(**result)
+        result = {}
+        result['name'] = module.params['name']
+        result['state'] = module.params['state']
+        if module.params['version']:
+            result['version'] = module.params['version']
+        result['changed'] = changed
+
+        module.exit_json(**result)
+    finally:
+        if old_umask is not None:
+            os.umask(old_umask)
 
 
 if __name__ == '__main__':
