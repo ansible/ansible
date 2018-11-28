@@ -579,6 +579,8 @@ class ACMEAccount(object):
                             continue
                         if parse_json_result:
                             result = decoded_result
+                        else:
+                            result = content
                     except ValueError:
                         raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(url, content))
                 else:
