@@ -99,7 +99,10 @@ project:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils.openstack import (
+    openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module,
+    openstack_get_domain_id
+)
 
 
 def _needs_update(module, project):
@@ -155,23 +158,12 @@ def main():
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
+        domain_id = None
         if domain:
-            try:
-                # We assume admin is passing domain id
-                dom = cloud.get_domain(domain)['id']
-                domain = dom
-            except Exception:
-                # If we fail, maybe admin is passing a domain name.
-                # Note that domains have unique names, just like id.
-                try:
-                    dom = cloud.search_domains(filters={'name': domain})[0]['id']
-                    domain = dom
-                except Exception:
-                    # Ok, let's hope the user is non-admin and passing a sane id
-                    pass
+            domain_id = openstack_get_domain_id(cloud, domain)
 
-        if domain:
-            project = cloud.get_project(name, domain_id=domain)
+        if domain_id:
+            project = cloud.get_project(name, domain_id=domain_id)
         else:
             project = cloud.get_project(name)
 
@@ -182,7 +174,7 @@ def main():
             if project is None:
                 project = cloud.create_project(
                     name=name, description=description,
-                    domain_id=domain,
+                    domain_id=domain_id,
                     enabled=enabled)
                 changed = True
             else:

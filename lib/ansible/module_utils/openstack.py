@@ -74,6 +74,28 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
     return ret
 
 
+def openstack_get_domain_id(cloud, domain, module_for_error=None):
+    '''
+    Get a domain id given a domain id or domain name
+    '''
+    try:
+        # We assume admin is passing domain id
+        domain_id = cloud.get_domain(domain)['id']
+    except Exception:
+        # If we fail, maybe admin is passing a domain name.
+        # Note that domains have unique names, just like id.
+        try:
+            domain_id = cloud.search_domains(filters={'name': domain})[0]['id']
+        except Exception:
+            if module_for_error:
+                module_for_error.fail_json(msg='Domain name or ID does not exist')
+            else:
+                # Ok, let's hope the user is non-admin and passing a sane id
+                domain_id = domain
+
+    return domain_id
+
+
 def openstack_full_argument_spec(**kwargs):
     spec = dict(
         cloud=dict(default=None, type='raw'),

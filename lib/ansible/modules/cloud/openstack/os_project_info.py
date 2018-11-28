@@ -109,7 +109,7 @@ openstack_projects:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_cloud_from_module
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_cloud_from_module, openstack_get_domain_id
 
 
 def main():
@@ -132,24 +132,14 @@ def main():
         domain = module.params['domain']
         filters = module.params['filters']
 
+        domain_id = None
         if domain:
-            try:
-                # We assume admin is passing domain id
-                dom = opcloud.get_domain(domain)['id']
-                domain = dom
-            except Exception:
-                # If we fail, maybe admin is passing a domain name.
-                # Note that domains have unique names, just like id.
-                dom = opcloud.search_domains(filters={'name': domain})
-                if dom:
-                    domain = dom[0]['id']
-                else:
-                    module.fail_json(msg='Domain name or ID does not exist')
+            domain_id = openstack_get_domain_id(opcloud, domain, module)
 
             if not filters:
                 filters = {}
 
-            filters['domain_id'] = domain
+            filters['domain_id'] = domain_id
 
         projects = opcloud.search_projects(name, filters)
         if is_old_facts:

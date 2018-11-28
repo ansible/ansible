@@ -136,10 +136,12 @@ user:
             type: str
             sample: "demouser"
 '''
-from distutils.version import StrictVersion
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils.openstack import (
+    openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module,
+    openstack_get_domain_id
+)
 
 
 def _needs_update(params_dict, user):
@@ -149,27 +151,10 @@ def _needs_update(params_dict, user):
 
     # We don't get password back in the user object, so assume any supplied
     # password is a change.
-    if (params_dict['password'] is not None and
-            params_dict['update_password'] == 'always'):
+    if params_dict['password'] is not None and params_dict['update_password'] == 'always':
         return True
 
     return False
-
-
-def _get_domain_id(cloud, domain):
-    try:
-        # We assume admin is passing domain id
-        domain_id = cloud.get_domain(domain)['id']
-    except Exception:
-        # If we fail, maybe admin is passing a domain name.
-        # Note that domains have unique names, just like id.
-        try:
-            domain_id = cloud.search_domains(filters={'name': domain})[0]['id']
-        except Exception:
-            # Ok, let's hope the user is non-admin and passing a sane id
-            domain_id = domain
-
-    return domain_id
 
 
 def _get_default_project_id(cloud, default_project, domain_id, module):
@@ -212,7 +197,7 @@ def main():
     try:
         domain_id = None
         if domain:
-            domain_id = _get_domain_id(cloud, domain)
+            domain_id = openstack_get_domain_id(cloud, domain)
             user = cloud.get_user(name, domain_id=domain_id)
         else:
             user = cloud.get_user(name)
