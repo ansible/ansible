@@ -1,22 +1,6 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2018, Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -29,9 +13,10 @@ DOCUMENTATION = '''
       - ovirt-engine-sdk-python >= 4.2.4
     extends_documentation_fragment:
         - inventory_cache
+        - constructed
     description:
       - Get inventory hosts from the ovirt service.
-      - Uses 'ovirt.yml', 'ovirt4.yml', 'ovirt.yaml', 'ovirt4.yaml' YAML configuration file.
+      - Requires a YAML file ending in 'ovirt.yml', 'ovirt4.yml', 'ovirt.yaml', 'ovirt4.yaml'.
     options:
       plugin:
         description: the name of this plugin, it should always be set to 'ovirt' for this plugin to recognise it as it's own.
@@ -49,13 +34,15 @@ DOCUMENTATION = '''
       ovirt_cafile:
         description: path to ovirt-engine CA file.
         required: False
-      ovirt_preferred_interface:
-        description: vm network interface from which the ansible_host IP is selected.
-        required: False
       ovirt_query_filter:
-        description: dictionary of filter key-values to query hosts/clusters. See U(https://ovirt.github.io/ovirt-engine-sdk/master/services.m.html#ovirtsdk4\
+        required: false
+        description: dictionary of filter key-values to query VM's. See U(https://ovirt.github.io/ovirt-engine-sdk/master/services.m.html#ovirtsdk4\
 .services.VmsService.list) for filter parameters.
-        required: False
+      ovirt_hostname_preference:
+        required: false
+        description: list of options that describe the ordering for which hostnames should be assigned. See U(https://ovirt.github.io/ovirt-engin\
+e-api-model/master/#types/vm) for available attributes.
+        default: ['fqdn', 'name']
 '''
 
 EXAMPLES = '''
@@ -65,25 +52,33 @@ EXAMPLES = '''
 # ovirt_username: ansible-tester
 # ovirt_password: secure
 # ovirt_query_filter:
-#   vm_filter:
-#      search: 'name=myvm'
-#      case_sensitive: no
-#      max: 15
+#   search: 'name=myvm AND cluster=mycluster'
+#   case_sensitive: no
+#   max: 15
+# keyed_groups:
+#   - key: cluster
+#     prefix: 'cluster'
+# groups:
+#   dev: "'dev' in tags"
+# compose:
+#   ansible_host: devices["eth0"][0]
 '''
 
 import sys
 
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.errors import AnsibleError, AnsibleParserError
+
+HAS_OVIRT_LIB = False
 
 try:
     import ovirtsdk4 as sdk
+    HAS_OVIRT_LIB = True
 except ImportError:
-    print('oVirt inventory script requires ovirt-engine-sdk-python >= 4.2.4')
-    sys.exit(1)
+    HAS_OVIRT_LIB = False
 
 
-class InventoryModule(BaseInventoryPlugin, Cacheable):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'ovirt'
 
@@ -102,21 +97,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             )
         return self.connection
 
-    def _get_dict_of_struct(self, vm, preferred_interface=None):
+    def _get_dict_of_struct(self, vm):
         '''  Transform SDK Vm Struct type to Python dictionary.
              :param vm: host struct of which to create dict
-             :param preferred_interface: interface to select the asnible_host ip from
              :return dict of vm struct type
         '''
-
-        def get_preferred_interface_ip(devices, preferred_interface=None):
-            for device in reversed(devices):
-                if preferred_interface is not None:
-                    if device.name == preferred_interface:
-                        return (device.ips[0].address)
-                else:
-                    return device.ips[0].address
-                return devices[-1].ips[0].address
 
         connection = self._get_connection()
 
@@ -153,18 +138,16 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             'devices': dict(
                 (device.name, [ip.address for ip in device.ips]) for device in devices if device.ips
             ),
-            'ansible_host': get_preferred_interface_ip(devices, preferred_interface)
         }
 
-    def _query(self, filter=None, preferred_interface=None):
+    def _query(self, query_filter=None):
         '''
-            :param filter: dictionary of filter parameter/values
-            :param preferred_interface: vm network interface from which the ansible_host ip is selected
+            :param query_filter: dictionary of filter parameter/values
             :return dict of oVirt vm dicts
         '''
-        return [self._get_dict_of_struct(host, preferred_interface) for host in self._get_hosts(filter=filter)]
+        return [self._get_dict_of_struct(host) for host in self._get_hosts(query_filter=query_filter)]
 
-    def _get_hosts(self, filter=None):
+    def _get_hosts(self, query_filter=None):
         '''
             :param filter: dictionary of vm filter parameter/values
             :return list of oVirt vm structs
@@ -172,35 +155,30 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         connection = self._get_connection()
 
         vms_service = connection.system_service().vms_service()
-        if filter is not None:
-            return vms_service.list(**filter)
+        if query_filter is not None:
+            return vms_service.list(**query_filter)
         else:
             return vms_service.list()
 
-    def _get_clusters(self):
+    def _add_hosts(self, hosts, group):
+        ''' Adds hosts to an inventory group
+            :param host: list of hosts to add
+            :param group: inventory group to add host to
         '''
-            :return list of oVirt cluster structs
-        '''
-        connection = self._get_connection()
 
-        clusters_service = connection.system_service().clusters_service()
-        return clusters_service.list()
+        self.inventory.add_group(group)
 
-    def _add_host_to_inventory_groups(self, host, group_prefix, group_names):
-        ''' Create groups based on dynamic retrieved facts
-            :param host: host name to add
-            :param group_prefix: prefix added to inventory group name
-            :param group_name: list of inventory groups to add host to
-        '''
-        for group_name in group_names:
-            self.inventory.add_group('{0}_{1}'.format(group_prefix, group_name))
-            self.inventory.add_child("{0}_{1}".format(group_prefix, group_name), host)
+        for host in hosts:
+            self.inventory.add_host(host.name, group=group)
 
-    def _cast_filter_params(self, param_dict):
-        ''' Convert filter parameters to comply with sdk VmsService.list param types
+    def _get_query_options(self, param_dict):
+        ''' Get filter parameters and cast these to comply with sdk VmsService.list param types
             :param param_dict: dictionary of filter parameters and values
             :return dictionary with casted parameter/value
         '''
+        if param_dict is None:
+            return None
+
         FILTER_MAPPING = {
             'all_content': bool,
             'case_sensitive': bool,
@@ -220,31 +198,46 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         return casted_dict
 
-    def _populate_from_source(self, source_data):
+    def _get_hostname(self, host):
+        '''
+          Get the host's hostname based on prefered attribute
+          :param host: dict representation of oVirt VmStruct
+          :param return: preferred hostname for the host
+        '''
+        hostname_preference = self.get_option('ovirt_hostname_preference', ['fqdn, name'])
+        hostname = None
 
-        for cluster in self._get_clusters():
-            self.inventory.add_group('cluster_{0}'.format(cluster.name))
+        for preference in hostname_preference:
+            if preference == 'fqdn':
+                hostname = host.get('fqdn')
+            elif preference == 'name':
+                hostname = host.get('name')
+            else:
+                raise AnsibleParserError("%s is not a valid hostname precedent" % preference)
+            if hostname is not None:
+                return hostname
+
+        raise AnsibleParserError("No valid name found for host id={}".format(host.get('id')))
+
+    def _populate_from_source(self, source_data):
 
         for host in source_data:
 
-            # add host to inventory and associated <cluster_name>_group
-            self.inventory.add_host(host.get('name'), 'cluster_{0}'.format(host.get('cluster')))
+            hostname = self._get_hostname(host)
+
+            self.inventory.add_host(hostname)
+
             for fact, value in host.items():
-                self.inventory.set_variable(host.get('name'), fact, value)
+                self.inventory.set_variable(hostname, fact, value)
 
-            # add host to status_<status> inventory group
-            self._add_host_to_inventory_groups(host.get('name'), 'status', [host.get('status')])
-
-            # add host to tag_<name> inventory group
-            self._add_host_to_inventory_groups(host.get('name'), 'tag', host.get('tags'))
-
-            # add host to affinity_group_<name> inventory group
-            self._add_host_to_inventory_groups(host.get('name'), 'affinity_group', host.get('affinity_groups'))
-
-            # add host to affinity_label_<name> inventory group
-            self._add_host_to_inventory_groups(host.get('name'), 'affinity_label', host.get('affinity_labels'))
+            self._set_composite_vars(self.get_option('compose'), host, hostname)
+            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname)
 
     def verify_file(self, path):
+
+        if not HAS_OVIRT_LIB:
+            raise AnsibleError('oVirt inventory script requires ovirt-engine-sdk-python >= 4.2.4')
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
@@ -263,12 +256,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         self.ovirt_engine_password = self.get_option('ovirt_password')
         self.ovirt_engine_cafile = self.get_option('ovirt_cafile')
 
-        vm_filter = None
-        if self.get_option('ovirt_query_filter'):
-            vm_filter = self._cast_filter_params(
-                self.get_option('ovirt_query_filter').get('vm_filter')
-            )
-        preferred_interface = self.get_option('ovirt_preferred_interface') or None
+        query_filter = self._get_query_options(self.get_option('ovirt_query_filter', None))
 
         if cache:
             cache = self.get_option('cache')
@@ -286,7 +274,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 self._populate_from_source(source_data)
 
         if not cache or update_cache:
-            source_data = self._query(filter=vm_filter, preferred_interface=preferred_interface)
+            source_data = self._query(query_filter=query_filter)
 
         if update_cache:
             self.cache.set(cache_key, source_data)
