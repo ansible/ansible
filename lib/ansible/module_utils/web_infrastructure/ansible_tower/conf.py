@@ -275,13 +275,6 @@ class Settings(object):
         :type kwargs: arbitrary keyword arguments
         :returns: N/A
 
-        :Example:
-
-        >>> import tower_cli
-        >>> from tower_cli.conf import settings
-        >>> with settings.runtime_values(username='user', password='pass'):
-        >>>     print(tower_cli.get_resource('credential').list())
-
         =====API DOCS=====
         """
 
