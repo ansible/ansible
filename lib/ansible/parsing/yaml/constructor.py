@@ -23,6 +23,7 @@ from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleOctal
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
@@ -80,7 +81,7 @@ class AnsibleConstructor(SafeConstructor):
 
     def construct_ansible_int(self, node):
         value = self.construct_scalar(node)
-        if len(value) > 1 and value.startswith('0') and not value.startswith('0x'):
+        if PY3 and len(value) > 1 and value.startswith('0') and not value.startswith('0x'):
             ret = self.construct_yaml_octal(node)
         else:
             ret = self.construct_yaml_int(node)
