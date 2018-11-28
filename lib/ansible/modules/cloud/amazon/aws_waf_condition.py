@@ -53,14 +53,13 @@ options:
         - I(target_string) is a maximum of 50 bytes.
         - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
     purge_filters:
-<<<<<<< HEAD
         description:
         - Whether to remove existing filters from a condition if not passed in I(filters).
         default: False
         type: bool
         description: Whether to remove existing filters from a condition if not passed in I(filters). Defaults to false.
     waf_regional:
-        description: Wether to use waf_regional module. Defaults to true
+        description: Wether to use waf_regional module. Defaults to false.
         default: false
         required: no
         version_added: 2.8

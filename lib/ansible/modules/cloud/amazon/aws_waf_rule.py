@@ -49,11 +49,8 @@ options:
           - Whether or not to remove conditions that are not passed when updating `conditions`.
         default: false
         type: bool
-    cloudfront:
-        description: Wether to use CloudFront WAF. Defaults to true
-        default: true
     waf_regional:
-        description: Wether to use waf_regional module. Defaults to true
+        description: Wether to use waf_regional module. Defaults to false
         default: false
         required: no
         version_added: "2.8"
