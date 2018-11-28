@@ -74,7 +74,7 @@ options:
       - Link/trunk enable/default interface configuration logging
     choices: ['link-enable', 'link-default', 'trunk-enable', 'trunk-default']
     version_added: '2.8'
-  message:
+  interface_message:
     description:
       - Add interface description to interface syslogs.
         Does not work with version 6.0 images using nxapi as a transport.
@@ -163,7 +163,7 @@ EXAMPLES = """
     state: present
 - name: Configure logging message ethernet description
   nxos_logging:
-    message: add-interface-description
+    interface_message: add-interface-description
     state: present
 - name: Configure logging event link enable
   nxos_logging:
@@ -679,7 +679,7 @@ def map_params_to_obj(module):
             'state': module.params['state'],
             'facility_link_status': module.params['facility_link_status'],
             'event': module.params['event'],
-            'message': module.params['message'],
+            'message': module.params['interface_message'],
             'file_size': file_size,
             'timestamp': module.params['timestamp']
         })
@@ -728,7 +728,7 @@ def main():
         interface=dict(),
         facility_link_status=dict(choices=['link-down-notif', 'link-down-error', 'link-up-notif', 'link-up-error']),
         event=dict(choices=['link-enable', 'link-default', 'trunk-enable', 'trunk-default']),
-        message=dict(choices=['add-interface-description']),
+        interface_message=dict(choices=['add-interface-description']),
         file_size=dict(type='int'),
         timestamp=dict(choices=['microseconds', 'milliseconds', 'seconds']),
         state=dict(default='present', choices=['present', 'absent']),
