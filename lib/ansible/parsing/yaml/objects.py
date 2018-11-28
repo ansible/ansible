@@ -68,6 +68,16 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
     pass
 
 
+class AnsibleOctal(AnsibleBaseYAMLObject, int):
+    ''' for using octal numbers in chmod/file operations to dwim and not return a decimal conversion '''
+
+    def __str__(self):
+        return to_text(oct(self).replace('o', ''))
+
+    def __repr__(self):
+        return repr(str(self))
+
+
 # Unicode like object that is not evaluated (decrypted) until it needs to be
 # TODO: is there a reason these objects are subclasses for YAMLObject?
 class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):

@@ -1,0 +1,2 @@
+minor_changes:
+    - Implement AnsibleOctal to deal with chmod/file modes sanely, also added !oct/!octal YAML tags for when we want to be explicit.

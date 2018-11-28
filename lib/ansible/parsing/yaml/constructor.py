@@ -23,7 +23,7 @@ from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleOctal, AnsibleHex
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
@@ -78,7 +78,15 @@ class AnsibleConstructor(SafeConstructor):
 
         return mapping
 
-    def construct_yaml_str(self, node, unsafe=False):
+    def construct_ansible_int(self, node):
+        value = self.construct_scalar(node)
+        if value.startswith('0') and not value.startswith('0x'):
+            ret = self.construct_yaml_octal(node)
+        else:
+            ret = self.construct_yaml_int(node)
+        return ret
+
+    def construct_yaml_str(self, node):
         # Override the default string handling function
         # to always return unicode objects
         value = self.construct_scalar(node)
@@ -86,8 +94,14 @@ class AnsibleConstructor(SafeConstructor):
 
         ret.ansible_pos = self._node_position_info(node)
 
-        if unsafe:
-            ret = wrap_var(ret)
+        return ret
+
+    def construct_yaml_octal(self, node):
+        # preserve octal notation as strings from int
+        value = self.construct_scalar(node)
+        ret = AnsibleOctal(int(value, 8))
+
+        ret.ansible_pos = self._node_position_info(node)
 
         return ret
 
@@ -113,7 +127,7 @@ class AnsibleConstructor(SafeConstructor):
         data.ansible_pos = self._node_position_info(node)
 
     def construct_yaml_unsafe(self, node):
-        return self.construct_yaml_str(node, unsafe=True)
+        return wrap_var(self.construct_yaml_str(node))
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
@@ -130,32 +144,14 @@ class AnsibleConstructor(SafeConstructor):
         return (datasource, line, column)
 
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:map',
-    AnsibleConstructor.construct_yaml_map)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/dict',
-    AnsibleConstructor.construct_yaml_map)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:str',
-    AnsibleConstructor.construct_yaml_str)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/unicode',
-    AnsibleConstructor.construct_yaml_str)
-
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:seq',
-    AnsibleConstructor.construct_yaml_seq)
-
-AnsibleConstructor.add_constructor(
-    u'!unsafe',
-    AnsibleConstructor.construct_yaml_unsafe)
-
-AnsibleConstructor.add_constructor(
-    u'!vault',
-    AnsibleConstructor.construct_vault_encrypted_unicode)
-
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:map', AnsibleConstructor.construct_yaml_map)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:python/dict', AnsibleConstructor.construct_yaml_map)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:str', AnsibleConstructor.construct_yaml_str)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:python/unicode', AnsibleConstructor.construct_yaml_str)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:seq', AnsibleConstructor.construct_yaml_seq)
+AnsibleConstructor.add_constructor(u'!unsafe', AnsibleConstructor.construct_yaml_unsafe)
+AnsibleConstructor.add_constructor(u'!vault', AnsibleConstructor.construct_vault_encrypted_unicode)
 AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
+AnsibleConstructor.add_constructor(u'tag:yaml.org,2002:int', AnsibleConstructor.construct_ansible_int)
+AnsibleConstructor.add_constructor(u'!oct', AnsibleConstructor.construct_yaml_octal)
+AnsibleConstructor.add_constructor(u'!octal', AnsibleConstructor.construct_yaml_octal)
