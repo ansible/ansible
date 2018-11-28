@@ -592,7 +592,6 @@ lib/ansible/modules/network/cnos/cnos_save.py E326
 lib/ansible/modules/network/cnos/cnos_showrun.py E323
 lib/ansible/modules/network/cnos/cnos_template.py E326
 lib/ansible/modules/network/cnos/cnos_vlag.py E326
-lib/ansible/modules/network/cnos/cnos_vlan.py E326
 lib/ansible/modules/network/enos/enos_command.py E323
 lib/ansible/modules/network/enos/enos_config.py E323
 lib/ansible/modules/network/enos/enos_facts.py E323
