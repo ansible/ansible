@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import click
-from click._compat import get_text_stderr
-
 
 class TowerExceptionError(Exception):
     """Base exception class for problems raised within Tower CLI.
