@@ -58,15 +58,14 @@ EXAMPLES = '''
 '''
 
 try:
-    import boto
-    from boto.elasticache import connect_to_region
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
+    import boto3
+    import botocore
+    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO = False
+    HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
 def main():
@@ -80,7 +79,7 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
+    if not HAS_BOTO3:
         module.fail_json(msg='boto required for this module')
 
     state = module.params.get('state')
@@ -98,43 +97,48 @@ def main():
                 module.fail_json(msg=str("Parameter %s not allowed for state='absent'" % not_allowed))
 
     # Retrieve any AWS settings from the environment.
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
     if not region:
         module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     """Get an elasticache connection"""
-    try:
-        conn = connect_to_region(region_name=region, **aws_connect_kwargs)
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=e.message)
+
+    connection = boto3_conn(module, conn_type='client',
+                            resource='elasticache', region=region,
+                            endpoint=ec2_url, **aws_connect_kwargs)
 
     try:
         changed = False
         exists = False
 
         try:
-            matching_groups = conn.describe_cache_subnet_groups(group_name, max_records=100)
+            matching_groups = connection.describe_cache_subnet_groups(
+                CacheSubnetGroupName=group_name, MaxRecords=100)
             exists = len(matching_groups) > 0
-        except BotoServerError as e:
-            if e.error_code != 'CacheSubnetGroupNotFoundFault':
-                module.fail_json(msg=e.error_message)
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] != 'CacheSubnetGroupNotFoundFault':
+                module.fail_json(msg=e.response['Error']['Message'])
 
         if state == 'absent':
             if exists:
-                conn.delete_cache_subnet_group(group_name)
+                connection.delete_cache_subnet_group(group_name)
                 changed = True
         else:
             if not exists:
-                new_group = conn.create_cache_subnet_group(group_name, cache_subnet_group_description=group_description, subnet_ids=group_subnets)
+                new_group = connection.create_cache_subnet_group(CacheSubnetGroupName=group_name,
+                                                                 CacheSubnetGroupDescription=group_description,
+                                                                 SubnetIds=group_subnets)
                 changed = True
             else:
-                changed_group = conn.modify_cache_subnet_group(group_name, cache_subnet_group_description=group_description, subnet_ids=group_subnets)
+                changed_group = connection.modify_cache_subnet_group(CacheSubnetGroupName=group_name,
+                                                                     CacheSubnetGroupDescription=group_description,
+                                                                     SubnetIds=group_subnets)
                 changed = True
 
-    except BotoServerError as e:
-        if e.error_message != 'No modifications were requested.':
-            module.fail_json(msg=e.error_message)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Message'] != 'No modifications were requested.':
+            module.fail_json(msg=e.response['Error']['Message'])
         else:
             changed = False
 
