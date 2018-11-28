@@ -32,6 +32,7 @@ options:
               interfaces do not persist across reboots.
         required: false
         default: false
+        type: bool
     type:
         description:
             - Specifies the type of tunnel to be created.

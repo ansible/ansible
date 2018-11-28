@@ -57,6 +57,7 @@ options:
   keystore_create:
     description:
       - Create keystore if it doesn't exist
+    type: bool
   executable:
     description:
       - Path to keytool binary if not used we search in PATH for it.

@@ -55,4 +55,5 @@ options:
       - This should only be used on private instances of the CloudControl API that use self-signed certificates.
     required: false
     default: true
+    type: bool
     '''

@@ -34,6 +34,7 @@ options:
     default: true
     description:
     - Should https certificates be validated?
+    type: bool
   ssid:
     required: true
     description:

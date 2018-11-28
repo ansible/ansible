@@ -51,6 +51,7 @@ options:
         lookup feature in Cisco NXOS.  This argument accepts boolean
         values.  When enabled, the system will try to resolve hostnames
         using DNS and when disabled, hostnames will not be resolved.
+    type: bool
   domain_search:
     description:
       - Configures a list of domain

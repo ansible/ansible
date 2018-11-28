@@ -87,6 +87,7 @@ options:
     description:
       - Whether the record should be the only one for that record type and record name. Only use with C(state=present)
       - This will delete all other records with the same record name and type.
+    type: bool
   state:
     description:
       - Whether the record(s) should exist or not

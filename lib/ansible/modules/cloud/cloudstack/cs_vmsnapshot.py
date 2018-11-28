@@ -48,6 +48,7 @@ options:
     description:
       - Snapshot memory if set to true.
     default: false
+    type: bool
   zone:
     description:
       - Name of the zone in which the VM is in. If not set, default zone is used.
@@ -70,6 +71,7 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).

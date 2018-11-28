@@ -84,9 +84,11 @@ options:
         means that other configurations cannot use the interface. Exclusive is
         specified when you configure the interface as span interface and allows
         higher throughput through the interface.
+    type: bool
   pn_nic_enable:
     description:
       - Specify if the NIC is enabled or not
+    type: bool
   pn_vrrp_id:
     description:
       - Specify the ID for the VRRP interface. The IDs on both vRouters must be

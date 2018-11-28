@@ -45,6 +45,7 @@ options:
         record with matching name. If there are already multiple records with
         matching name and overwrite=true, this module will fail.
     default: true
+    type: bool
     version_added: 2.1
   priority:
     description:

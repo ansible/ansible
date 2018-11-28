@@ -56,6 +56,7 @@ options:
         run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
     required: false
     default: true
+    type: bool
   force:
     description:
       - Whether or not to force full deployment, equivalent to serverless `--force` option.

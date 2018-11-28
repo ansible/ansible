@@ -61,7 +61,8 @@ options:
   managed:
     description:
       - Whether the storage pool should be managed by CloudStack.
-      - Only considere on creation.
+      - Only considered on creation.
+    type: bool
   hypervisor:
     description:
       - Required when creating a zone scoped pool.

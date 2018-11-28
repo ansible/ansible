@@ -81,6 +81,7 @@ options:
         VRF definition absolute.  It will remove any previously configured
         VRFs on the device.
     default: false
+    type: bool
   state:
     description:
       - Configures the state of the VRF definition

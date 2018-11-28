@@ -36,6 +36,7 @@ options:
               do not persist across reboots.
         required: false
         default: false
+        type: bool
     vlan_id:
         description:
             - VLAN ID value for VLAN interface.

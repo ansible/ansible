@@ -60,6 +60,7 @@ options:
         required: False
         description:
             - "A boolean flag that indicates if the server TLS certificate and host name should be checked."
+        type: bool
     ca_file:
         required: False
         description:
@@ -82,12 +83,13 @@ options:
                the server to send compressed responses. The default is I(True).
                Note that this is a hint for the server, and that it may return
                uncompressed data even when this parameter is set to I(True)."
+        type: bool
     kerberos:
         required: False
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
-
+        type: bool
     headers:
         required: False
         description:

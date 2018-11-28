@@ -37,6 +37,7 @@ options:
    admin_state_up:
      description:
         - Sets admin state.
+     type: bool
    mac_address:
      description:
         - MAC address of this port.
@@ -47,6 +48,7 @@ options:
    no_security_groups:
      description:
         - Do not associate a security group with this port.
+     type: bool
      default: 'no'
    allowed_address_pairs:
      description:

@@ -85,6 +85,7 @@ options:
       - Enable statefile locking, if you use a service that accepts locks (such
         as S3+DynamoDB) to store your statefile.
     required: false
+    type: bool
   lock_timeout:
     description:
       - How long to maintain the lock on the statefile, if you use a service

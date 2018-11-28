@@ -55,6 +55,7 @@ options:
       - Indicate that the boot disk should be
         deleted when the Node is deleted.
     default: true
+    type: bool
   network:
     description:
       - The network to associate with the instance.
@@ -95,9 +96,11 @@ options:
       - Defines whether the instance should be
         automatically restarted when it is
         terminated by Compute Engine.
+    type: bool
   preemptible:
     description:
       - Defines whether the instance is preemptible.
+    type: bool
   tags:
     description:
       - a comma-separated list of tags to associate with the instance

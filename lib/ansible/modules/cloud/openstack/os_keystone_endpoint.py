@@ -45,6 +45,7 @@ options:
      description:
         - Is the service enabled.
      default: True
+     type: bool
    state:
      description:
        - Should the resource be C(present) or C(absent).

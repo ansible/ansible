@@ -33,6 +33,7 @@ options:
   enabled:
     description:
       - Configure interface link status.
+    type: bool
   speed:
     description:
       - Interface link speed.

@@ -77,6 +77,7 @@ options:
         choices: ['raw', 'cow']
     sparse:
         required: False
+        type: bool
         version_added: "2.5"
         description:
             - "I(True) if the disk should be sparse (also known as I(thin provision)).
@@ -100,6 +101,7 @@ options:
             - "Please take a look at C(image_path) documentation to see the correct
                usage of this parameter."
         version_added: "2.3"
+        type: bool
     profile:
         description:
             - "Disk profile name to be attached to disk. By default profile is chosen by oVirt/RHV engine."
@@ -110,9 +112,11 @@ options:
     bootable:
         description:
             - "I(True) if the disk should be bootable. By default when disk is created it isn't bootable."
+        type: bool
     shareable:
         description:
             - "I(True) if the disk should be shareable. By default when disk is created it isn't shareable."
+        type: bool
     logical_unit:
         description:
             - "Dictionary which describes LUN to be directly attached to VM:"
@@ -132,6 +136,7 @@ options:
             - "Note that this parameter isn't idempotent, as it's not possible
                to check if the disk should be or should not be sparsified."
         version_added: "2.4"
+        type: bool
     openstack_volume_type:
         description:
             - "Name of the openstack volume type. This is valid when working

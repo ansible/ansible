@@ -47,9 +47,10 @@ options:
         version_added: "2.6"
         required: false
         default: 'no'
+        type: bool
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
-              This is useful in environments that use centralized authentification when you want to manipulate the local groups.
+              This is useful in environments that use centralized authentication when you want to manipulate the local groups.
               I.E. it uses `lgroupadd` instead of `useradd`.
             - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
 notes:

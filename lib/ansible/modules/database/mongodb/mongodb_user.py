@@ -61,6 +61,7 @@ options:
         version_added: "1.8"
         description:
             - Whether to use an SSL connection when connecting to the database
+        type: bool
     ssl_cert_reqs:
         version_added: "2.2"
         description:

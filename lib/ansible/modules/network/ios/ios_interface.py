@@ -35,6 +35,7 @@ options:
   enabled:
     description:
       - Interface link status.
+    type: bool
   speed:
     description:
       - Interface link speed.
