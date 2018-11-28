@@ -34,23 +34,23 @@ DOCUMENTATION = '''
       - Uses 'ovirt.yml', 'ovirt4.yml', 'ovirt.yaml', 'ovirt4.yaml' YAML configuration file.
     options:
       plugin:
-        description: the name of this plugin, it should alwys be set to 'ovirt' for this plugin to recognize it as it's own.
+        description: the name of this plugin, it should always be set to 'ovirt' for this plugin to recognise it as it's own.
         required: True
         choices: ['ovirt']
       ovirt_url:
-        description: url to ovirt-engine api
+        description: URL to ovirt-engine API.
         required: True
       ovirt_username:
-        description: ovirt authentication user
+        description: ovirt authentication user.
         required: True
       ovirt_password:
-        description: ovirt authentication password
+        description: ovirt authentication password.
         required : True
       ovirt_cafile:
-        description: path to ovirt-engine ca file
+        description: path to ovirt-engine CA file.
         required: False
       ovirt_preferred_interface:
-        description: vm network interface from which the ansible_host ip is selected
+        description: vm network interface from which the ansible_host IP is selected.
         required: False
       ovirt_query_filter:
         description: dictionary of filter key-values to query hosts/clusters. See U(https://ovirt.github.io/ovirt-engine-sdk/master/services.m.html#ovirtsdk4\
@@ -59,7 +59,7 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-# ovirt.yml
+# Sample content of ovirt.yml
 # plugin: ovirt
 # ovirt_url: http://localhost/ovirt-engine/api
 # ovirt_username: ansible-tester
