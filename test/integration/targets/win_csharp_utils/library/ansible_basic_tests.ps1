@@ -1927,6 +1927,28 @@ test_no_log - Invoked with:
         $actual.changed | Assert-Equals -Expected $false
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
     }
+
+    "PS Object in return result" = {
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        # JavaScriptSerializer struggles with PS Object like PSCustomObject due to circular references, this test makes
+        # sure we can handle these types of objects without bombing
+        $m.Result.output = [PSCustomObject]@{a = "a"; b = "b"}
+        $failed = $true
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.Keys.Count | Assert-Equals -Expected 3
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{}}
+        $actual.output | Assert-DictionaryEquals -Expected @{a = "a"; b = "b"}
+    }
 }
 
 try {
