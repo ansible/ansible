@@ -17,132 +17,112 @@ import click
 from click._compat import get_text_stderr
 
 
-class TowerCLIError(click.ClickException):
+class TowerExceptionError(Exception):
     """Base exception class for problems raised within Tower CLI.
     This class adds coloring to exceptions.
     """
-    fg = 'red'
-    bg = None
-    bold = True
+    message = "An unknown exception occurred."
 
-    def show(self, file=None):
-        if file is None:
-            file = get_text_stderr()
-        click.secho('Error: %s' % self.format_message(), file=file,
-                    fg=self.fg, bg=self.bg, bold=self.bold)
+    def __init__(self, **kwargs):
+        super(TowerExceptionError, self).__init__(self.message % kwargs)
+        self.msg = self.message % kwargs
 
 
-class UsageError(TowerCLIError):
-    """An exception class for reporting usage errors.
-
-    This uses an exit code of 2 in order to match click (which matters more
-    than following the erstwhile "standard" of using 64).
-    """
-    exit_code = 2
-
-
-class BadRequest(TowerCLIError):
+class BadRequest(TowerExceptionError):
     """An exception class for reporting unexpected error codes from Ansible
     Tower such that 400 <= code < 500.
 
     In theory, we should never, ever get these.
     """
-    exit_code = 40
+    message = ("Tower Unexpected error failed with: %(reason)")
 
 
-class AuthError(TowerCLIError):
+class AuthError(TowerExceptionError):
     """An exception class for reporting when a request failed due to an
     authorization failure.
     """
-    exit_code = 41
+    message = ("Tower Authorization failure failed with: %(reason)")
 
 
-class Forbidden(TowerCLIError):
+class Forbidden(TowerExceptionError):
     """An exception class for reporting when a user doesn't have permission
     to do something.
     """
-    exit_code = 43
+    message = ("Tower Permission failure failed with: %(reason)")
 
 
-class NotFound(TowerCLIError):
+class NotFound(TowerExceptionError):
     """An exception class for reporting when a request went through without
     incident, but the requested content could not be found.
     """
-    exit_code = 44
+    message = ("Tower Incident failure failed with: %(reason)")
 
 
-class MethodNotAllowed(BadRequest):
+class MethodNotAllowed(TowerExceptionError):
     """An exception class for sending a request to a URL where the URL doesn't
     accept that method at all.
     """
-    exit_code = 45
+    message = ("Tower Method failure failed with: %(reason)")
 
 
-class MultipleResults(TowerCLIError):
-    """An exception class for reporting when a request that expected one
-    and exactly one result got more than that.
-    """
-    exit_code = 49
-
-
-class ServerError(TowerCLIError):
+class ServerError(TowerExceptionError):
     """An exception class for reporting server-side errors which are expected
     to be ephemeral.
     """
-    exit_code = 50
+    message = ("Tower Server-side failure failed with: %(reason)")
 
 
-class Found(TowerCLIError):
+class Found(TowerExceptionError):
     """An exception class for when a record already exists, and we were
     explicitly told that it shouldn't.
     """
-    exit_code = 60
+    message = ("Tower Record failure failed with: %(reason)")
 
 
-class RelatedError(TowerCLIError):
+class RelatedError(TowerExceptionError):
     """An exception class for errors where we can't find related objects
     that we expect to find.
     """
-    exit_code = 61
+    message = ("Tower Related object failure failed with: %(reason)")
 
 
 class MultipleRelatedError(RelatedError):
     """An exception class for errors where we try to find a single related
     object, and get more than one.
     """
-    exit_code = 62
+    message = ("Tower Related object failure failed with: %(reason)")
 
 
-class ValidationError(TowerCLIError):
+class ValidationError(TowerExceptionError):
     """An exception class for invalid values being sent as option
     switches to Tower CLI.
     """
-    exit_code = 64
+    message = ("Tower Validation failure failed with: %(reason)")
 
 
-class CannotStartJob(TowerCLIError):
+class CannotStartJob(TowerExceptionError):
     """An exception class for jobs that cannot be started within Tower
     for whatever reason.
     """
-    exit_code = 97
+    message = ("Tower Job failure failed with: %(reason)")
 
 
-class Timeout(TowerCLIError):
+class Timeout(TowerExceptionError):
     """An exception class for timeouts encountered within Tower CLI,
     usually for monitoring.
     """
-    exit_code = 98
+    message = ("Tower Timeouts failure failed with: %(reason)")
 
 
-class JobFailure(TowerCLIError):
+class JobFailure(TowerExceptionError):
     """An exception class for job failures that require error codes within
     the Tower CLI.
     """
-    exit_code = 99
+    message = ("Tower Job failure failed with: %(reason)")
 
 
-class ConnectionError(TowerCLIError):
+class ConnectionError(TowerExceptionError):
     """An exception class to bubble requests errors more nicely,
     and communicate connection issues to the user.
     """
-    exit_code = 120
+    message = ("Tower HTTPs request failed with: %(reason)s")
