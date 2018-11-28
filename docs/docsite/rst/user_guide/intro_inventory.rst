@@ -103,10 +103,21 @@ Generally speaking, this is not the best way to define variables that describe y
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
 
+In INI:
+
 .. code-block:: guess
 
     [webservers]
     www[01:50].example.com
+    
+In YAML:
+
+.. code-block:: yaml
+
+    ...
+      webservers:
+        hosts:
+          www[01:50].example.com:
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges:
 
