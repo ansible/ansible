@@ -16,6 +16,7 @@ from ansible.modules.storage.netapp.na_ontap_aggregate \
 if not netapp_utils.has_netapp_lib():
     pytestmark = pytest.skip('skipping as missing required netapp_lib')
 
+
 def set_module_args(args):
     """prepare arguments so that they will be picked up during module creation"""
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
