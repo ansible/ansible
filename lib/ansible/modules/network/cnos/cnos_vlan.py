@@ -34,7 +34,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cnos_vlan
-version_added: "2.8"
+version_added: "2.3"
 author: "Anil Kumar Mureleedharan(@amuraleedhar)"
 short_description: Manage VLANs on CNOS network devices
 description:
