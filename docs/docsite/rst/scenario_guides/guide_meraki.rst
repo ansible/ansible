@@ -127,7 +127,7 @@ Since Meraki's response data uses lists instead of properly keyed dictionaries f
 Merging Existing and New Data
 =============================
 
-Ansible's Meraki modules do not allow for manipulating data. For example, there is likely a need to insert a rule in the middle of a firewall ruleset. Ansible and the Meraki modules lack a way to directly merge to manipulate data. However, a playlist can use a few tasks to split the list where a rule needs to be inserted and then merge them together again with the new rule added. The steps involved are as follows:
+Ansible's Meraki modules do not allow for manipulating data. For example, you may need to insert a rule in the middle of a firewall ruleset. Ansible and the Meraki modules lack a way to directly merge to manipulate data. However, a playlist can use a few tasks to split the list where you need to insert a rule and then merge them together again with the new rule added. The steps involved are as follows:
 
 1. Create blank "front" and "back" lists.
     ::
