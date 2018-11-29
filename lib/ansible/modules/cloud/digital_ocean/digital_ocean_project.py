@@ -95,6 +95,8 @@ def core(module):
             response = rest.post('projects', data=payload)
             if response.status_code == 201:
                 module.exit_json(changed=True, data=response.json)
+            elif response.status_code == 409:
+                module.exit_json(changed=False, data="name is already in use (duplicate)")
             else:
                 module.fail_json(msg=response.json)
         else:
