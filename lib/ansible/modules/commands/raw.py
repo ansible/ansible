@@ -69,7 +69,7 @@ EXAMPLES = r'''
 
 - name: Safely use templated variables. Always use quote filter to avoid injection issues.
   raw: "{{ package_mgr|quote }} {{ pkg_flags|quote }} install {{ python|quote }}"
-  
+
 - name: List user accounts on a Windows system
   raw: Get-WmiObject -Class Win32_UserAccount
 '''
