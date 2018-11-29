@@ -184,14 +184,15 @@ options:
     - '     - C(independent_nonpersistent): Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
     - ' - C(controller_type) (string): Type of disk controller. If this value is absent, disk will attach controller specified in C(hardware).'
     - '   Valid values are C(buslogic), C(lsilogic), C(lsilogicsas), C(paravirtual), C(sata) and C(nvme).'
+    - '   C(nvme) support from hardware C(version) 13 and ESXi version 6.5.'
     - ' - C(controller_number) (integer): disk controller bus number. The maximum number of same type controller is 4 per VM.'
     - '   Valid value range from 0 to 3.'
     - ' - C(unit_number) (integer): Disk Unit Number.'
     - '   Valid value range from 0 to 15 for SCSI controller, except 7.'
     - '   Valid value range from 0 to 14 for NVME controller.'
     - '   Valid value range from 0 to 29 for SATA controller.'
-    - ' - C(boot_disk) (bool): set this disk as Hard disk 1.'    
-    
+    - ' - C(boot_disk) (bool): If true, this disk will be set as Hard disk 1.'
+
   cdrom:
     description:
     - A CD-ROM configuration for the virtual machine.
@@ -1749,9 +1750,8 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="Only one boot disk can be configured, exist one %s." % controllers['boot_disk'])
             else:
                 # if this disk is configured to attach to the boot disk controller
-                if controllers['boot_disk'] is not None and \
-                                disk_spec['controller_type'].lower() == controllers['boot_disk'][0]['type'] and \
-                                disk_spec['controller_number'] == controllers['boot_disk'][0]['num']:
+                if controllers['boot_disk'] is not None and disk_spec['controller_type'].lower() == controllers['boot_disk'][0]['type'] and \
+                        disk_spec['controller_number'] == controllers['boot_disk'][0]['num']:
                     for i in range(0, len(controllers['boot_disk'][0]['disk'])):
                         if disk_spec['unit_number'] == controllers['boot_disk'][0]['disk'][i]['unit_number']:
                             self.module.fail_json(msg="Have same controller_type, controller_number, unit_number disk.")
@@ -1861,9 +1861,8 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_disks(self, vm_obj):
         # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
-        #if len(self.params['disk']) == 0:
-        #    return
-
+        if len(self.params['disk']) == 0:
+            return
         scsi_ctl = self.get_vm_scsi_controller(vm_obj)
 
         # Create scsi controller only if we are deploying a new VM, not a template or reconfiguring
