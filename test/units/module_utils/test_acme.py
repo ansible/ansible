@@ -36,7 +36,7 @@ def test_nopad_b64(value, result):
 
 ################################################
 
-TEST_TEXT = R"""1234
+TEST_TEXT = r"""1234
 5678"""
 
 
@@ -58,7 +58,7 @@ def test_write_file(tmpdir):
 
 TEST_PEM_DERS = [
     (
-        R"""
+        r"""
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIDWajU0PyhYKeulfy/luNtkAve7DkwQ01bXJ97zbxB66oAoGCCqGSM49
 AwEHoUQDQgAEAJz0yAAXAwEmOhTRkjXxwgedbWO6gobYM3lWszrS68G8QSzhXR6A
@@ -83,7 +83,7 @@ def test_pem_to_der(pem, der, tmpdir):
 
 TEST_KEYS = [
     (
-        R"""
+        r"""
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIDWajU0PyhYKeulfy/luNtkAve7DkwQ01bXJ97zbxB66oAoGCCqGSM49
 AwEHoUQDQgAEAJz0yAAXAwEmOhTRkjXxwgedbWO6gobYM3lWszrS68G8QSzhXR6A
@@ -102,7 +102,7 @@ mQ3IzZDimnTTXO7XhVylDT8SLzE44/Epmw==
             'point_size': 32,
             'type': 'ec',
         },
-        R"""
+        r"""
 read EC key
 Private-Key: (256 bit)
 priv:
@@ -146,7 +146,7 @@ if HAS_CURRENT_CRYPTOGRAPHY:
 
 ################################################
 
-TEST_CSR = R"""
+TEST_CSR = r"""
 -----BEGIN NEW CERTIFICATE REQUEST-----
 MIIBJTCBzQIBADAWMRQwEgYDVQQDEwthbnNpYmxlLmNvbTBZMBMGByqGSM49AgEG
 CCqGSM49AwEHA0IABACc9MgAFwMBJjoU0ZI18cIHnW1juoKG2DN5VrM60uvBvEEs
@@ -170,7 +170,7 @@ if HAS_CURRENT_CRYPTOGRAPHY:
 
 ################################################
 
-TEST_CERT = R"""
+TEST_CERT = r"""
 -----BEGIN CERTIFICATE-----
 MIIBljCCATugAwIBAgIBATAKBggqhkjOPQQDAjAWMRQwEgYDVQQDEwthbnNpYmxl
 LmNvbTAeFw0xODExMjUxNTI4MjNaFw0xODExMjYxNTI4MjRaMBYxFDASBgNVBAMT
