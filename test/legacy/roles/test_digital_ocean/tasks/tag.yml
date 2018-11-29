@@ -1,0 +1,23 @@
+---
+- name: Create a new tag
+  digital_ocean_tag:
+    oauth_token: "{{ digitalocean_oauth_token }}"
+    name: integration-test
+    state: present
+  register: create_tag
+
+- assert:
+    that:
+      - create_tag.changed == True
+      - create_tag.data.tag.name == "integration-test"
+
+- name: Delete tag
+  digital_ocean_tag:
+    oauth_token: "{{ digitalocean_oauth_token }}"
+    name: integration-test
+    state: absent
+  register: delete_tag
+
+- assert:
+    that:
+      - delete_tag.changed == True
