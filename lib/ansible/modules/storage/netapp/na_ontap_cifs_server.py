@@ -127,7 +127,7 @@ class NetAppOntapcifsServer(object):
             workgroup=dict(required=False, type='str', default=None),
             domain=dict(required=False, type='str'),
             admin_user_name=dict(required=False, type='str'),
-            admin_password=dict(required=False, type='str'),
+            admin_password=dict(required=False, type='str', no_log=True),
             ou=dict(required=False, type='str'),
             force=dict(required=False, type='bool'),
             vserver=dict(required=True, type='str'),
