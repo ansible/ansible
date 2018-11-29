@@ -629,7 +629,7 @@ class RedfishUtils(object):
         response = self.post_request(self.root_uri + reset_bios_settings_uri, {}, HEADERS)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
     def set_one_time_boot_device(self, bootdevice):
         result = {}
