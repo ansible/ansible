@@ -236,6 +236,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
             else:
                 pod_labels = {}
 
+            if not pod.status.containerStatuses:
+                continue
+
             for container in pod.status.containerStatuses:
                 # add each pod_container to the namespace group, and to each label_value group
                 container_name = '{0}_{1}'.format(pod.metadata.name, container.name)
