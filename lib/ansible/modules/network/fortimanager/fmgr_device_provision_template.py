@@ -376,7 +376,7 @@ options:
 
   admin_enable_fortiguard:
     description:
-     - Enables FortiGuard security updates to their default settings. 
+     - Enables FortiGuard security updates to their default settings.
     required: False
     choices: ["none", "direct", "this-fmg"]
 
