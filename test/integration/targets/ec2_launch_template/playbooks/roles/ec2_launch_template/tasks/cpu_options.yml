@@ -1,0 +1,38 @@
+- block:
+  - name: delete a non-existent template
+    ec2_launch_template:
+      name: "{{ resource_prefix }}-not-a-real-template"
+      state: absent
+    register: del_fake_lt
+    ignore_errors: true
+  - assert:
+      that:
+        - del_fake_lt is not failed
+  - name: create c4.large instance with cpu_options
+    ec2_launch_template:
+      name: "{{ resource_prefix }}-c4large-1-threads-per-core"
+      image_id: "{{ ec2_ami_image[aws_region] }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: c4.large
+      cpu_options:
+          core_count: 1
+          threads_per_core: 1
+    register: lt
+
+  - name: instance with cpu_options created with the right options
+    assert:
+      that:
+        - lt is success
+        - lt is changed
+        - "lt.latest_template.launch_template_data.cpu_options.core_count == 1"
+        - "lt.latest_template.launch_template_data.cpu_options.threads_per_core == 1"
+  always:
+  - name: delete the template
+    ec2_launch_template:
+      name: "{{ resource_prefix }}-c4large-1-threads-per-core"
+      state: absent
+    register: del_lt
+    retries: 10
+    until: del_lt is not failed
+    ignore_errors: true
