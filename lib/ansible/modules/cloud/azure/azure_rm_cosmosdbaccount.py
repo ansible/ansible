@@ -59,12 +59,12 @@ options:
                 description:
                     - "When used with the Bounded Staleness consistency level, this value represents the number of stale requests tolerated. Accepted range
                        for this value is 1 - 2,147,483,647. Required when I(default_consistency_policy) is set to C(bounded_staleness)."
-                type: number
+                type: int
             max_interval_in_seconds:
                 description:
                     - "When used with the Bounded Staleness consistency level, this value represents the time amount of staleness (in seconds) tolerated.
                        Accepted range for this value is 5 - 86400. Required when I(default_consistency_policy) is set to C(bounded_staleness)."
-                type: number
+                type: int
     geo_rep_locations:
         description:
             - An array that contains the georeplication locations enabled for the Cosmos DB account.
@@ -78,6 +78,7 @@ options:
                 description:
                     - "The failover priority of the region. A failover priority of 0 indicates a write region. The maximum value for a failover priority =
                        (total number of regions - 1). Failover priority values must be unique for each of the regions in which the database account exists."
+                type: int
     database_account_offer_type:
         description:
             - Database account offer type, for example I(Standard)
@@ -226,10 +227,10 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                                  'consistent_prefix']
                     ),
                     max_staleness_prefix=dict(
-                        type='number'
+                        type='int'
                     ),
                     max_interval_in_seconds=dict(
-                        type='number'
+                        type='int'
                     )
                 )
             ),
@@ -241,7 +242,7 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                         required=True
                     ),
                     failover_priority=dict(
-                        type='number',
+                        type='int',
                         required=True
                     )
                 )
