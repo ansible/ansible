@@ -331,16 +331,6 @@ except ImportError:
     HAS_PYFMGR = False
 
 
-# FUNCTION/METHOD FOR CONVERTING CIDR TO A NETMASK
-def cidr_to_netmask(cidr):
-    cidr = int(cidr)
-    mask = (0xffffffff >> (32 - cidr)) << (32 - cidr)
-    return (str((0xff000000 & mask) >> 24) + '.' +
-            str((0x00ff0000 & mask) >> 16) + '.' +
-            str((0x0000ff00 & mask) >> 8) + '.' +
-            str((0x000000ff & mask)))
-
-
 def fmgr_fwobj_service_custom(fmg, paramgram):
     """
     # NOTES!
