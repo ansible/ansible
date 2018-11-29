@@ -38,7 +38,7 @@ options:
       - Undefined, use default or puppet.conf value if defined.
       - true, Run puppet agent with --noop switch set.
       - false, Run puppet agent with --no-noop switch set.
-    version_added: "2.7"
+    version_added: "2.8"
   facts:
     description:
       - A dict of values to pass in as persistent external facter facts.
