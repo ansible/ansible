@@ -9,6 +9,14 @@ class ModuleDocFragment(object):
     # AWS only documentation fragment
     DOCUMENTATION = r'''
 options:
+  debug_botocore_endpoint_logs:
+    description:
+      - Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing
+        the set to the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during
+        a playbook.
+    type: bool
+    default: 'no'
+    version_added: "2.8"
   ec2_url:
     description:
       - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).

@@ -10,7 +10,10 @@
       region: "{{ aws_region }}"
   no_log: yes
 
-- block:
+- module_defaults:
+    group/aws:
+      debug_botocore_endpoint_logs: True
+  block:
     - name: test create bucket without permissions
       aws_s3:
         bucket: "{{ bucket_name }}"

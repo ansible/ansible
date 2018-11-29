@@ -9,6 +9,7 @@
 - name: Test basics (new zone, A and AAAA records)
   module_defaults:
     group/aws:
+      debug_botocore_endpoint_logs: True
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token }}"

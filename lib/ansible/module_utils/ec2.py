@@ -177,6 +177,7 @@ def boto_exception(err):
 
 def aws_common_argument_spec():
     return dict(
+        debug_botocore_endpoint_logs=dict(default=False, type='bool'),
         ec2_url=dict(),
         aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
         aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),

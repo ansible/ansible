@@ -644,3 +644,42 @@ integration builds, so the tests will initially fail when you submit a pull requ
 
 Once you're certain the failure is only due to the missing permissions, add a comment with the `ready_for_review`
 tag and explain that it's due to missing permissions.
+
+If your pull request is failing due to missing permissions, you can help with the process of getting your pull request
+into a mergeable state by collecting the minimum IAM permissions required to run the tests. The permissions used by CI
+are more restrictive than those in `hacking/aws_config/testing_policies`.
+
+Iterative approach to determine the minimum permissions needed to run your tests:
+1) Set up an IAM user or role without any IAM permissions at all
+2) Run the integration tests
+    a) If the error message is informative about the action and resource ARN used in the request, add the action to your policy and limit it to that resource
+    b) If the error message is not informative, usually the CamelCase of the method used is the action performed - e.g. ec2_client.describe_security_groups is `ec2:DescribeSecurityGroups`
+    c) If the error message did not indicate a resource ARN to add in your policy examine the AWS and https://iam.cloudonaut.io documentation
+3) Run the tests again with the updated policy attached to your user or role
+    a) If the tests are displaying the same error
+        - You may need to wait a few minutes for your policy to update
+        - Use the policy simulator to check if it should allow the action that's failing [policy simulator](https://policysim.aws.amazon.com/)
+        - If you've given it a little time and the policy simulator passes AWS may be using additional resources under the hood which you
+          will need to be guessed (examine the AWS FullAccess policy for the service for clues, re-read the docs, and use a search engine).
+        - Remove the permission if it is incorrect and replace it with the correct one
+4) Repeat step 2 and 3 until the tests complete, and share the minimum policy in a comment
+
+Alternative process by collecting all the actions performed:
+1) Run your tests using the `hacking/aws_config/testing_policies` with the `debug_botocore_endpoint_logs` module option set to True
+   (this only collects actions for AnsibleAWSModule so boto/non AnsibleAWSModule modules will need to use the iterative approach above)
+```
+- module_defaults:
+    group/aws:
+      debug_botocore_endpoint_logs: True
+```
+2) Create a policy allowing those actions
+3) Inspect the documentation and add resource restriction to account, region, and and prefix where possible
+4) Use the [policy simulator](https://policysim.aws.amazon.com/) to check that the actions listed succeed and return to step 2 if not
+5) Remove the `hacking/aws_config/testing_policy` from your user and run the tests with the new policy
+    a) If they fail, AWS may be using additional resources (the FullAccess policy for the service for clues) - troubleshoot and return to step 2
+6) Share the minimum policy in a comment
+
+Some cases where tests should be marked as unsupported:
+1) The tests take longer than 10 or 15 minutes to complete
+2) The tests create expensive resources
+3) The tests create inline policies

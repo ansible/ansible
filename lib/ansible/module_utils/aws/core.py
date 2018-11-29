@@ -60,9 +60,17 @@ don't need to be wrapped in the backoff decorator.
 
 """
 
+import re
+import logging
 import traceback
 from functools import wraps
 from distutils.version import LooseVersion
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
@@ -120,14 +128,38 @@ class AnsibleAWSModule(object):
         self._diff = self._module._diff
         self._name = self._module._name
 
+        self._botocore_endpoint_log_stream = StringIO()
+        self.logger = None
+        if self.params['debug_botocore_endpoint_logs']:
+            self.logger = logging.getLogger('botocore.endpoint')
+            self.logger.setLevel(logging.DEBUG)
+            self.logger.addHandler(logging.StreamHandler(self._botocore_endpoint_log_stream))
+
     @property
     def params(self):
         return self._module.params
 
+    def _get_resource_action_list(self):
+        actions = []
+        for ln in self._botocore_endpoint_log_stream.getvalue().split('\n'):
+            ln = ln.strip()
+            if not ln:
+                continue
+            found_operational_request = re.search(r"OperationModel\(name=.*?\)", ln)
+            if found_operational_request:
+                operation_request = found_operational_request.group(0)[20:-1]
+                resource = re.search("https://.*?\.", ln).group(0)[8:-1]
+                actions.append("{0}:{1}".format(resource, operation_request))
+        return list(set(actions))
+
     def exit_json(self, *args, **kwargs):
+        if self.params['debug_botocore_endpoint_logs']:
+            kwargs['resource_actions'] = self._get_resource_action_list()
         return self._module.exit_json(*args, **kwargs)
 
     def fail_json(self, *args, **kwargs):
+        if self.params['debug_botocore_endpoint_logs']:
+            kwargs['resource_actions'] = self._get_resource_action_list()
         return self._module.fail_json(*args, **kwargs)
 
     def debug(self, *args, **kwargs):
@@ -189,6 +221,8 @@ class AnsibleAWSModule(object):
 
         if response is not None:
             failure.update(**camel_dict_to_snake_dict(response))
+        if self.params['debug_botocore_endpoint_logs']:
+            failure.update({'resource_actions': self._get_resource_action_list()})
 
         self._module.fail_json(**failure)
 
