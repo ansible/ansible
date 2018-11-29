@@ -2,6 +2,32 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.12:
+
+v2.5.12
+=======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.12_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-11-29
+| Security release for CVE-2018-16859 (https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2018-16859)
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.12_Bugfixes:
+
+Bugfixes
+--------
+
+- openssl_csr - fix byte encoding issue on Python 3
+
+- postgresql_user - create pretty error message when creating a user without an encrypted password on newer PostgreSQL versions
+
+- Windows - prevent sensitive content from appearing in scriptblock logging (CVE 2018-16859)
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.11:
 
 v2.5.11
