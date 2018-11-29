@@ -187,6 +187,7 @@ options:
   placement_group:
     description:
       - The placement group that needs to be assigned to the instance
+    version_added: 2.8
 
 extends_documentation_fragment:
     - aws
