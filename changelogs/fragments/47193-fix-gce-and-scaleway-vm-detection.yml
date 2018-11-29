@@ -1,2 +1,2 @@
-bugfix:
+bugfixes:
 - "facts - detect VMs from google cloud engine and scaleway"
