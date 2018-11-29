@@ -22,6 +22,38 @@ description:
 author: "Kevin Breit (@kbreit)"
 version_added: "2.8"
 options:
+  name:
+    description:
+      - Name of project.
+      - Maximum of 255 characters.
+  description:
+    description:
+      - Description of project.
+      - Maximum of 255 characters.
+  purpose:
+    description:
+      - Purpose of project per DigitalOcean options.
+    choices: ['Just trying out DigitalOcean',
+              'Class project / Education purposes',
+              'Website or blog',
+              'Web application',
+              'Service or API',
+              'Mobile Application',
+              'Machine learning / AI / Data processing',
+              'IoT',
+              'Operational / Developer tooling',
+              'Other']
+  id:
+    description:
+      - ID number of project as assigned by DigitalOcean.
+  default:
+    description:
+      - States whether resources are assigned to project by default.
+      - Only valid for modifications to existing projects.
+  resources:
+    description:
+      - List of Uniform Resource Names (URN) of which to move into the project.
+      - Example URN: do:droplet:1234
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
