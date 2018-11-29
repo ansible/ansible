@@ -107,14 +107,23 @@ def core(module):
                 else:
                     module.fail_json(msg=response.json)
         else:  # Manipulate resources in a project
-            if pid is False:
-                module.fail_json(msg="Project must exist to assign resources")
-            payload = {'resources': module.params['resources']}
-            response = rest.post('projects/{0}/resources'.format(pid), data=payload)
-            if response.status_code == 200:
-                module.exit_json(changed=True, data=response.json)
-            else:
-                module.fail_json(msg=response.json)
+            if module.params['default'] == True:  # Assign to the default project
+                payload = {'resources': module.params['resources']}
+                response = rest.post('projects/default/resources', data=payload)
+                if response.status_code == 200:
+                    module.exit_json(changed=True, data=response.json)
+                else:
+                    module.fail_json(msg=response.json)
+
+            else:  # Assign to a specified project
+                if pid is False:
+                    module.fail_json(msg="Project must exist to assign resources")
+                payload = {'resources': module.params['resources']}
+                response = rest.post('projects/{0}/resources'.format(pid), data=payload)
+                if response.status_code == 200:
+                    module.exit_json(changed=True, data=response.json)
+                else:
+                    module.fail_json(msg=response.json)
     module.exit_json(changed=False)
 
 
