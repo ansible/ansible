@@ -89,6 +89,7 @@ options:
     - If the virtual machine already exists, this parameter will be ignored.
     - This parameter is case sensitive.
     - You can also specify template or VM UUID for identifying source. version_added 2.8. Use C(hw_product_uuid) from M(vmware_guest_facts) as UUID value.
+    - From version 2.8 onwards, absolute path to virtual machine or template can be used.
     aliases: [ 'template_src' ]
   is_template:
     description:
@@ -181,6 +182,16 @@ options:
     - '     - C(persistent): Changes are immediately and permanently written to the virtual disk. This is default.'
     - '     - C(independent_persistent): Same as persistent, but not affected by snapshots.'
     - '     - C(independent_nonpersistent): Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
+    - ' - C(controller_type) (string): Type of disk controller. If this value is absent, disk will attach controller specified in C(hardware).'
+    - '   Valid values are C(buslogic), C(lsilogic), C(lsilogicsas), C(paravirtual), C(sata) and C(nvme).'
+    - ' - C(controller_number) (integer): disk controller bus number. The maximum number of same type controller is 4 per VM.'
+    - '   Valid value range from 0 to 3.'
+    - ' - C(unit_number) (integer): Disk Unit Number.'
+    - '   Valid value range from 0 to 15 for SCSI controller, except 7.'
+    - '   Valid value range from 0 to 14 for NVME controller.'
+    - '   Valid value range from 0 to 29 for SATA controller.'
+    - ' - C(boot_disk) (bool): set this disk as Hard disk 1.'    
+    
   cdrom:
     description:
     - A CD-ROM configuration for the virtual machine.
@@ -335,19 +346,6 @@ options:
     - For example, when user has different datastore or datastore cluster for templates and virtual machines.
     - Please see example for more usage.
     version_added: '2.7'
-  diskcontrollers:
-    description:
-    - A list of disk controllers with attached disks.
-    - '"hardware.scsi" will take precendence over this parameter.'
-    - 'Valid attributes are:'
-    - ' - C(scsi) (string): SCSI controller type, it's value is the same as "hardware.scsi".'
-    - ' - C(status) (string): For existing VM, if it's value set to 'new', will add new disk controller and disks.' 
-    - ' - C(disks) (list): List of added disks, valid attributes are:'
-    - '   - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
-    - '   - C(type) (string): Valid values are:'
-    - '       - C(thin) (string): thin disk.'
-    - '       - C(eagerzeroedthick) (string): eagerzeroedthick disk.'
-    - '   - C(datastore) (string): Datastore to use for the disk. If not specified, will auto select one.'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -581,7 +579,9 @@ class PyVmomiDeviceHelper(object):
 
     def __init__(self, module):
         self.module = module
-        self.next_disk_unit_number = 0
+        # this is not appliable for the multiple controller with multiple disks scenario, so comment out and not use it
+        # disk unit number can not be None
+        # self.next_disk_unit_number = 0
         self.scsi_device_type = {
             'lsilogic': vim.vm.device.VirtualLsiLogicController,
             'paravirtual': vim.vm.device.ParaVirtualSCSIController,
@@ -589,16 +589,15 @@ class PyVmomiDeviceHelper(object):
             'lsilogicsas': vim.vm.device.VirtualLsiLogicSASController,
         }
 
-    def create_scsi_controller(self, scsi_type):
+    def create_scsi_controller(self, scsi_type, bus_number):
         scsi_ctl = vim.vm.device.VirtualDeviceSpec()
         scsi_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         scsi_device = self.scsi_device_type.get(scsi_type, vim.vm.device.ParaVirtualSCSIController)
         scsi_ctl.device = scsi_device()
-        # busNumber value of scsi controllers increases
-        # scsi_ctl.device.busNumber = 0
+        scsi_ctl.device.busNumber = bus_number
         # While creating a new SCSI controller, temporary key value
         # should be unique negative integers
-        scsi_ctl.device.key = -randint(1000, 1999)
+        scsi_ctl.device.key = -randint(1000, 9999)
         scsi_ctl.device.hotAddRemove = True
         scsi_ctl.device.sharedBus = 'noSharing'
         scsi_ctl.device.scsiCtlrUnitNumber = 7
@@ -608,11 +607,39 @@ class PyVmomiDeviceHelper(object):
     def is_scsi_controller(self, device):
         return isinstance(device, tuple(self.scsi_device_type.values()))
 
-    def create_disk_controller(self, ctl_str):
-        if ctl_str in self.scsi_device_type.keys():
-            disk_ctl = self.create_scsi_controller(ctl_str)
-        else:
-            self.module.fail_json(msg="diskcontrollers.scsi attribute should be 'buslogic', 'paravirtual', 'lsilogic', 'lsilogicsas'")
+    def create_sata_controller(self, bus_number):
+        sata_ctl = vim.vm.device.VirtualDeviceSpec()
+        sata_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        sata_ctl.device = vim.vm.device.VirtualAHCIController()
+        sata_ctl.device.busNumber = bus_number
+        sata_ctl.device.key = -randint(15000, 19999)
+
+        return sata_ctl
+
+    def is_sata_controller(self, device):
+        return isinstance(device, vim.vm.device.VirtualAHCIController)
+
+    def create_nvme_controller(self, bus_number):
+        nvme_ctl = vim.vm.device.VirtualDeviceSpec()
+        nvme_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        nvme_ctl.device = vim.vm.device.VirtualNVMEController()
+        nvme_ctl.device.deviceInfo = vim.Description()
+        nvme_ctl.device.key = -randint(31000, 39999)
+        nvme_ctl.device.busNumber = bus_number
+
+        return nvme_ctl
+
+    def is_nvme_controller(self, device):
+        return isinstance(device, vim.vm.device.VirtualNVMEController)
+
+    def create_disk_controller(self, ctl_type, ctl_number):
+        disk_ctl = None
+        if ctl_type in ['buslogic', 'paravirtual', 'lsilogic', 'lsilogicsas']:
+            disk_ctl = self.create_scsi_controller(ctl_type, ctl_number)
+        if ctl_type == 'sata':
+            disk_ctl = self.create_sata_controller(ctl_number)
+        if ctl_type == 'nvme':
+            disk_ctl = self.create_nvme_controller(ctl_number)
 
         return disk_ctl
 
@@ -665,31 +692,41 @@ class PyVmomiDeviceHelper(object):
                     cdrom_device.connectable.startConnected and
                     (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
 
-    def create_scsi_disk(self, scsi_ctl, disk_index=None):
+    def create_hard_disk(self, disk_ctl, disk_index):
         diskspec = vim.vm.device.VirtualDeviceSpec()
         diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
-        diskspec.device.controllerKey = scsi_ctl.device.key
+        diskspec.device.controllerKey = disk_ctl.device.key
 
-        if self.next_disk_unit_number == 7:
-            raise AssertionError()
-        if disk_index == 7:
-            raise AssertionError()
-        """
-        Configure disk unit number.
-        """
-        if disk_index is not None:
-            diskspec.device.unitNumber = disk_index
-            self.next_disk_unit_number = disk_index + 1
-        else:
-            diskspec.device.unitNumber = self.next_disk_unit_number
-            self.next_disk_unit_number += 1
-
-        # unit number 7 is reserved to SCSI controller, increase next index
-        if self.next_disk_unit_number == 7:
-            self.next_disk_unit_number += 1
+        if self.is_scsi_controller(disk_ctl.device):
+            # one scsi controller attach 0-15 (except 7) disks
+            if disk_index is None:
+                self.module.fail_json(msg='unitNumber for sata disk is None.')
+            else:
+                if disk_index == 7 or disk_index > 15:
+                    self.module.fail_json(msg='Invalid scsi disk unitNumber, valid 0-15(except 7).')
+                else:
+                    diskspec.device.unitNumber = disk_index
+        elif self.is_sata_controller(disk_ctl.device):
+            # one sata controller attach 0-29 disks
+            if disk_index is None:
+                self.module.fail_json(msg='unitNumber for sata disk is None.')
+            else:
+                if disk_index > 29:
+                    self.module.fail_json(msg='Invalid sata disk unitNumber, valid 0-29.')
+                else:
+                    diskspec.device.unitNumber = disk_index
+        elif self.is_nvme_controller(disk_ctl.device):
+            # one nvme controller attach 0-14 disks
+            if disk_index is None:
+                self.module.fail_json(msg='unitNumber for nvme disk is None.')
+            else:
+                if disk_index > 14:
+                    self.module.fail_json(msg='Invalid nvme disk unitNumber, valid 0-14.')
+                else:
+                    diskspec.device.unitNumber = disk_index
 
         return diskspec
 
@@ -737,6 +774,22 @@ class PyVmomiDeviceHelper(object):
         """
         mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
         return bool(mac_addr_regex.match(mac_addr))
+
+    def integer_value(self, input_value, name):
+        """
+        Function to return int value for given input, else return error
+        Args:
+            input_value: Input value to retrive int value from
+            name:  Name of the Input value (used to build error message)
+        Returns: (int) if integer value can be obtained, otherwise will send a error message.
+        """
+        if isinstance(input_value, int):
+            return input_value
+        elif isinstance(input_value, str) and input_value.isdigit():
+            return int(input_value)
+        else:
+            self.module.fail_json(msg='"%s" attribute should be an'
+                                  ' integer value.' % name)
 
 
 class PyVmomiCache(object):
@@ -924,6 +977,14 @@ class PyVmomiHelper(PyVmomi):
                     num_cpus = int(self.params['hardware']['num_cpus'])
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.num_cpus attribute should be an integer value.")
+                # check VM power state and cpu hot-add/hot-remove state before re-config VM
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    if not vm_obj.config.cpuHotRemoveEnabled and num_cpus < vm_obj.config.hardware.numCPU:
+                        self.module.fail_json(msg="Configured cpu number is less than the cpu number of the VM, "
+                                                  "cpuHotRemove is not enabled")
+                    if not vm_obj.config.cpuHotAddEnabled and num_cpus > vm_obj.config.hardware.numCPU:
+                        self.module.fail_json(msg="Configured cpu number is more than the cpu number of the VM, "
+                                                  "cpuHotAdd is not enabled")
 
                 if 'num_cpu_cores_per_socket' in self.params['hardware']:
                     try:
@@ -934,11 +995,9 @@ class PyVmomiHelper(PyVmomi):
                     if num_cpus % num_cpu_cores_per_socket != 0:
                         self.module.fail_json(msg="hardware.num_cpus attribute should be a multiple "
                                                   "of hardware.num_cpu_cores_per_socket")
-
                     self.configspec.numCoresPerSocket = num_cpu_cores_per_socket
                     if vm_obj is None or self.configspec.numCoresPerSocket != vm_obj.config.hardware.numCoresPerSocket:
                         self.change_detected = True
-
                 self.configspec.numCPUs = num_cpus
                 if vm_obj is None or self.configspec.numCPUs != vm_obj.config.hardware.numCPU:
                     self.change_detected = True
@@ -948,11 +1007,19 @@ class PyVmomiHelper(PyVmomi):
 
             if 'memory_mb' in self.params['hardware']:
                 try:
-                    self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
+                    memory_mb = int(self.params['hardware']['memory_mb'])
                 except ValueError:
                     self.module.fail_json(msg="Failed to parse hardware.memory_mb value."
                                               " Please refer the documentation and provide"
                                               " correct value.")
+                # check VM power state and memory hotadd state before re-config VM
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    if vm_obj.config.memoryHotAddEnabled and memory_mb < vm_obj.config.hardware.memoryMB:
+                        self.module.fail_json(msg="Configured memory is less than memory size of the VM, "
+                                                  "operation is not supported")
+                    elif not vm_obj.config.memoryHotAddEnabled and memory_mb != vm_obj.config.hardware.memoryMB:
+                        self.module.fail_json(msg="memoryHotAdd is not enabled")
+                self.configspec.memoryMB = memory_mb
                 if vm_obj is None or self.configspec.memoryMB != vm_obj.config.hardware.memoryMB:
                     self.change_detected = True
             # memory_mb is mandatory for VM creation
@@ -960,16 +1027,25 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
 
             if 'hotadd_memory' in self.params['hardware']:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
+                        vm_obj.config.memoryHotAddEnabled != bool(self.params['hardware']['hotadd_memory']):
+                    self.module.fail_json(msg="Configure hotadd memory operation is not supported when VM is power on")
                 self.configspec.memoryHotAddEnabled = bool(self.params['hardware']['hotadd_memory'])
                 if vm_obj is None or self.configspec.memoryHotAddEnabled != vm_obj.config.memoryHotAddEnabled:
                     self.change_detected = True
 
             if 'hotadd_cpu' in self.params['hardware']:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
+                        vm_obj.config.cpuHotAddEnabled != bool(self.params['hardware']['hotadd_cpu']):
+                    self.module.fail_json(msg="Configure hotadd cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotAddEnabled = bool(self.params['hardware']['hotadd_cpu'])
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
                     self.change_detected = True
 
             if 'hotremove_cpu' in self.params['hardware']:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
+                        vm_obj.config.cpuHotRemoveEnabled != bool(self.params['hardware']['hotremove_cpu']):
+                    self.module.fail_json(msg="Configure hotremove cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
                 if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
                     self.change_detected = True
@@ -994,13 +1070,15 @@ class PyVmomiHelper(PyVmomi):
                     self.change_detected = True
 
             if 'boot_firmware' in self.params['hardware']:
+                # boot firmware re-config can cause boot issue
+                if vm_obj is not None:
+                    return
                 boot_firmware = self.params['hardware']['boot_firmware'].lower()
                 if boot_firmware not in ('bios', 'efi'):
                     self.module.fail_json(msg="hardware.boot_firmware value is invalid [%s]."
                                               " Need one of ['bios', 'efi']." % boot_firmware)
                 self.configspec.firmware = boot_firmware
-                if vm_obj is None or self.configspec.firmware != vm_obj.config.firmware:
-                    self.change_detected = True
+                self.change_detected = True
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
@@ -1535,7 +1613,10 @@ class PyVmomiHelper(PyVmomi):
                 ident.guiUnattended.autoLogonCount = self.params['customization'].get('autologoncount', 1)
 
             if 'timezone' in self.params['customization']:
-                ident.guiUnattended.timeZone = self.params['customization']['timezone']
+                # Check if timezone value is a int before proceeding.
+                ident.guiUnattended.timeZone = self.device_helper.integer_value(
+                    self.params['customization']['timezone'],
+                    'customization.timezone')
 
             ident.identification = vim.vm.customization.Identification()
 
@@ -1597,17 +1678,6 @@ class PyVmomiHelper(PyVmomi):
 
         return None
 
-    def get_vm_all_disk_controllers(self, vm_obj):
-        if vm_obj is None:
-            return None
-        disk_ctls = []
-        for device in vm_obj.config.hardware.device:
-            if self.device_helper.is_scsi_controller(device):
-                disk_ctl = vim.vm.device.VirtualDeviceSpec()
-                disk_ctl.device = device
-                disk_ctls.append(disk_ctl)
-        return disk_ctls
-
     def get_configured_disk_size(self, expected_disk_spec):
         # what size is it?
         if [x for x in expected_disk_spec.keys() if x.startswith('size_') or x == 'size']:
@@ -1655,16 +1725,150 @@ class PyVmomiHelper(PyVmomi):
         self.module.fail_json(
             msg="No size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
 
-    def configure_disks(self, vm_obj):
-        # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
+    def get_configured_controllers_disks(self):
+        controllers = {'boot_disk': None, 'scsi': None, 'sata': None, 'nvme': None}
+        for disk_spec in self.params.get('disk'):
+            # max number of same type disk controller is 4
+            ctl_num = disk_spec['controller_number']
+            if disk_spec['controller_type'].lower() in ['buslogic', 'paravirtual', 'lsilogic', 'lsilogicsas']:
+                controller_type = 'scsi'
+            elif disk_spec['controller_type'].lower() in ['sata', 'nvme']:
+                controller_type = disk_spec['controller_type'].lower()
+            else:
+                self.module.fail_json(msg="Disk controller type %s not supported." % disk_spec['controller_type'])
+
+            # scsi: [{'type': 'paravirtual', 'num': 0, 'disk': []}, {}, {}, {}] like structure
+            ctl_exist = False
+            # if this disk is configured as boot disk, then add to 'boot_disk': [{}]
+            if 'boot_disk' in disk_spec and disk_spec['boot_disk']:
+                if controllers['boot_disk'] is None:
+                    controllers['boot_disk'] = []
+                    controllers['boot_disk'].append({'type': disk_spec['controller_type'].lower(),
+                                                     'num': ctl_num, 'disk': [disk_spec]})
+                else:
+                    self.module.fail_json(msg="Only one boot disk can be configured, exist one %s." % controllers['boot_disk'])
+            else:
+                # if this disk is configured to attach to the boot disk controller
+                if controllers['boot_disk'] is not None and \
+                                disk_spec['controller_type'].lower() == controllers['boot_disk'][0]['type'] and \
+                                disk_spec['controller_number'] == controllers['boot_disk'][0]['num']:
+                    for i in range(0, len(controllers['boot_disk'][0]['disk'])):
+                        if disk_spec['unit_number'] == controllers['boot_disk'][0]['disk'][i]['unit_number']:
+                            self.module.fail_json(msg="Have same controller_type, controller_number, unit_number disk.")
+                    controllers['boot_disk'][0]['disk'].append(disk_spec)
+                else:
+                    if controllers[controller_type] is not None:
+                        for ctl in controllers[controller_type]:
+                            if ctl['type'] == disk_spec['controller_type'].lower() and ctl['num'] == ctl_num:
+                                for i in range(0, len(ctl['disk'])):
+                                    if disk_spec['unit_number'] == ctl['disk'][i]['unit_number']:
+                                        self.module.fail_json(msg="Have same controller_type, controller_number, "
+                                                                  "unit_number disk.")
+                                ctl['disk'].append(disk_spec)
+                                ctl_exist = True
+                                break
+                            if ctl['type'] != disk_spec['controller_type'].lower() and ctl['num'] == ctl_num:
+                                self.module.fail_json(msg="Configured scsi controller number duplicate.")
+                        if not ctl_exist:
+                            controllers[controller_type].append({'type': disk_spec['controller_type'].lower(),
+                                                                 'num': ctl_num, 'disk': [disk_spec]})
+                    else:
+                        controllers[controller_type] = []
+                        controllers[controller_type].append({'type': disk_spec['controller_type'].lower(),
+                                                             'num': ctl_num, 'disk': [disk_spec]})
+
+        return controllers
+
+    def create_controllers_disks(self):
+        ctls = self.get_configured_controllers_disks()
+        if ctls['boot_disk'] is not None:
+            ctl_type = ctls['boot_disk'][0]['type']
+            ctl_number = ctls['boot_disk'][0]['num']
+            disk_ctl = self.device_helper.create_disk_controller(ctl_type, ctl_number)
+            self.configspec.deviceChange.append(disk_ctl)
+            for i in range(0, len(ctls['boot_disk'][0]['disk'])):
+                disk_unit_number = ctls['boot_disk'][0]['disk'][i]['unit_number']
+                hard_disk = self.device_helper.create_hard_disk(disk_ctl, disk_unit_number)
+                self.set_disk_parameters(hard_disk, ctls['boot_disk'][0]['disk'][i])
+                self.configspec.deviceChange.append(hard_disk)
+        ctls.pop('boot_disk')
+        for key in ctls:
+            if ctls[key] is not None:
+                for i in range(0, len(ctls[key])):
+                    disk_ctl = self.device_helper.create_disk_controller(ctls[key][i]['type'], ctls[key][i]['num'])
+                    self.configspec.deviceChange.append(disk_ctl)
+                    for j in range(0, len(ctls[key][i]['disk'])):
+                        disk_unit_number = ctls[key][i]['disk'][j]['unit_number']
+                        hard_disk = self.device_helper.create_hard_disk(disk_ctl, disk_unit_number)
+                        self.set_disk_parameters(hard_disk, ctls[key][i]['disk'][j])
+                        self.configspec.deviceChange.append(hard_disk)
+
+    def set_disk_parameters(self, disk_spec, expected_disk_spec):
+        if 'disk_mode' in expected_disk_spec:
+            disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
+            valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
+            if disk_mode not in valid_disk_mode:
+                self.module.fail_json(msg="disk_mode specified is not valid."
+                                          " Should be one of ['%s']" % "', '".join(valid_disk_mode))
+
+            if disk_spec.device.backing.diskMode != disk_mode:
+                disk_spec.device.backing.diskMode = disk_mode
+        else:
+            disk_spec.device.backing.diskMode = "persistent"
+
+        if 'type' in expected_disk_spec:
+            disk_type = expected_disk_spec.get('type', '').lower()
+            if disk_type == 'thin':
+                disk_spec.device.backing.thinProvisioned = True
+            elif disk_type == 'eagerzeroedthick':
+                disk_spec.device.backing.eagerlyScrub = True
+
+        kb = self.get_configured_disk_size(expected_disk_spec)
+        disk_spec.device.capacityInKB = kb
+
+    def configure_controllers_disks(self, vm_obj):
         if len(self.params['disk']) == 0:
             return
+        config_multi_ctls = False
+        for disk_spec in self.params.get('disk'):
+            if 'controller_type' in disk_spec or 'controller_number' in disk_spec or 'unit_number' in disk_spec:
+                if 'controller_type' in disk_spec and 'controller_number' in disk_spec and 'unit_number' in disk_spec:
+                    config_multi_ctls = True
+                    if disk_spec['controller_type'].lower() == 'nvme':
+                        if 'version' in self.params['hardware'] and self.params['hardware']['version'] < 13:
+                            self.module.fail_json(msg="Configured hardware version %d not support nvme controller."
+                                                      % self.params['hardware']['version'])
+                        else:
+                            host_version = self.select_host().summary.config.product.version
+                            if int(host_version.split('.')[0]) < 6 or \
+                                    (int(host_version.split('.')[0]) == 6 and int(host_version.split('.')[1]) < 5):
+                                self.module.fail_json(msg="ESXi version %s not support nvme controller." % host_version)
+                else:
+                    self.module.fail_json(msg="Disk controller_type, controller_number, unit_number must be "
+                                              "configured at the same time.")
+                if disk_spec['controller_number'] > 3:
+                    self.module.fail_json(msg="Controller number not valid, valid from 0 to 3.")
+        # not support re-configure VM with multiple controllers and disks, use vmware_guest_disk module
+        if vm_obj is not None and config_multi_ctls:
+            self.module.fail_json(msg="Not support reconfigure disks with multiple controllers, "
+                                      "use vmware_guest_disk module.")
+        # create new VM with multiple disks and controllers
+        elif vm_obj is None and config_multi_ctls:
+            self.create_controllers_disks()
+        # if no controller_type configured in disk spec, call configure_disks as usual
+        else:
+            self.configure_disks(vm_obj)
+
+    def configure_disks(self, vm_obj):
+        # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
+        #if len(self.params['disk']) == 0:
+        #    return
 
         scsi_ctl = self.get_vm_scsi_controller(vm_obj)
 
         # Create scsi controller only if we are deploying a new VM, not a template or reconfiguring
         if vm_obj is None or scsi_ctl is None:
-            scsi_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type())
+            scsi_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type(), 0)
             self.change_detected = True
             self.configspec.deviceChange.append(scsi_ctl)
 
@@ -1685,7 +1889,7 @@ class PyVmomiHelper(PyVmomi):
                 diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                 diskspec.device = disks[disk_index]
             else:
-                diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
+                diskspec = self.device_helper.create_hard_disk(scsi_ctl, disk_index)
                 disk_modified = True
 
             if 'disk_mode' in expected_disk_spec:
@@ -1734,91 +1938,6 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.deviceChange.append(diskspec)
 
                 self.change_detected = True
-
-    def configure_disks_multicontrollers(self, vm_obj):
-        # Ignore empty controller list
-        expected_disk_ctl_num = len(self.params['diskcontrollers'])
-        if expected_disk_ctl_num == 0:
-            return
-        actual_disk_ctls = None
-        ctl_bus_number = 0
-        if vm_obj is not None:
-            actual_disk_ctls = self.get_vm_all_disk_controllers(vm_obj)
-            ctl_bus_number = len(actual_disk_ctls)
-        for key in range(0, expected_disk_ctl_num):
-            if vm_obj is None or \
-                    (vm_obj is not None and 'status' in self.params['diskcontrollers'][key] and self.params['diskcontrollers'][key]['status'] == 'new'):
-                if (actual_disk_ctls is not None and len(actual_disk_ctls) == 4) or ctl_bus_number == 4:
-                    self.module.fail_json(msg="Unable to add more than 4 SCSI controllers.")
-                disk_ctl_type = self.params['diskcontrollers'][key]['scsi']
-                disk_ctl = self.device_helper.create_disk_controller(disk_ctl_type)
-                disk_ctl.device.busNumber = ctl_bus_number
-                self.change_detected = True
-                self.configspec.deviceChange.append(disk_ctl)
-                disk_index = 0
-                disk_num = 0
-                if 'disks' in self.params['diskcontrollers'][key]:
-                    disk_num = len(self.params['diskcontrollers'][key]['disks'])
-                # the maximum disks of SCSI controller is 15
-                if disk_num != 0 and disk_num < 16:
-                    for disk_spec_config in self.params['diskcontrollers'][key].get('disks'):
-                        diskspec = self.device_helper.create_scsi_disk(disk_ctl, disk_index)
-
-                        if 'disk_mode' in disk_spec_config:
-                            disk_mode = disk_spec_config.get('disk_mode', 'persistent').lower()
-                            valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
-                            if disk_mode not in valid_disk_mode:
-                                self.module.fail_json(msg="disk_mode specified is not valid."
-                                                          " Should be one of ['%s']" % "', '".join(valid_disk_mode))
-                                continue
-                            else:
-                                diskspec.device.backing.diskMode = disk_mode
-                        else:
-                            diskspec.device.backing.diskMode = "persistent"
-
-                        if 'type' in disk_spec_config:
-                            disk_type = disk_spec_config.get('type', '').lower()
-                            if disk_type == 'thin':
-                                diskspec.device.backing.thinProvisioned = True
-                            elif disk_type == 'eagerzeroedthick':
-                                diskspec.device.backing.eagerlyScrub = True
-
-                        kb = self.get_configured_disk_size(disk_spec_config)
-                        if 'datastore' in disk_spec_config:
-                            datastore_name = disk_spec_config['datastore']
-                            datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
-                            if datastore is None or datastore.summary.freeSpace < kb:
-                                self.module.fail_json(msg="Unable to find datastore named %s specified "
-                                                          "in disk configuration at index %s of controller %s or "
-                                                          "Free space of specified datastore %s "
-                                                          "is less than the configured size %s"
-                                                          % (datastore_name, disk_index, disk_ctl_type,
-                                                             datastore.summary.freeSpace, kb))
-                                continue
-                        else:
-                            # If not specify datastore for this disk then select one
-                            datastore = self.autoselect_datastore()
-                            datastore_name = datastore.name
-                            if datastore is None:
-                                self.module.fail_json(msg="Unable to auto selecting a datastore for the disk index %s "
-                                                          "of controller %s" % (disk_index, disk_ctl_type))
-                                continue
-
-                        diskspec.device.capacityInKB = kb
-                        diskspec.device.backing.datastore = datastore
-                        # set vmdk file name combine with controller index and disk index
-                        if ((key == 0 and disk_index != 0) or key != 0) or vm_obj is not None:
-                            diskspec.device.backing.fileName = '[' + datastore_name + '] ' + \ 
-                                self.params['name'] + '/' + self.params['name'] + '_' + \ 
-                                str(ctl_bus_number) + str(disk_index) + '.vmdk'
-                        self.configspec.deviceChange.append(diskspec)
-                        disk_index += 1
-                        if disk_index == 7:
-                            disk_index += 1
-                ctl_bus_number += 1
-            else:
-                # TODO: vm_obj is not None, not add new disk controller, add new disk to existing controller.
-                pass
 
     def select_host(self):
         hostsystem = self.cache.get_esx_host(self.params['esxi_hostname'])
@@ -1918,13 +2037,6 @@ class PyVmomiHelper(PyVmomi):
                 datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
-
-        # If disks configured under multiple disk controllers, get datastore from 1st controller's 1st disk or autoselect
-        elif 'diskcontrollers' in self.params and len(self.params['diskcontrollers']) != 0:
-            if 'disks' in self.params['diskcontrollers'][0] and len(self.params['diskcontrollers'][0]['disks']) != 0:
-                if 'datastore' in self.params['diskcontrollers'][0]['disks'][0]:
-                    datastore_name = self.params['diskcontrollers'][0]['disks'][0]['datastore']
-                    datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
 
         if not datastore and self.params['template']:
             # use the template's existing DS
@@ -2132,10 +2244,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
         self.configure_resource_alloc_info(vm_obj=vm_obj)
-        if 'scsi' in self.params['hardware']:
-            self.configure_disks(vm_obj=vm_obj)
-        else:
-            self.configure_disks_multicontrollers(vm_obj=vm_obj)
+        self.configure_controllers_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
 
@@ -2181,6 +2290,8 @@ class PyVmomiHelper(PyVmomi):
                     clonespec.customization = self.customspec
 
                 if snapshot_src is not None:
+                    if vm_obj.snapshot is None:
+                        self.module.fail_json(msg="No snapshots present for virtual machine or template [%(template)s]" % self.params)
                     snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
                                                                       snapname=snapshot_src)
                     if len(snapshot) != 1:
@@ -2278,10 +2389,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_guestid(vm_obj=self.current_vm_obj)
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_hardware_params(vm_obj=self.current_vm_obj)
-        if 'scsi' in self.params['hardware']:
-            self.configure_disks(vm_obj=self.current_vm_obj)
-        else:
-            self.configure_disks_multicontrollers(vm_obj=self.current_vm_obj)
+        self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
@@ -2436,7 +2544,6 @@ def main():
         customization_spec=dict(type='str', default=None),
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
-        diskcontrollers=dict(type='list', default=[]),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
