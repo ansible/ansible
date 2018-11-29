@@ -1,0 +1,2 @@
+bugfixes:
+  - Handle ClientError exceptions when describing VPC peering connections.
