@@ -25,7 +25,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ansible.compat.tests import unittest
+from test.units.compat import unittest
 
 
 class TestClass(unittest.TestCase):
