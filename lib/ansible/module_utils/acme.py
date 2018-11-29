@@ -578,7 +578,7 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.get('body')
+                content = info.pop('body')
 
             if content or not parse_json_result:
                 if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
@@ -593,6 +593,8 @@ class ACMEAccount(object):
                             continue
                         if parse_json_result:
                             result = decoded_result
+                        else:
+                            result = content
                     except ValueError:
                         raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(url, content))
                 else:
@@ -622,7 +624,7 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.get('body')
+                content = info.pop('body')
 
         # Process result
         if parse_json_result:
