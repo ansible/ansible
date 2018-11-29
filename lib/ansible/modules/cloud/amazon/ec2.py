@@ -179,7 +179,7 @@ options:
     description:
       - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
         are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
-        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GB), iops (int) - device_type
+        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GiB), iops (int) - device_type
         is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
   ebs_optimized:
     version_added: "1.6"
@@ -1102,7 +1102,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 for volume in volumes:
                     if 'device_name' not in volume:
                         module.fail_json(msg='Device name must be set for volume')
-                    # Minimum volume size is 1GB. We'll use volume size explicitly set to 0
+                    # Minimum volume size is 1GiB. We'll use volume size explicitly set to 0
                     # to be a signal not to create this volume
                     if 'volume_size' not in volume or int(volume['volume_size']) > 0:
                         bdm[volume['device_name']] = create_block_device(module, ec2, volume)
