@@ -220,10 +220,10 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                     default_consistency_level=dict(
                         type='str',
                         choices=['eventual',
-                                'session',
-                                'bounded_staleness',
-                                'strong',
-                                'consistent_prefix']
+                                 'session',
+                                 'bounded_staleness',
+                                 'strong',
+                                 'consistent_prefix']
                     ),
                     max_staleness_prefix=dict(
                         type='number'
