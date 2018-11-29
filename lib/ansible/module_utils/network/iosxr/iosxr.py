@@ -393,7 +393,7 @@ def get_oper(module, filter=None):
     if filter is not None:
         try:
             if is_netconf(module):
-                response = conn.get(filter, remove_ns=True)
+                response = conn.get(filter=filter, remove_ns=True)
             else:
                 response = conn.get(filter)
         except ConnectionError as exc:
@@ -442,7 +442,7 @@ def load_config(module, command_filter, commit=False, replace=False,
 
         try:
             for filter in to_list(command_filter):
-                conn.edit_config(filter, remove_ns=True)
+                conn.edit_config(config=filter, remove_ns=True)
 
             candidate = get_config(module, source='candidate', config_filter=nc_get_filter)
             diff = get_config_diff(module, running, candidate)
