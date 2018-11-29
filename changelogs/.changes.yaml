@@ -543,3 +543,14 @@ releases:
     - v2.6.8_summary.yaml
     - win_uri-junk-data.yaml
     release_date: '2018-11-15'
+  2.6.9:
+    codename: Heartbreaker
+    fragments:
+    - 44726-correct_deprecate_call.yaml
+    - 48580-apt_key-no-tty.yaml
+    - 48808-sysvinit_defaults_if_no_runlevels.yaml
+    - ps_sb_logging.yaml
+    - user-fix-zero-negative-expiration.yaml
+    - user-password_lock-change-fix.yaml
+    - v2.6.9_summary.yaml
+    release_date: '2018-11-29'

@@ -2,6 +2,26 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.9
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-11-29
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Fix calling deprecate with correct arguments (https://github.com/ansible/ansible/pull/46062).
+- Windows - prevent sensitive content from appearing in scriptblock logging (CVE 2018-16859)
+- apt_key - Disable TTY requirement in GnuPG for the module to work correctly when SSH pipelining is enabled (https://github.com/ansible/ansible/pull/48580)
+- sysvinit - enabling a service should use "defaults" if no runlevels are specified
+- user - do not report changes every time when setting password_lock (https://github.com/ansible/ansible/issues/43670)
+- user - properly remove expiration when set to a negative value (https://github.com/ansible/ansible/issues/47114)
+
 v2.6.8
 ======
 
