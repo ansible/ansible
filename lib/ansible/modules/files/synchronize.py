@@ -132,7 +132,8 @@ options:
     version_added: "2.0"
   rsync_opts:
     description:
-      - Specify additional rsync options by passing in an array.
+      - Specify additional rsync options by passing in an array.  Note that an empty string in
+        C(rsync_opts) will end up transfer the current working directory.
     default:
     version_added: "1.6"
   partial:
@@ -519,6 +520,11 @@ def main():
         cmd.append('--rsync-path=%s' % rsync_path)
 
     if rsync_opts:
+        if '' in rsync_opts:
+            module.warn('The empty string is present in rsync_opts which will cause rsync to'
+                        ' transfer the current working directory. If this is intended, use "."'
+                        ' instead to get rid of this warning. If this is unintended, check for'
+                        ' problems in your playbook leading to empty string in rsync_opts.')
         cmd.extend(rsync_opts)
 
     if partial:
@@ -559,10 +565,10 @@ def main():
                 # Ignore broken pipe errors if the sshpass process has exited.
                 if exc.errno != errno.EPIPE or proc.poll() is None:
                     raise
+
         (rc, out, err) = module.run_command(
             cmd, pass_fds=_sshpass_pipe,
-            before_communicate_callback=_write_password_to_pipe
-        )
+            before_communicate_callback=_write_password_to_pipe)
     else:
         (rc, out, err) = module.run_command(cmd)
 
