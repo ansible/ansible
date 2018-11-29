@@ -1,9 +1,11 @@
-.. contents:: Topics
-
 .. _lookup_plugins:
 
 Lookup Plugins
 --------------
+
+.. contents::
+   :local:
+   :depth: 2
 
 Lookup plugins allow Ansible to access data from outside sources.
 This can include reading the filesystem in addition to contacting external datastores and services.

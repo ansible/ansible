@@ -1,7 +1,10 @@
-.. contents:: Topics
 
 Connection Plugins
 ------------------
+
+.. contents::
+   :local:
+   :depth: 2
 
 Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
 

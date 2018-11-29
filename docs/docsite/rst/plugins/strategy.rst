@@ -1,8 +1,10 @@
-.. contents:: Topics
-
 
 Strategy Plugins
 ----------------
+
+.. contents::
+   :local:
+   :depth: 2
 
 Strategy plugins control the flow of play execution by handling task and host scheduling.
 
@@ -53,7 +55,7 @@ You can also specify the strategy plugin in the play via the :ref:`strategy keyw
 Plugin List
 +++++++++++
 
-You can use ``ansible-doc -t strategy -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t strategy -l`` to see the list of available plugins.
 Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific documentation and examples.
 
 

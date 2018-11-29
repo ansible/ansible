@@ -1,9 +1,11 @@
-.. contents:: Topics
-
 .. _inventory_plugins:
 
 Inventory Plugins
 =================
+
+.. contents::
+   :local:
+   :depth: 2
 
 Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either via the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
 
@@ -109,7 +111,7 @@ If a host does not have the variables in the configuration above (i.e. ``tags.Na
 Plugin List
 -----------
 
-You can use ``ansible-doc -t inventory -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t inventory -l`` to see the list of available plugins.
 Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentation and examples.
 
 .. toctree:: :maxdepth: 1

@@ -1,8 +1,10 @@
-.. contents:: Topics
-
 
 Callback Plugins
 ----------------
+
+.. contents::
+   :local:
+   :depth: 2
 
 Callback plugins enable adding new behaviors to Ansible when responding to events.
 By default, callback plugins control most of the output you see when running the command line programs,

@@ -1,8 +1,10 @@
-.. contents:: Topics
-
 
 Vars Plugins
 ------------
+
+.. contents::
+   :local:
+   :depth: 2
 
 Vars plugins inject additional variable data into Ansible runs that did not come from an inventory source, playbook, or command line. Playbook constructs like 'host_vars' and 'group_vars' work using vars plugins.
 
@@ -32,7 +34,7 @@ Vars plugins are used automatically after they are enabled.
 Plugin Lists
 ++++++++++++
 
-You can use ``ansible-doc -t vars -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t vars -l`` to see the list of available plugins.
 Use ``ansible-doc -t vars <plugin name>`` to see specific plugin-specific documentation and examples.
 
 

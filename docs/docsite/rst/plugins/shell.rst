@@ -1,7 +1,10 @@
-.. contents:: Topics
 
 Shell Plugins
 -------------
+
+.. contents::
+   :local:
+   :depth: 2
 
 Shell plugins work to ensure that the basic commands Ansible runs are properly formatted to work with
 the target machine and allow the user to configure certain behaviors related to how Ansible executes tasks.
