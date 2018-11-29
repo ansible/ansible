@@ -1,0 +1,2 @@
+bugfixes:
+- Fix iosxr netconf plugin response namespace (https://github.com/ansible/ansible/pull/49300)
