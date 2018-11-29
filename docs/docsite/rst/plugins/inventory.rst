@@ -1,16 +1,18 @@
-.. contents:: Topics
-
 .. _inventory_plugins:
 
 Inventory Plugins
 =================
+
+.. contents::
+   :local:
+   :depth: 2
 
 Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either via the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
 
 
 .. _enabling_inventory:
 
-Enabling Inventory Plugins
+Enabling inventory plugins
 --------------------------
 
 Most inventory plugins shipped with Ansible are disabled by default and need to be whitelisted in your
@@ -32,7 +34,7 @@ This list also establishes the order in which each plugin tries to parse an inve
 
 .. _using_inventory:
 
-Using Inventory Plugins
+Using inventory plugins
 -----------------------
 
 The only requirement for using an inventory plugin after it is enabled is to provide an inventory source to parse.
@@ -109,7 +111,7 @@ If a host does not have the variables in the configuration above (i.e. ``tags.Na
 Plugin List
 -----------
 
-You can use ``ansible-doc -t inventory -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t inventory -l`` to see the list of available plugins.
 Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentation and examples.
 
 .. toctree:: :maxdepth: 1
@@ -121,9 +123,9 @@ Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentat
 
    :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
    :ref:`playbooks_filters`
        Jinja2 filter plugins
@@ -131,7 +133,7 @@ Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentat
        Jinja2 test plugins
    :ref:`playbooks_lookups`
        Jinja2 lookup plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible vars plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
