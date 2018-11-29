@@ -9,7 +9,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Michael Scherer <misc@zarb.org>
+    author: Michael Scherer (@mscherer) <misc@zarb.org>
     connection: saltstack
     short_description: Allow ansible to piggyback on salt minions
     description:
