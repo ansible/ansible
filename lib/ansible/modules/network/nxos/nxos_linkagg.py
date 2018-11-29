@@ -291,9 +291,9 @@ def parse_mode(module, m):
 
     flags = ['| section interface.{0}'.format(m)]
     config = get_config(module, flags=flags)
-    match = re.search(r'mode (\S+)', config, re.M)
+    match = re.search(r'channel-group [0-9]+ (force )?mode (\S+)', config, re.M)
     if match:
-        mode = match.group(1)
+        mode = match.group(2)
 
     return mode
 
