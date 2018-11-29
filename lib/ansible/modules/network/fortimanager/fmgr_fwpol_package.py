@@ -35,13 +35,15 @@ author:
     - Jim Huber (@p4r4n0y1ng)
 short_description: Manages FortiManager Firewall Policies Packages.
 description:
-  -  Manages FortiManager Firewall Policies Packages.
+  -  Manages FortiManager Firewall Policies Packages. Policy Packages contain one or more Firewall Policies/Rules and
+     are distritbuted via FortiManager to Fortigates.
+  -  This module controls the creation/edit/delete/assign of these packages.
 
 options:
   adom:
     description:
       - The ADOM the configuration should belong to.
-    required: true
+    required: false
     default: root
 
   host:
