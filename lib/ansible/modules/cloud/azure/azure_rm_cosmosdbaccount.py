@@ -297,8 +297,8 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
         self.to_do = Actions.NoAction
 
         super(AzureRMCosmosDBAccount, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                      supports_check_mode=True,
-                                                      supports_tags=True)
+                                                     supports_check_mode=True,
+                                                     supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
