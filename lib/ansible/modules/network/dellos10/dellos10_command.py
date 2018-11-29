@@ -20,12 +20,12 @@ version_added: "2.2"
 author: "Senthil Kumar Ganesan (@skg-net)"
 short_description: Run commands on remote devices running Dell OS10
 description:
-  - Sends arbitrary commands to a Dell OS10 node and returns the results
+  - Sends arbitrary commands to a Dell EMC OS10 node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
-    Please use M(dellos10_config) to configure Dell OS10 devices.
+    Please use M(dellos10_config) to configure Dell EMC OS10 devices.
 extends_documentation_fragment: dellos10
 options:
   commands:
