@@ -1,0 +1,2 @@
+bugfixes:
+- Fix nxos_interface and nxos_linkagg Idempotence issue (https://github.com/ansible/ansible/pull/46437).
