@@ -281,8 +281,12 @@ class ServerCompatUtil(object):
 
     @property
     def supports_pluggable_auth(self):
-        """Returns whether the server supports pluggable authentication."""
-        return self.version >= (5, 5)
+        """Returns whether to use pluggable authentication."""
+        if self.vendor == 'mariadb' and self.version < (10, 2):
+            return False
+        elif self.vendor == 'mysql' and self.version < (5, 7):
+            return False
+        return True
 
     @property
     def supports_requiressl_priv(self):
@@ -374,9 +378,8 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             current_pass_hash = cursor.fetchone()
 
             if encrypted:
-                encrypted_string = (password)
                 if is_hash(password):
-                    if current_pass_hash[0] != encrypted_string:
+                    if current_pass_hash[0] != password:
                         if module.check_mode:
                             return True
                         if not scu.supports_pluggable_auth:
@@ -395,10 +398,10 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if current_pass_hash[0] != new_pass_hash[0]:
                     if module.check_mode:
                         return True
-                    if not scu.supports_pluggable_auth or (scu.vendor == 'mariadb' and scu.version < (10, 2)):
+                    if not scu.supports_pluggable_auth:
                         cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
                     else:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s", (user, host, password))
                     changed = True
 
         # Handle privileges
