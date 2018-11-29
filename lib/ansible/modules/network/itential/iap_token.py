@@ -52,6 +52,13 @@ options:
       - By default using http
     type: bool
     default: False
+    
+  validate_certs:
+    description:
+      - If C(no), SSL certificates for the target url will not be validated. This should only be used 
+        on personally controlled sites using self-signed certificates.
+    type: bool
+    default: False
 
 notes:
   - This module is under construction
@@ -86,7 +93,7 @@ def get_token(module):
     """
     # defaulting the value for transport_protocol to be : http
     transport_protocol = 'http'
-    if module.params['https'] is True:
+    if module.params['https'] or module.params['validate_certs'] is True:
         transport_protocol = 'https'
 
     url = transport_protocol + "://" + module.params['iap_fqdn'] + ":" + module.params['iap_port'] + "/login"
@@ -128,7 +135,8 @@ def main():
             iap_fqdn=dict(type='str', required=True),
             username=dict(type='str', required=True),
             password=dict(type='str', required=True, no_log=True),
-            https=(dict(type='bool', default=False))
+            https=(dict(type='bool', default=False)),
+            validate_certs=dict(type='bool', default=False)
         )
     )
     get_token(module)
