@@ -50,10 +50,19 @@ options:
     description:
       - States whether resources are assigned to project by default.
       - Only valid for modifications to existing projects.
+    type: bool
+  environment:
+    description:
+      - General type of deployment environment
+    choices: ['production', 'testing', 'development']
   resources:
     description:
-      - List of Uniform Resource Names (URN) of which to move into the project.
-      - Example URN: do:droplet:1234
+      - 'List of Uniform Resource Names (URN), such as do:droplet:1234, of which to move into the project.'
+    type: list
+  state:
+    description:
+      - Defines that a project should be created or modified.
+    choices: ['present']
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
@@ -139,7 +148,7 @@ def core(module):
                 else:
                     module.fail_json(msg=response.json)
         else:  # Manipulate resources in a project
-            if module.params['default'] == True:  # Assign to the default project
+            if module.params['default'] is True:  # Assign to the default project
                 payload = {'resources': module.params['resources']}
                 response = rest.post('projects/default/resources', data=payload)
                 if response.status_code == 200:
