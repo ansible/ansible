@@ -402,7 +402,7 @@ class StrategyBase:
 
         def parent_handler_match(target_handler, handler_name):
             if target_handler:
-                if isinstance(target_handler, (TaskInclude, IncludeRole)):
+                if isinstance(target_handler, (TaskInclude, IncludeRole)) and not getattr(target_handler, 'statically_loaded', True):
                     try:
                         handler_vars = self._variable_manager.get_vars(play=iterator._play, task=target_handler)
                         templar = Templar(loader=self._loader, variables=handler_vars)
