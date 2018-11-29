@@ -234,7 +234,6 @@ def main():
             payload['reserved_ip_ranges'] = meraki.params['reserved_ip_ranges']
         if meraki.params['route_id']:
             existing_route = get_static_route(meraki, net_id, meraki.params['route_id'])
-            meraki.fail_json(msg="Compare", original=existing_route, payload=payload)
             if meraki.is_update_required(existing_route, payload, optional_ignore=['id']):
                 path = meraki.construct_path('update', net_id=net_id, custom={'route_id': meraki.params['route_id']})
                 meraki.result['data'] = meraki.request(path, method="PUT", payload=json.dumps(payload))
