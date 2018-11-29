@@ -259,7 +259,7 @@ def main():
         argument_spec=dict(
             check=dict(required=False),
             creator=dict(required=False),
-            expire=dict(required=False),
+            expire=dict(type='int', required=False),
             expire_on_resolve=dict(type='bool', required=False),
             reason=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
