@@ -1,0 +1,2 @@
+bugfixes:
+- sensu_silence - Cast int for expire field to avoid call failure to sensu API.
