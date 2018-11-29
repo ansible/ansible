@@ -57,7 +57,7 @@ EXAMPLES = """
     suffix: temp
   register: tempfile_1
 
-- name: remove the temporary file
+- name: use the registered var and the file module to remove the temporary file
   file:
     path: "{{ tempfile_1.path }}"
     state: absent
