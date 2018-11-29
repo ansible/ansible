@@ -422,14 +422,14 @@ a shared source like Galaxy).
 .. note::
    * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement. This is also the case for handlers using `listen`.
    * Handler names and `listen` topics live in a global namespace.
-   * If two handler tasks have the same name, only one will run.
-     `* <https://github.com/ansible/ansible/issues/4943>`_
+   * Handlers with the same name are overwritten, the last one defined will run.
    * You cannot notify a handler that is defined inside of an include. As of Ansible 2.1, this does work, however the include must be `static`.
 
 Roles are described later on, but it's worthwhile to point out that:
 
-* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified;
-* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
+* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified,
+* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers,
+* handlers are play scoped and as such can be used outside of the role they are defined in.
 
 If you ever want to flush all the handler commands immediately you can do this::
 
