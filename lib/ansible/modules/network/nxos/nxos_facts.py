@@ -734,9 +734,13 @@ class Legacy(FactsBase):
         ('psmodel', 'model'),
         ('psnum', 'number'),
         ('ps_status', 'status'),
+        ('ps_status_3k', 'status'),
         ('actual_out', 'actual_output'),
         ('actual_in', 'actual_in'),
-        ('total_capa', 'total_capacity')
+        ('total_capa', 'total_capacity'),
+        ('input_type', 'input_type'),
+        ('watts', 'watts'),
+        ('amps', 'amps')
     ])
 
     def populate(self):
