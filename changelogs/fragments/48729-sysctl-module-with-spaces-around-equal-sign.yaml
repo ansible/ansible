@@ -1,2 +1,2 @@
 minor_changes: 
-  - Sysctl keys are written with a space before and after the '=' sign per default. This can be prevented by using 'no_extra_spaces: yes'  
+- "Sysctl keys are written with a space before and after the '=' sign per default. This can be prevented by using 'no_extra_spaces: yes'"
