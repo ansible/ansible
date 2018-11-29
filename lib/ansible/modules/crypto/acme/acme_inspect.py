@@ -262,9 +262,6 @@ def main():
             fail_on_acme_error=dict(required=False, type='bool', default=True),
             select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
         ),
-        required_one_of=(
-            # ['account_key_src', 'account_key_content'],
-        ),
         mutually_exclusive=(
             ['account_key_src', 'account_key_content'],
         ),
