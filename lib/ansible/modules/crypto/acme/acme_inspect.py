@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
+# (c) 2018 Felix Fontein (@felixfontein)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = R'''
+DOCUMENTATION = r'''
 ---
 module: acme_inspect
 author: "Felix Fontein (@felixfontein)"
@@ -75,7 +75,7 @@ options:
     default: yes
 '''
 
-EXAMPLES = R'''
+EXAMPLES = r'''
 - name: Get directory
   acme_inspect:
     acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
