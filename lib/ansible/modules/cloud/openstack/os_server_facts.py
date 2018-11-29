@@ -27,29 +27,30 @@ requirements:
     - "python >= 2.7"
     - "openstacksdk"
 options:
-   server:
-     description:
-       - restrict results to servers with names or UUID matching
-         this glob expression (e.g., <web*>).
-   host:
-     description:
-       - restrict results to servers host on a specific host.
-   detailed:
-    version_added: "2.8"
-     description:
-        - when true, return additional detail about servers at the expense
-          of additional API calls.
-     type: bool
-     default: 'no'
-   all_tenants:
-     version_added: "2.8"
-     description:
-        - when true, return VMs from all projects
-     type: bool
-     default: 'no'
-   availability_zone:
-     description:
-       - Ignored. Present for backwards compatibility
+    server:
+        description:
+            - restrict results to servers with names or UUID matching
+              this glob expression (e.g., <web*>).
+    host:
+        description:
+            - restrict results to servers host on a specific host.
+    detailed:
+        version_added: "2.8"
+        description:
+            - when true, return additional detail about servers at the expense
+                of additional API calls.
+        type: bool
+        default: 'no'
+    all_tenants:
+        version_added: "2.8"
+        description:
+            - when true, return VMs from all projects
+        type: bool
+        default: 'no'
+    availability_zone:
+        description:
+            - Ignored. Present for backwards compatibility
+            
 extends_documentation_fragment: openstack
 '''
 
