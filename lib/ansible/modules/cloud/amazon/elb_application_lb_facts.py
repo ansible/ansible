@@ -50,6 +50,13 @@ EXAMPLES = '''
     names:
       - elb1
       - elb2
+
+# Gather facts about specific ALB
+- elb_application_lb_facts:
+    names: "alb-name"
+    region: "aws-region"
+  register: alb_facts
+- debug: var=alb_facts
 '''
 
 RETURN = '''
