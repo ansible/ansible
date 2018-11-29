@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix AttributeError (Python 3 only) when an exception occurs while rendering a template
