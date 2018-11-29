@@ -28,8 +28,15 @@
 - name: Add RabbitMQ repository
   apt_repository: repo='deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main' filename='rabbitmq' state=present update_cache=yes
 
+# Required by the rabbitmq modules that uses the management API
+- name: Install requests
+  pip: name=requests
+
 - name: Install RabbitMQ Server
   apt: name=rabbitmq-server state=latest
 
 - name: Start RabbitMQ service
   service: name=rabbitmq-server state=started
+
+- name: Enable management
+  command: rabbitmq-plugins enable --online rabbitmq_management
