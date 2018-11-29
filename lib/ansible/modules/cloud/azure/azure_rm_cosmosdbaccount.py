@@ -454,8 +454,8 @@ def default_compare(new, old, path, result):
                 key = 'name'
             else:
                 key = list(old[0])[0]
-            new = sorted(new, key=lambda x: x.get(key, None))
-            old = sorted(old, key=lambda x: x.get(key, None))
+            new = sorted(new, key=lambda x: x.get(key, ''))
+            old = sorted(old, key=lambda x: x.get(key, ''))
         else:
             new = sorted(new)
             old = sorted(old)
