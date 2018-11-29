@@ -1,0 +1,4 @@
+bugfixes:
+- Fix NameError nxos_facts (https://github.com/ansible/ansible/pull/48981).
+- Fix N3K power supply facts (https://github.com/ansible/ansible/pull/49150).
+- Fix lldp and cdp neighbors information (https://github.com/ansible/ansible/pull/48318)(https://github.com/ansible/ansible/pull/48087)(https://github.com/ansible/ansible/pull/49024).
