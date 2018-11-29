@@ -394,14 +394,6 @@ class StrategyBase:
                             continue
             return None
 
-        def search_handler_blocks_by_uuid(handler_uuid, handler_blocks):
-            # iterate in reversed order since last handler loaded with the same name wins
-            for handler_block in reversed(handler_blocks):
-                for handler_task in handler_block.block:
-                    if handler_uuid == handler_task._uuid:
-                        return handler_task
-            return None
-
         def parent_handler_match(target_handler, handler_name):
             if target_handler:
                 if isinstance(target_handler, (TaskInclude, IncludeRole)) and not getattr(target_handler, 'statically_loaded', True):
@@ -556,7 +548,7 @@ class StrategyBase:
                                     # parent, so we just keep track of whether or not we found one at all
                                     for target_handler_block in iterator._play.handlers:
                                         for target_handler in target_handler_block.block:
-                                            if target_handler and parent_handler_match(target_handler, handler_name):
+                                            if parent_handler_match(target_handler, handler_name):
                                                 found = True
                                                 if not target_handler.is_notified(original_host):
                                                     target_handler.do_notify(original_host)
