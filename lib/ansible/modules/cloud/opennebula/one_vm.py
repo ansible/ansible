@@ -52,7 +52,7 @@ options:
     description:
       - Password of the user to login into OpenNebula RPC server. If not set
       - then the value of the C(ONE_PASSWORD) environment variable is used.
-      - if either api_username or api_password is not set, then it will try
+      - if both I(api_username) and I(api_password) are not set, then it will
       - authenticate with ONE auth file. Default path is "~/.one/one_auth".
       - Set environment variable C(ONE_AUTH) to override this path.
   template_name:
