@@ -720,7 +720,7 @@ class DockerService(DockerBaseClass):
             differences.add('update_order', parameter=self.update_order, active=os.update_order)
         if self.image != os.image.split('@')[0]:
             differences.add('image', parameter=self.image, active=os.image.split('@')[0])
-        if self.user != os.user:
+        if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
         if self.dns != os.dns:
             differences.add('dns', parameter=self.dns, active=os.dns)
