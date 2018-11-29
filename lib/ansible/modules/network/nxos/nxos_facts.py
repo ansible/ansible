@@ -416,7 +416,6 @@ class Interfaces(FactsBase):
 
         self.facts['neighbors'].pop(None, None)  # Remove null key
 
-
     def populate_structured_interfaces(self, data):
         interfaces = dict()
         for item in data['TABLE_interface']['ROW_interface']:
