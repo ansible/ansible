@@ -168,8 +168,6 @@ class StrategyBase:
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
         self._workers = tqm.get_workers()
-        self._notified_handlers = tqm._notified_handlers
-        self._listening_handlers = tqm._listening_handlers
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
         self._final_q = tqm._final_q
@@ -372,19 +370,21 @@ class StrategyBase:
             for handler_block in reversed(handler_blocks):
                 for handler_task in handler_block.block:
                     if handler_task.name:
-                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
-                        templar = Templar(loader=self._loader, variables=handler_vars)
+                        if not handler_task.cached_name:
+                            handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
+                            templar = Templar(loader=self._loader, variables=handler_vars)
+                            handler_task.name = templar.template(handler_task.name)
+                            handler_task.cached_name = True
+
                         try:
                             # first we check with the full result of get_name(), which may
                             # include the role name (if the handler is from a role). If that
                             # is not found, we resort to the simple name field, which doesn't
                             # have anything extra added to it.
-                            target_handler_name = templar.template(handler_task.name)
-                            if target_handler_name == handler_name:
+                            if handler_task.name == handler_name:
                                 return handler_task
                             else:
-                                target_handler_name = templar.template(handler_task.get_name())
-                                if target_handler_name == handler_name:
+                                if handler_task.get_name() == handler_name:
                                     return handler_task
                         except (UndefinedError, AnsibleUndefinedVariable):
                             # We skip this handler due to the fact that it may be using
@@ -548,31 +548,30 @@ class StrategyBase:
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
-                                    if target_handler._uuid not in self._notified_handlers:
-                                        self._notified_handlers[target_handler._uuid] = []
-                                    if original_host not in self._notified_handlers[target_handler._uuid]:
-                                        self._notified_handlers[target_handler._uuid].append(original_host)
+                                    if not target_handler.is_notified(original_host):
+                                        target_handler.do_notify(original_host)
                                         self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
                                 else:
                                     # As there may be more than one handler with the notified name as the
                                     # parent, so we just keep track of whether or not we found one at all
-                                    for target_handler_uuid in self._notified_handlers:
-                                        target_handler = search_handler_blocks_by_uuid(target_handler_uuid, iterator._play.handlers)
-                                        if target_handler and parent_handler_match(target_handler, handler_name):
-                                            found = True
-                                            if original_host not in self._notified_handlers[target_handler._uuid]:
-                                                self._notified_handlers[target_handler._uuid].append(original_host)
-                                                self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+                                    for target_handler_block in iterator._play.handlers:
+                                        for target_handler in target_handler_block.block:
+                                            if target_handler and parent_handler_match(target_handler, handler_name):
+                                                found = True
+                                                if not target_handler.is_notified(original_host):
+                                                    target_handler.do_notify(original_host)
+                                                    self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
-                                if handler_name in self._listening_handlers:
-                                    for listening_handler_uuid in self._listening_handlers[handler_name]:
-                                        listening_handler = search_handler_blocks_by_uuid(listening_handler_uuid, iterator._play.handlers)
-                                        if listening_handler is not None:
-                                            found = True
-                                        else:
+                                for listening_handler_block in iterator._play.handlers:
+                                    for listening_handler in listening_handler_block.block:
+                                        listeners = getattr(listening_handler, 'listen', []) or []
+                                        if handler_name not in listeners:
                                             continue
-                                        if original_host not in self._notified_handlers[listening_handler._uuid]:
-                                            self._notified_handlers[listening_handler._uuid].append(original_host)
+                                        else:
+                                            found = True
+
+                                        if not listening_handler.is_notified(original_host):
+                                            listening_handler.do_notify(original_host)
                                             self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
                                 # and if none were found, then we raise an error
@@ -877,14 +876,9 @@ class StrategyBase:
             #        but this may take some work in the iterator and gets tricky when
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
-                if handler._uuid in self._notified_handlers and len(self._notified_handlers[handler._uuid]):
+                if handler.notified_hosts:
                     handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
-                    templar = Templar(loader=self._loader, variables=handler_vars)
                     handler_name = handler.get_name()
-                    try:
-                        handler_name = templar.template(handler_name)
-                    except (UndefinedError, AnsibleUndefinedVariable):
-                        pass
                     result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break
@@ -898,7 +892,7 @@ class StrategyBase:
         #     result = False
         #     break
         if notified_hosts is None:
-            notified_hosts = self._notified_handlers[handler._uuid]
+            notified_hosts = handler.notified_hosts[:]
 
         notified_hosts = self._filter_notified_hosts(notified_hosts)
 
@@ -920,7 +914,7 @@ class StrategyBase:
 
         host_results = []
         for host in notified_hosts:
-            if not handler.has_triggered(host) and (not iterator.is_failed(host) or play_context.force_handlers):
+            if not iterator.is_failed(host) or play_context.force_handlers:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
@@ -953,7 +947,7 @@ class StrategyBase:
                         for task in block.block:
                             task_name = task.get_name()
                             display.debug("adding task '%s' included in handler '%s'" % (task_name, handler_name))
-                            self._notified_handlers[task._uuid] = included_file._hosts[:]
+                            task.notified_hosts = included_file._hosts[:]
                             result = self._do_handler_run(
                                 handler=task,
                                 handler_name=task_name,
@@ -971,8 +965,8 @@ class StrategyBase:
                     continue
 
         # remove hosts from notification list
-        self._notified_handlers[handler._uuid] = [
-            h for h in self._notified_handlers[handler._uuid]
+        handler.notified_hosts = [
+            h for h in handler.notified_hosts
             if h not in notified_hosts]
         display.debug("done running handlers, result is: %s" % result)
         return result
