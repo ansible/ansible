@@ -628,3 +628,25 @@ releases:
     - yum-handle-obsoletes-check-update.yaml
     - yumdnf-autoremove.yaml
     release_date: '2018-11-15'
+  2.7.3:
+    codename: In the Light
+    fragments:
+    - 15732-wait_for-documentation_fix.yaml
+    - 46044-puppet-puppet6-fix.yaml
+    - 47198-fix-setuptools-distutils.yaml
+    - 47747-ftd-http-api-fixes.yaml
+    - 48580-apt_key-no-tty.yaml
+    - 48673-fix-omit-on-play-keywords.yaml
+    - 48675-cs_template-fix-keyerror-state-extracted.yml
+    - 48809-sysvinit_defaults_if_no_runlevels.yaml
+    - 48836-proxymox_kvm-dictionary.yaml
+    - 49078-docker_container-min-version-fix.yml
+    - cfg_mgr_fix.yml
+    - deal_with_bad_config_types.yml
+    - dnf-modularity.yaml
+    - docker_network-driver_options.yaml
+    - ec2_group-rule-purge-fix.yaml
+    - ps_sb_logging.yaml
+    - v2.7.3_summary.yaml
+    - win_security_policy-rights.yaml
+    release_date: '2018-11-29'

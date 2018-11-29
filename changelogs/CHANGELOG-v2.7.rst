@@ -5,6 +5,44 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.3
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-11-29
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Document Path and Port are mutually exclusive parameters in wait_for module.
+- Puppet module remove ``--ignorecache`` to allow Puppet 6 support
+- dnf properly support modularity appstream installation via overloaded group modifier syntax
+- proxmox_kvm - fix exception.
+- win_security_policy - warn users to use win_user_right instead when editing ``Privilege Rights``
+
+Bugfixes
+--------
+
+- Fix the issue that FTD HTTP API retries authentication-related HTTP requests.
+- Fix the issue that module fails when the Swagger model does not have required fields.
+- Fix the issue with comparing string-like objects.
+- Fix using omit on play keywords (https://github.com/ansible/ansible/issues/48673)
+- Windows - prevent sensitive content from appearing in scriptblock logging (CVE 2018-16859)
+- apt_key - Disable TTY requirement in GnuPG for the module to work correctly when SSH pipelining is enabled (https://github.com/ansible/ansible/pull/48580)
+- better error message when bad type in config, deal with EVNAR= more gracefully https://github.com/ansible/ansible/issues/22470
+- configuration retrieval would fail on non primed plugins
+- cs_template - Fixed a KeyError on state=extracted.
+- docker_container - fix idempotency problems with docker-py caused by previous ``init`` idempotency fix.
+- docker_container - fix interplay of docker-py version check with argument_spec validation improvements.
+- docker_network - ``driver_options`` containing Python booleans would cause Docker to throw exceptions.
+- ec2_group - Fix comparison of determining which rules to purge by ignoring descriptions - https://github.com/ansible/ansible/issues/47904
+- pip module - fix setuptools/distutils replacement (https://github.com/ansible/ansible/issues/47198)
+- sysvinit - enabling a service should use "defaults" if no runlevels are specified
+
 v2.7.2
 ======
 
