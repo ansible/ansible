@@ -50,6 +50,7 @@ class BaseTemplar(object):
             some_unsafe_var=wrap_var("unsafe_blip"),
             some_static_unsafe_var=wrap_var("static_unsafe_blip"),
             some_unsafe_keyword=wrap_var("{{ foo }}"),
+            str_with_error="{{ 'str' | from_json }}",
         )
         self.fake_loader = DictDataLoader({
             "/path/to/my_file.txt": "foo\n",
@@ -182,6 +183,10 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
                                 'template error while templating string',
                                 self.templar.template,
                                 data)
+
+    def test_template_with_error(self):
+        """Check that AnsibleError is raised, fail if an unhandled exception is raised"""
+        self.assertRaises(AnsibleError, self.templar.template, "{{ str_with_error }}")
 
 
 class TestTemplarMisc(BaseTemplar, unittest.TestCase):
