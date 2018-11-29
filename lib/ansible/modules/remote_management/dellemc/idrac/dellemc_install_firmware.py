@@ -100,8 +100,8 @@ RETURN = """
 dest:
     description: Updates firmware from a repository on a network share (CIFS, NFS).
     returned: success
-    type: string
-    sample: "{
+    type: dict
+    sample: {
         'CompletionTime': '2018-01-24T00:47:33',
         'Id': 'JID_XXXXXXXXXXXX',
         'JobState': 'Completed',
@@ -111,7 +111,7 @@ dest:
         'Name': 'Import Configuration',
         'StartTime': 'TIME_NOW',
         'Status': 'Success',
-    }"
+    }
 """
 
 
