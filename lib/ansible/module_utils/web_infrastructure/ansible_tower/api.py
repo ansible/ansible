@@ -31,18 +31,14 @@ import os
 import functools
 import json
 import stat
-import warnings
 import urllib
 try:
     from urlparse import urljoin, urlparse
 except Exception as e:
     from urllib.parse import urljoin, urlparse
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
+display = Display()
 
 from datetime import datetime as dt
 
@@ -87,7 +83,7 @@ class BasicTowerAuth(AuthBase):
                 raise Exception("Current token expires.")
             return 'Token ' + token_json[self.cli_client.get_prefix()]['token']
         except Exception as e:
-            debug.log('Acquiring and caching auth token due to:\n%s' % str(e), fg='blue', bold=True)
+            display.vvvv('Acquiring and caching auth token due to:\n%s' % str(e))
             if not isinstance(token_json, dict):
                 token_json = {}
             token_json[self.cli_client.get_prefix()] = self._acquire_token()
@@ -102,38 +98,32 @@ class BasicTowerAuth(AuthBase):
             try:
                 os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR)
             except Exception as e:
-                warnings.warn(
-                    'Unable to set permissions on {0} - {1} '.format(filename, e),
-                    UserWarning
-                )
+                display.display("WARNING: Unable to set permissions on {0} - {1}, UserWarning".format(filename, e),
+                                color='yellow')
             return 'Token ' + token_json[self.cli_client.get_prefix()]['token']
 
-    def __call__(self, r):
-        if 'Authorization' in r.headers:
-            return r
+    def __call__(self, request):
+        if 'Authorization' in request.headers:
+            return request
         if settings.oauth_token:
             if supports_oauth:
-                r.headers['Authorization'] = 'Bearer {}'.format(settings.oauth_token)
-                return r
+                request.headers['Authorization'] = 'Bearer {}'.format(settings.oauth_token)
+                return request
             else:
-                warnings.warn(
-                    'This version of Tower does not support OAuth2.0'
-                )
+                display.display("WARNING: This version of Tower does not support OAuth2.0", color='yellow')
         if self.use_legacy_token:
             resp = self.cli_client._make_request(
                 'OPTIONS', self.cli_client.get_prefix() + 'authtoken/', [], {}
             )
             if resp.ok:
-                r.headers['Authorization'] = self._get_auth_token()
+                request.headers['Authorization'] = self._get_auth_token()
             else:
-                warnings.warn(
-                    'use_token is not supported in this version of Tower '
-                    '(the Auth Token API has been replaced with OAuth2.0 support)',
-                )
-                HTTPBasicAuth(self.username, self.password)(r)
+                display.display("WARNING: use_token is not supported in this version of Tower"
+                                " (the Auth Token API has been replaced with OAuth2.0 support)", color='yellow')
+                HTTPBasicAuth(self.username, self.password)(request)
         else:
-            HTTPBasicAuth(self.username, self.password)(r)
-        return r
+            HTTPBasicAuth(self.username, self.password)(request)
+        return request
 
 
 class Client(Session):
@@ -163,11 +153,11 @@ class Client(Session):
 
         # Call the superclass method.
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter(
-                    "ignore", urllib3.exceptions.InsecureRequestWarning)
-                return super(Client, self).request(
-                    method, url, *args, verify=verify_ssl, **kwargs)
+            # Ignore/Suppress InsecureRequestWarning
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            return super(Client, self).request(
+                method, url, *args, verify=verify_ssl, **kwargs)
+
         except SSLError:
             # Throw error if verify_ssl not set to false and server
             #  is not using verified certificate.
@@ -314,9 +304,9 @@ class Client(Session):
         # If so, write an appropriate error message.
         if r.status_code >= 400:
             raise exc.BadRequest(reason='The Tower server claims it was sent a bad request.\n\n'
-                '%s %s\nParams: %s\nData: %s\n\nResponse: %s' %
-                (method, url, kwargs.get('params', None),
-                 kwargs.get('data', None), r.content.decode('utf8')))
+                                        '%s %s\nParams: %s\nData: %s\n\nResponse: %s' %
+                                        (method, url, kwargs.get('params', None),
+                                         kwargs.get('data', None), r.content.decode('utf8')))
 
         # Django REST Framework intelligently prints API keys in the
         # order that they are defined in the models and serializer.
