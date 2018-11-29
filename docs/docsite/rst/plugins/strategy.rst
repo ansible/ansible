@@ -1,3 +1,4 @@
+.. _strategy_plugins:
 
 Strategy Plugins
 ----------------

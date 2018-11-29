@@ -1,3 +1,4 @@
+.. _cache_plugins:
 
 Cache Plugins
 =============

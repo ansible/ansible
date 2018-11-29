@@ -1,3 +1,4 @@
+.. _callback_plugins:
 
 Callback Plugins
 ----------------

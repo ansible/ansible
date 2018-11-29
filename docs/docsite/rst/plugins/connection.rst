@@ -1,3 +1,4 @@
+.. _connection_plugins:
 
 Connection Plugins
 ------------------

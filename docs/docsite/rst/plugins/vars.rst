@@ -1,3 +1,4 @@
+.. _vars_plugins:
 
 Vars Plugins
 ------------

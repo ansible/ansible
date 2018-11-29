@@ -1,3 +1,5 @@
+.. _action_plugins:
+
 Action Plugins
 ==============
 

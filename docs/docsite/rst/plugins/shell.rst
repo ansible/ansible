@@ -1,3 +1,4 @@
+.. _shell_plugins:
 
 Shell Plugins
 -------------
