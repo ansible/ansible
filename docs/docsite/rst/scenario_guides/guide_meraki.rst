@@ -148,7 +148,7 @@ Ansible's Meraki modules do not allow for manipulating data. For example, you ma
           register: rules
         - set_fact:
             original_ruleset: '{{rules.data}}'
-3. Write the new rule.
+3. Write the new rule. The new rule needs to be in a list so it can be merged with other lists in an upcoming step. The blank `-` puts the rule in a list so it can be merged.
     ::
 
         - set_fact:
