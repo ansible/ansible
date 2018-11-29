@@ -65,15 +65,13 @@ options:
       - The password associated with the username account.
     required: false
 
-  state:
+  mode:
     description:
-      - The desired state of the specified object.
-      - absent will delete the object if it exists. If grp_members is defined, only members are deleted.
-      - present will create the configuration if needed.
-      - To delete a grp_name, you must omit the grp_members field in the playbook task while setting to absent.
-    required: true
-    default: present
-    choices: ["absent", "present"]
+      - Sets one of three modes for managing the object.
+      - Allows use of soft-adds instead of overwriting existing values
+    choices: ['add', 'set', 'delete', 'update']
+    required: false
+    default: add
 
   grp_name:
     description:
@@ -88,7 +86,7 @@ options:
   grp_members:
     description:
       - A comma separated list of device names or device groups to be added as members to the device group.
-      - If Group Members are defined, and state="absent", only group members will be removed.
+      - If Group Members are defined, and mode="delete", only group members will be removed.
       - If you want to delete a group itself, you must omit this parameter from the task in playbook.
     required: false
 
@@ -104,7 +102,7 @@ EXAMPLES = '''
     grp_name: "TestGroup"
     grp_desc: "CreatedbyAnsible"
     adom: "ansible"
-    state: "present"
+    mode: "add"
 
 - name: CREATE DEVICE GROUP 2
   fmgr_device_group:
@@ -114,14 +112,14 @@ EXAMPLES = '''
     grp_name: "AnsibleGroup"
     grp_desc: "CreatedbyAnsible"
     adom: "ansible"
-    state: "present"
+    mode: "add"
 
 - name: ADD DEVICES TO DEVICE GROUP
   fmgr_device_group:
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
-    state: "present"
+    mode: "add"
     grp_name: "TestGroup"
     grp_members: "FGT1,FGT2"
     adom: "ansible"
@@ -132,7 +130,7 @@ EXAMPLES = '''
     host: "{{inventory_hostname}}"
     username: "{{ username }}"
     password: "{{ password }}"
-    state: "absent"
+    mode: "delete"
     grp_name: "TestGroup"
     grp_members: "FGT1,FGT2"
     adom: "ansible"
@@ -144,9 +142,10 @@ EXAMPLES = '''
     password: "{{ password }}"
     grp_name: "AnsibleGroup"
     grp_desc: "CreatedbyAnsible"
-    state: "absent"
+    mode: "delete"
     adom: "ansible"
 '''
+
 RETURN = """
 api_result:
   description: full API response, includes status code and message
@@ -184,6 +183,10 @@ def add_device_group(fmg, paramgram):
     """
     This method is used to add device groups
     """
+    # INIT A BASIC OBJECTS
+    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    url = ""
+    mode = paramgram["mode"]
 
     datagram = {
         "name": paramgram["grp_name"],
@@ -192,7 +195,17 @@ def add_device_group(fmg, paramgram):
     }
 
     url = '/dvmdb/adom/{adom}/group'.format(adom=paramgram["adom"])
-    response = fmg.add(url, datagram)
+
+    # IF MODE = SET -- USE THE 'SET' API CALL MODE
+    if mode == "set":
+        response = fmg.set(url, datagram)
+    # IF MODE = UPDATE -- USER THE 'UPDATE' API CALL MODE
+    elif mode == "update":
+        response = fmg.update(url, datagram)
+    # IF MODE = ADD  -- USE THE 'ADD' API CALL MODE
+    elif mode == "add":
+        response = fmg.add(url, datagram)
+
     return response
 
 
@@ -200,6 +213,9 @@ def delete_device_group(fmg, paramgram):
     """
     This method is used to add devices to the FMGR
     """
+    # INIT A BASIC OBJECTS
+    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    url = ""
 
     datagram = {
         "adom": paramgram["adom"],
@@ -215,7 +231,9 @@ def add_group_member(fmg, paramgram):
     """
     This method is used to update device groups add members
     """
-    response = None
+    # INIT A BASIC OBJECTS
+    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    url = ""
     device_member_list = paramgram["grp_members"].replace(' ', '')
     device_member_list = device_member_list.split(',')
 
@@ -233,7 +251,9 @@ def delete_group_member(fmg, paramgram):
     """
     This method is used to update device groups add members
     """
-    response = None
+    # INIT A BASIC OBJECTS
+    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    url = ""
     device_member_list = paramgram["grp_members"].replace(' ', '')
     device_member_list = device_member_list.split(',')
 
@@ -292,7 +312,7 @@ def main():
         host=dict(required=True, type="str"),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        state=dict(choices=["absent", "present"], type="str", default="present"),
+        mode=dict(choices=["add", "set", "delete", "update"], type="str", default="add"),
         grp_desc=dict(required=False, type="str"),
         grp_name=dict(required=True, type="str"),
         grp_members=dict(required=False, type="str"),
@@ -302,7 +322,7 @@ def main():
 
     # handle params passed via provider and insure they are represented as the data type expected by fortimanager
     paramgram = {
-        "state": module.params["state"],
+        "mode": module.params["mode"],
         "grp_name": module.params["grp_name"],
         "grp_desc": module.params["grp_desc"],
         "grp_members": module.params["grp_members"],
@@ -324,28 +344,28 @@ def main():
         # START SESSION LOGIC
 
         # PROCESS THE GROUP ADDS FIRST
-        if paramgram["grp_name"] is not None and paramgram["state"] == "present":
+        if paramgram["grp_name"] is not None and paramgram["mode"] in ["add", "set", "update"]:
             # add device group
             results = add_device_group(fmg, paramgram)
             if results[0] != 0 and results[0] != -2:
                 fmgr_logout(fmg, module, msg="Failed to Add Device Group", results=results, good_codes=[0])
 
         # PROCESS THE GROUP MEMBER ADDS
-        if paramgram["grp_members"] is not None and paramgram["state"] == "present":
+        if paramgram["grp_members"] is not None and paramgram["mode"] in ["add", "set", "update"]:
             # assign devices to device group
             results = add_group_member(fmg, paramgram)
             if results[0] != 0 and results[0] != -2:
                 fmgr_logout(fmg, module, msg="Failed to Add Group Member(s)", results=results, good_codes=[0])
 
         # PROCESS THE GROUP MEMBER DELETES
-        if paramgram["grp_members"] is not None and paramgram["state"] == "absent":
+        if paramgram["grp_members"] is not None and paramgram["mode"] == "delete":
             # remove devices grom a group
             results = delete_group_member(fmg, paramgram)
             if results[0] != 0:
                 fmgr_logout(fmg, module, msg="Failed to Delete Group Member(s)", results=results, good_codes=[0])
 
         # PROCESS THE GROUP DELETES, ONLY IF GRP_MEMBERS IS NOT NULL TOO
-        if paramgram["grp_name"] is not None and paramgram["state"] == "absent" and paramgram["grp_members"] is None:
+        if paramgram["grp_name"] is not None and paramgram["mode"] == "delete" and paramgram["grp_members"] is None:
             # delete device group
             results = delete_device_group(fmg, paramgram)
             if results[0] != 0:
