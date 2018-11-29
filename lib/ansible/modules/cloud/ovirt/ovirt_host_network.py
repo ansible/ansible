@@ -76,6 +76,10 @@ options:
         description:
             - "If I(true) network configuration will be persistent, by default they are temporarily."
         type: bool
+    sync_networks:
+        description:
+            - "If I(true) networks will synchronize."
+        type: bool
 extends_documentation_fragment: ovirt
 '''
 
@@ -333,6 +337,7 @@ def main():
         labels=dict(default=None, type='list'),
         check=dict(default=None, type='bool'),
         save=dict(default=None, type='bool'),
+        sync_networks=dict(default=False, type='bool'),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -362,8 +367,12 @@ def main():
         nics_service = host_service.nics_service()
         nic = search_by_name(nics_service, nic_name)
 
+        if module.params["sync_networks"]:
+            host_service.sync_all_networks()
+
         network_names = [network['name'] for network in networks or []]
         state = module.params['state']
+
         if (
             state == 'present' and
             (nic is None or host_networks_module.has_update(nics_service.service(nic.id)))
