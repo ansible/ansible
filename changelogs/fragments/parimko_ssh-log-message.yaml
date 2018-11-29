@@ -1,0 +1,2 @@
+bugfixes:
+  - paramiko_ssh - improve log message to state the connection type
