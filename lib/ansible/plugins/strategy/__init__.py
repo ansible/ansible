@@ -211,6 +211,10 @@ class StrategyBase:
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
 
+        # holds a cache of templated handler names, to limit calls to ``get_vars``
+        # and to the templar when searching for handlers
+        self._handler_name_cache = {}
+
     def cleanup(self):
         # close active persistent connections
         for sock in itervalues(self._active_connections):
@@ -371,19 +375,25 @@ class StrategyBase:
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
                     if handler_task.name:
-                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
-                        templar = Templar(loader=self._loader, variables=handler_vars)
+                        cache_key = (iterator._play._uuid, handler_task._uuid)
+                        try:
+                            target_handler_names = self._handler_name_cache[cache_key]
+                        except KeyError:
+                            handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
+                            templar = Templar(loader=self._loader, variables=handler_vars)
+                            target_handler_names = self._handler_name_cache[cache_key] = (
+                                templar.template(handler_task.name),
+                                templar.template(handler_task.get_name())
+                            )
                         try:
                             # first we check with the full result of get_name(), which may
                             # include the role name (if the handler is from a role). If that
                             # is not found, we resort to the simple name field, which doesn't
                             # have anything extra added to it.
-                            target_handler_name = templar.template(handler_task.name)
-                            if target_handler_name == handler_name:
+                            if target_handler_names[0] == handler_name:
                                 return handler_task
                             else:
-                                target_handler_name = templar.template(handler_task.get_name())
-                                if target_handler_name == handler_name:
+                                if target_handler_names[1] == handler_name:
                                     return handler_task
                         except (UndefinedError, AnsibleUndefinedVariable):
                             # We skip this handler due to the fact that it may be using
