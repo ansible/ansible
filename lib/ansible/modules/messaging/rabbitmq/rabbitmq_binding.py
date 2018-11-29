@@ -109,6 +109,7 @@ class RabbitMqBinding(object):
         self.verify = self.module.params['cacert']
         self.cert = self.module.params['cert']
         self.key = self.module.params['key']
+        self.props = urllib_parse.quote(self.routing_key) if self.routing_key != '' else '~'
         self.base_url = '{0}://{1}:{2}/api/bindings'.format(self.login_protocol,
                                                             self.login_host,
                                                             self.login_port)
@@ -117,7 +118,7 @@ class RabbitMqBinding(object):
                                                       urllib_parse.quote(self.name, safe=''),
                                                       self.destination_type,
                                                       urllib_parse.quote(self.destination, safe=''),
-                                                      urllib_parse.quote(self.routing_key) if self.routing_key != '' else '~')
+                                                      self.props)
         self.result = {
             'changed': False,
             'name': self.module.params['name'],
