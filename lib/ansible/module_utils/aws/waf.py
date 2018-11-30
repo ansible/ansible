@@ -159,7 +159,13 @@ def get_web_acl(client, module, web_acl_id):
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_rules_with_backoff(client):
     paginator = client.get_paginator('list_rules')
-    return paginator.paginate().build_full_result()['Rules']
+    regular_rules = paginator.paginate().build_full_result()['Rules']
+
+    # rate-base-rules cannot be paginated
+    rate_based_rules = client.list_rate_based_rules()['Rules']
+
+    rules = regular_rules + rate_based_rules
+    return rules
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)

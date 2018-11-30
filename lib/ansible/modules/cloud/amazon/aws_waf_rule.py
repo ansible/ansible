@@ -27,15 +27,23 @@ options:
         required: yes
     metric_name:
         description:
-        - A friendly name or description for the metrics for the rule
-        - The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
-        - You can't change metric_name after you create the rule
-        - Defaults to the same as name with disallowed characters removed
+          - A friendly name or description for the metrics for the rule
+          - The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
+          - You can't change metric_name after you create the rule
+          - Defaults to the same as name with disallowed characters removed
+    type:
+        description:
+          - 'regular' or 'rate_based'
+        default: regular
+    rate_limit:
+        description:
+          - The rate-limit to apply to the rule, for rate-based rules
+        default: 2000
     state:
         description: whether the rule should be present or absent
         choices:
-        - present
-        - absent
+          - present
+          - absent
         default: present
     conditions:
         description: >
@@ -66,6 +74,16 @@ EXAMPLES = '''
         - name: my_byte_condition
           type: byte
           negated: yes
+
+  - name: create rate-based WAF rule
+    aws_waf_rule:
+      name: my_waf_rule
+      type: rate_based
+      rate_limit: 4000
+      conditions:
+        - name: my_regex_condition
+          type: regex
+          negated: no
 
   - name: remove WAF rule
     aws_waf_rule:
@@ -127,8 +145,8 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, MATCH_LOOKUP
-from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff
+from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, MATCH_LOOKUP
+from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff, list_rules_with_backoff
 
 
 def get_rule_by_name(client, module, name):
@@ -140,8 +158,11 @@ def get_rule_by_name(client, module, name):
 def get_rule(client, module, rule_id):
     try:
         return client.get_rule(RuleId=rule_id)['Rule']
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg='Could not get WAF rule')
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+        try:
+            return client.get_rate_based_rule(RuleId=rule_id)['Rule']
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Could not get WAF rule')
 
 
 def list_rules(client, module):
@@ -154,6 +175,14 @@ def list_rules(client, module):
 def find_and_update_rule(client, module, rule_id):
     rule = get_rule(client, module, rule_id)
     rule_id = rule['RuleId']
+
+    # predicates key and update function are not the same for rate-based rules and regular rules
+    if module.params['type'] == 'rate_based':
+        predicates_key = 'MatchPredicates'
+        update_func = client.update_rate_based_rule
+    else:
+        predicates_key = 'Predicates'
+        update_func = client.update_rule
 
     existing_conditions = dict((condition_type, dict()) for condition_type in MATCH_LOOKUP)
     desired_conditions = dict((condition_type, dict()) for condition_type in MATCH_LOOKUP)
@@ -182,7 +211,7 @@ def find_and_update_rule(client, module, rule_id):
         desired_conditions[condition['type']][condition['name']] = condition
 
     reverse_condition_types = dict((v['type'], k) for (k, v) in MATCH_LOOKUP.items())
-    for condition in rule['Predicates']:
+    for condition in rule[predicates_key]:
         existing_conditions[reverse_condition_types[condition['Type']]][condition['DataId']] = camel_dict_to_snake_dict(condition)
 
     insertions = list()
@@ -206,9 +235,15 @@ def find_and_update_rule(client, module, rule_id):
         'RuleId': rule_id,
         'Updates': insertions + deletions
     }
+
+    if module.params['type'] == 'rate_based':
+        if int(rule['RateLimit']) != int(module.params['rate_limit']):
+            changed = True
+        update['RateLimit'] = int(module.params['rate_limit'])
+
     if changed:
         try:
-            run_func_with_change_token_backoff(client, module, update, client.update_rule, wait=True)
+            run_func_with_change_token_backoff(client, module, update, update_func, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update rule conditions')
 
@@ -250,8 +285,14 @@ def ensure_rule_present(client, module):
         if not metric_name:
             metric_name = re.sub(r'[^a-zA-Z0-9]', '', module.params['name'])
         params['MetricName'] = metric_name
+        if module.params['type'] == 'rate_based':
+            params['RateKey'] = 'IP'
+            params['RateLimit'] = int(module.params['rate_limit'])
+            create_rule_func = client.create_rate_based_rule
+        else:
+            create_rule_func = client.create_rule
         try:
-            new_rule = run_func_with_change_token_backoff(client, module, params, client.create_rule)['Rule']
+            new_rule = run_func_with_change_token_backoff(client, module, params, create_rule_func)['Rule']
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not create rule')
         return find_and_update_rule(client, module, new_rule['RuleId'])
@@ -295,6 +336,8 @@ def main():
         dict(
             name=dict(required=True),
             metric_name=dict(),
+            type=dict(default='regular'),
+            rate_limit=dict(default=2000),
             state=dict(default='present', choices=['present', 'absent']),
             conditions=dict(type='list'),
             purge_conditions=dict(type='bool', default=False)
