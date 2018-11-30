@@ -55,10 +55,11 @@ options:
   environment:
     description:
       - General type of deployment environment, case sensitive
-    choices: ['Production', 'Testing', 'Development']
+    choices: ['Development', 'Production', 'Staging']
   resources:
     description:
       - 'List of Uniform Resource Names (URN), such as do:droplet:1234, of which to move into the project.'
+      - Can only be performed against an existing project.
     type: list
   state:
     description:
@@ -77,7 +78,41 @@ requirements:
 
 
 EXAMPLES = '''
-
+- name: Create a new project
+  digital_ocean_project:
+    oauth_token: abc123
+    state: present
+    name: Web Frontends
+    description: Contains all corporate web frontends
+    purpose: Web application
+    environment: Production
+    
+- name: Assign a resource to an existing project
+  digital_ocean_project:
+    oauth_token: abc123
+    state: present
+    name: Web Frontends
+    resources:
+      - do:droplet:1
+      - do:volume:42
+    
+- name: Assign a resource to the default project
+  digital_ocean_project:
+    oauth_token: abc123
+    state: present
+    default: yes
+    resources:
+      - do:droplet:1
+      - do:volume:42
+      
+- name: Modify properties of an existing project
+    oauth_token: abc123
+    state: present
+    name: Web Frontends
+    description: Contains all corporate public web frontends
+    purpose: Web application
+    environment: Production
+    default: no
 '''
 
 
