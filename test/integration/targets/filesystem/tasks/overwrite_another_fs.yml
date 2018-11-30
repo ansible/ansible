@@ -1,8 +1,13 @@
 - name: 'Recreate "disk" file'
   command: 'dd if=/dev/zero of={{ image_file }} bs=1M count={{ fssize }}'
 
-- name: 'Create a swap filesystem'
-  command: 'mkswap {{ dev }}'
+- name: 'Create an unsupported filesystem (minix)'
+  shell: 'base64 -d | gzip -d > {{ dev }}'
+  args:
+    stdin: |
+      H4sIAPGkAVwCA+3XsQ0CQQwEQBt0EiJCIiWgguuBPr6Xb+Y7+XoIaAC4SykBz1gONt3IjgCqus
+      c5ckyb4Xa6rNdUChRxHPv+ABXtKoCyno/5A0S8tlzi0BxEUEhG/81dKwAAAADwH774rXnxACg
+      AAA==
 
 - command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
   register: uuid
