@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pn_admin_service
-author: "Pluribus Networks (rpachi@pluribusnetworks.com)"
+author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.8"
 short_description: CLI command to modify admin-service
 description:
@@ -32,58 +32,58 @@ options:
     choices: ['update']
   pn_web:
     description:
-      - Web (HTTP) to enable or disable
+      - Web (HTTP) to enable or disable.
     required: False
     type: bool
   pn_web_ssl:
     description:
-      - Web SSL (HTTPS) to enable or disable
+      - Web SSL (HTTPS) to enable or disable.
     required: False
     type: bool
   pn_snmp:
     description:
-      - Simple Network Monitoring Protocol (SNMP) to enable or disable
+      - Simple Network Monitoring Protocol (SNMP) to enable or disable.
     required: False
     type: bool
   pn_web_port:
     description:
-      - Web (HTTP) port to enable or disable
+      - Web (HTTP) port to enable or disable.
     required: False
     type: str
   pn_web_ssl_port:
     description:
-      - Web SSL (HTTPS) port to enable or disable
+      - Web SSL (HTTPS) port to enable or disable.
     required: False
     type: str
   pn_nfs:
     description:
-      - Network File System (NFS) to enable or disable
+      - Network File System (NFS) to enable or disable.
     required: False
     type: bool
   pn_ssh:
     description:
-      - Secure Shell to enable or disable
+      - Secure Shell to enable or disable.
     required: False
     type: bool
   pn_web_log:
     description:
-      - Web logging to enable or disable
+      - Web logging to enable or disable.
     required: False
     type: bool
   pn__if:
     description:
-      - administrative service interface
+      - administrative service interface.
     required: False
     type: str
     choices: ['mgmt', 'data']
   pn_icmp:
     description:
-      - Internet Message Control Protocol (ICMP) to enable or disable
+      - Internet Message Control Protocol (ICMP) to enable or disable.
     required: False
     type: bool
   pn_net_api:
     description:
-      - Netvisor API to enable or disable APIs
+      - Netvisor API to enable or disable APIs.
     required: False
     type: bool
 """
