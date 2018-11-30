@@ -232,25 +232,36 @@ class CloudStackInventory(object):
             data['_meta']['hostvars'][host_name]['affinity_group'] = host['affinitygroup']
             data['_meta']['hostvars'][host_name]['security_group'] = host['securitygroup']
             data['_meta']['hostvars'][host_name]['cpu_number'] = host['cpunumber']
-            data['_meta']['hostvars'][host_name]['cpu_speed'] = host['cpuspeed']
+            if 'cpuspeed' in host:
+                data['_meta']['hostvars'][host_name]['cpu_speed'] = host['cpuspeed']
             if 'cpuused' in host:
                 data['_meta']['hostvars'][host_name]['cpu_used'] = host['cpuused']
             data['_meta']['hostvars'][host_name]['created'] = host['created']
             data['_meta']['hostvars'][host_name]['memory'] = host['memory']
             data['_meta']['hostvars'][host_name]['tags'] = host['tags']
-            data['_meta']['hostvars'][host_name]['hypervisor'] = host['hypervisor']
+            if 'hypervisor' in host:
+                data['_meta']['hostvars'][host_name]['hypervisor'] = host['hypervisor']
             data['_meta']['hostvars'][host_name]['created'] = host['created']
             data['_meta']['hostvars'][host_name]['nic'] = []
             for nic in host['nic']:
-                data['_meta']['hostvars'][host_name]['nic'].append({
+                nicdata = {
                     'ip': nic['ipaddress'],
                     'mac': nic['macaddress'],
                     'netmask': nic['netmask'],
                     'gateway': nic['gateway'],
                     'type': nic['type'],
-                })
+                }
+                if 'ip6address' in nic:
+                    nicdata['ip6'] = nic['ip6address']
+                if 'gateway' in nic:
+                    nicdata['gateway'] = nic['gateway']
+                if 'netmask' in nic:
+                    nicdata['netmask'] = nic['netmask']
+                data['_meta']['hostvars'][host_name]['nic'].append(nicdata)
                 if nic['isdefault']:
                     data['_meta']['hostvars'][host_name]['default_ip'] = nic['ipaddress']
+                    if 'ip6address' in nic:
+                        data['_meta']['hostvars'][host_name]['default_ip6'] = nic['ip6address']
 
             group_name = ''
             if 'group' in host:
