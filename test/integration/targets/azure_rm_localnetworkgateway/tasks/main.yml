@@ -109,14 +109,13 @@
   azure_rm_localnetworkgateway:
     name: lgw{{ rpfx }}
     resource_group: "{{ resource_group }}"
-    gateway_ip_address: "{{ gateway_ip_address }}"
   register: output
   ignore_errors: yes
 
 - assert:
     that:
-      - "'missing: gateway_ip_address' in output.msg"
-      - output.changed == false
+      - not output.changed
+      - output.msg == 'state is present but all of the following are missing: gateway_ip_address'
 
 - name: Delete local network gateway
   azure_rm_localnetworkgateway:
