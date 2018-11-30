@@ -27,8 +27,6 @@ DOCUMENTATION = '''
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
-    notes:
-        - It takes the place of the previously hardcoded group_vars/host_vars loading.
     options:
       _valid_extensions:
         default: [".yml", ".yaml", ".json"]
