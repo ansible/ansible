@@ -42,7 +42,6 @@ options:
   force:
     description:
     - If C(yes), allows to create new filesystem on devices that already has filesystem.
-      Warning, C(swap) always override existing filesystems, even without force.
     type: bool
     default: 'no'
   resizefs:
