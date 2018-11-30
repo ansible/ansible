@@ -131,7 +131,7 @@ def fmgr_prepare_dict(obj):
 # utility function: remove empty "None" values/keys from a dictionary. FMG doesn't like them.
 def fmgr_scrub_dict(d):
     if type(d) is dict:
-        return dict((k, fmgr_scrub_dict(v)) for k, v in d.iteritems() if v and fmgr_scrub_dict(v))
+        return dict((k, fmgr_scrub_dict(v)) for k, v in d.items() if v and fmgr_scrub_dict(v))
     else:
         return d
 
