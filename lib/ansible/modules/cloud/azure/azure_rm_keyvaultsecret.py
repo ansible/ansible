@@ -141,6 +141,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
                 client_id=self.credentials['client_id'],
                 secret=self.credentials['secret'],
                 tenant=tenant,
+                cloud_environment=self._cloud_environment,
                 resource="https://vault.azure.net")
 
             token = authcredential.token
