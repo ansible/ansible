@@ -31,12 +31,13 @@ $application = Get-AnsibleParam -obj $params -name "application" -type "path"
 $appDirectory  = Get-AnsibleParam -obj $params -name "working_directory" -aliases "app_directory","chdir" -type "path"
 $appParameters = Get-AnsibleParam -obj $params -name "app_parameters"
 $appArguments = Get-AnsibleParam -obj $params -name "arguments" -aliases "app_parameters_free_form"
-$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
 
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "path"
 $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "path"
-$dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
 
+# Deprecated options since 2.8. Remove in 2.12
+$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
+$dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
 $user = Get-AnsibleParam -obj $params -name "user" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 
@@ -315,6 +316,22 @@ if ($null -ne $appParameters) {
     # The rest of the code should use only the new $appArguments variable
 }
 
+if ($state -in @("started","stopped","restarted")) {
+    Add-DeprecationWarning -obj $result -message "The values 'started', 'stopped', and 'restarted' for 'state' will be removed soon, use the win_service module to start or stop the service instead." -version 2.12
+}
+if ($null -ne $startMode) {
+    Add-DeprecationWarning -obj $result -message "The parameter 'start_mode' will be removed soon, use the win_service module instead." -version 2.12
+}
+if ($null -ne $dependencies) {
+    Add-DeprecationWarning -obj $result -message "The parameter 'dependencies' will be removed soon, use the win_service module instead." -version 2.12
+}
+if ($null -ne $user) {
+    Add-DeprecationWarning -obj $result -message "The parameter 'user' will be removed soon, use the win_service module instead." -version 2.12
+}
+if ($null -ne $password) {
+    Add-DeprecationWarning -obj $result -message "The parameter 'password' will be removed soon, use the win_service module instead." -version 2.12
+}
+
 if ($state -ne 'absent') {
     if ($null -eq $application) {
         Fail-Json -obj $result -message "The application parameter must be defined when the state is not absent."
@@ -426,8 +443,8 @@ if ($state -eq 'absent') {
         Update-NssmServiceParameter -parameter "AppRotateBytes" -value 104858 @common_params
 
 
+        ############## DEPRECATED block since 2.8. Remove in 2.12 ##############
         Update-NssmServiceParameter -parameter "DependOnService" -arguments $dependencies @common_params
-
         if ($user) {
             $fullUser = $user
             if (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
@@ -437,10 +454,8 @@ if ($state -eq 'absent') {
             # Use custom compare callback to test only the username (and not the password)
             Update-NssmServiceParameter -parameter "ObjectName" -arguments @($fullUser, $password) -compare {param($actual,$expected) $actual[0] -eq $expected[0]} @common_params
         }
-
         $mappedMode = $start_modes_map.$startMode
         Update-NssmServiceParameter -parameter "Start" -value $mappedMode @common_params
-
         if ($state -in "stopped","restarted") {
             Stop-NssmService @common_params
         }
@@ -448,6 +463,8 @@ if ($state -eq 'absent') {
         if($state -in "started","restarted") {
             Start-NssmService @common_params
         }
+        ########################################################################
+
     }
 }
 

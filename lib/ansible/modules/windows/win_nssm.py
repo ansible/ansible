@@ -15,9 +15,10 @@ DOCUMENTATION = r'''
 ---
 module: win_nssm
 version_added: "2.0"
-short_description: NSSM - the Non-Sucking Service Manager
+short_description: Install a service using NSSM
 description:
-    - nssm is a service helper which doesn't suck. See U(https://nssm.cc/) for more information.
+    - Install a Windows service using the NSSM wrapper.
+    - NSSM is a service helper which doesn't suck. See U(https://nssm.cc/) for more information.
 requirements:
     - "nssm >= 2.24.0 # (install via M(win_chocolatey)) C(win_chocolatey: name=nssm)"
 options:
@@ -29,15 +30,14 @@ options:
   state:
     description:
       - State of the service on the system.
-      - Note that NSSM actions like "pause", "continue", "rotate" do not fit the declarative style of ansible, so these should be implemented via the
-        ansible command module.
+      - Values C(started), C(stopped), and C(restarted) are deprecated since v2.8, please use the M(win_service) module instead to start, stop or restart the service.
     type: str
     choices: [ absent, present, started, stopped, restarted ]
     default: started
   application:
     description:
       - The application binary to run as a service
-      - "Specify this whenever the service may need to be installed (state: present, started, stopped, restarted)"
+      - Required when I(state) is C(present), C(started), C(stopped), or C(restarted).
     type: path
   description:
     description:
@@ -78,14 +78,17 @@ options:
   dependencies:
     description:
       - Service dependencies that has to be started to trigger startup, separated by comma.
+      - DEPRECATED since v2.8, please use the M(win_service) module instead.
     type: list
   user:
     description:
       - User to be used for service startup.
+      - DEPRECATED since v2.8, please use the M(win_service) module instead.
     type: str
   password:
     description:
       - Password to be used for service startup.
+      - DEPRECATED since v2.8, please use the M(win_service) module instead.
     type: str
   start_mode:
     description:
@@ -93,11 +96,16 @@ options:
       - C(delayed) causes a delayed but automatic start after boot (added in version 2.5).
       - C(manual) means that the service will start only when another service needs it.
       - C(disabled) means that the service will stay off, regardless if it is needed or not.
+      - DEPRECATED since v2.8, please use the M(win_service) module instead.
     type: str
     choices: [ auto, delayed, disabled, manual ]
     default: auto
 seealso:
-- module: win_service
+  - module: win_service
+notes:
+  - The service will NOT be started after its creation when C(state=present).
+  - Once the service is created, you can use the M(win_service) module to start it or configure 
+    some additionals properties, such as its startup type, dependencies, service account, and so on.
 author:
   - Adam Keech (@smadam813)
   - George Frank (@georgefrank)
@@ -136,25 +144,14 @@ EXAMPLES = r'''
     stdout_file: C:\windows\foo.log
     stderr_file: C:\windows\foo.log
 
-# Install and start the foo service, but wait for dependencies tcpip and adf
-- win_nssm:
+# Configure the foo service and start it with win_service
+- win_service:
     name: foo
-    application: C:\windows\foo.exe
-    dependencies: 'adf,tcpip'
-
-# Install and start the foo service with dedicated user
-- win_nssm:
-    name: foo
-    application: C:\windows\foo.exe
+    dependencies: [ adf, tcpip ]
     user: foouser
     password: secret
-
-# Install the foo service but do not start it automatically
-- win_nssm:
-    name: foo
-    application: C:\windows\foo.exe
-    state: present
     start_mode: manual
+    state: started
 
 # Remove the foo service
 - win_nssm:
