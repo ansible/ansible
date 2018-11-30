@@ -18,8 +18,7 @@ author: "Pluribus Networks (rpachi@pluribusnetworks.com)"
 version_added: "2.8"
 short_description: CLI command to add/remove access-list-ip
 description:
-  - This modules is used to dd IPs associated with access list
-    and remove IPs associated with access list.
+  - This modules can be used to add and remove IPs associated with access list.
 options:
   pn_cliswitch:
     description:
@@ -29,19 +28,19 @@ options:
   state:
     description:
       - State the action to perform. Use 'present' to add access-list-ip and
-      'absent' to remove access-list-ip.
+        'absent' to remove access-list-ip.
     required: True
-    choices: [ "present", "absent"]
+    choices: ["present", "absent"]
   pn_ip:
     description:
-      - IP associated with the access list
-    required: false
-    type: str
+      - IP associated with the access list.
+    required: False
     default: '::'
+    type: str
   pn_name:
     description:
-      - Access List Name
-    required: false
+      - Access List Name.
+    required: False
     type: str
 """
 
@@ -99,7 +98,7 @@ def check_cli(module, cli):
     show = cli + \
         ' access-list-ip-show name %s format ip no-show-headers' % name
     show = shlex.split(show)
-    out = module.run_command(show)[1]
+    out = module.run_command(show, use_unsafe_shell=True)[1]
 
     out = out.split()
     # Global flags
@@ -114,7 +113,7 @@ def main():
     global state_map
     state_map = dict(
         present='access-list-ip-add',
-        absent='access-list-ip-remove'
+        absent='access-list-ip-remove',
     )
 
     module = AnsibleModule(
@@ -128,7 +127,7 @@ def main():
         required_if=(
             ["state", "present", ["pn_name"]],
             ["state", "absent", ["pn_name", "pn_ip"]],
-            ),
+        ),
     )
 
     # Accessing the arguments
@@ -157,8 +156,8 @@ def main():
         if command == 'access-list-ip-add':
             if IP_EXISTS is True:
                 module.exit_json(
-                     skipped=True,
-                     msg='access list with ip %s already exists' % ip
+                    skipped=True,
+                    msg='access list with ip %s already exists' % ip
                 )
         if ip:
             cli += ' ip ' + ip
