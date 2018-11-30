@@ -495,14 +495,10 @@ class DnfModule(YumDnf):
     def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
         """Configure the dnf Base object."""
 
-        if self.enable_plugin and self.disable_plugin:
-            base.init_plugins(self.disable_plugin, self.enable_plugin)
-        elif self.enable_plugin:
-            base.init_plugins(enable_plugins=self.enable_plugin)
-        elif self.disable_plugin:
-            base.init_plugins(self.disable_plugin)
-
         conf = base.conf
+
+        # Read the configuration file
+        conf.read()
 
         # Turn off debug messages in the output
         conf.debuglevel = 0
@@ -563,9 +559,6 @@ class DnfModule(YumDnf):
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
 
-        # Read the configuration file
-        conf.read()
-
     def _specify_repositories(self, base, disablerepo, enablerepo):
         """Enable and disable repositories matching the provided patterns."""
         base.read_all_repos()
@@ -588,6 +581,12 @@ class DnfModule(YumDnf):
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
         self._specify_repositories(base, disablerepo, enablerepo)
+        try:
+            base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
+            base.pre_configure_plugins()
+            base.configure_plugins()
+        except AttributeError:
+            pass  # older versions of dnf didn't require this and don't have these methods
         try:
             base.fill_sack(load_system_repo='auto')
         except dnf.exceptions.RepoError as e:
