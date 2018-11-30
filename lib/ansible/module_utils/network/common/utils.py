@@ -34,6 +34,7 @@ from itertools import chain
 from struct import pack
 from socket import inet_aton, inet_ntoa
 
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils.basic import AnsibleFallbackNotFound
@@ -275,7 +276,10 @@ def dict_merge(base, other):
             if key in other:
                 item = other.get(key)
                 if item is not None:
-                    combined[key] = dict_merge(value, other[key])
+                    if isinstance(other[key], Mapping):
+                        combined[key] = dict_merge(value, other[key])
+                    else:
+                        combined[key] = other[key]
                 else:
                     combined[key] = item
             else:
