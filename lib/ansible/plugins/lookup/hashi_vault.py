@@ -119,6 +119,7 @@ class HashiVault:
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
         self.namespace = kwargs.get('namespace', None)
 
+
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s is None:
@@ -142,11 +143,7 @@ class HashiVault:
         self.auth_method = kwargs.get('auth_method')
         if self.auth_method and self.auth_method != 'token':
             try:
-                if self.namespace is None:
-                    self.client = hvac.Client(url=self.url, verify=self.verify)
-                else:
-                    self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
-
+                self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
@@ -165,10 +162,7 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-        if self.namespace is None:
-                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
-        else:
-                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
+            self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
 
         if not self.client.is_authenticated():
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
