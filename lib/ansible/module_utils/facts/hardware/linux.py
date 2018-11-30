@@ -182,7 +182,11 @@ class LinuxHardware(Hardware):
         for line in get_file_lines('/proc/cpuinfo'):
             data = line.split(":", 1)
             key = data[0].strip()
-            val = data[1].strip()
+
+            try:
+                val = data[1].strip()
+            except IndexError:
+                val = ""
 
             if xen:
                 if key == 'flags':
