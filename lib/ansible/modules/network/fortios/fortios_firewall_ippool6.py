@@ -109,7 +109,7 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       firewall_ippool6:
         state: "present"
-        comments: "<your_own_value>"
+        comments: "<your_own_comment>"
         endip: "<your_own_value>"
         name: "default_name_5"
         startip: "<your_own_value>"
