@@ -145,7 +145,7 @@ EXAMPLES = '''
     item: {"bank": {"S": "hsbc"},"quantity": {"N": "1000"},"person": {"S": "ochoa"}}
 
 # Updates the 'quantity' attibute value from a single item.
-- name: Updates arribute 'person'
+- name: Updates arribute 'number'
   dynamodb:
     table: narcos
     action: update
