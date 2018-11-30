@@ -211,21 +211,16 @@ class RabbitMqUser(object):
         self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
-        for permission in self._permissions:
-            if permission not in self.permissions:
-                cmd = ['clear_permissions', '-p']
-                cmd.append(permission['vhost'])
-                cmd.append(self.username)
-                self._exec(cmd)
-        for permission in self.permissions:
-            if permission not in self._permissions:
-                cmd = ['set_permissions', '-p']
-                cmd.append(permission['vhost'])
-                cmd.append(self.username)
-                cmd.append(permission['configure_priv'])
-                cmd.append(permission['write_priv'])
-                cmd.append(permission['read_priv'])
-                self._exec(cmd)
+        permissions_to_clear = [permission for permission in self._permissions if permission not in self.permissions]
+        permissions_to_add = [permission for permission in self.permissions if permission not in self._permissions]
+        for permission in permissions_to_clear:
+            cmd = 'clear_permissions -p {vhost} {username}'.format(username=self.username,
+                                                                   vhost=permission['vhost'])
+            self._exec(cmd.split(' '))
+        for permission in permissions_to_add:
+            cmd = ('set_permissions -p {vhost} {username} {configure_priv} {write_priv} {read_priv}'
+                   .format(username=self.username, **permission))
+            self._exec(cmd.split(' '))
 
     def has_tags_modifications(self):
         return set(self.tags) != set(self._tags)
