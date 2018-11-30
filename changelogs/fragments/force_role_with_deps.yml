@@ -1,0 +1,2 @@
+minor_changes:
+    - allow user to force install a role and it's dependencies
