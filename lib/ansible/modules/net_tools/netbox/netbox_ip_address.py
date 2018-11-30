@@ -177,7 +177,7 @@ except ImportError:
 
 def netbox_create_ip_address(nb, nb_endpoint, data):
     result = []
-    if not nb_endpoint.get(address=data["address"]):
+    if data.get('vrf'):
         norm_data = normalize_data(data)
         if norm_data.get("status"):
             norm_data["status"] = IP_ADDRESS_STATUS.get(norm_data["status"].lower())
@@ -185,20 +185,41 @@ def netbox_create_ip_address(nb, nb_endpoint, data):
             norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
         data = find_ids(nb, norm_data)
 
-        try:
-            return nb_endpoint.create([norm_data])
-        except pynetbox.RequestError as e:
-            return json.loads(e.error)
+        if not nb_endpoint.get(address=data["address"], vrf_id=data['vrf']):
+            try:
+                return nb_endpoint.create([norm_data])
+            except pynetbox.RequestError as e:
+                return json.loads(e.error)
+        else:
+            result.append({'failed': '%s already exists in Netbox' % (data["address"])})
     else:
-        result.append({'failed': '%s already exists in Netbox' % (data["address"])})
+        if not nb_endpoint.get(address=data["address"]):
+            norm_data = normalize_data(data)
+            if norm_data.get("status"):
+                norm_data["status"] = IP_ADDRESS_STATUS.get(norm_data["status"].lower())
+            if norm_data.get("role"):
+                norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
+            data = find_ids(nb, norm_data)
+
+            try:
+                return nb_endpoint.create([norm_data])
+            except pynetbox.RequestError as e:
+                return json.loads(e.error)
+        else:
+            result.append({'failed': '%s already exists in Netbox' % (data["address"])})
 
     return result
 
 
-def netbox_delete_ip_address(nb_endpoint, data):
+def netbox_delete_ip_address(nb, nb_endpoint, data):
     norm_data = normalize_data(data)
-    endpoint = nb_endpoint.get(address=norm_data["address"])
     result = []
+    if data.get('vrf'):
+        data = find_ids(nb, norm_data)
+        endpoint = nb_endpoint.get(address=norm_data["address"], vrf_id=data['vrf'])
+    else:
+        endpoint = nb_endpoint.get(address=norm_data["address"])
+
     try:
         if endpoint.delete():
             result.append({'success': '%s deleted from Netbox' % (norm_data["address"])})
@@ -252,7 +273,7 @@ def main():
         if response[0].get('created'):
             changed = True
     else:
-        response = netbox_delete_ip_address(nb_endpoint, data)
+        response = netbox_delete_ip_address(nb, nb_endpoint, data)
         if 'success' in response[0]:
             changed = True
     module.exit_json(changed=changed, meta=response)
@@ -260,3 +281,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
