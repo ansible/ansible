@@ -51,6 +51,8 @@ notes:
       M(acme_challenge_cert_helper) module to prepare the challenge certificate."
    - "You can use the M(certificate_complete_chain) module to find the root certificate
       for the returned fullchain."
+   - "In case you want to debug problems, you might be interested in the M(acme_inspect)
+      module."
 extends_documentation_fragment:
   - acme
 options:
