@@ -59,8 +59,8 @@ class ModuleFailException(Exception):
         self.msg = msg
         self.module_fail_args = args
 
-    def do_fail(self, module):
-        module.fail_json(msg=self.msg, other=self.module_fail_args)
+    def do_fail(self, module, **arguments):
+        module.fail_json(msg=self.msg, other=self.module_fail_args, **arguments)
 
 
 def nopad_b64(data):
@@ -518,12 +518,16 @@ class ACMEAccount(object):
         else:
             return _parse_key_openssl(self._openssl_bin, self.module, key_file, key_content)
 
-    def sign_request(self, protected, payload, key_data):
+    def sign_request(self, protected, payload, key_data, encode_payload=True):
         try:
             if payload is None:
+                # POST-as-GET
                 payload64 = ''
             else:
-                payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
+                # POST
+                if encode_payload:
+                    payload = self.module.jsonify(payload).encode('utf8')
+                payload64 = nopad_b64(to_bytes(payload))
             protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
         except Exception as e:
             raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
@@ -533,7 +537,7 @@ class ACMEAccount(object):
         else:
             return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
-    def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True):
+    def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True, encode_payload=True):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
@@ -551,7 +555,7 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
-            data = self.sign_request(protected, payload, key_data)
+            data = self.sign_request(protected, payload, key_data, encode_payload=encode_payload)
             if self.version == 1:
                 data["header"] = jws_header
             data = self.module.jsonify(data)
@@ -588,7 +592,7 @@ class ACMEAccount(object):
 
             return result, info
 
-    def get_request(self, uri, parse_json_result=True, headers=None, get_only=False):
+    def get_request(self, uri, parse_json_result=True, headers=None, get_only=False, fail_on_error=True):
         '''
         Perform a GET-like request. Will try POST-as-GET for ACMEv2, with fallback
         to GET if server replies with a status code of 405.
@@ -626,7 +630,7 @@ class ACMEAccount(object):
         else:
             result = content
 
-        if info['status'] >= 400:
+        if fail_on_error and info['status'] >= 400:
             raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
         return result, info
 
