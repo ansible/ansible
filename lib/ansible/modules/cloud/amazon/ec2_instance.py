@@ -180,10 +180,10 @@ options:
     default: {"tag:Name": "<provided-Name-attribute>", "subnet-id": "<provided-or-default subnet>"}
   instance_role:
     description:
-     - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in arn format
-       then the ListInstanceProfiles permission must also be granted.
-       U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
-       the role with a matching name will be used from the active AWS account.
+      - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in arn format
+        then the ListInstanceProfiles permission must also be granted.
+        U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
+        the role with a matching name will be used from the active AWS account.
   placement_group:
     description:
       - The placement group that needs to be assigned to the instance
