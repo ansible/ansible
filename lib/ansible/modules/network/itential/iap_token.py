@@ -59,9 +59,6 @@ options:
         on personally controlled sites using self-signed certificates.
     type: bool
     default: False
-
-notes:
-  - This module is under construction
 """
 
 EXAMPLES = '''
