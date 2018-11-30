@@ -345,6 +345,12 @@ releases:
     - win_group_membership-sid-bugfix.yml
     - wrcwd_ansible.cfg.yml
     release_date: '2018-07-05'
+  2.6.10:
+    codename: Heartbreaker
+    fragments:
+    - powershell-bootstrap.yaml
+    - v2.6.10_summary.yaml
+    release_date: '2018-11-30'
   2.6.2:
     codename: Heartbreaker
     fragments:

@@ -2,6 +2,21 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.10
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2018-11-30
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- powershell - add ``lib/ansible/executor/powershell`` to the packaging data
+
 v2.6.9
 ======
 
