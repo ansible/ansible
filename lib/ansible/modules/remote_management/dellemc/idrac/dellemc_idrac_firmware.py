@@ -144,7 +144,7 @@ def update_firmware(idrac, module):
     try:
         _validate_catalog_file(module.params['catalog_file_name'])
     except ValueError as e:
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=str(e))
 
     try:
         upd_share = FileOnShare(remote=module.params['share_name'] + "/" + module.params['catalog_file_name'],
@@ -208,7 +208,7 @@ def main():
         with iDRACConnection(module.params) as idrac:
             msg, err = update_firmware(idrac, module)
     except (ImportError, ValueError, RuntimeError) as e:
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=str(e))
 
     if err:
         module.fail_json(**msg)
