@@ -97,6 +97,7 @@ DOCUMENTATION = """
 """
 
 import base64
+import logging
 import os
 import re
 import traceback
@@ -112,6 +113,7 @@ try:
 except ImportError:
     pass
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -190,6 +192,11 @@ class Connection(ConnectionBase):
         self._shell_type = 'powershell'
 
         super(Connection, self).__init__(*args, **kwargs)
+
+        if not C.DEFAULT_DEBUG:
+            logging.getLogger('requests_credssp').setLevel(logging.INFO)
+            logging.getLogger('requests_kerberos').setLevel(logging.INFO)
+            logging.getLogger('urllib3').setLevel(logging.INFO)
 
     def _build_winrm_kwargs(self):
         # this used to be in set_options, as win_reboot needs to be able to
@@ -365,7 +372,7 @@ class Connection(ConnectionBase):
 
         winrm_host = self._winrm_host
         if HAS_IPADDRESS:
-            display.vvvv("checking if winrm_host %s is an IPv6 address" % winrm_host)
+            display.debug("checking if winrm_host %s is an IPv6 address" % winrm_host)
             try:
                 ipaddress.IPv6Address(winrm_host)
             except ipaddress.AddressValueError:
