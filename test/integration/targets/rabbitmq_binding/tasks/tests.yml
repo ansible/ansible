@@ -1,20 +1,25 @@
 ---
-
 - name: Add test requisites
   block:
     - name: Add exchange
-      rabbitmq_exchange: name=exchange-foo type=direct
-
-    - name: Add exchange
-      rabbitmq_exchange: name=exchange-bar type=direct
+      rabbitmq_exchange:
+        name: "{{ item }}"
+        type: direct
+      with_items:
+        - exchange-foo
+        - exchange-bar
 
     - name: Add queue
-      rabbitmq_queue: name=queue-foo
+      rabbitmq_queue:
+        name: queue-foo
 
 - name: Test add binding in check mode
   block:
     - name: Add binding
-      rabbitmq_binding: source=exchange-foo destination=queue-foo type=queue
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: queue-foo
+        type: queue
       check_mode: true
       register: add_binding
 
@@ -26,7 +31,10 @@
 - name: Test add binding
   block:
     - name: Add binding
-      rabbitmq_binding: source=exchange-foo destination=queue-foo type=queue
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: queue-foo
+        type: queue
       register: add_binding
 
     - name: Check that binding succeeds with a change
@@ -37,7 +45,10 @@
 - name: Test add binding idempotence
   block:
     - name: Add binding
-      rabbitmq_binding: source=exchange-foo destination=queue-foo type=queue
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: queue-foo
+        type: queue
       register: add_binding
 
     - name: Check that binding succeeds without a change
@@ -48,7 +59,11 @@
 - name: Test remove binding in check mode
   block:
     - name: Remove binding
-      rabbitmq_binding: source=exchange-foo destination=queue-foo type=queue state=absent
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: queue-foo
+        type: queue
+        state: absent
       check_mode: true
       register: remove_binding
 
@@ -60,7 +75,11 @@
 - name: Test remove binding
   block:
     - name: Remove binding
-      rabbitmq_binding: source=exchange-foo destination=queue-foo type=queue state=absent
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: queue-foo
+        type: queue
+        state: absent
       register: remove_binding
 
     - name: Check that binding succeeds with a change
@@ -71,7 +90,11 @@
 - name: Test remove binding idempotence
   block:
     - name: Remove binding
-      rabbitmq_binding: source=exchange-foo destination=queue-foo type=queue state=absent
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: queue-foo
+        type: queue
+        state: absent
       register: remove_binding
 
     - name: Check that binding succeeds with a change
@@ -82,7 +105,10 @@
 - name: Test add exchange to exchange binding
   block:
     - name: Add binding
-      rabbitmq_binding: source=exchange-foo destination=exchange-bar type=exchange
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: exchange-bar
+        type: exchange
       register: add_binding
 
     - name: Check that binding succeeds with a change
@@ -93,7 +119,11 @@
 - name: Test remove exchange to exchange binding
   block:
     - name: Remove binding
-      rabbitmq_binding: source=exchange-foo destination=exchange-bar type=exchange state=absent
+      rabbitmq_binding:
+        source: exchange-foo
+        destination: exchange-bar
+        type: exchange
+        state: absent
       register: remove_binding
 
     - name: Check that binding succeeds with a change
