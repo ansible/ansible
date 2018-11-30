@@ -174,6 +174,7 @@ class RabbitMqUser(object):
         return False
 
     def _get_permissions(self):
+        """Get permissions of the user from RabbitMQ."""
         perms_out = [perm for perm in self._exec(['list_user_permissions', self.username], True) if perm.strip()]
 
         perms_list = list()
