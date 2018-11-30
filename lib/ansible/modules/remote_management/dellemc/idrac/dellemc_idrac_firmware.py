@@ -97,7 +97,8 @@ EXAMPLES = """
 """
 
 RETURN = """
-dest:
+---
+msg:
     description: Updates firmware from a repository on a network share (CIFS, NFS).
     returned: success
     type: dict
