@@ -66,7 +66,7 @@ def test_fmgr_fwobj_ippool_addsetdelete(fixture_data, mocker):
     # associated-interface: None
     # mode: delete
     # source-startip: None
-    # type: None
+    # # type: None
     # block-size: None
     ##################################################
     ##################################################
@@ -84,7 +84,7 @@ def test_fmgr_fwobj_ippool_addsetdelete(fixture_data, mocker):
     # associated-interface: None
     # mode: delete
     # source-startip: None
-    # type: None
+    # # type: None
     # block-size: None
     ##################################################
     ##################################################
@@ -102,7 +102,7 @@ def test_fmgr_fwobj_ippool_addsetdelete(fixture_data, mocker):
     # associated-interface: None
     # mode: delete
     # source-startip: None
-    # type: None
+    # # type: None
     # block-size: None
     ##################################################
     ##################################################
@@ -120,7 +120,7 @@ def test_fmgr_fwobj_ippool_addsetdelete(fixture_data, mocker):
     # associated-interface: None
     # mode: delete
     # source-startip: None
-    # type: None
+    # # type: None
     # block-size: None
     ##################################################
     ##################################################
