@@ -43,9 +43,11 @@ class Handler(Task):
         t = Handler(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def do_notify(self, host):
-        if host not in self.notified_hosts:
+    def notify_host(self, host):
+        if not self.is_notified(host):
             self.notified_hosts.append(host)
+            return True
+        return False
 
     def is_notified(self, host):
         return host in self.notified_hosts
