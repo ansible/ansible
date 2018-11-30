@@ -23,6 +23,7 @@ __metaclass__ = type
 import json
 
 from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.connection import ConnectionError
 from ansible.plugins.httpapi import HttpApiBase
 
 

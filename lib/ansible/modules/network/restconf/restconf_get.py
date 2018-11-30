@@ -73,6 +73,7 @@ response:
 
 """
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.restconf import restconf
@@ -98,7 +99,7 @@ def main():
     try:
         response = restconf.get(module, **module.params)
     except ConnectionError as exc:
-        module.fail_json(msg=module.from_json(exc.message), code=exc.code)
+        module.fail_json(msg=to_text(exc), code=exc.code)
 
     result.update({
         'response': response,
