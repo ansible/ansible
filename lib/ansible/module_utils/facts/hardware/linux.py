@@ -443,13 +443,12 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
-    @timeout.timeout()
     def get_mount_info(self, fields, bind_mounts, uuids):
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
             mount_info = {}
 
-            if not device.startswith('/') and ':/' not in device or fstype == 'none':
+            if all([not device.startswith('/'), ':/' not in device, not fstype.startswith('fuse')]) or fstype == 'none':
                 return mount_info
 
             mount_statvfs_info = get_mount_size(mount)
@@ -474,20 +473,26 @@ class LinuxHardware(Hardware):
 
             return mount_info
 
+    @timeout.timeout()
     def get_mount_facts(self):
-
         mount_facts = {'mounts': []}
 
         bind_mounts = self._find_bind_mounts()
         uuids = self._lsblk_uuid()
         mtab_entries = self._mtab_entries()
 
-        pool = ThreadPool(processes=len(mtab_entries))
+        # start threads to query each mount
         mounts = []
+        async_results = []
+        pool = ThreadPool(processes=min(len(mtab_entries), 8))
         for fields in mtab_entries:
+            async_results.append(pool.apply_async(self.get_mount_info, (fields, bind_mounts, uuids)))
 
-            async_result = pool.apply_async(self.get_mount_info, (fields, bind_mounts, uuids))
-            mounts.append(async_result.get())
+        # wait for workers and get results
+        for res in async_results:
+            x = res.get(timeout=globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT)
+            if x:
+                mounts.append(x)
 
         mount_facts['mounts'] = mounts
 
