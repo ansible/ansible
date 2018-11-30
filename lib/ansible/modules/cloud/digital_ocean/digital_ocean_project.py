@@ -86,26 +86,27 @@ EXAMPLES = '''
     description: Contains all corporate web frontends
     purpose: Web application
     environment: Production
-    
+
 - name: Assign a resource to an existing project
   digital_ocean_project:
     oauth_token: abc123
     state: present
     name: Web Frontends
     resources:
-      - do:droplet:1
-      - do:volume:42
-    
+      - "do:droplet:1"
+      - "do:volume:42"
+
 - name: Assign a resource to the default project
   digital_ocean_project:
     oauth_token: abc123
     state: present
     default: yes
     resources:
-      - do:droplet:1
-      - do:volume:42
-      
+      - "do:droplet:1"
+      - "do:volume:42"
+
 - name: Modify properties of an existing project
+  digital_ocean_project:
     oauth_token: abc123
     state: present
     name: Web Frontends
