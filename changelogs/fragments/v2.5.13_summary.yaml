@@ -1,0 +1,3 @@
+release_summary: |
+   | Release Date: 2018-11-30
+   | Corrects packaging issue which prevented Windows targets from executing

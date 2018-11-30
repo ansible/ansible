@@ -2,6 +2,28 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.13:
+
+v2.5.13
+=======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.13_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-11-30
+| Corrects packaging issue which prevented Windows targets from executing
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.13_Bugfixes:
+
+Bugfixes
+--------
+
+- powershell - add ``lib/ansible/executor/powershell`` to the packaging data
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.12:
 
 v2.5.12
