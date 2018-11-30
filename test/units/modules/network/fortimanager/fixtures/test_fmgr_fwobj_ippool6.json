@@ -1,0 +1,50 @@
+{
+   "fmgr_fwobj_ippool6_addsetdelete": [
+      {
+         "paramgram_used": {
+            "endip": "fd30:fc67:cb18:ae44::ffff:ffff", 
+            "name": "IPv6 IPPool", 
+            "adom": "ansible", 
+            "startip": "fd30:fc67:cb18:ae44::aaaa:aaaa", 
+            "dynamic_mapping": {
+               "startip": null, 
+               "endip": null, 
+               "comments": null
+            }, 
+            "comments": "Created by Ansible", 
+            "mode": "add"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/ansible/obj/firewall/ippool6"
+         }, 
+         "post_method": "add"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/ansible/obj/firewall/ippool6/IPv6 IPPool"
+         }, 
+         "paramgram_used": {
+            "endip": null, 
+            "name": "IPv6 IPPool", 
+            "adom": "ansible", 
+            "startip": null, 
+            "dynamic_mapping": {
+               "startip": null, 
+               "endip": null, 
+               "comments": null
+            }, 
+            "comments": null, 
+            "mode": "delete"
+         }, 
+         "post_method": "delete"
+      }
+   ]
+}
