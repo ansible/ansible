@@ -10,6 +10,7 @@ include examples/hosts
 include examples/ansible.cfg
 include examples/scripts/ConfigureRemotingForAnsible.ps1
 include examples/scripts/upgrade_to_ps3.ps1
+recursive-include lib/ansible/executor/powershell *
 recursive-include lib/ansible/module_utils/powershell *
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *

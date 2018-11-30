@@ -1,0 +1,2 @@
+bugfixes:
+- powershell - add ``lib/ansible/executor/powershell`` to the packaging data
