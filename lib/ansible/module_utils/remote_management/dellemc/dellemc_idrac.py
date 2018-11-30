@@ -36,22 +36,22 @@ class iDRACConnection:
         self.idrac_port = module_params['idrac_port']
         if not all((self.idrac_ip, self.idrac_user, self.idrac_pwd)):
             raise ValueError("hostname, username and password required")
+        self.handle = None
+        self.creds = UserCredentials(self.idrac_user, self.idrac_pwd)
+        self.pOp = WsManOptions(port=self.idrac_port)
+        self.sdk = sdkinfra()
+        if self.sdk is None:
+            msg = "Could not initialize iDRAC drivers."
+            raise RuntimeError(msg)
 
     def __enter__(self):
-        self.handle = None
-        creds = UserCredentials(self.idrac_user, self.idrac_pwd)
-        pOp = WsManOptions(port=self.idrac_port)
-        sd = sdkinfra()
-        if sd:
-            sd.importPath()
-            self.handle = sd.get_driver(sd.driver_enum.iDRAC, self.idrac_ip, creds, pOptions=pOp)
+        self.sdk.importPath()
+        self.handle = self.sdk.get_driver(self.sdk.driver_enum.iDRAC, self.idrac_ip, self.creds, pOptions=self.pOp)
         if self.handle is None:
             msg = "Could not find device driver for iDRAC with IP Address: {0}".format(self.idrac_ip)
-            raise ValueError(msg)
+            raise RuntimeError(msg)
         return self.handle
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.handle:
-            self.handle.disconnect()
-            return True
-        return False
+        self.handle.disconnect()
+        return True

@@ -101,8 +101,8 @@ RETURN = """
 msg:
     description: Updates firmware from a repository on a network share (CIFS, NFS).
     returned: success
-    type: dict
-    sample: {
+    type: string
+    sample: "{
         'CompletionTime': '2018-01-24T00:47:33',
         'Id': 'JID_XXXXXXXXXXXX',
         'JobState': 'Completed',
@@ -112,7 +112,7 @@ msg:
         'Name': 'Import Configuration',
         'StartTime': 'TIME_NOW',
         'Status': 'Success',
-    }
+    }"
 """
 
 
@@ -207,7 +207,7 @@ def main():
         # Connect to iDRAC and update firmware
         with iDRACConnection(module.params) as idrac:
             msg, err = update_firmware(idrac, module)
-    except ValueError as e:
+    except (ImportError, ValueError, RuntimeError) as e:
         module.fail_json(msg=e.message)
 
     if err:
