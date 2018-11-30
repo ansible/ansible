@@ -12,8 +12,6 @@
 
 from __future__ import (absolute_import, division,
                         print_function)
-import tempfile
-import os
 __metaclass__ = type
 
 try:
@@ -23,32 +21,26 @@ try:
     from omsdk.sdkprotopref import ProtoPreference, ProtocolEnum
     from omsdk.http.sdkwsmanbase import WsManOptions
     HAS_OMSDK = True
-
 except ImportError:
-
     HAS_OMSDK = False
 
 
 class iDRACConnection:
+
     def __init__(self, module):
         if not HAS_OMSDK:
             results = {}
             results['msg'] = "Dell EMC OMSDK library is required for this module"
             module.fail_json(**results)
-
         self.module = module
+
+    def __enter__(self):
         self.handle = None
-
-    def connect(self):
         results = {}
-        idrac = None
-
-        ansible_module_params = self.module.params
-        idrac_ip = ansible_module_params['idrac_ip']
-        idrac_user = ansible_module_params['idrac_user']
-        idrac_pwd = ansible_module_params['idrac_pwd']
-        idrac_port = ansible_module_params['idrac_port']
-
+        idrac_ip = self.module.params['idrac_ip']
+        idrac_user = self.module.params['idrac_user']
+        idrac_pwd = self.module.params['idrac_pwd']
+        idrac_port = self.module.params['idrac_port']
         try:
             sd = sdkinfra()
             sd.importPath()
@@ -56,27 +48,20 @@ class iDRACConnection:
             results['msg'] = "Could not initialize drivers"
             results['exception'] = str(e)
             self.module.fail_json(**results)
-
-        # Connect to iDRAC
         if not all((idrac_ip, idrac_user, idrac_pwd)):
-            results['msg'] = "hostname, username and password required"
-            self.module.fail_json(**results)
+            self.module.fail_json(msg="hostname, username and password required")
         else:
             creds = UserCredentials(idrac_user, idrac_pwd)
             pOp = WsManOptions(port=idrac_port)
-
             idrac = sd.get_driver(sd.driver_enum.iDRAC, idrac_ip, creds, pOptions=pOp)
-
             if idrac is None:
-                results['msg'] = "Could not find device driver for iDRAC with IP Address: " + idrac_ip
-                self.module.fail_json(**results)
-
+                msg = "Could not find device driver for iDRAC with IP Address: {}".format(idrac_ip)
+                self.module.fail_json(msg=msg)
         self.handle = idrac
-        return idrac
+        return self.handle
 
-    def disconnect(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         if self.handle:
             self.handle.disconnect()
             return True
-
-        return True
+        return False

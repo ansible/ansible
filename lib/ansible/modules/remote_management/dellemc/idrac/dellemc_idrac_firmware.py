@@ -207,17 +207,9 @@ def main():
 
         supports_check_mode=False)
 
-    if not HAS_OMSDK:
-        module.fail_json(msg="Dell EMC OpenManage Python SDK required for this module")
-
-    # Connect to iDRAC
-    idrac_conn = iDRACConnection(module)
-    idrac = idrac_conn.connect()
-
-    msg, err = update_firmware(idrac, module)
-
-    # Disconnect from iDRAC
-    idrac_conn.disconnect()
+    # Connect to iDRAC and update firmware
+    with iDRACConnection(module) as idrac:
+        msg, err = update_firmware(idrac, module)
 
     if err:
         module.fail_json(**msg)
