@@ -24,10 +24,10 @@ import os
 import re
 import sys
 
+from multiprocessing.pool import ThreadPool
+
 from ansible.module_utils.six import iteritems
-
 from ansible.module_utils.basic import bytes_to_human
-
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 
@@ -444,24 +444,13 @@ class LinuxHardware(Hardware):
         return mtab_entries
 
     @timeout.timeout()
-    def get_mount_facts(self):
-        mount_facts = {}
+    def get_mount_info(self, fields, bind_mounts, uuids):
 
-        mount_facts['mounts'] = []
-
-        bind_mounts = self._find_bind_mounts()
-        uuids = self._lsblk_uuid()
-        mtab_entries = self._mtab_entries()
-
-        mounts = []
-        for fields in mtab_entries:
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
+            mount_info = {}
 
-            if not device.startswith('/') and ':/' not in device:
-                continue
-
-            if fstype == 'none':
-                continue
+            if not device.startswith('/') and ':/' not in device or fstype == 'none':
+                return mount_info
 
             mount_statvfs_info = get_mount_size(mount)
 
@@ -483,7 +472,22 @@ class LinuxHardware(Hardware):
 
             mount_info.update(mount_statvfs_info)
 
-            mounts.append(mount_info)
+            return mount_info
+
+    def get_mount_facts(self):
+
+        mount_facts = {'mounts': []}
+
+        bind_mounts = self._find_bind_mounts()
+        uuids = self._lsblk_uuid()
+        mtab_entries = self._mtab_entries()
+
+        pool = ThreadPool(processes=len(mtab_entries))
+        mounts = []
+        for fields in mtab_entries:
+
+            async_result = pool.apply_async(self.get_mount_info, (fields, bind_mounts, uuids))
+            mounts.append(async_result.get())
 
         mount_facts['mounts'] = mounts
 
