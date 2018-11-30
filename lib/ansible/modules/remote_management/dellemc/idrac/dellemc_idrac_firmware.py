@@ -203,9 +203,12 @@ def main():
 
         supports_check_mode=False)
 
-    # Connect to iDRAC and update firmware
-    with iDRACConnection(module) as idrac:
-        msg, err = update_firmware(idrac, module)
+    try:
+        # Connect to iDRAC and update firmware
+        with iDRACConnection(module.params) as idrac:
+            msg, err = update_firmware(idrac, module)
+    except ValueError as e:
+        module.fail_json(msg=e.message)
 
     if err:
         module.fail_json(**msg)

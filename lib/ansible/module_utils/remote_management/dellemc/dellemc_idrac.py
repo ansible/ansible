@@ -27,36 +27,27 @@ except ImportError:
 
 class iDRACConnection:
 
-    def __init__(self, module):
+    def __init__(self, module_params):
         if not HAS_OMSDK:
-            results = {}
-            results['msg'] = "Dell EMC OMSDK library is required for this module"
-            module.fail_json(**results)
-        self.module = module
-        self.idrac_ip = self.module.params['idrac_ip']
-        self.idrac_user = self.module.params['idrac_user']
-        self.idrac_pwd = self.module.params['idrac_pwd']
-        self.idrac_port = self.module.params['idrac_port']
+            raise ImportError("Dell EMC OMSDK library is required for this module")
+        self.idrac_ip = module_params['idrac_ip']
+        self.idrac_user = module_params['idrac_user']
+        self.idrac_pwd = module_params['idrac_pwd']
+        self.idrac_port = module_params['idrac_port']
         if not all((self.idrac_ip, self.idrac_user, self.idrac_pwd)):
-            self.module.fail_json(msg="hostname, username and password required")
+            raise ValueError("hostname, username and password required")
 
     def __enter__(self):
         self.handle = None
-        results = {}
-        try:
-            sd = sdkinfra()
-            sd.importPath()
-        except Exception as e:
-            results['msg'] = "Could not initialize drivers"
-            results['exception'] = str(e)
-            self.module.fail_json(**results)
         creds = UserCredentials(self.idrac_user, self.idrac_pwd)
         pOp = WsManOptions(port=self.idrac_port)
-        idrac = sd.get_driver(sd.driver_enum.iDRAC, self.idrac_ip, creds, pOptions=pOp)
-        if idrac is None:
+        sd = sdkinfra()
+        if sd:
+            sd.importPath()
+            self.handle = sd.get_driver(sd.driver_enum.iDRAC, self.idrac_ip, creds, pOptions=pOp)
+        if self.handle is None:
             msg = "Could not find device driver for iDRAC with IP Address: {0}".format(self.idrac_ip)
-            self.module.fail_json(msg=msg)
-        self.handle = idrac
+            raise ValueError(msg)
         return self.handle
 
     def __exit__(self, exc_type, exc_val, exc_tb):
