@@ -708,7 +708,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if self.purge_app_settings:
                     to_be_updated = True
                     self.app_settings_strDic.properties = dict()
-                    self.to_do = Actions.UpdateAppSettingss
+                    self.to_do = Actions.UpdateAppSettings
 
                 # check if app settings changed
                 if self.purge_app_settings or self.is_app_settings_changed():
@@ -746,9 +746,9 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                 self.results['id'] = response['id']
 
-            if self.to_do == Actions:UpdateAppSettingss:
+            if self.to_do == Actions.UpdateAppSettings:
                 update_response = self.update_app_settings()
-                self.results = update_response.id
+                self.results['id'] = update_response.id
 
         webapp = None
         if old_response:
@@ -790,14 +790,12 @@ class AzureRMWebApps(AzureRMModuleBase):
     # comparing existing app setting with input, determine whether it's changed
     def is_app_settings_changed(self):
         if self.app_settings:
-            if len(self.app_settings_strDic.properties) != len(self.app_settings):
-                return True
-
-            elif self.app_settings_strDic.properties and len(self.app_settings_strDic.properties) > 0:
+            if self.app_settings_strDic.properties:
                 for key in self.app_settings.keys():
-                    if not self.app_settings_strDic.properties.get(key) \
-                            or self.app_settings[key] != self.app_settings_strDic.properties[key]:
+                    if self.app_settings[key] != self.app_settings_strDic.properties.get(key, None):
                         return True
+            else:
+                return True
         return False
 
     # comparing deployment source with input, determine wheather it's changed
@@ -948,10 +946,8 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             return response
         except CloudError as ex:
-            self.log("Failed to list application settings for web app {0} in resource group {1}".format(
-                self.name, self.resource_group))
-
-            return False
+            self.fail("Failed to list application settings for web app {0} in resource group {1}: {2}".format(
+                self.name, self.resource_group, str(ex)))
 
     def update_app_settings(self):
         '''
@@ -967,10 +963,8 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             return response
         except CloudError as ex:
-            self.log("Failed to update application settings for web app {0} in resource group {1}".format(
-                self.name, self.resource_group))
-
-        return False
+            self.fail("Failed to update application settings for web app {0} in resource group {1}: {2}".format(
+                self.name, self.resource_group, str(ex)))
 
     def create_or_update_source_control(self):
         '''
