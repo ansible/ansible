@@ -54,7 +54,7 @@ class iDRACConnection:
         pOp = WsManOptions(port=self.idrac_port)
         idrac = sd.get_driver(sd.driver_enum.iDRAC, self.idrac_ip, creds, pOptions=pOp)
         if idrac is None:
-            msg = "Could not find device driver for iDRAC with IP Address: {}".format(self.idrac_ip)
+            msg = "Could not find device driver for iDRAC with IP Address: {0}".format(self.idrac_ip)
             self.module.fail_json(msg=msg)
         self.handle = idrac
         return self.handle

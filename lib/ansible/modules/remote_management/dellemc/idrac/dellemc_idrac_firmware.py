@@ -126,15 +126,12 @@ except ImportError:
     HAS_OMSDK = False
 
 
-def _validate_catalog_file(params):
-    invalid, message = False, ""
-    if not params.get("catalog_file_name"):
-        invalid, message = True, "Invalid file name or invalid file extensions."
-    elif params.get("catalog_file_name"):
-        file_name = params.get("catalog_file_name").lower()
-        if not file_name.endswith("xml"):
-            invalid, message = True, "Invalid file name or invalid file extensions."
-    return invalid, message
+def _validate_catalog_file(catalog_file_name):
+    normilized_file_name = catalog_file_name.lower()
+    if not normilized_file_name:
+        raise ValueError('catalog_file_name should be a non-empty string.')
+    elif not normilized_file_name.endswith("xml"):
+        raise ValueError('catalog_file_name should be an XML file.')
 
 
 def update_firmware(idrac, module):
@@ -145,12 +142,11 @@ def update_firmware(idrac, module):
     err = False
 
     try:
-        invalid, message = _validate_catalog_file(module.params)
-        if invalid:
-            err = True
-            msg['msg'] = message
-            return msg, err
+        _validate_catalog_file(module.params['catalog_file_name'])
+    except ValueError as e:
+        module.fail_json(msg=e.message)
 
+    try:
         upd_share = FileOnShare(remote=module.params['share_name'] + "/" + module.params['catalog_file_name'],
                                 mount_point=module.params['share_mnt'],
                                 isFolder=False,
@@ -178,7 +174,7 @@ def update_firmware(idrac, module):
 
     except Exception as e:
         err = True
-        msg['msg'] = "Error: %s" % str(e)
+        msg['msg'] = str(e)
 
     return msg, err
 
