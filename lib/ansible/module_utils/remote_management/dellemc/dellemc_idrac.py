@@ -29,7 +29,7 @@ except ImportError:
     HAS_OMSDK = False
 
 
-class iDRACConnection():
+class iDRACConnection:
     def __init__(self, module):
         if HAS_OMSDK is False:
             results = {}
@@ -58,7 +58,7 @@ class iDRACConnection():
             self.module.fail_json(**results)
 
         # Connect to iDRAC
-        if idrac_ip == '' or idrac_user == '' or idrac_pwd == '':
+        if not all((idrac_ip, idrac_user, idrac_pwd)):
             results['msg'] = "hostname, username and password required"
             self.module.fail_json(**results)
         else:
@@ -80,8 +80,3 @@ class iDRACConnection():
             return True
 
         return True
-
-
-class Constants:
-
-    share_name = tempfile.gettempdir() + os.sep
