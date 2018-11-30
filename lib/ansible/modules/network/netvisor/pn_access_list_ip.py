@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pn_access_list_ip
-author: "Pluribus Networks (rpachi@pluribusnetworks.com)"
+author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.8"
 short_description: CLI command to add/remove access-list-ip
 description:
@@ -79,7 +79,6 @@ changed:
   type: bool
 """
 
-import shlex
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
 
@@ -94,11 +93,9 @@ def check_cli(module, cli):
     """
     name = module.params['pn_name']
     ip = module.params['pn_ip']
+    cli += ' access-list-ip-show name %s format ip no-show-headers' % name
 
-    show = cli + \
-        ' access-list-ip-show name %s format ip no-show-headers' % name
-    show = shlex.split(show)
-    out = module.run_command(show, use_unsafe_shell=True)[1]
+    out = module.run_command(cli.split(), use_unsafe_shell=True)[1]
 
     out = out.split()
     # Global flags
