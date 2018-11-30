@@ -395,7 +395,8 @@ class StrategyBase:
             return None
 
         def search_handler_blocks_by_listen_name(handler_name, handler_blocks):
-            for handler_block in handler_blocks:
+            # iterate in reversed order since last handler loaded with the same name wins
+            for handler_block in reversed(handler_blocks):
                 for handler_task in handler_block.block:
                     listeners = getattr(handler_task, 'listen', []) or []
                     if handler_name in listeners:
