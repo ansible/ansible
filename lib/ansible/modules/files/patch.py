@@ -100,7 +100,7 @@ EXAMPLES = r'''
 
 import os
 from traceback import format_exc
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils._text import to_native
 
 
@@ -108,10 +108,19 @@ class PatchError(Exception):
     pass
 
 
+def add_dry_run_option(opts):
+    # Older versions of FreeBSD, OpenBSD and NetBSD support the --check option only.
+    if get_platform().lower() in ['openbsd', 'netbsd', 'freebsd']:
+        opts.append('--check')
+    else:
+        opts.append('--dry-run')
+
+
 def is_already_applied(patch_func, patch_file, basedir, dest_file=None, binary=False, strip=0, state='present'):
-    opts = ['--quiet', '--forward', '--dry-run',
+    opts = ['--quiet', '--forward',
             "--strip=%s" % strip, "--directory='%s'" % basedir,
             "--input='%s'" % patch_file]
+    add_dry_run_option(opts)
     if binary:
         opts.append('--binary')
     if dest_file:
@@ -128,7 +137,7 @@ def apply_patch(patch_func, patch_file, basedir, dest_file=None, binary=False, s
             "--strip=%s" % strip, "--directory='%s'" % basedir,
             "--input='%s'" % patch_file]
     if dry_run:
-        opts.append('--dry-run')
+        add_dry_run_option(opts)
     if binary:
         opts.append('--binary')
     if dest_file:
