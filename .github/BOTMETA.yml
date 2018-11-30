@@ -1084,6 +1084,8 @@ files:
   docs/:
     maintainers:
       - acozine
+  docs/docsite/:
+    labels: docsite
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
