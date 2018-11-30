@@ -1,0 +1,2 @@
+bugfixes:
+    - ensure we keep vault file context by using symlink path instead of real path
