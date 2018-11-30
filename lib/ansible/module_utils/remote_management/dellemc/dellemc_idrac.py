@@ -44,10 +44,10 @@ class iDRACConnection():
         idrac = None
 
         ansible_module_params = self.module.params
-        idrac_ip = ansible_module_params.get('idrac_ip')
-        idrac_user = ansible_module_params.get('idrac_user')
-        idrac_pwd = ansible_module_params.get('idrac_pwd')
-        idrac_port = ansible_module_params.get('idrac_port')
+        idrac_ip = ansible_module_params['idrac_ip']
+        idrac_user = ansible_module_params['idrac_user']
+        idrac_pwd = ansible_module_params['idrac_pwd']
+        idrac_port = ansible_module_params['idrac_port']
 
         try:
             sd = sdkinfra()
