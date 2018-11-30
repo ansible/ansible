@@ -160,9 +160,9 @@ def update_firmware(idrac, module):
 
         apply_update = True
         msg['update_status'] = idrac.update_mgr.update_from_repo(upd_share,
-                                                       apply_update,
-                                                       module.params['reboot'],
-                                                       module.params['job_wait'])
+                                                                 apply_update,
+                                                                 module.params['reboot'],
+                                                                 module.params['job_wait'])
     except Exception as e:
         module.fail_json(msg=str(e))
 
@@ -189,8 +189,8 @@ def main():
             "share_mnt": {"required": True, "type": str},
 
             "catalog_file_name": {"required": False, "type": str, "default": "Catalog.xml"},
-            "reboot": {"required": False, "type": bool},
-            "job_wait": {"required": False, "type": bool}
+            "reboot": {"required": False, "type": bool, "default": False},
+            "job_wait": {"required": False, "type": bool, "default": True}
         },
 
         supports_check_mode=False)
