@@ -13,11 +13,14 @@
 - block:
     - name: create dynamodb database
       dynamodb_table:
-        name: ansible-int-test
+        name: "{{ dynamo_db_table }}"
         hash_key_name: bank
         hash_key_type: STRING
         range_key_name: quantity
         range_key_type: NUMBER
+        # tag necessary so it waits until table creation
+        tags:
+          ansible_test: integration
         <<: *aws_connection_info
       register: result
     - name: assert changed is True
@@ -27,9 +30,9 @@
 
     - name: inserting db record
       dynamodb:
-        table: ansible-int-test
+        table: "{{ dynamo_db_table }}"
         action: put
-        item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "person": {"S": "ochoa"}}
+        item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
         <<: *aws_connection_info
       register: result
     - name: assert object exists
@@ -37,14 +40,14 @@
         that:
           - result.changed == True
 
-    - name: updating db record with the hypotetic protected word (quantity)
+    - name: updating db record with the status protected word
       dynamodb:
-        table: ansible-int-test
+        table: "{{ dynamo_db_table }}"
         action: update
-        primary_key: {"bank": {"S": "hsbc"}}
-        update_expression: 'SET #q = :number'
-        expression_attribute_values: {":number": {"N": "2000"}}
-        expression_attribute_names: {"#q": "quantity"}
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        update_expression: 'SET #s = :status'
+        expression_attribute_values: {":status": {"S": "red"}}
+        expression_attribute_names: {"#s": "status"}
         <<: *aws_connection_info
       register: result
     - name: assert object exists
@@ -54,9 +57,9 @@
 
     - name: updating to delete attribute 'person' in previously added db record
       dynamodb:
-        table: ansible-int-test
+        table: "{{ dynamo_db_table }}"
         action: update
-        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "2000"}}
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
         update_expression: 'REMOVE person'
         <<: *aws_connection_info
       register: result
@@ -67,11 +70,11 @@
 
     - name: deletes a single db record
       dynamodb:
-        table: ansible-int-test
+        table: "{{ dynamo_db_table }}"
         action: delete
-        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "2000"}}
-        condition_expression: person = :person
-        expression_attribute_values: {":person": {"S": "ochoa"}}
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        condition_expression: quantity = :quantity
+        expression_attribute_values: {":quantity": {"N": "1000"}}
         <<: *aws_connection_info
       register: result
     - name: assert object exists
@@ -84,7 +87,7 @@
 
     - name: delete the test dynamo db
       dynamodb_table:
-        name: ansible-int-test
+        name: "{{ dynamo_db_table }}"
         region: "{{ aws_region }}"
         state: absent
         <<: *aws_connection_info

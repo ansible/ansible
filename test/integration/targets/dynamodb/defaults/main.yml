@@ -1,0 +1,4 @@
+---
+# defaults file for dynamodb
+aws_region: eu-west-1
+dynamo_db_table: ansible-dynamodb-int-test
