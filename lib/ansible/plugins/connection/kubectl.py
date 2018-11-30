@@ -235,7 +235,7 @@ class Connection(ConnectionBase):
 
         pod = self.get_option(u'{0}_pod'.format(self.transport))
         if not pod:
-            pod = self._play_context.remote_addr
+            pod = self.get_option('remote_addr')
         # -i is needed to keep stdin open which allows pipelining to work
         local_cmd += ['exec', '-i', pod]
 
@@ -252,7 +252,7 @@ class Connection(ConnectionBase):
         """ Connect to the container. Nothing to do """
         super(Connection, self)._connect()
         if not self._connected:
-            display.vvv(u"ESTABLISH {0} CONNECTION".format(self.transport), host=self._play_context.remote_addr)
+            display.vvv(u"ESTABLISH {0} CONNECTION".format(self.transport), host=self.get_option('remote_addr'))
             self._connected = True
 
     def exec_command(self, cmd, in_data=None, sudoable=False):
@@ -261,7 +261,7 @@ class Connection(ConnectionBase):
 
         local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
 
-        display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
+        display.vvv("EXEC %s" % (local_cmd,), host=self.get_option('remote_addr'))
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -286,7 +286,7 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         """ Transfer a file from local to the container """
         super(Connection, self).put_file(in_path, out_path)
-        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.get_option('remote_addr'))
 
         out_path = self._prefix_login_path(out_path)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
@@ -316,7 +316,7 @@ class Connection(ConnectionBase):
     def fetch_file(self, in_path, out_path):
         """ Fetch a file from container to local. """
         super(Connection, self).fetch_file(in_path, out_path)
-        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.get_option('remote_addr'))
 
         in_path = self._prefix_login_path(in_path)
         out_dir = os.path.dirname(out_path)

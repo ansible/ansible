@@ -62,7 +62,7 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self.jail = self._play_context.remote_addr
+        self.jail = self.get_option('remote_addr')
         if self.modified_jailname_key in kwargs:
             self.jail = kwargs[self.modified_jailname_key]
 

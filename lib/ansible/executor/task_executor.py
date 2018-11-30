@@ -821,6 +821,7 @@ class TaskExecutor:
         correct connection object from the list of connection plugins
         '''
 
+        delegated_vars = {}
         if self._task.delegate_to is not None:
             # since we're delegating, we don't want to use interpreter values
             # which would have been set for the original target host
@@ -835,7 +836,9 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
-        conn_type = self._play_context.connection
+        # Use delegated or inventory_hostname variables if they exist,
+        # fallback to task object which includes config and inheritance
+        conn_type = delegated_vars.get('ansible_connection', variables.get('ansible_connection', self._task.connection))
 
         connection = self._shared_loader_obj.connection_loader.get(
             conn_type,
@@ -904,7 +907,8 @@ class TaskExecutor:
                     options['_extras'][k] = templar.template(final_vars[k])
 
         # set options with 'templated vars' specific to this plugin
-        self._connection.set_options(var_options=options)
+        remote_addr = {'remote_addr': self._task.delegate_to or self._host.address }
+        self._connection.set_options(task_keys=remote_addr, var_options=options)
         self._set_shell_options(final_vars, templar)
 
     def _set_shell_options(self, variables, templar):

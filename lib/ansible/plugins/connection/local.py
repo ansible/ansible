@@ -48,7 +48,7 @@ class Connection(ConnectionBase):
         self._play_context.remote_user = getpass.getuser()
 
         if not self._connected:
-            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self.get_option('remote_addr'))
             self._connected = True
         return self
 
@@ -65,7 +65,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to find the executable specified %s."
                                " Please verify if the executable exists and re-try." % executable)
 
-        display.vvv(u"EXEC {0}".format(to_text(cmd)), host=self._play_context.remote_addr)
+        display.vvv(u"EXEC {0}".format(to_text(cmd)), host=self.get_option('remote_addr'))
         display.debug("opening command with Popen()")
 
         if isinstance(cmd, (text_type, binary_type)):
@@ -128,7 +128,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.get_option('remote_addr'))
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
         try:
@@ -143,7 +143,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.get_option('remote_addr'))
         self.put_file(in_path, out_path)
 
     def close(self):

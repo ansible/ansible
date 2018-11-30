@@ -66,7 +66,7 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self.chroot = self._play_context.remote_addr
+        self.chroot = self.get_option('remote_addr')
 
         if os.geteuid() != 0:
             raise AnsibleError("chroot connection requires running as root")

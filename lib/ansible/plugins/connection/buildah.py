@@ -25,8 +25,6 @@ DOCUMENTATION = """
         default: inventory_hostname
         vars:
             - name: ansible_host
-#        keyword:
-#            - name: hosts
       remote_user:
         description:
             - User specified via name or ID which is used to execute commands inside the container.
@@ -68,7 +66,7 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self._container_id = self._play_context.remote_addr
+        self._container_id = self.get_option('remote_addr')
         self._connected = False
         # container filesystem will be mounted here on host
         self._mount_point = None

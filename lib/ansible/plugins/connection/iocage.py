@@ -46,7 +46,7 @@ class Connection(Jail):
     transport = 'iocage'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
-        self.ioc_jail = play_context.remote_addr
+        self.ioc_jail = self.getplay_context.remote_addr
 
         self.iocage_cmd = Jail._search_executable('iocage')
 

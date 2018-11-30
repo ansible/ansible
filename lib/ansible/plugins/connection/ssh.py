@@ -18,7 +18,7 @@ DOCUMENTATION = '''
     author: ansible (@core)
     version_added: historical
     options:
-      host:
+      remote_addr:
           description: Hostname/ip to connect to.
           default: inventory_hostname
           vars:
@@ -397,6 +397,16 @@ class Connection(ConnectionBase):
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
 
+    def set_option(self, option, value):
+        ''' override to keep backwards compat '''
+        super(Connection, self).set_option(option, value)
+
+        if option == 'remote_addr':
+            self.host = value
+
+        elif option in ('port', 'remote_user', 'control_path', 'control_path_dir'):
+            setattr(self, option, value)
+
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
     # management here.
@@ -469,7 +479,7 @@ class Connection(ConnectionBase):
             were added.  It will be displayed with a high enough verbosity.
         .. note:: This function does its work via side-effect.  The b_command list has the new arguments appended.
         """
-        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self._play_context.remote_addr)
+        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.get_option('remote_addr'))
         b_command += b_args
 
     def _build_command(self, binary, *other_args):
@@ -1056,7 +1066,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self.get_option('remote_addr'))
 
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the
