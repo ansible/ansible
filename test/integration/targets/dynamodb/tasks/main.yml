@@ -29,7 +29,7 @@
       dynamodb:
         table: ansible-int-test
         action: put
-        item: {"bank": {"S": "hsbc"},"quantity": {"N": "1000"},"person": {"S": "ochoa"}}
+        item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "person": {"S": "ochoa"}}
         <<: *aws_connection_info
       register: result
     - name: assert object exists
@@ -44,7 +44,7 @@
         primary_key: {"bank": {"S": "hsbc"}}
         update_expression: 'SET #q = :number'
         expression_attribute_values: {":number": {"N": "2000"}}
-        expression_attribute_names: {"#q" : "quantity"}
+        expression_attribute_names: {"#q": "quantity"}
         <<: *aws_connection_info
       register: result
     - name: assert object exists
@@ -81,11 +81,11 @@
 
   always:
     ###### TEARDOWN STARTS HERE ######
-    
+
     - name: delete the test dynamo db
       dynamodb_table:
         name: ansible-int-test
-        region: {{ aws_region }}
+        region: "{{ aws_region }}"
         state: absent
         <<: *aws_connection_info
       ignore_errors: yes
