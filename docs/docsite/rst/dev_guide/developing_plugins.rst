@@ -74,6 +74,76 @@ Plugins that support embedded documentation (see :ref:`ansible-doc` for the list
 Developing particular plugin types
 ==================================
 
+.. _developing_actions:
+
+Action plugins
+--------------
+
+Action plugins are useful when you want to modify data that is provided to any module, or filter the data that is returned by the module.
+
+To create an action plugin, create a new class with the Base(ActionBase) class as the parent:
+
+.. code-block:: python
+
+    from ansible.plugins.action import ActionBase
+
+    class ActionModule(ActionBase):
+        pass
+
+
+From there, execute the module using the ``_execute_module`` method to call the original module.
+After successful execution of the module, you can modify the module return data.
+
+.. code-block:: python
+
+    module_return = self._execute_module(module_name='<NAME_OF_MODULE>',
+                                         module_args=module_args,
+                                         task_vars=task_vars, tmp=tmp)
+
+The following is an example showing how you can modify return data from Ansible's ``setup`` module:
+
+.. code-block:: python
+
+    #!/usr/bin/python
+    # Make coding more python3-ish, this is required for contributions to Ansible
+    from __future__ import (absolute_import, division, print_function)
+    __metaclass__ = type
+
+    from ansible.plugins.action import ActionBase
+    from datetime import datetime
+
+
+    class ActionModule(ActionBase):
+        def run(self, tmp=None, task_vars=None):
+            super(ActionModule, self).run(tmp, task_vars)
+            module_args = self._task.args.copy()
+            module_return = self._execute_module(module_name='setup',
+                                                 module_args=module_args,
+                                                 task_vars=task_vars, tmp=tmp)
+            ret = dict()
+            remote_date = None
+            if not module_return.get('failed'):
+                for key, value in module_return['ansible_facts'].items():
+                    if key == 'ansible_date_time':
+                        remote_date = value['iso8601']
+
+            if remote_date:
+                remote_date_obj = datetime.strptime(remote_date, '%Y-%m-%dT%H:%M:%SZ')
+                time_delta = datetime.now() - remote_date_obj
+                ret['delta_seconds'] = time_delta.seconds
+                ret['delta_days'] = time_delta.days
+                ret['delta_microseconds'] = time_delta.microseconds
+
+            return dict(ansible_facts=dict(ret))
+
+
+Let us assume, you want to check time skewness between Ansible controller and remote machine then, we can have above code.
+Here, we are capturing date and time for remote machine using the ``setup`` module. Then we are calculating the time delta between the captured time and
+the time of Ansible controller. We are returning time delta in days, seconds and microseconds.
+
+For more example of action plugins,
+see the source code for the `action plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/action>`_
+
 .. _developing_callbacks:
 
 Callback plugins
