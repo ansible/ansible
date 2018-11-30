@@ -115,7 +115,8 @@
 - assert:
     that:
       - not output.changed
-      - output.msg == 'state is present but all of the following are missing: gateway_ip_address'
+      - output.failed == true
+      - output.msg == 'state is present but all of the following are missing{{ ":" }} gateway_ip_address'
 
 - name: Delete local network gateway
   azure_rm_localnetworkgateway:
