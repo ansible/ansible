@@ -80,7 +80,7 @@ Developing particular plugin types
 Action plugins
 --------------
 
-Action plugins modify the data that is provided to any module, or filter the data that is returned by a module.
+Action plugins let you integrate local processing and local data with module functionality.
 
 To create an action plugin, create a new class with the Base(ActionBase) class as the parent:
 
@@ -101,7 +101,7 @@ After successful execution of the module, you can modify the module return data.
                                          task_vars=task_vars, tmp=tmp)
 
 
-For example, if you wanted to check the time difference between your Ansible controller and your target machine(s), you could modify return data from Ansible's ``setup`` module:
+For example, if you wanted to check the time difference between your Ansible controller and your target machine(s), you could write an action plugin to check the local time and compare it to the return data from Ansible's ``setup`` module:
 
 .. code-block:: python
 
@@ -138,8 +138,8 @@ For example, if you wanted to check the time difference between your Ansible con
             return dict(ansible_facts=dict(ret))
 
 
-This code captures the date and time for remote machine using the ``setup`` module. The it calculates the difference between the captured time and
-the time of Ansible controller, returning the time delta in days, seconds and microseconds.
+This code checks the time on the controller, captures the date and time for remote machine using the ``setup`` module, and calculates the difference between the captured time and
+the local time, returning the time delta in days, seconds and microseconds.
 
 For practical examples of action plugins,
 see the source code for the `action plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/action>`_
