@@ -555,7 +555,7 @@ class StrategyBase:
                                 else:
                                     # As there may be more than one handler with the notified name as the
                                     # parent, so we just keep track of whether or not we found one at all
-                                    for target_handler_block in iterator._play.handlers:
+                                    for target_handler_block in reversed(iterator._play.handlers):
                                         for target_handler in target_handler_block.block:
                                             if parent_handler_match(target_handler, handler_name):
                                                 found = True
