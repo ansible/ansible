@@ -551,9 +551,6 @@ def main():
             config=dict(
                 type='dict',
             ),
-            description=dict(
-                type='str',
-            ),
             devices=dict(
                 type='dict',
             ),
