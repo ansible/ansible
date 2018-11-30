@@ -969,36 +969,49 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
 
     # ClearLinux https://github.com/ansible/ansible/issues/31501#issuecomment-340861535
-    {
-        "platform.dist": [
-            "Clear Linux OS for Intel Architecture",
-            "18450",
-            "clear-linux-os"
-        ],
-        "input": {
-            "/usr/lib/os-release": '''
-NAME="Clear Linux OS for Intel Architecture"
+{
+    "platform.dist": [
+        "Clear Linux OS",
+        "26580",
+        "clear-linux-os"
+    ],
+    "input": {
+        "/etc/os-release": '''
+NAME="Clear Linux OS"
 VERSION=1
 ID=clear-linux-os
-VERSION_ID=18450
-PRETTY_NAME="Clear Linux OS for Intel Architecture"
+ID_LIKE=clear-linux-os
+VERSION_ID=26580
+PRETTY_NAME="Clear Linux OS"
+ANSI_COLOR="1;35"
+HOME_URL="https://clearlinux.org"
+SUPPORT_URL="https://clearlinux.org"
+BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
+PRIVACY_POLICY_URL="http://www.intel.com/privacy"
+''',
+        "/usr/lib/os-release": '''
+NAME="Clear Linux OS"
+VERSION=1
+ID=clear-linux-os
+ID_LIKE=clear-linux-os
+VERSION_ID=26580
+PRETTY_NAME="Clear Linux OS"
 ANSI_COLOR="1;35"
 HOME_URL="https://clearlinux.org"
 SUPPORT_URL="https://clearlinux.org"
 BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
 PRIVACY_POLICY_URL="http://www.intel.com/privacy"
 '''
-        },
-        "name": "Clear Linux OS for Intel Architecture 1",
-        "result": {
-            "distribution_release": "clear-linux-os",
-            "distribution": "ClearLinux",
-            "distribution_major_version": "18450",
-            "os_family": "ClearLinux",
-            "distribution_version": "18450"
-        }
     },
-
+    "name": "ClearLinux 26580",
+    "result": {
+        "distribution_release": "clear-linux-os",
+        "distribution": "ClearLinux",
+        "distribution_major_version": "26580",
+        "os_family": "ClearLinux",
+        "distribution_version": "26580"
+    }
+},
     # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
     # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
     {
