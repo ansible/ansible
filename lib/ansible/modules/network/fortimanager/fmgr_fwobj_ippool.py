@@ -32,7 +32,7 @@ author:
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
 short_description: Allows the editing of IP Pool Objects within FortiManager.
-description: #TODO UPDATE THIS!
+description:
   -  Allows users to add/edit/delete IP Pool Objects.
 
 options:
