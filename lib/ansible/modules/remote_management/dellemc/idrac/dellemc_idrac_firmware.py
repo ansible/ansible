@@ -188,7 +188,6 @@ def run_update_fw_from_nw_share(idrac, module):
     return msg, err
 
 
-# Main
 def main():
     module = AnsibleModule(
         argument_spec=dict(
