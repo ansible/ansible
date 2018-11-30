@@ -157,24 +157,35 @@ class CloudStackInventory(object):
                 data['affinity_group'] = host['affinitygroup']
                 data['security_group'] = host['securitygroup']
                 data['cpu_number'] = host['cpunumber']
-                data['cpu_speed'] = host['cpuspeed']
+                if 'cpu_speed' in host:
+                    data['cpu_speed'] = host['cpuspeed']
                 if 'cpuused' in host:
                     data['cpu_used'] = host['cpuused']
                 data['memory'] = host['memory']
                 data['tags'] = host['tags']
-                data['hypervisor'] = host['hypervisor']
+                if 'hypervisor' in host:
+                    data['hypervisor'] = host['hypervisor']
                 data['created'] = host['created']
                 data['nic'] = []
                 for nic in host['nic']:
-                    data['nic'].append({
+                    nicdata = {
                         'ip': nic['ipaddress'],
                         'mac': nic['macaddress'],
                         'netmask': nic['netmask'],
                         'gateway': nic['gateway'],
                         'type': nic['type'],
-                    })
+                    }
+                    if 'ip6address' in nic:
+                        nicdata['ip6'] = nic['ip6address']
+                    if 'gateway' in nic:
+                        nicdata['gateway'] = nic['gateway']
+                    if 'netmask' in nic:
+                        nicdata['netmask'] = nic['netmask']
+                    data['nic'].append(nicdata)
                     if nic['isdefault']:
                         data['default_ip'] = nic['ipaddress']
+                        if 'ip6address' in nic:
+                            data['default_ip6'] = nic['ip6address']
                 break
         return data
 
