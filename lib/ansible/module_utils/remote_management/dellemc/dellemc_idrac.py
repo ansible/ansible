@@ -1,4 +1,4 @@
-# _*_ coding: utf-8 _*_
+# -*- coding: utf-8 -*-
 
 #
 # Dell EMC OpenManage Ansible Modules
@@ -41,17 +41,13 @@ class iDRACConnection():
 
     def connect(self):
         results = {}
+        idrac = None
 
         ansible_module_params = self.module.params
-
-        idrac = ansible_module_params.get('idrac')
         idrac_ip = ansible_module_params.get('idrac_ip')
         idrac_user = ansible_module_params.get('idrac_user')
         idrac_pwd = ansible_module_params.get('idrac_pwd')
         idrac_port = ansible_module_params.get('idrac_port')
-
-        if idrac:
-            return idrac
 
         try:
             sd = sdkinfra()
@@ -79,12 +75,6 @@ class iDRACConnection():
         return idrac
 
     def disconnect(self):
-        idrac = self.module.params.get('idrac')
-
-        if idrac:
-            # pre-existing handle from a task
-            return False
-
         if self.handle:
             self.handle.disconnect()
             return True
