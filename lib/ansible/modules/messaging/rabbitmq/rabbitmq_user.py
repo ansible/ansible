@@ -117,10 +117,9 @@ EXAMPLES = '''
         write_priv: .*
     state: present
 '''
-import operator
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.utils.collections import count
+from ansible.module_utils.common.collections import count
 
 
 class RabbitMqUser(object):
@@ -228,8 +227,13 @@ class RabbitMqUser(object):
         return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
-        sort_key_fetch = operator.itemgetter('vhost')
-        return sorted(self._permissions, key=sort_key_fetch) != sorted(self.permissions, key=sort_key_fetch)
+        def to_permission_tuple(vhost_permission_dict):
+            return vhost_permission_dict['vhost'], vhost_permission_dict
+
+        def permission_dict(vhost_permission_list):
+            return dict(map(to_permission_tuple, vhost_permission_list))
+
+        return permission_dict(self._permissions) != permission_dict(self.permissions)
 
 
 def main():
@@ -284,7 +288,6 @@ def main():
                                  node, bulk_permissions=bulk_permissions)
 
     result = dict(changed=False, user=username, state=state)
-
     if rabbitmq_user.get():
         if state == 'absent':
             rabbitmq_user.delete()
