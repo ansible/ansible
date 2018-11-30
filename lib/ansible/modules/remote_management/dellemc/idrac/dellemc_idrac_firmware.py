@@ -137,13 +137,7 @@ def _validate_catalog_file(params):
 
 
 def update_firmware(idrac, module):
-    """
-    Update firmware from a network share
-    Keyword arguments:
-    idrac  -- iDRAC handle
-    module -- Ansible module
-    """
-
+    """Update firmware from a network share and return the job details."""
     msg = {}
     msg['changed'] = False
     msg['msg'] = {}
