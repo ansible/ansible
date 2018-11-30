@@ -466,7 +466,7 @@ class GalaxyCLI(CLI):
             if install_info:
                 version = install_info.get("version", None)
             if not version:
-                version = "(unkown version)"
+                version = "(unknown version)"
             display.display("- %s, %s" % (gr.name, version))
 
         if len(self.args) == 1:
