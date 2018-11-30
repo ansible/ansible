@@ -80,6 +80,7 @@ options:
         description:
             - "If I(true) networks will synchronize."
         type: bool
+        version_added: 2.8
 extends_documentation_fragment: ovirt
 '''
 
@@ -323,6 +324,14 @@ class HostNetworksModule(BaseModule):
                 self._service.service(entity.id).commit_net_config()
             self.changed = True
 
+def check_if_needs_sync(nics_service):
+    nics = nics_service.list()
+    for nic in nics:
+        nic_service = nics_service.nic_service(nic.id)
+        for network_attachment_service in nic_service.network_attachments_service().list():
+            if not network_attachment_service.in_sync:
+                return True
+    return False
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -368,7 +377,9 @@ def main():
         nic = search_by_name(nics_service, nic_name)
 
         if module.params["sync_networks"]:
-            host_service.sync_all_networks()
+            if check_if_needs_sync(nics_service):
+                host_service.sync_all_networks()
+                host_networks_module.changed = True
 
         network_names = [network['name'] for network in networks or []]
         state = module.params['state']
