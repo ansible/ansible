@@ -324,6 +324,7 @@ class HostNetworksModule(BaseModule):
                 self._service.service(entity.id).commit_net_config()
             self.changed = True
 
+
 def needs_sync(nics_service):
     nics = nics_service.list()
     for nic in nics:
@@ -332,6 +333,7 @@ def needs_sync(nics_service):
             if not network_attachment_service.in_sync:
                 return True
     return False
+
 
 def main():
     argument_spec = ovirt_full_argument_spec(
