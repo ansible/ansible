@@ -120,6 +120,7 @@ EXAMPLES = '''
 import operator
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.utils.collections import count
 
 
 class RabbitMqUser(object):
@@ -263,8 +264,12 @@ def main():
     node = module.params['node']
     update_password = module.params['update_password']
 
-    bulk_permissions = True
-    if not permissions:
+    if permissions:
+        vhosts = map(lambda permission: permission.get('vhost', '/'), permissions)
+        if any(map(lambda count: count > 1, count(vhosts).values())):
+            module.fail_json(msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
+        bulk_permissions = True
+    else:
         perm = {
             'vhost': vhost,
             'configure_priv': configure_priv,
