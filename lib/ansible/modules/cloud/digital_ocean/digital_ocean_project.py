@@ -33,6 +33,7 @@ options:
   purpose:
     description:
       - Purpose of project per DigitalOcean options.
+      - Values are case sensitive.
     choices: ['Just trying out DigitalOcean',
               'Class project / Education purposes',
               'Website or blog',
@@ -53,8 +54,8 @@ options:
     type: bool
   environment:
     description:
-      - General type of deployment environment
-    choices: ['production', 'testing', 'development']
+      - General type of deployment environment, case sensitive
+    choices: ['Production', 'Testing', 'Development']
   resources:
     description:
       - 'List of Uniform Resource Names (URN), such as do:droplet:1234, of which to move into the project.'
@@ -63,6 +64,7 @@ options:
     description:
       - Defines that a project should be created or modified.
     choices: ['present']
+    default: present
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
