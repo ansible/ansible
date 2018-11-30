@@ -136,7 +136,7 @@ def _validate_catalog_file(params):
     return invalid, message
 
 
-def run_update_fw_from_nw_share(idrac, module):
+def update_firmware(idrac, module):
     """
     Update firmware from a network share
     Keyword arguments:
@@ -219,7 +219,7 @@ def main():
     idrac_conn = iDRACConnection(module)
     idrac = idrac_conn.connect()
 
-    msg, err = run_update_fw_from_nw_share(idrac, module)
+    msg, err = update_firmware(idrac, module)
 
     # Disconnect from iDRAC
     idrac_conn.disconnect()
