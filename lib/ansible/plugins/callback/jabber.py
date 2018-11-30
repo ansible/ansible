@@ -14,6 +14,7 @@ DOCUMENTATION = '''
       - This callback plugin sends status updates to a HipChat channel during playbook execution.
     version_added: "2.2"
     requirements:
+      - whitelist in configuration
       - xmpp (python lib https://github.com/ArchipelProject/xmpppy)
     options:
       server:

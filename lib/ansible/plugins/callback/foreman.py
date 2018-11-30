@@ -17,7 +17,7 @@ DOCUMENTATION = '''
       - In 2.4 and above you can just put it in the main Ansible configuration file.
     version_added: "2.2"
     requirements:
-      - whitelisting in configuration
+      - whitelist in configuration
       - requests (python library)
     options:
       url:

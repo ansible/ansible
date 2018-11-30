@@ -13,7 +13,7 @@ DOCUMENTATION = '''
     version_added: "2.7"
     requirements:
       - LogDNA Python Library (https://github.com/logdna/python)
-      - whitelisting in configuration
+      - whitelist in configuration
     options:
       conf_key:
         required: True

@@ -38,7 +38,7 @@ DOCUMENTATION = """
       - This callback will report start, failed and stats events to Grafana as annotations (https://grafana.com)
     version_added: "2.6"
     requirements:
-      - whitelisting in configuration
+      - whitelist in configuration
     options:
       grafana_url:
         description: Grafana annotations api URL

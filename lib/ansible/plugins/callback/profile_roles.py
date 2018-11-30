@@ -14,7 +14,7 @@ DOCUMENTATION = '''
     description:
         - This callback module provides profiling for ansible roles.
     requirements:
-      - whitelisting in configuration
+      - whitelist in configuration
 '''
 
 import collections

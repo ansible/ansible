@@ -16,7 +16,7 @@ version_added: '2.0'
 author:
 - Dag Wieers (@dagwieers)
 requirements:
-- whitelisting in configuration
+- whitelist in configuration
 options:
   mta:
     description: Mail Transfer Agent, server that accepts SMTP

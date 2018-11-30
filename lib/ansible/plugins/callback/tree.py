@@ -9,6 +9,7 @@ DOCUMENTATION = '''
     callback: tree
     callback_type: notification
     requirements:
+      - whitelist in configuration
       - invoked in the command line
     short_description: Save host events to files
     version_added: "2.0"

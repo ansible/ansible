@@ -22,7 +22,7 @@ DOCUMENTATION = '''
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
-      - whitelisting in configuration - see examples section below for details.
+      - whitelist in configuration - see examples section below for details.
     options:
       output_limit:
         description: Number of tasks to display in the summary

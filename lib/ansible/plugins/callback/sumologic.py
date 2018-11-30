@@ -26,7 +26,7 @@ description:
   - This callback plugin will send task results as JSON formatted events to a Sumologic HTTP collector source
 version_added: "2.6"
 requirements:
-  - Whitelisting this callback plugin
+  - Whitelist in configuration
   - 'Create a HTTP collector source in Sumologic and specify a custom timestamp format of C(yyyy-MM-dd HH:mm:ss ZZZZ) and a custom timestamp locator
     of C("timestamp": "(.*)")'
 options:

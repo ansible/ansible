@@ -23,9 +23,9 @@ DOCUMENTATION = '''
           Unlike host lines, C(:vars) sections accept only a single entry per line, so everything after the C(=) must be the value for the entry.
         - Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
         - See the Examples for proper quoting to prevent changes to variable type.
+    requirements:
+        - whitelist in configuration
     notes:
-        - Replaces the previously hardcoded INI inventory.
-        - Must be whitelisted in configuration to function.
         - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable.
           The YAML inventory plugin processes variable values consistently and correctly.
 '''

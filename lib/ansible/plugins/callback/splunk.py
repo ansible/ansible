@@ -28,7 +28,7 @@ DOCUMENTATION = '''
       - Credit to "Ryan Currah (@ryancurrah)" for original source upon which this is based.
     version_added: "2.7"
     requirements:
-      - Whitelisting this callback plugin
+      - Whitelist in configuration
       - 'Create a HTTP Event Collector in Splunk'
       - 'Define the url and token in ansible.cfg'
     options:

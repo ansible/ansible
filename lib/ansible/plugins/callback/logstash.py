@@ -13,7 +13,7 @@ DOCUMENTATION = '''
       - This callback will report facts and task events to Logstash https://www.elastic.co/products/logstash
     version_added: "2.3"
     requirements:
-      - whitelisting in configuration
+      - whitelist in configuration
       - logstash (python library)
     options:
       server:

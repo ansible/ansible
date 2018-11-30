@@ -9,7 +9,7 @@ DOCUMENTATION = '''
     callback: hipchat
     callback_type: notification
     requirements:
-      - whitelist in configuration.
+      - whitelist in configuration
       - prettytable (python lib)
     short_description: post task events to hipchat
     description:

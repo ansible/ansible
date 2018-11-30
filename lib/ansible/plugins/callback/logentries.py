@@ -14,7 +14,7 @@ DOCUMENTATION = '''
       - In 2.4 and above you can just put it in the main Ansible configuration file.
     version_added: "2.0"
     requirements:
-      - whitelisting in configuration
+      - whitelist in configuration
       - certifi (python library)
       - flatdict (python library), if you want to use the 'flatten' option
     options:
