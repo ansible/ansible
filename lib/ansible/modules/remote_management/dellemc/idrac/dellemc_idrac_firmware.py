@@ -138,8 +138,7 @@ def update_firmware(idrac, module):
     """Update firmware from a network share and return the job details."""
     msg = {}
     msg['changed'] = False
-    msg['msg'] = {}
-    err = False
+    msg['update_status'] = {}
 
     try:
         _validate_catalog_file(module.params['catalog_file_name'])
@@ -160,58 +159,49 @@ def update_firmware(idrac, module):
             idrac.use_redfish = False
 
         apply_update = True
-        msg['msg'] = idrac.update_mgr.update_from_repo(upd_share,
+        msg['update_status'] = idrac.update_mgr.update_from_repo(upd_share,
                                                        apply_update,
                                                        module.params['reboot'],
                                                        module.params['job_wait'])
-
-        if "Status" in msg['msg']:
-            if msg['msg']['Status'] == "Success":
-                if module.params['job_wait'] is True:
-                    msg['changed'] = True
-            else:
-                err = True
-
     except Exception as e:
-        err = True
-        msg['msg'] = str(e)
+        module.fail_json(msg=str(e))
 
-    return msg, err
+    if "Status" in msg['update_status']:
+        if msg['update_status']['Status'] == "Success":
+            if module.params['job_wait'] is True:
+                msg['changed'] = True
+        else:
+            module.fail_json(msg=str(msg['update_status']))
+    return msg
 
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict(
+        argument_spec={
+            "idrac_ip": {"required": True, "type": str},
+            "idrac_user": {"required": True, "type": str},
+            "idrac_pwd": {"required": True, "type": str, "no_log": True},
+            "idrac_port": {"required": False, "default": 443, "type": int},
 
-            # iDRAC Credentials
-            idrac_ip=dict(required=True, type='str'),
-            idrac_user=dict(required=True, type='str'),
-            idrac_pwd=dict(required=True, type='str', no_log=True),
-            idrac_port=dict(required=False, default=443, type='int'),
+            "share_name": {"required": True, "type": str},
+            "share_user": {"required": False, "type": str},
+            "share_pwd": {"required": False, "type": str, "no_log": True},
+            "share_mnt": {"required": True, "type": str},
 
-            # Network File Share
-            share_name=dict(required=True, type='str'),
-            share_user=dict(required=False, type='str'),
-            share_pwd=dict(required=False, type='str', no_log=True),
-            share_mnt=dict(required=True, type='str'),
-
-            # Firmware update parameters
-            catalog_file_name=dict(required=False, type='str', default='Catalog.xml'),
-            reboot=dict(required=False, default=False, type='bool'),
-            job_wait=dict(required=False, default=True, type='bool')
-        ),
+            "catalog_file_name": {"required": False, "type": str, "default": "Catalog.xml"},
+            "reboot": {"required": False, "type": bool},
+            "job_wait": {"required": False, "type": bool}
+        },
 
         supports_check_mode=False)
 
     try:
         # Connect to iDRAC and update firmware
         with iDRACConnection(module.params) as idrac:
-            msg, err = update_firmware(idrac, module)
+            msg = update_firmware(idrac, module)
     except (ImportError, ValueError, RuntimeError) as e:
         module.fail_json(msg=str(e))
 
-    if err:
-        module.fail_json(**msg)
     module.exit_json(**msg)
 
 
