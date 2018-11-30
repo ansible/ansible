@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: meraki_network
+module: meraki_static_route
 short_description: Manage static routes in the Meraki cloud
-version_added: "2.6"
+version_added: "2.8"
 description:
 - Allows for creation, management, and visibility into static routes within Meraki.
 
@@ -33,7 +33,6 @@ options:
     net_name:
         description:
         - Name of a network.
-        aliases: [name, network]
     net_id:
         description:
         - ID number of a network.
@@ -52,6 +51,18 @@ options:
     gateway_ip:
         description:
         - IP address of the gateway for the subnet.
+    route_id:
+        description:
+        - Unique ID of static route.
+    fixed_ip_assignments:
+        description:
+        - List of fixed IP assignments for DHCP.
+        type: list
+    reserved_ip_ranges:
+        description:
+        - List of IP ranges reserved for static IP assignments.
+        type: list
+
 
 author:
     - Kevin Breit (@kbreit)
@@ -90,41 +101,19 @@ data:
     returned: info
     type: complex
     contains:
-      id:
+      net_id:
         description: Identification string of network.
         returned: success
         type: string
         sample: N_12345
-      name:
+      net_name:
         description: Written name of network.
         returned: success
         type: string
         sample: YourNet
-      organizationId:
-        description: Organization ID which owns the network.
-        returned: success
-        type: string
-        sample: 0987654321
-      tags:
-        description: Space delimited tags assigned to network.
-        returned: success
-        type: string
-        sample: " production wireless "
-      timeZone:
-        description: Timezone where network resides.
-        returned: success
-        type: string
-        sample: America/Chicago
-      type:
-        description: Functional type of network.
-        returned: success
-        type: string
-        sample: switch
-      disableMyMerakiCom:
-        description: States whether U(my.meraki.com) and other device portals should be disabled.
-        returned: success
-        type: bool
-        sample: true
+      name:
+        description: Name of static route.
+        
 '''
 
 import os
@@ -158,7 +147,7 @@ def main():
         name=dict(type='str'),
         subnet=dict(type='str'),
         gateway_ip=dict(type='str'),
-        state=dict(type='str', choices=['absent', 'query', 'present']),
+        state=dict(type='str', choices=['absent', 'query', 'present'], default='present'),
         fixed_ip_assignments=dict(type='list'),
         reserved_ip_ranges=dict(type='list'),
         route_id=dict(type='str'),
@@ -206,7 +195,6 @@ def main():
         if meraki.params['net_name']:
             payload['name'] = meraki.params['net_name']
 
-
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
@@ -246,7 +234,6 @@ def main():
         path = meraki.construct_path('delete', net_id=net_id, custom={'route_id': meraki.params['route_id']})
         meraki.result['data'] = meraki.request(path, method='DELETE')
         meraki.result['changed'] = True
-
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
