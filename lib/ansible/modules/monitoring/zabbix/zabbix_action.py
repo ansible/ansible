@@ -374,7 +374,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-result:
+msg:
     description: The result of the operation
     returned: success
     type: string
@@ -1598,7 +1598,7 @@ def main():
         action_id = zapi_wrapper.get_action_by_name(name)['actionid']
         if state == "absent":
             result = action.delete_action(action_id)
-            module.exit_json(changed=True, result="Action Deleted: %s, ID: %s" % (name, result))
+            module.exit_json(changed=True, msg="Action Deleted: %s, ID: %s" % (name, result))
         else:
             difference = action.check_difference(
                 action_id=action_id,
@@ -1619,13 +1619,13 @@ def main():
             )
 
             if difference == {}:
-                module.exit_json(changed=False, result="Action is up to date: %s" % (name))
+                module.exit_json(changed=False, msg="Action is up to date: %s" % (name))
             else:
                 result = action.update_action(
                     action_id=action_id,
                     **difference
                 )
-                module.exit_json(changed=True, result="Action Updated: %s, ID: %s" % (name, result))
+                module.exit_json(changed=True, msg="Action Updated: %s, ID: %s" % (name, result))
     else:
         if state == "absent":
             module.exit_json(changed=False)
@@ -1646,7 +1646,7 @@ def main():
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
                 conditions=fltr.construct_the_data(formula, conditions)
             )
-            module.exit_json(changed=True, result="Action created: %s, ID: %s" % (name, action_id))
+            module.exit_json(changed=True, msg="Action created: %s, ID: %s" % (name, action_id))
 
 
 if __name__ == '__main__':
