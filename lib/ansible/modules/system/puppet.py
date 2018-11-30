@@ -36,7 +36,7 @@ options:
     description:
       - Override puppet.conf noop mode.
       - Undefined, use default or puppet.conf value if defined.
-      - true, Run puppet agent with --noop switch set.
+      - true, Run Puppet agent with C(--noop) switch set.
       - false, Run puppet agent with --no-noop switch set.
     version_added: "2.8"
   facts:
