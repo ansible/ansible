@@ -5,6 +5,21 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.4
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-11-30
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- powershell - add ``lib/ansible/executor/powershell`` to the packaging data
+
 v2.7.3
 ======
 

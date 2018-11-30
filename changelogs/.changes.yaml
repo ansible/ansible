@@ -650,3 +650,9 @@ releases:
     - v2.7.3_summary.yaml
     - win_security_policy-rights.yaml
     release_date: '2018-11-29'
+  2.7.4:
+    codename: In the Light
+    fragments:
+    - powershell-bootstrap.yaml
+    - v2.7.4_summary.yaml
+    release_date: '2018-11-30'
