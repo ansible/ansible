@@ -5,7 +5,8 @@
 Developing plugins
 ******************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. All plugins must:
 
@@ -79,7 +80,7 @@ Developing particular plugin types
 Action plugins
 --------------
 
-Action plugins are useful when you want to modify data that is provided to any module, or filter the data that is returned by the module.
+Action plugins modify the data that is provided to any module, or filter the data that is returned by a module.
 
 To create an action plugin, create a new class with the Base(ActionBase) class as the parent:
 
@@ -90,7 +91,6 @@ To create an action plugin, create a new class with the Base(ActionBase) class a
     class ActionModule(ActionBase):
         pass
 
-
 From there, execute the module using the ``_execute_module`` method to call the original module.
 After successful execution of the module, you can modify the module return data.
 
@@ -100,7 +100,8 @@ After successful execution of the module, you can modify the module return data.
                                          module_args=module_args,
                                          task_vars=task_vars, tmp=tmp)
 
-The following is an example showing how you can modify return data from Ansible's ``setup`` module:
+
+For example, if you wanted to check the time difference between your Ansible controller and your target machine(s), you could modify return data from Ansible's ``setup`` module:
 
 .. code-block:: python
 
@@ -137,11 +138,10 @@ The following is an example showing how you can modify return data from Ansible'
             return dict(ansible_facts=dict(ret))
 
 
-Let us assume, you want to check time skewness between Ansible controller and remote machine then, we can have above code.
-Here, we are capturing date and time for remote machine using the ``setup`` module. Then we are calculating the time delta between the captured time and
-the time of Ansible controller. We are returning time delta in days, seconds and microseconds.
+This code captures the date and time for remote machine using the ``setup`` module. The it calculates the difference between the captured time and
+the time of Ansible controller, returning the time delta in days, seconds and microseconds.
 
-For more example of action plugins,
+For practical examples of action plugins,
 see the source code for the `action plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/action>`_
 
 .. _developing_callbacks:
