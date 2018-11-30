@@ -625,7 +625,7 @@ def _check_security_groups(module, cloud, server):
         return changed, server
 
     module_security_groups = set(module.params['security_groups'])
-    server_security_groups = set(sg.name for sg in server.security_groups)
+    server_security_groups = set(sg['name'] for sg in server.security_groups)
 
     add_sgs = module_security_groups - server_security_groups
     remove_sgs = server_security_groups - module_security_groups
