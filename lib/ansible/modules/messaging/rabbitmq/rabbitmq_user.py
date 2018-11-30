@@ -117,6 +117,7 @@ EXAMPLES = '''
         write_priv: .*
     state: present
 '''
+import operator
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -230,7 +231,8 @@ class RabbitMqUser(object):
         return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
-        return sorted(self._permissions) != sorted(self.permissions)
+        sort_key_fetch = operator.itemgetter('vhost')
+        return sorted(self._permissions, key=sort_key_fetch) != sorted(self.permissions, key=sort_key_fetch)
 
 
 def main():
