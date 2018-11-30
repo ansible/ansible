@@ -1,0 +1,3 @@
+---
+bugfixes:
+- fixes an issue with dict_merge in network utils (https://github.com/ansible/ansible/pull/49474)
