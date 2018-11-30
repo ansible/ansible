@@ -217,7 +217,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if hostname is not None:
                 return hostname
 
-        raise AnsibleParserError("No valid name found for host id={}".format(host.get('id')))
+        raise AnsibleParserError("No valid name found for host id={0}".format(host.get('id')))
 
     def _populate_from_source(self, source_data):
 
