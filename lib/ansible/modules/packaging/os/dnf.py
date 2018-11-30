@@ -582,12 +582,12 @@ class DnfModule(YumDnf):
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
         self._specify_repositories(base, disablerepo, enablerepo)
         try:
-            try:
-                base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
-                base.pre_configure_plugins()
-                base.configure_plugins()
-            except AttributeError:
-                pass  # older versions of dnf didn't require this and don't have these methods
+            base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
+            base.pre_configure_plugins()
+            base.configure_plugins()
+        except AttributeError:
+            pass  # older versions of dnf didn't require this and don't have these methods
+        try:
             base.fill_sack(load_system_repo='auto')
         except dnf.exceptions.RepoError as e:
             self.module.fail_json(
