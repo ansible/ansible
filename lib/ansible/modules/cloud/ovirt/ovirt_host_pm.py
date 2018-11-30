@@ -54,6 +54,7 @@ options:
         description:
             - "If I(true) options will be encrypted when send to agent."
         aliases: ['encrypt']
+        type: bool
     order:
         description:
             - "Integer value specifying, by default it's added at the end."

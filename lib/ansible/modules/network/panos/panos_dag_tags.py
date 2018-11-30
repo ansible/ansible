@@ -49,6 +49,7 @@ options:
         description:
             - commit if changed
         default: true
+        type: bool
     devicegroup:
         description: >
             - Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.

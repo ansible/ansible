@@ -315,6 +315,24 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         return hostnames, port, variables
 
+    def _expand_hostpattern(self, hostpattern):
+        '''
+        do some extra checks over normal processing
+        '''
+        # specification?
+
+        hostnames, port = super(InventoryModule, self)._expand_hostpattern(hostpattern)
+
+        if hostpattern.strip().endswith(':') and port is None:
+            raise AnsibleParserError("Invalid host pattern '%s' supplied, ending in ':' is not allowed, this character is reserved to provide a port." %
+                                     hostpattern)
+        for pattern in hostnames:
+            # some YAML parsing prevention checks
+            if pattern.strip() == '---':
+                raise AnsibleParserError("Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
+
+        return (hostnames, port)
+
     @staticmethod
     def _parse_value(v):
         '''

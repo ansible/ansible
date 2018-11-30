@@ -16,10 +16,20 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Required, Schema, Self
+import re
+from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Invalid, Required, Schema, Self
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.collections import is_iterable
 list_string_types = list(string_types)
 any_string_types = Any(*string_types)
+
+# Valid DOCUMENTATION.author lines
+# Based on Ansibulbot's extract_github_id()
+#   author: First Last (@name) [optional anything]
+#     "Ansible Core Team" - Used by the Bot
+#     "Michael DeHaan" - nop
+#     "Name (!UNKNOWN)" - For the few untraceable authors
+author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$')
 
 
 def sequence_of_sequences(min=None, max=None):
@@ -140,6 +150,17 @@ deprecation_schema = Schema(
 )
 
 
+def author(value):
+
+    if not is_iterable(value):
+        value = [value]
+
+    for line in value:
+        m = author_line.search(line)
+        if not m:
+            raise Invalid("Invalid author")
+
+
 def doc_schema(module_name):
     deprecated_module = False
 
@@ -151,7 +172,7 @@ def doc_schema(module_name):
         Required('short_description'): Any(*string_types),
         Required('description'): Any(list_string_types, *string_types),
         Required('version_added'): Any(float, *string_types),
-        Required('author'): Any(None, list_string_types, *string_types),
+        Required('author'): All(Any(None, list_string_types, *string_types), author),
         'notes': Any(None, list_string_types),
         'requirements': list_string_types,
         'todo': Any(None, list_string_types, *string_types),

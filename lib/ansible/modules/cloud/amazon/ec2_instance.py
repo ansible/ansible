@@ -18,7 +18,7 @@ description:
     - Create and manage AWS EC2 instance
 version_added: "2.5"
 author:
-  - Ryan Scott Brown, @ryansb
+  - Ryan Scott Brown (@ryansb)
 requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:
@@ -33,6 +33,7 @@ options:
     description:
       - Whether or not to wait for the desired state (use wait_timeout to customize this).
     default: true
+    type: bool
   wait_timeout:
     description:
       - How long to wait (in seconds) for the instance to finish booting/terminating.
@@ -69,6 +70,7 @@ options:
       - Delete any tags not specified in the task that are on the instance.
         This means you have to specify all the desired tags on each task affecting an instance.
     default: false
+    type: bool
   image:
     description:
       - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
@@ -136,6 +138,7 @@ options:
     description:
       - Whether to enable termination protection.
         This module will not terminate an instance with termination protection active, it must be turned off first.
+    type: bool
   cpu_credit_specification:
     description:
       - For T2 series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
@@ -161,9 +164,11 @@ options:
   detailed_monitoring:
     description:
       - Whether to allow detailed cloudwatch metrics to be collected, enabling more detailed alerting.
+    type: bool
   ebs_optimized:
     description:
       - Whether instance is should use optimized EBS volumes, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html).
+    type: bool
   filters:
     description:
       - A dict of filters to apply when deciding whether existing instances match and should be altered. Each dict item

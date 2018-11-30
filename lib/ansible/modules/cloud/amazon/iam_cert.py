@@ -65,10 +65,10 @@ options:
       - By default the module will not upload a certificate that is already uploaded into AWS.
         If set to True, it will upload the certificate as long as the name is unique.
     default: False
-
+    type: bool
 
 requirements: [ "boto" ]
-author: Jonathan I. Davila
+author: Jonathan I. Davila (@defionscode)
 extends_documentation_fragment:
     - aws
     - ec2

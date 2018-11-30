@@ -140,6 +140,8 @@ groupings:
   - aws
   ec2_key:
   - aws
+  ec2_launch_template:
+  - aws
   ec2_lc:
   - aws
   ec2_lc_facts:

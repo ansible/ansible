@@ -55,8 +55,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Hai Cao <t-haicao@microsoft.com>"
-    - "Yunge Zhu <yungez@microsoft.com>"
+    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
+    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
 '''
 
 EXAMPLES = '''
@@ -64,7 +64,7 @@ EXAMPLES = '''
       azure_rm_cdnprofile:
           resource_group: Testing
           name: cdntest
-          sku: Standard_Akamai
+          sku: standard_akamai
           tags:
               testing: testing
 

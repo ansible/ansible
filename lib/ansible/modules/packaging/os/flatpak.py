@@ -22,7 +22,7 @@ description:
 - Allows users to add or remove flatpaks.
 - See the M(flatpak_remote) module for managing flatpak remotes.
 author:
-- John Kwiatkoski (@jaykayy)
+- John Kwiatkoski (@JayKayy)
 - Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak
@@ -82,7 +82,7 @@ EXAMPLES = r'''
   flatpak:
     name: org.gnome.gedit
     state: present
-  method: user
+    method: user
 
 - name: Install the Gnome Calendar flatpak from the gnome remote system-wide
   flatpak:

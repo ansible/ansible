@@ -26,6 +26,7 @@
     name: "{{ cname }}"
     state: started
     hostname: example.org
+    force_kill: yes
     comparisons:
       hostname: ignore
   register: value_2
@@ -37,7 +38,7 @@
     name: "{{ cname }}"
     state: started
     hostname: example.org
-    stop_timeout: 1
+    force_kill: yes
     comparisons:
       hostname: strict
   register: value_3
@@ -46,7 +47,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -77,6 +79,7 @@
     state: started
     dns_servers:
     - 9.9.9.9
+    force_kill: yes
     comparisons:
       dns_servers: ignore
   register: list_2
@@ -89,16 +92,17 @@
     state: started
     dns_servers:
     - 9.9.9.9
+    force_kill: yes
     comparisons:
       dns_servers: strict
-    stop_timeout: 1
   register: list_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -131,6 +135,7 @@
     - 1010
     - 1011
     - 1012
+    force_kill: yes
     comparisons:
       groups: ignore
   register: set_2
@@ -145,9 +150,9 @@
     - 1010
     - 1011
     - 1012
+    force_kill: yes
     comparisons:
       groups: allow_more_present
-    stop_timeout: 1
   register: set_3
 
 - name: set (change, allow_more_present)
@@ -159,9 +164,9 @@
     groups:
     - 1010
     - 1012
+    force_kill: yes
     comparisons:
       groups: allow_more_present
-    stop_timeout: 1
   register: set_4
 
 - name: set (change, strict)
@@ -173,16 +178,17 @@
     groups:
     - 1010
     - 1012
+    force_kill: yes
     comparisons:
       groups: strict
-    stop_timeout: 1
   register: set_5
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -217,6 +223,7 @@
     - "/dev/random:/dev/virt-random:rwm"
     - "/dev/urandom:/dev/virt-urandom:rwm"
     - "/dev/null:/dev/virt-null:rwm"
+    force_kill: yes
     comparisons:
       devices: ignore
   register: set_dict_2
@@ -231,9 +238,9 @@
     - "/dev/random:/dev/virt-random:rwm"
     - "/dev/urandom:/dev/virt-urandom:rwm"
     - "/dev/null:/dev/virt-null:rwm"
+    force_kill: yes
     comparisons:
       devices: allow_more_present
-    stop_timeout: 1
   register: set_dict_3
 
 - name: set(dict) (change, allow_more_present)
@@ -245,9 +252,9 @@
     devices:
     - "/dev/random:/dev/virt-random:rwm"
     - "/dev/null:/dev/virt-null:rwm"
+    force_kill: yes
     comparisons:
       devices: allow_more_present
-    stop_timeout: 1
   register: set_dict_4
 
 - name: set(dict) (change, strict)
@@ -259,16 +266,17 @@
     devices:
     - "/dev/random:/dev/virt-random:rwm"
     - "/dev/null:/dev/virt-null:rwm"
+    force_kill: yes
     comparisons:
       devices: strict
-    stop_timeout: 1
   register: set_dict_5
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -303,6 +311,7 @@
       ansible.test.1: hello
       ansible.test.2: world
       ansible.test.3: ansible
+    force_kill: yes
     comparisons:
       labels: ignore
   register: dict_2
@@ -317,9 +326,9 @@
       ansible.test.1: hello
       ansible.test.2: world
       ansible.test.3: ansible
+    force_kill: yes
     comparisons:
       labels: allow_more_present
-    stop_timeout: 1
   register: dict_3
 
 - name: dict (change, allow_more_present)
@@ -331,9 +340,9 @@
     labels:
       ansible.test.1: hello
       ansible.test.3: ansible
+    force_kill: yes
     comparisons:
       labels: allow_more_present
-    stop_timeout: 1
   register: dict_4
 
 - name: dict (change, strict)
@@ -345,16 +354,17 @@
     labels:
       ansible.test.1: hello
       ansible.test.3: ansible
+    force_kill: yes
     comparisons:
       labels: strict
-    stop_timeout: 1
   register: dict_5
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -399,6 +409,7 @@
     labels:
       ansible.test.1: hello
       ansible.test.4: ignore
+    force_kill: yes
     comparisons:
       '*': ignore
   register: wildcard_2
@@ -415,6 +426,7 @@
       ansible.test.1: hello
       ansible.test.2: world
       ansible.test.3: ansible
+    force_kill: yes
     comparisons:
       '*': strict
   register: wildcard_3
@@ -431,6 +443,7 @@
       ansible.test.1: hello
       ansible.test.2: world
       ansible.test.3: ansible
+    force_kill: yes
     comparisons:
       '*': strict
   register: wildcard_4
@@ -439,7 +452,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:

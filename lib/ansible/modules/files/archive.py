@@ -426,7 +426,10 @@ def main():
                         arcfile.write(path, path[len(arcroot):])
                         arcfile.close()
                         state = 'archive'  # because all zip files are archives
-
+                    elif format == 'tar':
+                        arcfile = tarfile.open(dest, 'w')
+                        arcfile.add(path)
+                        arcfile.close()
                     else:
                         f_in = open(path, 'rb')
 

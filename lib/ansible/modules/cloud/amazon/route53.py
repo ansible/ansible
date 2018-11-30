@@ -71,6 +71,7 @@ options:
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
+    type: bool
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many

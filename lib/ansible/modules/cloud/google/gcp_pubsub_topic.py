@@ -32,24 +32,26 @@ DOCUMENTATION = '''
 ---
 module: gcp_pubsub_topic
 description:
-    - A named resource to which messages are sent by publishers.
+- A named resource to which messages are sent by publishers.
 short_description: Creates a GCP Topic
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    name:
-        description:
-            - Name of the topic.
-        required: false
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  name:
+    description:
+    - Name of the topic.
+    required: false
 extends_documentation_fragment: gcp
 '''
 
@@ -64,11 +66,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    name:
-        description:
-            - Name of the topic.
-        returned: success
-        type: str
+name:
+  description:
+  - Name of the topic.
+  returned: success
+  type: str
 '''
 
 ################################################################################

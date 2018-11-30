@@ -17,7 +17,7 @@ short_description: NetApp ONTAP Start, Stop and Enable FCP services.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Start, Stop and Enable FCP services.
 options:
@@ -111,9 +111,12 @@ class NetAppOntapFCP(object):
         try:
             self.server.invoke_successfully(netapp_utils.zapi.NaElement('fcp-service-start'), True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error starting FCP %s' %
-                                      (to_native(error)),
-                                  exception=traceback.format_exc())
+            # Error 13013 denotes fcp service already started.
+            if to_native(error.code) == "13013":
+                return None
+            else:
+                self.module.fail_json(msg='Error starting FCP %s' % (to_native(error)),
+                                      exception=traceback.format_exc())
 
     def stop_fcp(self):
         """
@@ -164,6 +167,9 @@ class NetAppOntapFCP(object):
                                   exception=traceback.format_exc())
 
     def apply(self):
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event("na_ontap_fcp", cserver)
         exists = self.get_fcp()
         changed = False
         if self.parameters['state'] == 'present':
@@ -180,6 +186,8 @@ class NetAppOntapFCP(object):
                 self.create_fcp()
                 if self.parameters['status'] == 'up':
                     self.start_fcp()
+                elif self.parameters['status'] == 'down':
+                    self.stop_fcp()
                 changed = True
         else:
             if exists:

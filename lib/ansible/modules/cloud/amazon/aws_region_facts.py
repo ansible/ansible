@@ -14,7 +14,7 @@ short_description: Gather facts about AWS regions.
 description:
     - Gather facts about AWS regions.
 version_added: '2.5'
-author: 'Henrique Rodrigues (github.com/Sodki)'
+author: 'Henrique Rodrigues (@Sodki)'
 options:
   filters:
     description:

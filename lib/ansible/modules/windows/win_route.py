@@ -41,7 +41,7 @@ options:
 notes:
   - Works only with Windows 2012 R2 and newer.
 author:
-- Daniele Lazzari
+- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = r'''

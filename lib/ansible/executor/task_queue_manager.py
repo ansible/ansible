@@ -38,15 +38,12 @@ from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 
 __all__ = ['TaskQueueManager']
+
+display = Display()
 
 
 class TaskQueueManager:
@@ -244,6 +241,10 @@ class TaskQueueManager:
         )
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
+        if (self._stdout_callback and
+                hasattr(self._stdout_callback, 'set_play_context')):
+            self._stdout_callback.set_play_context(play_context)
+
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)

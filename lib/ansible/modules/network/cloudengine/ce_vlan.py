@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages VLAN resources and attributes on Huawei CloudEngine switches.
 description:
     - Manages VLAN configurations on Huawei CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     vlan_id:
         description:

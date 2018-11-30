@@ -37,7 +37,6 @@ options:
     default: '/api/fdm/v2/fdm/token'
     vars:
       - name: ansible_httpapi_ftd_token_path
-
   spec_path:
     type: str
     description:
@@ -61,6 +60,7 @@ from ansible.plugins.httpapi import HttpApiBase
 from urllib3 import encode_multipart_formdata
 from urllib3.fields import RequestField
 from ansible.module_utils.connection import ConnectionError
+from ansible.utils.display import Display
 
 BASE_HEADERS = {
     'Content-Type': 'application/json',
@@ -69,6 +69,8 @@ BASE_HEADERS = {
 
 TOKEN_EXPIRATION_STATUS_CODE = 408
 UNAUTHORIZED_STATUS_CODE = 401
+
+display = Display()
 
 
 class HttpApi(HttpApiBase):
@@ -79,6 +81,7 @@ class HttpApi(HttpApiBase):
         self.refresh_token = None
         self._api_spec = None
         self._api_validator = None
+        self._ignore_http_errors = False
 
     def login(self, username, password):
         def request_token_payload(username, password):
@@ -101,10 +104,15 @@ class HttpApi(HttpApiBase):
         else:
             raise AnsibleConnectionFailure('Username and password are required for login in absence of refresh token')
 
-        dummy, response_data = self.connection.send(
-            self._get_api_token_path(), json.dumps(payload), method=HTTPMethod.POST, headers=BASE_HEADERS
+        url = self._get_api_token_path()
+        self._display(HTTPMethod.POST, 'login', url)
+
+        response, response_data = self._send_auth_request(
+            url, json.dumps(payload), method=HTTPMethod.POST, headers=BASE_HEADERS
         )
-        response = self._response_to_json(response_data.getvalue())
+        self._display(HTTPMethod.POST, 'login:status_code', response.getcode())
+
+        response = self._response_to_json(self._get_response_value(response_data))
 
         try:
             self.refresh_token = response['refresh_token']
@@ -120,12 +128,28 @@ class HttpApi(HttpApiBase):
             'access_token': self.access_token,
             'token_to_revoke': self.refresh_token
         }
-        self.connection.send(
-            self._get_api_token_path(), json.dumps(auth_payload), method=HTTPMethod.POST,
-            headers=BASE_HEADERS
-        )
+
+        url = self._get_api_token_path()
+
+        self._display(HTTPMethod.POST, 'logout', url)
+        response, dummy = self._send_auth_request(url, json.dumps(auth_payload), method=HTTPMethod.POST,
+                                                  headers=BASE_HEADERS)
+        self._display(HTTPMethod.POST, 'logout:status_code', response.getcode())
+
         self.refresh_token = None
         self.access_token = None
+
+    def _send_auth_request(self, path, data, **kwargs):
+        try:
+            self._ignore_http_errors = True
+            return self.connection.send(path, data, **kwargs)
+        except HTTPError as e:
+            # HttpApi connection does not read the error response from HTTPError, so we do it here and wrap it up in
+            # ConnectionError, so the actual error message is displayed to the user.
+            error_msg = self._response_to_json(to_text(e.read()))
+            raise ConnectionError('Server returned an error during authentication request: %s' % error_msg)
+        finally:
+            self._ignore_http_errors = False
 
     def update_auth(self, response, response_data):
         # With tokens, authentication should not be checked and updated on each request
@@ -135,23 +159,34 @@ class HttpApi(HttpApiBase):
         url = construct_url_path(url_path, path_params, query_params)
         data = json.dumps(body_params) if body_params else None
         try:
+            self._display(http_method, 'url', url)
+            if data:
+                self._display(http_method, 'data', data)
+
             response, response_data = self.connection.send(url, data, method=http_method, headers=BASE_HEADERS)
+
+            value = self._get_response_value(response_data)
+            self._display(http_method, 'response', value)
+
             return {
                 ResponseParams.SUCCESS: True,
                 ResponseParams.STATUS_CODE: response.getcode(),
-                ResponseParams.RESPONSE: self._response_to_json(response_data.getvalue())
+                ResponseParams.RESPONSE: self._response_to_json(value)
             }
         # Being invoked via JSON-RPC, this method does not serialize and pass HTTPError correctly to the method caller.
         # Thus, in order to handle non-200 responses, we need to wrap them into a simple structure and pass explicitly.
         except HTTPError as e:
+            error_msg = to_text(e.read())
+            self._display(http_method, 'error', error_msg)
             return {
                 ResponseParams.SUCCESS: False,
                 ResponseParams.STATUS_CODE: e.code,
-                ResponseParams.RESPONSE: self._response_to_json(e.read())
+                ResponseParams.RESPONSE: self._response_to_json(error_msg)
             }
 
     def upload_file(self, from_path, to_url):
         url = construct_url_path(to_url)
+        self._display(HTTPMethod.POST, 'upload', url)
         with open(from_path, 'rb') as src_file:
             rf = RequestField('fileToUpload', src_file.read(), os.path.basename(src_file.name))
             rf.make_multipart()
@@ -162,10 +197,13 @@ class HttpApi(HttpApiBase):
             headers['Content-Length'] = len(body)
 
             dummy, response_data = self.connection.send(url, data=body, method=HTTPMethod.POST, headers=headers)
-            return self._response_to_json(response_data.getvalue())
+            value = self._get_response_value(response_data)
+            self._display(HTTPMethod.POST, 'upload:response', value)
+            return self._response_to_json(value)
 
     def download_file(self, from_url, to_path, path_params=None):
         url = construct_url_path(from_url, path_params=path_params)
+        self._display(HTTPMethod.GET, 'download', url)
         response, response_data = self.connection.send(url, data=None, method=HTTPMethod.GET, headers=BASE_HEADERS)
 
         if os.path.isdir(to_path):
@@ -174,14 +212,23 @@ class HttpApi(HttpApiBase):
 
         with open(to_path, "wb") as output_file:
             output_file.write(response_data.getvalue())
+        self._display(HTTPMethod.GET, 'downloaded', to_path)
 
     def handle_httperror(self, exc):
-        if exc.code == TOKEN_EXPIRATION_STATUS_CODE or exc.code == UNAUTHORIZED_STATUS_CODE:
+        is_auth_related_code = exc.code == TOKEN_EXPIRATION_STATUS_CODE or exc.code == UNAUTHORIZED_STATUS_CODE
+        if not self._ignore_http_errors and is_auth_related_code:
             self.connection._auth = None
             self.login(self.connection.get_option('remote_user'), self.connection.get_option('password'))
             return True
         # None means that the exception will be passed further to the caller
         return None
+
+    def _display(self, http_method, title, msg=''):
+        display.vvvv('REST:%s:%s:%s\n%s' % (http_method, self.connection._url, title, msg))
+
+    @staticmethod
+    def _get_response_value(response_data):
+        return to_text(response_data.getvalue())
 
     def _get_api_spec_path(self):
         return self.get_option('spec_path')
@@ -190,8 +237,7 @@ class HttpApi(HttpApiBase):
         return self.get_option('token_path')
 
     @staticmethod
-    def _response_to_json(response_data):
-        response_text = to_text(response_data)
+    def _response_to_json(response_text):
         try:
             return json.loads(response_text) if response_text else {}
         # JSONDecodeError only available on Python 3.5+
@@ -200,6 +246,12 @@ class HttpApi(HttpApiBase):
 
     def get_operation_spec(self, operation_name):
         return self.api_spec[SpecProp.OPERATIONS].get(operation_name, None)
+
+    def get_operation_specs_by_model_name(self, model_name):
+        if model_name:
+            return self.api_spec[SpecProp.MODEL_OPERATIONS].get(model_name, None)
+        else:
+            return None
 
     def get_model_spec(self, model_name):
         return self.api_spec[SpecProp.MODELS].get(model_name, None)

@@ -28,7 +28,7 @@ short_description: Manages information center debug configuration on HUAWEI Clou
 description:
     - Manages information center debug configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

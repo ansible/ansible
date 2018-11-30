@@ -19,7 +19,9 @@
 
 - name: attempt to upgrade hello
   apt:
-    upgrade: dist
+    name: hello
+    state: latest
+  ignore_errors: yes
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'
@@ -37,7 +39,8 @@
 
 - name: upgrade hello
   apt:
-    upgrade: dist
+    name: hello
+    state: latest
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'

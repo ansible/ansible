@@ -219,7 +219,7 @@ requirements:
 - yum
 author:
     - Ansible Core Team
-    - Seth Vidal
+    - Seth Vidal (@skvidal)
     - Eduard Snesarev (@verm666)
     - Berend De Schouwer (@berenddeschouwer)
     - Abhijeet Kasurde (@Akasurde)

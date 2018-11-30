@@ -50,6 +50,7 @@ options:
   port:
     description:
       - Port number to poll.
+      - C(path) and C(port) are mutually exclusive parameters.
   active_connection_states:
     description:
       - The list of TCP connection states which are counted as active connections.
@@ -67,6 +68,7 @@ options:
     version_added: "1.4"
     description:
       - Path to a file on the filesystem that must exist before continuing.
+      - C(path) and C(port) are mutually exclusive parameters.
   search_regex:
     version_added: "1.4"
     description:
@@ -87,7 +89,7 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
-  - Prior to 2.4, testing for the absense of a directory or UNIX socket did not work correctly.
+  - Prior to 2.4, testing for the absence of a directory or UNIX socket did not work correctly.
   - Prior to 2.4, testing for the presence of a file did not work correctly if the remote user did not have read access to that file.
   - Under some circumstances when using mandatory access control, a path may always be treated as being absent even if it exists, but
     can't be modified or created by the remote user either.
@@ -134,6 +136,14 @@ EXAMPLES = r'''
     path: /tmp/foo
     search_regex: completed
 
+- name: Wait until regex pattern matches in the file /tmp/foo and print the matched group
+  wait_for:
+    path: /tmp/foo
+    search_regex: completed (?P<task>\w+)
+  register: waitfor
+- debug:
+    msg: Completed {{ waitfor['groupdict']['task'] }}
+
 - name: Wait until the lock file is removed
   wait_for:
     path: /var/lock/file.lock
@@ -176,6 +186,20 @@ elapsed:
   returned: always
   type: int
   sample: 23
+match_groups:
+  description: Tuple containing all the subgroups of the match as returned by U(https://docs.python.org/2/library/re.html#re.MatchObject.groups)
+  returned: always
+  type: list
+  sample: ['match 1', 'match 2']
+match_groupdict:
+  description: Dictionary containing all the named subgroups of the match, keyed by the subgroup name,
+    as returned by U(https://docs.python.org/2/library/re.html#re.MatchObject.groupdict)
+  returned: always
+  type: dict
+  sample:
+    {
+      'group': 'match'
+    }
 '''
 
 import binascii
@@ -468,6 +492,9 @@ def main():
     else:
         compiled_search_re = None
 
+    match_groupdict = {}
+    match_groups = ()
+
     if port and path:
         module.fail_json(msg="port and path parameter can not both be passed to wait_for", elapsed=0)
     if path and state == 'stopped':
@@ -537,8 +564,13 @@ def main():
                     try:
                         f = open(path)
                         try:
-                            if re.search(compiled_search_re, f.read()):
-                                # String found, success!
+                            search = re.search(compiled_search_re, f.read())
+                            if search:
+                                if search.groupdict():
+                                    match_groupdict = search.groupdict()
+                                if search.groups():
+                                    match_groups = search.groups()
+
                                 break
                         finally:
                             f.close()
@@ -630,7 +662,8 @@ def main():
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
     elapsed = datetime.datetime.utcnow() - start
-    module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
+    module.exit_json(state=state, port=port, search_regex=search_regex, match_groups=match_groups, match_groupdict=match_groupdict, path=path,
+                     elapsed=elapsed.seconds)
 
 
 if __name__ == '__main__':

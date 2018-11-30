@@ -88,6 +88,7 @@ options:
         Once that's done the ASG size is reduced back to the expected size.
     version_added: "1.8"
     default: 'no'
+    type: bool
   replace_batch_size:
     description:
       - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
@@ -104,11 +105,13 @@ options:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_config.
     version_added: "1.8"
     default: 'yes'
+    type: bool
   lt_check:
     description:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_template or launch_template version.
     version_added: "2.8"
     default: 'yes'
+    type: bool
   vpc_zone_identifier:
     description:
       - List of VPC subnets to use
@@ -146,6 +149,7 @@ options:
         instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
     default: 'yes'
+    type: bool
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
@@ -581,7 +585,7 @@ def update_asg(connection, **params):
     connection.update_auto_scaling_group(**params)
 
 
-@AWSRetry.backoff(**backoff_params)
+@AWSRetry.backoff(catch_extra_error_codes=['ScalingActivityInProgress'], **backoff_params)
 def delete_asg(connection, asg_name, force_delete):
     connection.delete_auto_scaling_group(AutoScalingGroupName=asg_name, ForceDelete=force_delete)
 

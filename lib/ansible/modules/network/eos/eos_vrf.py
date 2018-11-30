@@ -61,6 +61,7 @@ options:
     description:
       - Purge VRFs not defined in the I(aggregate) parameter.
     default: no
+    type: bool
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote

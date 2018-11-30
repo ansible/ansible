@@ -41,12 +41,9 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
 from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.role.requirement import RoleRequirement
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class GalaxyCLI(CLI):
@@ -286,7 +283,7 @@ class GalaxyCLI(CLI):
             install_info = gr.install_info
             if install_info:
                 if 'version' in install_info:
-                    install_info['intalled_version'] = install_info['version']
+                    install_info['installed_version'] = install_info['version']
                     del install_info['version']
                 role_info.update(install_info)
 

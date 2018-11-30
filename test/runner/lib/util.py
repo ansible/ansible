@@ -197,7 +197,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     cmd = list(cmd)
     version = python_version or args.python_version
     interpreter = find_python(version, path)
-    inject_path = get_coverage_path(args, version, interpreter)
+    inject_path = get_coverage_path(args, interpreter)
     config_path = os.path.join(inject_path, 'injector.json')
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
@@ -222,19 +222,18 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
 
-def get_coverage_path(args, version, interpreter):
+def get_coverage_path(args, interpreter):
     """
     :type args: TestConfig
-    :type version: str
     :type interpreter: str
     :rtype: str
     """
-    coverage_path = COVERAGE_PATHS.get(version)
+    coverage_path = COVERAGE_PATHS.get(interpreter)
 
     if coverage_path:
         return os.path.join(coverage_path, 'coverage')
 
-    prefix = 'ansible-test-coverage-python-%s-' % version
+    prefix = 'ansible-test-coverage-'
     tmp_dir = '/tmp'
 
     if args.explain:
@@ -248,15 +247,6 @@ def get_coverage_path(args, version, interpreter):
     shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
     shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
 
-    injector = os.path.join(coverage_path, 'coverage', 'injector.py')
-
-    with open(injector, 'r+') as injector_fd:
-        code = injector_fd.read()
-        code = re.sub(r'^#!.*', '#!%s' % interpreter, code, count=1)
-        injector_fd.seek(0)
-        injector_fd.write(code)
-        injector_fd.truncate()
-
     for root, dir_names, file_names in os.walk(coverage_path):
         for name in dir_names + file_names:
             os.chmod(os.path.join(root, name), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
@@ -265,18 +255,20 @@ def get_coverage_path(args, version, interpreter):
         os.mkdir(os.path.join(coverage_path, directory))
         os.chmod(os.path.join(coverage_path, directory), stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
+    os.symlink(interpreter, os.path.join(coverage_path, 'coverage', 'python'))
+
     if not COVERAGE_PATHS:
         atexit.register(cleanup_coverage_dirs)
 
-    COVERAGE_PATHS[version] = coverage_path
+    COVERAGE_PATHS[interpreter] = coverage_path
 
     return os.path.join(coverage_path, 'coverage')
 
 
 def cleanup_coverage_dirs():
     """Clean up all coverage directories."""
-    for version, path in COVERAGE_PATHS.items():
-        display.info('Cleaning up coverage directory for Python %s: %s' % (version, path), verbosity=2)
+    for path in COVERAGE_PATHS.values():
+        display.info('Cleaning up coverage directory: %s' % path, verbosity=2)
         cleanup_coverage_dir(path)
 
 

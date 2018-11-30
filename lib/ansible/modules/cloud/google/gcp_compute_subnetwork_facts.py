@@ -32,25 +32,24 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_subnetwork_facts
 description:
-  - Gather facts for GCP Subnetwork
+- Gather facts for GCP Subnetwork
 short_description: Gather facts for GCP Subnetwork
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    filters:
-       description:
-           A list of filter value pairs. Available filters are listed here
-           U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
-           Each additional filter in the list will act be added as an AND condition
-           (filter1 and filter2)
-    region:
-        description:
-            - URL of the GCP region for this subnetwork.
-        required: true
+  filters:
+    description:
+    - A list of filter value pairs. Available filters are listed here U(U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).)
+    - Each additional filter in the list will act be added as an AND condition (filter1
+      and filter2) .
+  region:
+    description:
+    - URL of the GCP region for this subnetwork.
+    required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -67,101 +66,102 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
-    returned: always
-    type: complex
-    contains:
-        creationTimestamp:
-            description:
-                - Creation timestamp in RFC3339 text format.
-            returned: success
-            type: str
-        description:
-            description:
-                - An optional description of this resource. Provide this property when you create
-                  the resource. This field can be set only at resource creation time.
-            returned: success
-            type: str
-        gatewayAddress:
-            description:
-                - The gateway address for default routes to reach destination addresses outside this
-                  subnetwork.
-            returned: success
-            type: str
-        id:
-            description:
-                - The unique identifier for the resource.
-            returned: success
-            type: int
+  description: List of items
+  returned: always
+  type: complex
+  contains:
+    creationTimestamp:
+      description:
+      - Creation timestamp in RFC3339 text format.
+      returned: success
+      type: str
+    description:
+      description:
+      - An optional description of this resource. Provide this property when you create
+        the resource. This field can be set only at resource creation time.
+      returned: success
+      type: str
+    gatewayAddress:
+      description:
+      - The gateway address for default routes to reach destination addresses outside
+        this subnetwork.
+      returned: success
+      type: str
+    id:
+      description:
+      - The unique identifier for the resource.
+      returned: success
+      type: int
+    ipCidrRange:
+      description:
+      - The range of internal addresses that are owned by this subnetwork.
+      - Provide this property when you create the subnetwork. For example, 10.0.0.0/8
+        or 192.168.0.0/16. Ranges must be unique and non-overlapping within a network.
+        Only IPv4 is supported.
+      returned: success
+      type: str
+    name:
+      description:
+      - The name of the resource, provided by the client when initially creating the
+        resource. The name must be 1-63 characters long, and comply with RFC1035.
+        Specifically, the name must be 1-63 characters long and match the regular
+        expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must
+        be a lowercase letter, and all following characters must be a dash, lowercase
+        letter, or digit, except the last character, which cannot be a dash.
+      returned: success
+      type: str
+    network:
+      description:
+      - The network this subnet belongs to.
+      - Only networks that are in the distributed mode can have subnetworks.
+      returned: success
+      type: dict
+    enableFlowLogs:
+      description:
+      - Whether to enable flow logging for this subnetwork.
+      returned: success
+      type: bool
+    fingerprint:
+      description:
+      - Fingerprint of this resource. This field is used internally during updates
+        of this resource.
+      returned: success
+      type: str
+    secondaryIpRanges:
+      description:
+      - An array of configurations for secondary IP ranges for VM instances contained
+        in this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
+        of the subnetwork. The alias IPs may belong to either primary or secondary
+        ranges.
+      returned: success
+      type: complex
+      contains:
+        rangeName:
+          description:
+          - The name associated with this subnetwork secondary range, used when adding
+            an alias IP range to a VM instance. The name must be 1-63 characters long,
+            and comply with RFC1035. The name must be unique within the subnetwork.
+          returned: success
+          type: str
         ipCidrRange:
-            description:
-                - The range of internal addresses that are owned by this subnetwork.
-                - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
-                  192.168.0.0/16. Ranges must be unique and non-overlapping within a network. Only
-                  IPv4 is supported.
-            returned: success
-            type: str
-        name:
-            description:
-                - The name of the resource, provided by the client when initially creating the resource.
-                  The name must be 1-63 characters long, and comply with RFC1035. Specifically, the
-                  name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-                  which means the first character must be a lowercase letter, and all following characters
-                  must be a dash, lowercase letter, or digit, except the last character, which cannot
-                  be a dash.
-            returned: success
-            type: str
-        network:
-            description:
-                - The network this subnet belongs to.
-                - Only networks that are in the distributed mode can have subnetworks.
-            returned: success
-            type: dict
-        enableFlowLogs:
-            description:
-                - Whether to enable flow logging for this subnetwork.
-            returned: success
-            type: bool
-        fingerprint:
-            description:
-                - Fingerprint of this resource. This field is used internally during updates of this
-                  resource.
-            returned: success
-            type: str
-        secondaryIpRanges:
-            description:
-                - An array of configurations for secondary IP ranges for VM instances contained in
-                  this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
-                  of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
-            returned: success
-            type: complex
-            contains:
-                rangeName:
-                    description:
-                        - The name associated with this subnetwork secondary range, used when adding an alias
-                          IP range to a VM instance. The name must be 1-63 characters long, and comply with
-                          RFC1035. The name must be unique within the subnetwork.
-                    returned: success
-                    type: str
-                ipCidrRange:
-                    description:
-                        - The range of IP addresses belonging to this subnetwork secondary range. Provide
-                          this property when you create the subnetwork.
-                        - Ranges must be unique and non-overlapping with all primary and secondary IP ranges
-                          within a network. Only IPv4 is supported.
-                    returned: success
-                    type: str
-        privateIpGoogleAccess:
-            description:
-                - Whether the VMs in this subnet can access Google services without assigned external
-                  IP addresses.
-            returned: success
-            type: bool
-        region:
-            description:
-                - URL of the GCP region for this subnetwork.
-            returned: success
-            type: str
+          description:
+          - The range of IP addresses belonging to this subnetwork secondary range.
+            Provide this property when you create the subnetwork.
+          - Ranges must be unique and non-overlapping with all primary and secondary
+            IP ranges within a network. Only IPv4 is supported.
+          returned: success
+          type: str
+    privateIpGoogleAccess:
+      description:
+      - Whether the VMs in this subnet can access Google services without assigned
+        external IP addresses.
+      returned: success
+      type: bool
+    region:
+      description:
+      - URL of the GCP region for this subnetwork.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -183,7 +183,7 @@ def main():
         )
     )
 
-    if 'scopes' not in module.params:
+    if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
 
     items = fetch_list(module, collection(module), query_options(module.params['filters']))

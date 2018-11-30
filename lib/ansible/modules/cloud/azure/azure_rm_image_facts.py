@@ -36,7 +36,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Madhura Naniwadekar(@Madhura-CSI)"
+    - "Madhura Naniwadekar (@Madhura-CSI)"
 '''
 
 

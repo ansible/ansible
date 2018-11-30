@@ -18,7 +18,7 @@
     - 8081
     published_ports:
     - all
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_1
 
 - name: published_ports -- all (idempotency)
@@ -32,7 +32,7 @@
     - 8081
     published_ports:
     - all
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_2
 
 - name: published_ports -- all (writing out 'all')
@@ -47,7 +47,7 @@
     published_ports:
     - 8080
     - 8081
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_3
 
 - name: published_ports -- all (idempotency 2)
@@ -62,7 +62,7 @@
     published_ports:
     - 8080
     - 8081
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_4
 
 - name: published_ports -- all (switching back to 'all')
@@ -76,14 +76,15 @@
     - 8081
     published_ports:
     - all
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_5
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -109,7 +110,7 @@
     published_ports:
     - 8080:8080
     - 5000-5040:5000-5040
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_1
 
 - name: published_ports -- port range (idempotency)
@@ -124,7 +125,7 @@
     published_ports:
     - 8080:8080
     - 5000-5040:5000-5040
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_2
 
 - name: published_ports -- port range (different range)
@@ -139,14 +140,15 @@
     published_ports:
     - 8080:8080
     - 5010-5050:5010-5050
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_3
 
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:
@@ -166,7 +168,7 @@
     state: started
     published_ports:
     - "[::1]:8080:8080"
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_1
 
 - name: published_ports -- IPv6 (idempotency)
@@ -177,7 +179,7 @@
     state: started
     published_ports:
     - "[::1]:8080:8080"
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_2
 
 - name: published_ports -- IPv6 (different IP)
@@ -188,7 +190,7 @@
     state: started
     published_ports:
     - 127.0.0.1:8080:8080
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_3
 
 - name: published_ports -- IPv6 (hostname)
@@ -199,7 +201,7 @@
     state: started
     published_ports:
     - localhost:8080:8080
-    stop_timeout: 1
+    force_kill: yes
   register: published_ports_4
   ignore_errors: yes
 
@@ -207,7 +209,8 @@
   docker_container:
     name: "{{ cname }}"
     state: absent
-    stop_timeout: 1
+    force_kill: yes
+  diff: no
 
 - assert:
     that:

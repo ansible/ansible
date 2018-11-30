@@ -1083,6 +1083,32 @@ To escape special characters within a regex, use the "regex_escape" filter::
     {{ '^f.*o(.*)$' | regex_escape() }}
 
 
+Kubernetes Filters
+``````````````````
+
+Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
+including its hash::
+
+    {{ configmap_resource_definition | k8s_config_resource_name }}
+
+This can then be used to reference hashes in Pod specifications::
+
+    my_secret:
+      kind: Secret
+      name: my_secret_name
+
+    deployment_resource:
+      kind: Deployment
+      spec:
+        template:
+          spec:
+            containers:
+            - envFrom:
+                - secretRef:
+                    name: {{ my_secret | k8s_config_resource_name }}
+
+.. versionadded:: 2.8
+
 Other Useful Filters
 ````````````````````
 

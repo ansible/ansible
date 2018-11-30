@@ -20,7 +20,7 @@ options:
     required: true
   description:
     description:
-      - parameter key desciption.
+      - parameter key description.
     required: false
   value:
     description:
@@ -42,7 +42,7 @@ options:
   decryption:
     description:
       - Work with SecureString type to get plain text secrets
-      - Boolean
+    type: bool
     required: false
     default: True
   key_id:
@@ -64,7 +64,7 @@ options:
     required: false
 author:
   - Nathan Webster (@nathanwebsterdotme)
-  - Bill Wang (ozbillwang@gmail.com)
+  - Bill Wang (@ozbillwang) <ozbillwang@gmail.com>
   - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]

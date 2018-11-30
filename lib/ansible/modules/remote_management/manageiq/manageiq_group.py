@@ -32,7 +32,7 @@ module: manageiq_group
 short_description: Management of groups in ManageIQ.
 extends_documentation_fragment: manageiq
 version_added: '2.8'
-author: Evert Mulder
+author: Evert Mulder (@evertmulder)
 description:
   - The manageiq_group module supports adding, updating and deleting groups in ManageIQ.
 

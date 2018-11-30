@@ -402,6 +402,7 @@ options:
     l2conn:
         description:
             - "Use L2 Parameters to identify a connection."
+        type: bool
 
     mysqlprotocolversion:
         description:

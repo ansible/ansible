@@ -61,6 +61,7 @@ options:
         description:
             - "Force batch mode when installing plugins. This is only necessary if a plugin requires additional permissions and console detection fails."
         default: False
+        type: bool
         version_added: "2.7"
     plugin_bin:
         description:
@@ -256,7 +257,7 @@ def main():
             src=dict(default=None),
             url=dict(default=None),
             timeout=dict(default="1m"),
-            force=dict(default=False),
+            force=dict(type='bool', default=False),
             plugin_bin=dict(type="path"),
             plugin_dir=dict(default="/usr/share/elasticsearch/plugins/", type="path"),
             proxy_host=dict(default=None),

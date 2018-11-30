@@ -11,7 +11,7 @@ DOCUMENTATION = """
 module: spotinst_aws_elastigroup
 version_added: 2.5
 short_description: Create, update or delete Spotinst AWS Elastigroups
-author: Spotinst
+author: Spotinst (@talzur)
 description:
   - Can create, update, or delete Spotinst AWS Elastigroups
     Launch configuration is part of the elastigroup configuration,
@@ -89,6 +89,7 @@ options:
     description:
       - (Boolean) Enable EBS optimization for supported instances which are not enabled by default.;
         Note - additional charges will be applied.
+    type: bool
 
   ebs_volume_pool:
     description:
@@ -112,7 +113,7 @@ options:
   fallback_to_od:
     description:
       - (Boolean) In case of no spots available, Elastigroup will launch an On-demand instance instead
-
+    type: bool
   health_check_grace_period:
     description:
       - (Integer) The amount of time, in seconds, after the instance has launched to start and check its health.
@@ -364,7 +365,7 @@ options:
   terminate_at_end_of_billing_hour:
     description:
       - (Boolean) terminate at the end of billing hour
-
+    type: bool
   unit:
     choices:
       - instance
@@ -452,12 +453,12 @@ options:
     description:
       - (Boolean) In case of any available Reserved Instances,
          Elastigroup will utilize your reservations before purchasing Spot instances.
-
+    type: bool
 
   wait_for_instances:
     description:
       - (Boolean) Whether or not the elastigroup creation / update actions should wait for the instances to spin
-
+    type: bool
 
   wait_timeout:
     description:

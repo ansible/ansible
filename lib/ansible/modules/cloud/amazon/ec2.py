@@ -186,6 +186,7 @@ options:
     description:
       - whether instance is using optimized EBS volumes, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html).
     default: 'no'
+    type: bool
   exact_count:
     version_added: "1.5"
     description:
@@ -212,7 +213,7 @@ options:
 author:
     - "Tim Gerla (@tgerla)"
     - "Lester Wade (@lwade)"
-    - "Seth Vidal"
+    - "Seth Vidal (@skvidal)"
 extends_documentation_fragment: aws
 '''
 
@@ -1598,12 +1599,12 @@ def main():
             source_dest_check=dict(type='bool', default=None),
             termination_protection=dict(type='bool', default=None),
             state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
-            instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
+            instance_initiated_shutdown_behavior=dict(default='stop', choices=['stop', 'terminate']),
             exact_count=dict(type='int', default=None),
             count_tag=dict(),
             volumes=dict(type='list'),
             ebs_optimized=dict(type='bool', default=False),
-            tenancy=dict(default='default'),
+            tenancy=dict(default='default', choices=['default', 'dedicated']),
             network_interfaces=dict(type='list', aliases=['network_interface'])
         )
     )

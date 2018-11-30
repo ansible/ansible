@@ -27,12 +27,9 @@ from ansible.inventory.host import Host
 from ansible.plugins.loader import vars_loader
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 INTERNAL_VARS = frozenset(['ansible_diff_mode',
                            'ansible_facts',
@@ -327,6 +324,8 @@ class InventoryCLI(CLI):
 
     def json_inventory(self, top):
 
+        seen = set()
+
         def format_group(group):
             results = {}
             results[group.name] = {}
@@ -335,7 +334,9 @@ class InventoryCLI(CLI):
             results[group.name]['children'] = []
             for subgroup in sorted(group.child_groups, key=attrgetter('name')):
                 results[group.name]['children'].append(subgroup.name)
-                results.update(format_group(subgroup))
+                if subgroup.name not in seen:
+                    results.update(format_group(subgroup))
+                    seen.add(subgroup.name)
             if self.options.export:
                 results[group.name]['vars'] = self._get_group_variables(group)
 

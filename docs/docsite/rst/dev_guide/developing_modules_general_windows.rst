@@ -502,6 +502,7 @@ environment, and configure a test inventory for Ansible to connect to.
 In this example we will set up a test inventory to connect to two hosts and run the integration
 tests for win_stat:
 
+- Run the command ``source ./hacking/env-setup`` to prepare environment.
 - Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
 - Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
 - To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
