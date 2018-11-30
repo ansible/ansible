@@ -1,0 +1,2 @@
+bugfixes:
+  - Last loaded handler with the same name is used
