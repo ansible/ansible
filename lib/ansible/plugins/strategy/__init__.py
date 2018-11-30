@@ -394,15 +394,6 @@ class StrategyBase:
                             continue
             return None
 
-        def search_handler_blocks_by_listen_name(handler_name, handler_blocks):
-            # iterate in reversed order since last handler loaded with the same name wins
-            for handler_block in reversed(handler_blocks):
-                for handler_task in handler_block.block:
-                    listeners = getattr(handler_task, 'listen', []) or []
-                    if handler_name in listeners:
-                        return handler_task
-            return None
-
         def parent_handler_match(target_handler, handler_name):
             if target_handler:
                 if isinstance(target_handler, (TaskInclude, IncludeRole)) and not getattr(target_handler, 'statically_loaded', True):
@@ -566,12 +557,17 @@ class StrategyBase:
                                         if found:
                                             break
 
-                                listening_handler = search_handler_blocks_by_listen_name(handler_name, iterator._play.handlers)
-                                if listening_handler is not None:
-                                    found = True
-                                    if not listening_handler.is_notified(original_host):
-                                        listening_handler.do_notify(original_host)
-                                        self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
+                                for listening_handler_block in iterator._play.handlers:
+                                    for listening_handler in listening_handler_block.block:
+                                        listeners = getattr(listening_handler, 'listen', []) or []
+                                        if handler_name not in listeners:
+                                            continue
+                                        else:
+                                            found = True
+
+                                        if not listening_handler.is_notified(original_host):
+                                            listening_handler.do_notify(original_host)
+                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
                                 # and if none were found, then we raise an error
                                 if not found:
