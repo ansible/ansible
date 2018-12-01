@@ -1,0 +1,2 @@
+minor_changes:
+- ansible.cli.CLI.parse - Limit option requires non-zero length string value (https://github.com/ansible/ansible/pull/49261)

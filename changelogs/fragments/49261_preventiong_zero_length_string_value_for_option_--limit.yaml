@@ -1,2 +1,0 @@
-minor_changes:
-- ansible.cli.CLI.parse - raise exception if option --limit get zero length string value(https://github.com/ansible/ansible/pull/49261) 
