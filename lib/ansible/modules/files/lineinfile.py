@@ -204,9 +204,9 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import FileLock
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.common.file import FileLock
 
 
 def write_changes(module, b_lines, dest):
@@ -523,14 +523,14 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        with flock.lock_file(path, module.tmpdir):
+        with flock.lock_file(path, tempfile.gettempdir()):
             present(module, path, regexp, line,
                     ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        with flock.lock_file(path, module.tmpdir):
+        with flock.lock_file(path, tempfile.gettempdir()):
             absent(module, path, regexp, line, backup)
 
 
