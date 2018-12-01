@@ -25,7 +25,7 @@ short_description: Creates and activates swap, controls swap mounts in fstab.
 description:
     - This module creates and activates swap, controls swap mounts in fstab.
 
-version_added: "1.1"
+version_added: "2.8"
 
 options:
     device:
@@ -88,6 +88,8 @@ EXAMPLES = '''
     backup: yes
 '''
 
+RETURN = ''' # '''
+
 import os
 from ansible.module_utils.basic import AnsibleModule
 
@@ -117,7 +119,7 @@ class SwapModuleError(Exception):
             err (str): Command's standard error.
 
         """
-        super(Exception, self).__init__(msg)
+        super(SwapModuleError, self).__init__(msg)
         self.msg = msg
         self.cmd = cmd
         self.rc = rc
