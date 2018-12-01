@@ -253,6 +253,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             'after_header': '%s (content)' % dest}
 
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    flock = FileLock()
+
     if not os.path.exists(b_dest):
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
@@ -264,9 +266,12 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
 
         b_lines = []
-    else:
-        with open(b_dest, 'rb') as f:
-            b_lines = f.readlines()
+
+    if not module.check_mode:
+        flock.set_lock(dest)
+
+    with open(b_dest, 'rb') as f:
+        b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
@@ -397,6 +402,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if backup and os.path.exists(b_dest):
             backupdest = module.backup_local(dest)
         write_changes(module, b_lines, dest)
+        flock.unlock()
 
     if module.check_mode and not os.path.exists(b_dest):
         module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
@@ -414,6 +420,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 def absent(module, dest, regexp, line, backup):
 
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    flock = FileLock()
+
     if not os.path.exists(b_dest):
         module.exit_json(changed=False, msg="file not present")
 
@@ -422,6 +430,9 @@ def absent(module, dest, regexp, line, backup):
             'after': '',
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
+
+    if not module.check_mode:
+        flock.set_lock(dest)
 
     with open(b_dest, 'rb') as f:
         b_lines = f.readlines()
@@ -455,6 +466,7 @@ def absent(module, dest, regexp, line, backup):
         if backup:
             backupdest = module.backup_local(dest)
         write_changes(module, b_lines, dest)
+        flock.unlock()
 
     if changed:
         msg = "%s line(s) removed" % len(found)
@@ -498,7 +510,6 @@ def main():
     firstmatch = params['firstmatch']
     regexp = params['regexp']
     line = params['line']
-    flock = FileLock()
 
     if regexp == '':
         module.warn(
@@ -523,15 +534,13 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        with flock.lock_file(path):
-            present(module, path, regexp, line,
-                    ins_aft, ins_bef, create, backup, backrefs, firstmatch)
+        present(module, path, regexp, line,
+                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        with flock.lock_file(path):
-            absent(module, path, regexp, line, backup)
+        absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':
