@@ -2784,8 +2784,8 @@
     name: "{{ cname }}"
     state: started
     pids_limit: 10
-    force_kill: yes
   register: pids_limit_1
+  ignore_errors: yes
 
 - name: pids_limit (idempotency)
   docker_container:
@@ -2794,8 +2794,8 @@
     name: "{{ cname }}"
     state: started
     pids_limit: 10
-    force_kill: yes
   register: pids_limit_2
+  ignore_errors: yes
 
 - name: pids_limit (changed)
   docker_container:
@@ -2806,6 +2806,7 @@
     pids_limit: 20
     force_kill: yes
   register: pids_limit_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2819,6 +2820,12 @@
     - pids_limit_1 is changed
     - pids_limit_2 is not changed
     - pids_limit_3 is changed
+  when: docker_py_version is version('1.10.0', '>=')
+- assert:
+    that:
+    - pids_limit_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in pids_limit_1.msg"
+  when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
 ## privileged ######################################################
