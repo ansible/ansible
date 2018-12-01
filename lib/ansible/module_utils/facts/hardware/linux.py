@@ -488,8 +488,8 @@ class LinuxHardware(Hardware):
                           'options': options}
 
             results[mount] = {'info': mount_info,
-                               'extra': pool.apply_async(self.get_mount_info, (mount_info, bind_mounts, uuids)),
-                               'start': time.time() + maxtime}
+                              'extra': pool.apply_async(self.get_mount_info, (mount_info, bind_mounts, uuids)),
+                              'start': time.time() + maxtime}
 
         pool.close()  # done with new workers, start gc
 
