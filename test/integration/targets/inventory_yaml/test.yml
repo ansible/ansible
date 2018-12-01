@@ -1,0 +1,27 @@
+all:
+    children:
+        kids:
+            hosts:
+                marcia:
+                    popular: True
+                jan:
+                    popular: False
+                cindy:
+                    popular: True
+                greg:
+                    popular: True
+                peter:
+                    popular: False
+                bobby:
+                    popular: False
+            vars:
+                in_trouble: True
+        cousins:
+            children:
+                redheads:
+                    hosts:
+                        #oliver:  # this used to cause an error and deliver incomplete inventory
+        the-maid:
+            hosts:
+                alice:
+                    status: single
