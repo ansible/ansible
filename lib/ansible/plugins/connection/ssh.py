@@ -517,7 +517,9 @@ class Connection(ConnectionBase):
             b_command += [b'-b', b'-']
 
         if self._play_context.verbosity > 3:
-            b_command.append(b'-vvv')
+            #b_command.append(b'-vvv')
+            vs = u''.join(['v' for x in range(0, self._play_context.verbosity)])
+            b_command.append(b'-' + vs)
 
         #
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
