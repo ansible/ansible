@@ -57,7 +57,7 @@ options:
     esc_period:
         description:
             - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro
-        default: '1h'
+        default: '60'
     conditions:
         type: list
         description:
@@ -146,15 +146,19 @@ options:
     recovery_default_message:
         description:
             - Recovery message text.
+            - Works only with >= Zabbix 3.2
     recovery_default_subject:
         description:
             - Recovery message subject.
+            - Works only with >= Zabbix 3.2
     acknowledge_default_message:
         description:
             - Acknowledge operation message text.
+            - Works only with >= Zabbix 3.4
     acknowledge_default_subject:
         description:
             - Acknowledge operation message subject.
+            - Works only with >= Zabbix 3.4
     operations:
         type: list
         description:
@@ -273,11 +277,13 @@ options:
         description:
             - List of recovery operations
             - C(Suboptions) are the same as I(operations)
+            - Works only with >= Zabbix 3.2
     acknowledge_operations:
         type: list
         description:
             - List of acknowledge operations
             - C(Suboptions) are the same as I(operations)
+            - Works only with >= Zabbix 3.4
 
 
 
@@ -409,13 +415,18 @@ class Zapi(object):
 
         """
         try:
-            return self._zapi.action.get({
+            _action = self._zapi.action.get({
                 "selectOperations": "extend",
                 "selectRecoveryOperations": "extend",
+                "selectAcknowledgeOperations": "extend",
                 "selectFilter": "extend",
                 'selectInventory': 'extend',
                 'filter': {'name': [name]}
             })
+            if len(_action) > 0:
+                _action[0]['recovery_operations'] = _action[0].pop('recoveryOperations', [])
+                _action[0]['acknowledge_operations'] = _action[0].pop('acknowledgeOperations', [])
+            return _action
         except Exception as e:
             self._module.fail_json(msg="Failed to check if action '%s' exists: %s" % (name, e))
 
@@ -752,7 +763,14 @@ class Action(object):
         existing_action = convert_unicode_to_str(self._zapi_wrapper.check_if_action_exists(kwargs['name'])[0])
         parameters = convert_unicode_to_str(self._construct_parameters(**kwargs))
         change_parameters = {}
-        return cleanup_data(compare_dictionaries(parameters, existing_action, change_parameters))
+        _diff = cleanup_data(compare_dictionaries(parameters, existing_action, change_parameters))
+        if ('recovery_operations' in cleanup_data(existing_action) and
+           'acknowledge_operations' not in cleanup_data(parameters)):
+            _diff['recovery_operations'] = []
+        if ('acknowledge_operations' in cleanup_data(existing_action) and
+           'acknowledge_operations' not in cleanup_data(parameters)):
+            _diff['acknowledge_operations'] = []
+        return _diff
 
     def update_action(self, **kwargs):
         """Update action.
@@ -1442,9 +1460,9 @@ def compare_lists(l1, l2, diff_dict):
     to the diff_dict dictionary.
     Used in recursion with compare_dictionaries() function.
     Args:
-        l1: list to compaire
-        l2: list to compaire
-        diff_dict: dict to compaire with
+        l1: first list to compare
+        l2: second list to compare
+        diff_dict: dictionary to store the difference
 
     Returns:
         dict: items that are different
@@ -1470,9 +1488,9 @@ def compare_dictionaries(d1, d2, diff_dict):
     to the diff_dict dictionary.
     Used in recursion with compare_lists() function.
     Args:
-        d1: dictionary to compaire
-        d2: dictionary to compaire
-        diff_dict: dict to compaire with
+        d1: first dictionary to compare
+        d2: second ditionary to compare
+        diff_dict: dictionary to store the difference
 
     Returns:
         dict: items that are different
@@ -1529,7 +1547,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            esc_period=dict(type='str', required=False, default='1h'),
+            esc_period=dict(type='int', required=False, default=60),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
             event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
