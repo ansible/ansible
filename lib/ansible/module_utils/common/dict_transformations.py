@@ -8,6 +8,7 @@ __metaclass__ = type
 
 
 import re
+import json
 from copy import deepcopy
 
 
@@ -139,3 +140,11 @@ def recursive_diff(dict1, dict2):
         return left, right
     else:
         return None
+		
+def find_value_in_json(key, value, json_result):
+    json_loaded_dict = json.loads(json_result)
+    stringified_dict = json.dumps(json_loaded_dict)
+    if "\""+key+"\": \""+value+"\"" in stringified_dict:
+        return True
+    else:
+        return False
