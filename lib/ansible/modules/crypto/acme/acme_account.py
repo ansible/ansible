@@ -168,8 +168,12 @@ def main():
         account = ACMEAccount(module)
         changed = False
         state = module.params.get('state')
+        diff_before = {}
+        diff_after = {}
         if state == 'absent':
             created, account_data = account.setup_account(allow_creation=False)
+            if account_data:
+                diff_before = dict(account_data)
             if created:
                 raise AssertionError('Unwanted account creation')
             if account_data is not None:
@@ -195,10 +199,15 @@ def main():
             )
             if account_data is None:
                 raise ModuleFailException(msg='Account does not exist or is deactivated.')
+            if created:
+                diff_before = {}
+            else:
+                diff_before = dict(account_data)
             updated = False
             if not created:
                 updated, account_data = account.update_account(account_data, contact)
             changed = created or updated
+            diff_after = dict(account_data)
         elif state == 'changed_key':
             # Parse new account key
             error, new_key_data = account.parse_key(
@@ -213,6 +222,7 @@ def main():
                 raise AssertionError('Unwanted account creation')
             if account_data is None:
                 raise ModuleFailException(msg='Account does not exist or is deactivated.')
+            diff_before = dict(account_data)
             # Now we can start the account key rollover
             if not module.check_mode:
                 # Compose inner signed message
@@ -233,8 +243,24 @@ def main():
                 result, info = account.send_signed_request(url, data)
                 if info['status'] != 200:
                     raise ModuleFailException('Error account key rollover: {0} {1}'.format(info['status'], result))
+                if module._diff:
+                    account.key_data = new_key_data
+                    account.jws_header['alg'] = new_key_data['alg']
+                    diff_after = account.get_account_data()
+            elif module._diff:
+                # Kind of fake diff_after
+                diff_after = dict(diff_before)
             changed = True
-        module.exit_json(changed=changed, account_uri=account.uri)
+        result = {
+            'changed': changed,
+            'account_uri': account.uri,
+        }
+        if module._diff:
+            result['diff'] = {
+                'before': diff_before,
+                'after': diff_after,
+            }
+        module.exit_json(**result)
     except ModuleFailException as e:
         e.do_fail(module)
 
