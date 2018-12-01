@@ -66,7 +66,7 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self.chroot = self.get_option('remote_addr')
+        self.chroot = self._play_context.remote_addr
 
         if os.geteuid() != 0:
             raise AnsibleError("chroot connection requires running as root")
@@ -87,6 +87,13 @@ class Connection(ConnectionBase):
         self.chroot_cmd = distutils.spawn.find_executable('chroot')
         if not self.chroot_cmd:
             raise AnsibleError("chroot command not found in PATH")
+
+    def set_option(self, option, value):
+        ''' override to keep backwards compat '''
+        super(Connection, self).set_option(option, value)
+
+        if option == 'remote_addr':
+            self.chroot = value
 
     def _connect(self):
         ''' connect to the chroot; nothing to do here '''

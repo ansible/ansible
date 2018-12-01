@@ -30,7 +30,6 @@ import distutils.spawn
 import os
 import os.path
 import subprocess
-import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -52,16 +51,30 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self.zone = self._play_context.remote_addr
-
         if os.geteuid() != 0:
             raise AnsibleError("zone connection requires running as root")
 
         self.zoneadm_cmd = to_bytes(self._search_executable('zoneadm'))
         self.zlogin_cmd = to_bytes(self._search_executable('zlogin'))
 
-        if self.zone not in self.list_zones():
+        self.zone = self._play_context.remote_addr
+
+    @property
+    def zone(self):
+        return self._zone
+
+    @zone.setter
+    def zone(self, value):
+        if value not in self.list_zones():
             raise AnsibleError("incorrect zone name %s" % self.zone)
+        self._zone = value
+
+    def set_option(self, option, value):
+        ''' override to keep backwards compat '''
+        super(Connection, self).set_option(option, value)
+
+        if option == 'remote_addr':
+            self.zone = value
 
     @staticmethod
     def _search_executable(executable):
@@ -163,9 +176,8 @@ class Connection(ConnectionBase):
                     raise AnsibleError("jail connection requires dd command in the jail")
                 try:
                     stdout, stderr = p.communicate()
-                except:
-                    traceback.print_exc()
-                    raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                except Exception as e:
+                    raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path), orig_exc=e)
                 if p.returncode != 0:
                     raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
         except IOError:
@@ -188,9 +200,8 @@ class Connection(ConnectionBase):
                 while chunk:
                     out_file.write(chunk)
                     chunk = p.stdout.read(BUFSIZE)
-            except:
-                traceback.print_exc()
-                raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+            except Exception as e:
+                raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path), orig_exc=e)
             stdout, stderr = p.communicate()
             if p.returncode != 0:
                 raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))

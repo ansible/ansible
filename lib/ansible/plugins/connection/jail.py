@@ -50,8 +50,6 @@ display = Display()
 class Connection(ConnectionBase):
     ''' Local BSD Jail based connections '''
 
-    modified_jailname_key = 'conn_jail_name'
-
     transport = 'jail'
     # Pipelining may work.  Someone needs to test by setting this to True and
     # having pipelining=True in their ansible.cfg
@@ -62,10 +60,7 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self.jail = self.get_option('remote_addr')
-        if self.modified_jailname_key in kwargs:
-            self.jail = kwargs[self.modified_jailname_key]
-
+        self.jail = play_context.remote_addr
         if os.geteuid() != 0:
             raise AnsibleError("jail connection requires running as root")
 
@@ -74,6 +69,13 @@ class Connection(ConnectionBase):
 
         if self.jail not in self.list_jails():
             raise AnsibleError("incorrect jail name %s" % self.jail)
+
+    def set_option(self, option, value):
+        ''' override to keep backwards compat '''
+        super(Connection, self).set_option(option, value)
+
+        if option == 'remote_addr':
+            self.jail = value
 
     @staticmethod
     def _search_executable(executable):
