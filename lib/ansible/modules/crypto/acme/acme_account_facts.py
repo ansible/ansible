@@ -89,6 +89,11 @@ account:
       returned: always
       type: str
       sample: https://example.ca/account/1/orders
+    public_account_key:
+      description: the public account key as a L(JSON Web Key,https://tools.ietf.org/html/rfc7517).
+      returned: always
+      type: str
+      sample: https://example.ca/account/1/orders
 '''
 
 from ansible.module_utils.acme import (
@@ -145,6 +150,7 @@ def main():
             # Make sure promised data is there
             if 'contact' not in account_data:
                 account_data['contact'] = []
+            account_data['public_account_key'] = account.key_data['jwk']
             result['account'] = account_data
         module.exit_json(**result)
     except ModuleFailException as e:

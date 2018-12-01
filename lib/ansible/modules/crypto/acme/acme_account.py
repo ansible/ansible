@@ -174,6 +174,7 @@ def main():
             created, account_data = account.setup_account(allow_creation=False)
             if account_data:
                 diff_before = dict(account_data)
+                diff_before['public_account_key'] = account.key_data['jwk']
             if created:
                 raise AssertionError('Unwanted account creation')
             if account_data is not None:
@@ -203,11 +204,13 @@ def main():
                 diff_before = {}
             else:
                 diff_before = dict(account_data)
+                diff_before['public_account_key'] = account.key_data['jwk']
             updated = False
             if not created:
                 updated, account_data = account.update_account(account_data, contact)
             changed = created or updated
             diff_after = dict(account_data)
+            diff_after['public_account_key'] = account.key_data['jwk']
         elif state == 'changed_key':
             # Parse new account key
             error, new_key_data = account.parse_key(
@@ -223,6 +226,7 @@ def main():
             if account_data is None:
                 raise ModuleFailException(msg='Account does not exist or is deactivated.')
             diff_before = dict(account_data)
+            diff_before['public_account_key'] = account.key_data['jwk']
             # Now we can start the account key rollover
             if not module.check_mode:
                 # Compose inner signed message
@@ -250,6 +254,7 @@ def main():
             elif module._diff:
                 # Kind of fake diff_after
                 diff_after = dict(diff_before)
+            diff_after['public_account_key'] = new_key_data['jwk']
             changed = True
         result = {
             'changed': changed,

@@ -84,6 +84,7 @@
       - account_change_key_check is changed
       - account_change_key_check.account_uri is not none
       - "'diff' in account_change_key_check"
+      - account_change_key_check.diff.before.public_account_key != account_change_key_check.diff.after.public_account_key
 
 - name: Validate that the account key was changed
   assert:
