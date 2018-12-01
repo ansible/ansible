@@ -523,14 +523,14 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        with flock.lock_file(path, tempfile.gettempdir()):
+        with flock.lock_file(path):
             present(module, path, regexp, line,
                     ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        with flock.lock_file(path, tempfile.gettempdir()):
+        with flock.lock_file(path):
             absent(module, path, regexp, line, backup)
 
 
