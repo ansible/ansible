@@ -338,12 +338,12 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 if index[1] <= 0:
                     if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
-                        msg = 'line replaced'
+                        msg = 'line added'
                         changed = True
 
                 elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line replaced'
+                    msg = 'line added'
                     changed = True
 
         elif b_lines[index[0]] != b_new_line:
