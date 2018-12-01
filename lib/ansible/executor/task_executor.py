@@ -907,7 +907,7 @@ class TaskExecutor:
                     options['_extras'][k] = templar.template(final_vars[k])
 
         # set options with 'templated vars' specific to this plugin
-        remote_addr = {'remote_addr': self._task.delegate_to or self._host.address }
+        remote_addr = {'remote_addr': self._task.delegate_to or self._host.address}
         self._connection.set_options(task_keys=remote_addr, var_options=options)
         self._set_shell_options(final_vars, templar)
 
