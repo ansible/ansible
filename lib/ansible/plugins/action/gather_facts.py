@@ -47,7 +47,6 @@ class ActionModule(ActionBase):
                 poll_args = {'jid': jobs[module]['ansible_job_id'] , '_async_dir': os.path.dirname(jobs[module]['results_file'])}
                 res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                 if 'finished' in res:
-                    print(res)
                     if res.get('failed', False):
                         failed[module] = res.get('msg')
                     elif res.get('skipped', False):
