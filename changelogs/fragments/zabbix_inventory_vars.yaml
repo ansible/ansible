@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - Add option to read zabbix inventory per each host
+  - Add option to set ansible_ssh_host based on first interface settings
