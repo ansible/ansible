@@ -406,16 +406,21 @@ class ACMEClient(object):
             contact = []
             if module.params['account_email']:
                 contact.append('mailto:' + module.params['account_email'])
-            self.changed = self.account.init_account(
+            created, account_data = self.account.setup_account(
                 contact,
                 agreement=module.params.get('agreement'),
                 terms_agreed=module.params.get('terms_agreed'),
                 allow_creation=modify_account,
-                update_contact=modify_account
             )
+            if account_data is None:
+                raise ModuleFailException(msg='Account does not exist or is deactivated.')
+            updated = False
+            if not created and account_data and modify_account:
+                updated, account_data = self.account.update_account(account_data, contact)
+            self.changed = created or updated
         else:
             # This happens if modify_account is False and the ACME v1
-            # protocol is used. In this case, we do not call init_account()
+            # protocol is used. In this case, we do not call setup_account()
             # to avoid accidental creation of an account. This is OK
             # since for ACME v1, the account URI is not needed to send a
             # signed ACME request.

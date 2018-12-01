@@ -169,39 +169,36 @@ def main():
         changed = False
         state = module.params.get('state')
         if state == 'absent':
-            changed = account.init_account(
-                [],
-                allow_creation=False,
-                update_contact=False,
-            )
-            if changed:
-                raise AssertionError('Unwanted account change')
-            if account.uri is not None:
-                # Account does exist
-                account_data = account.get_account_data()
-                if account_data is not None:
-                    # Account is not yet deactivated
-                    if not module.check_mode:
-                        # Deactivate it
-                        payload = {
-                            'status': 'deactivated'
-                        }
-                        result, info = account.send_signed_request(account.uri, payload)
-                        if info['status'] != 200:
-                            raise ModuleFailException('Error deactivating account: {0} {1}'.format(info['status'], result))
-                    changed = True
+            created, account_data = account.setup_account(allow_creation=False)
+            if created:
+                raise AssertionError('Unwanted account creation')
+            if account_data is not None:
+                # Account is not yet deactivated
+                if not module.check_mode:
+                    # Deactivate it
+                    payload = {
+                        'status': 'deactivated'
+                    }
+                    result, info = account.send_signed_request(account.uri, payload)
+                    if info['status'] != 200:
+                        raise ModuleFailException('Error deactivating account: {0} {1}'.format(info['status'], result))
+                changed = True
         elif state == 'present':
             allow_creation = module.params.get('allow_creation')
             # Make sure contact is a list of strings (unfortunately, Ansible doesn't do that for us)
             contact = [str(v) for v in module.params.get('contact')]
             terms_agreed = module.params.get('terms_agreed')
-            changed = account.init_account(
+            created, account_data = account.setup_account(
                 contact,
                 terms_agreed=terms_agreed,
                 allow_creation=allow_creation,
             )
-            if account.uri is None:
+            if account_data is None:
                 raise ModuleFailException(msg='Account does not exist or is deactivated.')
+            updated = False
+            if not created:
+                updated, account_data = account.update_account(account_data, contact)
+            changed = created or updated
         elif state == 'changed_key':
             # Parse new account key
             error, new_key_data = account.parse_key(
@@ -211,14 +208,10 @@ def main():
             if error:
                 raise ModuleFailException("error while parsing account key: %s" % error)
             # Verify that the account exists and has not been deactivated
-            changed = account.init_account(
-                [],
-                allow_creation=False,
-                update_contact=False,
-            )
-            if changed:
-                raise AssertionError('Unwanted account change')
-            if account.uri is None or account.get_account_data() is None:
+            created, account_data = account.setup_account(allow_creation=False)
+            if created:
+                raise AssertionError('Unwanted account creation')
+            if account_data is None:
                 raise ModuleFailException(msg='Account does not exist or is deactivated.')
             # Now we can start the account key rollover
             if not module.check_mode:

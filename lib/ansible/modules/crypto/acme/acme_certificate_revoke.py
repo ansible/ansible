@@ -177,13 +177,11 @@ def main():
             result, info = account.send_signed_request(endpoint, payload, key_data=private_key_data, jws_header=jws_header)
         else:
             # Step 1: get hold of account URI
-            changed = account.init_account(
-                [],
-                allow_creation=False,
-                update_contact=False,
-            )
-            if changed:
-                raise AssertionError('Unwanted account change')
+            created, account_data = account.setup_account(allow_creation=False)
+            if created:
+                raise AssertionError('Unwanted account creation')
+            if account_data is None:
+                raise ModuleFailException(msg='Account does not exist or is deactivated.')
             # Step 2: sign revokation request with account key
             result, info = account.send_signed_request(endpoint, payload)
         if info['status'] != 200:
