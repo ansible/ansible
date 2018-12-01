@@ -12,6 +12,12 @@ DOCUMENTATION = '''
         - This connection plugin allows ansible to execute tasks on the Ansible 'controller' instead of on a remote host.
     author: ansible (@core)
     version_added: historical
+    options:
+        remote_addr:
+            description: Hostname/ip to connect to, this is unused for this plugin except for reporting purposes.
+            default: inventory_hostname
+            vars:
+                - name: ansible_host
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
@@ -42,13 +48,8 @@ class Connection(ConnectionBase):
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
 
-        # Because we haven't made any remote connection we're running as
-        # the local user, rather than as whatever is configured in
-        # remote_user.
-        self._play_context.remote_user = getpass.getuser()
-
         if not self._connected:
-            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self.get_option('remote_addr'))
+            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(getpass.getuser(), host=self.get_option('remote_addr'))
             self._connected = True
         return self
 
