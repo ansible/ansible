@@ -568,7 +568,7 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.pop('body')
+                content = info.pop('body', None)
 
             if content or not parse_json_result:
                 if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
@@ -614,7 +614,7 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.pop('body')
+                content = info.pop('body', None)
 
         # Process result
         if parse_json_result:
