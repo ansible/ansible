@@ -1,0 +1,2 @@
+bugfixes:
+    - make YAML inventory more tolerant to comments/empty/None entries
