@@ -113,7 +113,6 @@ data:
         sample: YourNet
       name:
         description: Name of static route.
-        
 '''
 
 import os
