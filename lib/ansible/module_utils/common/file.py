@@ -148,14 +148,13 @@ class FileLock:
             Default is None, wait indefinitely until lock is released.
         :returns: True
         '''
-        lock_path = path
-        lock_path_b = to_bytes(lock_path, errors='surrogate_or_strict')
+        lock_path_b = to_bytes(path, errors='surrogate_or_strict')
         l_wait = 0.1
         r_exception = IOError
         if sys.version_info[0] == 3:
             r_exception = BlockingIOError
 
-        self.lockfd = open(lock_path_b, 'a')
+        self.lockfd = open(lock_path_b, 'ab')
 
         if lock_timeout is None or lock_timeout < 0:
             fcntl.flock(self.lockfd, fcntl.LOCK_EX)
