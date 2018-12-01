@@ -7,7 +7,7 @@ __metaclass__ = type
 import os
 import time
 
-from collections import MutableMapping
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
