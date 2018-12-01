@@ -23,6 +23,7 @@ import json
 import os
 import re
 import sys
+import time
 
 from multiprocessing.pool import ThreadPool
 
@@ -443,60 +444,83 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
-    def get_mount_info(self, fields, bind_mounts, uuids):
+    def get_mount_info(self, mount_info, bind_mounts, uuids):
 
-            device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
-            mount_info = {}
+            mount_info.update(get_mount_size(mount_info['mount']))
 
-            if all([not device.startswith('/'), ':/' not in device, not fstype.startswith('fuse')]) or fstype == 'none':
-                return mount_info
-
-            mount_statvfs_info = get_mount_size(mount)
-
-            if mount in bind_mounts:
+            options = mount_info['options']
+            if mount_info['mount'] in bind_mounts:
                 # only add if not already there, we might have a plain /etc/mtab
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     options += ",bind"
+            mount_info['options'] = options
 
             # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
             # see _run_lsblk() above
             # https://github.com/ansible/ansible/issues/36077
-            uuid = uuids.get(device, self._udevadm_uuid(device))
-
-            mount_info = {'mount': mount,
-                          'device': device,
-                          'fstype': fstype,
-                          'options': options,
-                          'uuid': uuid}
-
-            mount_info.update(mount_statvfs_info)
+            mount_info['uuid'] = uuids.get(mount_info['device'], self._udevadm_uuid(mount_info['device']))
 
             return mount_info
 
     @timeout.timeout()
     def get_mount_facts(self):
-        mount_facts = {'mounts': []}
+
+        mounts = []
 
         bind_mounts = self._find_bind_mounts()
         uuids = self._lsblk_uuid()
         mtab_entries = self._mtab_entries()
 
         # start threads to query each mount
-        mounts = []
-        async_results = []
-        pool = ThreadPool(processes=min(len(mtab_entries), 8))
+        results = {}
+        pool = ThreadPool(processes=min(len(mtab_entries), 8))  # cpu facts instead of hardcode 8?
+        maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
-            async_results.append(pool.apply_async(self.get_mount_info, (fields, bind_mounts, uuids)))
+
+            device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
+
+            if not device.startswith('/') and ':/' not in device or fstype == 'none':
+                continue
+
+            mount_info = {'mount': mount,
+                          'device': device,
+                          'fstype': fstype,
+                          'options': options}
+
+            results[mount] = {'info': mount_info,
+                               'extra': pool.apply_async(self.get_mount_info, (mount_info, bind_mounts, uuids)),
+                               'start': time.time() + maxtime}
+
+        pool.close()  # done with new workers, start gc
 
         # wait for workers and get results
-        for res in async_results:
-            x = res.get(timeout=globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT)
-            if x:
-                mounts.append(x)
+        while results:
+            for mount in results:
+                res = results[mount]['extra']
+                if res.ready():
+                    if res.successful():
+                        x = res.get()
+                        if x:
+                            mounts.append(x)
+                    else:
+                        # give incomplete data
+                        results[mount]['info']['note'] = 'failed to get extra information'
+                        mounts.append(results[mount]['info'])
+                    del results[mount]
+                    break
+                elif time.time() > results[mount]['start']:
+                    results[mount]['info']['note'] = 'timed out while attempting to get extra information'
+                    mounts.append(results[mount]['info'])
+                    del results[mount]
+                    break
+            else:
+                # avoid cpu churn
+                time.sleep(0.1)
 
-        mount_facts['mounts'] = mounts
+        pool.terminate()  # force any stuck jobs to finish
+        pool.join()
 
-        return mount_facts
+        return {'mounts': mounts}
 
     def get_device_links(self, link_dir):
         if not os.path.exists(link_dir):
