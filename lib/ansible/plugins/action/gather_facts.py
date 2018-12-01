@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
                     del jobs[module]
                     break
             else:
-                time.sleep(1)
+                time.sleep(0.5)
 
         if skipped:
             result['msg'] = "The following modules where skipped: %s\n" % (', '.join(skipped.keys()))
