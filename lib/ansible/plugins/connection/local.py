@@ -49,7 +49,7 @@ class Connection(ConnectionBase):
         ''' connect to the local host; nothing to do here '''
 
         if not self._connected:
-            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(getpass.getuser(), host=self.get_option('remote_addr'))
+            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(getpass.getuser(), host=self.get_option('remote_addr')))
             self._connected = True
         return self
 
