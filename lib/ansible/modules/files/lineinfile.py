@@ -309,9 +309,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        # If no regexp was given and a line match is found anywhere in the file,
+        # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m:
+        if regexp is None and m is None:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
