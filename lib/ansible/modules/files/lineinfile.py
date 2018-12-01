@@ -298,7 +298,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     msg = ''
     changed = False
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
-    # Regexp matched a line in the file
+    # Exact line or Regexp matched a line in the file
     if index[0] != -1:
         if backrefs:
             b_new_line = m.expand(b_line)
