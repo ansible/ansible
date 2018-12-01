@@ -285,6 +285,8 @@ options:
             - C(Suboptions) are the same as I(operations)
             - Works only with >= Zabbix 3.4
 
+notes:
+    - Only Zabbix Server >= 3.0 is supported.
 
 
 extends_documentation_fragment:
