@@ -4,10 +4,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+import time
+
 from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
+from ansible.utils.vars import combine_vars
 
 
 class ActionModule(ActionBase):
@@ -16,12 +20,13 @@ class ActionModule(ActionBase):
         ''' handler for package operations '''
 
         self._supports_check_mode = True
-        self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        for fact_module in C.config.get_config_value('FACTS_MODULES', variables=task_vars):
+        jobs = {}
+        modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
+        for fact_module in modules:
 
             mod_args = task_vars.get('ansible_facts_modules', {}).get(fact_module, {})
             if isinstance(mod_args, MutableMapping):
@@ -30,10 +35,42 @@ class ActionModule(ActionBase):
                 mod_args = self._task.args.copy()
 
             if fact_module != 'setup':
-                del mod_args['gather_subset']
+                mod_args.pop('gather_subset', None)
 
             self._display.vvvv("Running %s" % fact_module)
-            result.update(self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=self._task.async_val))
+            jobs[fact_module] = (self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=True))
+
+        failed = {}
+        skipped = {}
+        while jobs:
+            for module in jobs:
+                poll_args = {'jid': jobs[module]['ansible_job_id'] , '_async_dir': os.path.dirname(jobs[module]['results_file'])}
+                res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
+                if 'finished' in res:
+                    print(res)
+                    if res.get('failed', False):
+                        failed[module] = res.get('msg')
+                    elif res.get('skipped', False):
+                        skipped[module] = res.get('msg')
+                    else:
+                        result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+                    del jobs[module]
+                    break
+            else:
+                time.sleep(1)
+
+        if skipped:
+            result['msg'] = "The following modules where skipped: %s\n" % (', '.join(skipped.keys()))
+            for skip in skipped:
+                result['msg'] += '  %s: %s\n' % (skip, skipped[skip])
+            if len(skipped) == len(modules):
+                result['skipped'] = True
+
+        if failed:
+            result['failed'] = True
+            result['msg'] += "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
+            for fail in failed:
+                result['msg'] += '  %s: %s\n' % (fail, failed[fail])
 
         # tell executor facts were gathered
         result['ansible_facts']['_ansible_facts_gathered'] = True

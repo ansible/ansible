@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gather_facts
-version_added: 2.6
+version_added: 2.8
 short_description: Gathers facts about remote hosts
 description:
      - This module takes care of executing the configured facts modules, the default is to use the M(setup) module.
