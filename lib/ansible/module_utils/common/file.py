@@ -116,8 +116,8 @@ class LockTimeout(Exception):
 
 class FileLock:
     '''
-    Currently FileLock is implemented via fcntl.flock on a lock file, however this
-    behaviour may change in the future. Avoid mixing lock types fcntl.flock,
+    Currently FileLock is implemented via fcntl.lockf on a lock file, however this
+    behaviour may change in the future. Avoid mixing lock types fcntl.lockf,
     fcntl.lockf and module_utils.common.file.FileLock as it will certainly cause
     unwanted and/or unexpected behaviour
     '''
@@ -137,7 +137,7 @@ class FileLock:
 
     def set_lock(self, path, lock_timeout=None):
         '''
-        Set lock on given path via fcntl.flock(), note that using
+        Set lock on given path via fcntl.lockf(), note that using
         locks does not guarantee exclusiveness unless all accessing
         processes honor locks.
 
@@ -157,18 +157,18 @@ class FileLock:
         self.lockfd = open(lock_path_b, 'ab')
 
         if lock_timeout is None or lock_timeout < 0:
-            fcntl.flock(self.lockfd, fcntl.LOCK_EX)
+            fcntl.lockf(self.lockfd, fcntl.LOCK_EX)
             return True
 
         if lock_timeout == 0:
-            fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.lockf(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             return True
 
         if lock_timeout > 0:
             e_secs = 0
             while e_secs < lock_timeout:
                 try:
-                    fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.lockf(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     return True
                 except r_exception:
                     time.sleep(l_wait)
@@ -189,7 +189,7 @@ class FileLock:
             return True
 
         try:
-            fcntl.flock(self.lockfd, fcntl.LOCK_UN)
+            fcntl.lockf(self.lockfd, fcntl.LOCK_UN)
             self.lockfd.close()
         except ValueError:  # file wasn't opened, let context manager fail gracefully
             pass
