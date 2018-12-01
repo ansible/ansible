@@ -25,6 +25,7 @@ import re
 import sys
 import time
 
+from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils.six import iteritems
@@ -462,7 +463,6 @@ class LinuxHardware(Hardware):
 
             return mount_info
 
-    @timeout.timeout()
     def get_mount_facts(self):
 
         mounts = []
@@ -473,7 +473,7 @@ class LinuxHardware(Hardware):
 
         # start threads to query each mount
         results = {}
-        pool = ThreadPool(processes=min(len(mtab_entries), 8))  # cpu facts instead of hardcode 8?
+        pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
         maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
 
