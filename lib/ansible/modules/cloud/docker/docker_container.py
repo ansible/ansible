@@ -410,8 +410,8 @@ options:
       - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
   pids_limit:
     description:
-      - Set PID limit for the container. It accepts an integer value.
-      - Set -1 for unlimited PID.
+      - Set PIDs limit for the container. It accepts an integer value.
+      - Set -1 for unlimited PIDs.
     type: int
     version_added: "2.8"
   privileged:
@@ -1694,11 +1694,6 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_cmd'] = 'command'
         self.parameters_map['expected_devices'] = 'devices'
         self.parameters_map['expected_healthcheck'] = 'healthcheck'
-        self.parameters_map['device_read_bps'] = 'device_read_bps'
-        self.parameters_map['device_write_bps'] = 'device_write_bps'
-        self.parameters_map['device_read_iops'] = 'device_read_iops'
-        self.parameters_map['device_write_iops'] = 'device_write_iops'
-        self.parameters_map['pids_limit'] = 'pids_limit'
 
     def fail(self, msg):
         self.parameters.client.module.fail_json(msg=msg)
