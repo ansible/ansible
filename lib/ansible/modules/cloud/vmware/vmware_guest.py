@@ -184,7 +184,7 @@ options:
     - '     - C(independent_nonpersistent): Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
     - ' - C(controller_type) (string): Type of disk controller. If this value is absent, disk will attach controller specified in C(hardware).'
     - '   Valid values are C(buslogic), C(lsilogic), C(lsilogicsas), C(paravirtual), C(sata) and C(nvme).'
-    - '   C(nvme) support from hardware C(version) 13 and ESXi version 6.5.'
+    - '   C(nvme) controller support from hardware C(version) 13 and ESXi version 6.5.'
     - ' - C(controller_number) (integer): disk controller bus number. The maximum number of same type controller is 4 per VM.'
     - '   Valid value range from 0 to 3.'
     - ' - C(unit_number) (integer): Disk Unit Number.'
