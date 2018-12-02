@@ -29,7 +29,7 @@ description:
        overridden with the I(select_crypto_backend) option."
 requirements:
     - "One of the following Python libraries:"
-    - "cryptography >= 1.5"
+    - "cryptography >= 0.5"
     - "pyOpenSSL"
 options:
     state:
@@ -46,9 +46,48 @@ options:
     type:
         required: false
         default: "RSA"
-        choices: [ RSA, DSA ]
+        choices:
+            - RSA
+            - DSA
+            # - X448
+            # - X25519
+            - secp384r1
+            - NIST-P-384
+            - secp521r1
+            - NIST-P-521
+            - secp224r1
+            - NIST-P-224
+            - secp192r1
+            - NIST-P-192
+            - secp256k1
+            - brainpool-p256r1
+            - brainpool-p384r1
+            - brainpool-p512r1
+            - sect571k1
+            - NIST-K-571
+            - sect409k1
+            - NIST-K-409
+            - sect283k1
+            - NIST-K-283
+            - sect233k1
+            - NIST-K-233
+            - sect163k1
+            - NIST-K-163
+            - sect571r1
+            - NIST-B-571
+            - sect409r1
+            - NIST-B-409
+            - sect283r1
+            - NIST-B-283
+            - sect233r1
+            - NIST-B-233
+            - sect163r2
+            - NIST-B-163
         description:
             - The algorithm used to generate the TLS/SSL private key
+            - "Note that all elliptic curves (i.e. everything but C(RSA) and C(DSA)) require the
+               C(cryptography) backend. Depending on the curve, you need a newer version of the
+               cryptography backend."
     force:
         required: false
         default: False
@@ -153,7 +192,7 @@ import traceback
 from distutils.version import LooseVersion
 
 MINIMAL_PYSOPENSSL_VERSION = '0.6'
-MINIMAL_CRYPTOGRAPHY_VERSION = '1.5'
+MINIMAL_CRYPTOGRAPHY_VERSION = '0.5'
 
 try:
     import OpenSSL
@@ -165,16 +204,28 @@ else:
     PYOPENSSL_FOUND = True
 try:
     import cryptography
+    import cryptography.exceptions
     import cryptography.hazmat.backends
     import cryptography.hazmat.primitives.serialization
     import cryptography.hazmat.primitives.asymmetric.rsa
     import cryptography.hazmat.primitives.asymmetric.dsa
+    import cryptography.hazmat.primitives.asymmetric.ec
     import cryptography.hazmat.primitives.asymmetric.utils
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_FOUND = False
 else:
     CRYPTOGRAPHY_FOUND = True
+    try:
+        import cryptography.hazmat.primitives.asymmetric.x25519
+        CRYPTOGRAPHY_HAS_X25519 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_X25519 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.x448
+        CRYPTOGRAPHY_HAS_X448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_X448 = False
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
@@ -281,9 +332,12 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
     def __init__(self, module):
         super(PrivateKeyPyOpenSSL, self).__init__(module)
 
-        self.type = crypto.TYPE_RSA
-        if module.params['type'] == 'DSA':
+        if module.params['type'] == 'RSA':
+            self.type = crypto.TYPE_RSA
+        elif module.params['type'] == 'DSA':
             self.type = crypto.TYPE_DSA
+        else:
+            module.fail_json(msg="PyOpenSSL backend only supports RSA and DSA keys.")
 
     def _generate_private_key_data(self):
         self.privatekey = crypto.PKey()
@@ -336,26 +390,99 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
 # Implementation with using cryptography
 class PrivateKeyCryptography(PrivateKeyBase):
 
+    def _get_ec_class(self, ectype):
+        ecclass = cryptography.hazmat.primitives.asymmetric.ec.__dict__.get(ectype)
+        if ecclass is None:
+            self.module.fail_json(msg='Your cryptography version does not support {0}'.format(ectype))
+        return ecclass
+
+    def _add_curve(self, name, ectype, deprecated=False):
+        def create(size):
+            ecclass = self._get_ec_class(ectype)
+            return ecclass()
+
+        def verify(privatekey):
+            ecclass = self._get_ec_class(ectype)
+            return isinstance(privatekey.private_numbers().public_numbers.curve, ecclass)
+
+        self.curves[name] = {
+            'create': create,
+            'verify': verify,
+            'deprecated': deprecated,
+        }
+
     def __init__(self, module):
         super(PrivateKeyCryptography, self).__init__(module)
+
+        self.curves = dict()
+        self._add_curve('secp384r1', 'SECP384R1')
+        self._add_curve('NIST-P-384', 'SECP384R1')  # alias
+        self._add_curve('secp521r1', 'SECP521R1')
+        self._add_curve('NIST-P-521', 'SECP521R1')  # alias
+        self._add_curve('secp224r1', 'SECP224R1')
+        self._add_curve('NIST-P-224', 'SECP224R1')  # alias
+        self._add_curve('secp192r1', 'SECP192R1')
+        self._add_curve('NIST-P-192', 'SECP192R1')  # alias
+        self._add_curve('secp256k1', 'SECP256K1')
+        self._add_curve('brainpool-p256r1', 'BrainpoolP256R1', deprecated=True)
+        self._add_curve('brainpool-p384r1', 'BrainpoolP384R1', deprecated=True)
+        self._add_curve('brainpool-p512r1', 'BrainpoolP512R1', deprecated=True)
+        self._add_curve('sect571k1', 'SECT571K1', deprecated=True)
+        self._add_curve('NIST-K-571', 'SECT571K1', deprecated=True)  # alias
+        self._add_curve('sect409k1', 'SECT409K1', deprecated=True)
+        self._add_curve('NIST-K-409', 'SECT409K1', deprecated=True)  # alias
+        self._add_curve('sect283k1', 'SECT283K1', deprecated=True)
+        self._add_curve('NIST-K-283', 'SECT283K1', deprecated=True)  # alias
+        self._add_curve('sect233k1', 'SECT233K1', deprecated=True)
+        self._add_curve('NIST-K-233', 'SECT233K1', deprecated=True)  # alias
+        self._add_curve('sect163k1', 'SECT163K1', deprecated=True)
+        self._add_curve('NIST-K-163', 'SECT163K1', deprecated=True)  # alias
+        self._add_curve('sect571r1', 'SECT571R1', deprecated=True)
+        self._add_curve('NIST-B-571', 'SECT571R1', deprecated=True)  # alias
+        self._add_curve('sect409r1', 'SECT409R1', deprecated=True)
+        self._add_curve('NIST-B-409', 'SECT409R1', deprecated=True)  # alias
+        self._add_curve('sect283r1', 'SECT283R1', deprecated=True)
+        self._add_curve('NIST-B-283', 'SECT283R1', deprecated=True)  # alias
+        self._add_curve('sect233r1', 'SECT233R1', deprecated=True)
+        self._add_curve('NIST-B-233', 'SECT233R1', deprecated=True)  # alias
+        self._add_curve('sect163r2', 'SECT163R2', deprecated=True)
+        self._add_curve('NIST-B-163', 'SECT163R2', deprecated=True)  # alias
 
         self.module = module
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
 
         self.type = module.params['type']
+        if not CRYPTOGRAPHY_HAS_X25519 and self.type == 'X25519':
+            self.module.fail_json(msg='Your cryptography version does not support X25519')
+        if not CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
+            self.module.fail_json(msg='Your cryptography version does not support X448')
 
     def _generate_private_key_data(self):
-        if self.type == 'RSA':
-            self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
-                public_exponent=65537,  # OpenSSL always uses this
-                key_size=self.size,
-                backend=self.cryptography_backend
-            )
-        if self.type == 'DSA':
-            self.privatekey = cryptography.hazmat.primitives.asymmetric.dsa.generate_private_key(
-                key_size=self.size,
-                backend=self.cryptography_backend
-            )
+        try:
+            if self.type == 'RSA':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
+                    public_exponent=65537,  # OpenSSL always uses this
+                    key_size=self.size,
+                    backend=self.cryptography_backend
+                )
+            if self.type == 'DSA':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.dsa.generate_private_key(
+                    key_size=self.size,
+                    backend=self.cryptography_backend
+                )
+            if CRYPTOGRAPHY_HAS_X25519 and self.type == 'X25519':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
+            if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
+            if self.type in self.curves:
+                if self.curves[self.type]['deprecated']:
+                    self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.type))
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.ec.generate_private_key(
+                    curve=self.curves[self.type]['create'](self.size),
+                    backend=self.cryptography_backend
+                )
+        except cryptography.exceptions.UnsupportedAlgorithm as e:
+            self.module.fail_json(msg='Cryptography backend does not support the algorithm required for {0}'.format(self.type))
 
         # Select key encryption
         encryption_algorithm = cryptography.hazmat.primitives.serialization.NoEncryption()
@@ -404,13 +531,19 @@ class PrivateKeyCryptography(PrivateKeyBase):
     def _check_size_and_type(self):
         privatekey = self._load_privatekey()
 
-        if self.size != privatekey.key_size:
-            return False
-
         if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
-            return self.type == 'RSA'
+            return self.type == 'RSA' and self.size == privatekey.key_size
         if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.dsa.DSAPrivateKey):
-            return self.type == 'DSA'
+            return self.type == 'DSA' and self.size == privatekey.key_size
+        if CRYPTOGRAPHY_HAS_X25519 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey):
+            return self.type == 'X25519'
+        if CRYPTOGRAPHY_HAS_X448 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey):
+            return self.type == 'X448'
+        if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
+            if self.type not in self.curves:
+                return False
+            return self.curves[self.type]['verify'](privatekey)
+
         return False
 
     def dump(self):
@@ -426,7 +559,19 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             size=dict(default=4096, type='int'),
-            type=dict(default='RSA', choices=['RSA', 'DSA'], type='str'),
+            type=dict(default='RSA', choices=[
+                'RSA', 'DSA',
+                # x25519 is missing serialization functions: https://github.com/pyca/cryptography/issues/4386
+                # x448 is also missing it: https://github.com/pyca/cryptography/pull/4580#issuecomment-437913340
+                # 'X448', 'X25519',
+                'secp384r1', 'NIST-P-384', 'secp521r1', 'NIST-P-521', 'secp224r1', 'NIST-P-224',
+                'secp192r1', 'NIST-P-192', 'secp256k1',
+                'brainpool-p256r1', 'brainpool-p384r1', 'brainpool-p512r1',
+                'sect571k1', 'NIST-K-571', 'sect409k1', 'NIST-K-409', 'sect283k1', 'NIST-K-283',
+                'sect233k1', 'NIST-K-233', 'sect163k1', 'NIST-K-163', 'sect571r1', 'NIST-B-571',
+                'sect409r1', 'NIST-B-409', 'sect283r1', 'NIST-B-283', 'sect233r1', 'NIST-B-233',
+                'sect163r2', 'NIST-B-163',
+            ], type='str'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
             passphrase=dict(type='str', no_log=True),

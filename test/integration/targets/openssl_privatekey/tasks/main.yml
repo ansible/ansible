@@ -1,4 +1,31 @@
 ---
+- name: Find out which elliptic curves are supported by installed OpenSSL
+  command: openssl ecparam -list_curves
+  register: openssl_ecc
+
+- name: Compile list of elliptic curves supported by OpenSSL
+  set_fact:
+    openssl_ecc_list: |
+      {{
+        openssl_ecc.stdout_lines
+        | map('regex_search', '^ *([a-zA-Z0-9_-]+) *: .*$')
+        | select()
+        | map('regex_replace', '^ *([a-zA-Z0-9_-]+) *: .*$', '\1')
+        | list
+      }}
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '6'
+  # CentOS comes with a very old jinja2 which does not include the map() filter...
+- name: Compile list of elliptic curves supported by OpenSSL (CentOS 6)
+  set_fact:
+    openssl_ecc_list:
+    - secp384r1
+    - secp521r1
+    - prime256v1
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6'
+
+- name: List of elliptic curves supported by OpenSSL
+  debug: var=openssl_ecc_list
+
 - block:
   - name: Running tests with pyOpenSSL backend
     include_tasks: impl.yml
@@ -28,4 +55,4 @@
 
   - import_tasks: ../tests/validate.yml
 
-  when: cryptography_version.stdout is version('1.5', '>=')
+  when: cryptography_version.stdout is version('0.5', '>=')
