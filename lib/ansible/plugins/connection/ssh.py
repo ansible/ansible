@@ -48,7 +48,11 @@ DOCUMENTATION = '''
               - name: ansible_password
               - name: ansible_ssh_pass
       ssh_args:
-          description: Arguments to pass to all ssh cli tools
+          description:
+            - Arguments to pass to all ssh cli tools.
+            - If set, this will override the Ansible default ssh arguments.
+            - In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may be appropriate.
+            - Be aware that if `-o ControlPath` is set in ssh_args, the control path setting is not used.
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
           ini:
               - section: 'ssh_connection'
@@ -69,20 +73,6 @@ DOCUMENTATION = '''
                 version_added: '2.7'
           vars:
               - name: ansible_ssh_common_args
-      ssh_executable:
-          default: ssh
-          description:
-            - This defines the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in $PATH.
-            - This option is usually not required, it might be useful when access to system ssh is restricted,
-              or when using ssh wrappers to connect to remote hosts.
-          env: [{name: ANSIBLE_SSH_EXECUTABLE}]
-          ini:
-          - {key: ssh_executable, section: ssh_connection}
-          #const: ANSIBLE_SSH_EXECUTABLE
-          version_added: "2.2"
-          vars:
-              - name: ansible_ssh_executable
-                version_added: '2.7'
       sftp_executable:
           default: sftp
           description:
@@ -140,8 +130,8 @@ DOCUMENTATION = '''
               version_added: '2.7'
       retries:
           # constant: ANSIBLE_SSH_RETRIES
-          description: Number of attempts to connect.
-          default: 3
+          description: Number of attempts to establish a connection before we give up and report the host as 'UNREACHABLE'
+          default: 0
           type: integer
           env:
             - name: ANSIBLE_SSH_RETRIES
@@ -155,8 +145,8 @@ DOCUMENTATION = '''
                 version_added: '2.7'
       port:
           description: Remote port to connect to.
-          type: int
           default: 22
+          type: int
           ini:
             - section: defaults
               key: remote_port
@@ -214,6 +204,8 @@ DOCUMENTATION = '''
         description:
           - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
           - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
+          - Before 2.3 it defaulted to `control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r`.
+          - Be aware that this setting is ignored if `-o ControlPath` is set in ssh args.
         env:
           - name: ANSIBLE_SSH_CONTROL_PATH
         ini:
@@ -248,15 +240,23 @@ DOCUMENTATION = '''
       scp_if_ssh:
         default: smart
         description:
-          - "Prefered method to use when transfering files over ssh"
-          - When set to smart, Ansible will try them until one succeeds or they all fail
-          - If set to True, it will force 'scp', if False it will use 'sftp'
+          - "Prefered method to use when transfering files over ssh."
+          - When set to smart, Ansible will try them until one succeeds or they all fail.
+          - If set to True, it will force 'scp', if False it will use 'sftp'.
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
         vars:
           - name: ansible_scp_if_ssh
             version_added: '2.7'
+      transfer_method:
+        description: 'unused?'
+        #  - "Preferred method to use when transferring files over ssh"
+        #  - Setting to smart will try them until one succeeds or they all fail
+        #choices: ['sftp', 'scp', 'dd', 'smart']
+        env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
+        ini:
+        - {key: transfer_method, section: ssh_connection}
       use_tty:
         version_added: '2.5'
         default: 'yes'
