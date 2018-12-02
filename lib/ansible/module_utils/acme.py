@@ -568,7 +568,7 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.pop('body')
+                content = info.pop('body', None)
 
             if content or not parse_json_result:
                 if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
@@ -614,7 +614,7 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.pop('body')
+                content = info.pop('body', None)
 
         # Process result
         if parse_json_result:
@@ -674,14 +674,26 @@ class ACMEAccount(object):
             url = self.directory['newAccount']
 
         result, info = self.send_signed_request(url, new_reg)
-        if 'location' in info:
-            self.set_account_uri(info['location'])
 
         if info['status'] in ([200, 201] if self.version == 1 else [201]):
             # Account did not exist
+            if 'location' in info:
+                self.set_account_uri(info['location'])
             return True
         elif info['status'] == (409 if self.version == 1 else 200):
             # Account did exist
+            if result.get('status') == 'deactivated':
+                # A probable bug in Pebble (https://github.com/letsencrypt/pebble/issues/179)
+                # and Boulder: this should not return a valid account object according to
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.3.6:
+                #     "Once an account is deactivated, the server MUST NOT accept further
+                #      requests authorized by that account's key."
+                if not allow_creation:
+                    return False
+                else:
+                    raise ModuleFailException("Account is deactivated")
+            if 'location' in info:
+                self.set_account_uri(info['location'])
             return False
         elif info['status'] == 400 and result['type'] == 'urn:ietf:params:acme:error:accountDoesNotExist' and not allow_creation:
             # Account does not exist (and we didn't try to create it)
