@@ -1,0 +1,3 @@
+bugfixes:
+- "acme_account, acme_account_facts - in some cases, it could happen that the modules
+   return information on disabled accounts accidentally returned by the ACME server."
