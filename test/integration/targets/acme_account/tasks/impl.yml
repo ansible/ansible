@@ -16,6 +16,22 @@
   ignore_errors: yes
   register: account_not_created
 
+- name: Create it now (check mode, diff)
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: present
+    allow_creation: yes
+    terms_agreed: yes
+    contact:
+    - mailto:example@example.org
+  check_mode: yes
+  diff: yes
+  register: account_created_check
+
 - name: Create it now
   acme_account:
     select_crypto_backend: "{{ select_crypto_backend }}"
@@ -29,6 +45,35 @@
     contact:
     - mailto:example@example.org
   register: account_created
+
+- name: Create it now (idempotent)
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: present
+    allow_creation: yes
+    terms_agreed: yes
+    contact:
+    - mailto:example@example.org
+  register: account_created_idempotent
+
+- name: Change email address (check mode, diff)
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_content: "{{ lookup('file', output_dir ~ '/accountkey.pem') }}"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: present
+    # allow_creation: no
+    contact:
+    - mailto:example@example.com
+  check_mode: yes
+  diff: yes
+  register: account_modified_check
 
 - name: Change email address
   acme_account:
@@ -70,6 +115,20 @@
   ignore_errors: yes
   register: account_modified_wrong_uri
 
+- name: Clear contact email addresses (check mode, diff)
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: present
+    # allow_creation: no
+    contact: []
+  check_mode: yes
+  diff: yes
+  register: account_modified_2_check
+
 - name: Clear contact email addresses
   acme_account:
     select_crypto_backend: "{{ select_crypto_backend }}"
@@ -100,6 +159,21 @@
 - name: Parse account key (to ease debugging some test failures)
   command: openssl ec -in {{ output_dir }}/accountkey2.pem -noout -text
 
+- name: Change account key (check mode, diff)
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    new_account_key_src: "{{ output_dir }}/accountkey2.pem"
+    state: changed_key
+    contact:
+    - mailto:example@example.com
+  check_mode: yes
+  diff: yes
+  register: account_change_key_check
+
 - name: Change account key
   acme_account:
     select_crypto_backend: "{{ select_crypto_backend }}"
@@ -112,6 +186,18 @@
     contact:
     - mailto:example@example.com
   register: account_change_key
+
+- name: Deactivate account (check mode, diff)
+  acme_account:
+    select_crypto_backend: "{{ select_crypto_backend }}"
+    account_key_src: "{{ output_dir }}/accountkey2.pem"
+    acme_version: 2
+    acme_directory: https://{{ acme_host }}:14000/dir
+    validate_certs: no
+    state: absent
+  check_mode: yes
+  diff: yes
+  register: account_deactivate_check
 
 - name: Deactivate account
   acme_account:
