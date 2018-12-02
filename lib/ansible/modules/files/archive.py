@@ -45,9 +45,16 @@ options:
     type: path
   exclude_path:
     description:
-      - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive.
+      - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive
     type: str
     version_added: '2.4'
+  force_archive:
+    version_added: '2.8'
+    description:
+      - Allow you to force the module to treat this as an archive even if only a single file is specified.
+      - By default behaviour is maintained. i.e A when a single file is specified it is compressed only (not archived).
+    type: bool
+    default: false
   remove:
     description:
       - Remove any added source files and trees after adding to archive.
@@ -105,6 +112,19 @@ EXAMPLES = r'''
     exclude_path:
     - /path/to/foo/ba*
     format: bz2
+
+- name: Use gzip to compress a single archive (i.e don't archive it first with tar)
+  archive:
+    path: /path/to/foo/single.file
+    dest: /path/file.gz
+    format: gz
+
+- name: Create a tar.gz archive of a single file.
+  archive:
+    path: /path/to/foo/single.file
+    dest: /path/file.tar.gz
+    format: gz
+    force_archive: true
 '''
 
 RETURN = r'''
@@ -176,6 +196,7 @@ def main():
             format=dict(type='str', default='gz', choices=['bz2', 'gz', 'tar', 'xz', 'zip']),
             dest=dict(type='path'),
             exclude_path=dict(type='list'),
+            force_archive=dict(type='bool', default=False),
             remove=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
@@ -192,6 +213,7 @@ def main():
     expanded_paths = []
     expanded_exclude_paths = []
     format = params['format']
+    force_archive = params['force_archive']
     globby = False
     changed = False
     state = 'absent'
@@ -236,9 +258,13 @@ def main():
     if not expanded_paths:
         return module.fail_json(path=', '.join(paths), expanded_paths=', '.join(expanded_paths), msg='Error, no source paths were found')
 
-    # If we actually matched multiple files or TRIED to, then
-    # treat this as a multi-file archive
-    archive = globby or os.path.isdir(expanded_paths[0]) or len(expanded_paths) > 1
+    # Only try to determine if we are working with an archive or not if we haven't set archive to true
+    if not force_archive:
+        # If we actually matched multiple files or TRIED to, then
+        # treat this as a multi-file archive
+        archive = globby or os.path.isdir(expanded_paths[0]) or len(expanded_paths) > 1
+    else:
+        archive = True
 
     # Default created file name (for single-file archives) to
     # <file>.<format>
