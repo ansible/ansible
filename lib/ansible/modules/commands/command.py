@@ -145,8 +145,8 @@ from ansible.module_utils.common.collections import is_iterable
 
 def check_command(module, commandline):
     arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
-                 'ln': 'state=link', 'mkdir': 'state=directory',
-                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
+                 'ln': 'state: link', 'mkdir': 'state: directory',
+                 'rmdir': 'state: absent', 'rm': 'state: absent', 'touch': 'state: touch'}
     commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
@@ -160,8 +160,8 @@ def check_command(module, commandline):
     command = os.path.basename(command)
 
     disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
-                     " warn=False to this command task or set command_warnings=False in" \
-                     " ansible.cfg to get rid of this message."
+                     " warn: no to this command task or set command_warnings=False in" \
+                     " the [defaults] section of ansible.cfg to get rid of this message."
     substitutions = {'mod': None, 'cmd': command}
 
     if command in arguments:
