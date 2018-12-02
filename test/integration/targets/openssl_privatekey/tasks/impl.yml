@@ -1,0 +1,51 @@
+---
+- name: Generate privatekey1 - standard
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate privatekey2 - size 2048
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey2.pem'
+    size: 2048
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate privatekey3 - type DSA
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey3.pem'
+    type: DSA
+    size: 3072
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate privatekey4 - standard
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey4.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Delete privatekey4 - standard
+  openssl_privatekey:
+    state: absent
+    path: '{{ output_dir }}/privatekey4.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate privatekey5 - standard - with passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey5.pem'
+    passphrase: ansible
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate privatekey5 - standard - idempotence
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey5.pem'
+    passphrase: ansible
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey5_idempotence
+
+- name: Generate privatekey6 - standard - with non-ASCII passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey6.pem'
+    passphrase: ànsïblé
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'

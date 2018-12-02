@@ -1,3 +1,4 @@
+---
 - name: Validate privatekey1 (test - RSA key with size 4096 bits)
   shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey1
@@ -18,14 +19,14 @@
       - privatekey2.stdout == '2048'
 
 
-- name: Validate privatekey3 (test - DSA key with size 4096 bits)
+- name: Validate privatekey3 (test - DSA key with size 3072 bits)
   shell: "openssl dsa -noout -text -in {{ output_dir }}/privatekey3.pem  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey3
 
-- name: Validate privatekey3 (assert - DSA key with size 4096 bits)
+- name: Validate privatekey3 (assert - DSA key with size 3072 bits)
   assert:
     that:
-      - privatekey3.stdout == '4096'
+      - privatekey3.stdout == '3072'
 
 
 - name: Validate privatekey4 (test - Ensure key has been removed)
