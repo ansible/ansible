@@ -155,7 +155,6 @@ def get_pid(name, projects):
 
 
 def core(module):
-    state = module.params['state']
     name = module.params['name']
     pid = module.params['id']
     rest = DigitalOceanHelper(module)
@@ -169,62 +168,21 @@ def core(module):
 
     if module.params['resources'] is None:  # Get generic information about projects
         if pid is not None:  # Get information about specific project
-            response = rest.query('projects/{0}'.pid)
+            response = rest.get('projects/{0}'.format(pid))
         elif module.params['default'] is True:  # Get information about default project
-            response = rest.query('projects/default')
+            response = rest.get('projects/default')
         else:  # Get information about all projects
-            response = get_all_projects(rest)
-    else:  # Get information about project resources
+            response = rest.get('projects')
+    else:
         if module.params['default'] is True:  # Get information about default project resources
-            response = rest.query('projects/default/resources')
-        else:  # Get information about specific project resources
-            response = rest.query('/projects/{0}/resources'.format(pid))
+            response = rest.get('projects/default/resources')
+        elif module.params['default'] is None:  # Get information about specific project resources
+            response = rest.get('/projects/{0}/resources'.format(pid))
 
     if response.status_code == 200:
         module.exit_json(changed=False, data=response.json)
     else:
         module.fail_json(msg=response.json)
-
-    # if state == 'present':
-    #     if module.params['resources'] is None:  # No resource should be assigned
-    #         payload = {'name': name,
-    #                    'description': module.params['description'],
-    #                    'purpose': module.params['purpose'],
-    #                    'environment': module.params['environment'],
-    #                    }
-    #         if pid is False:  # Create new project
-    #             response = rest.post('projects', data=payload)
-    #             if response.status_code == 201:
-    #                 module.exit_json(changed=True, data=response.json)
-    #             elif response.status_code == 409:
-    #                 module.exit_json(changed=False, data="name is already in use (duplicate)")
-    #             else:
-    #                 module.fail_json(msg=response.json)
-    #         else:
-    #             payload['is_default'] = module.params['default']
-    #             response = rest.put('projects/{0}'.format(pid), data=payload)
-    #             if response.status_code == 200:
-    #                 module.exit_json(changed=True, data=response.json)
-    #             else:
-    #                 module.fail_json(msg=response.json)
-    #     else:  # Manipulate resources in a project
-    #         if module.params['default'] is True:  # Assign to the default project
-    #             payload = {'resources': module.params['resources']}
-    #             response = rest.post('projects/default/resources', data=payload)
-    #             if response.status_code == 200:
-    #                 module.exit_json(changed=True, data=response.json)
-    #             else:
-    #                 module.fail_json(msg=response.json)
-
-    #         else:  # Assign to a specified project
-    #             if pid is False:
-    #                 module.fail_json(msg="Project must exist to assign resources")
-    #             payload = {'resources': module.params['resources']}
-    #             response = rest.post('projects/{0}/resources'.format(pid), data=payload)
-    #             if response.status_code == 200:
-    #                 module.exit_json(changed=True, data=response.json)
-    #             else:
-    #                 module.fail_json(msg=response.json)
     module.exit_json(changed=False)
 
 

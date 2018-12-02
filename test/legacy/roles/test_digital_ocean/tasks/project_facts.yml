@@ -1,39 +1,55 @@
 ---
+- set_fact:
+    proj:
+      - AnsibleDev1
+      - AnsibleDev2
+
+# - name: Create new projects
+#   digital_ocean_project:
+#     state: present
+#     name: '{{item}}'
+#     description: Project created for integration test
+#     purpose: Just trying out DigitalOcean
+#     environment: development
+#     oauth_token: "{{ digitalocean_oauth_token }}"
+#   loop: '{{proj}}'
+
 - name: Query all projects
   digital_ocean_project_facts:
     oauth_token: "{{ digitalocean_oauth_token }}"
   register: query_all
 
+- assert:
+    that:
+      - query_all.data | length >= 2
 
-- name: Create new project
-  digital_ocean_project:
-    state: present
-    name: IntTestProject
-    description: Project created for integration test
-    purpose: Just trying out DigitalOcean
-    environment: development
+- name: Query one project by name
+  digital_ocean_project_facts:
     oauth_token: "{{ digitalocean_oauth_token }}"
-  register: create
+    name: Development
+  register: query_dev
 
 - assert:
     that:
-      - create.data.name == IntTestProject
-      - create.data.description == "Project created for integration test"
-      - create.changed == True
+      - query_dev.changed == False
+      - query_dev.data.project.name == "Development"
 
-- name: Modify project
-  digital_ocean_project:
-    state: present
-    name: IntTestProject
-    description: Modified description
-    purpose: Just trying out DigitalOcean
-    environment: development
-    default: no
+- name: Query default project
+  digital_ocean_project_facts:
     oauth_token: "{{ digitalocean_oauth_token }}"
-  register: modified
+    default: true
+  register: query_default
 
-- assert:
-    that:
-      - modified.data.name == IntTestProject
-      - modified.data.description == "Modified description"
-      - modified.changed == True
+- name: Query default project resources
+  digital_ocean_project_facts:
+    oauth_token: "{{ digitalocean_oauth_token }}"
+    default: true
+    resources: true
+  register: query_default_resources
+
+- name: Query Production project resources
+  digital_ocean_project_facts:
+    oauth_token: "{{ digitalocean_oauth_token }}"
+    name: Production
+    resources: true
+  register: query_dev_resources
