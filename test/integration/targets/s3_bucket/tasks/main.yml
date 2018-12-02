@@ -262,6 +262,18 @@
           - output.changed
 
     # ============================================================
+    - name: Delete s3_bucket again (should not fail)
+      s3_bucket:
+        name: "{{ resource_prefix }}.testbucket.ansible"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+
+    # ============================================================
     - name: Try to delete a missing bucket (should not fail)
       s3_bucket:
         name: "{{ resource_prefix }}.testbucket.ansible.missing"
