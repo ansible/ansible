@@ -848,9 +848,6 @@ class TaskExecutor:
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
-        # FIXME: remove once all plugins pull all data from self._options
-        self._play_context.set_options_from_plugin(connection)
-
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
             self._play_context.timeout = connection.get_option('persistent_command_timeout')
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)

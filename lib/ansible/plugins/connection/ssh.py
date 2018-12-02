@@ -145,7 +145,6 @@ DOCUMENTATION = '''
                 version_added: '2.7'
       port:
           description: Remote port to connect to.
-          default: 22
           type: int
           ini:
             - section: defaults
@@ -168,7 +167,6 @@ DOCUMENTATION = '''
             - name: ansible_user
             - name: ansible_ssh_user
       pipelining:
-          default: ANSIBLE_PIPELINING
           description:
             - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
               by executing many Ansible modules without actual file transfer.
