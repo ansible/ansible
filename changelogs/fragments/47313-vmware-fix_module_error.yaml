@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix VMware module utils for self usage.
