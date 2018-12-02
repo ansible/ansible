@@ -13,6 +13,7 @@
       - account_created.account_uri is not none
       - "'account' in account_created"
       - "'contact' in account_created.account"
+      - "'public_account_key' in account_created.account"
       - account_created.account.contact | length == 1
       - "account_created.account.contact[0] == 'mailto:example@example.org'"
 
@@ -23,6 +24,7 @@
       - account_modified.account_uri is not none
       - "'account' in account_modified"
       - "'contact' in account_modified.account"
+      - "'public_account_key' in account_modified.account"
       - account_modified.account.contact | length == 0
 
 - name: Validate that account does not exist with wrong account URI
