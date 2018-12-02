@@ -1,0 +1,42 @@
+- name: Create a remote unprivileged remote user and test-ansible.cfg
+  hosts: ssh
+  serial: 1  # ssh group contains 2 inventory hosts: localhost
+  tasks:
+    - name: Create remote unprivileged remote group
+      group:
+        name: '{{ remote_unprivileged_user }}'
+
+    - name: Create remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+        group: '{{ remote_unprivileged_user }}'
+      register: user
+
+    - file:
+        path: "{{ user.home }}/.ssh"
+        owner: '{{ remote_unprivileged_user }}'
+        group: '{{ remote_unprivileged_user }}'
+        state: directory
+        mode: 0700
+
+    - name: Duplicate authorized_keys
+      copy:
+        src: $HOME/.ssh/authorized_keys
+        dest: '{{ user.home }}/.ssh/authorized_keys'
+        owner: '{{ remote_unprivileged_user }}'
+        group: '{{ remote_unprivileged_user }}'
+        mode: 0600
+        remote_src: yes
+
+    - name: Create local test-ansible.cfg
+      copy:
+        content: |
+          [ssh_connection]
+          ssh_common_args = "-o User={{ remote_unprivileged_user }}"
+        dest: "{{ playbook_dir }}/test-ansible.cfg"
+      connection: local
+
+    - name: Enable login for other users
+      command: mv /var/run/nologin /var/run/nologin.backup
+      args:
+        removes: /var/run/nologin

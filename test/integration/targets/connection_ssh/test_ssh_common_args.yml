@@ -1,0 +1,8 @@
+- hosts: ssh
+  serial: 1  # ssh group contains 2 inventory hosts: localhost
+  tasks:
+    - name: Ensure remote user is remote_unprivileged_user
+      assert:
+        fail_msg: "'{{ remote_unprivileged_user }}' expected instead of '{{ ansible_user_id}}'"
+        that:
+          - ansible_user_id == remote_unprivileged_user

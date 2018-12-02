@@ -2,6 +2,8 @@
 
 set -eux
 
+./ssh_common_args.sh "$@"
+
 # sftp
 ./posix.sh "$@"
 # scp

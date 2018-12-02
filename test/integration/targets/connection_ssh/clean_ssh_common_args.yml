@@ -1,0 +1,18 @@
+- hosts: ssh
+  serial: 1  # ssh group contains 2 inventory hosts: localhost
+  tasks:
+    - name: Delete local test-ansible.cfg
+      file:
+        path: "{{ playbook_dir }}/test-ansible.cfg"
+        state: absent
+      connection: local
+
+    - name: Remove remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+        state: absent
+
+    - name: Restore pam_nologin configuration
+      command: mv /var/run/nologin.backup /var/run/nologin
+      args:
+        removes: /var/run/nologin.backup
