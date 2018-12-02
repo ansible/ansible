@@ -1,52 +1,130 @@
+# -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Ansible Project
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import sys
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-from units.compat import unittest
-from units.compat.mock import patch, MagicMock
-
-from ansible.module_utils.six.moves import builtins
-from ansible.module_utils._text import to_native
-
-realimport = builtins.__import__
+import pytest
+from ansible.module_utils.vmware import connect_to_api, PyVmomi
 
 
-class TestVmware(unittest.TestCase):
-    def clear_modules(self, mods):
-        for mod in mods:
-            if mod in sys.modules:
-                del sys.modules[mod]
+test_data = [
+    (
+        dict(
+            username='Administrator@vsphere.local',
+            password='Esxi@123$%',
+            hostname=False,
+            validate_certs=False,
+        ),
+        "Hostname parameter is missing. Please specify this parameter in task or"
+        " export environment variable like 'export VMWARE_HOST=ESXI_HOSTNAME'"
+    ),
+    (
+        dict(
+            username=False,
+            password='Esxi@123$%',
+            hostname='esxi1',
+            validate_certs=False,
+        ),
+        "Username parameter is missing. Please specify this parameter in task or"
+        " export environment variable like 'export VMWARE_USER=ESXI_USERNAME'"
+    ),
+    (
+        dict(
+            username='Administrator@vsphere.local',
+            password=False,
+            hostname='esxi1',
+            validate_certs=False,
+        ),
+        "Password parameter is missing. Please specify this parameter in task or"
+        " export environment variable like 'export VMWARE_PASSWORD=ESXI_PASSWORD'"
+    ),
+    (
+        dict(
+            username='Administrator@vsphere.local',
+            password='Esxi@123$%',
+            hostname='esxi1',
+            validate_certs=True,
+        ),
+        "Unknown error while connecting to vCenter or ESXi API at esxi1:443"
+        " : [Errno 8] nodename nor servname provided, or not known"
+    ),
+]
 
-    @patch.object(builtins, '__import__')
-    def test_vmware_missing_ensure_libs(self, mock_import):
-        def _mock_import(name, *args, **kwargs):
-            if name in ('pyVmomi', 'requests'):
-                raise ImportError
-            return realimport(name, *args, **kwargs)
 
-        self.clear_modules(['pyVmomi', 'ansible.module_utils.vmware', 'requests'])
-        mock_import.side_effect = _mock_import
-        mod = builtins.__import__('ansible.module_utils.vmware')
+class AnsibleModuleExit(Exception):
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
 
-        self.assertFalse(mod.module_utils.vmware.HAS_PYVMOMI)
-        self.assertFalse(mod.module_utils.vmware.HAS_REQUESTS)
 
-        with self.assertRaises(NameError) as context:
-            mod.module_utils.vmware.PyVmomi(MagicMock())
+class ExitJson(AnsibleModuleExit):
+    pass
 
-        self.assertIn("name 'vim' is not defined", to_native(context.exception))
 
-    @patch.object(builtins, '__import__')
-    def test_vmware_found_ensure_libs(self, mock_import):
-        def _mock_import(name, *args, **kwargs):
-            if 'pyVmomi' in name:
-                return MagicMock()
-            return realimport(name, *args, **kwargs)
+class FailJson(AnsibleModuleExit):
+    pass
 
-        self.clear_modules(['pyVmomi', 'ansible.module_utils.vmware', 'requests'])
-        mock_import.side_effect = _mock_import
-        mod = builtins.__import__('ansible.module_utils.vmware')
 
-        self.assertTrue(mod.module_utils.vmware.HAS_PYVMOMI)
-        self.assertTrue(mod.module_utils.vmware.HAS_REQUESTS)
+@pytest.fixture
+def fake_ansible_module():
+    return FakeAnsibleModule()
+
+
+class FakeAnsibleModule:
+    def __init__(self):
+        self.params = {}
+        self.tmpdir = None
+
+    def exit_json(self, *args, **kwargs):
+        raise ExitJson(*args, **kwargs)
+
+    def fail_json(self, *args, **kwargs):
+        raise FailJson(*args, **kwargs)
+
+
+def test_pyvmomi_lib_exists(mocker, fake_ansible_module):
+    """ Test if Pyvmomi is present or not"""
+    mocker.patch('ansible.module_utils.vmware.HAS_PYVMOMI', new=False)
+    with pytest.raises(FailJson) as exec_info:
+        PyVmomi(fake_ansible_module)
+
+    assert 'PyVmomi Python module required. Install using "pip install PyVmomi"' == exec_info.value.kwargs['msg']
+
+
+def test_requests_lib_exists(mocker, fake_ansible_module):
+    """ Test if requests is present or not"""
+    mocker.patch('ansible.module_utils.vmware.HAS_REQUESTS', new=False)
+    with pytest.raises(FailJson) as exec_info:
+        PyVmomi(fake_ansible_module)
+
+    msg = "Unable to find 'requests' Python library which is required. Please install using 'pip install requests'"
+    assert msg == exec_info.value.kwargs['msg']
+
+
+@pytest.mark.parametrize("params, msg", test_data, ids=['hostname', 'username', 'password', 'validate_certs'])
+def test_required_params(request, params, msg, fake_ansible_module):
+    """ Test if required params are correct or not"""
+    fake_ansible_module.params = params
+    with pytest.raises(FailJson) as exec_info:
+        connect_to_api(fake_ansible_module)
+    assert msg == exec_info.value.kwargs['msg']
+
+
+def test_validate_certs(mocker, fake_ansible_module):
+    """ Test if SSL is required or not"""
+    fake_ansible_module.params = dict(
+        username='Administrator@vsphere.local',
+        password='Esxi@123$%',
+        hostname='esxi1',
+        validate_certs=True,
+    )
+
+    mocker.patch('ansible.module_utils.vmware.ssl', new=None)
+    with pytest.raises(FailJson) as exec_info:
+        PyVmomi(fake_ansible_module)
+    msg = 'pyVim does not support changing verification mode with python < 2.7.9.' \
+          ' Either update python or use validate_certs=false.'
+    assert msg == exec_info.value.kwargs['msg']
