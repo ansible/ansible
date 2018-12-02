@@ -42,13 +42,22 @@ def get_fingerprint_of_bytes(source):
     fingerprint = {}
 
     try:
-        for algo in hashlib.algorithms:
-            f = getattr(hashlib, algo)
-            pubkey_digest = f(source).hexdigest()
-            fingerprint[algo] = ':'.join(pubkey_digest[i:i + 2] for i in range(0, len(pubkey_digest), 2))
+        algorithms = hashlib.algorithms
     except AttributeError:
-        # Certain hashlib versions do not have algorithms attribute
-        return None
+        try:
+            algorithms = hashlib.algorithms_guaranteed
+        except AttributeError:
+            return None
+
+    for algo in algorithms:
+        f = getattr(hashlib, algo)
+        h = f(source)
+        try:
+            # Certain hash functions have a hexdigest() which expects a length parameter
+            pubkey_digest = h.hexdigest()
+        except TypeError:
+            pubkey_digest = h.hexdigest(32)
+        fingerprint[algo] = ':'.join(pubkey_digest[i:i + 2] for i in range(0, len(pubkey_digest), 2))
 
     return fingerprint
 
