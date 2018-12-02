@@ -55,7 +55,7 @@
   assert:
     that:
       - account_deactivate_idempotent is not changed
-      - account_deactivate_idempotent.account_uri is not none
+      - account_deactivate_idempotent.account_uri is none
 
 - name: Validate that the account is gone (new account key)
   assert:
