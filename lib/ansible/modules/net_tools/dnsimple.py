@@ -254,12 +254,12 @@ def main():
                         changed = True
                 if rr:
                     # check if we need to update
-                    if rr['ttl'] != ttl or rr['prio'] != priority:
+                    if rr['ttl'] != ttl or rr['priority'] != priority:
                         data = {}
                         if ttl:
                             data['ttl'] = ttl
                         if priority:
-                            data['prio'] = priority
+                            data['priority'] = priority
                         if module.check_mode:
                             module.exit_json(changed=True)
                         else:
@@ -276,7 +276,7 @@ def main():
                     if ttl:
                         data['ttl'] = ttl
                     if priority:
-                        data['prio'] = priority
+                        data['priority'] = priority
                     if module.check_mode:
                         module.exit_json(changed=True)
                     else:
