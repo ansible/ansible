@@ -1761,12 +1761,11 @@ class CloudFrontValidationManager(object):
             distribution_config_name = 'DistributionConfig'
             distribution_ids = [dist.get('Id') for dist in distributions]
             for distribution_id in distribution_ids:
-                config = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
-                distribution = config.get(distribution_name)
+                distribution = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
                 if distribution is not None:
-                    distribution_config = distribution.get(distribution_config_name)
+                    distribution_config = distribution[distribution_name].get(distribution_config_name)
                     if distribution_config is not None and distribution_config.get('CallerReference') == caller_reference:
-                        distribution['DistributionConfig'] = distribution_config
+                        distribution[distribution_name][distribution_config_name] = distribution_config
                         return distribution
 
         except Exception as e:
