@@ -408,6 +408,12 @@ options:
     description:
       - Set the PID namespace mode for the container.
       - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
+  pids_limit:
+    description:
+      - Set PIDs limit for the container. It accepts an integer value.
+      - Set -1 for unlimited PIDs.
+    type: int
+    version_added: "2.8"
   privileged:
     description:
       - Give extended privileges to the container.
@@ -1012,6 +1018,7 @@ class TaskParameters(DockerBaseClass):
         self.oom_score_adj = None
         self.paused = None
         self.pid_mode = None
+        self.pids_limit = None
         self.privileged = None
         self.purge_networks = None
         self.pull = None
@@ -1276,6 +1283,7 @@ class TaskParameters(DockerBaseClass):
             device_write_bps='device_write_bps',
             device_read_iops='device_read_iops',
             device_write_iops='device_write_iops',
+            pids_limit='pids_limit',
         )
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
@@ -1686,10 +1694,6 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_cmd'] = 'command'
         self.parameters_map['expected_devices'] = 'devices'
         self.parameters_map['expected_healthcheck'] = 'healthcheck'
-        self.parameters_map['device_read_bps'] = 'device_read_bps'
-        self.parameters_map['device_write_bps'] = 'device_write_bps'
-        self.parameters_map['device_read_iops'] = 'device_read_iops'
-        self.parameters_map['device_write_iops'] = 'device_write_iops'
 
     def fail(self, msg):
         self.parameters.client.module.fail_json(msg=msg)
@@ -1814,6 +1818,7 @@ class Container(DockerBaseClass):
             device_write_bps=host_config.get('BlkioDeviceWriteBps'),
             device_read_iops=host_config.get('BlkioDeviceReadIOps'),
             device_write_iops=host_config.get('BlkioDeviceWriteIOps'),
+            pids_limit=host_config.get('PidsLimit'),
         )
         # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:
@@ -2782,6 +2787,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             sysctls=dict(docker_py_version='1.10.0', docker_api_version='1.24'),
             userns_mode=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
+            pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
                                         usage_msg='ipv4_address or ipv6_address in networks'),
@@ -2937,6 +2943,7 @@ def main():
         output_logs=dict(type='bool', default=False),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
+        pids_limit=dict(type='int'),
         privileged=dict(type='bool', default=False),
         published_ports=dict(type='list', aliases=['ports'], elements='str'),
         pull=dict(type='bool', default=False),
