@@ -2695,7 +2695,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, raise_timeouts=False):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2918,6 +2918,12 @@ class AnsibleModule(object):
             cmd.stderr.close()
 
             rc = cmd.returncode
+        except TimeoutError as e:
+            self.log("Timeout Executing CMD:%s Timeout :%s" % (self._clean_args(args), to_native(e)))
+            if raise_timeouts:
+                raise e
+            else:
+                self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
         except (OSError, IOError) as e:
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
