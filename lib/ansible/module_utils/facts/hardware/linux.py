@@ -445,16 +445,16 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
-    def get_mount_info(self, mount_info, uuids):
+    def get_mount_info(self, mount, device, uuids):
 
-            mount_info.update(get_mount_size(mount_info['mount']))
+            mount_size = get_mount_size(mount)
 
             # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
             # see _run_lsblk() above
             # https://github.com/ansible/ansible/issues/36077
-            mount_info['uuid'] = uuids.get(mount_info['device'], self._udevadm_uuid(mount_info['device']))
+            uuid = uuids.get(device, self._udevadm_uuid(device))
 
-            return mount_info
+            return mount_size, uuid
 
     def get_mount_facts(self):
 
@@ -498,9 +498,11 @@ class LinuxHardware(Hardware):
                 res = results[mount]['extra']
                 if res.ready():
                     if res.successful():
-                        x = res.get()
-                        if x:
-                            mounts.append(x)
+                        mount_size, uuid = res.get()
+                        if mount_size:
+                            results[mount]['info'].update(mount_size)
+                        results[mount]['info']['uuid'] = uuid or 'N/A'
+                        mounts.append(results[mount]['info'])
                     else:
                         # give incomplete data
                         results[mount]['info']['note'] = 'failed to get extra information'
