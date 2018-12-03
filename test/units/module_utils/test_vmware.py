@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import sys
 import pytest
 from ansible.module_utils.vmware import connect_to_api, PyVmomi
 
@@ -49,7 +50,6 @@ test_data = [
             validate_certs=True,
         ),
         "Unknown error while connecting to vCenter or ESXi API at esxi1:443"
-        " : [Errno 8] nodename nor servname provided, or not known"
     ),
 ]
 
@@ -104,13 +104,14 @@ def test_requests_lib_exists(mocker, fake_ansible_module):
     assert msg == exec_info.value.kwargs['msg']
 
 
+@pytest.mark.skipif(sys.version_info < (2, 7), reason="requires python2.7 and greater")
 @pytest.mark.parametrize("params, msg", test_data, ids=['hostname', 'username', 'password', 'validate_certs'])
 def test_required_params(request, params, msg, fake_ansible_module):
     """ Test if required params are correct or not"""
     fake_ansible_module.params = params
     with pytest.raises(FailJson) as exec_info:
         connect_to_api(fake_ansible_module)
-    assert msg == exec_info.value.kwargs['msg']
+    assert msg in exec_info.value.kwargs['msg']
 
 
 def test_validate_certs(mocker, fake_ansible_module):
