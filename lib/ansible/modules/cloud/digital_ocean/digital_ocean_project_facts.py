@@ -39,11 +39,6 @@ options:
       - 'List of Uniform Resource Names (URN), such as do:droplet:1234, of which to move into the project.'
       - Can only be performed against an existing project.
     type: bool
-  state:
-    description:
-      - Defines that a project should be created or modified.
-    choices: ['present']
-    default: present
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
