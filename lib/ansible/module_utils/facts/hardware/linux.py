@@ -28,6 +28,7 @@ import time
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
@@ -487,7 +488,7 @@ class LinuxHardware(Hardware):
                     mount_info['options'] += ",bind"
 
             results[mount] = {'info': mount_info,
-                              'extra': pool.apply_async(self.get_mount_info, (mount_info, uuids)),
+                              'extra': pool.apply_async(self.get_mount_info, (mount, device, uuids)),
                               'timelimit': time.time() + maxtime}
 
         pool.close()  # done with new workers, start gc
@@ -502,15 +503,17 @@ class LinuxHardware(Hardware):
                         if mount_size:
                             results[mount]['info'].update(mount_size)
                         results[mount]['info']['uuid'] = uuid or 'N/A'
-                        mounts.append(results[mount]['info'])
                     else:
                         # give incomplete data
-                        results[mount]['info']['note'] = 'failed to get extra information'
-                        mounts.append(results[mount]['info'])
+                        errmsg = to_text(res.get())
+                        self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, errmsg))
+                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (errmsg)
+
+                    mounts.append(results[mount]['info'])
                     del results[mount]
                     break
                 elif time.time() > results[mount]['timelimit']:
-                    results[mount]['info']['note'] = 'timed out while attempting to get extra information'
+                    results[mount]['info']['note'] = 'Timed out while attempting to get extra information.'
                     mounts.append(results[mount]['info'])
                     del results[mount]
                     break
