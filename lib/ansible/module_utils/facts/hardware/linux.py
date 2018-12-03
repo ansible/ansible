@@ -488,7 +488,7 @@ class LinuxHardware(Hardware):
 
             results[mount] = {'info': mount_info,
                               'extra': pool.apply_async(self.get_mount_info, (mount_info, uuids)),
-                              'start': time.time() + maxtime}
+                              'timelimit': time.time() + maxtime}
 
         pool.close()  # done with new workers, start gc
 
@@ -509,7 +509,7 @@ class LinuxHardware(Hardware):
                         mounts.append(results[mount]['info'])
                     del results[mount]
                     break
-                elif time.time() > results[mount]['start']:
+                elif time.time() > results[mount]['timelimit']:
                     results[mount]['info']['note'] = 'timed out while attempting to get extra information'
                     mounts.append(results[mount]['info'])
                     del results[mount]
