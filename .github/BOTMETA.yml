@@ -138,6 +138,7 @@ files:
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
   $modules/cloud/vultr/: $team_vultr
   $modules/cloud/webfaction/: quentinsf
+  $modules/cloud/xenserver/xenserver_guest.py: bvitnik
   $modules/clustering/k8s/:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
@@ -639,6 +640,8 @@ files:
     maintainers: $team_scaleway
     labels:
       - cloud
+  $module_utils/xenserver.py:
+    maintainers: bvitnik
   lib/ansible/playbook/handler.py:
     keywords:
       - handlers
@@ -1068,6 +1071,9 @@ files:
   lib/ansible/utils/module_docs_fragments/acme.py:
     support: community
     maintainers: resmo felixfontein
+  lib/ansible/utils/module_docs_fragments/xenserver.py:
+    support: community
+    maintainers: bvitnik
   test/sanity/validate-modules:
     notified:
       - mattclay
