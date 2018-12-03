@@ -34,7 +34,6 @@ from ansible.module_utils.network.ios.config.bgp.af_neighbor import BgpAFNeighbo
 
 
 class BgpAddressFamily(ConfigBase):
-    # TO-DO = Removed neighbor configuration option within AF for now
 
     argument_spec = {
         'name': dict(choices=['ipv4', 'ipv6'], required=True),
