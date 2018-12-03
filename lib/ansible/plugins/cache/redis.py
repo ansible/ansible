@@ -48,7 +48,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.cache import BaseCacheModule
 
 try:
-    from redis import StrictRedis
+    from redis import StrictRedis, VERSION
 except ImportError:
     raise AnsibleError("The 'redis' python module is required for the redis fact cache, 'pip install redis'")
 
@@ -99,7 +99,10 @@ class CacheModule(BaseCacheModule):
         else:
             self._db.set(self._make_key(key), value2)
 
-        self._db.zadd(self._keys_set, time.time(), key)
+        if VERSION[0] == 2:
+            self._db.zadd(self._keys_set, time.time(), key)
+        else:
+            self._db.zadd(self._keys_set, {key: time.time()})
         self._cache[key] = value
 
     def _expire_keys(self):
