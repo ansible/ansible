@@ -170,6 +170,21 @@ EXAMPLES = '''
     next_marker: "{{ first_facts.NextMarker }}"
     max_items: 1
   when: "{{ 'NextMarker' in first_facts }}"
+
+- name: retrieve host entries starting with host1.workshop.test.io
+  block:
+    - name: grab zone id
+      route53_zone:
+        zone: "test.io"
+      register: AWSINFO
+
+    - name: GRAB ROUTE53 INFORMATION
+      route53_facts:
+        type: A
+        query: record_sets
+        hosted_zone_id: "{{AWSINFO.zone_id}}"
+        start_record_name: "host1.workshop.test.io"
+      register: RECORDS
 '''
 try:
     import boto
