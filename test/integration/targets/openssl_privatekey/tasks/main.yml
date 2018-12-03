@@ -56,3 +56,40 @@
   - import_tasks: ../tests/validate.yml
 
   when: cryptography_version.stdout is version('0.5', '>=')
+
+- name: Check that fingerprints do not depend on the backend
+  block:
+  - name: "Fingerprint comparison: pyOpenSSL"
+    openssl_privatekey:
+      path: '{{ output_dir }}/fingerprint-{{ item }}.pem'
+      type: "{{ item }}"
+      size: 1024
+      select_crypto_backend: pyopenssl
+    loop:
+    - RSA
+    - DSA
+    register: fingerprint_pyopenssl
+
+  - name: "Fingerprint comparison: cryptography"
+    openssl_privatekey:
+      path: '{{ output_dir }}/fingerprint-{{ item }}.pem'
+      type: "{{ item }}"
+      size: 1024
+      select_crypto_backend: cryptography
+    loop:
+    - RSA
+    - DSA
+    register: fingerprint_cryptography
+
+  - name: Verify that fingerprints match
+    assert:
+      that: item.0.fingerprint[item.2] == item.1.fingerprint[item.2]
+    when: item.0 is not skipped and item.1 is not skipped
+    loop: |
+      {{ query('nested',
+            fingerprint_pyopenssl.results | zip(fingerprint_cryptography.results),
+            fingerprint_pyopenssl.results[0].fingerprint.keys()
+      ) if fingerprint_pyopenssl.results[0].fingerprint else [] }}
+    loop_control:
+      label: "{{ [item.0.item, item.2] }}"
+  when: pyopenssl_version.stdout is version('0.6', '>=') and cryptography_version.stdout is version('0.5', '>=')
