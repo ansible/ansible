@@ -1431,10 +1431,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
             data_disks = vm.storage_profile.data_disks
             for data_disk in data_disks:
-                if(data_disk.vhd):
-                    vhd_uris.append(data_disk.vhd.uri)
-                elif(data_disk.managed_disk):
-                    managed_disk_ids.append(data_disk.managed_disk.id)
+                if data_disk is not None:
+                    if(data_disk.vhd):
+                        vhd_uris.append(data_disk.vhd.uri)
+                    elif(data_disk.managed_disk):
+                        managed_disk_ids.append(data_disk.managed_disk.id)
 
             # FUTURE enable diff mode, move these there...
             self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))
