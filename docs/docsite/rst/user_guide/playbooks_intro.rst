@@ -166,7 +166,7 @@ You can also use keyword ``become`` on a particular task instead of the whole pl
     - hosts: webservers
       remote_user: yourname
       tasks:
-        - service: 
+        - service:
             name: nginx
             state: started
           become: yes
@@ -266,7 +266,7 @@ which is totally ok if the command is something like
 be used to make these modules also idempotent.
 
 Every task should have a ``name``, which is included in the output from
-running the playbook.   This is human readable output, and so it is 
+running the playbook.   This is human readable output, and so it is
 useful to provide good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
@@ -379,7 +379,7 @@ The things listed in the ``notify`` section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by a globally unique name, and are notified 
+tasks, that are referenced by a globally unique name, and are notified
 by notifiers.  If nothing notifies a handler, it will not
 run.  Regardless of how many tasks notify a handler, it will run only
 once, after all of the tasks complete in a particular play.
@@ -422,7 +422,7 @@ a shared source like Galaxy).
 .. note::
    * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement. This is also the case for handlers using `listen`.
    * Handler names and `listen` topics live in a global namespace.
-   * Handlers with the same name are overwritten, the last one defined will run.
+   * Use unique handler names. If you trigger more than one handler with the same name, the first one(s) get overwritten. Only the last one defined will run.
    * You cannot notify a handler that is defined inside of an include. As of Ansible 2.1, this does work, however the include must be `static`.
 
 Roles are described later on, but it's worthwhile to point out that:
@@ -506,6 +506,3 @@ can do this::
        Complete end-to-end playbook examples
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-
-
-
