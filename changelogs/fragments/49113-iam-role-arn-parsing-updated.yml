@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_metadata_facts - Parse IAM role name from the security credential field since the instance profile name is different
