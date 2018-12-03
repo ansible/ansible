@@ -84,16 +84,16 @@ EXAMPLES = """
 ---
 - name: Update firmware from repository on a Network Share
   dellemc_idrac_firmware:
-       idrac_ip:   "192.168.0.1"
+       idrac_ip: "192.168.0.1"
        idrac_user: "user_name"
-       idrac_pwd:  "user_pwd"
+       idrac_pwd: "user_pwd"
        share_name: "192.168.0.0:/share"
        share_user: "share_user_name"
-       share_pwd:  "share_user_pwd"
+       share_pwd: "share_user_pwd"
        share_mnt: "/mnt/share"
-       reboot:     True
-       job_wait:   True
-       catalog_file_name:  "Catalog.xml"
+       reboot: True
+       job_wait: True
+       catalog_file_name: "Catalog.xml"
 """
 
 RETURN = """
@@ -190,7 +190,7 @@ def main():
 
             "catalog_file_name": {"required": False, "type": str, "default": "Catalog.xml"},
             "reboot": {"required": False, "type": bool, "default": False},
-            "job_wait": {"required": False, "type": bool, "default": True}
+            "job_wait": {"required": True, "type": bool, "default": True},
         },
 
         supports_check_mode=False)
