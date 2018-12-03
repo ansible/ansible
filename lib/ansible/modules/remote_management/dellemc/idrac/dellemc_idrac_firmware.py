@@ -64,7 +64,7 @@ options:
         default: False
         type: bool
     job_wait:
-        required:  True
+        required:  False
         description: Whether to wait for job completion or not.
         type: bool
         default: True
@@ -190,7 +190,7 @@ def main():
 
             "catalog_file_name": {"required": False, "type": str, "default": "Catalog.xml"},
             "reboot": {"required": False, "type": bool, "default": False},
-            "job_wait": {"required": True, "type": bool, "default": True},
+            "job_wait": {"required": False, "type": bool, "default": True},
         },
 
         supports_check_mode=False)
