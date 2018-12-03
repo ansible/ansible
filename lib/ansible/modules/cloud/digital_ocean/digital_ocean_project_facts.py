@@ -26,24 +26,6 @@ options:
     description:
       - Name of project.
       - Maximum of 255 characters.
-  description:
-    description:
-      - Description of project.
-      - Maximum of 255 characters.
-  purpose:
-    description:
-      - Purpose of project per DigitalOcean options.
-      - Values are case sensitive.
-    choices: ['Just trying out DigitalOcean',
-              'Class project / Education purposes',
-              'Website or blog',
-              'Web application',
-              'Service or API',
-              'Mobile Application',
-              'Machine learning / AI / Data processing',
-              'IoT',
-              'Operational / Developer tooling',
-              'Other']
   id:
     description:
       - ID number of project as assigned by DigitalOcean.
@@ -52,15 +34,11 @@ options:
       - States whether resources are assigned to project by default.
       - Only valid for modifications to existing projects.
     type: bool
-  environment:
-    description:
-      - General type of deployment environment, case sensitive
-    choices: ['Development', 'Production', 'Staging']
   resources:
     description:
       - 'List of Uniform Resource Names (URN), such as do:droplet:1234, of which to move into the project.'
       - Can only be performed against an existing project.
-    type: list
+    type: bool
   state:
     description:
       - Defines that a project should be created or modified.
@@ -158,7 +136,6 @@ def core(module):
     name = module.params['name']
     pid = module.params['id']
     rest = DigitalOceanHelper(module)
-
 
     if pid is None and name is not None:
         pid = get_pid(name, get_all_projects(rest)['projects'])
