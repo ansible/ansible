@@ -178,11 +178,11 @@ EXAMPLES = '''
         zone: "test.io"
       register: AWSINFO
 
-    - name: GRAB ROUTE53 INFORMATION
+    - name: grab Route53 record information
       route53_facts:
         type: A
         query: record_sets
-        hosted_zone_id: "{{AWSINFO.zone_id}}"
+        hosted_zone_id: "{{ AWSINFO.zone_id }}"
         start_record_name: "host1.workshop.test.io"
       register: RECORDS
 '''
