@@ -30,6 +30,7 @@ from ansible.module_utils.network.ios.config import ConfigBase
 from ansible.module_utils.network.ios.config.bgp import get_bgp_as
 from ansible.module_utils.network.ios.config.bgp.redistribute import BgpRedistribute
 from ansible.module_utils.network.ios.config.bgp.network import BgpNetwork
+from ansible.module_utils.network.ios.config.bgp.af_neighbor import BgpAFNeighbor
 
 
 class BgpAddressFamily(ConfigBase):
@@ -40,6 +41,7 @@ class BgpAddressFamily(ConfigBase):
         'cast': dict(choices=['flowspec', 'labeled-unicast', 'multicast', 'unicast'], default='unicast'),
         'networks': dict(type='list', elements='dict', options=BgpNetwork.argument_spec),
         'redistribute': dict(type='list', elements='dict', options=BgpRedistribute.argument_spec),
+        'af_neighbors': dict(type='list', elements='dict', options=BgpAFNeighbor.argument_spec),
         'auto_summary': dict(type='bool'),
         'synchronization': dict(type='bool'),
         'state': dict(choices=['present', 'absent'], default='present')
@@ -113,4 +115,13 @@ class BgpAddressFamily(ConfigBase):
             resp = redis.render(config)
             if resp:
                 commands.append(resp)
+        return commands
+
+    def _set_af_neighbors(self, config=None):
+        commands = list()
+        for entry in self.af_neighbors:
+            af_nbr = BgpAFNeighbor(**entry)
+            resp = af_nbr.render(config)
+            if resp:
+                commands.extend(resp)
         return commands

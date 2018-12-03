@@ -199,6 +199,45 @@ options:
             choices:
               - present
               - absent
+      af_neighbors:
+        description:
+          - Specifies Address Family neighbor related configurations
+          - This option extends the top-level parameter - neighbors 
+        suboptions:
+          activate:
+            description:
+              - Enable the Address Family for this Neighbor
+            type: bool
+          remove_private_as:
+            description:
+              - Remove private AS number from outbound updates
+            type: bool
+          route_map:
+            description:
+              - Specify the route map to apply to this neighbor
+          route_map_dir:
+            description:
+              - Specify the direction of route map to be applied
+            choices:
+              - in
+              - out
+            default: in
+          route_server_client:
+            description:
+              - Configure a neighbor as Route Server client
+            type: bool
+          weight:
+            description:
+              - Specify default weight for routes from this neighbor
+            type: int
+          next_hop_self:
+            description:
+              - Enable/Disable the next hop calculation for this neighbor
+            type: bool
+          next_hop_unchanged:
+            description:
+              - Enable/Disable propagation of next hop unchanged for iBGP paths to this neighbor
+            type: bool
       auto_summary:
         description:
           - Enable automatic network number summarization
