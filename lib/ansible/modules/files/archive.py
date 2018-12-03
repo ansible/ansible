@@ -261,8 +261,13 @@ def main():
             arcroot += os.sep
 
         # Don't allow archives to be created anywhere within paths to be removed
-        if remove and os.path.isdir(path) and dest.startswith(path):
-            module.fail_json(path=', '.join(paths), msg='Error, created archive can not be contained in source paths when remove=True')
+        if remove and os.path.isdir(path):
+            path_dir = path
+            if path[-1] != '/':
+                path_dir += '/'
+
+            if dest.startswith(path_dir):
+                module.fail_json(path=', '.join(paths), msg='Error, created archive can not be contained in source paths when remove=True')
 
         if os.path.lexists(path) and path not in expanded_exclude_paths:
             archive_paths.append(path)
