@@ -3,13 +3,26 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- block:
-  - name: configure track
-    nxos_config:
-      lines:
-        - track 1 ip sla 1
-      provider: "{{ connection }}"
+# Flag used to test the track feature.  Some platforms
+# don't support it so this flag will be toggled accordingly.
+- set_fact: test_track_feature="true"
 
+- name: configure track
+  nxos_config:
+    lines:
+      - track 1 ip sla 1
+    provider: "{{ connection }}"
+  register: cmd_result
+  ignore_errors: yes
+
+- debug: msg="cmd result {{ cmd_result }}"
+
+- set_fact: test_track_feature="false"
+  when: cmd_result.failed
+
+- debug: msg="Test Track Feature {{ test_track_feature }}"
+
+- block:
   - name: create static route
     nxos_static_route: &configure_static
       prefix: "192.168.20.64/24"
@@ -68,18 +81,22 @@
       provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
+    when: test_track_feature
 
   - assert: *true
+    when: test_track_feature
 
   - name: "Config track Idempotence"
     nxos_static_route: *config_static_track
     with_items: "{{ vrfs }}"
     register: result
+    when: test_track_feature
 
   - assert: *false
+    when: test_track_feature
 
   - name: configure static route with not configured track
-    nxos_static_route: &config_static_track
+    nxos_static_route:
       prefix: "192.168.20.64/24"
       next_hop: "192.0.2.3"
       route_name: default
@@ -91,10 +108,12 @@
     with_items: "{{ vrfs }}"
     register: result
     ignore_errors: yes
+    when: test_track_feature
 
   - assert:
       that:
         - "result.failed == True"
+    when: test_track_feature
 
   - name: remove static route
     nxos_static_route: &remove_static
@@ -157,6 +176,7 @@
         - no track 1
       provider: "{{ connection }}"
     ignore_errors: yes
+    when: test_track_feature
 
   - name: remove static route
     nxos_static_route:
