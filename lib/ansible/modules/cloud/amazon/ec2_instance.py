@@ -180,10 +180,14 @@ options:
     default: {"tag:Name": "<provided-Name-attribute>", "subnet-id": "<provided-or-default subnet>"}
   instance_role:
     description:
-    - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in arn format
-      then the ListInstanceProfiles permission must also be granted.
-      U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
-      the role with a matching name will be used from the active AWS account.
+      - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in arn format
+        then the ListInstanceProfiles permission must also be granted.
+        U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
+        the role with a matching name will be used from the active AWS account.
+  placement_group:
+    description:
+      - The placement group that needs to be assigned to the instance
+    version_added: 2.8
 
 extends_documentation_fragment:
     - aws
@@ -1116,6 +1120,8 @@ def build_top_level_options(params):
         spec['CreditSpecification'] = {'CpuCredits': params.get('cpu_credit_specification')}
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
+    if params.get('placement_group'):
+        spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params.get('ebs_optimized')
     elif (params.get('network') or {}).get('ebs_optimized') is not None:
@@ -1584,6 +1590,7 @@ def main():
             threads_per_core=dict(type='int', choices=[1, 2], required=True)
         )),
         tenancy=dict(type='str', choices=['dedicated', 'default']),
+        placement_group=dict(type='str'),
         instance_initiated_shutdown_behavior=dict(type='str', choices=['stop', 'terminate']),
         termination_protection=dict(type='bool'),
         detailed_monitoring=dict(type='bool'),
