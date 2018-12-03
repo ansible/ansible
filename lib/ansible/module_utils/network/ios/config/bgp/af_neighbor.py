@@ -109,5 +109,4 @@ class BgpAFNeighbor(BgpNeighbor):
             cmd = 'no %s' % cmd
         if not config or cmd not in config:
             return cmd
-
-
+        
