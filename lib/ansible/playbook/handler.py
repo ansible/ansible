@@ -44,12 +44,12 @@ class Handler(Task):
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def notify_host(self, host):
-        if not self.is_notified(host):
+        if not self.is_host_notified(host):
             self.notified_hosts.append(host)
             return True
         return False
 
-    def is_notified(self, host):
+    def is_host_notified(self, host):
         return host in self.notified_hosts
 
     def serialize(self):

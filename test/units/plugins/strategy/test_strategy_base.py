@@ -406,7 +406,7 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(strategy_base._pending_results, 0)
         self.assertNotIn('test01', strategy_base._blocked_hosts)
-        self.assertTrue(mock_handler_task.is_notified(mock_host))
+        self.assertTrue(mock_handler_task.is_host_notified(mock_host))
 
         # queue_items.append(('set_host_var', mock_host, mock_task, None, 'foo', 'bar'))
         # results = strategy_base._process_pending_results(iterator=mock_iterator)
