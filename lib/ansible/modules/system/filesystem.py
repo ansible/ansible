@@ -312,6 +312,11 @@ class LVM(Filesystem):
         return block_count
 
 
+class Swap(Filesystem):
+    MKFS = 'mkswap'
+    MKFS_FORCE_FLAGS = '-f'
+
+
 FILESYSTEMS = {
     'ext2': Ext2,
     'ext3': Ext3,
@@ -324,6 +329,7 @@ FILESYSTEMS = {
     'vfat': VFAT,
     'ocfs2': Ocfs2,
     'LVM2_member': LVM,
+    'swap': Swap,
 }
 
 
