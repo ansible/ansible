@@ -65,6 +65,13 @@ DOCUMENTATION = '''
         version_added: "2.8"
         env:
           - name: JUNIT_HIDE_TASK_ARGUMENTS
+      test_case_prefix:
+        name: Prefix to find actual test cases
+        default: <empty>
+        description: Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed test cases.
+        version_added: "2.8"
+        env:
+          - name: JUNIT_TEST_CASE_PREFIX
     requirements:
       - whitelist in configuration
       - junit_xml (python lib)
@@ -122,6 +129,9 @@ class CallbackModule(CallbackBase):
                                      Default: True
         JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
                                      Default: False
+        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed
+                                     test cases.
+                                     Default: <empty>
 
     Requires:
         junit_xml
@@ -143,6 +153,7 @@ class CallbackModule(CallbackBase):
         self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
         self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
         self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
+        self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -211,7 +222,8 @@ class CallbackModule(CallbackBase):
             elif status == 'ok':
                 status = 'failed'
 
-        task_data.add_host(HostData(host_uuid, host_name, status, result))
+        if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
+            task_data.add_host(HostData(host_uuid, host_name, status, result))
 
     def _build_test_case(self, task_data, host_data):
         """ build a TestCase from the given TaskData and HostData """
