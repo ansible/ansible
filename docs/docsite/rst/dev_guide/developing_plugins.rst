@@ -138,7 +138,7 @@ For example, if you wanted to check the time difference between your Ansible con
             return dict(ansible_facts=dict(ret))
 
 
-This code checks the time on the controller, captures the date and time for remote machine using the ``setup`` module, and calculates the difference between the captured time and
+This code checks the time on the controller, captures the date and time for the remote machine using the ``setup`` module, and calculates the difference between the captured time and
 the local time, returning the time delta in days, seconds and microseconds.
 
 For practical examples of action plugins,
