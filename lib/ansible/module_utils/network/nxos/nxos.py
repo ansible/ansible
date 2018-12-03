@@ -145,7 +145,7 @@ class Cli:
             except ConnectionError as exc:
                 self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-            cfg = to_text(out, errors='surrogate_then_replace').strip()
+            cfg = to_text(out, errors='surrogate_then_replace').strip() + '\n'
             self._device_configs[cmd] = cfg
             return cfg
 
