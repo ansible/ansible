@@ -32,7 +32,7 @@ from ansible.module_utils.network.ios.config.bgp.neighbor import BgpNeighbor
 class BgpAFNeighbor(BgpNeighbor):
 
     argument_spec = {
-        'activate': dict(type='bool')
+        'activate': dict(type='bool'),
         'remove_private_as': dict(type='bool'),
         'route_map': dict(),
         'route_map_dir': dict(choices=['in', 'out'], default='in'),
