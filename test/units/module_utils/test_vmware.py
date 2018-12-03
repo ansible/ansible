@@ -8,6 +8,9 @@ __metaclass__ = type
 
 import sys
 import pytest
+
+pyvmomi = pytest.importorskip('PyVmomi')
+
 from ansible.module_utils.vmware import connect_to_api, PyVmomi
 
 
