@@ -445,16 +445,9 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
-    def get_mount_info(self, mount_info, bind_mounts, uuids):
+    def get_mount_info(self, mount_info, uuids):
 
             mount_info.update(get_mount_size(mount_info['mount']))
-
-            options = mount_info['options']
-            if mount_info['mount'] in bind_mounts:
-                # only add if not already there, we might have a plain /etc/mtab
-                if not self.MTAB_BIND_MOUNT_RE.match(options):
-                    options += ",bind"
-            mount_info['options'] = options
 
             # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
             # see _run_lsblk() above
@@ -467,6 +460,7 @@ class LinuxHardware(Hardware):
 
         mounts = []
 
+        # gather system lists
         bind_mounts = self._find_bind_mounts()
         uuids = self._lsblk_uuid()
         mtab_entries = self._mtab_entries()
@@ -487,8 +481,13 @@ class LinuxHardware(Hardware):
                           'fstype': fstype,
                           'options': options}
 
+            if mount in bind_mounts:
+                # only add if not already there, we might have a plain /etc/mtab
+                if not self.MTAB_BIND_MOUNT_RE.match(options):
+                    mount_info['options'] += ",bind"
+
             results[mount] = {'info': mount_info,
-                              'extra': pool.apply_async(self.get_mount_info, (mount_info, bind_mounts, uuids)),
+                              'extra': pool.apply_async(self.get_mount_info, (mount_info, uuids)),
                               'start': time.time() + maxtime}
 
         pool.close()  # done with new workers, start gc
