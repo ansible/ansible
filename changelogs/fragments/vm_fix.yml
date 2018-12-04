@@ -1,2 +1,0 @@
-bugfixes:
-    - fix issue with incorrect dict update in vars manager
