@@ -209,7 +209,7 @@ def core(module):
     else:
         if module.params['default'] is True:  # Get information about default project resources
             response = rest.get('projects/default/resources')
-        elif module.params['default'] is None:  # Get information about specific project resources
+        elif module.params['default'] is None or module.params['default'] is False:  # Get information about specific project resources
             response = rest.get('/projects/{0}/resources'.format(pid))
 
     if response.status_code == 200:
