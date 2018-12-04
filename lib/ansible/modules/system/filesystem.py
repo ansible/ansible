@@ -31,6 +31,7 @@ options:
     - vfat support was added in 2.5
     - ocfs2 support was added in 2.6
     - f2fs support was added in 2.7
+    - swap support added in 2.8
     required: yes
     aliases: [type]
   dev:
