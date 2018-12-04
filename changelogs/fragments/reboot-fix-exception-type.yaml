@@ -1,0 +1,2 @@
+bugfixes:
+  - reboot - use IndexError instead of TypeError in exception
