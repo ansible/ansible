@@ -318,7 +318,7 @@ def _ssh_retry(func):
     """
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
+        remaining_tries = self.get_option('retries') + 1
         cmd_summary = "%s..." % args[0]
         for attempt in range(remaining_tries):
             cmd = args[0]
@@ -392,8 +392,6 @@ class Connection(ConnectionBase):
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
-        self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
-        self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -505,7 +503,7 @@ class Connection(ConnectionBase):
         # be disabled if the client side doesn't support the option. However,
         # sftp batch mode does not prompt for passwords so it must be disabled
         # if not using controlpersist and using sshpass
-        if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
+        if binary == 'sftp' and self.get_option('sftp_batch_mode'):
             if self._play_context.password:
                 b_args = [b'-o', b'BatchMode=no']
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
@@ -518,16 +516,16 @@ class Connection(ConnectionBase):
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
         #
 
-        if self._play_context.ssh_args:
+        if self.get_option('ssh_args'):
             b_args = [to_bytes(a, errors='surrogate_or_strict') for a in
-                      self._split_ssh_args(self._play_context.ssh_args)]
+                      self._split_ssh_args(self.get_option('ssh_args'))]
             self._add_args(b_command, b_args, u"ansible.cfg set ssh_args")
 
         # Now we add various arguments controlled by configuration file settings
         # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
         # a combination thereof.
 
-        if not C.HOST_KEY_CHECKING:
+        if not self.get_option('host_key_checking'):
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
@@ -568,7 +566,7 @@ class Connection(ConnectionBase):
         # (i.e. inventory or task settings or overrides on the command line).
 
         for opt in (u'ssh_common_args', u'{0}_extra_args'.format(binary)):
-            attr = getattr(self._play_context, opt, None)
+            attr = self.get_option(opt)
             if attr is not None:
                 b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
                 self._add_args(b_command, b_args, u"PlayContext set %s" % opt)
@@ -582,7 +580,7 @@ class Connection(ConnectionBase):
             self._persistent = True
 
             if not controlpath:
-                cpdir = unfrackpath(self.control_path_dir)
+                cpdir = unfrackpath(self.get_option('control_path_dir'))
                 b_cpdir = to_bytes(cpdir, errors='surrogate_or_strict')
 
                 # The directory must exist and be writable.
@@ -590,13 +588,14 @@ class Connection(ConnectionBase):
                 if not os.access(b_cpdir, os.W_OK):
                     raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 
-                if not self.control_path:
-                    self.control_path = self._create_control_path(
+                control_path = self.get_option('control_path')
+                if not control_path:
+                    control_path = self._create_control_path(
                         self.host,
                         self.port,
                         self.user
                     )
-                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
+                b_args = (b"-o", b"ControlPath=" + to_bytes(control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
@@ -751,7 +750,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise we can send initial data straightaway.
 
         state = states.index('ready_to_send')
-        if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
+        if to_bytes(self._play_context.ssh_executable) in cmd and sudoable:
             if self._play_context.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
@@ -938,7 +937,7 @@ class Connection(ConnectionBase):
             # completely (see also issue #848)
             stdin.close()
 
-        if C.HOST_KEY_CHECKING:
+        if self.get_option('host_key_checking'):
             if cmd[0] == b"sshpass" and p.returncode == 6:
                 raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support '
                                    'this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
@@ -975,7 +974,7 @@ class Connection(ConnectionBase):
         methods = []
 
         # Use the transfer_method option if set, otherwise use scp_if_ssh
-        ssh_transfer_method = self._play_context.ssh_transfer_method
+        ssh_transfer_method = self.get_option('transfer_method')
         if ssh_transfer_method is not None:
             if not (ssh_transfer_method in ('smart', 'sftp', 'scp', 'piped')):
                 raise AnsibleOptionsError('transfer_method needs to be one of [smart|sftp|scp|piped]')
@@ -985,7 +984,7 @@ class Connection(ConnectionBase):
                 methods = [ssh_transfer_method]
         else:
             # since this can be a non-bool now, we need to handle it correctly
-            scp_if_ssh = C.DEFAULT_SCP_IF_SSH
+            scp_if_ssh = self.get_option('scp_if_ssh')
             if not isinstance(scp_if_ssh, bool):
                 scp_if_ssh = scp_if_ssh.lower()
                 if scp_if_ssh in BOOLEANS:
