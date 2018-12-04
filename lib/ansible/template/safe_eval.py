@@ -74,14 +74,6 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         )
     )
 
-    # AST node types were expanded after 2.6
-    if sys.version_info[:2] >= (2, 7):
-        SAFE_NODES.update(
-            set(
-                (ast.Set,)
-            )
-        )
-
     # And in Python 3.4 too
     if sys.version_info[:2] >= (3, 4):
         SAFE_NODES.update(
