@@ -76,7 +76,7 @@ BECOME_ERROR_STRINGS = {
     'pbrun': '',
     'pfexec': '',
     'doas': 'Permission denied',
-    'dzdo': '',
+    'dzdo': 'Sorry, try again.',
     'ksu': 'Password incorrect',
     'pmrun': 'You are not permitted to run this command',
     'enable': '',
