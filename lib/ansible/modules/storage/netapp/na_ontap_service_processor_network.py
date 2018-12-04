@@ -62,15 +62,15 @@ options:
 EXAMPLES = """
     - name: Modify Service Processor Network
       na_ontap_service_processor_network:
-        state=present
-        address_type=ipv4
-        is_enabled=true
-        dhcp=v4
-        node=FPaaS-A300-01
-        node={{ netapp_node }}
-        username={{ netapp_username }}
-        password={{ netapp_password }}
-        hostname={{ netapp_hostname }}
+        state: present
+        address_type: ipv4
+        is_enabled: true
+        dhcp: v4
+        node: FPaaS-A300-01
+        node: "{{ netapp_node }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
 """
 
 RETURN = """
