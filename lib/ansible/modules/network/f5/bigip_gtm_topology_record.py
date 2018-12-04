@@ -44,7 +44,9 @@ options:
       country:
         description:
           - Specifies a country.
-          - Full continent names and their abbreviated versions are supported.
+          - In addition to the country full names, you may also specify their abbreviated
+            form, such as C(US) instead of C(United States).
+          - Valid country codes can be found here https://countrycode.org/.
       state:
         description:
           - Specifies a state in a given country.
