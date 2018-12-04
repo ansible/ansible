@@ -150,7 +150,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-add-repository --yes --update ppa:ansible/ansible
     $ sudo apt install ansible
 
-.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 
@@ -179,7 +179,7 @@ Then run these commands:
     $ sudo apt update
     $ sudo apt install ansible
 
-.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions.
+.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions. You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
 Latest Releases via Portage (Gentoo)
 ++++++++++++++++++++++++++++++++++++
