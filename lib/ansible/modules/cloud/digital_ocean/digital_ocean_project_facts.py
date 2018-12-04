@@ -122,7 +122,7 @@ data:
             type: string
             example: Production database
         purpose:
-            description: The purpose of the project. The maximum length is 255 characters. For examples of valid purposes, see the "Purposes" section
+            description: The purpose of the project. The maximum length is 255 characters.
             type: string
             returned: succes, when resource not defined or false
             example: Service or API
@@ -143,7 +143,7 @@ data:
             example: "2018-09-27T15:52:48Z"
         updated_at:
             description: A time value given in ISO8601 combined date and time format that represents when the project was updated.
-            returned success, when resource not defined or false
+            returned: success, when resource not defined or false
             type: string
             example: "2018-09-27T15:52:48Z"
         urn:
