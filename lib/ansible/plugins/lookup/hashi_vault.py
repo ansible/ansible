@@ -31,6 +31,7 @@ DOCUMENTATION = """
       env:
         - name: VAULT_ADDR
       default: 'http://127.0.0.1:8200'
+      default: 'http://127.0.0.1:8200'
     username:
       description: authentication user name
     password:
@@ -151,6 +152,7 @@ class HashiVault:
                     self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
                 else:
                     self.client = hvac.Client(url=self.url, verify=self.verify)
+
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
