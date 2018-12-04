@@ -1,0 +1,2 @@
+---
+ansible_ssh_common_args: "-o User={{ lookup('env', 'remote_user') }}"

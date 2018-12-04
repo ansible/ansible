@@ -21,6 +21,21 @@ ansible-playbook -i test_connection.inventory -v "${remote_user_var}" test_ssh_c
 # Check that ssh_common_args in test-ansible.cfg is taken in account
 ANSIBLE_CONFIG=./test-ansible.cfg ansible-playbook -i test_connection.inventory -v "${remote_user_var}" test_ssh_common_args.yml "$@"
 
+# Check that environment variable is taken in account
+ANSIBLE_SSH_COMMON_ARGS="-o \"User=${remote_user}\"" ansible-playbook -i test_connection.inventory -v "${remote_user_var}" test_ssh_common_args.yml "$@"
+
+# Ensure --ssh-common-args overrides test-ansible.cfg
+ANSIBLE_CONFIG=./test-ansible.cfg ansible all -i test_connection.inventory -v "${remote_user_var}" -m ping --ssh-common-args="-o \"User=non_existent_user\"" "$@" && exit 1
+
+# Ensure --ssh-common-args overrides environment variable
+ANSIBLE_SSH_COMMON_ARGS="-o \"User=${remote_user}\"" ansible-playbook -i test_connection.inventory -v "${remote_user_var}" test_ssh_common_args.yml --ssh-common-args="-o \"User=non_existent_user\"" "$@" && exit 1
+
+# Ensure environment variable overrides test-ansible.cfg
+ANSIBLE_CONFIG=./test-ansible.cfg ANSIBLE_SSH_COMMON_ARGS="-o \"User=non_existent_user\"" ansible-playbook -i test_connection.inventory -v "${remote_user_var}" test_ssh_common_args.yml "$@" && exit 1
+
+# Ensure inventory variable overrides --ssh-common-args
+ansible-playbook -i test_connection.inventory -v "${remote_user_var}" test_ssh_common_args.yml --ssh-common-args="-o \"User=non_existent_user\"" --playbook-dir=./playbook_dir "$@" && exit 1
+
 function cleanup {
     ansible-playbook -i test_connection.inventory -v "${remote_user_var}" clean_ssh_common_args.yml "$@"
 }
