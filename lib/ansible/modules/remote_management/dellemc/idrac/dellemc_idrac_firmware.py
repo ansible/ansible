@@ -64,7 +64,7 @@ options:
         default: False
         type: bool
     job_wait:
-        required:  False
+        required: False
         description: Whether to wait for job completion or not.
         type: bool
         default: True
@@ -99,20 +99,22 @@ EXAMPLES = """
 RETURN = """
 ---
 msg:
-    description: Updates firmware from a repository on a network share (CIFS, NFS).
-    returned: success
-    type: string
-    sample: "{
-        'CompletionTime': '2018-01-24T00:47:33',
-        'Id': 'JID_XXXXXXXXXXXX',
+  type: string
+  returned: always
+  sample: "Successfully updated the firmware."
+update_status:
+  type: dict
+  returned: success
+  sample:
+    sample: {
+        'InstanceID': 'JID_XXXXXXXXXXXX',
         'JobState': 'Completed',
-        'JobType': 'ImportConfiguration',
-        'Message': 'Successfully imported and applied Server Configuration Profile.',
-        'MessageId': 'SYSXXX',
-        'Name': 'Import Configuration',
-        'StartTime': 'TIME_NOW',
+        'Message': 'Job completed successfully.',
+        'MessageId': 'REDXXX',
+        'Name': 'Repository Update',
+        'JobStartTime': 'NA',
         'Status': 'Success',
-    }"
+    }
 """
 
 
@@ -163,15 +165,18 @@ def update_firmware(idrac, module):
                                                                  apply_update,
                                                                  module.params['reboot'],
                                                                  module.params['job_wait'])
-    except Exception as e:
+    except RuntimeError as e:
         module.fail_json(msg=str(e))
 
     if "Status" in msg['update_status']:
         if msg['update_status']['Status'] == "Success":
-            if module.params['job_wait'] is True:
+            if module.params['job_wait']:
                 msg['changed'] = True
         else:
-            module.fail_json(msg=msg['update_status'])
+            err_msg = "Failed to update firmware."
+            if msg['update_status']['Message']:
+                err_msg = "{0} Message: {1}".format(err_msg, msg['update_status']['Message'])
+            module.fail_json(msg=err_msg)
     return msg
 
 
@@ -198,11 +203,11 @@ def main():
     try:
         # Connect to iDRAC and update firmware
         with iDRACConnection(module.params) as idrac:
-            msg = update_firmware(idrac, module)
+            update_status = update_firmware(idrac, module)
     except (ImportError, ValueError, RuntimeError) as e:
         module.fail_json(msg=str(e))
 
-    module.exit_json(**msg)
+    module.exit_json(msg='Successfully updated the firmware.', update_status=update_status)
 
 
 if __name__ == '__main__':
