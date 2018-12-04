@@ -140,33 +140,32 @@ data:
             description:A time value given in ISO8601 combined date and time format that represents when the project was created.
             returned: success, when resource not defined or false
             type: string
-            example: 2018-09-27T15:52:48Z
+            example: "2018-09-27T15:52:48Z"
         updated_at:
             description: A time value given in ISO8601 combined date and time format that represents when the project was updated.
             returned success, when resource not defined or false
             type: string
-            example: 2018-09-27T15:52:48Z
+            example: "2018-09-27T15:52:48Z"
         urn:
             description: The uniform resource name of the resource.
             returned: success, when resource is true
             type: string
-            example: do:droplet:1
+            example: "do:droplet:1"
         assigned_at:
             description: A time value given in ISO8601 combined date and time format that represents when the project was created.
             returned: success, when resource is true
             type: string
-            example: 2018-09-28T19:26:37Z
+            example: "2018-09-28T19:26:37Z"
         links:
             description: The links object contains the self object, which contains the resource relationship.
             returned: success, when resource is true
             type: string
-            example: https://api.digitalocean.com/v2/droplets/1
+            example: "https://api.digitalocean.com/v2/droplets/1"
         status:
             description: The status of assigning and fetching the resources.
             returned: success, when resource is true
             type: string
             example: ok
-            
 '''
 
 from traceback import format_exc
