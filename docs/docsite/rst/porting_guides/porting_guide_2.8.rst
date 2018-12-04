@@ -52,6 +52,18 @@ Deprecated
         vars:
           ansible_aync_dir: /tmp/.ansible_async
 
+* Plugin writers who need a ``FactCache`` object should be aware of two deprecations:
+
+  1. The ``FactCache`` class has moved from ``ansible.plugins.cache.FactCache`` to
+     ``ansible.vars.fact_cache.FactCache``.  This is because the ``FactCache`` is not part of the
+     cache plugin API and cache plugin authors should not be subclassing it.  ``FactCache`` is still
+     available from its old location but will issue a deprecation warning when used from there.  The
+     old location will be removed in Ansible 2.12.
+
+  2. The ``FactCache.update()`` method has been converted to follow the dict API.  It now takes a
+     dictionary as its sole argument and updates itself with the dictionary's items.  The previous
+     API where ``update()`` took a key and a value will now issue a deprecation warning and will be
+     removed in 2.12.
 
 Modules
 =======
