@@ -100,10 +100,12 @@ RETURN = """
 ---
 msg:
   type: string
+  description: Over all firmware update status
   returned: always
   sample: "Successfully updated the firmware."
 update_status:
   type: dict
+  description: Firmware Update job and progress details from the iDRAC. 
   returned: success
   sample:
     sample: {
