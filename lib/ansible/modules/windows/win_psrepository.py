@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
 # Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -44,7 +43,7 @@ notes:
   - See the examples on how to update the NuGet package provider.
   - You can't use M(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
 author:
-- Wojciech Sciesinski (@it-praktyk)
+
 '''
 
 EXAMPLES = r'''
