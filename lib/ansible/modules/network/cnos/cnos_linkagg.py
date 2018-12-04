@@ -60,6 +60,7 @@ options:
   purge:
     description:
       - Purge links not defined in the I(aggregate) parameter.
+    type: bool
     default: no
   provider:
     description:
@@ -176,6 +177,7 @@ from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.cnos.cnos import get_config, load_config
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
+
 
 def search_obj_in_list(group, lst):
     for o in lst:
