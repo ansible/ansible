@@ -32,7 +32,7 @@ options:
       - Desired boolean value
     type: bool
     required: true
-  force:
+  ignore_selinux_state:
     description:
     - Run independent of selinux runtime state
     type: bool
@@ -74,8 +74,8 @@ from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_bytes, to_text
 
 
-def get_runtime_status(force=False):
-    return True if force is True else selinux.is_selinux_enabled()
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def has_boolean_value(module, name):
@@ -270,7 +270,7 @@ def set_boolean_value(module, name, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            force=dict(type='bool', default=False),
+            ignore_selinux_state=dict(type='bool', default=False),
             name=dict(type='str', required=True),
             persistent=dict(type='bool', default=False),
             state=dict(type='bool', required=True),
@@ -284,9 +284,9 @@ def main():
     if not HAVE_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
 
-    force = module.params['force']
+    ignore_selinux_state = module.params['ignore_selinux_state']
 
-    if not get_runtime_status(force):
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     name = module.params['name']

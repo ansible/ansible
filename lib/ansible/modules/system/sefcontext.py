@@ -64,7 +64,7 @@ options:
     - Note that this does not apply SELinux file contexts to existing files.
     type: bool
     default: 'yes'
-  force:
+  ignore_selinux_state:
     description:
     - Run independent of selinux runtime state
     type: bool
@@ -143,8 +143,8 @@ option_to_file_type_str = dict(
 )
 
 
-def get_runtime_status(force=False):
-    return True if force is True else selinux.is_selinux_enabled()
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def semanage_fcontext_exists(sefcontext, target, ftype):
@@ -245,7 +245,7 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            force=dict(type='bool', default=False),
+            ignore_selinux_state=dict(type='bool', default=False),
             target=dict(required=True, aliases=['path']),
             ftype=dict(type='str', default='a', choices=option_to_file_type_str.keys()),
             setype=dict(type='str', required=True),
@@ -262,9 +262,9 @@ def main():
     if not HAVE_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
 
-    force = module.params['force']
+    ignore_selinux_state = module.params['ignore_selinux_state']
 
-    if not get_runtime_status(force):
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     target = module.params['target']

@@ -42,7 +42,7 @@ options:
       - Reload SELinux policy after commit.
     type: bool
     default: 'yes'
-  force:
+  ignore_selinux_state:
     description:
     - Run independent of selinux runtime state
     type: bool
@@ -108,8 +108,8 @@ from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
 from ansible.module_utils._text import to_native
 
 
-def get_runtime_status(force=False):
-    return True if force is True else selinux.is_selinux_enabled()
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def semanage_port_get_ports(seport, setype, proto):
@@ -250,7 +250,7 @@ def semanage_port_del(module, ports, proto, setype, do_reload, sestore=''):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            force=dict(type='bool', default=False),
+            ignore_selinux_state=dict(type='bool', default=False),
             ports=dict(type='list', required=True),
             proto=dict(type='str', required=True, choices=['tcp', 'udp']),
             setype=dict(type='str', required=True),
@@ -266,9 +266,9 @@ def main():
     if not HAVE_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
 
-    force = module.params['force']
+    ignore_selinux_state = module.params['ignore_selinux_state']
 
-    if not get_runtime_status(force):
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     ports = module.params['ports']
