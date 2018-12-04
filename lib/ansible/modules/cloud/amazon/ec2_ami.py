@@ -71,7 +71,7 @@ options:
     description:
       - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters).
       - >
-        Valid properties include: device_name, volume_type, size/volume_size (in GB), delete_on_termination (boolean), no_device (boolean),
+        Valid properties include: device_name, volume_type, size/volume_size (in GiB), delete_on_termination (boolean), no_device (boolean),
         snapshot_id, iops (for io1 volume_type), encrypted
   delete_snapshot:
     description:
