@@ -1,0 +1,41 @@
+# This file is part of Ansible
+
+# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+---
+
+- name: get PowerShell version
+  win_shell: '$PSVersionTable.PSVersion.Major'
+  register: powershell_major_version
+
+- name: Perform integration tests for Powershell 5+
+  when: powershell_major_version.stdout | int >= 5
+  block:
+
+    - name: update NuGet version
+      win_shell: |
+        $nuget_exists = (Get-PackageProvider | Where-Object { $_.Name -eq 'Nuget' } | Measure-Object).Count -eq 1
+
+        if ( $nuget_exists ) {
+          $nuget_outdated = (Get-PackageProvider -Name NuGet -ErrorAction Ignore).Version -lt [Version]"2.8.5.201"
+        }
+
+        if ( -not $nuget_exists -or $nuget_outdated ) {
+          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+        }
+
+    - name: ensure test repository is deleted
+      win_psrepository:
+        name: '{{ repository_name }}'
+        state: absent
+
+    - name: run all tests
+      include_tasks: tests.yml
+
+  always:
+
+  - name: ensure test repository is deleted after tests run
+    win_psrepository:
+      name: '{{ repository_name }}'
+      state: absent
