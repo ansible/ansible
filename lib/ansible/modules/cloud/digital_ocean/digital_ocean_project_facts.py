@@ -137,7 +137,7 @@ data:
             type: string
             example: true
         created_at:
-            description:A time value given in ISO8601 combined date and time format that represents when the project was created.
+            description: A time value given in ISO8601 combined date and time format that represents when the project was created.
             returned: success, when resource not defined or false
             type: string
             example: "2018-09-27T15:52:48Z"
