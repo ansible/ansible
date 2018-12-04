@@ -277,6 +277,11 @@ class PlayContext(Base):
 
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
+        for attr in OPTION_FLAGS:
+            if hasattr(self, attr):
+                attr_val = getattr(self, attr)
+                setattr(new_info, attr, attr_val)
+
         for attr in TASK_ATTRIBUTE_OVERRIDES:
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
