@@ -145,4 +145,3 @@ class TestCnosLinkaggModule(TestCnosModule):
                 'changed': False
             }
         )
-
