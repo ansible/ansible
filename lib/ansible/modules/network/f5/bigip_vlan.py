@@ -140,6 +140,7 @@ options:
     choices:
       - reboot
       - restart-all
+      - failover
     version_added: 2.8
   sflow_poll_interval:
     description:
@@ -914,7 +915,7 @@ class ArgumentSpec(object):
             fail_safe=dict(type='bool'),
             fail_safe_timeout=dict(type='int'),
             fail_safe_action=dict(
-                choices=['reboot', 'restart-all']
+                choices=['reboot', 'restart-all', 'failover']
             ),
             sflow_poll_interval=dict(type='int'),
             sflow_sampling_rate=dict(type='int'),
