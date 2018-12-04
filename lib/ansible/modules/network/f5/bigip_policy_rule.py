@@ -126,6 +126,10 @@ EXAMPLES = r'''
   bigip_policy:
     name: Policy-Foo
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add a rule to the new policy
@@ -138,6 +142,10 @@ EXAMPLES = r'''
     actions:
       - type: forward
         pool: pool-svrs
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add multiple rules to the new policy
@@ -146,6 +154,10 @@ EXAMPLES = r'''
     name: "{{ item.name }}"
     conditions: "{{ item.conditions }}"
     actions: "{{ item.actions }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
   loop:
     - name: rule1
@@ -171,6 +183,10 @@ EXAMPLES = r'''
       - type: all_traffic
     actions:
       - type: ignore
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

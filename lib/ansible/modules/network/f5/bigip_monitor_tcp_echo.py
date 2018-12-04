@@ -86,20 +86,22 @@ EXAMPLES = r'''
 - name: Create TCP Echo Monitor
   bigip_monitor_tcp_echo:
     state: present
-    server: lb.mydomain.com
-    user: admin
     ip: 10.10.10.10
-    password: secret
     name: my_tcp_monitor
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove TCP Echo Monitor
   bigip_monitor_tcp_echo:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

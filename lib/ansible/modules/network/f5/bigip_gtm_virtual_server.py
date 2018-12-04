@@ -176,12 +176,13 @@ author:
 EXAMPLES = r'''
 - name: Enable virtual server
   bigip_gtm_virtual_server:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     server_name: server1
     name: my-virtual-server
     state: enabled
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

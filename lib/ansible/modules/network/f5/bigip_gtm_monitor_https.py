@@ -163,28 +163,31 @@ EXAMPLES = r'''
     port: 80
     send: my send string
     receive: my receive string
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove HTTPS Monitor
   bigip_gtm_monitor_https:
     name: my_monitor
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add HTTPS monitor for all addresses, port 514
   bigip_gtm_monitor_https:
     name: my_monitor
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
     port: 514
-    password: secret
   delegate_to: localhost
 '''
 

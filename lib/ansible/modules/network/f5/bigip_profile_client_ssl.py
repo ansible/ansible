@@ -216,55 +216,60 @@ EXAMPLES = r'''
 - name: Create client SSL profile
   bigip_profile_client_ssl:
     state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_profile
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create client SSL profile with specific ciphers
   bigip_profile_client_ssl:
     state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_profile
     ciphers: "!SSLv3:!SSLv2:ECDHE+AES-GCM+SHA256:ECDHE-RSA-AES128-CBC-SHA"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create client SSL profile with specific SSL options
   bigip_profile_client_ssl:
     state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_profile
     options:
       - no-sslv2
       - no-sslv3
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create client SSL profile require secure renegotiation
   bigip_profile_client_ssl:
     state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_profile
     secure_renegotation: request
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create a client SSL profile with a cert/key/chain setting
   bigip_profile_client_ssl:
     state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_profile
     cert_key_chain:
       - cert: bigip_ssl_cert1
         key: bigip_ssl_key1
         chain: bigip_ssl_cert1
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
