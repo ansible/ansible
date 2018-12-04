@@ -68,10 +68,11 @@ EXAMPLES = r'''
     ports:
       - 80
       - 443
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Override the above list of ports with a new list
@@ -81,10 +82,11 @@ EXAMPLES = r'''
       - 3389
       - 8080
       - 25
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create port list with series of ranges
@@ -94,10 +96,11 @@ EXAMPLES = r'''
       - 25-30
       - 80-500
       - 50-78
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Use multiple types of port arguments
@@ -110,29 +113,32 @@ EXAMPLES = r'''
     ports:
       - 8080
       - 443
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove port list
   bigip_firewall_port_list:
     name: foo
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create port list from a file with one port per line
   bigip_firewall_port_list:
     name: lot-of-ports
     ports: "{{ lookup('file', 'my-large-port-list.txt').split('\n') }}"
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 

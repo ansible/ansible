@@ -77,10 +77,11 @@ EXAMPLES = r'''
     parent: f5-tcp-progressive
     time_wait_recycle: no
     idle_timeout: 300
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

@@ -105,10 +105,11 @@ EXAMPLES = r'''
     smtp_server_password: mail-secret
     local_host_name: smtp.mydomain.com
     from_address: no-reply@mydomain.com
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

@@ -163,30 +163,33 @@ EXAMPLES = r'''
 - name: Create HTTP profile
   bigip_profile_http:
     name: my_profile
-    password: secret
-    server: lb.mydomain.com
     insert_xforwarded_for: yes
     redirect_rewrite: all
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove HTTP profile
   bigip_profile_http:
     name: my_profile
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add HTTP profile for transparent proxy
   bigip_profile_http:
     name: my_profile
-    server: lb.mydomain.com
-    user: admin
     proxy_type: transparent
-    password: secret
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 

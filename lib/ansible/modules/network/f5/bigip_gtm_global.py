@@ -50,10 +50,11 @@ EXAMPLES = r'''
     synchronization: yes
     synchronization_group_name: my-group
     synchronize_zone_files: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

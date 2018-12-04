@@ -197,22 +197,24 @@ author:
 EXAMPLES = r'''
 - name: Add virtual address
   bigip_virtual_address:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     partition: Common
     address: 10.10.10.10
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Enable route advertisement on the virtual address
   bigip_virtual_address:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     address: 10.10.10.10
     use_route_advertisement: yes
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

@@ -71,19 +71,19 @@ EXAMPLES = r'''
 - name: Set snmp contact
   bigip_snmp:
     contact: Joe User
-    password: secret
-    server: lb.mydomain.com
-    user: admin
-    validate_certs: false
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set snmp location
   bigip_snmp:
     location: US West 1
-    password: secret
-    server: lb.mydomain.com
-    user: admin
-    validate_certs: no
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
