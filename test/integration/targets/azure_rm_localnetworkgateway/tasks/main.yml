@@ -5,22 +5,6 @@
     bgp_peering_address: 169.254.53.201
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
-- name: Create local network gateway
-  azure_rm_localnetworkgateway:
-    name: lgw{{ rpfx }}
-    local_address_prefixes:
-      - 10.1.0.0/16
-      - 172.100.0.0/16
-    gateway_ip_address: "{{ gateway_ip_address }}"
-    tags:
-      testing: testing
-      delete: on-exit
-    resource_group: "{{ resource_group }}"
-  register: output
-
-- assert:
-    that: output.changed
-
 - name: Create local network gateway(check-mode)
   azure_rm_localnetworkgateway:
     name: lgw{{ rpfx }}
@@ -38,7 +22,7 @@
 - assert:
     that: output.changed
 
-- name: Re-create local network gateway
+- name: Create local network gateway
   azure_rm_localnetworkgateway:
     name: lgw{{ rpfx }}
     local_address_prefixes:
@@ -52,7 +36,23 @@
   register: output
 
 - assert:
-    that: output.changed == false
+    that: output.changed
+
+- name: Re-create local network gateway(idempotent test)
+  azure_rm_localnetworkgateway:
+    name: lgw{{ rpfx }}
+    local_address_prefixes:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    gateway_ip_address: "{{ gateway_ip_address }}"
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: not output.changed
 
 - name: Update local network gateway with bgp settings
   azure_rm_localnetworkgateway:
@@ -70,7 +70,7 @@
 - assert:
     that: output.changed
 
-- name: Re-create local network gateway with bgp settings
+- name: Re-create local network gateway with bgp settings(idempotent test after update)
   azure_rm_localnetworkgateway:
     name: lgw{{ rpfx }}
     local_address_prefixes:
