@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
-#
+# (c) 2017, Ansible by Red Hat, inc
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
