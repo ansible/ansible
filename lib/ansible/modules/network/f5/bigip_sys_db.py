@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 F5 Networks Inc.
+# Copyright: (c) 2016, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -18,7 +18,7 @@ module: bigip_sys_db
 short_description: Manage BIG-IP system database variables
 description:
   - Manage BIG-IP system database variables
-version_added: "2.2"
+version_added: 2.2
 options:
   key:
     description:
@@ -30,7 +30,6 @@ options:
         that an existing variable is set to C(value). When C(reset) sets the
         variable back to the default value. At least one of value and state
         C(reset) are required.
-    required: False
     default: present
     choices:
       - present
@@ -39,14 +38,9 @@ options:
     description:
       - The value to set the key to. At least one of value and state C(reset)
         are required.
-    required: False
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires BIG-IP version 12.0.0 or greater
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -54,29 +48,32 @@ author:
 EXAMPLES = r'''
 - name: Set the boot.quiet DB variable on the BIG-IP
   bigip_sys_db:
-    user: admin
-    password: secret
-    server: lb.mydomain.com
     key: boot.quiet
     value: disable
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Disable the initial setup screen
   bigip_sys_db:
-    user: admin
-    password: secret
-    server: lb.mydomain.com
     key: setup.run
     value: false
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Reset the initial setup screen
   bigip_sys_db:
-    user: admin
-    password: secret
-    server: lb.mydomain.com
     key: setup.run
     state: reset
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -98,71 +95,138 @@ value:
   sample: false
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'defaultValue': 'default_value'
     }
-    api_attributes = ['value']
-    updatables = ['value']
-    returnables = ['name', 'value', 'default_value']
+    api_attributes = [
+        'value',
+    ]
+    updatables = [
+        'value',
+    ]
+    returnables = [
+        'name',
+        'value',
+        'default_value',
+    ]
 
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
+        try:
+            for returnable in self.returnables:
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
+        except Exception:
+            pass
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
 
     @property
-    def name(self):
-        return self._values['key']
-
-    @name.setter
-    def name(self, value):
-        self._values['key'] = value
+    def value(self):
+        if self.want.state == 'reset':
+            if str(self.have.value) != str(self.have.default_value):
+                return self.have.default_value
+        if self.want.value != self.have.value:
+            return self.want.value
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.pop('module', None)
+        self.client = kwargs.pop('client', None)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
-        if self.want.state == 'reset':
-            if str(self.want.value) == str(self.want.default_value):
-                changed[self.want.key] = self.want.value
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            changed['name'] = self.want.key
+            changed['default_value'] = self.have.default_value
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -171,39 +235,39 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "reset":
-                changed = self.reset()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "reset":
+            changed = self.reset()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
-
-    def read_current_from_device(self):
-        resource = self.client.api.tm.sys.dbs.db.load(
-            name=self.want.key
-        )
-        result = resource.attrs
-        return Parameters(result)
-
-    def exists(self):
-        resource = self.client.api.tm.sys.dbs.db.load(
-            name=self.want.key
-        )
-        if str(resource.value) == str(self.want.value):
-            return True
-        return False
 
     def present(self):
         if self.exists():
             return False
         else:
             return self.update()
+
+    def reset(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.module.check_mode:
+            return True
+        self.reset_on_device()
+        self.want.update({'key': self.want.key})
+        self.want.update({'value': self.have.default_value})
+        if self.exists():
+            return True
+        else:
+            raise F5ModuleError(
+                "Failed to reset the DB variable"
+            )
 
     def update(self):
         if self.want.value is None:
@@ -213,7 +277,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -224,38 +288,92 @@ class ModuleManager(object):
             return True
         return False
 
-    def update_on_device(self):
-        params = self.want.api_params()
-        resource = self.client.api.tm.sys.dbs.db.load(
-            name=self.want.key
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.key
         )
-        resource.update(**params)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if str(response['value']) == str(self.want.value):
+            return True
+        return False
 
-    def reset(self):
-        self.have = self.read_current_from_device()
-        if not self.should_update():
-            return False
-        if self.client.check_mode:
-            return True
-        self.update_on_device()
-        if self.exists():
-            return True
-        else:
-            raise F5ModuleError(
-                "Failed to reset the DB variable"
-            )
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.key
+        )
+
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        return ApiParameters(params=response)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.key
+        )
+
+        resp = self.client.api.patch(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def reset_on_device(self):
-        resource = self.client.api.tm.sys.dbs.db.load(
-            name=self.want.key
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.key
         )
-        resource.update(value=self.want.default_value)
+        params = dict(
+            value=self.have.default_value
+        )
+
+        resp = self.client.api.patch(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             key=dict(required=True),
             state=dict(
                 default='present',
@@ -263,27 +381,29 @@ class ArgumentSpec(object):
             ),
             value=dict()
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

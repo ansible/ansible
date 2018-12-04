@@ -23,63 +23,52 @@ version_added: 2.2
 options:
     token:
         description:
-            - GitHub Personal Access Token for authenticating
-        default: null
+            - GitHub Personal Access Token for authenticating. Mutually exclusive with C(password).
     user:
-        required: true
         description:
             - The GitHub account that owns the repository
-        default: null
+        required: true
     password:
         description:
-            - The GitHub account password for the user
-        default: null
+            - The GitHub account password for the user. Mutually exclusive with C(token).
         version_added: "2.4"
     repo:
-        required: true
         description:
             - Repository name
-        default: null
-    action:
         required: true
+    action:
         description:
             - Action to perform
+        required: true
         choices: [ 'latest_release', 'create_release' ]
     tag:
-        required: false
         description:
             - Tag name when creating a release. Required when using action is set to C(create_release).
         version_added: 2.4
     target:
-        required: false
         description:
             - Target of release when creating a release
         version_added: 2.4
     name:
-        required: false
         description:
             - Name of release when creating a release
         version_added: 2.4
     body:
-        required: false
         description:
             - Description of the release when creating a release
         version_added: 2.4
     draft:
-        required: false
         description:
             - Sets if the release is a draft or not. (boolean)
-        default: false
+        type: 'bool'
+        default: 'no'
         version_added: 2.4
-        choices: ['True', 'False']
     prerelease:
-        required: false
         description:
             - Sets if the release is a prerelease or not. (boolean)
-        default: false
+        type: bool
+        default: 'no'
         version_added: 2.4
-        choices: ['True', 'False']
-
 
 author:
     - "Adrian Moisey (@adrianmoisey)"
@@ -88,6 +77,12 @@ requirements:
 '''
 
 EXAMPLES = '''
+- name: Get latest release of a public repository
+  github_release:
+    user: ansible
+    repo: ansible
+    action: latest_release
+
 - name: Get latest release of testuseer/testrepo
   github_release:
     token: tokenabc1234567890
@@ -116,6 +111,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+create_release:
+    description:
+    - Version of the created release
+    - "For Ansible version 2.5 and later, if specified release version already exists, then State is unchanged"
+    - "For Ansible versions prior to 2.5, if specified release version already exists, then State is skipped"
+    type: string
+    returned: success
+    sample: 1.1.0
+
 latest_release:
     description: Version of the latest release
     type: string
@@ -151,9 +155,9 @@ def main():
             prerelease=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        required_one_of=(('password', 'token'),),
         mutually_exclusive=(('password', 'token'),),
-        required_if=[('action', 'create_release', ['tag'])],
+        required_if=[('action', 'create_release', ['tag']),
+                     ('action', 'create_release', ['password', 'token'], True)],
     )
 
     if not HAS_GITHUB_API:
@@ -174,14 +178,17 @@ def main():
 
     # login to github
     try:
-        if user and password:
+        if password:
             gh_obj = github3.login(user, password=password)
         elif login_token:
             gh_obj = github3.login(token=login_token)
+        else:
+            gh_obj = github3.GitHub()
 
         # test if we're actually logged in
-        gh_obj.me()
-    except github3.AuthenticationFailed as e:
+        if password or login_token:
+            gh_obj.me()
+    except github3.exceptions.AuthenticationFailed as e:
         module.fail_json(msg='Failed to connect to GitHub: %s' % to_native(e),
                          details="Please check username and password or token "
                                  "for repository %s" % repo)
@@ -201,15 +208,14 @@ def main():
     if action == 'create_release':
         release_exists = repository.release_from_tag(tag)
         if release_exists:
-            module.exit_json(
-                skipped=True, msg="Release for tag %s already exists." % tag)
+            module.exit_json(changed=False, msg="Release for tag %s already exists." % tag)
 
         release = repository.create_release(
             tag, target, name, body, draft, prerelease)
         if release:
-            module.exit_json(tag=release.tag_name)
+            module.exit_json(changed=True, tag=release.tag_name)
         else:
-            module.exit_json(tag=None)
+            module.exit_json(changed=False, tag=None)
 
 
 if __name__ == '__main__':

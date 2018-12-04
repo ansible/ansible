@@ -1,0 +1,44 @@
+- name: Test include_tasks
+  hosts: testhost
+
+  tasks:
+    - name: Test basic task include
+      include_tasks: tasks1.yml
+
+    - name: Assert that fact was set in include
+      assert:
+        that:
+          - set_in_tasks1
+
+    - name: Test conditional task include
+      include_tasks: tasks2.yml
+      when: no
+
+    - name: Assert that tasks were skipped
+      assert:
+        that:
+          - set_in_tasks2 is not defined
+
+    - block:
+        - name: Include tasks inside a block
+          include_tasks: tasks3.yml
+
+        - name: Assert that task3 was included
+          assert:
+            that:
+              - set_in_tasks3
+
+      always:
+        - name: Include task inside always
+          include_tasks: tasks4.yml
+
+        - name: Validate that variables set in previously improted tasks are passed down
+          include_tasks: validate3.yml
+
+        - name: Assert that tasks4 was included
+          assert:
+            that:
+              - set_in_tasks4
+
+    - name: include_tasks + action
+      action: include_tasks tasks1.yml

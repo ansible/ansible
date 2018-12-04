@@ -1,0 +1,86 @@
+# Copyright (c) 2018, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup
+  vultr_firewall_group:
+    name: "{{ vultr_firewall_group_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result is success
+
+- name: test fail if missing name
+  vultr_firewall_group:
+  register: result
+  ignore_errors: yes
+- name: verify test fail if missing name
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test create firewall group in check mode
+  vultr_firewall_group:
+    name: "{{ vultr_firewall_group_name }}"
+  register: result
+  check_mode: yes
+- name: verify test create firewall group in check mode
+  assert:
+    that:
+    - result is changed
+
+- name: test create firewall group
+  vultr_firewall_group:
+    name: "{{ vultr_firewall_group_name }}"
+  register: result
+- name: verify test create firewall group
+  assert:
+    that:
+    - result is changed
+    - result.vultr_firewall_group.name == '{{ vultr_firewall_group_name }}'
+
+- name: test create firewall group idempotence
+  vultr_firewall_group:
+    name: "{{ vultr_firewall_group_name }}"
+
+  register: result
+- name: verify test create firewall group idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_firewall_group.name == '{{ vultr_firewall_group_name }}'
+
+- name: test absent firewall group in check mode
+  vultr_firewall_group:
+    name: "{{ vultr_firewall_group_name }}"
+    state: absent
+  register: result
+  check_mode: yes
+- name: verify test absent firewall group in check mode
+  assert:
+    that:
+    - result is changed
+    - result.vultr_firewall_group.name == '{{ vultr_firewall_group_name }}'
+
+- name: test absent firewall group
+  vultr_firewall_group:
+    name: "{{ vultr_firewall_group_name }}"
+    state: absent
+  register: result
+- name: verify test absent firewall group
+  assert:
+    that:
+    - result is changed
+    - result.vultr_firewall_group.name == '{{ vultr_firewall_group_name }}'
+
+- name: test absent firewall group idempotence
+  vultr_firewall_group:
+    name: "{{ vultr_firewall_group_name }}"
+    state: absent
+  register: result
+- name: verify test absent firewall group idempotence
+  assert:
+    that:
+    - result is not changed

@@ -71,8 +71,6 @@ class DimensionDataModule(object):
         if not HAS_LIBCLOUD:
             self.module.fail_json(msg='libcloud is required for this module.')
 
-            return
-
         # Credentials are common to all Dimension Data modules.
         credentials = self.get_credentials()
         self.user_id = credentials['user_id']
@@ -80,7 +78,7 @@ class DimensionDataModule(object):
 
         # Region and location are common to all Dimension Data modules.
         region = self.module.params['region']
-        self.region = 'dd-{}'.format(region)
+        self.region = 'dd-{0}'.format(region)
         self.location = self.module.params['location']
 
         libcloud.security.VERIFY_SSL_CERT = self.module.params['validate_certs']
@@ -125,8 +123,6 @@ class DimensionDataModule(object):
         if not HAS_LIBCLOUD:
             self.module.fail_json(msg='libcloud is required for this module.')
 
-            return None
-
         user_id = None
         key = None
 
@@ -136,8 +132,6 @@ class DimensionDataModule(object):
                 self.module.fail_json(
                     msg='"mcp_user" parameter was specified, but not "mcp_password" (either both must be specified, or neither).'
                 )
-
-                return None
 
             user_id = self.module.params['mcp_user']
             key = self.module.params['mcp_password']

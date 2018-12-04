@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,7 +20,7 @@ description:
   - Manage the trust relationships between BIG-IPs. Devices, once peered, cannot
     be updated. If updating is needed, the peer must first be removed before it
     can be re-added to the trust.
-version_added: "2.5"
+version_added: 2.5
 options:
   peer_server:
     description:
@@ -30,8 +31,9 @@ options:
   peer_hostname:
     description:
       - The hostname that you want to associate with the device. This value will
-        be used to easily distinguish this device in BIG-IP configuration. If not
-        specified, the value of C(peer_server) will be used as a default.
+        be used to easily distinguish this device in BIG-IP configuration.
+      - When trusting a new device, if this parameter is not specified, the value
+        of C(peer_server) will be used as a default.
   peer_user:
     description:
       - The API username of the remote peer device that you are trusting. Note
@@ -60,12 +62,14 @@ options:
       - peer
       - subordinate
     default: peer
-notes:
-    - Requires the f5-sdk Python package on the host. This is as easy as
-      pip install f5-sdk.
-requirements:
-  - f5-sdk
-  - netaddr
+  state:
+    description:
+      - When C(present), ensures the specified devices are trusted.
+      - When C(absent), removes the device trusts.
+    default: present
+    choices:
+      - absent
+      - present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -74,14 +78,15 @@ author:
 EXAMPLES = r'''
 - name: Add trusts for all peer devices to Active device
   bigip_device_trust:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     peer_server: "{{ item.ansible_host }}"
     peer_hostname: "{{ item.inventory_hostname }}"
     peer_user: "{{ item.bigip_username }}"
     peer_password: "{{ item.bigip_password }}"
-  with_items: hostvars
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  loop: hostvars
   when: inventory_hostname in groups['master']
   delegate_to: localhost
 '''
@@ -101,21 +106,22 @@ peer_hostname:
 
 import re
 
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
-
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
@@ -128,7 +134,12 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'name', 'caDevice', 'device', 'deviceName', 'username', 'password'
+        'name',
+        'caDevice',
+        'device',
+        'deviceName',
+        'username',
+        'password'
     ]
 
     returnables = [
@@ -147,41 +158,23 @@ class Parameters(AnsibleF5Parameters):
         except Exception:
             return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
     @property
     def peer_server(self):
         if self._values['peer_server'] is None:
             return None
-        try:
-            result = str(netaddr.IPAddress(self._values['peer_server']))
-            return result
-        except netaddr.core.AddrFormatError:
-            raise F5ModuleError(
-                "The provided 'peer_server' parameter is not an IP address."
-            )
+        if is_valid_ip(self._values['peer_server']):
+            return self._values['peer_server']
+        raise F5ModuleError(
+            "The provided 'peer_server' parameter is not an IP address."
+        )
 
     @property
     def peer_hostname(self):
         if self._values['peer_hostname'] is None:
             return self.peer_server
-        regex = re.compile('[^a-zA-Z.-_]')
+        regex = re.compile(r'[^a-zA-Z0-9.\-_]')
         result = regex.sub('_', self._values['peer_hostname'])
         return result
-
-    @property
-    def partition(self):
-        # Partitions are not supported when making peers.
-        # Everybody goes in Common.
-        return None
 
     @property
     def type(self):
@@ -191,10 +184,11 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def _set_changed_options(self):
@@ -203,25 +197,38 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
 
     def exec_module(self):
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
         return result
+
+    def provided_password(self):
+        if self.want.password:
+            return self.password
+        if self.want.provider.get('password', None):
+            return self.want.provider.get('password')
+        if self.module.params.get('password', None):
+            return self.module.params.get('password')
+
+    def provided_username(self):
+        if self.want.username:
+            return self.username
+        if self.want.provider.get('user', None):
+            return self.provider.get('user')
+        if self.module.params.get('user', None):
+            return self.module.params.get('user')
 
     def present(self):
         if self.exists():
@@ -232,13 +239,14 @@ class ModuleManager(object):
     def create(self):
         self._set_changed_options()
         if self.want.peer_user is None:
-            self.want.update({'peer_user': self.want.user})
+            self.want.update({'peer_user': self.provided_username()})
         if self.want.peer_password is None:
-            self.want.update({'peer_password': self.want.password})
+            self.want.update({'peer_password': self.provided_password()})
         if self.want.peer_hostname is None:
-            self.want.update({'peer_hostname': self.want.server})
-        if self.client.check_mode:
+            self.want.update({'peer_hostname': self.want.peer_server})
+        if self.module.check_mode:
             return True
+
         self.create_on_device()
         return True
 
@@ -248,43 +256,88 @@ class ModuleManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
+        if self.want.peer_hostname is None:
+            self.want.update({'peer_hostname': self.want.peer_server})
         self.remove_from_device()
         if self.exists():
             raise F5ModuleError("Failed to remove the trusted peer.")
         return True
 
     def exists(self):
-        result = self.client.api.tm.cm.devices.get_collection()
-        for device in result:
+        uri = "https://{0}:{1}/mgmt/tm/cm/device".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        for device in response['items']:
             try:
-                if device.managementIp == self.want.peer_server:
+                if device['managementIp'] == self.want.peer_server:
                     return True
-            except AttributeError:
+            except KeyError:
                 pass
         return False
 
     def create_on_device(self):
         params = self.want.api_params()
-        self.client.api.tm.cm.add_to_trust.exec_cmd(
-            'run',
-            name='Root',
-            **params
+        params.update({
+            "command": "run",
+            "name": 'Root',
+        })
+        uri = "https://{0}:{1}/mgmt/tm/cm/add-to-trust/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        result = self.client.api.tm.cm.remove_from_trust.exec_cmd(
-            'run', deviceName=self.want.peer_hostname
+        params = self.want.api_params()
+        params.update({
+            "command": "run",
+            "deviceName": self.want.peer_hostname,
+            "name": self.want.peer_hostname,
+        })
+        uri = "https://{0}:{1}/mgmt/tm/cm/remove-from-trust/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
-        if result:
-            result.delete()
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             peer_server=dict(required=True),
             peer_hostname=dict(),
             peer_user=dict(),
@@ -292,32 +345,35 @@ class ArgumentSpec(object):
             type=dict(
                 choices=['peer', 'subordinate'],
                 default='peer'
+            ),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
+    spec = ArgumentSpec()
+
+    module = AnsibleModule(
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode
+    )
+
+    client = F5RestClient(**module.params)
+
     try:
-        spec = ArgumentSpec()
-
-        client = AnsibleF5Client(
-            argument_spec=spec.argument_spec,
-            supports_check_mode=spec.supports_check_mode,
-            f5_product_name=spec.f5_product_name
-        )
-
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        if not HAS_NETADDR:
-            raise F5ModuleError("The python netaddr module is required")
-
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

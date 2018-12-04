@@ -35,6 +35,8 @@ description:
     IP routes on Cisco IOS network devices.
 notes:
   - Tested against IOS 15.6
+requirements:
+  - Python >= 3.3 or C(ipaddress) python package
 options:
   prefix:
     description:
@@ -48,7 +50,6 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
-    default: 1
   aggregate:
     description: List of static route definitions.
   state:
@@ -56,6 +57,7 @@ options:
       - State of the static route configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -95,34 +97,55 @@ commands:
     - ip route 192.168.2.0 255.255.255.0 10.0.0.1
 """
 from copy import deepcopy
+import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import get_config, load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
-from ipaddress import ip_network
-import re
+
+try:
+    from ipaddress import ip_network
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(want, have, module):
     commands = list()
-    want, have = updates
 
     for w in want:
+        # Try to match an existing config with the desired config
+        for h in have:
+            for key in ['prefix', 'mask', 'next_hop']:
+                # If any key doesn't match, skip to the next set
+                if w[key] != h[key]:
+                    break
+            # If all keys match, don't execute final else
+            else:
+                break
+        # If no matches found, clear `h`
+        else:
+            h = None
+
         prefix = w['prefix']
         mask = w['mask']
         next_hop = w['next_hop']
-        admin_distance = w['admin_distance']
+        admin_distance = w.get('admin_distance')
+        if not admin_distance and h:
+            w['admin_distance'] = admin_distance = h['admin_distance']
         state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
             commands.append('no ip route %s %s %s' % (prefix, mask, next_hop))
         elif state == 'present' and w not in have:
-            commands.append('ip route %s %s %s %s' % (prefix, mask, next_hop,
-                                                      admin_distance))
+            if admin_distance:
+                commands.append('ip route %s %s %s %s' % (prefix, mask, next_hop, admin_distance))
+            else:
+                commands.append('ip route %s %s %s' % (prefix, mask, next_hop))
 
     return commands
 
@@ -130,54 +153,81 @@ def map_obj_to_commands(updates, module):
 def map_config_to_obj(module):
     obj = []
 
-    rc, out, err = exec_command(module, 'show ip static route')
-    match = re.search(r'.*Static local RIB for default\s*(.*)$', out, re.DOTALL)
+    try:
+        out = run_commands(module, 'show ip static route')[0]
+        match = re.search(r'.*Static local RIB for default\s*(.*)$', out, re.DOTALL)
 
-    if match and match.group(1):
-        for r in match.group(1).splitlines():
-            splitted_line = r.split()
+        if match and match.group(1):
+            for r in match.group(1).splitlines():
+                splitted_line = r.split()
 
-            code = splitted_line[0]
+                code = splitted_line[0]
 
-            if code != 'M':
+                if code != 'M':
+                    continue
+
+                cidr = ip_network(to_text(splitted_line[1]))
+                prefix = str(cidr.network_address)
+                mask = str(cidr.netmask)
+                next_hop = splitted_line[4]
+                admin_distance = splitted_line[2][1]
+
+                obj.append({
+                    'prefix': prefix, 'mask': mask, 'next_hop': next_hop,
+                    'admin_distance': admin_distance
+                })
+
+    except ConnectionError:
+        out = get_config(module, flags='| include ip route')
+
+        for line in out.splitlines():
+            splitted_line = line.split()
+            if len(splitted_line) not in (5, 6):
                 continue
 
-            cidr = ip_network(to_text(splitted_line[1]))
-            prefix = str(cidr.network_address)
-            mask = str(cidr.netmask)
+            prefix = splitted_line[2]
+            mask = splitted_line[3]
             next_hop = splitted_line[4]
-            admin_distance = splitted_line[2][1]
+            if len(splitted_line) == 6:
+                admin_distance = splitted_line[5]
+            else:
+                admin_distance = '1'
 
-            obj.append({'prefix': prefix, 'mask': mask,
-                        'next_hop': next_hop,
-                        'admin_distance': admin_distance})
+            obj.append({
+                'prefix': prefix, 'mask': mask, 'next_hop': next_hop,
+                'admin_distance': admin_distance
+            })
 
     return obj
 
 
 def map_params_to_obj(module, required_together=None):
+    keys = ['prefix', 'mask', 'next_hop', 'admin_distance', 'state']
     obj = []
 
     aggregate = module.params.get('aggregate')
     if aggregate:
         for item in aggregate:
-            for key in item:
-                if item.get(key) is None:
-                    item[key] = module.params[key]
+            route = item.copy()
+            for key in keys:
+                if route.get(key) is None:
+                    route[key] = module.params.get(key)
 
-            module._check_required_together(required_together, item)
-            d = item.copy()
-            d['admin_distance'] = str(module.params['admin_distance'])
-
-            obj.append(d)
+            module._check_required_together(required_together, route)
+            obj.append(route)
     else:
+        module._check_required_together(required_together, module.params)
         obj.append({
             'prefix': module.params['prefix'].strip(),
             'mask': module.params['mask'].strip(),
             'next_hop': module.params['next_hop'].strip(),
-            'admin_distance': str(module.params['admin_distance']),
-            'state': module.params['state']
+            'admin_distance': module.params.get('admin_distance'),
+            'state': module.params['state'],
         })
+
+    for route in obj:
+        if route['admin_distance']:
+            route['admin_distance'] = str(route['admin_distance'])
 
     return obj
 
@@ -189,7 +239,7 @@ def main():
         prefix=dict(type='str'),
         mask=dict(type='str'),
         next_hop=dict(type='str'),
-        admin_distance=dict(default=1, type='int'),
+        admin_distance=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -212,9 +262,11 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
-                           required_together=required_together,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
+
+    if not HAS_IPADDRESS:
+        module.fail_json(msg="ipaddress python package is required")
 
     warnings = list()
     check_args(module, warnings)
@@ -225,7 +277,7 @@ def main():
     want = map_params_to_obj(module, required_together=required_together)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:
@@ -235,6 +287,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

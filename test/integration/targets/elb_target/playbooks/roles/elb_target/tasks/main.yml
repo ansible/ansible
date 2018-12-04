@@ -1,0 +1,471 @@
+---
+  - name: set up elb_target test prerequisites
+
+    block:
+
+    - name:
+      debug: msg="********** Setting up elb_target test dependencies **********"
+    # ============================================================
+
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+
+    - name: set up testing VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: 20.0.0.0/16
+        <<: *aws_connection_info
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc
+
+    - name: set up testing internet gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: present
+        <<: *aws_connection_info
+      register: igw
+
+    - name: set up testing subnet
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        cidr: 20.0.0.0/18
+        az: "{{ aws_region }}a"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet"
+        <<: *aws_connection_info
+      register: subnet_1
+
+    - name: set up testing subnet
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        cidr: 20.0.64.0/18
+        az: "{{ aws_region }}b"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet"
+        <<: *aws_connection_info
+      register: subnet_2
+
+    - name: create routing rules
+      ec2_vpc_route_table:
+        vpc_id: "{{ vpc.vpc.id }}"
+        tags:
+          created: "{{ resource_prefix }}-route"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+        subnets:
+          - "{{ subnet_1.subnet.id }}"
+          - "{{ subnet_2.subnet.id }}"
+        <<: *aws_connection_info
+      register: route_table
+
+    - name: create testing security group
+      ec2_group:
+        name: "{{ resource_prefix }}-sg"
+        description: a security group for ansible tests
+        vpc_id: "{{ vpc.vpc.id }}"
+        rules:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+        <<: *aws_connection_info
+      register: sg
+
+    - name: set up testing target group (type=instance)
+      elb_target_group:
+        name: "{{ tg_name }}"
+        health_check_port: 80
+        protocol: http
+        port: 80
+        vpc_id: '{{ vpc.vpc.id }}'
+        state: present
+        target_type: instance
+        tags:
+          Description: "Created by {{ resource_prefix }}"
+        <<: *aws_connection_info
+
+    - name: set up testing target group for ALB (type=instance)
+      elb_target_group:
+        name: "{{ tg_name }}-used"
+        health_check_port: 80
+        protocol: http
+        port: 80
+        vpc_id: '{{ vpc.vpc.id }}'
+        state: present
+        target_type: instance
+        tags:
+          Description: "Created by {{ resource_prefix }}"
+        <<: *aws_connection_info
+
+    - name: set up ec2 instance to use as a target
+      ec2:
+        group_id: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        image: "{{ ec2_ami_image[aws_region] }}"
+        vpc_subnet_id: "{{ subnet_2.subnet.id }}"
+        instance_tags:
+          Name: "{{ resource_prefix }}-inst"
+        exact_count: 1
+        count_tag:
+          Name: "{{ resource_prefix }}-inst"
+        assign_public_ip: true
+        volumes: []
+        wait: true
+        ebs_optimized: false
+        user_data: |
+          #cloud-config
+          package_upgrade: true
+          package_update: true
+          packages:
+            - httpd
+          runcmd:
+            - "service httpd start"
+            - echo "HELLO ANSIBLE" > /var/www/html/index.html
+        <<: *aws_connection_info
+      register: ec2
+
+    - name: create an application load balancer
+      elb_application_lb:
+        name: "{{ lb_name }}"
+        security_groups:
+          - "{{ sg.group_id }}"
+        subnets:
+          - "{{ subnet_1.subnet.id }}"
+          - "{{ subnet_2.subnet.id }}"
+        listeners:
+          - Protocol: HTTP
+            Port: 80
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ tg_name }}-used"
+        state: present
+        <<: *aws_connection_info
+
+    # ============================================================
+
+    - name:
+      debug: msg="********** Running elb_target integration tests **********"
+
+    # ============================================================
+
+    - name: register an instance to unused target group
+      elb_target:
+        target_group_name: "{{ tg_name }}"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: target is registered
+      assert:
+        that:
+          - result.changed
+          - result.target_group_arn
+          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
+
+    # ============================================================
+
+    - name: test idempotence
+      elb_target:
+        target_group_name: "{{ tg_name }}"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: target was already registered
+      assert:
+        that:
+          - not result.changed
+
+    # ============================================================
+
+    - name: remove an unused target
+      elb_target:
+        target_group_name: "{{ tg_name }}"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: absent
+        deregister_unused: true
+        <<: *aws_connection_info
+      register: result
+
+    - name: target group was deleted
+      assert:
+        that:
+          - result.changed
+          - not result.target_health_descriptions
+
+    # ============================================================
+
+    - name: register an instance to used target group and wait until healthy
+      elb_target:
+        target_group_name: "{{ tg_name }}-used"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: present
+        target_status: healthy
+        target_status_timeout: 200
+        <<: *aws_connection_info
+      register: result
+
+    - name: target is registered
+      assert:
+        that:
+          - result.changed
+          - result.target_group_arn
+          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
+          - "{{ result.target_health_descriptions.target_health }} == {'state': 'healthy'}"
+
+    # ============================================================
+
+    - name: remove a target from used target group
+      elb_target:
+        target_group_name: "{{ tg_name }}-used"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: absent
+        target_status: unused
+        target_status_timeout: 400
+        <<: *aws_connection_info
+      register: result
+
+    - name: target was deregistered
+      assert:
+        that:
+          - result.changed
+
+    # ============================================================
+
+    - name: test idempotence
+      elb_target:
+        target_group_name: "{{ tg_name }}-used"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: target was already deregistered
+      assert:
+        that:
+          - not result.changed
+
+    # ============================================================
+
+    - name: register an instance to used target group and wait until healthy again to test deregistering differently
+      elb_target:
+        target_group_name: "{{ tg_name }}-used"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: present
+        target_status: healthy
+        target_status_timeout: 200
+        <<: *aws_connection_info
+      register: result
+
+    - name: target is registered
+      assert:
+        that:
+          - result.changed
+          - result.target_group_arn
+          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
+          - "{{ result.target_health_descriptions.target_health }} == {'state': 'healthy'}"
+
+    - name: start deregisteration but don't wait
+      elb_target:
+        target_group_name: "{{ tg_name }}-used"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: target is starting to deregister
+      assert:
+        that:
+          - result.changed
+          - result.target_health_descriptions.target_health.reason == "Target.DeregistrationInProgress"
+
+    - name: now wait for target to finish deregistering
+      elb_target:
+        target_group_name: "{{ tg_name }}-used"
+        target_id: "{{ ec2.instance_ids[0] }}"
+        state: absent
+        target_status: unused
+        target_status_timeout: 400
+        <<: *aws_connection_info
+      register: result
+
+    - name: target was deregistered already and now has finished
+      assert:
+        that:
+          - not result.changed
+          - not result.target_health_descriptions
+
+    # ============================================================
+
+    always:
+
+    - name:
+      debug: msg="********** Tearing down elb_target test dependencies **********"
+
+    - name: remove ec2 instance
+      ec2:
+        group_id: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        image: "{{ ec2_ami_image[aws_region] }}"
+        vpc_subnet_id: "{{ subnet_2.subnet.id }}"
+        instance_tags:
+          Name: "{{ resource_prefix }}-inst"
+        exact_count: 0
+        count_tag:
+          Name: "{{ resource_prefix }}-inst"
+        assign_public_ip: true
+        volumes: []
+        wait: true
+        ebs_optimized: false
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: remove testing target groups
+      elb_target_group:
+        name: "{{ item }}"
+        health_check_port: 80
+        protocol: http
+        port: 80
+        vpc_id: '{{ vpc.vpc.id }}'
+        state: absent
+        target_type: instance
+        tags:
+          Description: "Created by {{ resource_prefix }}"
+        wait: true
+        wait_timeout: 200
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      with_items:
+        - "{{ tg_name }}"
+        - "{{ tg_name }}-used"
+      ignore_errors: true
+
+    - name: remove application load balancer
+      elb_application_lb:
+        name: "{{ lb_name }}"
+        security_groups:
+          - "{{ sg.group_id }}"
+        subnets:
+          - "{{ subnet_1.subnet.id }}"
+          - "{{ subnet_2.subnet.id }}"
+        listeners:
+          - Protocol: HTTP
+            Port: 80
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ tg_name }}-used"
+        state: absent
+        wait: true
+        wait_timeout: 200
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      ignore_errors: true
+
+    - name: remove testing security group
+      ec2_group:
+        state: absent
+        name: "{{ resource_prefix }}-sg"
+        description: a security group for ansible tests
+        vpc_id: "{{ vpc.vpc.id }}"
+        rules:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      ignore_errors: true
+
+    - name: remove routing rules
+      ec2_vpc_route_table:
+        state: absent
+        lookup: id
+        route_table_id: "{{ route_table.route_table.id }}"
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      ignore_errors: true
+
+    - name: remove testing subnet
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ vpc.vpc.id }}"
+        cidr: 20.0.0.0/18
+        az: "{{ aws_region }}a"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet"
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      ignore_errors: true
+
+    - name: remove testing subnet
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ vpc.vpc.id }}"
+        cidr: 20.0.64.0/18
+        az: "{{ aws_region }}b"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet"
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      ignore_errors: true
+
+    - name: remove testing internet gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+      ignore_errors: true
+
+    - name: remove testing VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: 20.0.0.0/16
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+        <<: *aws_connection_info
+      register: removed
+      retries: 10
+      until: removed is not failed
+
+    # ============================================================

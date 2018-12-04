@@ -1,0 +1,7 @@
+# This contain sample command execution tasks
+---
+
+- name: Run a command
+  cnos_conditional_command: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} condition={{ hostvars[inventory_hostname]['condition'] }} flag='{{item.flag}}' clicommand='{{item.clicommand}}' outputfile=./results/cnos_conditional_command_{{ inventory_hostname }}_output.txt
+  with_items: "{{conditional_command_data1}}"
+# Completed file

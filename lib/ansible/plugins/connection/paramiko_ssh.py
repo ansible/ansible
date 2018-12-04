@@ -114,8 +114,16 @@ DOCUMENTATION = """
             version_added: '2.5'
           - name: ansible_paramiko_host_key_checking
             version_added: '2.5'
+      use_persistent_connections:
+        description: 'Toggles the use of persistence for connections'
+        type: boolean
+        default: False
+        env:
+          - name: ANSIBLE_USE_PERSISTENT_CONNECTIONS
+        ini:
+          - section: defaults
+            key: use_persistent_connections
 # TODO:
-#C.USE_PERSISTENT_CONNECTIONS:
 #timeout=self._play_context.timeout,
 """
 
@@ -136,14 +144,11 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNo
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 AUTHENTICITY_MSG = """
@@ -188,7 +193,7 @@ class MyAddPolicy(object):
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            if C.USE_PERSISTENT_CONNECTIONS or self.connection.force_persistence:
+            if self.connection.get_option('use_persistent_connections') or self.connection.force_persistence:
                 # don't print the prompt string since the user cannot respond
                 # to the question anyway
                 raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
@@ -228,6 +233,7 @@ class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
     transport = 'paramiko'
+    _log_channel = None
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
@@ -239,6 +245,10 @@ class Connection(ConnectionBase):
         else:
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
         return self
+
+    def _set_log_channel(self, name):
+        '''Mimic paramiko.SSHClient.set_log_channel'''
+        self._log_channel = name
 
     def _parse_proxy_command(self, port=22):
         proxy_command = None
@@ -292,10 +302,14 @@ class Connection(ConnectionBase):
             raise AnsibleError("paramiko is not installed")
 
         port = self._play_context.port or 22
-        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+        display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
                     host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
+
+        # override paramiko's default logger name
+        if self._log_channel is not None:
+            ssh.set_log_channel(self._log_channel)
 
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
@@ -324,7 +338,7 @@ class Connection(ConnectionBase):
                 key_filename = os.path.expanduser(self._play_context.private_key_file)
 
             ssh.connect(
-                self._play_context.remote_addr,
+                self._play_context.remote_addr.lower(),
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
@@ -337,10 +351,10 @@ class Connection(ConnectionBase):
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except Exception as e:
-            msg = str(e)
-            if "PID check failed" in msg:
+            msg = to_text(e)
+            if u"PID check failed" in msg:
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
-            elif "Private key file is encrypted" in msg:
+            elif u"Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     self._play_context.remote_user, self._play_context.remote_addr, port, msg)
                 raise AnsibleConnectionFailure(msg)
@@ -363,13 +377,14 @@ class Connection(ConnectionBase):
             self.ssh.get_transport().set_keepalive(5)
             chan = self.ssh.get_transport().open_session()
         except Exception as e:
-            msg = "Failed to open session"
-            if len(str(e)) > 0:
-                msg += ": %s" % str(e)
-            raise AnsibleConnectionFailure(msg)
+            text_e = to_text(e)
+            msg = u"Failed to open session"
+            if text_e:
+                msg += u": %s" % text_e
+            raise AnsibleConnectionFailure(to_native(msg))
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
-        # we give it one by default (pty=True in ansble.cfg), and we try
+        # we give it one by default (pty=True in ansible.cfg), and we try
         # to initialise from the calling environment when sudoable is enabled
         if self.get_option('pty') and sudoable:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
@@ -513,6 +528,10 @@ class Connection(ConnectionBase):
 
         f.close()
 
+    def reset(self):
+        self.close()
+        self._connect()
+
     def close(self):
         ''' terminate the connection '''
 
@@ -570,7 +589,7 @@ class Connection(ConnectionBase):
 
                 os.rename(tmp_keyfile.name, self.keyfile)
 
-            except:
+            except Exception:
 
                 # unable to save keys, including scenario when key was invalid
                 # and caught earlier
@@ -578,3 +597,4 @@ class Connection(ConnectionBase):
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
+        self._connected = False

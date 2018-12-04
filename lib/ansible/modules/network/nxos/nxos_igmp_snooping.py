@@ -40,37 +40,27 @@ options:
     snooping:
         description:
             - Enables/disables IGMP snooping on the switch.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     group_timeout:
         description:
             - Group membership timeout value for all VLANs on the device.
               Accepted values are integer in range 1-10080, I(never) and
               I(default).
-        required: false
-        default: null
     link_local_grp_supp:
         description:
             - Global link-local groups suppression.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     report_supp:
         description:
             - Global IGMPv1/IGMPv2 Report Suppression.
-        required: false
-        default: null
+        type: bool
     v3_report_supp:
         description:
             - Global IGMPv3 Report Suppression and Proxy Reporting.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','default']
 '''
@@ -138,17 +128,6 @@ def get_group_timeout(config):
     return value
 
 
-def get_snooping(config):
-    REGEX = re.compile(r'{0}$'.format('no ip igmp snooping'), re.M)
-    value = False
-    try:
-        if REGEX.search(config):
-            value = False
-    except TypeError:
-        value = True
-    return value
-
-
 def get_igmp_snooping(module):
     command = 'show ip igmp snooping'
     existing = {}
@@ -205,6 +184,9 @@ def config_igmp_snooping(delta, existing, default=False):
     for key, value in delta.items():
         if value:
             if default and key == 'group_timeout':
+                if existing.get(key):
+                    command = 'no ' + CMDS.get(key).format(existing.get(key))
+            elif value == 'default' and key == 'group_timeout':
                 if existing.get(key):
                     command = 'no ' + CMDS.get(key).format(existing.get(key))
             else:
@@ -299,6 +281,7 @@ def main():
         results['commands'] = cmds
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

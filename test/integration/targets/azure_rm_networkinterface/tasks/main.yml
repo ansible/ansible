@@ -1,0 +1,497 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "tn{{ rpfx }}"
+      address_prefixes: "10.10.0.0/16"
+  register: vn
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "tn{{ rpfx }}"
+      address_prefix: "10.10.0.0/24"
+      virtual_network: "tn{{ rpfx }}"
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: "pip{{ rpfx }}"
+    resource_group: '{{ resource_group }}'
+
+- name: create load balancer with multiple parameters
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "lb{{ rpfx }}"
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        public_ip_address: "pip{{ rpfx }}"
+    backend_address_pools:
+      - name: backendaddrpool0
+      - name: backendaddrpool1
+    probes:
+      - name: prob0
+        port: 80
+    inbound_nat_pools:
+      - name: inboundnatpool0
+        frontend_ip_configuration_name: frontendipconf0
+        protocol: Tcp
+        frontend_port_range_start: 80
+        frontend_port_range_end: 81
+        backend_port: 8080
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
+  register: lb
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: "pip{{ rpfx }}"
+    resource_group: '{{ resource_group }}'
+
+- name: Create NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group: "tn{{ rpfx }}"
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Create NIC using virtual_network resource_group parameter
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}rg"
+      virtual_network:
+        name: "tn{{ rpfx }}"
+        resource_group: "{{ resource_group_secondary }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}rg"
+      public_ip_allocation_method: Static
+      security_group: "tn{{ rpfx }}"
+  register: output
+
+- name: Create NIC using virtual_network resource_group parameter (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}rg"
+      virtual_network:
+        name: "tn{{ rpfx }}"
+        resource_group: "{{ resource_group_secondary }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}rg"
+      public_ip_allocation_method: Static
+      security_group: "tn{{ rpfx }}"
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Delete NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}rg"
+      state: absent
+
+- name: Create NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      public_ip_name: "tn{{ rpfx }}"
+      public_ip_allocation_method: Static
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.state.ip_configuration.subnet.name == 'tn{{ rpfx }}'
+
+- name: Update the NIC with mutilple ip configurations (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: "tn{{ rpfx }}2"
+        - name: default
+          public_ip_name: "tn{{ rpfx }}"
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+          public_ip_name: "tn{{ rpfx }}3"
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Update the NIC with mutilple ip configurations
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      security_group: 
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: "tn{{ rpfx }}2"
+        - name: default
+          public_ip_name: "tn{{ rpfx }}"
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+          public_ip_name: "tn{{ rpfx }}3"
+          load_balancer_backend_address_pools:
+          - "{{ lb.state.backend_address_pools[0].id }}"
+          - name: backendaddrpool1
+            load_balancer: "lb{{ rpfx }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - not output.state.ip_configuration
+      - output.state.ip_configurations | length == 3
+      - output.state.network_security_group.name == 'tn{{ rpfx }}2'
+
+- name: Update the NIC with mutilple ip configurations (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      security_group: "{{ output.state.network_security_group.id }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      ip_configurations:
+        - name: ipconfig-add
+          public_ip_name: "tn{{ rpfx }}2"
+        - name: default
+          public_ip_name: "tn{{ rpfx }}"
+          primary: True
+          public_ip_allocation_method: Static
+        - name: ipconfig1
+          public_ip_name: "tn{{ rpfx }}3"
+          load_balancer_backend_address_pools:
+          - "{{ lb.state.backend_address_pools[0].id }}"
+          - name: backendaddrpool1
+            load_balancer: "lb{{ rpfx }}"
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Remove one ip configuration
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      security_group:
+        name: "tn{{ rpfx }}2"
+        resource_group: "{{ resource_group_secondary }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      ip_configurations:
+        - name: ipconfig1
+          public_ip_name: "tn{{ rpfx }}3"
+          load_balancer_backend_address_pools:
+          - "{{ lb.state.backend_address_pools[0].id }}"
+          - name: backendaddrpool1
+            load_balancer: "lb{{ rpfx }}"
+        - name: default
+          public_ip_name: "tn{{ rpfx }}"
+          public_ip_allocation_method: Static
+          primary: True
+  register: output
+
+- assert:
+    that:
+      - not output.state.ip_configuration
+      - output.state.ip_configurations | length == 2
+
+- name: IP configuration without public IP and NSG
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}noip"
+      create_with_security_group: False
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      ip_configurations:
+        - name: ipconfig1
+          primary: True
+  register: output
+
+- assert:
+    that:
+      - output.state.ip_configurations[0].public_ip_address == None
+      - output.state.network_security_group == None
+
+- name: NIC with Accelerated networking enabled
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_accelerated_networking
+      - output.changed
+
+- name: NIC with Accelerated networking enabled (check idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_accelerated_networking
+      - not output.changed
+
+- name: Disable (previously enabled) Accelerated networking
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      enable_accelerated_networking: False
+  register: output
+
+- assert:
+    that:
+      - not output.state.enable_accelerated_networking
+      - output.changed
+
+- name: Delete AN NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}an"
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: NIC with IP forwarding networking enabled
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+    enable_ip_forwarding: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_ip_forwarding
+      - output.changed
+
+- name: NIC with IP forwarding enabled (check idempotent)
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+    enable_ip_forwarding: True
+  register: output
+
+- assert:
+    that:
+      - output.state.enable_ip_forwarding
+      - not output.changed
+
+- name: Disable (previously enabled) IP forwarding
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    virtual_network: "{{ vn.state.id }}"
+    subnet: "tn{{ rpfx }}"
+    enable_ip_forwarding: False
+  register: output
+
+- assert:
+    that:
+      - not output.state.enable_ip_forwarding
+      - output.changed
+
+- name: Delete IP forwarding NIC
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "tn{{ rpfx }}ipf"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: NIC with dns servers
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}dns"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      dns_servers:
+        - 8.9.10.11
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.state.dns_settings.dns_servers == ['8.9.10.11']
+
+- name: NIC with dns servers is idempotent
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}dns"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      dns_servers:
+        - 8.9.10.11
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: NIC with dns servers adding server
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}dns"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      dns_servers:
+        - 8.9.10.11
+        - 10.11.12.13
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.state.dns_settings.dns_servers | sort() == ['8.9.10.11', '10.11.12.13'] | sort()
+
+- name: NIC with dns servers removing server
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}dns"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "tn{{ rpfx }}"
+      dns_servers:
+        - 10.11.12.13
+  register: output
+
+- assert:
+    that:
+      - output.changed
+      - output.state.dns_settings.dns_servers == ['10.11.12.13']
+
+- name: Delete DNS servers NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}dns"
+      state: absent
+      
+- name: Delete the NIC (check mode)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      state: absent
+  check_mode: yes
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete the NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "{{ item }}"
+      state: absent
+  with_items:
+    - "tn{{ rpfx }}"
+    - "tn{{ rpfx }}noip"
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete the NIC (idempotent)
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "tn{{ rpfx }}"
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "lb{{ rpfx }}"
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        public_ip_address: "pip{{ rpfx }}"
+    backend_address_pools:
+      - name: backendaddrpool0
+      - name: backendaddrpool1
+    probes:
+      - name: prob0
+        port: 80
+    inbound_nat_pools:
+      - name: inboundnatpool0
+        frontend_ip_configuration_name: frontendipconf0
+        protocol: Tcp
+        frontend_port_range_start: 80
+        frontend_port_range_end: 81
+        backend_port: 8080
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
+    state: absent
+
+- name: delete public ip
+  azure_rm_publicipaddress:
+    name: "pip{{ rpfx }}"
+    resource_group: '{{ resource_group }}'
+    state: absent

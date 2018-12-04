@@ -25,10 +25,13 @@ options:
         description:
             - URL to the Keycloak instance.
         required: true
+        aliases:
+          - url
 
     auth_client_id:
         description:
             - OpenID Connect I(client_id) to authenticate to the API with.
+        default: admin-cli
         required: true
 
     auth_realm:
@@ -39,21 +42,24 @@ options:
     auth_client_secret:
         description:
             - Client Secret to use in conjunction with I(auth_client_id) (if required).
-        required: false
 
     auth_username:
         description:
             - Username to authenticate for API access with.
         required: true
+        aliases:
+          - username
 
     auth_password:
         description:
             - Password to authenticate for API access with.
         required: true
+        aliases:
+          - password
 
     validate_certs:
         description:
             - Verify TLS certificates (do not disable this in production).
-        required: false
         default: True
+        type: bool
 '''

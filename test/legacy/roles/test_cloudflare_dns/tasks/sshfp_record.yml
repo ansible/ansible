@@ -1,0 +1,207 @@
+---
+######## SSHFP record tests #################
+
+- name: "Test: SSHFP record creation"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: feb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record creation"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "1\t2\tfeb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c"
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == "SSHFP"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.algorithm == 1
+      - cloudflare_dns.result.record.data.type == 2
+      - cloudflare_dns.result.record.data.fingerprint == "feb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c"
+
+- name: "Test: SSHFP record idempotency"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: feb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record idempotency"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: SSHFP record update"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: feb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record update"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.ttl == 300
+
+- name: "Test: SSHFP record duplicate (create new record)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: fd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record duplicate (create new record)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "1\t2\tfd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "SSHFP"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.algorithm == 1
+      - cloudflare_dns.result.record.data.type == 2
+      - cloudflare_dns.result.record.data.fingerprint == "fd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b"
+
+- name: "Test: SSHFP record duplicate (old record present)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: feb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record duplicate (old record present)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+      - cloudflare_dns.result.record.content == "1\t2\tfeb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "SSHFP"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.algorithm == 1
+      - cloudflare_dns.result.record.data.type == 2
+      - cloudflare_dns.result.record.data.fingerprint == "feb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c"
+
+- name: "Test: SSHFP record duplicate (make new record solo)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: fd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b
+    ttl: 300
+    solo: true
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record duplicate (make new record solo)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "1\t2\tfd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "SSHFP"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.algorithm == 1
+      - cloudflare_dns.result.record.data.type == 2
+      - cloudflare_dns.result.record.data.fingerprint == "fd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b"
+
+- name: "Test: SSHFP record duplicate (old record absent)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: feb66965cee89137b4d4a46a15c718c3f15ad408b6d1b528a2ed479a54da762c
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record duplicate (old record absent)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: SSHFP record deletion"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: fd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record deletion"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+
+- name: "Test: SSHFP record deletion succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: SSHFP
+    algorithm: 1
+    hash_type: 2
+    value: fd3800532d26b56279524d4d1ed8afbfd9f725113c394bc185e447ba991f368b
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: SSHFP record deletion succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_evpn_vni
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -57,7 +57,8 @@ class TestNxosEvpnVniModule(TestNxosModule):
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['evpn',
                                               'vni 6000 l2',
-                                              'route-target import 5000:10'])
+                                              'route-target import 5000:10',
+                                              'no route-target import auto'])
 
     def test_nxos_evpn_vni_absent_not_existing(self):
         set_module_args(dict(vni='12000', state='absent'))

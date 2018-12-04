@@ -8,9 +8,12 @@ __metaclass__ = type
 import telnetlib
 from time import sleep
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.six import text_type
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class ActionModule(ActionBase):
@@ -22,6 +25,7 @@ class ActionModule(ActionBase):
             self._display.warning('The telnet task does not support the environment keyword')
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if self._play_context.check_mode:
             # in --check mode, always skip this module execution
@@ -40,9 +44,11 @@ class ActionModule(ActionBase):
             timeout = self._task.args.get('timeout', 120)
             pause = self._task.args.get('pause', 1)
 
+            send_newline = self._task.args.get('send_newline', False)
+
             login_prompt = self._task.args.get('login_prompt', "login: ")
             password_prompt = self._task.args.get('password_prompt', "Password: ")
-            prompts = self._task.args.get('prompts', "$ ")
+            prompts = self._task.args.get('prompts', ["\\$ "])
             commands = self._task.args.get('command') or self._task.args.get('commands')
 
             if isinstance(commands, text_type):
@@ -54,22 +60,27 @@ class ActionModule(ActionBase):
 
                 output = []
                 try:
-                    tn.read_until(login_prompt)
-                    tn.write('%s\n' % to_native(user))
+                    if send_newline:
+                        tn.write(b'\n')
+
+                    tn.read_until(to_bytes(login_prompt))
+                    tn.write(to_bytes(user + "\n"))
 
                     if password:
-                        tn.read_until(password_prompt)
-                        tn.write('%s\n' % to_native(password))
+                        tn.read_until(to_bytes(password_prompt))
+                        tn.write(to_bytes(password + "\n"))
 
-                    tn.expect(prompts)
+                    tn.expect(list(map(to_bytes, prompts)))
 
                     for cmd in commands:
-                        tn.write('%s\n' % to_native(cmd))
-                        index, match, out = tn.expect(prompts)
+                        display.vvvvv('>>> %s' % cmd)
+                        tn.write(to_bytes(cmd + "\n"))
+                        index, match, out = tn.expect(list(map(to_bytes, prompts)))
+                        display.vvvvv('<<< %s' % cmd)
                         output.append(out)
                         sleep(pause)
 
-                    tn.write("exit\n")
+                    tn.write(b"exit\n")
 
                 except EOFError as e:
                     result['failed'] = True

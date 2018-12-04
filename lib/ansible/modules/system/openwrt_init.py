@@ -21,25 +21,20 @@ description:
     - Controls OpenWrt services on remote hosts.
 options:
     name:
-        required: true
         description:
             - Name of the service.
+        required: true
         aliases: ['service']
     state:
-        required: false
-        default: null
-        choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               C(restarted) will always bounce the service. C(reloaded) will always reload.
+        choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
-        default: null
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
+        type: bool
     pattern:
-        required: false
         description:
         - If the service does not respond to the 'running' command, name a
           substring to look for as would be found in the output of the I(ps)

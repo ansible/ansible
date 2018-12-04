@@ -1,0 +1,8 @@
+[0] fail_json message: Error: interface aggi not found
+options:
+{
+    "iface": "aggi",
+    "option": "mtu",
+    "state": "present",
+    "value": "1350"
+}

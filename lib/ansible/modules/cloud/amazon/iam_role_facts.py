@@ -26,18 +26,15 @@ options:
         description:
             - Name of a role to search for
             - Mutually exclusive with C(prefix)
-        required: false
-        default: None
         aliases:
             - role_name
     path_prefix:
         description:
             - Prefix of role I(path) to restrict IAM role search for
             - Mutually exclusive with C(name)
-        required: false
-        default: None
 extends_documentation_fragment:
-    - aws
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -94,6 +91,41 @@ iam_roles:
           returned: always
           type: string
           sample: AnsibleTestEC2Policy
+    instance_profiles:
+      description: List of attached instance profiles
+      returned: always
+      type: complex
+      contains:
+        arn:
+          description: Amazon Resource Name for the instance profile
+          returned: always
+          type: string
+          sample: arn:aws:iam::123456789012:instance-profile/AnsibleTestEC2Policy
+        create_date:
+          description: Date instance profile was created
+          returned: always
+          type: string
+          sample: '2017-10-23T00:05:08+00:00'
+        instance_profile_id:
+          description: Amazon Identifier for the instance profile
+          returned: always
+          type: string
+          sample: AROAII7ABCD123456EFGH
+        instance_profile_name:
+          description: Name of instance profile
+          returned: always
+          type: string
+          sample: AnsibleTestEC2Policy
+        path:
+          description: Path of instance profile
+          returned: always
+          type: string
+          sample: /
+        roles:
+          description: List of roles associated with this instance profile
+          returned: always
+          type: list
+          sample: []
     path:
       description: Path of role
       returned: always
@@ -139,6 +171,12 @@ def list_iam_attached_role_policies_with_backoff(client, role_name):
     return paginator.paginate(RoleName=role_name).build_full_result()['AttachedPolicies']
 
 
+@AWSRetry.exponential_backoff()
+def list_iam_instance_profiles_for_role_with_backoff(client, role_name):
+    paginator = client.get_paginator('list_instance_profiles_for_role')
+    return paginator.paginate(RoleName=role_name).build_full_result()['InstanceProfiles']
+
+
 def describe_iam_role(module, client, role):
     name = role['RoleName']
     try:
@@ -149,6 +187,10 @@ def describe_iam_role(module, client, role):
         role['ManagedPolicies'] = list_iam_attached_role_policies_with_backoff(client, name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't get managed  policies for role %s" % name)
+    try:
+        role['InstanceProfiles'] = list_iam_instance_profiles_for_role_with_backoff(client, name)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get instance profiles for role %s" % name)
     return role
 
 

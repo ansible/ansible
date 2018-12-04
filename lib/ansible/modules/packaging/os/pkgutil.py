@@ -50,6 +50,7 @@ options:
       - If you want to refresh your catalog from the mirror, set this to (C(yes)).
     required: false
     default: False
+    type: bool
     version_added: "2.1"
 '''
 
@@ -66,8 +67,7 @@ EXAMPLES = '''
     state: latest
 '''
 
-import os
-import pipes
+from ansible.module_utils.basic import AnsibleModule
 
 
 def package_installed(module, name):
@@ -225,8 +225,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

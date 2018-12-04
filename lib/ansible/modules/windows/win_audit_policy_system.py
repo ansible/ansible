@@ -1,19 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Noah Sparks <nsparks@outlook.com>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Noah Sparks <nsparks@outlook.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: win_audit_policy_system
-short_description: Used to make changes to the system wide Audit Policy.
+short_description: Used to make changes to the system wide Audit Policy
 description:
   - Used to make changes to the system wide Audit Policy.
   - It is recommended to take a backup of the policies before adjusting them for the first time.
@@ -35,8 +34,9 @@ options:
     description:
       - The type of event you would like to audit for.
       - Accepts a list. See examples.
-    choices: [ 'success', 'failure', 'none' ]
-    required: true
+    required: yes
+    type: list
+    choices: [ failure, none, success ]
 '''
 
 EXAMPLES = r'''

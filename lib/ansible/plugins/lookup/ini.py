@@ -15,28 +15,28 @@ DOCUMENTATION = """
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description: they key(s) too look up
+        description: The key(s) to look up
         required: True
-    type:
-      description: ini Type of the file. 'properties' refers to the Java properties files.
-      default: 'ini'
-      choices: ['ini', 'properties']
-    file:
-      description: Name of the file to load
-      default: ansible.ini
-    section:
-      default: global
-      description: section where to lookup for key.
-    re:
-      default: False
-      type: boolean
-      description:  Flag to indicate if the key supplied is a regexp.
-    encoding:
-      default: utf-8
-      description:  Text encoding to use.
-    default:
-      description: return value if the key is not in the ini file
-      default: ''
+      type:
+        description: ini Type of the file. 'properties' refers to the Java properties files.
+        default: 'ini'
+        choices: ['ini', 'properties']
+      file:
+        description: Name of the file to load
+        default: ansible.ini
+      section:
+        default: global
+        description: section where to lookup for key.
+      re:
+        default: False
+        type: boolean
+        description:  Flag to indicate if the key supplied is a regexp.
+      encoding:
+        default: utf-8
+        description:  Text encoding to use.
+      default:
+        description: return value if the key is not in the ini file
+        default: ''
 """
 
 EXAMPLES = """
@@ -62,12 +62,12 @@ _raw:
 """
 import os
 import re
-from collections import MutableSequence
 from io import StringIO
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
 

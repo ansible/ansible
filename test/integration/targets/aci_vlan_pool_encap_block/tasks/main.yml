@@ -1,0 +1,380 @@
+# Test code for the ACI modules
+
+# Copyright: (c) 2017, Jacob McGill (jmcgill298)
+# Copyright: (c) 2018, Dag Wieers (dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an aci apic host, aci username and aci password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Ensure vlan pool exists for tests to kick off
+  aci_vlan_pool:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: absent
+    pool: anstest
+    allocation_mode: static
+    description: Ansible Test
+
+- name: Ensure vlan pool exists for tests to kick off
+  aci_vlan_pool: &aci_pool_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    pool: anstest
+    allocation_mode: static
+    description: Ansible Test
+  register: pool_present
+
+- name: Create vlan pool encap block - check mode works
+  aci_vlan_pool_encap_block: &aci_encap_block_present
+    <<: *aci_pool_present
+    block_name: anstest
+    block_start: 20
+    block_end: 40
+    pool: anstest
+    pool_allocation_mode: static
+    allocation_mode: inherit
+    description: Ansible Test
+  check_mode: yes
+  register: encap_block_present_check_mode
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_present_check_mode is changed
+      - 'encap_block_present_check_mode.sent == {"fvnsEncapBlk": {"attributes": {"allocMode": "inherit", "descr": "Ansible Test", "from": "vlan-20", "name": "anstest", "to": "vlan-40"}}}'
+
+- name: Create vlan pool encap_block - creation works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+  register: encap_block_present
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_present is changed
+      - encap_block_present.previous == []
+      - encap_block_present.sent == encap_block_present_check_mode.sent
+      - encap_block_present.sent == encap_block_present.proposed
+
+- name: Create vlan pool range - idempotency works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+  register: encap_block_present_idempotent
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_present_idempotent is not changed
+      - encap_block_present_idempotent.previous.0.fvnsEncapBlk.attributes.name == "anstest"
+
+- name: Update vlan pool range - update works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    description: Ansible Test Update
+    allocation_mode: inherit
+  register: encap_block_present_update
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_present_update is changed
+      - encap_block_present_update.previous != []
+      - encap_block_present_update.sent != encap_block_present.sent
+
+- name: Create vlan pool range - used for query
+  aci_vlan_pool_encap_block: &aci_encap_block_present_2
+    <<: *aci_encap_block_present
+    block_name: anstest_2
+    block_start: 50
+    block_end: 55
+  register: encap_block_present_2
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_present_2 is changed
+      - encap_block_present_2.previous == []
+
+- name: Invalid encap_block_start - error message works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    block_start: 0
+  ignore_errors: yes
+  register: encap_block_start_low
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_start_low is failed
+      - encap_block_start_low.msg == "vlan pools must have 'block_start' and 'block_end' values between 1 and 4094"
+
+- name: Invalid encap_block_start - error message works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    block_start: 4096
+  ignore_errors: yes
+  register: encap_block_start_high
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_start_high is failed
+      - encap_block_start_high.msg == "vlan pools must have 'block_start' and 'block_end' values between 1 and 4094"
+
+- name: Invalid encap_block_end - error message works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    block_end: 0
+  ignore_errors: yes
+  register: encap_block_end_low
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_end_low is failed
+      - encap_block_end_low.msg == "vlan pools must have 'block_start' and 'block_end' values between 1 and 4094"
+
+- name: Invalid encap_block_end - error message works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    block_end: 4096
+  ignore_errors: yes
+  register: encap_block_end_high
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_end_high is failed
+      - encap_block_end_high.msg == "vlan pools must have 'block_start' and 'block_end' values between 1 and 4094"
+
+- name: Range start higher than range end - error message works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    block_start: 1000
+  ignore_errors: yes
+  register: encap_block_start_end
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_start_end is failed
+      - encap_block_start_end.msg == "The 'block_start' must be less than or equal to the 'block_end'"
+
+- name: Missing required param - error message works
+  aci_vlan_pool_encap_block:
+    <<: *aci_pool_present
+  ignore_errors: yes
+  register: encap_block_present_missing_param
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_present_missing_param is failed
+      - 'encap_block_present_missing_param.msg == "state is present but all of the following are missing: block_end, block_name, block_start"'
+
+- name: Missing required param - error message works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    pool_allocation_mode: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: encap_block_present_allocation
+
+- name: Present assertions
+  assert:
+    that:
+      - encap_block_present_allocation is failed
+      - encap_block_present_allocation.msg == "ACI requires the 'pool_allocation_mode' when 'pool' is provided"
+
+- name: Query specific vlan pool range
+  aci_vlan_pool_encap_block: &aci_encap_block_query
+    <<: *aci_encap_block_present
+    state: query
+  register: encap_block_query
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query is not changed
+      - encap_block_query.url.endswith("infra/vlanns-[anstest]-static/from-[vlan-20]-to-[vlan-40].json")
+      - encap_block_query.current | length == 1
+      - encap_block_query.current.0.fvnsEncapBlk.attributes.name == "anstest"
+
+- name: Query vlan pool range - from, to, and name are filtered
+  aci_vlan_pool_encap_block: &aci_encap_block_query_filter
+    <<: *aci_encap_block_query
+    pool: "{{ fake_var | default(omit) }}"
+  register: encap_block_query_from_to_name
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query_from_to_name is not changed
+      - encap_block_query_from_to_name.url.endswith("class/fvnsEncapBlk.json")
+      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_to_name.filter_string'
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_from_to_name.filter_string'
+      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_from_to_name.filter_string'
+      - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
+      - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
+
+- name: Query vlan pool range - from and name are filtered
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_query_filter
+    block_end: "{{ fake_var | default(omit) }}"
+  register: encap_block_query_from_name
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query_from_name is not changed
+      - encap_block_query_from_name.url.endswith("class/fvnsEncapBlk.json")
+      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_name.filter_string'
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_from_name.filter_string'
+      - encap_block_query_from_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query_from_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
+
+- name: Query vlan pool range - to and name are filtered
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_query_filter
+    block_start: "{{ fake_var | default(omit) }}"
+  register: encap_block_query_to_name
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query_to_name is not changed
+      - encap_block_query_to_name.url.endswith("class/fvnsEncapBlk.json")
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_to_name.filter_string'
+      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_to_name.filter_string'
+      - encap_block_query_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
+
+- name: Query vlan pool range - name is filtered
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_query_filter
+    block_start: "{{ fake_var | default(omit) }}"
+    block_end: "{{ fake_var | default(omit) }}"
+  register: encap_block_query_name
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query_name is not changed
+      - encap_block_query_name.url.endswith("class/fvnsEncapBlk.json")
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_name.filter_string'
+      - encap_block_query_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
+
+- name: Query vlan pool range - from and to are filtered
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_query_filter
+    block_name: "{{ fake_var | default(omit) }}"
+  register: encap_block_query_from_to
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query_from_to is not changed
+      - encap_block_query_from_to.url.endswith("class/fvnsEncapBlk.json")
+      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_to.filter_string'
+      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_from_to.filter_string'
+      - encap_block_query_from_to.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
+      - encap_block_query_from_to.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
+
+- name: Query all ranges in a vlan pool
+  aci_vlan_pool_encap_block:
+    <<: *aci_pool_present
+    state: query
+    pool_allocation_mode: static
+  register: encap_block_query_pool
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query_pool is not changed
+      - encap_block_query_pool.current | length == 1
+      - encap_block_query_pool.current.0.fvnsVlanInstP.attributes.name == "anstest"
+      - encap_block_query_pool.current.0.fvnsVlanInstP.children | length > 1
+      - encap_block_query_pool.url.endswith("infra/vlanns-[anstest]-static.json")
+
+- name: Query all ranges
+  aci_vlan_pool_encap_block:
+    <<: *aci_pool_present
+    state: query
+    pool: "{{ fake_var | default(omit) }}"
+  register: encap_block_query_all
+
+- name: Query assertions
+  assert:
+    that:
+      - encap_block_query_all is not changed
+      - encap_block_query_all.current | length > 1
+      - encap_block_query_all.current.0.fvnsEncapBlk is defined
+      - encap_block_query_all.url.endswith("class/fvnsEncapBlk.json")
+
+- name: Delete vlan pool range - deletion works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_present
+    state: absent
+  register: delete_range
+
+- name: Absent assertions
+  assert:
+    that:
+      - delete_range is changed
+      - delete_range.proposed == {}
+      - delete_range.previous.0.fvnsEncapBlk.attributes.name == "anstest"
+
+- name: Delete vlan pool range - check mode works
+  aci_vlan_pool_encap_block: &aci_encap_block_absent
+    <<: *aci_encap_block_present_2
+    state: absent
+  check_mode: yes
+  register: delete_check_mode
+
+- name: Absent assertions
+  assert:
+    that:
+      - delete_check_mode is changed
+      - delete_check_mode.previous != []
+
+- name: Delete vlan pool range - deletion works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_absent
+  register: delete_encap_block_2
+
+- name: Absent assertions
+  assert:
+    that:
+      - delete_encap_block_2 is changed
+      - delete_encap_block_2.previous == delete_check_mode.previous
+
+- name: Delete vlan pool range again - idempotency works
+  aci_vlan_pool_encap_block:
+    <<: *aci_encap_block_absent
+  register: delete_idempotent
+
+- name: Absent assertions
+  assert:
+    that:
+      - delete_idempotent is not changed
+      - delete_idempotent.previous == []
+
+- name: Cleanup vlan pool
+  aci_vlan_pool:
+    <<: *aci_pool_present
+    state: absent
+  when: pool_present is changed

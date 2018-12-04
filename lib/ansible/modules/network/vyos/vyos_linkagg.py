@@ -56,6 +56,7 @@ options:
       - State of the link aggregation group.
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -258,6 +259,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -4,7 +4,8 @@
   ios_banner:
     banner: motd
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
+
 
 - name: Set motd
   ios_banner:
@@ -14,7 +15,8 @@
       that has a multiline
       string
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
+
   register: result
 
 - debug:
@@ -33,7 +35,8 @@
       that has a multiline
       string
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
+
   register: result
 
 - assert:

@@ -35,7 +35,7 @@ def params_from_doc(func):
     return cfg[0]['os_server']
 
 
-class FakeCloud (object):
+class FakeCloud(object):
     ports = [
         {'name': 'port1', 'id': '1234'},
         {'name': 'port2', 'id': '4321'},
@@ -80,6 +80,9 @@ class FakeCloud (object):
 
     def get_network(self, name):
         return self._find(self.networks, name)
+
+    def get_openstack_vars(self, server):
+        return server
 
     create_server = mock.MagicMock()
 

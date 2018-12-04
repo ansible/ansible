@@ -11,35 +11,42 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_user import Parameters
-    from library.bigip_user import ModuleManager
-    from library.bigip_user import ArgumentSpec
-    from library.bigip_user import UnparitionedManager
-    from library.bigip_user import PartitionedManager
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+    from library.modules.bigip_user import Parameters
+    from library.modules.bigip_user import ModuleManager
+    from library.modules.bigip_user import ArgumentSpec
+    from library.modules.bigip_user import UnpartitionedManager
+    from library.modules.bigip_user import PartitionedManager
+
+    from library.module_utils.network.f5.common import F5ModuleError
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_user import Parameters
-        from ansible.modules.network.f5.bigip_user import ModuleManager
-        from ansible.modules.network.f5.bigip_user import ArgumentSpec
-        from ansible.modules.network.f5.bigip_user import UnparitionedManager
-        from ansible.modules.network.f5.bigip_user import PartitionedManager
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_user import Parameters
+    from ansible.modules.network.f5.bigip_user import ModuleManager
+    from ansible.modules.network.f5.bigip_user import ArgumentSpec
+    from ansible.modules.network.f5.bigip_user import UnpartitionedManager
+    from ansible.modules.network.f5.bigip_user import PartitionedManager
+
+    from ansible.module_utils.network.f5.common import F5ModuleError
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -74,7 +81,7 @@ class TestParameters(unittest.TestCase):
             update_password='always'
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.username_credential == 'someuser'
         assert p.password_credential == 'testpass'
         assert p.full_name == 'Fake Person'
@@ -86,21 +93,17 @@ class TestParameters(unittest.TestCase):
         args = dict(
             name='someuser',
             description='Fake Person',
-            password='testpass',
             partitionAccess=access,
             shell='none'
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.name == 'someuser'
-        assert p.password == 'testpass'
         assert p.full_name == 'Fake Person'
         assert p.partition_access == access
         assert p.shell == 'none'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -118,21 +121,21 @@ class TestManager(unittest.TestCase):
             update_password='on_create'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.create_on_device = Mock(return_value=True)
         pm.exists = Mock(return_value=False)
 
-        results = pm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['partition_access'] == access
@@ -147,57 +150,24 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.create_on_device = Mock(return_value=True)
         pm.exists = Mock(return_value=False)
 
-        results = pm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['partition_access'] == access
-
-    def test_create_user_raises(self, *args):
-        access = [{'name': 'Common', 'role': 'guest'}]
-        set_module_args(dict(
-            username_credential='someuser',
-            password_credential='testpass',
-            partition_access=access,
-            password='password',
-            server='localhost',
-            user='admin'
-        ))
-
-        client = AnsibleF5Client(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
-        )
-
-        # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
-        pm.create_on_device = Mock(return_value=True)
-        pm.exists = Mock(return_value=False)
-
-        msg = "The 'update_password' option " \
-              "needs to be set to 'on_create' when creating " \
-              "a resource with a password."
-
-        with pytest.raises(F5ModuleError) as ex:
-            pm.exec_module()
-        assert str(ex.value) == msg
 
     def test_create_user_partition_access_raises(self, *args):
         set_module_args(dict(
@@ -207,25 +177,25 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.create_on_device = Mock(return_value=True)
         pm.exists = Mock(return_value=False)
+
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
 
         msg = "The 'partition_access' option " \
               "is required when creating a resource."
 
         with pytest.raises(F5ModuleError) as ex:
-            pm.exec_module()
+            mm.exec_module()
         assert str(ex.value) == msg
 
     def test_create_user_shell_bash(self, *args):
@@ -241,21 +211,21 @@ class TestManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.create_on_device = Mock(return_value=True)
         pm.exists = Mock(return_value=False)
 
-        results = pm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['partition_access'] == access
@@ -273,25 +243,25 @@ class TestManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.create_on_device = Mock(return_value=True)
         pm.exists = Mock(return_value=False)
 
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
-            pm.exec_module()
+            mm.exec_module()
         assert str(ex.value) == msg
 
     def test_update_user_password_no_pass(self, *args):
@@ -303,26 +273,26 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_auth_user_no_pass.json'))
+        current = Parameters(params=load_fixture('load_auth_user_no_pass.json'))
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.exists = Mock(return_value=True)
         pm.update_on_device = Mock(return_value=True)
         pm.read_current_from_device = Mock(return_value=current)
 
-        results = pm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
 
@@ -335,26 +305,26 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_auth_user_with_pass.json'))
+        current = Parameters(params=load_fixture('load_auth_user_with_pass.json'))
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.exists = Mock(return_value=True)
         pm.update_on_device = Mock(return_value=True)
         pm.read_current_from_device = Mock(return_value=current)
 
-        results = pm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
 
@@ -367,31 +337,31 @@ class TestManager(unittest.TestCase):
             shell='none'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 shell='tmsh'
             )
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.exists = Mock(return_value=True)
         pm.update_on_device = Mock(return_value=True)
         pm.read_current_from_device = Mock(return_value=current)
 
-        results = pm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['shell'] == 'none'
@@ -405,32 +375,32 @@ class TestManager(unittest.TestCase):
             shell='none'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
         access = [{'name': 'Common', 'role': 'guest'}]
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 partition_access=access
             )
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-
-        pm = PartitionedManager(client)
+        pm = PartitionedManager(module=module, params=module.params)
         pm.exists = Mock(return_value=True)
         pm.update_on_device = Mock(return_value=True)
         pm.read_current_from_device = Mock(return_value=current)
 
-        results = pm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=False)
+        mm.get_manager = Mock(return_value=pm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is False
         assert not hasattr(results, 'shell')
@@ -444,17 +414,16 @@ class TestManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
         access = [{'name': 'all', 'role': 'admin'}]
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 shell='tmsh',
                 partition_access=access
@@ -462,15 +431,16 @@ class TestManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['shell'] == 'bash'
@@ -484,10 +454,9 @@ class TestManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
@@ -497,7 +466,7 @@ class TestManager(unittest.TestCase):
             {'name': 'all', 'role': 'guest'}
         ]
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 shell='tmsh',
                 partition_access=access
@@ -505,24 +474,23 @@ class TestManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
 
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
-            upm.exec_module()
+            mm.exec_module()
         assert str(ex.value) == msg
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestLegacyManager(unittest.TestCase):
 
     def setUp(self):
@@ -540,21 +508,21 @@ class TestLegacyManager(unittest.TestCase):
             update_password='on_create'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['partition_access'] == access
@@ -569,57 +537,24 @@ class TestLegacyManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['partition_access'] == access
-
-    def test_create_user_raises(self, *args):
-        access = [{'name': 'Common', 'role': 'guest'}]
-        set_module_args(dict(
-            username_credential='someuser',
-            password_credential='testpass',
-            partition_access=access,
-            password='password',
-            server='localhost',
-            user='admin'
-        ))
-
-        client = AnsibleF5Client(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
-        )
-
-        # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
-        upm.create_on_device = Mock(return_value=True)
-        upm.exists = Mock(return_value=False)
-
-        msg = "The 'update_password' option " \
-              "needs to be set to 'on_create' when creating " \
-              "a resource with a password."
-
-        with pytest.raises(F5ModuleError) as ex:
-            upm.exec_module()
-        assert str(ex.value) == msg
 
     def test_create_user_partition_access_raises(self, *args):
         set_module_args(dict(
@@ -629,25 +564,25 @@ class TestLegacyManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
+
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
 
         msg = "The 'partition_access' option " \
               "is required when creating a resource."
 
         with pytest.raises(F5ModuleError) as ex:
-            upm.exec_module()
+            mm.exec_module()
         assert str(ex.value) == msg
 
     def test_create_user_shell_bash(self, *args):
@@ -663,21 +598,21 @@ class TestLegacyManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['partition_access'] == access
@@ -695,25 +630,25 @@ class TestLegacyManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.create_on_device = Mock(return_value=True)
         upm.exists = Mock(return_value=False)
 
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
-            upm.exec_module()
+            mm.exec_module()
         assert str(ex.value) == msg
 
     def test_update_user_password(self, *args):
@@ -725,32 +660,32 @@ class TestLegacyManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
         access = [{'name': 'Common', 'role': 'guest'}]
         current = Parameters(
-            dict(
+            params=dict(
                 shell='tmsh',
                 partition_access=access
             )
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
 
@@ -763,31 +698,31 @@ class TestLegacyManager(unittest.TestCase):
             shell='none'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 shell='tmsh'
             )
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['shell'] == 'none'
@@ -801,32 +736,32 @@ class TestLegacyManager(unittest.TestCase):
             shell='none'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
         access = [{'name': 'Common', 'role': 'guest'}]
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 partition_access=access
             )
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is False
         assert not hasattr(results, 'shell')
@@ -840,17 +775,16 @@ class TestLegacyManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
         # remote device
         access = [{'name': 'all', 'role': 'admin'}]
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 shell='tmsh',
                 partition_access=access
@@ -858,15 +792,16 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
 
-        results = upm.exec_module()
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
+        results = mm.exec_module()
 
         assert results['changed'] is True
         assert results['shell'] == 'bash'
@@ -880,10 +815,9 @@ class TestLegacyManager(unittest.TestCase):
             shell='bash'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Configure the parameters that would be returned by querying the
@@ -893,7 +827,7 @@ class TestLegacyManager(unittest.TestCase):
             {'name': 'all', 'role': 'guest'}
         ]
         current = Parameters(
-            dict(
+            params=dict(
                 user='admin',
                 shell='tmsh',
                 partition_access=access
@@ -901,17 +835,18 @@ class TestLegacyManager(unittest.TestCase):
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-
-        upm = UnparitionedManager(client)
+        upm = UnpartitionedManager(module=module, params=module.params)
         upm.exists = Mock(return_value=True)
         upm.update_on_device = Mock(return_value=True)
         upm.read_current_from_device = Mock(return_value=current)
 
+        mm = ModuleManager(module=module)
+        mm.is_version_less_than_13 = Mock(return_value=True)
+        mm.get_manager = Mock(return_value=upm)
+
         msg = "Shell access is only available to 'admin' or " \
-              "'resource-admin' roles"
+              "'resource-admin' roles."
 
         with pytest.raises(F5ModuleError) as ex:
-            upm.exec_module()
+            mm.exec_module()
         assert str(ex.value) == msg

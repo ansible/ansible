@@ -1,0 +1,82 @@
+- name: filesystem creation
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+  register: fs_result
+
+- assert:
+    that:
+      - 'fs_result is changed'
+      - 'fs_result is success'
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid
+
+- name: "Check that filesystem isn't created if force isn't used"
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+  register: fs2_result
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid2
+
+- assert:
+    that:
+      - 'not (fs2_result is changed)'
+      - 'fs2_result is success'
+      - 'uuid.stdout == uuid2.stdout'
+
+- name: Check that filesystem is recreated if force is used
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+    force: yes
+  register: fs3_result
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid3
+
+- assert:
+    that:
+      - 'fs3_result is changed'
+      - 'fs3_result is success'
+      - 'uuid.stdout != uuid3.stdout'
+
+- name: increase fake device
+  shell: 'dd if=/dev/zero bs=1M count=1 >> {{ image_file }}'
+
+- when: fstype == 'lvm'
+  block:
+    - name: Resize loop device for LVM
+      command: losetup -c {{ dev }}
+
+- when: 'grow|bool and (fstype != "vfat" or resize_vfat)'
+  block:
+  - name: Expand filesystem
+    filesystem:
+      dev: '{{ dev }}'
+      fstype: '{{ fstype }}'
+      resizefs: yes
+    register: fs4_result
+
+  - command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+    register: uuid4
+
+  - assert:
+      that:
+        - 'fs4_result is changed'
+        - 'fs4_result is success'
+        - 'uuid3.stdout == uuid4.stdout' # unchanged
+
+  - name: Try to expand filesystem again
+    filesystem:
+      dev: '{{ dev }}'
+      fstype: '{{ fstype }}'
+      resizefs: yes
+    register: fs5_result
+
+  - assert:
+      that:
+        - 'not (fs5_result is changed)'
+        - 'fs5_result is successful'

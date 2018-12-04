@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    ecr_name: 'ecr-test-{{ ansible_date_time.epoch }}'
+    ecr_name: '{{ resource_prefix }}-ecr'
 
 - block:
 
@@ -88,7 +88,7 @@
           - result is not changed
 
 
-    - name: When in check mode, and deleting a policy that does not exists
+    - name: When in check mode, and deleting a policy that does not exist
       ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'

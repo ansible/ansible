@@ -1,11 +1,4 @@
 ---
-- name: Enable Netconf service
-  iosxr_netconf:
-    netconf_port: 830
-    netconf_vrf: 'default'
-    state: present
-  register: result
-
 - name: setup - remove login
   iosxr_banner:
     banner: login
@@ -29,8 +22,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my login banner' in result.commands"
-      - "'that has a multiline' in result.commands"
+      - "'this is my login banner' in result.xml"
+      - "'that has a multiline' in result.xml"
 
 - name: Set login again (idempotent)
   iosxr_banner:
@@ -46,4 +39,4 @@
 - assert:
     that:
       - "result.changed == false"
-      - "result.commands | length == 0"
+      - "result.xml | length == 0"

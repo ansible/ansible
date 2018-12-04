@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2017, Dag Wieers <dag@wieers.com>
+# Copyright: 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -20,15 +20,17 @@ options:
   command:
     description:
     - The command line to run through PsExec (limited to 260 characters).
-    required: true
+    required: yes
   executable:
     description:
     - The location of the PsExec utility (in case it is not located in your PATH).
+    type: path
     default: psexec.exe
   hostnames:
     description:
     - The hostnames to run the command.
     - If not provided, the command is run locally.
+    type: list
   username:
     description:
     - The (remote) user to run the command as.
@@ -40,6 +42,7 @@ options:
   chdir:
     description:
     - Run the command from this (remote) directory.
+    type: path
   nobanner:
     description:
     - Do not display the startup banner and copyright message.
@@ -62,6 +65,13 @@ options:
     - Run the program so that it interacts with the desktop on the remote system.
     type: bool
     default: 'no'
+  session:
+    description:
+    - Specifies the session ID to use.
+    - This parameter works in conjunction with I(interactive).
+    - It has no effect when I(interactive) is set to C(no).
+    type: int
+    version_added: '2.7'
   limited:
     description:
     - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).
@@ -85,6 +95,7 @@ options:
   timeout:
     description:
     - The connection timeout in seconds
+    type: int
   wait:
     description:
     - Wait for the application to terminate.
@@ -151,14 +162,4 @@ stderr:
     returned: always
     type: string
     sample: Error 15 running E:\setup.exe
-msg:
-    description: Possible error message on failure
-    returned: failed
-    type: string
-    sample: The 'password' parameter is a required parameter.
-changed:
-    description: Whether or not any changes were made.
-    returned: always
-    type: bool
-    sample: True
 '''

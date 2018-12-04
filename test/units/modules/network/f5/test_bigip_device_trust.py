@@ -8,40 +8,37 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_device_trust import Parameters
-    from library.bigip_device_trust import ModuleManager
-    from library.bigip_device_trust import ArgumentSpec
-    from library.bigip_device_trust import HAS_F5SDK
-    from library.bigip_device_trust import HAS_NETADDR
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
-except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_device_trust import Parameters
-        from ansible.modules.network.f5.bigip_device_trust import ModuleManager
-        from ansible.modules.network.f5.bigip_device_trust import ArgumentSpec
-        from ansible.modules.network.f5.bigip_device_trust import HAS_F5SDK
-        from ansible.modules.network.f5.bigip_device_trust import HAS_NETADDR
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from library.modules.bigip_device_trust import Parameters
+    from library.modules.bigip_device_trust import ModuleManager
+    from library.modules.bigip_device_trust import ArgumentSpec
 
-    from ansible.modules.network.f5.bigip_device_trust import HAS_NETADDR
-    if not HAS_NETADDR:
-        raise SkipTest("F5 Ansible modules require the netaddr Python library")
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
+except ImportError:
+    from ansible.modules.network.f5.bigip_device_trust import Parameters
+    from ansible.modules.network.f5.bigip_device_trust import ModuleManager
+    from ansible.modules.network.f5.bigip_device_trust import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -74,7 +71,7 @@ class TestParameters(unittest.TestCase):
             peer_password='secret'
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.peer_server == '10.10.10.10'
         assert p.peer_hostname == 'foo.bar.baz'
         assert p.peer_user == 'admin'
@@ -89,7 +86,7 @@ class TestParameters(unittest.TestCase):
             type='peer'
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.peer_server == '10.10.10.10'
         assert p.peer_hostname == 'foo.bar.baz'
         assert p.peer_user == 'admin'
@@ -105,16 +102,30 @@ class TestParameters(unittest.TestCase):
             type='subordinate'
         )
 
-        p = Parameters(args)
+        p = Parameters(params=args)
         assert p.peer_server == '10.10.10.10'
         assert p.peer_hostname == 'foo.bar.baz'
         assert p.peer_user == 'admin'
         assert p.peer_password == 'secret'
         assert p.type is False
 
+    def test_hyphenated_peer_hostname(self):
+        args = dict(
+            peer_hostname='hn---hyphen____underscore.hmatsuda.local',
+        )
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
+        p = Parameters(params=args)
+        assert p.peer_hostname == 'hn---hyphen____underscore.hmatsuda.local'
+
+    def test_numbered_peer_hostname(self):
+        args = dict(
+            peer_hostname='BIG-IP_12x_ans2.example.local',
+        )
+
+        p = Parameters(params=args)
+        assert p.peer_hostname == 'BIG-IP_12x_ans2.example.local'
+
+
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -131,15 +142,14 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
-        mm.exists = Mock(side_effect=[False, True])
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=False)
         mm.create_on_device = Mock(return_value=True)
 
         results = mm.exec_module()
@@ -157,14 +167,13 @@ class TestManager(unittest.TestCase):
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         mm.exists = Mock(return_value=True)
 
         results = mm.exec_module()

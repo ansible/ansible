@@ -22,26 +22,21 @@ description:
 notes:
     - Facts are placed in the C(openstack_ports) variable.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
     port:
         description:
             - Unique name or ID of a port.
-        required: false
-        default: null
     filters:
         description:
             - A dictionary of meta data to use for further filtering. Elements
               of this dictionary will be matched against the returned port
               dictionaries. Matching is currently limited to strings within
               the port dictionary, or strings within nested dictionaries.
-        required: false
-        default: null
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -189,14 +184,8 @@ openstack_ports:
             sample: "51fce036d7984ba6af4f6c849f65ef00"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -207,19 +196,16 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    port = module.params.get('port')
+    filters = module.params.get('filters')
 
-    port = module.params.pop('port')
-    filters = module.params.pop('filters')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         ports = cloud.search_ports(port, filters)
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_ports=ports))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

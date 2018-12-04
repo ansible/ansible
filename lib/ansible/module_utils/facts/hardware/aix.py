@@ -19,6 +19,7 @@ __metaclass__ = type
 import re
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
+from ansible.module_utils.facts.utils import get_mount_size
 
 
 class AIXHardware(Hardware):
@@ -42,12 +43,14 @@ class AIXHardware(Hardware):
         dmi_facts = self.get_dmi_facts()
         vgs_facts = self.get_vgs_facts()
         mount_facts = self.get_mount_facts()
+        devices_facts = self.get_device_facts()
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
         hardware_facts.update(dmi_facts)
         hardware_facts.update(vgs_facts)
         hardware_facts.update(mount_facts)
+        hardware_facts.update(devices_facts)
 
         return hardware_facts
 
@@ -173,6 +176,9 @@ class AIXHardware(Hardware):
         mount_facts = {}
 
         mount_facts['mounts'] = []
+
+        mounts = []
+
         # AIX does not have mtab but mount command is only source of info (or to use
         # api calls to get same info)
         mount_path = self.module.get_bin_path('mount')
@@ -183,11 +189,13 @@ class AIXHardware(Hardware):
                 if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
                     if re.match('^/', fields[0]):
                         # normal mount
-                        mount_facts['mounts'].append({'mount': fields[1],
-                                                      'device': fields[0],
-                                                      'fstype': fields[2],
-                                                      'options': fields[6],
-                                                      'time': '%s %s %s' % (fields[3], fields[4], fields[5])})
+                        mount = fields[1]
+                        mount_info = {'mount': mount,
+                                      'device': fields[0],
+                                      'fstype': fields[2],
+                                      'options': fields[6],
+                                      'time': '%s %s %s' % (fields[3], fields[4], fields[5])}
+                        mount_info.update(get_mount_size(mount))
                     else:
                         # nfs or cifs based mount
                         # in case of nfs if no mount options are provided on command line
@@ -195,12 +203,48 @@ class AIXHardware(Hardware):
                         if len(fields) < 8:
                             fields.append("")
 
-                        mount_facts['mounts'].append({'mount': fields[2],
-                                                      'device': '%s:%s' % (fields[0], fields[1]),
-                                                      'fstype': fields[3],
-                                                      'options': fields[7],
-                                                      'time': '%s %s %s' % (fields[4], fields[5], fields[6])})
+                        mount_info = {'mount': fields[2],
+                                      'device': '%s:%s' % (fields[0], fields[1]),
+                                      'fstype': fields[3],
+                                      'options': fields[7],
+                                      'time': '%s %s %s' % (fields[4], fields[5], fields[6])}
+
+                    mounts.append(mount_info)
+
+        mount_facts['mounts'] = mounts
+
         return mount_facts
+
+    def get_device_facts(self):
+        device_facts = {}
+        device_facts['devices'] = {}
+
+        lsdev_cmd = self.module.get_bin_path('lsdev', True)
+        lsattr_cmd = self.module.get_bin_path('lsattr', True)
+        rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
+
+        for line in out_lsdev.splitlines():
+            field = line.split()
+
+            device_attrs = {}
+            device_name = field[0]
+            device_state = field[1]
+            device_type = field[2:]
+            lsattr_cmd_args = [lsattr_cmd, '-E', '-l', device_name]
+            rc, out_lsattr, err = self.module.run_command(lsattr_cmd_args)
+            for attr in out_lsattr.splitlines():
+                attr_fields = attr.split()
+                attr_name = attr_fields[0]
+                attr_parameter = attr_fields[1]
+                device_attrs[attr_name] = attr_parameter
+
+            device_facts['devices'][device_name] = {
+                'state': device_state,
+                'type': ' '.join(device_type),
+                'attributes': device_attrs
+            }
+
+        return device_facts
 
 
 class AIXHardwareCollector(HardwareCollector):

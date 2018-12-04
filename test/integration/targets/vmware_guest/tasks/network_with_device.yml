@@ -1,0 +1,97 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Testcase to check #38605
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+
+- debug: var=vmlist
+
+- set_fact:
+   vm1: "{{ vmlist['json'][0] }}"
+
+- debug: var=vm1
+
+- set_fact:
+    vm_name: "VM_{{ 10000 | random }}"
+
+- name: Deploy VM {{ vm1 | basename }}
+  vmware_guest:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: False
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    state: poweredon
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm_name }}"
+    disk:
+      - size: 10mb
+        autoselect_datastore: yes
+    guest_id: rhel7_64guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+    networks:
+      - name: 'VM Network'
+        device_type: "vmxnet3"
+  register: vm_result
+
+- debug: var=vm_result
+
+- assert:
+    that:
+      - "vm_result.changed"
+
+- name: Deploy VM {{ vm1 | basename }} again
+  vmware_guest:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: False
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    state: poweredon
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm_name }}"
+    disk:
+      - size: 10mb
+        autoselect_datastore: yes
+    guest_id: rhel7_64guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+    networks:
+      - name: 'VM Network'
+        device_type: "vmxnet3"
+  register: vm_result_again
+
+- debug: var=vm_result_again
+
+- assert:
+    that:
+      - "not vm_result_again.changed"

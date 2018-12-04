@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_domain_search.yaml"
+- debug: msg="START cli/set_domain_search.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -7,14 +7,14 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: configure domain_search
   ios_system:
     domain_search:
       - ansible.com
       - redhat.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -28,7 +28,7 @@
     domain_search:
       - ansible.com
       - redhat.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -39,7 +39,7 @@
   ios_system:
     domain_search:
       - ansible.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -51,7 +51,7 @@
   ios_system:
     domain_search:
       - ansible.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -63,7 +63,7 @@
     domain_search:
       - ansible.com
       - redhat.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -76,7 +76,7 @@
     domain_search:
       - ansible.com
       - redhat.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -88,7 +88,7 @@
     domain_search:
       - ansible.com
       - eng.ansible.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -103,7 +103,7 @@
     domain_search:
       - ansible.com
       - eng.ansible.com
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -117,6 +117,6 @@
       - no ip domain-list redhat.com
       - no ip domain-list eng.ansible.com
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
-- debug: msg="END cli/set_domain_search.yaml"
+- debug: msg="END cli/set_domain_search.yaml on connection={{ ansible_connection }}"

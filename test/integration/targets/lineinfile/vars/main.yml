@@ -1,0 +1,29 @@
+test_regexp:
+  - regex: '1'
+    replace: 'bar'
+
+  - regex: '2'
+    replace: 'bar'
+
+  - regex: '3'
+    replace: 'bar'
+
+  - regex: '4'
+    replace: 'bar'
+
+
+test_befaf_regexp:
+  - before: section_three
+    after: section_one
+    regexp: option_one=
+    line: option_one=1
+
+  - before: section_three
+    after: section_one
+    regexp: option_two=
+    line: option_two=2
+
+  - before: section_three
+    after: section_one
+    regexp: option_three=
+    line: option_three=3

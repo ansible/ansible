@@ -4,15 +4,15 @@
 - name: setup
   nxos_config:
     lines: no ip access-list test
-    provider: "{{ nxapi }}"
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: configure sub level command
   nxos_config:
     lines: 10 permit ip any any log
     parents: ip access-list test
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -25,7 +25,7 @@
   nxos_config:
     lines: 10 permit ip any any log
     parents: ip access-list test
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -35,7 +35,7 @@
 - name: teardown
   nxos_config:
     lines: no ip access-list test
-    provider: "{{ nxapi }}"
     match: none
+    provider: "{{ connection }}"
 
 - debug: msg="END nxapi/sublevel.yaml"

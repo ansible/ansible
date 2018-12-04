@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     callback: debug
     type: stdout
-    short_description: formated stdout/stderr display
+    short_description: formatted stdout/stderr display
     description:
       - Use this callback to sort though extensive debug output
     version_added: "2.4"
@@ -31,7 +31,7 @@ class CallbackModule(CallbackModule_default):  # pylint: disable=too-few-public-
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'debug'
 
-    def _dump_results(self, result):
+    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         '''Return the text to output for a result.'''
 
         # Enable JSON identation

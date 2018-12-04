@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Set Up
   eos_config:
     lines:
@@ -7,6 +9,7 @@
       - no username ansibletest3
       - no username ansibletest4
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create user with role
   eos_user:
@@ -17,6 +20,7 @@
     configured_password: test1
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -36,6 +40,7 @@
     authorize: yes
     update_password: on_create
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -54,6 +59,7 @@
     state: present
     role: network-operator
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -73,6 +79,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   ignore_errors: yes
   register: result
 
@@ -90,3 +97,5 @@
       - no username ansibletest3
       - no username ansibletest4
     provider: "{{ cli }}"
+    authorize: yes
+  become: yes

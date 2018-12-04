@@ -22,9 +22,13 @@ version_added: 2.1
 author: "Kamil Szczygiel (@kamsz)"
 requirements:
     - "python >= 2.6"
-    - "influxdb >= 0.9"
+    - "influxdb >= 0.9 & <= 1.2.4"
     - requests
 options:
+    database_name:
+        description:
+            - Name of the database.
+        required: true
     state:
         description:
             - Determines if the database should be created or destroyed.
@@ -107,6 +111,7 @@ def drop_database(module, client, database_name):
 def main():
     argument_spec = InfluxDb.influxdb_argument_spec()
     argument_spec.update(
+        database_name=dict(required=True, type='str'),
         state=dict(default='present', type='str', choices=['present', 'absent'])
     )
     module = AnsibleModule(

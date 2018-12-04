@@ -1,25 +1,9 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#Requires -Module Ansible.ModuleUtils.Legacy
 
-# Write lines to a file using the specified line separator and encoding,
-# performing validation if a validation command was specified.
 function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_mode) {
 	Try {
 		$temppath = [System.IO.Path]::GetTempFileName();
@@ -98,7 +82,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	# Check if path exists. If it does not exist, either create it if create == "yes"
 	# was specified or fail with a reasonable error message.
-	If (-not (Test-Path -Path $path)) {
+	If (-not (Test-Path -LiteralPath $path)) {
 		If (-not $create) {
 			Fail-Json @{} "Path $path does not exist !";
 		}
@@ -234,7 +218,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linesep, $check_mode, $diff_support) {
 
 	# Check if path exists. If it does not exist, fail with a reasonable error message.
-	If (-not (Test-Path -Path $path)) {
+	If (-not (Test-Path -LiteralPath $path)) {
 		Fail-Json @{} "Path $path does not exist !";
 	}
 
@@ -332,7 +316,7 @@ $encoding = Get-AnsibleParam -obj $params -name "encoding" -type "str" -default 
 $newline = Get-AnsibleParam -obj $params -name "newline" -type "str" -default "windows" -validateset "unix","windows";
 
 # Fail if the path is not a file
-If (Test-Path -Path $path -PathType "container") {
+If (Test-Path -LiteralPath $path -PathType "container") {
 	Fail-Json @{} "Path $path is a directory";
 }
 
@@ -340,15 +324,6 @@ If (Test-Path -Path $path -PathType "container") {
 $linesep = "`r`n"
 If ($newline -eq "unix") {
 	$linesep = "`n";
-}
-
-# Fix any CR/LF literals in the line argument. PS will not recognize either backslash
-# or backtick literals in the incoming string argument without this bit of black magic.
-If ($line) {
-	$line = $line.Replace("\r", "`r");
-	$line = $line.Replace("\n", "`n");
-	$line = $line.Replace("``r", "`r");
-	$line = $line.Replace("``n", "`n");
 }
 
 # Figure out the proper encoding to use for reading / writing the target file.
@@ -364,7 +339,7 @@ If ($encoding -ne "auto") {
 # Otherwise see if we can determine the current encoding of the target file.
 # If the file doesn't exist yet (create == 'yes') we use the default or
 # explicitly specified encoding set above.
-ElseIf (Test-Path -Path $path) {
+ElseIf (Test-Path -LiteralPath $path) {
 
 	# Get a sorted list of encodings with preambles, longest first
 	$max_preamble_len = 0;
@@ -381,7 +356,7 @@ ElseIf (Test-Path -Path $path) {
 	}
 
 	# Get the first N bytes from the file, where N is the max preamble length we saw
-	[Byte[]]$bom = Get-Content -Encoding Byte -ReadCount $max_preamble_len -TotalCount $max_preamble_len -Path $path;
+	[Byte[]]$bom = Get-Content -Encoding Byte -ReadCount $max_preamble_len -TotalCount $max_preamble_len -LiteralPath $path;
 
 	# Iterate through the sorted encodings, looking for a full match.
 	$found = $false;

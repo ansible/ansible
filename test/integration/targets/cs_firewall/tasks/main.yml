@@ -244,8 +244,8 @@
     that:
     - fw is successful
     - fw is changed
-    - fw.cidr == "0.0.0.0/0"
-    - fw.cidrs == [ '0.0.0.0/0' ]
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
     - fw.network == "{{ cs_firewall_network }}"
     - fw.protocol == "all"
     - fw.type == "egress"
@@ -262,7 +262,8 @@
     that:
     - fw is successful
     - fw is not changed
-    - fw.cidr == "0.0.0.0/0"
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
     - fw.network == "{{ cs_firewall_network }}"
     - fw.protocol == "all"
     - fw.type == "egress"
@@ -404,8 +405,8 @@
     that:
     - fw is successful
     - fw is changed
-    - fw.cidr == "0.0.0.0/0"
-    - fw.cidrs == [ '0.0.0.0/0' ]
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
     - fw.network == "{{ cs_firewall_network }}"
     - fw.protocol == "all"
     - fw.type == "egress"
@@ -423,8 +424,8 @@
     that:
     - fw is successful
     - fw is changed
-    - fw.cidr == "0.0.0.0/0"
-    - fw.cidrs == [ '0.0.0.0/0' ]
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
     - fw.network == "{{ cs_firewall_network }}"
     - fw.protocol == "all"
     - fw.type == "egress"

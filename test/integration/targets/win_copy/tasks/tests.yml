@@ -134,6 +134,7 @@
     that:
     - copy_file_check is changed
     - copy_file_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_check.dest == test_win_copy_path + '\\foo-target.txt'
     - copy_file_check.operation == 'file_copy'
     - copy_file_check.size == 8
     - copy_file_actual_check.stat.exists == False
@@ -154,6 +155,7 @@
     that:
     - copy_file is changed
     - copy_file.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file.dest == test_win_copy_path + '\\foo-target.txt'
     - copy_file.operation == 'file_copy'
     - copy_file.size == 8
     - copy_file_actual.stat.exists == True
@@ -187,6 +189,7 @@
     that:
     - copy_file_to_folder_check is changed
     - copy_file_to_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_folder_check.dest == test_win_copy_path + '\\foo.txt'
     - copy_file_to_folder_check.operation == 'file_copy'
     - copy_file_to_folder_check.size == 8
     - copy_file_to_folder_actual_check.stat.exists == False
@@ -207,6 +210,7 @@
     that:
     - copy_file_to_folder is changed
     - copy_file_to_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_folder.dest == test_win_copy_path + '\\foo.txt'
     - copy_file_to_folder.operation == 'file_copy'
     - copy_file_to_folder.size == 8
     - copy_file_to_folder_actual.stat.exists == True

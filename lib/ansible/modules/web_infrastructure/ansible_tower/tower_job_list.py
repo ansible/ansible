@@ -26,20 +26,18 @@ options:
     status:
       description:
         - Only list jobs with this status.
-      default: null
       choices: ['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']
     page:
       description:
         - Page number of the results to fetch.
-      default: null
     all_pages:
       description:
         - Fetch all the pages and return a single result.
-      default: False
+      type: bool
+      default: 'no'
     query:
       description:
-        - Query used to further filter the list of jobs. {"foo":"bar"} will be passed at ?foo=bar
-      default: null
+        - Query used to further filter the list of jobs. C({"foo":"bar"}) will be passed at C(?foo=bar)
 extends_documentation_fragment: tower
 '''
 
@@ -80,9 +78,7 @@ results:
 '''
 
 
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
@@ -94,21 +90,17 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         status=dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
         page=dict(type='int'),
         all_pages=dict(type='bool', default=False),
         query=dict(type='dict'),
-    ))
+    )
 
-    module = AnsibleModule(
+    module = TowerModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
 
     json_output = {}
 

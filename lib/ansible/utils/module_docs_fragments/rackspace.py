@@ -30,7 +30,6 @@ options:
     description:
       - File to find the Rackspace credentials in. Ignored if I(api_key) and
         I(username) are provided.
-    default: null
     aliases:
       - creds_file
   env:
@@ -79,7 +78,6 @@ options:
     description:
       - File to find the Rackspace credentials in. Ignored if I(api_key) and
         I(username) are provided.
-    default: null
     aliases:
       - creds_file
   env:
@@ -111,6 +109,7 @@ options:
     description:
       - Whether or not to require SSL validation of API endpoints.
     version_added: 1.5
+    type: bool
 requirements:
   - "python >= 2.6"
   - pyrax

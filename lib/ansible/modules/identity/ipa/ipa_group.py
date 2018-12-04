@@ -24,12 +24,17 @@ options:
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ['name']
+  description:
+    description:
+    - Description of the group.
   external:
     description:
     - Allow adding external non-IPA members from trusted domains.
+    type: bool
   gidnumber:
     description:
     - GID (use this option to set it manually).
+    aliases: ['gid']
   group:
     description:
     - List of group names assigned to this group.
@@ -39,6 +44,7 @@ options:
   nonposix:
     description:
     - Create as a non-POSIX group.
+    type: bool
   user:
     description:
     - List of user names assigned to this group.

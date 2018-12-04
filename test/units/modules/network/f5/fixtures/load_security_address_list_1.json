@@ -1,0 +1,53 @@
+{
+    "kind": "tm:security:firewall:address-list:address-liststate",
+    "name": "bar",
+    "partition": "Common",
+    "fullPath": "/Common/bar",
+    "generation": 135,
+    "selfLink": "https://localhost/mgmt/tm/security/firewall/address-list/~Common~bar?ver=12.1.2",
+    "addressLists": [
+        {
+            "name": "foo",
+            "partition": "Common",
+            "nameReference": {
+                "link": "https://localhost/mgmt/tm/security/firewall/address-list/~Common~foo?ver=12.1.2"
+            }
+        }
+    ],
+    "addresses": [
+        {
+            "name": "1.1.1.1"
+        },
+        {
+            "name": "2.2.2.2-3.3.3.3"
+        },
+        {
+            "name": "5.5.5.5-6.6.6.6"
+        },
+        {
+            "name": "2700:bc00:1f10:101::6"
+        }
+    ],
+    "fqdns": [
+        {
+            "name": "google.com"
+        }
+    ],
+    "geo": [
+        {
+            "name": "AF:Baghlan"
+        },
+        {
+            "name": "AF:Helmand"
+        },
+        {
+            "name": "BS"
+        },
+        {
+            "name": "EU"
+        },
+        {
+            "name": "GE:Marneulis Raioni"
+        }
+    ]
+}

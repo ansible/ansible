@@ -3,3 +3,4 @@ cs_resource_prefix: "cs-{{ (ansible_date_time.iso8601_micro | to_uuid).split('-'
 cs_common_template: CentOS 5.6 (64-bit) no GUI (Simulator)
 cs_common_service_offering: Small Instance
 cs_common_zone_adv: Sandbox-simulator-advanced
+cs_common_zone_basic: Sandbox-simulator-basic

@@ -15,7 +15,7 @@ DOCUMENTATION = """
          The lookup order mirrors the one from Chef, all folders in the base path are walked back looking for the following configuration
          file in order : .chef/knife.rb, ~/.chef/knife.rb, /etc/chef/client.rb"
     requirements:
-        - "pychef (python library https://pychef.readthedocs.io `pip install pychef`"
+        - "pychef (python library https://pychef.readthedocs.io `pip install pychef`)"
     options:
         name:
           description:
@@ -28,8 +28,8 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-    - debug
-        msg: {{ lookup('chef_databag', 'name=data_bag_name item=data_bag_item') }}
+    - debug:
+        msg: "{{ lookup('chef_databag', 'name=data_bag_name item=data_bag_item') }}"
 """
 
 RETURN = """
@@ -75,7 +75,7 @@ class LookupModule(LookupBase):
                 setattr(self, arg, parsed)
             except ValueError:
                 raise AnsibleError(
-                    "can't parse arg {}={} as string".format(arg, arg_raw)
+                    "can't parse arg {0}={1} as string".format(arg, arg_raw)
                 )
         if args:
             raise AnsibleError(

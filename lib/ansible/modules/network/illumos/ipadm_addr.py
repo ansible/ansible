@@ -45,6 +45,7 @@ options:
               IP addresses do not persist across reboots.
         required: false
         default: false
+        type: bool
     wait:
         description:
             - Specifies the time in seconds we wait for obtaining address via DHCP.
@@ -59,17 +60,17 @@ options:
 '''
 
 EXAMPLES = '''
-name: Configure IP address 10.0.0.1 on e1000g0
-ipadm_addr: addr=10.0.0.1/32 addrobj=e1000g0/v4 state=present
+- name: Configure IP address 10.0.0.1 on e1000g0
+  ipadm_addr: addr=10.0.0.1/32 addrobj=e1000g0/v4 state=present
 
-name: Delete addrobj
-ipadm_addr: addrobj=e1000g0/v4 state=absent
+- name: Delete addrobj
+  ipadm_addr: addrobj=e1000g0/v4 state=absent
 
-name: Configure link-local IPv6 address
-ipadm_addr: addtype=addrconf addrobj=vnic0/v6
+- name: Configure link-local IPv6 address
+  ipadm_addr: addtype=addrconf addrobj=vnic0/v6
 
-name: Configure address via DHCP and wait 180 seconds for address obtaining
-ipadm_addr: addrobj=vnic0/dhcp addrtype=dhcp wait=180
+- name: Configure address via DHCP and wait 180 seconds for address obtaining
+  ipadm_addr: addrobj=vnic0/dhcp addrtype=dhcp wait=180
 '''
 
 RETURN = '''

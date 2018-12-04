@@ -4,20 +4,17 @@
 - name: Setup - put NXAPI in stopped state
   nxos_nxapi:
       state: absent
-      provider: "{{ cli }}"
   register: result
 
 - name: Enable NXAPI
   nxos_nxapi:
       state: present
-      provider: "{{ cli }}"
   register: result
 
 - name: Check NXAPI state
   nxos_command:
       commands:
           - show feature | grep nxapi
-      provider: "{{ cli }}"
   register: result
 
 - name: Assert NXAPI is enabled
@@ -26,7 +23,6 @@
 
 - name: Enable NXAPI again
   nxos_nxapi:
-      provider: "{{ cli }}"
   register: result
 
 - name: Assert idempotence

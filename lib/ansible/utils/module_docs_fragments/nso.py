@@ -22,8 +22,6 @@
 class ModuleDocFragment(object):
 
     DOCUMENTATION = '''
-notes:
-  - Cisco NSO version 4.4.3 or higher required.
 options:
   url:
     description: NSO JSON-RPC URL, http://localhost:8080/jsonrpc
@@ -34,6 +32,8 @@ options:
   password:
     description: NSO password
     required: true
-requirements:
-  - Cisco NSO version 4.4.3 or higher
+  timeout:
+    description: JSON-RPC request timeout in seconds
+    default: 300
+    version_added: "2.6"
 '''

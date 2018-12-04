@@ -24,7 +24,7 @@ DOCUMENTATION = '''
           - name: HIPCHAT_TOKEN
         ini:
           - section: callback_hipchat
-          - key: token
+            key: token
       api_version:
         description: HipChat API version, v1 or v2.
         required: False
@@ -33,7 +33,7 @@ DOCUMENTATION = '''
           - name: HIPCHAT_API_VERSION
         ini:
           - section: callback_hipchat
-          - key: api_version
+            key: api_version
       room:
         description: HipChat room to post in.
         default: ansible
@@ -41,7 +41,7 @@ DOCUMENTATION = '''
           - name: HIPCHAT_ROOM
         ini:
           - section: callback_hipchat
-          - key: room
+            key: room
       from:
         description:  Name to post as
         default: ansible
@@ -49,7 +49,7 @@ DOCUMENTATION = '''
           - name: HIPCHAT_FROM
         ini:
           - section: callback_hipchat
-          - key: from
+            key: from
       notify:
         description: Add notify flag to important messages
         type: bool
@@ -58,7 +58,7 @@ DOCUMENTATION = '''
           - name: HIPCHAT_NOTIFY
         ini:
           - section: callback_hipchat
-          - key: notify
+            key: notify
 
 '''
 
@@ -141,7 +141,7 @@ class CallbackModule(CallbackBase):
             response = open_url(url, data=data, headers=headers, method='POST')
             return response.read()
         except Exception as ex:
-            self._display.warning('Could not submit message to hipchat: {}'.format(ex))
+            self._display.warning('Could not submit message to hipchat: {0}'.format(ex))
 
     def send_msg_v1(self, msg, msg_format='text', color='yellow', notify=False):
         """Method for sending a message to HipChat"""
@@ -159,7 +159,7 @@ class CallbackModule(CallbackBase):
             response = open_url(url, data=urlencode(params))
             return response.read()
         except Exception as ex:
-            self._display.warning('Could not submit message to hipchat: {}'.format(ex))
+            self._display.warning('Could not submit message to hipchat: {0}'.format(ex))
 
     def v2_playbook_on_play_start(self, play):
         """Display Playbook and play start messages"""

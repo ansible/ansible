@@ -29,7 +29,6 @@ options:
         description:
             - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave
               (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
-        required: False
         choices:
             - getslave
             - getmaster
@@ -88,8 +87,6 @@ options:
     master_auto_position:
         description:
             - does the host uses GTID based replication or not
-        required: false
-        default: null
         version_added: "2.0"
 
 extends_documentation_fragment: mysql
@@ -121,15 +118,8 @@ EXAMPLES = '''
 import os
 import warnings
 
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
 
 
@@ -242,16 +232,16 @@ def main():
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
 
-    if not mysqldb_found:
-        module.fail_json(msg="The MySQL-python module is required.")
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
     else:
-        warnings.filterwarnings('error', category=MySQLdb.Warning)
+        warnings.filterwarnings('error', category=mysql_driver.Warning)
 
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
 
     try:
-        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'MySQLdb.cursors.DictCursor',
+        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'mysql_driver.cursors.DictCursor',
                                connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
@@ -328,7 +318,7 @@ def main():
             chm.append("MASTER_AUTO_POSITION = 1")
         try:
             changemaster(cursor, chm, chm_params)
-        except MySQLdb.Warning as e:
+        except mysql_driver.Warning as e:
             result['warning'] = to_native(e)
         except Exception as e:
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (to_native(e), chm))
@@ -359,7 +349,8 @@ def main():
         else:
             module.exit_json(msg="Slave already reset", changed=False)
 
+    warnings.simplefilter("ignore")
+
 
 if __name__ == '__main__':
     main()
-    warnings.simplefilter("ignore")

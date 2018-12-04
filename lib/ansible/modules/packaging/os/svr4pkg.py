@@ -64,7 +64,7 @@ options:
     description:
       - Install/Remove category instead of a single package.
     required: false
-    choices: ["true", "false"]
+    type: bool
     version_added: "1.6"
 '''
 
@@ -104,6 +104,8 @@ EXAMPLES = '''
 
 import os
 import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def package_installed(module, name, category):
@@ -257,8 +259,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

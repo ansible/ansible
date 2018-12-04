@@ -1,0 +1,6 @@
+# This contain sample show rnunning config tasks
+---
+- name: Test Running Configurations
+  cnos_showrun: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} enablePassword='{{item.enablePassword}}' outputfile=./results/cnos_showrun_{{ inventory_hostname }}_output.txt
+  with_items: "{{test_showrun_data}}"
+# Completed file

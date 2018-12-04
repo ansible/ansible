@@ -1,25 +1,7 @@
 # Test code for the vmware_datastore_facts module.
-# (c) 2017, Tim Rightnour <thegarbledone@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-- name: make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
+# Copyright (c) 2017, Tim Rightnour <thegarbledone@gmail.com>
+# Copyright (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: store the vcenter container ip
   set_fact:
@@ -36,11 +18,11 @@
 
 - name: kill vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+    url: http://{{ vcsim }}:5000/killall
 
 - name: start vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?ds=2&datacenter=1&cluster=1&folder=0' }}"
+    url: http://{{ vcsim }}:5000/spawn?ds=2&datacenter=1&cluster=1&folder=0
   register: vcsim_instance
 
 - name: Wait for vcsim server to come up online
@@ -51,15 +33,15 @@
 
 - name: get a list of Clusters from vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
   register: clusters
 
 - set_fact:
     cl1: "{{ clusters['json'][0] }}"
-    
+
 - name: get a list of Datacenters from vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
   register: datacenters
 
 - set_fact:
@@ -67,12 +49,12 @@
 
 - name: get a list of Datastores from vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=D' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=D
   register: datastores
 
 - set_fact:
     ds1: "{{ datastores['json'][0] }}"
-  
+
 # Testcase 0001: Get a full list of datastores in a datacenter
 - name: get list of facts about datastores
   vmware_datastore_facts:
@@ -127,3 +109,41 @@
     that:
       - "datastore_facts_0003['datastores'][0]['name'] == ds1 | basename"
       - "datastore_facts_0003['datastores'][0]['capacity'] is defined"
+
+- name: get list of extended facts about one datastore
+  vmware_datastore_facts:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ ds1 | basename }}"
+    gather_nfs_mount_info: True
+    gather_vmfs_mount_info: True
+  register: datastore_facts_0004
+
+- debug:
+    msg: "{{ datastore_facts_0004 }}"
+
+- assert:
+    that:
+      - "datastore_facts_0004['datastores'][0]['name'] == ds1 | basename"
+      - "datastore_facts_0004['datastores'][0]['capacity'] is defined"
+
+- name: get list of facts about one datastore in check mode
+  vmware_datastore_facts:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ ds1 | basename }}"
+  register: datastore_facts_0005
+
+- debug:
+    msg: "{{ datastore_facts_0005 }}"
+
+- assert:
+    that:
+      - "datastore_facts_0005['datastores'][0]['name'] == ds1 | basename"
+      - "datastore_facts_0005['datastores'][0]['capacity'] is defined"

@@ -1,0 +1,59 @@
+---
+- hosts: localhost
+  vars:
+    foreman_stub_host: "{{ lookup('env', 'FOREMAN_HOST') }}"
+    foreman_stub_port: "{{ lookup('env', 'FOREMAN_PORT') }}"
+    foreman_stub_api_path: /api/v2
+    foreman_stub_host_uri: "http://{{ foreman_stub_host }}:{{ foreman_stub_port }}"
+    foreman_stub_api_uri: "{{ foreman_stub_host_uri }}{{ foreman_stub_api_path }}"
+    foreman_stub_heartbeat_uri: "{{ foreman_stub_host_uri }}/ping"
+  tasks:
+  - debug:
+      msg: >-
+        Foreman host: {{ foreman_stub_host }} |
+        Foreman port: {{ foreman_stub_port }} |
+        API path: {{ foreman_stub_api_path }} |
+        Foreman API URL: {{ foreman_stub_api_uri }}
+  
+  - name: Wait for Foreman API stub to come up online
+    wait_for:
+      host: "{{ foreman_stub_host }}"
+      port: "{{ foreman_stub_port }}"
+      state: started
+  
+  # smoke test that flask app is serving
+  - name: Smoke test HTTP response from Foreman stub
+    uri:
+      url: "{{ foreman_stub_heartbeat_uri }}"
+      return_content: yes
+    register: heartbeat_resp
+    failed_when: >
+        heartbeat_resp.json.status != 'ok' or heartbeat_resp.json.response != 'pong'
+
+  #### Testing start
+  - name: >
+      Check that there are 'foreman_pgagne_sats' and 'foreman_base'
+      groups present in inventory
+    assert:
+      that: >
+        '{{ item }}' in groups
+    with_items:
+    - foreman_pgagne_sats
+    - foreman_base
+
+  - name: Check that host are in appropriate groups
+    assert:
+      that: >
+        '{{ item.key }}' in groups['{{ item.value }}']
+    with_dict:
+      v6.example-780.com: foreman_base
+      c4.j1.y5.example-487.com: ungrouped
+
+  - name: Check host UUIDs
+    assert:
+      that: >
+        hostvars['{{ item.key }}']['foreman_subscription_facet_attributes']['uuid']  == '{{ item.value }}'
+    with_dict:
+      v6.example-780.com: 2c72fa49-995a-4bbf-bda0-684c7048ad9f
+      c4.j1.y5.example-487.com: 0a494b6e-7e90-4ed2-8edc-43a41436a242
+  #### Testing end

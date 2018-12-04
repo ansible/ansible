@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: ordnance_facts
 version_added: "2.3"
-author: "Alexander Turner (alex.turner@ordnance.io)"
+author: "Alexander Turner (@alexanderturner) <alex.turner@ordnance.io>"
 short_description: Collect facts from Ordnance Virtual Routers over SSH
 description:
   - Collects a base set of device facts from an Ordnance Virtual
@@ -215,6 +215,7 @@ class Interfaces(FactsBase):
         match = re.search(r'^(?:.+) is (.+),', data, re.M)
         if match:
             return match.group(1)
+
 
 FACT_SUBSETS = dict(
     interfaces=Interfaces,

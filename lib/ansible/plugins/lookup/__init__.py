@@ -23,12 +23,9 @@ from abc import abstractmethod
 
 from ansible.errors import AnsibleFileNotFound
 from ansible.plugins import AnsiblePlugin
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 __all__ = ['LookupBase']
 
@@ -123,6 +120,6 @@ class LookupBase(AnsiblePlugin):
             result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
         except AnsibleFileNotFound:
             if not ignore_missing:
-                self._display.warning("Unable to find '%s' in expected paths." % needle)
+                self._display.warning("Unable to find '%s' in expected paths (use -vvvvv to see paths)" % needle)
 
         return result

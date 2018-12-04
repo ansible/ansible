@@ -1,0 +1,12 @@
+- name: Test pause module with custom prompt
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: EXPECTED FAILURE
+      pause:
+        prompt: Custom prompt
+
+    - debug:
+        msg: Task after pause

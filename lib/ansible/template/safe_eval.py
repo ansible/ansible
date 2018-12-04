@@ -91,8 +91,8 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         )
 
     filter_list = []
-    for filter in filter_loader.all():
-        filter_list.extend(filter.filters().keys())
+    for filter_ in filter_loader.all():
+        filter_list.extend(filter_.filters().keys())
 
     test_list = []
     for test in test_loader.all():

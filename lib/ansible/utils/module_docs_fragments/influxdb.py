@@ -9,24 +9,25 @@ class ModuleDocFragment(object):
 options:
   hostname:
     description:
-    - The hostname or IP address on which InfluxDB server is listening
-    required: true
+    - The hostname or IP address on which InfluxDB server is listening.
+    - Since version 2.5, defaulted to localhost.
+    default: localhost
   username:
     description:
-    - Username that will be used to authenticate against InfluxDB server
+    - Username that will be used to authenticate against InfluxDB server.
+    - Alias C(login_username) added in version 2.5.
     default: root
+    aliases: [ login_username ]
   password:
     description:
-    - Password that will be used to authenticate against InfluxDB server
+    - Password that will be used to authenticate against InfluxDB server.
+    - Alias C(login_password) added in version 2.5.
     default: root
+    aliases: [ login_password ]
   port:
     description:
     - The port on which InfluxDB server is listening
     default: 8086
-  database_name:
-    description:
-    - Name of the database.
-    required: true
   validate_certs:
     description:
     - If set to C(no), the SSL certificates will not be validated.
@@ -36,12 +37,10 @@ options:
   ssl:
     description:
     - Use https instead of http to connect to InfluxDB server.
-    default: False
     version_added: "2.5"
   timeout:
     description:
     - Number of seconds Requests will wait for client to establish a connection.
-    default: None
     version_added: "2.5"
   retries:
     description:
@@ -52,7 +51,6 @@ options:
   use_udp:
     description:
     - Use UDP to connect to InfluxDB server.
-    default: False
     version_added: "2.5"
   udp_port:
     description:
@@ -62,6 +60,5 @@ options:
   proxies:
     description:
     - HTTP(S) proxy to use for Requests to connect to InfluxDB server.
-    default: None
     version_added: "2.5"
 '''

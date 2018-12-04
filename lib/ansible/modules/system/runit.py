@@ -38,7 +38,7 @@ options:
         choices: [ killed, once, reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Wheater the service is enabled or not, if disabled it also implies stopped.
+            - Whether the service is enabled or not, if disabled it also implies stopped.
         type: bool
     service_dir:
         description:
@@ -168,18 +168,22 @@ class Sv(object):
             self.full_state = self.state = err
         else:
             self.full_state = out
+            # full_state *may* contain information about the logger:
+            # "down: /etc/service/service-without-logger: 1s, normally up\n"
+            # "down: /etc/service/updater: 127s, normally up; run: log: (pid 364) 263439s\n"
+            full_state_no_logger = self.full_state.split("; ")[0]
 
-            m = re.search(r'\(pid (\d+)\)', out)
+            m = re.search(r'\(pid (\d+)\)', full_state_no_logger)
             if m:
                 self.pid = m.group(1)
 
-            m = re.search(r' (\d+)s', out)
+            m = re.search(r' (\d+)s', full_state_no_logger)
             if m:
                 self.duration = m.group(1)
 
-            if re.search('run:', out):
+            if re.search(r'^run:', full_state_no_logger):
                 self.state = 'started'
-            elif re.search('down:', out):
+            elif re.search(r'^down:', full_state_no_logger):
                 self.state = 'stopped'
             else:
                 self.state = 'unknown'

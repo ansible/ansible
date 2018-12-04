@@ -1,0 +1,11 @@
+- name: Launch a Job Template
+  tower_job_launch:
+    job_template: "Demo Job Template"
+    inventory: "Demo Inventory"
+    credential: "Demo Credential"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+      - "result.status == 'pending'"

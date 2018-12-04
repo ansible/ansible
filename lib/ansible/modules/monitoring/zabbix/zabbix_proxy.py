@@ -33,7 +33,7 @@ description:
    - This module allows you to create, modify, get and delete Zabbix proxy entries.
 version_added: "2.5"
 author:
-    - "Alen Komic"
+    - "Alen Komic (@akomic)"
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
@@ -259,7 +259,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module" +
+        module.fail_json(msg="Missing required zabbix-api module" +
                              " (check docs or install with:" +
                              " pip install zabbix-api)")
 

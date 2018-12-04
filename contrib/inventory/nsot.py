@@ -339,5 +339,6 @@ def main():
     elif args.host:
         print(client.do_host(args.host))
 
+
 if __name__ == '__main__':
     main()

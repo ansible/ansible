@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/contains.yaml"
+- debug: msg="START common/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator
   nxos_command:
@@ -9,11 +9,10 @@
     wait_for:
       - "result[0] contains NX-OS"
       - "result[1].TABLE_interface.ROW_interface.interface contains mgmt"
-    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- debug: msg="END cli/contains.yaml"
+- debug: msg="END common/contains.yaml on connection={{ ansible_connection }}"

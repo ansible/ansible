@@ -1,0 +1,2 @@
+minor_changes:
+  - Add warning about falling back to jinja2_native=false when Jinja2 version is lower than 2.10.

@@ -8,32 +8,39 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_snat_pool import Parameters
-    from library.bigip_snat_pool import ModuleManager
-    from library.bigip_snat_pool import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+    from library.modules.bigip_snat_pool import ModuleParameters
+    from library.modules.bigip_snat_pool import ApiParameters
+    from library.modules.bigip_snat_pool import ModuleManager
+    from library.modules.bigip_snat_pool import ArgumentSpec
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_snat_pool import Parameters
-        from ansible.modules.network.f5.bigip_snat_pool import ModuleManager
-        from ansible.modules.network.f5.bigip_snat_pool import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_snat_pool import ModuleParameters
+    from ansible.modules.network.f5.bigip_snat_pool import ApiParameters
+    from ansible.modules.network.f5.bigip_snat_pool import ModuleManager
+    from ansible.modules.network.f5.bigip_snat_pool import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -65,7 +72,7 @@ class TestParameters(unittest.TestCase):
             members=['10.10.10.10', '20.20.20.20'],
             partition='Common'
         )
-        p = Parameters(args)
+        p = ModuleParameters(params=args)
         assert p.name == 'my-snat-pool'
         assert p.state == 'present'
         assert len(p.members) == 2
@@ -76,14 +83,12 @@ class TestParameters(unittest.TestCase):
         args = dict(
             members=['/Common/10.10.10.10', '/foo/20.20.20.20']
         )
-        p = Parameters(args)
+        p = ApiParameters(params=args)
         assert len(p.members) == 2
         assert '/Common/10.10.10.10' in p.members
-        assert '/Common/20.20.20.20' in p.members
+        assert '/foo/20.20.20.20' in p.members
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -94,17 +99,16 @@ class TestManager(unittest.TestCase):
             name='my-snat-pool',
             state='present',
             members=['10.10.10.10', '20.20.20.20'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[False, True])
@@ -122,19 +126,18 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['1.1.1.1', '2.2.2.2'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_snatpool.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_snatpool.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.exists = Mock(side_effect=[True, True])
@@ -149,19 +152,18 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['30.30.30.30'],
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))
 
-        current = Parameters(load_fixture('load_ltm_snatpool.json'))
+        current = ApiParameters(params=load_fixture('load_ltm_snatpool.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.read_current_from_device = Mock(return_value=current)

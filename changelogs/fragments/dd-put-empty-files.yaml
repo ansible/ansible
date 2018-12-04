@@ -1,0 +1,7 @@
+bugfixes:
+- docker connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- chroot connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- jail connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- kubectl connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- libvirt_lxc connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)
+- zone connection - Support empty files with copying to target (https://github.com/ansible/ansible/issues/36725)

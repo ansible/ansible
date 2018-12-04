@@ -1,0 +1,2 @@
+bugfixes:
+  - properly report errors when k=v syntax is mixed with YAML syntax in a task (https://github.com/ansible/ansible/issues/27210)

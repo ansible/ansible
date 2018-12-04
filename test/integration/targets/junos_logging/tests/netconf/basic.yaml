@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_logging netconf/basic.yaml"
+- debug: msg="START junos_logging netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove file logging
   junos_logging:
@@ -390,3 +390,5 @@
 - assert:
     that:
       - "result.changed == false"
+
+- debug: msg="END junos_logging netconf/basic.yaml on connection={{ ansible_connection }}"

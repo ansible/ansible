@@ -1,0 +1,2 @@
+bugfixes:
+- get_url - support remote checksum files with paths specified with leading dots (`./path/to/file`)

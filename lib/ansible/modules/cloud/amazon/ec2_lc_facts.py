@@ -25,33 +25,25 @@ options:
   name:
     description:
       - A name or a list of name to match.
-    required: false
     default: []
   sort:
     description:
       - Optional attribute which with to sort the results.
     choices: ['launch_configuration_name', 'image_id', 'created_time', 'instance_type', 'kernel_id', 'ramdisk_id', 'key_name']
-    default: null
-    required: false
   sort_order:
     description:
       - Order in which to sort results.
       - Only used when the 'sort' parameter is specified.
     choices: ['ascending', 'descending']
     default: 'ascending'
-    required: false
   sort_start:
     description:
       - Which result to start with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   sort_end:
     description:
       - Which result to end with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
 extends_documentation_fragment:
     - aws
     - ec2

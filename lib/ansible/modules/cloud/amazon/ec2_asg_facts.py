@@ -370,9 +370,13 @@ def find_asgs(conn, module, name=None, tags=None):
                 del(asg['target_group_ar_ns'])
             if asg.get('target_group_arns'):
                 if elbv2:
-                    tg_paginator = elbv2.get_paginator('describe_target_groups')
-                    tg_result = tg_paginator.paginate(TargetGroupArns=asg['target_group_arns']).build_full_result()
-                    asg['target_group_names'] = [tg['TargetGroupName'] for tg in tg_result['TargetGroups']]
+                    try:
+                        tg_paginator = elbv2.get_paginator('describe_target_groups')
+                        tg_result = tg_paginator.paginate(TargetGroupArns=asg['target_group_arns']).build_full_result()
+                        asg['target_group_names'] = [tg['TargetGroupName'] for tg in tg_result['TargetGroups']]
+                    except ClientError as e:
+                        if e.response['Error']['Code'] == 'TargetGroupNotFound':
+                            asg['target_group_names'] = []
             else:
                 asg['target_group_names'] = []
             matched_asgs.append(asg)

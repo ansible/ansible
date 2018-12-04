@@ -310,3 +310,4 @@ class LinuxNetwork(Network):
 class LinuxNetworkCollector(NetworkCollector):
     _platform = 'Linux'
     _fact_class = LinuxNetwork
+    required_facts = set(['distribution', 'platform'])

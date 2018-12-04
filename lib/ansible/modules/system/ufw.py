@@ -165,7 +165,7 @@ EXAMPLES = '''
   ufw:
     rule: allow
     src: '{{ item }}'
-  with_items:
+  loop:
     - 10.0.0.0/8
     - 172.16.0.0/12
     - 192.168.0.0/16
@@ -314,11 +314,11 @@ def main():
         elif command == 'rule':
             # Rules are constructed according to the long format
             #
-            # ufw [--dry-run] [delete] [insert NUM] [route] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
+            # ufw [--dry-run] [route] [delete] [insert NUM] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
             #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
             #     [proto protocol] [app application] [comment COMMENT]
-            cmd.append([module.boolean(params['delete']), 'delete'])
             cmd.append([module.boolean(params['route']), 'route'])
+            cmd.append([module.boolean(params['delete']), 'delete'])
             cmd.append([params['insert'], "insert %s" % params['insert']])
             cmd.append([value])
             cmd.append([params['direction'], "%s" % params['direction']])

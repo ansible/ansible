@@ -38,6 +38,7 @@ if platform.system() != 'SunOS':
 class ServiceMgrFactCollector(BaseFactCollector):
     name = 'service_mgr'
     _fact_ids = set()
+    required_facts = set(['platform', 'distribution'])
 
     @staticmethod
     def is_systemd_managed(module):

@@ -30,12 +30,9 @@ from ansible.utils.helpers import pct_to_int
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class PlaybookExecutor:
@@ -68,7 +65,6 @@ class PlaybookExecutor:
         check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE)
 
     def run(self):
-
         '''
         Run the given playbook, based on the settings in the play which
         may limit the runs to serialized groups, etc.
@@ -103,6 +99,11 @@ class PlaybookExecutor:
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
+                    # Allow variables to be used in vars_prompt fields.
+                    all_vars = self._variable_manager.get_vars(play=play)
+                    templar = Templar(loader=self._loader, variables=all_vars)
+                    setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
+
                     if play.vars_prompt:
                         for var in play.vars_prompt:
                             vname = var['name']
@@ -121,19 +122,17 @@ class PlaybookExecutor:
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
-                    # Create a temporary copy of the play here, so we can run post_validate
-                    # on it without the templating changes affecting the original object.
+                    # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
-                    new_play = play.copy()
-                    new_play.post_validate(templar)
+                    play.post_validate(templar)
 
                     if self._options.syntax:
                         continue
 
                     if self._tqm is None:
                         # we are just doing a listing
-                        entry['plays'].append(new_play)
+                        entry['plays'].append(play)
 
                     else:
                         self._tqm._unreachable_hosts.update(self._unreachable_hosts)
@@ -143,9 +142,9 @@ class PlaybookExecutor:
 
                         break_play = False
                         # we are actually running plays
-                        batches = self._get_serialized_batches(new_play)
+                        batches = self._get_serialized_batches(play)
                         if len(batches) == 0:
-                            self._tqm.send_callback('v2_playbook_on_play_start', new_play)
+                            self._tqm.send_callback('v2_playbook_on_play_start', play)
                             self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
                         for batch in batches:
                             # restrict the inventory to the hosts in the serialized batch
@@ -222,6 +221,13 @@ class PlaybookExecutor:
         if self._options.syntax:
             display.display("No issues encountered")
             return result
+
+        if self._options.start_at_task and not self._tqm._start_at_done:
+            display.error(
+                "No matching task \"%s\" found. "
+                "Note: --start-at-task can only follow static includes."
+                % self._options.start_at_task
+            )
 
         return result
 

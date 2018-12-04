@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_vlan netconf/basic.yaml"
+- debug: msg="START junos_vlan netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove vlan
   junos_vlan:
@@ -188,3 +188,5 @@
 - assert:
     that:
       - 'result.changed == false'
+
+- debug: msg="END junos_vlan netconf/basic.yaml on connection={{ ansible_connection }}"

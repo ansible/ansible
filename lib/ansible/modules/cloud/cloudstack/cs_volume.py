@@ -56,6 +56,7 @@ options:
       - Whether to display the volume to the end user or not.
       - Allowed to Root Admins only.
     default: true
+    type: bool
   domain:
     description:
       - Name of the domain the volume to be deployed in.
@@ -78,12 +79,14 @@ options:
   force:
     description:
       - Force removal of volume even it is attached to a VM.
-      - Considered on C(state=absnet) only.
+      - Considered on C(state=absent) only.
     default: false
+    type: bool
   shrink_ok:
     description:
       - Whether to allow to shrink the volume.
     default: false
+    type: bool
   vm:
     description:
       - Name of the virtual machine to attach the volume to.
@@ -100,6 +103,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -245,11 +249,12 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
                 'zoneid': self.get_zone(key='id'),
                 'displayvolume': self.module.params.get('display_volume'),
                 'type': 'DATADISK',
+                'fetch_list': True,
             }
             volumes = self.query_api('listVolumes', **args)
             if volumes:
                 volume_name = self.module.params.get('name')
-                for v in volumes['volume']:
+                for v in volumes:
                     if volume_name.lower() == v['name'].lower():
                         self.volume = v
                         break

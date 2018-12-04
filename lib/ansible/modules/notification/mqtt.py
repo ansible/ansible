@@ -24,42 +24,34 @@ options:
   server:
     description:
       - MQTT broker address/name
-    required: false
     default: localhost
   port:
     description:
       - MQTT broker port number
-    required: false
     default: 1883
   username:
     description:
       - Username to authenticate against the broker.
-    required: false
   password:
     description:
       - Password for C(username) to authenticate against the broker.
-    required: false
   client_id:
     description:
       - MQTT client identifier
-    required: false
     default: hostname + pid
   topic:
     description:
       - MQTT topic name
     required: true
-    default: null
   payload:
     description:
       - Payload. The special string C("None") may be used to send a NULL
         (i.e. empty) payload which is useful to simply notify with the I(topic)
         or to clear previously retained messages.
     required: true
-    default: null
   qos:
     description:
       - QoS (Quality of Service)
-    required: false
     default: 0
     choices: [ "0", "1", "2" ]
   retain:
@@ -67,8 +59,8 @@ options:
       - Setting this flag causes the broker to retain (i.e. keep) the message so that
         applications that subsequently subscribe to the topic can received the last
         retained message immediately.
-    required: false
-    default: False
+    type: bool
+    default: 'no'
   ca_certs:
     description:
       - The path to the Certificate Authority certificate files that are to be
@@ -79,24 +71,18 @@ options:
         but will not attempt any form of authentication. This provides basic
         network encryption but may not be sufficient depending on how the broker
         is configured.
-    required: False
-    default: None
     version_added: 2.3
   certfile:
     description:
       - The path pointing to the PEM encoded client certificate. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
-    required: False
-    default: None
     version_added: 2.3
   keyfile:
     description:
       - The path pointing to the PEM encoded client private key. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
-    required: False
-    default: None
     version_added: 2.3
 
 
@@ -104,7 +90,7 @@ options:
 requirements: [ mosquitto ]
 notes:
  - This module requires a connection to an MQTT broker such as Mosquitto
-   U(http://mosquitto.org) and the I(Paho) C(mqtt) Python client (U(https://pypi.python.org/pypi/paho-mqtt)).
+   U(http://mosquitto.org) and the I(Paho) C(mqtt) Python client (U(https://pypi.org/project/paho-mqtt/)).
 author: "Jan-Piet Mens (@jpmens)"
 '''
 

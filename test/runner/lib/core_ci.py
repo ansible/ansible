@@ -69,10 +69,11 @@ class AnsibleCoreCI(object):
                 'vyos',
                 'junos',
                 'ios',
+                'tower',
+                'rhel',
             ),
             azure=(
                 'azure',
-                'rhel',
             ),
             parallels=(
                 'osx',
@@ -88,6 +89,13 @@ class AnsibleCoreCI(object):
                     # assign default provider based on platform
                     self.provider = candidate
                     break
+            for candidate in providers:
+                if '%s/%s' % (platform, version) in providers[candidate]:
+                    # assign default provider based on platform and version
+                    self.provider = candidate
+                    break
+
+        self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
         if self.provider in ('aws', 'azure'):
             if self.provider != 'aws':
@@ -108,13 +116,13 @@ class AnsibleCoreCI(object):
                 # send all non-Shippable jobs to us-east-1 to reduce api key maintenance
                 region = 'us-east-1'
 
-            self.endpoints = AWS_ENDPOINTS[region],
+            self.path = "%s-%s" % (self.path, region)
+            self.endpoints = (AWS_ENDPOINTS[region],)
+            self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
-                self.ssh_key = None
                 self.port = 5986
             else:
-                self.ssh_key = SshKey(args)
                 self.port = 22
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
@@ -124,8 +132,6 @@ class AnsibleCoreCI(object):
             self.port = None
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
-
-        self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
         if persist and load and self._load():
             try:
@@ -158,6 +164,8 @@ class AnsibleCoreCI(object):
             self.instance_id = str(uuid.uuid4())
             self.endpoint = None
 
+            display.sensitive.add(self.instance_id)
+
     def _get_parallels_endpoints(self):
         """
         :rtype: tuple[str]
@@ -184,7 +192,7 @@ class AnsibleCoreCI(object):
         if self.started:
             display.info('Skipping started %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                          verbosity=1)
-            return
+            return None
 
         if is_shippable():
             return self.start_shippable()
@@ -290,6 +298,9 @@ class AnsibleCoreCI(object):
                 username=con['username'],
                 password=con.get('password'),
             )
+
+            if self.connection.password:
+                display.sensitive.add(self.connection.password)
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -445,6 +456,8 @@ class AnsibleCoreCI(object):
         self.endpoint = config['endpoint']
         self.started = True
 
+        display.sensitive.add(self.instance_id)
+
         return True
 
     def _save(self):
@@ -529,7 +542,7 @@ class SshKey(object):
                 make_dirs(base_dir)
 
             if not os.path.isfile(key) or not os.path.isfile(pub):
-                run_command(args, ['ssh-keygen', '-q', '-t', 'rsa', '-N', '', '-f', key])
+                run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
 
             if not args.explain:
                 shutil.copy2(key, self.key)

@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_acl
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -64,9 +64,9 @@ class TestNxosAclModule(TestNxosModule):
 
     def test_nxos_acl(self):
         set_module_args(dict(name='ANSIBLE', seq=10, action='permit',
-                             proto='tcp', src='1.1.1.1/24', dest='any'))
+                             proto='tcp', src='192.0.2.1/24', dest='any'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['ip access-list ANSIBLE', '10 permit tcp 1.1.1.1/24 any'])
+        self.assertEqual(result['commands'], ['ip access-list ANSIBLE', '10 permit tcp 192.0.2.1/24 any'])
 
     def test_nxos_acl_remove(self):
         set_module_args(dict(name='copp-system-p-acl-bgp', seq=10, state='absent'))

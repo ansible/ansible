@@ -24,59 +24,53 @@ options:
   name:
     description:
       - The name of the Perl library to install. You may use the "full distribution path", e.g.  MIYAGAWA/Plack-0.99_05.tar.gz
-    required: false
-    default: null
     aliases: ["pkg"]
   from_path:
     description:
       - The local directory from where to install
-    required: false
-    default: null
   notest:
     description:
       - Do not run unit tests
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   locallib:
     description:
       - Specify the install base to install modules
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   mirror:
     description:
       - Specifies the base URL for the CPAN mirror to use
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   mirror_only:
     description:
       - Use the mirror's index file instead of the CPAN Meta DB
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   installdeps:
     description:
       - Only install dependencies
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
   version:
     description:
       - minimum version of perl module to consider acceptable
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.1"
   system_lib:
     description:
      -  Use this if you want to install modules to the system perl include path. You must be root or have "passwordless" sudo for this to work.
      -  This uses the cpanm commandline option '--sudo', which has nothing to do with ansible privilege escalation.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.0"
     aliases: ['use_sudo']
   executable:
     description:
       - Override the path to the cpanm executable
-    required: false
-    default: null
     version_added: "2.1"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.

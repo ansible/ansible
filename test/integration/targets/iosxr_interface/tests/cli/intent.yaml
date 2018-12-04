@@ -1,5 +1,5 @@
 ---
-- debug: msg="START iosxr_interface cli/intent.yaml"
+- debug: msg="START iosxr_interface cli/intent.yaml on connection={{ ansible_connection }}"
 
 - name: Setup (interface is up)
   iosxr_interface:

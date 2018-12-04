@@ -65,7 +65,7 @@ EXAMPLES = """
 - name: configure host logging
   net_logging:
     dest: host
-    name: 1.1.1.1
+    name: 192.0.2.1
     facility: kernel
     level: critical
 

@@ -1,0 +1,51 @@
+---
+- debug: msg="START eos_lldp cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Make sure LLDP is not running before tests
+  eos_config:
+    lines: no lldp run
+  become: yes
+
+- name: Enable LLDP service
+  eos_lldp:
+    state: present
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"lldp run" in result.commands'
+
+- name: Enable LLDP service again (idempotent)
+  eos_lldp:
+    state: present
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable LLDP service
+  eos_lldp:
+    state: absent
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no lldp run" in result.commands'
+
+- name: Disable LLDP service (idempotent)
+  eos_lldp:
+    state: absent
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- debug: msg="END eos_lldp cli/basic.yaml on connection={{ ansible_connection }}"

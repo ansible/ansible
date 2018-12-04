@@ -1,0 +1,36 @@
+---
+- debug: msg="START ios cli/net_logging.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Remove host logging - setup
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Set up host logging using platform agnostic module
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    facility: local7
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging host 172.16.0.1" in result.commands'
+      - '"logging facility local7" in result.commands'
+
+- name: Remove host logging - teardown
+  net_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ cli }}"
+
+- debug: msg="END ios cli/net_logging.yaml on connection={{ ansible_connection }}"

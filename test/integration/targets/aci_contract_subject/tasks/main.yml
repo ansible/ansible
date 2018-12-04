@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Jacob McGill <jmcgill298
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -13,7 +13,10 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     state: present
     tenant: anstest
   register: tenant_present
@@ -69,20 +72,20 @@
 - name: present assertions
   assert:
     that:
-      - subject_present_check_mode.changed == true
-      - 'subject_present_check_mode.config == {"vzSubj": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
-      - subject_present.changed == true
-      - subject_present.existing == []
-      - subject_present.config == subject_present_check_mode.config
-      - subject_present_idempotent.changed == false
-      - subject_present_idempotent.existing != []
-      - subject_update.changed == true
-      - subject_update.config != subject_update.proposed
-      - 'subject_update.config.vzSubj.attributes == {"prio": "level2", "provMatchT": "AtmostOne"}'
-      - subject_present_2.changed == true
-      - 'subject_present_2.config.vzSubj.attributes == {"consMatchT": "All", "name": "anstest2", "prio": "level3", "revFltPorts": "no"}'
-      - present_missing_param.failed == true
-      - 'present_missing_param.msg == "state is present but the following are missing: contract,subject"'
+      - subject_present_check_mode is changed
+      - 'subject_present_check_mode.sent == {"vzSubj": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+      - subject_present is changed
+      - subject_present.previous == []
+      - subject_present.sent == subject_present_check_mode.sent
+      - subject_present_idempotent is not changed
+      - subject_present_idempotent.previous != []
+      - subject_update is changed
+      - subject_update.sent != subject_update.proposed
+      - 'subject_update.sent.vzSubj.attributes == {"prio": "level2", "provMatchT": "AtmostOne"}'
+      - subject_present_2 is changed
+      - 'subject_present_2.sent.vzSubj.attributes == {"consMatchT": "All", "name": "anstest2", "prio": "level3", "revFltPorts": "no"}'
+      - present_missing_param is failed
+      - 'present_missing_param.msg == "state is present but all of the following are missing: contract, subject"'
 
 - name: query tenant contract subject
   aci_contract_subject: &aci_query_subject
@@ -138,49 +141,49 @@
 - name: query assertions
   assert:
     that:
-      - query_tenant_contract_subject.changed == false
-      - query_tenant_contract_subject.existing | length == 1
-      - 'query_tenant_contract_subject.existing.0.vzSubj.attributes.name == "anstest"'
+      - query_tenant_contract_subject is not changed
+      - query_tenant_contract_subject.current | length == 1
+      - query_tenant_contract_subject.current.0.vzSubj.attributes.name == "anstest"
       - '"tn-anstest/brc-anstest/subj-anstest.json" in query_tenant_contract_subject.url'
-      - query_tenant_contract.changed == false
-      - query_tenant_contract.existing | length == 1
-      - 'query_tenant_contract.existing.0.vzBrCP.attributes.name == "anstest"'
-      - query_tenant_contract.existing.0.vzBrCP.children | length == 2
+      - query_tenant_contract is not changed
+      - query_tenant_contract.current | length == 1
+      - query_tenant_contract.current.0.vzBrCP.attributes.name == "anstest"
+      - query_tenant_contract.current.0.vzBrCP.children | length == 2
       - '"rsp-subtree-class=vzSubj" in query_tenant_contract.filter_string'
       - '"tn-anstest/brc-anstest.json" in query_tenant_contract.url'
-      - query_tenant_subject.changed == false
-      - query_tenant_subject.existing | length == 1
-      - 'query_tenant_subject.existing.0.fvTenant.attributes.name == "anstest"'
-      - query_tenant_subject.existing.0.fvTenant.children.0.vzBrCP.children | length == 1
-      - 'query_tenant_subject.existing.0.fvTenant.children.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"'
+      - query_tenant_subject is not changed
+      - query_tenant_subject.current | length == 1
+      - query_tenant_subject.current.0.fvTenant.attributes.name == "anstest"
+      - query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children | length == 1
+      - query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"
       - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_tenant_subject.filter_string'
       - '"rsp-subtree-class=vzSubj" in query_tenant_subject.filter_string'
       - '"tn-anstest.json" in query_tenant_subject.url'
-      - query_contract_subject.changed == false
-      - 'query_contract_subject.existing.0.vzBrCP.attributes.name == "anstest"'
-      - query_contract_subject.existing.0.vzBrCP.children | length == 1
-      - 'query_contract_subject.existing.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"'
+      - query_contract_subject is not changed
+      - query_contract_subject.current.0.vzBrCP.attributes.name == "anstest"
+      - query_contract_subject.current.0.vzBrCP.children | length == 1
+      - query_contract_subject.current.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"
       - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract_subject.filter_string'
       - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_contract_subject.filter_string'
       - '"rsp-subtree-class=vzSubj" in query_contract_subject.filter_string'
       - '"class/vzBrCP.json" in query_contract_subject.url'
-      - query_tenant.changed == false
-      - query_tenant.existing | length == 1
-      - 'query_tenant.existing.0.fvTenant.attributes.name == "anstest"'
+      - query_tenant is not changed
+      - query_tenant.current | length == 1
+      - query_tenant.current.0.fvTenant.attributes.name == "anstest"
       - '"rsp-subtree-class=vzBrCP,vzSubj" in query_tenant.filter_string'
       - '"tn-anstest.json" in query_tenant.url'
-      - query_contract.changed == false
-      - 'query_contract.existing.0.vzBrCP.attributes.name == "anstest"'
+      - query_contract is not changed
+      - query_contract.current.0.vzBrCP.attributes.name == "anstest"
       - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract.filter_string'
       - '"rsp-subtree-class=vzSubj" in query_contract.filter_string'
       - '"class/vzBrCP.json" in query_contract.url'
-      - query_subject.changed == false
-      - 'query_subject.existing.0.vzSubj.attributes.name == "anstest"'
+      - query_subject is not changed
+      - query_subject.current.0.vzSubj.attributes.name == "anstest"
       - '"query-target-filter=eq(vzSubj.name, \"anstest\")" in query_subject.filter_string'
       - '"class/vzSubj.json" in query_subject.url'
-      - query_all.changed == false
-      - query_all.existing > 1
-      - query_all.existing.0.vzSubj is defined
+      - query_all is not changed
+      - query_all.current > 1
+      - query_all.current.0.vzSubj is defined
       - '"class/vzSubj.json" in query_all.url'
 
 - name: delete subject - check mode works
@@ -215,24 +218,24 @@
 - name: absent assertions
   assert:
     that:
-      - subject_absent_check_mode.changed == true
-      - subject_absent_check_mode.existing != []
+      - subject_absent_check_mode is changed
+      - subject_absent_check_mode.previous != []
       - subject_absent_check_mode.proposed == {}
-      - subject_absent.changed == true
-      - subject_absent.existing == subject_absent_check_mode.existing
-      - subject_absent_idempotent.changed == false
-      - subject_absent_idempotent.existing == []
-      - absent_missing_param.failed == true
-      - 'absent_missing_param.msg == "state is absent but the following are missing: subject"'
+      - subject_absent is changed
+      - subject_absent.previous == subject_absent_check_mode.previous
+      - subject_absent_idempotent is not changed
+      - subject_absent_idempotent.previous == []
+      - absent_missing_param is failed
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: subject"'
 
 - name: cleanup contract
   aci_contract:
     <<: *aci_contract_present
     state: absent
-  when: contract_present.changed == true
+  when: contract_present is changed
 
 - name: cleanup tenant
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

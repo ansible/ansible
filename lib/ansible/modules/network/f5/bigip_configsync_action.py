@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -20,7 +20,7 @@ description:
   - Allows one to run different config-sync actions. These actions allow
     you to manually sync your configuration across multiple BIG-IPs when
     those devices are in an HA pair.
-version_added: "2.4"
+version_added: 2.4
 options:
   device_group:
     description:
@@ -32,67 +32,58 @@ options:
         device to other members of the device group. In this case, the device
         will do a "push" to all the other devices in the group. This option
         is mutually exclusive with the C(sync_group_to_device) option.
-    choices:
-      - yes
-      - no
+    type: bool
   sync_most_recent_to_device:
     description:
       - Specifies that the system synchronizes configuration data from the
         device with the most recent configuration. In this case, the device
         will do a "pull" from the most recently updated device. This option
         is mutually exclusive with the C(sync_device_to_group) options.
-    choices:
-      - yes
-      - no
+    type: bool
   overwrite_config:
     description:
       - Indicates that the sync operation overwrites the configuration on
         the target.
     default: no
-    choices:
-      - yes
-      - no
+    type: bool
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-  - Requires the objectpath Python package on the host. This is as easy as pip
-    install objectpath.
-requirements:
-  - f5-sdk >= 2.2.3
+  - Requires the objectpath Python package on the host. This is as easy as
+    C(pip install objectpath).
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Sync configuration from device to group
-  bigip_configsync_actions:
+  bigip_configsync_action:
     device_group: foo-group
     sync_device_to_group: yes
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Sync configuration from most recent device to the current host
-  bigip_configsync_actions:
+  bigip_configsync_action:
     device_group: foo-group
     sync_most_recent_to_device: yes
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Perform an initial sync of a device to a new device group
-  bigip_configsync_actions:
+  bigip_configsync_action:
     device_group: new-device-group
     sync_device_to_group: yes
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -100,8 +91,28 @@ RETURN = r'''
 # only common fields returned
 '''
 
-import time
 import re
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+
+try:
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+except ImportError:
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 try:
     from objectpath import Tree
@@ -109,22 +120,17 @@ try:
 except ImportError:
     HAS_OBJPATH = False
 
-from ansible.module_utils.basic import BOOLEANS_TRUE
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-
-try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-except ImportError:
-    HAS_F5SDK = False
-
 
 class Parameters(AnsibleF5Parameters):
     api_attributes = []
     returnables = []
 
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
     @property
     def direction(self):
         if self.sync_device_to_group:
@@ -162,6 +168,8 @@ class Parameters(AnsibleF5Parameters):
         else:
             return False
 
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
         try:
@@ -172,31 +180,44 @@ class Parameters(AnsibleF5Parameters):
             pass
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    pass
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.present()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.present()
 
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
     def present(self):
@@ -215,17 +236,25 @@ class ModuleManager(object):
             return self.execute()
 
     def _sync_to_group_required(self):
-        resource = self.read_current_from_device()
-        status = self._get_status_from_resource(resource)
+        status = self._get_status_from_resource()
         if status == 'Awaiting Initial Sync' and self.want.sync_group_to_device:
             return True
         return False
 
     def _device_group_exists(self):
-        result = self.client.api.tm.cm.device_groups.device_group.exists(
-            name=self.want.device_group
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.device_group
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def execute(self):
         self.execute_on_device()
@@ -233,8 +262,7 @@ class ModuleManager(object):
         return True
 
     def exists(self):
-        resource = self.read_current_from_device()
-        status = self._get_status_from_resource(resource)
+        status = self._get_status_from_resource()
         if status == 'In Sync':
             return True
         else:
@@ -246,17 +274,32 @@ class ModuleManager(object):
             self.want.device_group,
             self.want.force_full_push
         )
-        self.client.api.tm.cm.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/cm".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs=sync_cmd
         )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def _wait_for_sync(self):
         # Wait no more than half an hour
-        resource = self.read_current_from_device()
         for x in range(1, 180):
             time.sleep(3)
-            status = self._get_status_from_resource(resource)
+            status = self._get_status_from_resource()
 
             # Changes Pending:
             #     The existing device has changes made to it that
@@ -272,29 +315,48 @@ class ModuleManager(object):
             #     after starting the sync and stay until all devices finish.
             #
             if status in ['Changes Pending']:
-                details = self._get_details_from_resource(resource)
+                details = self._get_details_from_resource()
                 self._validate_pending_status(details)
             elif status in ['Awaiting Initial Sync', 'Not All Devices Synced']:
                 pass
             elif status == 'In Sync':
                 return
+            elif status == 'Disconnected':
+                raise F5ModuleError(
+                    "One or more devices are unreachable (disconnected). "
+                    "Resolve any communication problems before attempting to sync."
+                )
             else:
                 raise F5ModuleError(status)
 
     def read_current_from_device(self):
-        result = self.client.api.tm.cm.sync_status.load()
-        return result
+        uri = "https://{0}:{1}/mgmt/tm/cm/sync-status/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def _get_status_from_resource(self, resource):
-        resource.refresh()
-        entries = resource.entries.copy()
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
+
+    def _get_status_from_resource(self):
+        resource = self.read_current_from_device()
+        entries = resource['entries'].copy()
         k, v = entries.popitem()
         status = v['nestedStats']['entries']['status']['description']
         return status
 
-    def _get_details_from_resource(self, resource):
-        resource.refresh()
-        stats = resource.entries.copy()
+    def _get_details_from_resource(self):
+        resource = self.read_current_from_device()
+        stats = resource['entries'].copy()
         tree = Tree(stats)
         details = list(tree.execute('$..*["details"]["description"]'))
         result = details[::-1]
@@ -319,8 +381,9 @@ class ModuleManager(object):
 
 class ArgumentSpec(object):
     def __init__(self):
-        self.supports_check_mode = True
-        self.argument_spec = dict(
+        self.supports_check_mode = False
+
+        argument_spec = dict(
             sync_device_to_group=dict(
                 type='bool'
             ),
@@ -335,7 +398,10 @@ class ArgumentSpec(object):
                 required=True
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
+
         self.required_one_of = [
             ['sync_device_to_group', 'sync_most_recent_to_device']
         ]
@@ -348,32 +414,25 @@ class ArgumentSpec(object):
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError(
-            "The python 'f5-sdk' module is required. This can be done with 'pip install f5-sdk'"
-        )
-
-    if not HAS_OBJPATH:
-        raise F5ModuleError(
-            "The python 'objectpath' module is required. This can be done with 'pip install objectpath'"
-        )
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
         mutually_exclusive=spec.mutually_exclusive,
-        required_one_of=spec.required_one_of,
-        f5_product_name=spec.f5_product_name
+        required_one_of=spec.required_one_of
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ DOCUMENTATION = '''
     type: notification
     requirements:
       - whitelising in configuration
-      - the '/usr/bin/say' command line program (standard on OS X)
+      - the '/usr/bin/say' command line program (standard on macOS)
     short_description: oneline Ansible screen output
     version_added: historical
     description:
@@ -32,7 +32,7 @@ SAY_CMD = "/usr/bin/say"
 
 class CallbackModule(CallbackBase):
     """
-    makes Ansible much more exciting on OS X.
+    makes Ansible much more exciting on macOS.
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'

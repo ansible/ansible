@@ -1,0 +1,4 @@
+---
+vultr_network_name: ansible-test-network
+vultr_network_cidr: 192.168.42.0/24
+vultr_network_region: New Jersey

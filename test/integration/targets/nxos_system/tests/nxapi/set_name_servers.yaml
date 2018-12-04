@@ -5,40 +5,40 @@
 # nxapi will error if you try and remove a non-existent entry,
 # Therefore we do this as a with_items loop with ignore_errors
 - name: setup
-  nxos_config:
+  nxos_config: &reset
     lines:
       - no ip name-server {{ item }}
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
   with_items:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
 
 - name: configure name_servers
   nxos_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
-    provider: "{{ nxapi }}"
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'ip name-server 1.1.1.1' in result.commands"
-      - "'ip name-server 2.2.2.2' in result.commands"
-      - "'ip name-server 3.3.3.3' in result.commands"
+      - "'ip name-server 192.0.2.1' in result.commands"
+      - "'ip name-server 192.0.2.2' in result.commands"
+      - "'ip name-server 192.0.2.3' in result.commands"
 
 - name: verify name_servers
   nxos_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-      - 3.3.3.3
-    provider: "{{ nxapi }}"
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -48,26 +48,24 @@
 #- name: change to vrf
 #  nxos_system:
 #    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
-#    provider: "{{ nxapi }}"
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
 #  register: result
 
 #- assert:
 #    that:
 #      - result.changed == true
 #      - result.commands|length == 2
-#      - "'no ip name-server 2.2.2.2' in result.commands"
-#      - "'ip name-server 2.2.2.2 vrf ansible' in result.commands"
+#      - "'no ip name-server 192.0.2.2' in result.commands"
+#      - "'ip name-server 192.0.2.2 vrf ansible' in result.commands"
 
 #- name: verify change to vrf
 #  nxos_system:
 #    name_servers:
-#      - 1.1.1.1
-#      - { server: 2.2.2.2, vrf: ansible }
-#      - 3.3.3.3
-#    provider: "{{ nxapi }}"
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
 #  register: result
 #
 #- assert:
@@ -77,24 +75,41 @@
 - name: remove one
   nxos_system:
     name_servers:
-      - 1.1.1.1
-      - 2.2.2.2
-    provider: "{{ nxapi }}"
+      - 192.0.2.1
+      - 192.0.2.2
+    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - result.changed == true
       - result.commands|length == 1
-      - "'no ip name-server 3.3.3.3' in result.commands"
+      - "'no ip name-server 192.0.2.3' in result.commands"
+
+- name: default name server
+  nxos_system: &defns
+    name_servers: default
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: Idempotent check
+  nxos_system: *defns
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
 
 - name: teardown
-  nxos_config:
-    lines:
-      - no ip lookup source-interface
-    match: none
-    provider: "{{ nxapi }}"
+  nxos_config: *reset
+  with_items:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
   ignore_errors: yes
-  # FIXME Copied from iosxr, not sure what we need here
 
 - debug: msg="END nxapi/set_name_servers.yaml"

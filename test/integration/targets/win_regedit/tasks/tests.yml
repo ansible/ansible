@@ -311,7 +311,7 @@
   win_regedit:
     path: '{{test_win_regedit_local_key}}\{{item}}'
     state: present
-  items:
+  loop:
   - nest1
   - nest2
   - nest1\nested
@@ -469,12 +469,14 @@
 
 - name: get result of create new key in loaded hive (check mode)
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_key_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of create new key in loaded hive (check mode)
   assert:
@@ -491,12 +493,14 @@
 
 - name: get result of create new key in loaded hive
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_key_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of create new key in loaded hive
   assert:
@@ -534,10 +538,9 @@
     if ($prop) {
       $prop.TestProp
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_prop_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of set hive key property (check mode)
   assert:
@@ -562,10 +565,9 @@
     if ($prop) {
       $prop.TestProp
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_prop_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of set hive key property
   assert:
@@ -604,10 +606,9 @@
     if ($prop) {
       $prop.TestProp
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_prop_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove hive key property (check mode)
   assert:
@@ -630,10 +631,9 @@
     if ($prop) {
       $prop.TestProp
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_prop_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove hive key property
   assert:
@@ -658,19 +658,21 @@
   win_regedit:
     path: '{{test_win_regedit_hive_key}}'
     state: absent
-    delete_yes: yes
+    delete_key: yes
     hive: C:\Users\Default\NTUSER.dat
   register: remove_key_in_hive_check
   check_mode: yes
 
 - name: get result of remove key in loaded hive (check mode)
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_key_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of removekey in loaded hive (check mode)
   assert:
@@ -682,18 +684,20 @@
   win_regedit:
     path: '{{test_win_regedit_hive_key}}'
     state: absent
-    delete_yes: yes
+    delete_key: yes
     hive: C:\Users\Default\NTUSER.dat
   register: remove_key_in_hive
 
 - name: get result of remove key in loaded hive
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_key_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove key in loaded hive
   assert:
@@ -705,7 +709,7 @@
   win_regedit:
     path: '{{test_win_regedit_hive_key}}'
     state: absent
-    delete_yes: yes
+    delete_key: yes
     hive: C:\Users\Default\NTUSER.dat
   register: remove_key_in_hive_again
 

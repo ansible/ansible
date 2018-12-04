@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -21,11 +21,9 @@ options:
   cdb_id:
     description:
       - The databases server UUID
-    default: null
   name:
     description:
       - Name to give to the database
-    default: null
   character_set:
     description:
       - Set of symbols and encodings
@@ -40,7 +38,9 @@ options:
     choices: ['present', 'absent']
     default: present
 author: "Simon JAILLET (@jails)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

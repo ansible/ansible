@@ -1,0 +1,423 @@
+##############
+### CM Add ###
+##############
+#changed true, check nothing present
+- name: CM add https binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+    certificate_hash: "{{ thumbprint1.stdout_lines[0] }}"
+  register: https_no_header
+  check_mode: yes
+
+- name: CM get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: get_https_no_header
+  changed_when: false
+
+- name: CM assert changed, but not added
+  assert:
+    that:
+    - https_no_header is changed
+    - https_no_header.operation_type == 'added'
+    - https_no_header.binding_info is none
+    - get_https_no_header.binding is not defined
+
+###########
+### Add ###
+###########
+#changed true, new bindings present
+- name: add https binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+    certificate_hash: "{{ thumbprint1.stdout_lines[0] }}"
+  register: https_no_header
+
+- name: assert changed and added
+  assert:
+    that:
+    - https_no_header is changed
+    - https_no_header.binding_info is defined
+    - https_no_header.operation_type == 'added'
+    - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
+    - https_no_header.binding_info.port == {{ https_vars.port }}
+    - https_no_header.binding_info.protocol == "{{ https_vars.protocol }}"
+    - https_no_header.binding_info.hostheader == ''
+    - https_no_header.binding_info.certificateHash == "{{ thumbprint1.stdout_lines[0] }}"
+
+################
+### Idem Add ###
+################
+#changed false
+- name: idem add https binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+    certificate_hash: "{{ thumbprint1.stdout_lines[0] }}"
+  register: https_no_header
+
+- name: idem assert not changed
+  assert:
+    that:
+    - https_no_header is not changed
+
+#################
+### CM Modify ###
+#################
+# changed true, verify no changes occurred
+
+#modify sni
+- name: CM modify https binding change cert
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+    certificate_hash: "{{ thumbprint2.stdout_lines[0] }}"
+  register: https_no_header
+  check_mode: yes
+
+- name: get binding info header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: get_https_no_header
+  changed_when: false
+
+- name: CM assert changed but old cert
+  assert:
+    that:
+    - https_no_header is changed
+    - https_no_header.operation_type == 'updated'
+    - https_no_header.binding_info is defined
+    - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
+    - https_no_header.binding_info.port == {{ https_vars.port }}
+    - https_no_header.binding_info.protocol == "{{ https_vars.protocol }}"
+    - https_no_header.binding_info.certificateHash == "{{ thumbprint1.stdout_lines[0] }}"
+    - get_https_no_header.binding is defined
+    - get_https_no_header.binding.ip == "{{ https_vars.ip }}"
+    - get_https_no_header.binding.port == {{ https_vars.port }}
+    - get_https_no_header.binding.protocol == "{{ https_vars.protocol }}"
+    - get_https_no_header.binding.certificateHash == "{{ thumbprint1.stdout_lines[0] }}"
+
+##############
+### Modify ###
+##############
+# modify ssl flags
+- name:  modify https binding, change cert
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+    certificate_hash: "{{ thumbprint2.stdout_lines[0] }}"
+  register: https_no_header
+
+- name: get binding info header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: get_https_no_header
+  changed_when: false
+
+- name:  modify assert changed and new cert
+  assert:
+    that:
+    - https_no_header is changed
+    - https_no_header.operation_type == 'updated'
+    - https_no_header.binding_info is defined
+    - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
+    - https_no_header.binding_info.port == {{ https_vars.port }}
+    - https_no_header.binding_info.protocol == "{{ https_vars.protocol }}"
+    - https_no_header.binding_info.certificateHash == "{{ thumbprint2.stdout_lines[0] }}"
+    - get_https_no_header.binding is defined
+    - get_https_no_header.binding.ip == "{{ https_vars.ip }}"
+    - get_https_no_header.binding.port == {{ https_vars.port }}
+    - get_https_no_header.binding.protocol == "{{ https_vars.protocol }}"
+    - get_https_no_header.binding.hostheader == ''
+    - get_https_no_header.binding.certificateHash == "{{ thumbprint2.stdout_lines[0] }}"
+
+###################
+### Idem Modify ###
+###################
+#changed false
+
+#idem modify ssl flags
+- name: idem modify https binding and change cert
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+    certificate_hash: "{{ thumbprint2.stdout_lines[0] }}"
+  register: https_header
+
+- name: idem assert not changed
+  assert:
+    that:
+    - https_header is not changed
+
+#################
+### CM Remove ###
+#################
+#changed true, bindings still present
+- name: cm remove https binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: https_no_header
+  check_mode: yes
+
+- name: get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: get_https_no_header
+  changed_when: false
+
+- name: cm remove assert changed, but still present
+  assert:
+    that:
+    - https_no_header is changed
+    - https_no_header.operation_type == 'removed'
+    - https_no_header.binding_info is defined
+    - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
+    - https_no_header.binding_info.port == {{ https_vars.port }}
+    - https_no_header.binding_info.protocol == "{{ https_vars.protocol }}"
+    - https_no_header.binding_info.certificateHash == "{{ thumbprint2.stdout_lines[0] }}"
+    - get_https_no_header.binding is defined
+    - get_https_no_header.binding.ip == "{{ https_vars.ip }}"
+    - get_https_no_header.binding.port == {{ https_vars.port }}
+    - get_https_no_header.binding.protocol == "{{ https_vars.protocol }}"
+    - get_https_no_header.binding.certificateHash == "{{ thumbprint2.stdout_lines[0] }}"
+
+##############
+### remove ###
+##############
+#changed true, bindings gone
+- name: remove https binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: https_no_header
+
+- name: get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: get_https_no_header
+  changed_when: false
+
+- name: remove assert changed and gone
+  assert:
+    that:
+    - https_no_header is changed
+    - https_no_header.operation_type == 'removed'
+    - https_no_header.binding_info is defined
+    - https_no_header.binding_info.ip == "{{ https_vars.ip }}"
+    - https_no_header.binding_info.port == {{ https_vars.port }}
+    - https_no_header.binding_info.protocol == "{{ https_vars.protocol }}"
+    - get_https_no_header.binding is not defined
+
+###################
+### remove idem ###
+###################
+#change false, bindings gone
+- name: idem remove https binding no header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: absent
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: https_no_header
+
+- name: get binding info no header
+  test_get_webbindings:
+    name: "{{ test_iis_site_name }}"
+    protocol: "{{ https_vars.protocol }}"
+    ip: "{{ https_vars.ip }}"
+    port: "{{ https_vars.port }}"
+  register: get_https_no_header
+  changed_when: false
+
+- name: idem remove assert changed and gone
+  assert:
+    that:
+    - https_no_header is not changed
+    - https_no_header.binding_info is not defined
+    - get_https_no_header.binding is not defined
+
+
+##################
+### WC Testing ###
+##################
+
+# Unfortunately this does not work due to some strange errors
+# that are caused when using a self signed wildcard cert.
+# I'm leaving this here in case someone finds a solution in the
+# future.
+
+# - name: add https binding wildcard with header
+#   win_iis_webbinding:
+#     name: "{{ test_iis_site_name }}"
+#     state: present
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#     certificate_hash: "{{ thumbprint_wc.stdout_lines[0] }}"
+#   register: https_header
+
+# - name: assert changed and added
+#   assert:
+#     that:
+#     - https_header is changed
+#     - https_header.added is defined
+#     - https_header.added.ip == "{{ https_wc_vars.ip }}"
+#     - https_header.added.port == {{ https_wc_vars.port }}
+#     - https_header.added.protocol == "{{ https_wc_vars.protocol }}"
+#     - https_header.added.hostheader == "{{ https_wc_vars.header }}"
+#     - https_header.added.certificateHash == "{{ thumbprint_wc.stdout_lines[0] }}"
+
+
+# - name: idem add https binding wildcard with header
+#   win_iis_webbinding:
+#     name: "{{ test_iis_site_name }}"
+#     state: present
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#     certificate_hash: "{{ thumbprint_wc.stdout_lines[0] }}"
+#   register: https_header
+
+
+# - name: cm remove wildcard https binding
+#   win_iis_webbinding:
+#     name: "{{ test_iis_site_name }}"
+#     state: absent
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#   register: https_header
+#   check_mode: yes
+
+# - name: get binding info header
+#   test_get_webbindings:
+#     name: "{{ test_iis_site_name }}"
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#   register: get_https_header
+#   changed_when: false
+
+# - name: cm remove assert changed, but still present
+#   assert:
+#     that:
+#     - https_header is changed
+#     - https_header.removed is defined
+#     - https_header.removed.ip == "{{ https_wc_vars.ip }}"
+#     - https_header.removed.port == {{ https_wc_vars.port }}
+#     - https_header.removed.protocol == "{{ https_wc_vars.protocol }}"
+#     - https_header.removed.hostheader == "{{ https_wc_vars.header }}"
+#     - https_header.removed.certificateHash == "{{ thumbprint_wc.stdout_lines[0] }}"
+#     - get_https_header.binding is defined
+#     - get_https_header.removed.ip == "{{ https_wc_vars.ip }}"
+#     - get_https_header.removed.port == {{ https_wc_vars.port }}
+#     - get_https_header.removed.protocol == "{{ https_wc_vars.protocol }}"
+#     - get_https_header.removed.hostheader == "{{ https_wc_vars.header }}"
+#     - get_https_header.removed.certificateHash == "{{ thumbprint_wc.stdout_lines[0] }}"
+
+# - name: remove wildcard https binding
+#   win_iis_webbinding:
+#     name: "{{ test_iis_site_name }}"
+#     state: absent
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#   register: https_header
+
+# - name: get binding info header
+#   test_get_webbindings:
+#     name: "{{ test_iis_site_name }}"
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#   register: get_https_header
+#   changed_when: false
+
+
+# - name: remove assert changed and gone
+#   assert:
+#     that:
+#     - https_header is changed
+#     - https_header.removed is defined
+#     - https_header.removed.ip == "{{ https_wc_vars.ip }}"
+#     - https_header.removed.port == {{ https_wc_vars.port }}
+#     - https_header.removed.protocol == "{{ https_wc_vars.protocol }}"
+#     - https_header.removed.hostheader == "{{ https_wc_vars.header }}"
+#     - https_header.removed.certificateHash == "{{ thumbprint_wc.stdout_lines[0] }}"
+#     - get_https_header.binding is not defined
+
+# - name: idem remove wildcard https binding
+#   win_iis_webbinding:
+#     name: "{{ test_iis_site_name }}"
+#     state: absent
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#   register: https_header
+
+# - name: get binding info header
+#   test_get_webbindings:
+#     name: "{{ test_iis_site_name }}"
+#     host_header: "{{ https_wc_vars.header }}"
+#     protocol: "{{ https_wc_vars.protocol }}"
+#     ip: "{{ https_wc_vars.ip }}"
+#     port: "{{ https_wc_vars.port }}"
+#   register: get_https_header
+#   changed_when: false
+
+# - name: idem remove assert changed and gone
+#   assert:
+#     that:
+#     -  https_header is not changed
+#     - https_header.removed is not defined
+#     - get_https_header.binding is not defined

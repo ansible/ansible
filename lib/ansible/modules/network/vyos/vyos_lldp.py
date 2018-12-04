@@ -41,6 +41,7 @@ options:
       - State of the LLDP configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -114,6 +115,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

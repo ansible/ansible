@@ -24,36 +24,27 @@ options:
     description:
       - name of the extension to add or remove
     required: true
-    default: null
   db:
     description:
       - name of the database to add or remove the extension to/from
     required: true
-    default: null
   login_user:
     description:
       - The username used to authenticate with
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database
-    required: false
     default: localhost
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   state:
     description:
       - The database extension state
-    required: false
     default: present
     choices: [ "present", "absent" ]
 notes:

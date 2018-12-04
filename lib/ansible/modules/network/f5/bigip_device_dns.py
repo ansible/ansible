@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,16 +9,16 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: bigip_device_dns
 short_description: Manage BIG-IP device DNS settings
 description:
-  - Manage BIG-IP device DNS settings
-version_added: "2.2"
+  - Manage BIG-IP device DNS settings.
+version_added: 2.2
 options:
   cache:
     description:
@@ -26,17 +26,14 @@ options:
         operation each time a lookup is needed. Please note that this applies
         only to Access Policy Manager features, such as ACLs, web application
         rewrites, and authentication.
-    default: disable
     choices:
        - enabled
        - disabled
+       - enable
+       - disable
   name_servers:
     description:
       - A list of name servers that the system uses to validate DNS lookups
-  forwarders:
-    description:
-      - A list of BIND servers that the system can use to perform DNS lookups
-      - Deprecated in 2.4. Use the GUI or edit named.conf.
   search:
     description:
       - A list of domains that the system searches for local domain lookups,
@@ -55,14 +52,10 @@ options:
     choices:
       - absent
       - present
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -74,10 +67,10 @@ EXAMPLES = r'''
     search:
       - localdomain
       - lab.local
-    password: secret
-    server: lb.mydomain.com
-    user: admin
-    validate_certs: no
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -109,124 +102,261 @@ warnings:
   sample: ['...', '...']
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.common import is_empty_list
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.common import is_empty_list
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'dhclient.mgmt': 'dhcp',
         'dns.cache': 'cache',
         'nameServers': 'name_servers',
-        'include': 'ip_version'
+        'include': 'ip_version',
     }
 
     api_attributes = [
-        'nameServers', 'search', 'include'
+        'nameServers', 'search', 'include',
     ]
 
     updatables = [
-        'cache', 'name_servers', 'search', 'ip_version'
+        'cache', 'name_servers', 'search', 'ip_version',
     ]
 
     returnables = [
-        'cache', 'name_servers', 'search', 'ip_version'
+        'cache', 'name_servers', 'search', 'ip_version',
     ]
 
     absentables = [
-        'name_servers', 'search'
+        'name_servers', 'search',
     ]
 
-    def to_return(self):
-        result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+class ApiParameters(Parameters):
+    pass
 
+
+class ModuleParameters(Parameters):
     @property
     def search(self):
-        result = []
-        if self._values['search'] is None:
+        search = self._values['search']
+        if search is None:
             return None
-        for server in self._values['search']:
-            result.append(str(server))
-        return result
+        if isinstance(search, str) and search != "":
+            result = list()
+            result.append(str(search))
+            return result
+        if is_empty_list(search):
+            return []
+        return search
 
     @property
     def name_servers(self):
-        result = []
-        if self._values['name_servers'] is None:
+        name_servers = self._values['name_servers']
+        if name_servers is None:
             return None
-        for server in self._values['name_servers']:
-            result.append(str(server))
-        return result
+        if isinstance(name_servers, str) and name_servers != "":
+            result = list()
+            result.append(str(name_servers))
+            return result
+        if is_empty_list(name_servers):
+            return []
+        return name_servers
 
     @property
     def cache(self):
+        if self._values['cache'] is None:
+            return None
         if str(self._values['cache']) in ['enabled', 'enable']:
             return 'enable'
         else:
             return 'disable'
 
     @property
-    def dhcp(self):
-        valid = ['enable', 'enabled']
-        return True if self._values['dhcp'] in valid else False
-
-    @property
-    def forwarders(self):
-        if self._values['forwarders'] is None:
-            return None
-        else:
-            raise F5ModuleError(
-                "The modifying of forwarders is not supported."
-            )
-
-    @property
     def ip_version(self):
-        if self._values['ip_version'] in [6, '6', 'options inet6']:
+        if self._values['ip_version'] == 6:
             return "options inet6"
-        elif self._values['ip_version'] in [4, '4', '']:
+        elif self._values['ip_version'] == 4:
             return ""
         else:
             return None
 
 
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    @property
+    def ip_version(self):
+        if self._values['ip_version'] == 'options inet6':
+            return 6
+        elif self._values['ip_version'] == "":
+            return 4
+        else:
+            return None
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def ip_version(self):
+        if self.want.ip_version is None:
+            return None
+        if self.want.ip_version == "" and self.have.ip_version is None:
+            return None
+        if self.want.ip_version == self.have.ip_version:
+            return None
+        if self.want.ip_version != self.have.ip_version:
+            return self.want.ip_version
+
+    @property
+    def name_servers(self):
+        state = self.want.state
+        if self.want.name_servers is None:
+            return None
+        if state == 'absent':
+            if self.have.name_servers is None and self.want.name_servers:
+                return None
+            if set(self.want.name_servers) == set(self.have.name_servers):
+                return []
+            if set(self.want.name_servers) != set(self.have.name_servers):
+                return list(set(self.want.name_servers).difference(self.have.name_servers))
+        if not self.want.name_servers:
+            if self.have.name_servers is None:
+                return None
+            if self.have.name_servers is not None:
+                return self.want.name_servers
+        if self.have.name_servers is None:
+            return self.want.name_servers
+        if set(self.want.name_servers) != set(self.have.name_servers):
+                return self.want.name_servers
+
+    @property
+    def search(self):
+        state = self.want.state
+        if self.want.search is None:
+            return None
+        if not self.want.search:
+            if self.have.search is None:
+                return None
+            if self.have.search is not None:
+                return self.want.search
+        if state == 'absent':
+            if self.have.search is None and self.want.search:
+                return None
+            if set(self.want.search) == set(self.have.search):
+                return []
+            if set(self.want.search) != set(self.have.search):
+                return list(set(self.want.search).difference(self.have.search))
+        if self.have.search is None:
+            return self.want.search
+        if set(self.want.search) != set(self.have.search):
+                return self.want.search
+
+
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.pop('module', None)
+        self.client = kwargs.pop('client', None)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = UsableChanges(params=changed)
+            return True
+        return False
+
+    def _absent_changed_options(self):
+        diff = Difference(self.want, self.have)
+        absentables = Parameters.absentables
+        changed = dict()
+        for k in absentables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -235,38 +365,23 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.update()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.update()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
-
-    def read_current_from_device(self):
-        want_keys = ['dns.cache']
-        result = dict()
-        dbs = self.client.api.tm.sys.dbs.get_collection()
-        for db in dbs:
-            if db.name in want_keys:
-                result[db.name] = db.value
-        dns = self.client.api.tm.sys.dns.load()
-        attrs = dns.attrs
-        if 'include' not in attrs:
-            attrs['include'] = 4
-        result.update(attrs)
-        return Parameters(result)
 
     def update(self):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -274,32 +389,6 @@ class ModuleManager(object):
     def should_update(self):
         result = self._update_changed_options()
         if result:
-            return True
-        return False
-
-    def update_on_device(self):
-        params = self.want.api_params()
-        cache = self.client.api.tm.sys.dbs.db.load(name='dns.cache')
-        dns = self.client.api.tm.sys.dns.load()
-
-        # Empty values can be supplied, but you cannot supply the
-        # None value, so we check for that specifically
-        if self.want.cache is not None:
-            cache.update(value=self.want.cache)
-        if params:
-            dns.update(**params)
-
-    def _absent_changed_options(self):
-        changed = {}
-        for key in Parameters.absentables:
-            if getattr(self.want, key) is not None:
-                set_want = set(getattr(self.want, key))
-                set_have = set(getattr(self.have, key))
-                set_new = set_have - set_want
-                if set_new != set_have:
-                    changed[key] = list(set_new)
-        if changed:
-            self.changes = Parameters(changed)
             return True
         return False
 
@@ -313,78 +402,157 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_absent():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.absent_on_device()
         return True
 
+    def read_dns_cache_setting(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            'dns.cache'
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
+
+    def read_current_from_device(self):
+        cache = self.read_dns_cache_setting()
+        uri = "https://{0}:{1}/mgmt/tm/sys/dns/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if cache:
+            response['cache'] = cache['value']
+        return ApiParameters(params=response)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        if params:
+            uri = "https://{0}:{1}/mgmt/tm/sys/dns/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+            )
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        if self.want.cache:
+            uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                'dns.cache'
+            )
+            payload = {"value": self.want.cache}
+            resp = self.client.api.patch(uri, json=payload)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
     def absent_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.sys.dns.load()
-        resource.update(**params)
+        uri = "https://{0}:{1}/mgmt/tm/sys/dns/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             cache=dict(
-                required=False,
-                choices=['disabled', 'enabled', 'disable', 'enable'],
-                default=None
+                choices=['disabled', 'enabled', 'disable', 'enable']
             ),
             name_servers=dict(
-                required=False,
-                default=None,
-                type='list'
-            ),
-            forwarders=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             search=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             ip_version=dict(
-                required=False,
-                default=None,
                 choices=[4, 6],
                 type='int'
             ),
             state=dict(
-                required=False,
                 default='present',
                 choices=['absent', 'present']
             )
         )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.required_one_of = [
-            ['name_servers', 'search', 'forwarders', 'ip_version', 'cache']
+            ['name_servers', 'search', 'ip_version', 'cache']
         ]
-        self.f5_product_name = 'bigip'
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name,
         required_one_of=spec.required_one_of
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
+
 
 if __name__ == '__main__':
     main()

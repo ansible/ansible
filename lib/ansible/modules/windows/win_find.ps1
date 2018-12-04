@@ -1,7 +1,6 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2016 Ansible Project
+# Copyright: (c) 2016, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -9,6 +8,7 @@
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $paths = Get-AnsibleParam -obj $params -name 'paths' -failifempty $true
 
@@ -70,7 +70,10 @@ namespace Ansible.Command {
     }
 }
 "@
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
+$env:TMP = $original_tmp
 
 Function Assert-Age($info) {
     $valid_match = $true

@@ -25,15 +25,25 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+# Networking tools for network modules only
+
 import re
 import ast
 import operator
 import socket
 
 from itertools import chain
+from socket import inet_aton
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.basic import AnsibleFallbackNotFound
+
+# Backwards compatibility for 3rd party modules
+from ansible.module_utils.common.network import (
+    to_bits, is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
+)
 
 try:
     from jinja2 import Environment, StrictUndefined
@@ -54,6 +64,26 @@ def to_list(val):
         return [val]
     else:
         return list()
+
+
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, string_types):
+            item = to_text(item).split('\n')
+        yield item
+
+
+def transform_commands(module):
+    transform = ComplexList(dict(
+        command=dict(key=True),
+        output=dict(),
+        prompt=dict(type='list'),
+        answer=dict(type='list'),
+        sendonly=dict(type='bool', default=False),
+        check_all=dict(type='bool', default=False),
+    ), module)
+
+    return transform(module.params['commands'])
 
 
 def sort_list(val):
@@ -271,7 +301,10 @@ def dict_merge(base, other):
             if key in other:
                 item = other.get(key)
                 if item is not None:
-                    combined[key] = dict_merge(value, other[key])
+                    if isinstance(other[key], dict):
+                        combined[key] = dict_merge(value, other[key])
+                    else:
+                        combined[key] = other[key]
                 else:
                     combined[key] = item
             else:
@@ -280,7 +313,11 @@ def dict_merge(base, other):
             if key in other:
                 item = other.get(key)
                 if item is not None:
-                    combined[key] = list(set(chain(value, item)))
+                    try:
+                        combined[key] = list(set(chain(value, item)))
+                    except TypeError:
+                        value.extend([i for i in item if i not in value])
+                        combined[key] = value
                 else:
                     combined[key] = item
             else:
@@ -349,6 +386,14 @@ def validate_ip_address(address):
     except socket.error:
         return False
     return address.count('.') == 3
+
+
+def validate_ip_v6_address(address):
+    try:
+        socket.inet_pton(socket.AF_INET6, address)
+    except socket.error:
+        return False
+    return True
 
 
 def validate_prefix(prefix):

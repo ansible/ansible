@@ -1,0 +1,436 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Bruno Calogero <brunocalogero@hotmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Making sure interface_policy_leaf_policy_group doesn't exist at beginning of test (PC)
+  aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_link_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_link
+    lag_type: link
+    state: absent
+
+- name: Making sure interface_policy_leaf_policy_group doesn't exist at beginning of test (VPC)
+  aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_node_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_node
+    lag_type: node
+    state: absent
+
+- name: Making sure interface_policy_leaf_policy_group doesn't exist at beginning of test (Leaf Access Port)
+  aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_leaf_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_leaf
+    lag_type: leaf
+    state: absent
+
+
+# ==== TESTING Port Channel (PC), lag_type: link ====
+
+- name: Adding a interface policy leaf policy group (PC) - check mode works
+  aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_link_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_link
+    lag_type: link
+    link_level_policy: linklevelpolicy
+    fibre_channel_interface_policy: fiberchannelpolicy
+    state: present
+  check_mode: yes
+  register: intf_policy_leaf_polgrp_check_mode_present
+
+- name: Adding a interface policy leaf policy group (PC) - creation works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_link_present
+  register: intf_policy_leaf_polgrp_present
+
+- name: Adding a interface policy leaf policy group (PC) - idempotency works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_link_present
+  register: intf_policy_leaf_polgrp_idempotent
+
+- name: Adding a interface policy leaf policy group description (PC) - update works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_link_present
+    description: policygroup description
+  register: intf_policy_leaf_polgrp_update
+
+# TODO: also test for errors
+- name: present assertions
+  assert:
+    that:
+    - intf_policy_leaf_polgrp_check_mode_present is changed
+    - intf_policy_leaf_polgrp_present is changed
+    - intf_policy_leaf_polgrp_present.previous == []
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "link","name": "policygroupname_link"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
+    - intf_policy_leaf_polgrp_idempotent is not changed
+    - intf_policy_leaf_polgrp_idempotent.sent == {}
+    - intf_policy_leaf_polgrp_update is changed
+    - 'intf_policy_leaf_polgrp_update.sent == {"infraAccBndlGrp": {"attributes": {"descr": "policygroup description"}}}'
+
+- name: Query interface policy leaf policy group (PC)
+  aci_interface_policy_leaf_policy_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_link
+    lag_type: link
+    state: query
+  register: binding_query
+
+- name: present assertions
+  assert:
+    that:
+      - binding_query is not changed
+      - binding_query.current | length >= 1
+      - '"/api/mo/uni/infra/funcprof/accbundle-policygroupname_link.json" in binding_query.url'
+
+- name: Remove interface policy leaf policy group (PC) - check mode
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_link_absent
+  check_mode: yes
+  register: intf_policy_leaf_polgrp_check_mode_absent
+
+- name: Remove interface policy leaf policy group (PC) - delete works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_link_absent
+  register: intf_policy_leaf_polgrp_absent
+
+- name: Remove interface policy leaf policy group (PC) - idempotency works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_link_absent
+  register: intf_policy_leaf_polgrp_absent_idempotent
+
+- name: Remove interface policy leaf policy group (PC) - check mode
+  aci_interface_policy_leaf_policy_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_link
+    #lag_type: link
+    state: absent
+  ignore_errors: yes
+  register: intf_policy_leaf_polgrp_absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - intf_policy_leaf_polgrp_check_mode_absent is changed
+      - intf_policy_leaf_polgrp_check_mode_absent.previous != []
+      - intf_policy_leaf_polgrp_absent is changed
+      - intf_policy_leaf_polgrp_absent.previous == intf_policy_leaf_polgrp_absent.previous
+      - intf_policy_leaf_polgrp_absent_idempotent is not changed
+      - intf_policy_leaf_polgrp_absent_idempotent.previous == []
+      - intf_policy_leaf_polgrp_absent_missing_param is failed
+      - 'intf_policy_leaf_polgrp_absent_missing_param.msg == "missing required arguments: lag_type"'
+
+# ==== END TESTING Port Channel (PC), lag_type: link ====
+
+
+# ==== START TESTING Virtual Port Channel (VPC), lag_type: node ====
+
+- name: Making sure interface_policy_leaf_policy_group doesn't exist at beginning of test (VPC)
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_node_absent
+
+- name: Adding a interface policy leaf policy group (VPC) - check mode works
+  aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_node_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_node
+    lag_type: node
+    link_level_policy: linklevelpolicy
+    fibre_channel_interface_policy: fiberchannelpolicy
+    state: present
+  check_mode: yes
+  register: intf_policy_leaf_polgrp_check_mode_present
+
+- name: Adding a interface policy leaf policy group (VPC) - creation works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_node_present
+  register: intf_policy_leaf_polgrp_present
+
+- name: Adding a interface policy leaf policy group (VPC) - idempotency works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_node_present
+  register: intf_policy_leaf_polgrp_idempotent
+
+- name: Adding a interface policy leaf policy group description (VPC) - update works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_node_present
+    description: policygroup description
+  register: intf_policy_leaf_polgrp_update
+
+# TODO: also test for errors
+- name: present assertions
+  assert:
+    that:
+    - intf_policy_leaf_polgrp_check_mode_present is changed
+    - intf_policy_leaf_polgrp_present is changed
+    - intf_policy_leaf_polgrp_present.previous == []
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "node","name": "policygroupname_node"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
+    - intf_policy_leaf_polgrp_idempotent is not changed
+    - intf_policy_leaf_polgrp_idempotent.sent == {}
+    - intf_policy_leaf_polgrp_update is changed
+    - 'intf_policy_leaf_polgrp_update.sent == {"infraAccBndlGrp": {"attributes": {"descr": "policygroup description"}}}'
+
+- name: Query interface policy leaf policy group (VPC)
+  aci_interface_policy_leaf_policy_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_node
+    lag_type: node
+    state: query
+  register: binding_query
+
+- name: present assertions
+  assert:
+    that:
+      - binding_query is not changed
+      - binding_query.current | length >= 1
+      - '"/api/mo/uni/infra/funcprof/accbundle-policygroupname_node.json" in binding_query.url'
+
+# Add lag_type link to see what we get back
+- name: Adding a interface policy leaf policy group (PC) - creation works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_link_present
+  register: intf_policy_leaf_polgrp_present
+
+- name: Query interface policy leaf policy group (VPC)
+  aci_interface_policy_leaf_policy_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    lag_type: node
+    state: query
+  register: binding_query_node_all
+
+- name: present assertions
+  assert:
+    that:
+      - binding_query_node_all is not changed
+      - binding_query_node_all.current | length >= 1
+      - binding_query_node_all.current | selectattr("infraAccBndlGrp.attributes.lagT", "equalto", "link") | list == []
+      - '"/api/class/infraAccBndlGrp.json" in binding_query_node_all.url'
+
+- name: Remove interface policy leaf policy group (VPC) - check mode
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_node_absent
+  check_mode: yes
+  register: intf_policy_leaf_polgrp_check_mode_absent
+
+- name: Remove interface policy leaf policy group (VPC) - delete works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_node_absent
+  register: intf_policy_leaf_polgrp_absent
+
+- name: Remove interface policy leaf policy group (VPC) - idempotency works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_node_absent
+  register: intf_policy_leaf_polgrp_absent_idempotent
+
+- name: Remove interface policy leaf policy group (VPC) - check mode
+  aci_interface_policy_leaf_policy_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_node
+    #lag_type: node
+    state: absent
+  ignore_errors: yes
+  register: intf_policy_leaf_polgrp_absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - intf_policy_leaf_polgrp_check_mode_absent is changed
+      - intf_policy_leaf_polgrp_check_mode_absent.previous != []
+      - intf_policy_leaf_polgrp_absent is changed
+      - intf_policy_leaf_polgrp_absent.previous == intf_policy_leaf_polgrp_absent.previous
+      - intf_policy_leaf_polgrp_absent_idempotent is not changed
+      - intf_policy_leaf_polgrp_absent_idempotent.previous == []
+      - intf_policy_leaf_polgrp_absent_missing_param is failed
+      - 'intf_policy_leaf_polgrp_absent_missing_param.msg == "missing required arguments: lag_type"'
+
+# ==== END TESTING Virtual Port Channel (VPC), lag_type: node ====
+
+
+# ==== START TESTING Virtual Port Channel (VPC), lag_type: leaf ====
+
+- name: Making sure interface_policy_leaf_policy_group doesn't exist at beginning of test (Leaf Access Port)
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_leaf_absent
+
+- name: Adding a interface policy leaf policy group (Leaf Access Port) - check mode works
+  aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_leaf_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_leaf
+    lag_type: leaf
+    link_level_policy: linklevelpolicy
+    fibre_channel_interface_policy: fiberchannelpolicy
+    state: present
+  check_mode: yes
+  register: intf_policy_leaf_polgrp_check_mode_present
+
+- name: Adding a interface policy leaf policy group (Leaf Access Port) - creation works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_leaf_present
+  register: intf_policy_leaf_polgrp_present
+
+- name: Adding a interface policy leaf policy group (Leaf Access Port) - idempotency works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_leaf_present
+  register: intf_policy_leaf_polgrp_idempotent
+
+- name: Adding a interface policy leaf policy group description (Leaf Access Port) - update works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_leaf_present
+    description: policygroup description
+  register: intf_policy_leaf_polgrp_update
+
+- name: hello
+  debug:
+    msg: "{{ intf_policy_leaf_polgrp_present.sent }}"
+
+- name: hello
+  debug:
+    msg: "{{ intf_policy_leaf_polgrp_update.sent }}"
+
+# TODO: also test for errors
+- name: present assertions
+  assert:
+    that:
+    - intf_policy_leaf_polgrp_check_mode_present is changed
+    - intf_policy_leaf_polgrp_present is changed
+    - intf_policy_leaf_polgrp_present.previous == []
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccPortGrp": {"attributes": {"name": "policygroupname_leaf"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}}]}}'
+    - intf_policy_leaf_polgrp_idempotent is not changed
+    - intf_policy_leaf_polgrp_idempotent.sent == {}
+    - intf_policy_leaf_polgrp_update is changed
+    - 'intf_policy_leaf_polgrp_update.sent == {"infraAccPortGrp": {"attributes": {"descr": "policygroup description"}}}'
+
+- name: Query interface policy leaf policy group (Leaf Access Port)
+  aci_interface_policy_leaf_policy_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_leaf
+    lag_type: leaf
+    state: query
+  register: binding_query
+
+- name: present assertions
+  assert:
+    that:
+      - binding_query is not changed
+      - binding_query.current | length >= 1
+      - '"/api/mo/uni/infra/funcprof/accportgrp-policygroupname_leaf.json" in binding_query.url'
+
+- name: Remove interface policy leaf policy group (Leaf Access Port) - check mode
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_leaf_absent
+  check_mode: yes
+  register: intf_policy_leaf_polgrp_check_mode_absent
+
+- name: Remove interface policy leaf policy group (Leaf Access Port) - delete works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_leaf_absent
+  register: intf_policy_leaf_polgrp_absent
+
+- name: Remove interface policy leaf policy group (Leaf Access Port) - idempotency works
+  aci_interface_policy_leaf_policy_group:
+    <<: *aci_interface_policy_leaf_policy_group_leaf_absent
+  register: intf_policy_leaf_polgrp_absent_idempotent
+
+- name: Remove interface policy leaf policy group (Leaf Access Port) - check mode
+  aci_interface_policy_leaf_policy_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    policy_group: policygroupname_leaf
+    #lag_type: leaf
+    state: absent
+  ignore_errors: yes
+  register: intf_policy_leaf_polgrp_absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - intf_policy_leaf_polgrp_check_mode_absent is changed
+      - intf_policy_leaf_polgrp_check_mode_absent.previous != []
+      - intf_policy_leaf_polgrp_absent is changed
+      - intf_policy_leaf_polgrp_absent.previous == intf_policy_leaf_polgrp_absent.previous
+      - intf_policy_leaf_polgrp_absent_idempotent is not changed
+      - intf_policy_leaf_polgrp_absent_idempotent.previous == []
+      - intf_policy_leaf_polgrp_absent_missing_param is failed
+      - 'intf_policy_leaf_polgrp_absent_missing_param.msg == "missing required arguments: lag_type"'
+
+# ==== END TESTING Virtual Port Channel (VPC), lag_type: leaf ====

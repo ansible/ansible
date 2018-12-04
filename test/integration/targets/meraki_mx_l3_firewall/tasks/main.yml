@@ -1,0 +1,198 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  # - name: Test an API key is provided
+  #   fail:
+  #     msg: Please define an API key
+  #   when: auth_key is not defined
+    
+  # - name: Use an invalid domain
+  #   meraki_organization:
+  #     auth_key: '{{ auth_key }}'
+  #     host: marrrraki.com
+  #     state: present
+  #     org_name: IntTestOrg
+  #     output_level: debug
+  #   delegate_to: localhost
+  #   register: invalid_domain
+  #   ignore_errors: yes
+    
+  # - name: Disable HTTP
+  #   meraki_organization:
+  #     auth_key: '{{ auth_key }}'
+  #     use_https: false
+  #     state: query
+  #     output_level: debug
+  #   delegate_to: localhost
+  #   register: http
+  #   ignore_errors: yes
+
+  # - name: Connection assertions
+  #   assert:
+  #     that:
+  #       - '"Failed to connect to" in invalid_domain.msg'
+  #       - '"http" in http.url'
+
+  - name: Create network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      type: appliance
+    delegate_to: localhost
+
+  - name: Query firewall rules
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: query
+    delegate_to: localhost
+    register: query
+
+  - debug:
+      msg: '{{query}}'
+
+  - assert:
+      that:
+        - query.data|length == 1
+
+  - name: Set one firewall rule
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - comment: Deny to documentation address
+          src_port: any
+          src_cidr: any
+          dest_port: 80,443
+          dest_cidr: 192.0.1.1/32
+          protocol: tcp
+          policy: deny
+    delegate_to: localhost
+    register: create_one
+
+  - assert:
+      that:
+        - create_one.data|length == 2
+        - create_one.data.0.destCidr == '192.0.1.1/32'
+        - create_one.data.0.protocol == 'tcp'
+        - create_one.data.0.policy == 'deny'
+        - create_one.changed == True
+
+  - name: Check for idempotency
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - comment: Deny to documentation address
+          src_port: any
+          src_cidr: any
+          dest_port: 80,443
+          dest_cidr: 192.0.1.1/32
+          protocol: tcp
+          policy: deny
+    delegate_to: localhost
+    register: create_one_idempotent
+
+  - debug:
+      msg: '{{create_one_idempotent}}'
+
+  - assert:
+      that:
+        - create_one_idempotent.changed == False
+
+  - name: Enable syslog for default rule
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - comment: Deny to documentation address
+          src_port: any
+          src_cidr: any
+          dest_port: 80,443
+          dest_cidr: 192.0.1.1/32
+          protocol: tcp
+          policy: deny        
+      syslog_default_rule: yes
+    delegate_to: localhost
+    register: default_syslog
+
+  - debug:
+      msg: '{{default_syslog}}'
+
+  - name: Query firewall rules
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: query
+    delegate_to: localhost
+    register: query
+
+  - debug:
+      msg: '{{query.data.1}}'
+
+  - assert:
+      that:
+        - query.data.1.syslogEnabled == True
+        - default_syslog.changed == True
+
+  - name: Disable syslog for default rule
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - comment: Deny to documentation address
+          src_port: any
+          src_cidr: any
+          dest_port: 80,443
+          dest_cidr: 192.0.1.1/32
+          protocol: tcp
+          policy: deny        
+      syslog_default_rule: no
+    delegate_to: localhost
+    register: disable_syslog
+
+  - debug:
+      msg: '{{disable_syslog}}'
+
+  - name: Query firewall rules
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: query
+    delegate_to: localhost
+    register: query
+
+  - debug:
+      msg: '{{query.data.1}}'
+
+  - assert:
+      that:
+        - query.data.1.syslogEnabled == False
+        - disable_syslog.changed == True
+
+  always:
+  - name: Delete all firewall rules
+    meraki_mx_l3_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules: []
+    delegate_to: localhost
+    register: delete_all

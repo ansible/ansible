@@ -1,0 +1,41 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_ssh
+
+- scaleway_sshkey:
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDf29yyommeGyKSIgSmX0ISVXP+3x6RUY4JDGLoAMFh2efkfDaRVdsvkvnFuUywgP2RewrjTyLE8w0NpCBHVS5Fm1BAn3yvxOUtTMxTbsQcw6HQ8swJ02+1tewJYjHPwc4GrBqiDo3Nmlq354Us0zBOJg/bBzuEnVD5eJ3GO3gKaCSUYTVrYwO0U4eJE0D9OJeUP9J48kl4ULbCub976+mTHdBvlzRw0Tzfl2kxgdDwlks0l2NefY/uiTdz2oMt092bAY3wZHxjto/DXoChxvaf5s2k8Zb+J7CjimUYnzPlH+zA9F6ROjP5AUu6ZWPd0jOIBl1nDWWb2j/qfNLYM43l sieben@sieben-macbook.local"
+    state: present
+  check_mode: yes
+
+- scaleway_sshkey:
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDf29yyommeGyKSIgSmX0ISVXP+3x6RUY4JDGLoAMFh2efkfDaRVdsvkvnFuUywgP2RewrjTyLE8w0NpCBHVS5Fm1BAn3yvxOUtTMxTbsQcw6HQ8swJ02+1tewJYjHPwc4GrBqiDo3Nmlq354Us0zBOJg/bBzuEnVD5eJ3GO3gKaCSUYTVrYwO0U4eJE0D9OJeUP9J48kl4ULbCub976+mTHdBvlzRw0Tzfl2kxgdDwlks0l2NefY/uiTdz2oMt092bAY3wZHxjto/DXoChxvaf5s2k8Zb+J7CjimUYnzPlH+zA9F6ROjP5AUu6ZWPd0jOIBl1nDWWb2j/qfNLYM43l sieben@sieben-macbook.local"
+    state: present
+  register: result1
+
+- scaleway_sshkey:
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDf29yyommeGyKSIgSmX0ISVXP+3x6RUY4JDGLoAMFh2efkfDaRVdsvkvnFuUywgP2RewrjTyLE8w0NpCBHVS5Fm1BAn3yvxOUtTMxTbsQcw6HQ8swJ02+1tewJYjHPwc4GrBqiDo3Nmlq354Us0zBOJg/bBzuEnVD5eJ3GO3gKaCSUYTVrYwO0U4eJE0D9OJeUP9J48kl4ULbCub976+mTHdBvlzRw0Tzfl2kxgdDwlks0l2NefY/uiTdz2oMt092bAY3wZHxjto/DXoChxvaf5s2k8Zb+J7CjimUYnzPlH+zA9F6ROjP5AUu6ZWPd0jOIBl1nDWWb2j/qfNLYM43l sieben@sieben-macbook.local"
+    state: present
+  register: result2
+
+- assert:
+    that:
+      - result1 is success and result1 is changed
+      - result2 is success and result2 is not changed
+
+- scaleway_sshkey:
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDf29yyommeGyKSIgSmX0ISVXP+3x6RUY4JDGLoAMFh2efkfDaRVdsvkvnFuUywgP2RewrjTyLE8w0NpCBHVS5Fm1BAn3yvxOUtTMxTbsQcw6HQ8swJ02+1tewJYjHPwc4GrBqiDo3Nmlq354Us0zBOJg/bBzuEnVD5eJ3GO3gKaCSUYTVrYwO0U4eJE0D9OJeUP9J48kl4ULbCub976+mTHdBvlzRw0Tzfl2kxgdDwlks0l2NefY/uiTdz2oMt092bAY3wZHxjto/DXoChxvaf5s2k8Zb+J7CjimUYnzPlH+zA9F6ROjP5AUu6ZWPd0jOIBl1nDWWb2j/qfNLYM43l sieben@sieben-macbook.local"
+    state: absent
+  check_mode: yes
+
+- scaleway_sshkey:
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDf29yyommeGyKSIgSmX0ISVXP+3x6RUY4JDGLoAMFh2efkfDaRVdsvkvnFuUywgP2RewrjTyLE8w0NpCBHVS5Fm1BAn3yvxOUtTMxTbsQcw6HQ8swJ02+1tewJYjHPwc4GrBqiDo3Nmlq354Us0zBOJg/bBzuEnVD5eJ3GO3gKaCSUYTVrYwO0U4eJE0D9OJeUP9J48kl4ULbCub976+mTHdBvlzRw0Tzfl2kxgdDwlks0l2NefY/uiTdz2oMt092bAY3wZHxjto/DXoChxvaf5s2k8Zb+J7CjimUYnzPlH+zA9F6ROjP5AUu6ZWPd0jOIBl1nDWWb2j/qfNLYM43l sieben@sieben-macbook.local"
+    state: absent
+  register: result1
+
+- scaleway_sshkey:
+    ssh_pub_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDf29yyommeGyKSIgSmX0ISVXP+3x6RUY4JDGLoAMFh2efkfDaRVdsvkvnFuUywgP2RewrjTyLE8w0NpCBHVS5Fm1BAn3yvxOUtTMxTbsQcw6HQ8swJ02+1tewJYjHPwc4GrBqiDo3Nmlq354Us0zBOJg/bBzuEnVD5eJ3GO3gKaCSUYTVrYwO0U4eJE0D9OJeUP9J48kl4ULbCub976+mTHdBvlzRw0Tzfl2kxgdDwlks0l2NefY/uiTdz2oMt092bAY3wZHxjto/DXoChxvaf5s2k8Zb+J7CjimUYnzPlH+zA9F6ROjP5AUu6ZWPd0jOIBl1nDWWb2j/qfNLYM43l sieben@sieben-macbook.local"
+    state: absent
+  register: result2
+
+- assert:
+    that:
+      - result1 is success and result1 is changed
+      - result2 is success and result2 is not changed

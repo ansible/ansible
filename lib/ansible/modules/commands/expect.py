@@ -45,12 +45,14 @@ options:
     required: true
   timeout:
     description:
-      - Amount of time in seconds to wait for the expected strings.
+      - Amount of time in seconds to wait for the expected strings. Use
+        C(null) to disable timeout.
     default: 30
   echo:
     description:
       - Whether or not to echo out your response strings.
     default: false
+    type: bool
 requirements:
   - python >= 2.6
   - pexpect >= 3.3
@@ -71,11 +73,13 @@ author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = r'''
-- name: Case insensitve password string match
+- name: Case insensitive password string match
   expect:
     command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
+  # you don't want to show passwords in your logs
+  no_log: true
 
 - name: Generic question with multiple different responses
   expect:

@@ -1,0 +1,14 @@
+# ONLINE_TOKEN='XXX' ansible-playbook ./test/legacy/online.yml --tags test_online_user_facts
+
+- name: Get user information and register it in a variable
+  online_user_facts:
+  register: user
+
+- name: Display user variable
+  debug:
+    var: user
+
+- name: Ensure retrieval of user facts is success
+  assert:
+    that:
+      - user is success

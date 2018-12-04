@@ -21,12 +21,9 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def _generic_g(prop_name, self):
@@ -48,12 +45,13 @@ def _generic_g_method(prop_name, self):
 
 def _generic_g_parent(prop_name, self):
     try:
-        value = self._attributes[prop_name]
-        if value is None and not self._squashed and not self._finalized:
+        if self._squashed or self._finalized:
+            value = self._attributes[prop_name]
+        else:
             try:
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
-                pass
+                value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
@@ -139,35 +137,7 @@ class BaseMeta(type):
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
-class Base(with_metaclass(BaseMeta, object)):
-
-    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
-
-    # connection/transport
-    _connection = FieldAttribute(isa='string')
-    _port = FieldAttribute(isa='int')
-    _remote_user = FieldAttribute(isa='string')
-
-    # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
-
-    # flags and misc. settings
-    _environment = FieldAttribute(isa='list')
-    _no_log = FieldAttribute(isa='bool')
-    _always_run = FieldAttribute(isa='bool')
-    _run_once = FieldAttribute(isa='bool')
-    _ignore_errors = FieldAttribute(isa='bool')
-    _check_mode = FieldAttribute(isa='bool')
-    _diff = FieldAttribute(isa='bool')
-    _any_errors_fatal = FieldAttribute(isa='bool')
-
-    # param names which have been deprecated/removed
-    DEPRECATED_ATTRIBUTES = [
-        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
-        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
-    ]
-
-    _inheritable = True
+class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def __init__(self):
 
@@ -189,6 +159,9 @@ class Base(with_metaclass(BaseMeta, object)):
         # need a unique object here (all members contained within are
         # unique already).
         self._attributes = self._attributes.copy()
+        for key, value in self._attributes.items():
+            if callable(value):
+                self._attributes[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
@@ -272,6 +245,12 @@ class Base(with_metaclass(BaseMeta, object)):
 
     def get_variable_manager(self):
         return self._variable_manager
+
+    def _validate_debugger(self, attr, name, value):
+        valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
+        if value and isinstance(value, string_types) and value not in valid_values:
+            raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
+        return value
 
     def _validate_attributes(self, ds):
         '''
@@ -384,7 +363,10 @@ class Base(with_metaclass(BaseMeta, object)):
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    setattr(self, name, attribute.default)
+                    if callable(attribute.default):
+                        setattr(self, name, attribute.default())
+                    else:
+                        setattr(self, name, attribute.default)
                     continue
 
                 # and make sure the attribute is of the type it should be
@@ -403,18 +385,11 @@ class Base(with_metaclass(BaseMeta, object)):
                         if isinstance(value, string_types) and '%' in value:
                             value = value.replace('%', '')
                         value = float(value)
-                    elif attribute.isa in ('list', 'barelist'):
+                    elif attribute.isa == 'list':
                         if value is None:
                             value = []
                         elif not isinstance(value, list):
-                            if isinstance(value, string_types) and attribute.isa == 'barelist':
-                                display.deprecated(
-                                    "Using comma separated values for a list has been deprecated. "
-                                    "You should instead use the correct YAML syntax for lists. "
-                                )
-                                value = value.split(',')
-                            else:
-                                value = [value]
+                            value = [value]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
@@ -448,6 +423,7 @@ class Base(with_metaclass(BaseMeta, object)):
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
             except (TypeError, ValueError) as e:
+                value = getattr(self, name)
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
@@ -475,9 +451,9 @@ class Base(with_metaclass(BaseMeta, object)):
         try:
             if isinstance(ds, dict):
                 _validate_variable_keys(ds)
-                return ds
+                return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
-                all_vars = dict()
+                all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
@@ -573,9 +549,47 @@ class Base(with_metaclass(BaseMeta, object)):
             if name in data:
                 setattr(self, name, data[name])
             else:
-                setattr(self, name, attribute.default)
+                if callable(attribute.default):
+                    setattr(self, name, attribute.default())
+                else:
+                    setattr(self, name, attribute.default)
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
+
+
+class Base(FieldAttributeBase):
+
+    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+
+    # connection/transport
+    _connection = FieldAttribute(isa='string')
+    _port = FieldAttribute(isa='int')
+    _remote_user = FieldAttribute(isa='string')
+
+    # variables
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
+
+    # module default params
+    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+
+    # flags and misc. settings
+    _environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    _no_log = FieldAttribute(isa='bool')
+    _run_once = FieldAttribute(isa='bool')
+    _ignore_errors = FieldAttribute(isa='bool')
+    _ignore_unreachable = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool')
+    _diff = FieldAttribute(isa='bool')
+    _any_errors_fatal = FieldAttribute(isa='bool')
+
+    # explicitly invoke a debugger on tasks
+    _debugger = FieldAttribute(isa='string')
+
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]

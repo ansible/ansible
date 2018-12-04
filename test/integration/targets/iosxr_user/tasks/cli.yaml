@@ -1,4 +1,11 @@
 ---
+- name: collect all common test cases
+  find:
+    paths: "{{ role_path }}/tests/common"
+    patterns: "{{ testcase }}.yaml"
+  register: common_test_cases
+  delegate_to: localhost
+
 - name: collect all cli test cases
   find:
     paths: "{{ role_path }}/tests/cli"
@@ -6,11 +13,15 @@
   register: test_cases
   delegate_to: localhost
 
+- set_fact:
+    test_cases:
+      files: "{{ common_test_cases.files }} + {{ test_cases.files }}"
+
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
-- name: run test case
-  include: "{{ test_case_to_run }}"
+- name: run test case (connection=network_cli)
+  include: "{{ test_case_to_run }} ansible_connection=network_cli"
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run

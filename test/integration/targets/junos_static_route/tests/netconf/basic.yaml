@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_static_route netconf/basic.yaml"
+- debug: msg="START junos_static_route netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove static route
   junos_static_route:
@@ -247,3 +247,5 @@
 - assert:
     that:
       - "result.changed == false"
+
+- debug: msg="END junos_static_route netconf/basic.yaml on connection={{ ansible_connection }}"

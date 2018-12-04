@@ -1,0 +1,19 @@
+{
+    "kind": "tm:gtm:monitor:firepass:firepassstate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 0,
+    "selfLink": "https://localhost/mgmt/tm/gtm/monitor/firepass/~Common~foo?ver=13.1.0.4",
+    "cipherlist": "HIGH:!ADH",
+    "concurrencyLimit": 95,
+    "defaultsFrom": "/Common/firepass_gtm",
+    "destination": "1.1.1.1:80",
+    "ignoreDownResponse": "enabled",
+    "interval": 30,
+    "maxLoadAverage": 12,
+    "password": "secret",
+    "probeTimeout": 5,
+    "timeout": 90,
+    "username": "gtmuser"
+}

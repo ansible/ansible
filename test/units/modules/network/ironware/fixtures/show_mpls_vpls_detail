@@ -10,7 +10,7 @@ VPLS TEST-VPLS, Id 333, Max mac entries: 2048
    Untagged: ethe 2/7
  VC-Mode: Raw
  Total VPLS peers: 1 (0 Operational)
- Peer address: 3.3.3.3, State: Wait for functional local ports
+ Peer address: 192.0.2.3, State: Wait for functional local ports
   Tnnl in use: tnl1(3)[RSVP]    Peer Index:0
   Local VC lbl: N/A, Remote VC lbl: N/A
   Local VC MTU: 9190, Remote VC MTU: 0

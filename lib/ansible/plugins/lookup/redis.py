@@ -12,7 +12,7 @@ DOCUMENTATION = """
     version_added: "2.5"
     short_description: fetch data from Redis
     description:
-      - This looup returns a list of results from a Redis DB corresponding to a list of items given to it
+      - This lookup returns a list of results from a Redis DB corresponding to a list of items given to it
     requirements:
       - redis (python library https://github.com/andymccurdy/redis-py/)
     options:
@@ -26,7 +26,6 @@ DOCUMENTATION = """
         ini:
           - section: lookup_redis
             key: host
-      port:
       port:
         description: port on which Redis is listening on
         default: 6379A
@@ -48,7 +47,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: query redis for somekey (default or configured settings used)
-  debug: msg="{{ lookup('redis', 'somekey'}}"
+  debug: msg="{{ lookup('redis', 'somekey') }}"
 
 - name: query redis for list of keys and non-default host and port
   debug: msg="{{ lookup('redis', item, host='myredis.internal.com', port=2121) }}"

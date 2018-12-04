@@ -35,7 +35,7 @@ options:
     force:
         required: false
         default: False
-        choices: [ True, False ]
+        type: bool
         description:
             - Should the key be regenerated even it it already exists
     format:
@@ -259,7 +259,7 @@ def main():
             path=dict(required=True, type='path'),
             privatekey_path=dict(type='path'),
             format=dict(type='str', choices=['PEM', 'OpenSSH'], default='PEM'),
-            privatekey_passphrase=dict(type='path', no_log=True),
+            privatekey_passphrase=dict(type='str', no_log=True),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

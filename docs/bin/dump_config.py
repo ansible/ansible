@@ -6,6 +6,8 @@ import sys
 import yaml
 
 from jinja2 import Environment, FileSystemLoader
+from ansible.module_utils._text import to_bytes
+from ansible.utils._build_helpers import update_file_if_different
 
 DEFAULT_TEMPLATE_FILE = 'config.rst.j2'
 
@@ -62,8 +64,8 @@ def main(args):
     output_name = os.path.join(output_dir, template_file.replace('.j2', ''))
     temp_vars = {'config_options': config_options}
 
-    with open(output_name, 'wb') as f:
-        f.write(template.render(temp_vars).encode('utf-8'))
+    data = to_bytes(template.render(temp_vars))
+    update_file_if_different(output_name, data)
 
     return 0
 

@@ -49,12 +49,14 @@ Other options include:
 'datacenter':
 
 which restricts the included nodes to those from the given datacenter
+This can also be set with the environmental variable CONSUL_DATACENTER
 
 'url':
 
 the URL of the Consul cluster. host, port and scheme are derived from the
 URL. If not specified, connection configuration defaults to http requests
 to localhost on port 8500.
+This can also be set with the environmental variable CONSUL_URL
 
 'domain':
 
@@ -191,16 +193,13 @@ if os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_ENABLED'):
     setup_logging()
 
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import consul
 except ImportError as e:
     sys.exit("""failed=True msg='python-consul required for this module.
-See http://python-consul.readthedocs.org/en/latest/#installation'""")
+See https://python-consul.readthedocs.io/en/latest/#installation'""")
 
 from six import iteritems
 
@@ -255,23 +254,31 @@ class ConsulInventory(object):
             self.load_data_for_datacenter(datacenter)
 
     def load_availability_groups(self, node, datacenter):
-        '''check the health of each service on a node and add add the node to either
+        '''check the health of each service on a node and add the node to either
         an 'available' or 'unavailable' grouping. The suffix for each group can be
         controlled from the config'''
         if self.config.has_config('availability'):
             for service_name, service in iteritems(node['Services']):
                 for node in self.consul_api.health.service(service_name)[1]:
-                    for check in node['Checks']:
-                        if check['ServiceName'] == service_name:
-                            ok = 'passing' == check['Status']
-                            if ok:
-                                suffix = self.config.get_availability_suffix(
-                                    'available_suffix', '_available')
-                            else:
-                                suffix = self.config.get_availability_suffix(
-                                    'unavailable_suffix', '_unavailable')
-                            self.add_node_to_map(self.nodes_by_availability,
-                                                 service_name + suffix, node['Node'])
+                    if self.is_service_available(node, service_name):
+                        suffix = self.config.get_availability_suffix(
+                            'available_suffix', '_available')
+                    else:
+                        suffix = self.config.get_availability_suffix(
+                            'unavailable_suffix', '_unavailable')
+                    self.add_node_to_map(self.nodes_by_availability,
+                                         service_name + suffix, node['Node'])
+
+    def is_service_available(self, node, service_name):
+        '''check the availability of the service on the node beside ensuring the
+        availability of the node itself'''
+        consul_ok = service_ok = False
+        for check in node['Checks']:
+            if check['CheckID'] == 'serfHealth':
+                consul_ok = check['Status'] == 'passing'
+            elif check['ServiceName'] == service_name:
+                service_ok = check['Status'] == 'passing'
+        return consul_ok and service_ok
 
     def consul_get_kv_inmemory(self, key):
         result = filter(lambda x: x['Key'] == key, self.inmemory_kv)
@@ -292,7 +299,7 @@ class ConsulInventory(object):
             self.load_data_for_node(node['Node'], datacenter)
 
     def load_data_for_node(self, node, datacenter):
-        '''loads the data for a sinle node adding it to various groups based on
+        '''loads the data for a single node adding it to various groups based on
         metadata retrieved from the kv store and service availability'''
 
         if self.config.suffixes == 'true':
@@ -448,6 +455,7 @@ class ConsulConfig(dict):
     def __init__(self):
         self.read_settings()
         self.read_cli_args()
+        self.read_env_vars()
 
     def has_config(self, name):
         if hasattr(self, name):
@@ -492,6 +500,14 @@ class ConsulConfig(dict):
             if getattr(args, arg):
                 setattr(self, arg, getattr(args, arg))
 
+    def read_env_vars(self):
+        env_var_options = ['datacenter', 'url']
+        for option in env_var_options:
+            value = None
+            env_var = 'CONSUL_' + option.upper()
+            if os.environ.get(env_var):
+                setattr(self, option, os.environ.get(env_var))
+
     def get_availability_suffix(self, suffix, default):
         if self.has_config(suffix):
             return self.has_config(suffix)
@@ -519,5 +535,6 @@ class ConsulConfig(dict):
             if not token:
                 token = 'anonymous'
         return consul.Consul(host=host, port=port, token=token, scheme=scheme)
+
 
 ConsulInventory()

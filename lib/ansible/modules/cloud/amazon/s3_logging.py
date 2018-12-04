@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -27,18 +27,14 @@ options:
   state:
     description:
       - "Enable or disable logging."
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   target_bucket:
     description:
       - "The bucket to log to. Required when state=present."
-    required: false
-    default: null
   target_prefix:
     description:
       - "The prefix that should be prepended to the generated log files written to the target_bucket."
-    required: false
     default: ""
 extends_documentation_fragment:
     - aws

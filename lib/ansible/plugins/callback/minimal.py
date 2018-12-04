@@ -55,13 +55,17 @@ class CallbackModule(CallbackBase):
 
         self._handle_warnings(result._result)
 
-        if result._task.action in C.MODULE_NO_JSON:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "SUCCESS"), color=C.COLOR_OK)
+        if result._result.get('changed', False):
+            color = C.COLOR_CHANGED
+            state = 'CHANGED'
         else:
-            if 'changed' in result._result and result._result['changed']:
-                self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_CHANGED)
-            else:
-                self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_OK)
+            color = C.COLOR_OK
+            state = 'SUCCESS'
+
+        if result._task.action in C.MODULE_NO_JSON:
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, state), color=color)
+        else:
+            self._display.display("%s | %s => %s" % (result._host.get_name(), state, self._dump_results(result._result, indent=4)), color=color)
 
     def v2_runner_on_skipped(self, result):
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)

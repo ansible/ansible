@@ -77,6 +77,18 @@
       - "fetch_missing.msg"
       - "fetch_missing is not changed"
 
+- name: attempt to fetch a non-existent file - fail on missing implicit
+  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched
+  register: fetch_missing_implicit
+  ignore_errors: true
+
+- name: check fetch missing with failure with implicit fail
+  assert:
+    that:
+      - "fetch_missing_implicit is failed"
+      - "fetch_missing_implicit.msg"
+      - "fetch_missing_implicit is not changed"
+
 - name: attempt to fetch a directory - should not fail but return a message
   fetch: src={{ output_dir }} dest={{ output_dir }}/somedir fail_on_missing=False
   register: fetch_dir

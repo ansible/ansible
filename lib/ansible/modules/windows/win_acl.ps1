@@ -1,11 +1,15 @@
 #!powershell
-# Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
-# Copyright 2015, Trond Hindenes
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+
+# Copyright: (c) 2015, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright: (c) 2015, Trond Hindenes
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 #Requires -Module Ansible.ModuleUtils.SID
+
+$ErrorActionPreference = "Stop"
 
 # win_acl module (File/Resources Permission Additions/Removal)
 
@@ -40,87 +44,7 @@ function Get-UserSID {
     return $userSID
 }
 
-# Need to adjust token privs when executing Set-ACL in certain cases.
-# e.g. d:\testdir is owned by group in which current user is not a member and no perms are inherited from d:\
-# This also sets us up for setting the owner as a feature.
-$AdjustTokenPrivileges = @"
-using System;
-using System.Runtime.InteropServices;
-
-namespace Ansible {
-        public class TokenManipulator {
-
-            [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-            internal static extern bool AdjustTokenPrivileges(IntPtr htok, bool disall,
-                ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen);
-
-            [DllImport("kernel32.dll", ExactSpelling = true)]
-            internal static extern IntPtr GetCurrentProcess();
-
-            [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
-            internal static extern bool OpenProcessToken(IntPtr h, int acc,
-                ref IntPtr phtok);
-
-            [DllImport("advapi32.dll", SetLastError = true)]
-            internal static extern bool LookupPrivilegeValue(string host, string name,
-                ref long pluid);
-
-            [StructLayout(LayoutKind.Sequential, Pack = 1)]
-            internal struct TokPriv1Luid
-            {
-                public int Count;
-                public long Luid;
-                public int Attr;
-            }
-
-            internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
-            internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
-            internal const int TOKEN_QUERY = 0x00000008;
-            internal const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
-
-            public static bool AddPrivilege(string privilege) {
-                try {
-                    bool retVal;
-                    TokPriv1Luid tp;
-                    IntPtr hproc = GetCurrentProcess();
-                    IntPtr htok = IntPtr.Zero;
-                    retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
-                    tp.Count = 1;
-                    tp.Luid = 0;
-                    tp.Attr = SE_PRIVILEGE_ENABLED;
-                    retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
-                    retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-                    return retVal;
-                }
-                catch (Exception ex) {
-                    throw ex;
-                }
-            }
-
-            public static bool RemovePrivilege(string privilege) {
-                try {
-                    bool retVal;
-                    TokPriv1Luid tp;
-                    IntPtr hproc = GetCurrentProcess();
-                    IntPtr htok = IntPtr.Zero;
-                    retVal = OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok);
-                    tp.Count = 1;
-                    tp.Luid = 0;
-                    tp.Attr = SE_PRIVILEGE_DISABLED;
-                    retVal = LookupPrivilegeValue(null, privilege, ref tp.Luid);
-                    retVal = AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-                    return retVal;
-                }
-
-                catch (Exception ex) {
-                    throw ex;
-                }
-            }
-        }
-}
-"@
-
-add-type $AdjustTokenPrivileges
+$params = Parse-Args $args
 
 Function SetPrivilegeTokens() {
     # Set privilege tokens only if admin.
@@ -132,51 +56,57 @@ Function SetPrivilegeTokens() {
 
 
     if ($myWindowsPrincipal.IsInRole($adminRole)) {
-
+        # Need to adjust token privs when executing Set-ACL in certain cases.
+        # e.g. d:\testdir is owned by group in which current user is not a member and no perms are inherited from d:\
+        # This also sets us up for setting the owner as a feature.
         # See the following for details of each privilege
         # https://msdn.microsoft.com/en-us/library/windows/desktop/bb530716(v=vs.85).aspx
-
-        [void][Ansible.TokenManipulator]::AddPrivilege("SeRestorePrivilege") #Grants all write access control to any file, regardless of ACL.
-        [void][Ansible.TokenManipulator]::AddPrivilege("SeBackupPrivilege") #Grants all read access control to any file, regardless of ACL.
-        [void][Ansible.TokenManipulator]::AddPrivilege("SeTakeOwnershipPrivilege") #Grants ability to take owernship of an object w/out being granted discretionary access
+        Import-PrivilegeUtil
+        $privileges = @(
+            "SeRestorePrivilege",  # Grants all write access control to any file, regardless of ACL.
+            "SeBackupPrivilege",  # Grants all read access control to any file, regardless of ACL.
+            "SeTakeOwnershipPrivilege"  # Grants ability to take owernship of an object w/out being granted discretionary access
+        )
+        foreach ($privilege in $privileges) {
+            $state = Get-AnsiblePrivilege -Name $privilege
+            if ($state -eq $false) {
+                Set-AnsiblePrivilege -Name $privilege -Value $true
+            }
+        }
     }
 }
 
-
-$params = Parse-Args $args;
 
 $result = @{
     changed = $false
 }
 
-$path = Get-Attr $params "path" -failifempty $true
-$user = Get-Attr $params "user" -failifempty $true
-$rights = Get-Attr $params "rights" -failifempty $true
+$path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
+$user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $true
+$rights = Get-AnsibleParam -obj $params -name "rights" -type "str" -failifempty $true
 
-$type = Get-Attr $params "type" -failifempty $true -validateSet "allow","deny" -resultobj $result
-$state = Get-Attr $params "state" "present" -validateSet "present","absent" -resultobj $result
+$type = Get-AnsibleParam -obj $params -name "type" -type "str" -failifempty $true -validateset "allow","deny"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 
-$inherit = Get-Attr $params "inherit" ""
-$propagation = Get-Attr $params "propagation" "None" -validateSet "None","NoPropagateInherit","InheritOnly" -resultobj $result
+$inherit = Get-AnsibleParam -obj $params -name "inherit" -type "str"
+$propagation = Get-AnsibleParam -obj $params -name "propagation" -type "str" -default "None" -validateset "InheritOnly","None","NoPropagateInherit"
 
 If (-Not (Test-Path -Path $path)) {
-    Fail-Json $result "$path file or directory does not exist on the host"
+    Fail-Json -obj $result -message "$path file or directory does not exist on the host"
 }
 
 # Test that the user/group is resolvable on the local machine
 $sid = Get-UserSID -AccountName $user
 if (!$sid) {
-    Fail-Json $result "$user is not a valid user or group on the host machine or domain"
+    Fail-Json -obj $result -message "$user is not a valid user or group on the host machine or domain"
 }
 
 If (Test-Path -Path $path -PathType Leaf) {
     $inherit = "None"
 }
-ElseIf ($inherit -eq "") {
+ElseIf ($null -eq $inherit) {
     $inherit = "ContainerInherit, ObjectInherit"
 }
-
-$ErrorActionPreference = "Stop"
 
 Try {
     SetPrivilegeTokens
@@ -243,7 +173,7 @@ Try {
             $result.changed = $true
         }
         Catch {
-            Fail-Json $result "an exception occurred when adding the specified rule - $($_.Exception.Message)"
+            Fail-Json -obj $result -message "an exception occurred when adding the specified rule - $($_.Exception.Message)"
         }
     }
     ElseIf ($state -eq "absent" -And $match -eq $true) {
@@ -253,22 +183,22 @@ Try {
             $result.changed = $true
         }
         Catch {
-            Fail-Json $result "an exception occurred when removing the specified rule - $($_.Exception.Message)"
+            Fail-Json -obj $result -message "an exception occurred when removing the specified rule - $($_.Exception.Message)"
         }
     }
     Else {
         # A rule was attempting to be added but already exists
         If ($match -eq $true) {
-            Exit-Json $result "the specified rule already exists"
+            Exit-Json -obj $result -message "the specified rule already exists"
         }
         # A rule didn't exist that was trying to be removed
         Else {
-            Exit-Json $result "the specified rule does not exist"
+            Exit-Json -obj $result -message "the specified rule does not exist"
         }
     }
 }
 Catch {
-    Fail-Json $result "an error occurred when attempting to $state $rights permission(s) on $path for $user - $($_.Exception.Message)"
+    Fail-Json -obj $result -message "an error occurred when attempting to $state $rights permission(s) on $path for $user - $($_.Exception.Message)"
 }
 
-Exit-Json $result
+Exit-Json -obj $result

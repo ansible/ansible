@@ -1,0 +1,68 @@
+- block:
+    - name: Ensure that append_hash namespace exists
+      k8s:
+        kind: Namespace
+        name: append-hash
+
+    - name: create k8s_resource variable
+      set_fact:
+        k8s_resource:
+          metadata:
+            name: config-map-test
+            namespace: append-hash
+          apiVersion: v1
+          kind: ConfigMap
+          data:
+            hello: world
+
+    - name: Create config map
+      k8s:
+        definition: "{{ k8s_resource }}"
+        append_hash: yes
+      register: k8s_configmap1
+
+    - name: check configmap is created with a hash
+      assert:
+        that:
+          - k8s_configmap1 is changed
+          - k8s_configmap1.result.metadata.name != 'config-map-test'
+          - k8s_configmap1.result.metadata.name[:-10] == 'config-map-test-'
+
+    - name: recreate same config map
+      k8s:
+        definition: "{{ k8s_resource }}"
+        append_hash: yes
+      register: k8s_configmap2
+
+    - name: check configmaps are different
+      assert:
+        that:
+          - k8s_configmap2 is not changed
+          - k8s_configmap1.result.metadata.name == k8s_configmap2.result.metadata.name
+
+    - name: add key to config map
+      k8s:
+        definition:
+          metadata:
+            name: config-map-test
+            namespace: append-hash
+          apiVersion: v1
+          kind: ConfigMap
+          data:
+            hello: world
+            another: value
+        append_hash: yes
+      register: k8s_configmap3
+
+    - name: check configmaps are different
+      assert:
+        that:
+          - k8s_configmap3 is changed
+          - k8s_configmap1.result.metadata.name != k8s_configmap3.result.metadata.name
+
+  always:
+    - name: ensure that namespace is removed
+      k8s:
+        kind: Namespace
+        name: append-hash
+        state: absent

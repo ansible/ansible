@@ -1,0 +1,23 @@
+---
+instance_id: "{{ resource_prefix }}"
+modified_instance_id: "{{ resource_prefix }}-updated"
+username: test
+password: test12345678
+db_instance_class: db.t2.micro
+storage_encrypted_db_instance_class: db.t2.small
+modified_db_instance_class: db.t2.medium
+allocated_storage: 20
+modified_allocated_storage: 30
+
+# For aurora tests
+cluster_id: "{{ resource_prefix }}-cluster"
+aurora_db_instance_class: db.t2.medium
+
+# For oracle tests
+oracle_ee_db_instance_class: db.r3.xlarge
+processor_features:
+  coreCount: 1
+  threadsPerCore: 1
+modified_processor_features:
+  coreCount: 2
+  threadsPerCore: 2

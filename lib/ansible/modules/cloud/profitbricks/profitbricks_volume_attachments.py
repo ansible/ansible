@@ -44,7 +44,7 @@ options:
       - wait for the operation to complete before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -57,7 +57,7 @@ options:
     choices: ["present", "absent"]
 
 requirements: [ "profitbricks" ]
-author: Matt Baldwin (baldwin@stackpointcloud.com)
+author: Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
 '''
 
 EXAMPLES = '''

@@ -1,0 +1,16 @@
+- name: Test vars_prompt not private
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: not_secret
+      private: no
+
+  tasks:
+    - assert:
+        that:
+          - not_secret == 'this is displayed'
+
+    - debug:
+        var: not_secret

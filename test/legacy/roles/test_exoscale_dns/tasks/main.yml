@@ -54,19 +54,6 @@
     - result is failed
     - 'result.msg == "missing required arguments: domain"'
 
-- name: test fail if missing required params
-  local_action:
-    module: exo_dns_record
-    domain: "{{ exo_dns_domain_name }}"
-    state: absent
-  register: result
-  ignore_errors: true
-- name: verify results of test fail if missing required params
-  assert:
-    that:
-    - result is failed
-    - 'result.msg == "name is  but the following are missing: content"'
-
 - name: test fail if missing required params state=present
   local_action:
     module: exo_dns_record
@@ -78,21 +65,7 @@
   assert:
     that:
     - result is failed
-    - 'result.msg == "state is present but the following are missing: content"'
-
-- name: test fail if missing required params state=absent
-  local_action:
-    module: exo_dns_record
-    domain: "{{ exo_dns_domain_name }}"
-    name: ""
-    state: absent
-  register: result
-  ignore_errors: true
-- name: verify results of test fail if missing required params state=absent
-  assert:
-    that:
-    - result is failed
-    - 'result.msg == "name is  but the following are missing: content"'
+    - 'result.msg == "state is present but all of the following are missing: content"'
 
 - name: test create a record
   local_action:

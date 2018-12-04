@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,7 +23,7 @@ description:
     the description, and things unrelated to the policy rules themselves.
     It is also the first module that should be used when creating rules as
     the C(bigip_policy_rule) module requires a policy parameter.
-version_added: "2.5"
+version_added: 2.5
 options:
   description:
     description:
@@ -47,6 +47,7 @@ options:
       - present
       - absent
       - draft
+    default: present
   strategy:
     description:
       - Specifies the method to determine which actions get executed in the
@@ -72,14 +73,10 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk
-requirements:
-  - f5-sdk
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -87,6 +84,10 @@ EXAMPLES = r'''
   bigip_policy:
     name: Policy-Foo
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add a rule to the new policy - Immediately published
@@ -105,6 +106,11 @@ EXAMPLES = r'''
       - forward: yes
         select: yes
         pool: pool-svrs
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
 
 - name: Add multiple rules to the new policy - Added in the order they are specified
   bigip_policy_rule:
@@ -112,7 +118,12 @@ EXAMPLES = r'''
     name: "{{ item.name }}"
     conditions: "{{ item.conditions }}"
     actions: "{{ item.actions }}"
-  with_items:
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
+  loop:
     - name: rule1
       actions:
         - type: forward
@@ -136,6 +147,11 @@ EXAMPLES = r'''
       - rule1
       - rule2
       - rule3
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
 
 - name: Create policy specify default rules - Left in a draft
   bigip_policy:
@@ -145,6 +161,11 @@ EXAMPLES = r'''
       - rule1
       - rule2
       - rule3
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -168,66 +189,39 @@ rules:
 '''
 import re
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-    from f5.sdk_exception import NonExtantPolicyRule
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
 class Parameters(AnsibleF5Parameters):
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-        self._values['__warning'] = []
-        self._values['__deprecated'] = []
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
     def to_return(self):
         result = {}
         for returnable in self.returnables:
             result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
         result = self._filter_params(result)
         return result
 
@@ -261,9 +255,7 @@ class Parameters(AnsibleF5Parameters):
                 return self._get_custom_strategy_name()
 
     def _get_builtin_strategy(self, strategy):
-        return '/{0}/{1}-match'.format(
-            self.partition, strategy
-        )
+        return '/Common/{0}-match'.format(strategy)
 
     def _get_custom_strategy_name(self):
         strategy = self._values['strategy']
@@ -287,6 +279,41 @@ class Parameters(AnsibleF5Parameters):
 
 class SimpleParameters(Parameters):
     api_attributes = [
+        'strategy',
+    ]
+
+    updatables = [
+        'strategy',
+        'rules',
+    ]
+
+    returnables = [
+        'strategy',
+        'rules',
+    ]
+
+
+class ComplexParameters(Parameters):
+    api_attributes = [
+        'strategy',
+        'description',
+    ]
+
+    updatables = [
+        'strategy',
+        'description',
+        'rules',
+    ]
+
+    returnables = [
+        'strategy',
+        'description',
+        'rules',
+    ]
+
+
+class SimpleChanges(SimpleParameters):
+    api_attributes = [
         'strategy'
     ]
 
@@ -299,7 +326,7 @@ class SimpleParameters(Parameters):
     ]
 
 
-class ComplexParameters(Parameters):
+class ComplexChanges(ComplexParameters):
     api_attributes = [
         'strategy', 'description'
     ]
@@ -314,9 +341,11 @@ class ComplexParameters(Parameters):
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
+        self.want = Parameters(params=self.module.params)
 
     def _announce_deprecations(self):
         warnings = []
@@ -325,7 +354,7 @@ class BaseManager(object):
         if self.have:
             warnings += self.have._values.get('__deprecated', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -337,7 +366,7 @@ class BaseManager(object):
         if self.have:
             warnings += self.have._values.get('__warning', [])
         for warning in warnings:
-            self.client.module.warn(warning['msg'])
+            self.module.warn(warning['msg'])
 
     def present(self):
         if self.exists():
@@ -355,40 +384,168 @@ class BaseManager(object):
         if self.want.strategy is None:
             self.want.update(dict(strategy='first'))
 
-    def _get_rule_names(self, resource):
-        rules = resource.rules_s.get_collection()
-        rules.sort(key=lambda x: x.ordinal)
-        result = [x.name for x in rules]
-        return result
+    def _get_rule_names(self, rules):
+        if 'items' in rules:
+            rules['items'].sort(key=lambda x: x['ordinal'])
+            result = [x['name'] for x in rules['items']]
+            return result
+        else:
+            return []
 
-    def _upsert_policy_rules_on_device(self, policy):
+    def _read_rule_from_device(self, rule_name, draft=False):
+        if draft:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+                rule_name
+            )
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name),
+                self.want.name
+            )
+
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['ordinal']
+
+    def _create_rule_on_device(self, rule_name, idx, draft=False):
+        params = dict(name=rule_name, ordinal=idx)
+        if draft:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+            )
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name),
+            )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403, 409]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def _modify_rule_on_device(self, rule_name, idx, draft=False):
+        params = dict(ordinal=idx)
+        if draft:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+                rule_name
+            )
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name),
+                self.want.name
+            )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == [400, 409]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def _rule_exists_on_device(self, rule_name, draft=False):
+        if draft:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+                rule_name
+            )
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name),
+                self.want.name
+            )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def _remove_rule_on_device(self, rule_name, draft=False):
+        if draft:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+                rule_name
+            )
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name),
+                self.want.name
+            )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
+
+    def _upsert_policy_rules_on_device(self, draft=False):
         rules = self.changes.rules
         if rules is None:
             rules = []
         for idx, rule in enumerate(rules):
-            try:
-                resource = policy.rules_s.rules.load(name=rule)
-                if int(resource.ordinal) != idx:
-                    resource.modify(ordinal=idx)
-            except NonExtantPolicyRule:
-                policy.rules_s.rules.create(name=rule, ordinal=idx)
-        self._remove_rule_difference(rules, policy)
+            if self._rule_exists_on_device(rule, draft):
+                ordinal = self._read_rule_from_device(rule, draft)
+                if int(ordinal) != idx:
+                    self._modify_rule_on_device(rule, idx, draft)
+            else:
+                self._create_rule_on_device(rule, idx, draft)
+        self._remove_rule_difference(rules, draft)
 
-    def _remove_rule_difference(self, rules, policy=None):
+    def _remove_rule_difference(self, rules, draft=False):
         if not rules or not self.have.rules:
             return
         have_rules = set(self.have.rules)
         want_rules = set(rules)
         removable = have_rules.difference(want_rules)
         for remove in removable:
-            resource = policy.rules_s.rules.load(name=remove)
-            resource.delete()
+            self._remove_rule_on_device(remove, draft)
 
 
 class SimpleManager(BaseManager):
-    def __init__(self, client):
-        super(SimpleManager, self).__init__(client)
-        self.want = SimpleParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        super(SimpleManager, self).__init__(**kwargs)
+        self.want = SimpleParameters(params=self.module.params)
         self.have = SimpleParameters()
         self.changes = SimpleChanges()
 
@@ -398,7 +555,7 @@ class SimpleManager(BaseManager):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = SimpleChanges(changed)
+            self.changes = SimpleChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -411,7 +568,7 @@ class SimpleManager(BaseManager):
             else:
                 changed[k] = change
         if changed:
-            self.changes = SimpleChanges(changed)
+            self.changes = SimpleChanges(params=changed)
             return True
         return False
 
@@ -420,17 +577,14 @@ class SimpleManager(BaseManager):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == 'draft':
-                raise F5ModuleError(
-                    "The 'draft' status is not available on BIG-IP versions < 12.1.0"
-                )
-            if state == 'present':
-                changed = self.present()
-            elif state == 'absent':
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == 'draft':
+            raise F5ModuleError(
+                "The 'draft' status is not available on BIG-IP versions < 12.1.0"
+            )
+        if state == 'present':
+            changed = self.present()
+        elif state == 'absent':
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
@@ -439,59 +593,19 @@ class SimpleManager(BaseManager):
         self._announce_warnings()
         return result
 
-    def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        rules = self._get_rule_names(resource)
-        result = SimpleParameters(resource.attrs)
-        result.update(dict(rules=rules))
-        return result
-
-    def exists(self):
-        result = self.client.api.tm.ltm.policys.policy.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
-
-    def update_on_device(self):
-        params = self.changes.api_params()
-
-        resource = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        if params:
-            resource.modify(**params)
-        self._upsert_policy_rules_on_device(resource)
-
     def create(self):
         self._validate_creation_parameters()
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
-        return True
-
-    def create_on_device(self):
-        params = self.want.api_params()
-
-        params = dict(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
-        )
-        resource = self.client.api.tm.ltm.policys.policy.create(**params)
-        self._upsert_policy_rules_on_device(resource)
         return True
 
     def update(self):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -503,25 +617,117 @@ class SimpleManager(BaseManager):
         return changed
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
             raise F5ModuleError("Failed to delete the policy")
         return True
 
-    def remove_from_device(self):
-        resource = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.name,
-            partition=self.want.partition
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.delete()
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        rules = self._get_rule_names(response['rulesReference'])
+        result = SimpleParameters(params=response)
+        result.update(dict(rules=rules))
+        return result
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        if params:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name)
+            )
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+        self._upsert_policy_rules_on_device()
+
+    def create_on_device(self):
+        params = self.want.api_params()
+        payload = dict(
+            name=self.want.name,
+            partition=self.want.partition,
+            **params
+        )
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=payload)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        self._upsert_policy_rules_on_device()
+
+        return True
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ComplexManager(BaseManager):
-    def __init__(self, client):
-        super(ComplexManager, self).__init__(client)
-        self.want = ComplexParameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        super(ComplexManager, self).__init__(**kwargs)
+        self.want = ComplexParameters(params=self.module.params)
         self.have = ComplexParameters()
         self.changes = ComplexChanges()
 
@@ -531,7 +737,7 @@ class ComplexManager(BaseManager):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = ComplexChanges(changed)
+            self.changes = ComplexChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -544,7 +750,7 @@ class ComplexManager(BaseManager):
             else:
                 changed[k] = change
         if changed:
-            self.changes = ComplexChanges(changed)
+            self.changes = ComplexChanges(params=changed)
             return True
         return False
 
@@ -553,13 +759,10 @@ class ComplexManager(BaseManager):
         result = dict()
         state = self.want.state
 
-        try:
-            if state in ["present", "draft"]:
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state in ["present", "draft"]:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
@@ -595,109 +798,18 @@ class ComplexManager(BaseManager):
         return changed
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.draft_exists() or self.policy_exists():
             raise F5ModuleError("Failed to delete the policy")
         return True
 
-    def remove_from_device(self):
-        if self.draft_exists():
-            resource = self.client.api.tm.ltm.policys.policy.load(
-                name=self.want.name,
-                partition=self.want.partition,
-                subPath='Drafts'
-            )
-            resource.delete()
-        if self.policy_exists():
-            resource = self.client.api.tm.ltm.policys.policy.load(
-                name=self.want.name,
-                partition=self.want.partition
-            )
-            resource.delete()
-
-    def read_current_from_device(self):
-        if self.draft_exists():
-            resource = self.client.api.tm.ltm.policys.policy.load(
-                name=self.want.name,
-                partition=self.want.partition,
-                subPath='Drafts'
-            )
-        else:
-            resource = self.client.api.tm.ltm.policys.policy.load(
-                name=self.want.name,
-                partition=self.want.partition
-            )
-
-        rules = self._get_rule_names(resource)
-        result = ComplexParameters(resource.attrs)
-        result.update(dict(rules=rules))
-        return result
-
-    def policy_exists(self):
-        params = dict(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result = self.client.api.tm.ltm.policys.policy.exists(**params)
-        return result
-
-    def draft_exists(self):
-        params = dict(
-            name=self.want.name,
-            partition=self.want.partition,
-            subPath='Drafts'
-        )
-        result = self.client.api.tm.ltm.policys.policy.exists(**params)
-        return result
-
-    def _create_new_policy_draft(self):
-        params = self.want.api_params()
-        params = dict(
-            name=self.want.name,
-            partition=self.want.partition,
-            subPath='Drafts',
-            **params
-        )
-        self.client.api.tm.ltm.policys.policy.create(**params)
-        return True
-
-    def _create_existing_policy_draft(self):
-        params = dict(
-            name=self.want.name,
-            partition=self.want.partition,
-        )
-        resource = self.client.api.tm.ltm.policys.policy.load(**params)
-        resource.draft()
-        return True
-
-    def update_on_device(self):
-        params = self.changes.api_params()
-
-        resource = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.name,
-            partition=self.want.partition,
-            subPath='Drafts'
-        )
-        if params:
-            resource.modify(**params)
-        self._upsert_policy_rules_on_device(resource)
-
-    def publish(self):
-        resource = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.name,
-            partition=self.want.partition,
-            subPath='Drafts'
-        )
-        resource.publish()
-        return True
-
     def create(self):
         self._validate_creation_parameters()
 
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         if not self.draft_exists():
@@ -716,7 +828,7 @@ class ComplexManager(BaseManager):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         if not self.draft_exists():
@@ -730,33 +842,190 @@ class ComplexManager(BaseManager):
         else:
             return self.publish()
 
+    def draft_exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name, sub_path='Drafts')
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
-class SimpleChanges(SimpleParameters):
-    api_attributes = [
-        'strategy'
-    ]
+    def policy_exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
-    updatables = [
-        'strategy', 'rules'
-    ]
+    def _create_existing_policy_draft(self):
+        params = dict(createDraft=True)
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    returnables = [
-        'strategy', 'rules'
-    ]
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
 
+    def _create_new_policy_draft(self):
+        params = self.want.api_params()
+        payload = dict(
+            name=self.want.name,
+            partition=self.want.partition,
+            subPath='Drafts',
+            **params
+        )
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=payload)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-class ComplexChanges(ComplexParameters):
-    api_attributes = [
-        'strategy', 'description'
-    ]
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
 
-    updatables = [
-        'strategy', 'description', 'rules'
-    ]
+    def update_on_device(self):
+        params = self.changes.api_params()
+        if params:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+            )
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
 
-    returnables = [
-        'strategy', 'description', 'rules'
-    ]
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+        self._upsert_policy_rules_on_device(draft=True)
+
+    def read_current_from_device(self):
+        if self.draft_exists():
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+            )
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name)
+            )
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        rules = self._get_rule_names(response['rulesReference'])
+        result = ComplexParameters(params=response)
+        result.update(dict(rules=rules))
+        return result
+
+    def publish(self):
+        params = dict(
+            name=fq_name(self.want.partition,
+                         self.want.name,
+                         sub_path='Drafts'
+                         ),
+            command="publish"
+
+        )
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
+
+    def remove_policy_draft_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name, sub_path='Drafts'),
+        )
+        response = self.client.api.delete(uri)
+
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
+
+    def remove_policy_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        response = self.client.api.delete(uri)
+
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
+
+    def remove_from_device(self):
+        if self.draft_exists():
+            self.remove_policy_draft_from_device()
+        if self.policy_exists():
+            self.remove_policy_from_device()
+        return True
 
 
 class Difference(object):
@@ -787,8 +1056,10 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
         if self.version_is_less_than_12():
@@ -799,12 +1070,12 @@ class ModuleManager(object):
 
     def get_manager(self, type):
         if type == 'simple':
-            return SimpleManager(self.client)
+            return SimpleManager(**self.kwargs)
         elif type == 'complex':
-            return ComplexManager(self.client)
+            return ComplexManager(**self.kwargs)
 
     def version_is_less_than_12(self):
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('12.1.0'):
             return True
         else:
@@ -814,7 +1085,7 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(
                 required=True
             ),
@@ -824,32 +1095,37 @@ class ArgumentSpec(object):
                 choices=['first', 'all', 'best']
             ),
             state=dict(
-                required=False,
                 default='present',
                 choices=['absent', 'present', 'draft']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/single.yaml"
+- debug: msg="START netconf/single.yaml on connection={{ ansible_connection }}"
 
 # Ensure that when we change the hostname to `localhost` we cause a change
 - name: setup
@@ -79,4 +79,4 @@
     provider: "{{ netconf }}"
 
 
-- debug: msg="END netconf/single.yaml"
+- debug: msg="END netconf/single.yaml on connection={{ ansible_connection }}"

@@ -18,7 +18,7 @@ module: digital_ocean_certificate
 short_description: Manage certificates in DigitalOcean.
 description:
     - Create, Retrieve and remove certificates DigitalOcean.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.5"
 options:
   name:
@@ -39,11 +39,7 @@ options:
      - Whether the certificate should be present or absent.
     default: present
     choices: ['present', 'absent']
-  oauth_token:
-    description:
-     - DigitalOcean OAuth token.
-    required: true
-
+extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY, DO_OAUTH_TOKEN and DO_API_TOKEN.
     They both refer to the v2 token.
@@ -100,11 +96,6 @@ def core(module):
 
     results = dict(changed=False)
 
-    # Check if oauth_token is valid or not
-    response = rest.get('account')
-    if response.status_code == 401:
-        module.fail_json(msg='Failed to login using oauth_token, please verify validity of oauth_token')
-
     response = rest.get('certificates')
     status_code = response.status_code
     resp_json = response.json
@@ -117,7 +108,7 @@ def core(module):
             if cert['name'] == name:
                 module.fail_json(msg="Certificate name %s already exists" % name)
 
-        # Certificate does not exists, let us create it
+        # Certificate does not exist, let us create it
         cert_data = dict(name=name,
                          private_key=module.params['private_key'],
                          leaf_certificate=module.params['leaf_certificate'])
@@ -156,15 +147,17 @@ def core(module):
 
 
 def main():
+    argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
+    argument_spec.update(
+        name=dict(type='str'),
+        leaf_certificate=dict(type='str'),
+        private_key=dict(type='str', no_log=True),
+        state=dict(choices=['present', 'absent'], default='present'),
+        certificate_chain=dict(type='str')
+    )
+
     module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(type='str'),
-            leaf_certificate=dict(type='str'),
-            private_key=dict(type='str', no_log=True),
-            state=dict(choices=['present', 'absent'], default='present'),
-            certificate_chain=dict(type='str'),
-            oauth_token=dict(aliases=['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN'], no_log=True),
-        ),
+        argument_spec=argument_spec,
         required_if=[('state', 'present', ['name', 'leaf_certificate', 'private_key']),
                      ('state', 'absent', ['name'])
                      ],
@@ -174,6 +167,7 @@ def main():
         core(module)
     except Exception as e:
         module.fail_json(msg=to_native(e))
+
 
 if __name__ == '__main__':
     main()

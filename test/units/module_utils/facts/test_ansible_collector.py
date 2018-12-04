@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 # for testing
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock, patch
+from units.compat import unittest
+from units.compat.mock import Mock, patch
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts import ansible_collector
@@ -75,13 +75,16 @@ ALL_COLLECTOR_CLASSES = \
      FacterFactCollector]
 
 
-def mock_module(gather_subset=None):
+def mock_module(gather_subset=None,
+                filter=None):
     if gather_subset is None:
         gather_subset = ['all', '!facter', '!ohai']
+    if filter is None:
+        filter = '*'
     mock_module = Mock()
     mock_module.params = {'gather_subset': gather_subset,
                           'gather_timeout': 5,
-                          'filter': '*'}
+                          'filter': filter}
     mock_module.get_bin_path = Mock(return_value=None)
     return mock_module
 
@@ -199,6 +202,8 @@ class TestCollectedFacts(unittest.TestCase):
                       'env']
     not_expected_facts = ['facter', 'ohai']
 
+    collected_facts = {}
+
     def _mock_module(self, gather_subset=None):
         return mock_module(gather_subset=self.gather_subset)
 
@@ -209,7 +214,8 @@ class TestCollectedFacts(unittest.TestCase):
         fact_collector = \
             ansible_collector.AnsibleFactCollector(collectors=collectors,
                                                    namespace=ns)
-        self.facts = fact_collector.collect(module=mock_module)
+        self.facts = fact_collector.collect(module=mock_module,
+                                            collected_facts=self.collected_facts)
 
     def _collectors(self, module,
                     all_collector_classes=None,
@@ -256,6 +262,153 @@ class TestCollectedFacts(unittest.TestCase):
         facts_keys = sorted(facts.keys())
         for not_expected_fact in self.not_expected_facts:
             self.assertNotIn(not_expected_fact, facts_keys)
+
+
+class ProvidesOtherFactCollector(collector.BaseFactCollector):
+    name = 'provides_something'
+    _fact_ids = set(['needed_fact'])
+
+    def collect(self, module=None, collected_facts=None):
+        return {'needed_fact': 'THE_NEEDED_FACT_VALUE'}
+
+
+class RequiresOtherFactCollector(collector.BaseFactCollector):
+    name = 'requires_something'
+
+    def collect(self, module=None, collected_facts=None):
+        collected_facts = collected_facts or {}
+        fact_dict = {}
+        fact_dict['needed_fact'] = collected_facts['needed_fact']
+        fact_dict['compound_fact'] = "compound-%s" % collected_facts['needed_fact']
+        return fact_dict
+
+
+class ConCatFactCollector(collector.BaseFactCollector):
+    name = 'concat_collected'
+
+    def collect(self, module=None, collected_facts=None):
+        collected_facts = collected_facts or {}
+        fact_dict = {}
+        con_cat_list = []
+        for key, value in collected_facts.items():
+            con_cat_list.append(value)
+
+        fact_dict['concat_fact'] = '-'.join(con_cat_list)
+        return fact_dict
+
+
+class TestCollectorDepsWithFilter(unittest.TestCase):
+    gather_subset = ['all', '!facter', '!ohai']
+
+    def _mock_module(self, gather_subset=None, filter=None):
+        return mock_module(gather_subset=self.gather_subset,
+                           filter=filter)
+
+    def setUp(self):
+        self.mock_module = self._mock_module()
+        self.collectors = self._collectors(mock_module)
+
+    def _collectors(self, module,
+                    all_collector_classes=None,
+                    minimal_gather_subset=None):
+        return [ProvidesOtherFactCollector(),
+                RequiresOtherFactCollector()]
+
+    def test_no_filter(self):
+        _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'])
+
+        facts_dict = self._collect(_mock_module)
+
+        expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE',
+                    'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
+
+        self.assertEquals(expected, facts_dict)
+
+    def test_with_filter_on_compound_fact(self):
+        _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
+                                   filter='compound_fact')
+
+        facts_dict = self._collect(_mock_module)
+
+        expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
+
+        self.assertEquals(expected, facts_dict)
+
+    def test_with_filter_on_needed_fact(self):
+        _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
+                                   filter='needed_fact')
+
+        facts_dict = self._collect(_mock_module)
+
+        expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE'}
+
+        self.assertEquals(expected, facts_dict)
+
+    def test_with_filter_on_compound_gather_compound(self):
+        _mock_module = mock_module(gather_subset=['!all', '!any', 'compound_fact'],
+                                   filter='compound_fact')
+
+        facts_dict = self._collect(_mock_module)
+
+        expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
+
+        self.assertEquals(expected, facts_dict)
+
+    def test_with_filter_no_match(self):
+        _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
+                                   filter='ansible_this_doesnt_exist')
+
+        facts_dict = self._collect(_mock_module)
+
+        expected = {}
+        self.assertEquals(expected, facts_dict)
+
+    def test_concat_collector(self):
+        _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'])
+
+        _collectors = self._collectors(_mock_module)
+        _collectors.append(ConCatFactCollector())
+
+        fact_collector = \
+            ansible_collector.AnsibleFactCollector(collectors=_collectors,
+                                                   namespace=ns,
+                                                   filter_spec=_mock_module.params['filter'])
+
+        collected_facts = {}
+        facts_dict = fact_collector.collect(module=_mock_module,
+                                            collected_facts=collected_facts)
+        self.assertIn('concat_fact', facts_dict)
+        self.assertTrue('THE_NEEDED_FACT_VALUE' in facts_dict['concat_fact'])
+
+    def test_concat_collector_with_filter_on_concat(self):
+        _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
+                                   filter='concat_fact')
+
+        _collectors = self._collectors(_mock_module)
+        _collectors.append(ConCatFactCollector())
+
+        fact_collector = \
+            ansible_collector.AnsibleFactCollector(collectors=_collectors,
+                                                   namespace=ns,
+                                                   filter_spec=_mock_module.params['filter'])
+
+        collected_facts = {}
+        facts_dict = fact_collector.collect(module=_mock_module,
+                                            collected_facts=collected_facts)
+        self.assertIn('concat_fact', facts_dict)
+        self.assertTrue('THE_NEEDED_FACT_VALUE' in facts_dict['concat_fact'])
+        self.assertTrue('compound' in facts_dict['concat_fact'])
+
+    def _collect(self, _mock_module, collected_facts=None):
+        _collectors = self._collectors(_mock_module)
+
+        fact_collector = \
+            ansible_collector.AnsibleFactCollector(collectors=_collectors,
+                                                   namespace=ns,
+                                                   filter_spec=_mock_module.params['filter'])
+        facts_dict = fact_collector.collect(module=_mock_module,
+                                            collected_facts=collected_facts)
+        return facts_dict
 
 
 class ExceptionThrowingCollector(collector.BaseFactCollector):
@@ -316,10 +469,15 @@ class TestOhaiCollectedFacts(TestCollectedFacts):
 class TestPkgMgrFacts(TestCollectedFacts):
     gather_subset = ['pkg_mgr']
     min_fact_count = 1
-    max_fact_count = 10
+    max_fact_count = 20
     expected_facts = ['gather_subset',
                       'module_setup',
                       'pkg_mgr']
+    collected_facts = {
+        "ansible_distribution": "Fedora",
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat"
+    }
 
 
 class TestOpenBSDPkgMgrFacts(TestPkgMgrFacts):

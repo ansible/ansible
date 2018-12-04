@@ -39,7 +39,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Obezimnaka Boms @ozboms"
+    - "Obezimnaka Boms (@ozboms)"
 
 '''
 
@@ -176,6 +176,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
 
 def main():
     AzureRMDNSZoneFacts()
+
 
 if __name__ == '__main__':
     main()

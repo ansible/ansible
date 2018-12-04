@@ -1,28 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Ansible, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2016, Ansible, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -39,18 +23,21 @@ description:
 options:
   free_form:
     description:
-      - the C(win_command) module takes a free form command to run.  There is no parameter actually named 'free form'.
-        See the examples!
-    required: true
+      - The C(win_command) module takes a free form command to run.
+      - There is no parameter actually named 'free form'. See the examples!
+    required: yes
   creates:
     description:
-      - a path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+      - A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+    type: path
   removes:
     description:
-      - a path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
+      - A path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
+    type: path
   chdir:
     description:
-      - set the specified path as the current working directory before executing a command.
+      - Set the specified path as the current working directory before executing a command.
+    type: path
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.
@@ -64,7 +51,7 @@ notes:
       exist, use this.
     - For non-Windows targets, use the M(command) module instead.
 author:
-    - Matt Davis
+    - Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = r'''

@@ -68,14 +68,17 @@ options:
     description:
       - Attach a public network interface to the server.
     default: True
+    type: bool
   use_private_network:
     description:
       - Attach a private network interface to the server.
     default: False
+    type: bool
   use_ipv6:
     description:
       - Enable IPv6 on the public network interface.
     default: True
+    type: bool
   anti_affinity_with:
     description:
       - UUID of another server to create an anti-affinity group with.
@@ -95,6 +98,7 @@ options:
 
 EXAMPLES = '''
 # Start a server (if it does not exist) and register the server details
+
 - name: Start cloudscale.ch server
   cloudscale_server:
     name: my-shiny-cloudscale-server
@@ -205,6 +209,7 @@ anti_affinity_with:
 import os
 from datetime import datetime, timedelta
 from time import sleep
+from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudscale import AnsibleCloudscaleBase, cloudscale_argument_spec
@@ -296,8 +301,11 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             self._module.fail_json(msg='Missing required parameter(s) to create a new server: %s.' %
                                    ' '.join(missing_parameters))
 
+        # Deepcopy: Duplicate the data object for iteration, because
+        # iterating an object and changing it at the same time is insecure
+
         # Sanitize data dictionary
-        for k, v in data.items():
+        for k, v in deepcopy(data).items():
 
             # Remove items not relevant to the create server call
             if k in ('api_token', 'api_timeout', 'uuid', 'state'):
@@ -358,7 +366,7 @@ def main():
     # The server could be in a changeing or error state.
     # Wait for one of the allowed states before doing anything.
     # If an allowed state can't be reached, this module fails.
-    if not server.info['state'] in ALLOWED_STATES:
+    if server.info['state'] not in ALLOWED_STATES:
         server.wait_for_state(ALLOWED_STATES)
     current_state = server.info['state']
 

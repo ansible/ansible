@@ -1,0 +1,37 @@
+---
+- debug: msg="START cli/misc_tests.yaml on connection={{ ansible_connection }}"
+
+
+# test become and unbecome
+- block:
+    - name: command that does require become (should fail)
+      eos_command:
+        commands: show running-config
+        provider: "{{ cli }}"
+      become: no
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - 'result.failed == true'
+          - '"privileged mode required" in result.msg'
+
+    - name: command that doesn't require become
+      eos_command:
+        commands: show uptime
+        provider: "{{ cli }}"
+      become: no
+
+    # Test that transport values are properly ignored
+    - name: wrong transport specified
+      eos_command:
+          commands: show version
+          transport: eapi
+
+    - name: wrong transport specified in provider
+      eos_command:
+          commands: show version
+          provider: "{{ eapi }}"
+
+  when: "ansible_connection != 'local'"

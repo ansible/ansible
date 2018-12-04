@@ -24,8 +24,11 @@ class ModuleDocFragment(object):
 options:
   provider:
     description:
+      - B(Deprecated)
+      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli) or C(connection: netconf)."
+      - For more information please see the L(Junos OS Platform Options guide, ../network/user_guide/platform_junos.html).
+      - HORIZONTALLINE
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -52,7 +55,6 @@ options:
             the remote device.   This value is used to authenticate
             the SSH session. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-        default: null
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
@@ -67,5 +69,7 @@ options:
             the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
             will be used instead.
 notes:
+  - For information on using CLI and netconf see the :ref:`Junos OS Platform Options guide <junos_platform_options>`
+  - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
   - For more information on using Ansible to manage Juniper network devices see U(https://www.ansible.com/ansible-juniper).
 """

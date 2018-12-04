@@ -36,7 +36,7 @@ class CallbackModule(CallbackBase):
         self.play = None
 
     def v2_on_any(self, *args, **kwargs):
-        self._display.display("--- play: {} task: {} ---".format(getattr(self.play, 'name', None), self.task))
+        self._display.display("--- play: {0} task: {1} ---".format(getattr(self.play, 'name', None), self.task))
 
         self._display.display("     --- ARGS ")
         for i, a in enumerate(args):

@@ -11,31 +11,40 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_device_connectivity import Parameters
-    from library.bigip_device_connectivity import ModuleManager
-    from library.bigip_device_connectivity import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+    from library.modules.bigip_device_connectivity import ApiParameters
+    from library.modules.bigip_device_connectivity import ModuleParameters
+    from library.modules.bigip_device_connectivity import ModuleManager
+    from library.modules.bigip_device_connectivity import ArgumentSpec
+
+    from library.module_utils.network.f5.common import F5ModuleError
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_device_connectivity import Parameters
-        from ansible.modules.network.f5.bigip_device_connectivity import ModuleManager
-        from ansible.modules.network.f5.bigip_device_connectivity import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_device_connectivity import ApiParameters
+    from ansible.modules.network.f5.bigip_device_connectivity import ModuleParameters
+    from ansible.modules.network.f5.bigip_device_connectivity import ModuleManager
+    from ansible.modules.network.f5.bigip_device_connectivity import ArgumentSpec
+
+    from ansible.module_utils.network.f5.common import F5ModuleError
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -80,7 +89,7 @@ class TestParameters(unittest.TestCase):
             user='admin',
             password='password'
         )
-        p = Parameters(args)
+        p = ModuleParameters(params=args)
         assert p.multicast_port == 1010
         assert p.multicast_address == '10.10.10.10'
         assert p.multicast_interface == 'eth0'
@@ -100,7 +109,7 @@ class TestParameters(unittest.TestCase):
 
     def test_api_parameters(self):
         params = load_fixture('load_tm_cm_device.json')
-        p = Parameters(params)
+        p = ApiParameters(params=params)
         assert p.multicast_port == 62960
         assert p.multicast_address == '224.0.0.245'
         assert p.multicast_interface == 'eth0'
@@ -118,8 +127,6 @@ class TestParameters(unittest.TestCase):
         assert p.unicast_failover[0]['effectivePort'] == 1026
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -141,14 +148,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device_default.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device_default.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
@@ -159,7 +165,7 @@ class TestManager(unittest.TestCase):
         assert results['changed'] is True
         assert results['config_sync_ip'] == '10.1.30.1'
         assert results['mirror_primary_address'] == '10.1.30.1'
-        assert len(results.keys()) == 3
+        assert len(results.keys()) == 4
 
     def test_set_primary_mirror_address_none(self, *args):
         set_module_args(dict(
@@ -171,14 +177,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
@@ -200,14 +205,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
@@ -229,14 +233,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
@@ -258,14 +261,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
@@ -286,14 +288,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
@@ -315,14 +316,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)
@@ -344,14 +344,13 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(load_fixture('load_tm_cm_device.json'))
+        current = ApiParameters(params=load_fixture('load_tm_cm_device.json'))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
 
         # Override methods to force specific logic in the module to happen
         mm.update_on_device = Mock(return_value=True)

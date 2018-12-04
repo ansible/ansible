@@ -32,21 +32,19 @@ from distutils.version import LooseVersion
 from shutil import rmtree
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.galaxy.api import GalaxyAPI
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
-    META_MAIN = os.path.join('meta', 'main.yml')
+    META_MAIN = (os.path.join('meta', 'main.yml'), os.path.join('meta', 'main.yaml'))
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
@@ -71,17 +69,11 @@ class GalaxyRole(object):
                 path = os.path.join(path, self.name)
             self.path = path
         else:
-            for role_path_dir in galaxy.roles_paths:
-                role_path = os.path.join(role_path_dir, self.name)
-                if os.path.exists(role_path):
-                    self.path = role_path
-                    break
-            else:
-                # use the first path by default
-                self.path = os.path.join(galaxy.roles_paths[0], self.name)
-                # create list of possible paths
-                self.paths = [x for x in galaxy.roles_paths]
-                self.paths = [os.path.join(x, self.name) for x in self.paths]
+            # use the first path by default
+            self.path = os.path.join(galaxy.roles_paths[0], self.name)
+            # create list of possible paths
+            self.paths = [x for x in galaxy.roles_paths]
+            self.paths = [os.path.join(x, self.name) for x in self.paths]
 
     def __repr__(self):
         """
@@ -102,16 +94,17 @@ class GalaxyRole(object):
         Returns role metadata
         """
         if self._metadata is None:
-            meta_path = os.path.join(self.path, self.META_MAIN)
-            if os.path.isfile(meta_path):
-                try:
-                    f = open(meta_path, 'r')
-                    self._metadata = yaml.safe_load(f)
-                except:
-                    display.vvvvv("Unable to load metadata for %s" % self.name)
-                    return False
-                finally:
-                    f.close()
+            for meta_main in self.META_MAIN:
+                meta_path = os.path.join(self.path, meta_main)
+                if os.path.isfile(meta_path):
+                    try:
+                        f = open(meta_path, 'r')
+                        self._metadata = yaml.safe_load(f)
+                    except:
+                        display.vvvvv("Unable to load metadata for %s" % self.name)
+                        return False
+                    finally:
+                        f.close()
 
         return self._metadata
 
@@ -173,7 +166,7 @@ class GalaxyRole(object):
 
     def fetch(self, role_data):
         """
-        Downloads the archived role from github to a temp location
+        Downloads the archived role to a temp location based on role data
         """
         if role_data:
 
@@ -195,22 +188,17 @@ class GalaxyRole(object):
                 temp_file.close()
                 return temp_file.name
             except Exception as e:
-                display.error("failed to download the file: %s" % str(e))
+                display.error(u"failed to download the file: %s" % to_text(e))
 
         return False
 
     def install(self):
-        # the file is a tar, so open it that way and extract it
-        # to the specified (or default) roles directory
-        local_file = False
 
         if self.scm:
             # create tar file from scm url
-            tmp_file = RoleRequirement.scm_archive_role(**self.spec)
+            tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=self.options.keep_scm_meta, **self.spec)
         elif self.src:
             if os.path.isfile(self.src):
-                # installing a local tar.gz
-                local_file = True
                 tmp_file = self.src
             elif '://' in self.src:
                 role_data = self.src
@@ -234,7 +222,14 @@ class GalaxyRole(object):
                     # of the master branch
                     if len(role_versions) > 0:
                         loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
-                        loose_versions.sort()
+                        try:
+                            loose_versions.sort()
+                        except TypeError:
+                            raise AnsibleError(
+                                'Unable to compare role versions (%s) to determine the most recent version due to incompatible version formats. '
+                                'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
+                                'install.' % ', '.join([v.vstring for v in loose_versions])
+                            )
                         self.version = str(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
@@ -245,6 +240,11 @@ class GalaxyRole(object):
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
                                                                                                                                          self.name,
                                                                                                                                          role_versions))
+
+                # check if there's a source link for our role_version
+                for role_version in role_versions:
+                    if role_version['name'] == self.version and 'source' in role_version:
+                        self.src = role_version['source']
 
                 tmp_file = self.fetch(role_data)
 
@@ -267,18 +267,19 @@ class GalaxyRole(object):
                 members = role_tar_file.getmembers()
                 # next find the metadata file
                 for member in members:
-                    if self.META_MAIN in member.name:
-                        # Look for parent of meta/main.yml
-                        # Due to possibility of sub roles each containing meta/main.yml
-                        # look for shortest length parent
-                        meta_parent_dir = os.path.dirname(os.path.dirname(member.name))
-                        if not meta_file:
-                            archive_parent_dir = meta_parent_dir
-                            meta_file = member
-                        else:
-                            if len(meta_parent_dir) < len(archive_parent_dir):
+                    for meta_main in self.META_MAIN:
+                        if meta_main in member.name:
+                            # Look for parent of meta/main.yml
+                            # Due to possibility of sub roles each containing meta/main.yml
+                            # look for shortest length parent
+                            meta_parent_dir = os.path.dirname(os.path.dirname(member.name))
+                            if not meta_file:
                                 archive_parent_dir = meta_parent_dir
                                 meta_file = member
+                            else:
+                                if len(meta_parent_dir) < len(archive_parent_dir):
+                                    archive_parent_dir = meta_parent_dir
+                                    meta_file = member
                 if not meta_file:
                     raise AnsibleError("this role does not appear to have a meta/main.yml file.")
                 else:
@@ -332,15 +333,15 @@ class GalaxyRole(object):
                                 self.path = self.paths[current + 1]
                                 error = False
                         if error:
-                            raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
+                            raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % str(self))
-                if not local_file:
+                if not (self.src and os.path.isfile(self.src)):
                     try:
                         os.unlink(tmp_file)
                     except (OSError, IOError) as e:
-                        display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
+                        display.warning(u"Unable to remove tmp file (%s): %s" % (tmp_file, to_text(e)))
                 return True
 
         return False

@@ -1,13 +1,15 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.CamelConversion
 
 $ErrorActionPreference = "Stop"
+
+$params = Parse-Args $args -supports_check_mode $true
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $session_util = @'
 using System;
@@ -40,7 +42,6 @@ namespace Ansible
 
         // TOKEN_GROUPS
         public ArrayList Groups { get; internal set; }
-        public Sid LogonSid { get; internal set; }
         public ArrayList Rights { get; internal set; }
 
         // TOKEN_MANDATORY_LABEL
@@ -570,7 +571,6 @@ namespace Ansible
             }
 
             // Get Current Process LogonSID, User Rights and Groups
-            Sid logonSid = null;
             ArrayList userRights = new ArrayList();
             ArrayList userGroups = new ArrayList();
             TOKEN_GROUPS groups;
@@ -598,9 +598,7 @@ namespace Ansible
                         }
                     }
                     // Do not include the Logon SID in the groups category
-                    if (attributes.HasFlag(TokenGroupAttributes.SE_GROUP_LOGON_ID))
-                        logonSid = new Sid(sidAndAttribute.Sid);
-                    else
+                    if (!attributes.HasFlag(TokenGroupAttributes.SE_GROUP_LOGON_ID))
                     {
                         Hashtable groupInfo = new Hashtable();
                         Sid group = new Sid(sidAndAttribute.Sid);
@@ -645,7 +643,6 @@ namespace Ansible
             Marshal.FreeHGlobal(tokenStatsPtr);
 
             SessionInfo sessionInfo = GetSessionDataForLogonSession(tokenStats.AuthenticationId);
-            sessionInfo.LogonSid = logonSid;
             sessionInfo.Groups = userGroups;
             sessionInfo.Label = integritySid;
             sessionInfo.ImpersonationLevel = tokenStats.ImpersonationLevel;
@@ -785,7 +782,11 @@ namespace Ansible
 }
 '@
 
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
 Add-Type -TypeDefinition $session_util
+$env:TMP = $original_tmp
+
 $session_info = [Ansible.SessionUtil]::GetSessionInfo()
 
 Function Convert-Value($value) {

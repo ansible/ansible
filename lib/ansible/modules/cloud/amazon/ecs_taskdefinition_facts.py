@@ -15,13 +15,14 @@ DOCUMENTATION = '''
 module: ecs_taskdefinition_facts
 short_description: describe a task definition in ecs
 notes:
-    - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/ecs.html#ECS.Client.describe_task_definition)
+    - for details of the parameters and returns see
+      U(http://boto3.readthedocs.io/en/latest/reference/services/ecs.html#ECS.Client.describe_task_definition)
 description:
     - Describes a task definition in ecs.
 version_added: "2.5"
 author:
-    - Gustavo Maia(@gurumaia)
-    - Mark Chance(@Java1Guy)
+    - Gustavo Maia (@gurumaia)
+    - Mark Chance (@Java1Guy)
     - Darek Kaczynski (@kaczynskid)
 requirements: [ json, botocore, boto3 ]
 options:
@@ -123,7 +124,8 @@ container_definitions:
                     returned: when present
                     type: string
                 readOnly:
-                    description: If this value is true , the container has read-only access to the volume. If this value is false , then the container can write to the volume.
+                    description: If this value is true , the container has read-only access to the volume.
+                      If this value is false , then the container can write to the volume.
                     returned: when present
                     type: bool
         volumesFrom:
@@ -136,7 +138,8 @@ container_definitions:
                     returned: when present
                     type: string
                 readOnly:
-                    description: If this value is true , the container has read-only access to the volume. If this value is false , then the container can write to the volume.
+                    description: If this value is true , the container has read-only access to the volume.
+                      If this value is false , then the container can write to the volume.
                     returned: when present
                     type: bool
         hostname:
@@ -156,7 +159,8 @@ container_definitions:
             returned: when present
             type: bool
         privileged:
-            description: When this parameter is true, the container is given elevated privileges on the host container instance (similar to the root user).
+            description: When this parameter is true, the container is given elevated
+              privileges on the host container instance (similar to the root user).
             returned: when present
             type: bool
         readonlyRootFilesystem:
@@ -248,7 +252,8 @@ volumes:
             returned: when present
             type: string
         host:
-            description: The contents of the host parameter determine whether your data volume persists on the host container instance and where it is stored.
+            description: The contents of the host parameter determine whether your data volume
+              persists on the host container instance and where it is stored.
             returned: when present
             type: bool
         source_path:
@@ -293,21 +298,15 @@ placement_constraints:
             description: A cluster query language expression to apply to the constraint.
             returned: when present
             type: string
-'''  # NOQA
+'''
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # will be detected by imported AnsibleAWSModule
 
 
 def main():
@@ -316,22 +315,18 @@ def main():
         task_definition=dict(required=True, type='str')
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     ecs = boto3_conn(module, conn_type='client', resource='ecs',
                      region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
-    ecs_td = ecs.describe_task_definition(taskDefinition=module.params['task_definition'])['taskDefinition']
-    ecs_td_snake = {}
-    for k, v in ecs_td.items():
-        ecs_td_snake[_camel_to_snake(k)] = v
+    try:
+        ecs_td = ecs.describe_task_definition(taskDefinition=module.params['task_definition'])['taskDefinition']
+    except botocore.exceptions.ClientError:
+        ecs_td = {}
 
-    ecs_td_facts_result = dict(changed=False, ansible_facts=ecs_td_snake)
-    module.exit_json(**ecs_td_facts_result)
+    module.exit_json(changed=False, **camel_dict_to_snake_dict(ecs_td))
 
 
 if __name__ == '__main__':

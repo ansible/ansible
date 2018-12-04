@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -21,7 +21,7 @@ description:
     has synchronization and failover connectivity information (IP addresses) that
     you define as part of HA pairing or clustering. This module allows you to configure
     that information.
-version_added: "2.5"
+version_added: 2.5
 options:
   config_sync_ip:
     description:
@@ -50,9 +50,7 @@ options:
         C(multicast_interface), C(multicast_address) and C(multicast_port) are
         the defaults specified in each option's description. When C(no), ensures
         that Failover Multicast configuration is disabled.
-    choices:
-      - yes
-      - no
+    type: bool
   multicast_interface:
     description:
       - Interface over which the system sends multicast messages associated
@@ -69,17 +67,24 @@ options:
         failover. When C(failover_multicast) is C(yes) and this option is not
         provided, a default of C(62960) will be used. This value must be between
         0 and 65535.
+  cluster_mirroring:
+    description:
+      - Specifies whether mirroring occurs within the same cluster or between
+        different clusters on a multi-bladed system.
+      - This parameter is only supported on platforms that have multiple blades,
+        such as Viprion hardware. It is not supported on VE.
+    choices:
+      - between-clusters
+      - within-cluster
+    version_added: 2.7
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - This module is primarily used as a component of configuring HA pairs of
     BIG-IP devices.
   - Requires BIG-IP >= 12.0.0
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -90,9 +95,10 @@ EXAMPLES = r'''
     unicast_failover:
       - address: management-ip
       - address: 10.1.30.1
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -140,49 +146,79 @@ multicast_port:
   returned: changed
   type: string
   sample: 1026
+cluster_mirroring:
+  description: The current cluster-mirroring setting.
+  returned: changed
+  type: string
+  sample: between-clusters
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 try:
-    from netaddr import IPAddress, AddrFormatError
-    HAS_NETADDR = True
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
-    HAS_NETADDR = False
-
-try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
+        'unicastAddress': 'unicast_failover',
         'configsyncIp': 'config_sync_ip',
         'multicastInterface': 'multicast_interface',
         'multicastIp': 'multicast_address',
         'multicastPort': 'multicast_port',
         'mirrorIp': 'mirror_primary_address',
         'mirrorSecondaryIp': 'mirror_secondary_address',
-        'managementIp': 'management_ip'
+        'managementIp': 'management_ip',
     }
     api_attributes = [
-        'configsyncIp', 'multicastInterface', 'multicastIp', 'multicastPort',
-        'mirrorIp', 'mirrorSecondaryIp', 'unicastAddress'
+        'configsyncIp',
+        'multicastInterface',
+        'multicastIp',
+        'multicastPort',
+        'mirrorIp',
+        'mirrorSecondaryIp',
+        'unicastAddress',
     ]
     returnables = [
-        'config_sync_ip', 'multicast_interface', 'multicast_address',
-        'multicast_port', 'mirror_primary_address', 'mirror_secondary_address',
-        'failover_multicast', 'unicast_failover'
+        'config_sync_ip',
+        'multicast_interface',
+        'multicast_address',
+        'multicast_port',
+        'mirror_primary_address',
+        'mirror_secondary_address',
+        'failover_multicast',
+        'unicast_failover',
+        'cluster_mirroring',
     ]
     updatables = [
-        'config_sync_ip', 'multicast_interface', 'multicast_address',
-        'multicast_port', 'mirror_primary_address', 'mirror_secondary_address',
-        'failover_multicast', 'unicast_failover'
+        'config_sync_ip',
+        'multicast_interface',
+        'multicast_address',
+        'multicast_port',
+        'mirror_primary_address',
+        'mirror_secondary_address',
+        'failover_multicast',
+        'unicast_failover',
+        'cluster_mirroring',
     ]
 
     @property
@@ -234,19 +270,47 @@ class Parameters(AnsibleF5Parameters):
         result = self._get_validated_ip_address('config_sync_ip')
         return result
 
+    def _validate_unicast_failover_port(self, port):
+        try:
+            result = int(port)
+        except ValueError:
+            raise F5ModuleError(
+                "The provided 'port' for unicast failover is not a valid number"
+            )
+        except TypeError:
+            result = 1026
+        return result
+
+    def _validate_unicast_failover_address(self, address):
+        if address != 'management-ip':
+            if is_valid_ip(address):
+                return address
+            else:
+                raise F5ModuleError(
+                    "'address' field in unicast failover is not a valid IP address"
+                )
+        else:
+            return address
+
+    def _get_validated_ip_address(self, address):
+        if is_valid_ip(self._values[address]):
+            return self._values[address]
+        raise F5ModuleError(
+            "The specified '{0}' is not a valid IP address".format(address)
+        )
+
+
+class ApiParameters(Parameters):
     @property
-    def unicastAddress(self):
-        return self.unicast_failover
+    def cluster_mirroring(self):
+        if self._values['cluster_mirroring'] is None:
+            return None
+        if self._values['cluster_mirroring'] == 'between':
+            return 'between-clusters'
+        return 'within-cluster'
 
-    @unicastAddress.setter
-    def unicastAddress(self, value):
-        result = []
-        for item in value:
-            item['address'] = item.pop('ip')
-            result.append(item)
-        if result:
-            self._values['unicast_failover'] = result
 
+class ModuleParameters(Parameters):
     @property
     def unicast_failover(self):
         if self._values['unicast_failover'] is None:
@@ -272,64 +336,20 @@ class Parameters(AnsibleF5Parameters):
         else:
             return None
 
-    def _validate_unicast_failover_port(self, port):
-        try:
-            result = int(port)
-        except ValueError:
-            raise F5ModuleError(
-                "The provided 'port' for unicast failover is not a valid number"
-            )
-        except TypeError:
-            result = 1026
-        return result
-
-    def _validate_unicast_failover_address(self, address):
-        try:
-            if address != 'management-ip':
-                result = IPAddress(address)
-                return str(result)
-            else:
-                return address
-        except KeyError:
-            raise F5ModuleError(
-                "An 'address' must be supplied when configuring unicast failover"
-            )
-        except AddrFormatError:
-            raise F5ModuleError(
-                "'address' field in unicast failover is not a valid IP address"
-            )
-
-    def _get_validated_ip_address(self, address):
-        try:
-            IPAddress(self._values[address])
-            return self._values[address]
-        except AddrFormatError:
-            raise F5ModuleError(
-                "The specified '{0}' is not a valid IP address".format(
-                    address
-                )
-            )
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
 
 class Changes(Parameters):
     def to_return(self):
         result = {}
         try:
             for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
         except Exception:
             pass
-        result = self._filter_params(result)
         return result
 
 
@@ -388,6 +408,14 @@ class UsableChanges(Changes):
         elif self._values['unicast_failover']:
             return self._values['unicast_failover']
         return "none"
+
+    @property
+    def cluster_mirroring(self):
+        if self._values['cluster_mirroring'] is None:
+            return None
+        elif self._values['cluster_mirroring'] == 'between-clusters':
+            return 'between'
+        return 'within'
 
 
 class Difference(object):
@@ -459,9 +487,11 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
         self.changes = UsableChanges()
 
     def _update_changed_options(self):
@@ -478,7 +508,7 @@ class ModuleManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = UsableChanges(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -489,17 +519,11 @@ class ModuleManager(object):
         return False
 
     def exec_module(self):
-        changed = False
         result = dict()
-        state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.update()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.update()
 
-        reportable = ReportableChanges(self.changes.to_return())
+        reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
@@ -509,37 +533,142 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
+        if self.changes.cluster_mirroring:
+            self.update_cluster_mirroring_on_device()
         return True
 
     def update_on_device(self):
         params = self.changes.api_params()
-        collection = self.client.api.tm.cm.devices.get_collection()
-        for resource in collection:
-            if resource.selfDevice == 'true':
-                resource.modify(**params)
+        if not params:
+            return
+        uri = "https://{0}:{1}/mgmt/tm/cm/device/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        for item in response['items']:
+            if item['selfDevice'] == 'true':
+                uri = "https://{0}:{1}/mgmt/tm/cm/device/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    transform_name(item['partition'], item['name'])
+                )
+                resp = self.client.api.patch(uri, json=params)
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
                 return
         raise F5ModuleError(
             "The host device was not found."
         )
 
+    def update_cluster_mirroring_on_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            'statemirror.clustermirroring'
+        )
+        payload = {"value": self.changes.cluster_mirroring}
+        resp = self.client.api.patch(uri, json=payload)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
     def read_current_from_device(self):
-        collection = self.client.api.tm.cm.devices.get_collection()
-        for resource in collection:
-            if resource.selfDevice == 'true':
-                result = resource.attrs
-                return Parameters(result)
+        db = self.read_cluster_mirroring_from_device()
+        uri = "https://{0}:{1}/mgmt/tm/cm/device/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        for item in response['items']:
+            if item['selfDevice'] == 'true':
+                uri = "https://{0}:{1}/mgmt/tm/cm/device/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    transform_name(item['partition'], item['name'])
+                )
+                resp = self.client.api.get(uri)
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+                if db:
+                    response['cluster_mirroring'] = db['value']
+                return ApiParameters(params=response)
         raise F5ModuleError(
             "The host device was not found."
         )
+
+    def read_cluster_mirroring_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            'statemirror.clustermirroring'
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             multicast_port=dict(
                 type='int'
             ),
@@ -554,38 +683,38 @@ class ArgumentSpec(object):
             mirror_primary_address=dict(),
             mirror_secondary_address=dict(),
             config_sync_ip=dict(),
-            state=dict(
-                default='present',
-                choices=['present']
+            cluster_mirroring=dict(
+                choices=['within-cluster', 'between-clusters']
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.required_together = [
             ['multicast_address', 'multicast_interface', 'multicast_port']
         ]
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
-    if not HAS_NETADDR:
-        raise F5ModuleError("The python netaddr module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        required_together=spec.required_together
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
+
 
 if __name__ == '__main__':
     main()

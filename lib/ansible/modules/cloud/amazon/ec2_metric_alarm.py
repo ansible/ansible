@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -18,7 +18,7 @@ description:
  - Can create or delete AWS metric alarms.
  - Metrics you wish to alarm on must already exist.
 version_added: "1.6"
-author: "Zacharie Eakin (@zeekin)"
+author: "Zacharie Eakin (@Zeekin)"
 options:
     state:
         description:
@@ -103,7 +103,7 @@ options:
         required: false
     alarm_actions:
         description:
-          - A list of the names action(s) taken when the alarm is in the 'alarm' status
+          - A list of the names action(s) taken when the alarm is in the 'alarm' status, denoted as Amazon Resource Name(s)
         required: false
     insufficient_data_actions:
         description:
@@ -111,7 +111,7 @@ options:
         required: false
     ok_actions:
         description:
-          - A list of the names of action(s) to take when the alarm is in the 'ok' status
+          - A list of the names of action(s) to take when the alarm is in the 'ok' status, denoted as Amazon Resource Name(s)
         required: false
 extends_documentation_fragment:
     - aws
@@ -136,6 +136,22 @@ EXAMPLES = '''
       dimensions: {'InstanceId':'i-XXX'}
       alarm_actions: ["action1","action2"]
 
+  - name: Create an alarm to recover a failed instance
+    ec2_metric_alarm:
+      state: present
+      region: us-west-1
+      name: "recover-instance"
+      metric: "StatusCheckFailed_System"
+      namespace: "AWS/EC2"
+      statistic: "Minimum"
+      comparison: ">="
+      threshold: 1.0
+      period: 60
+      evaluation_periods: 2
+      unit: "Seconds"
+      description: "This will recover an instance when it fails"
+      dimensions: {"InstanceId":'i-XXX'}
+      alarm_actions: ["arn:aws:automate:us-west-1:ec2:recover"]
 
 '''
 

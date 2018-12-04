@@ -41,16 +41,15 @@ options:
       - Order in which to sort results.
     choices: ['ascending', 'descending']
     default: 'ascending'
-    required: false
   limit:
     description:
       - How many results to show.
       - Corresponds to Python slice notation like list[:limit].
-    default: null
-    required: false
 requirements:
   - "python >= 2.6"
   - boto3
+extends_documentation_fragment:
+    - aws
 """
 
 EXAMPLES = '''

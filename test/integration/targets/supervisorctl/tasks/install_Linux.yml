@@ -1,0 +1,10 @@
+- name: install supervisor
+  package:
+    name: supervisor
+    state: present
+
+- name: disable supervisord system service
+  service:
+    name: '{{ supervisor_service_name }}'
+    state: stopped
+    enabled: no
