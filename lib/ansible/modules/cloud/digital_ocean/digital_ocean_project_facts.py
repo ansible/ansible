@@ -92,20 +92,81 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: a DigitalOcean Tag resource
-    returned: success and no resource constraint
+    description: DigitalOcean Project details
+    returned: success
     type: dict
-    sample: {
-        "tag": {
-        "name": "awesome",
-        "resources": {
-          "droplets": {
-            "count": 0,
-            "last_tagged": null
-          }
-        }
-      }
-    }
+    contains:
+        id:
+            description: The unique universal identifier of the project.
+            returned: success
+            type: string, when resource not defined or false
+            example: 4e1bfbc3-dc3e-41f2-a18f-1b4d7ba71679
+        owner_uuid:
+            description: The unique universal identifier of the project owner.
+            returned: success, when resource not defined or false
+            type: string
+            example: The unique universal identifier of the project owner.
+        owner_id:
+            description: The integer id of the project owner.
+            returned: success, when resource not defined or false
+            type: string
+            example: 2
+        name:
+            description: The human-readable name for the project. The maximum length is 175 characters and the name must be unique.
+            returned: success, when resource not defined or false
+            type: string
+            example: Production
+        description:
+            description: The description of the project. The maximum length is 255 characters.
+            returned: success, when resource not defined or false
+            type: string
+            example: Production database
+        purpose:
+            description: The purpose of the project. The maximum length is 255 characters. For examples of valid purposes, see the "Purposes" section
+            type: string
+            returned: succes, when resource not defined or false
+            example: Service or API
+        environment:
+            description: The environment of the project's resources.
+            returned: success, when resource not defined or false
+            type: string
+            example: Production
+        is_default:
+            description: If true, all resources will be added to this project if no project is specified.
+            returned: success, when resource not defined or false
+            type: string
+            example: true
+        created_at:
+            description:A time value given in ISO8601 combined date and time format that represents when the project was created.
+            returned: success, when resource not defined or false
+            type: string
+            example: 2018-09-27T15:52:48Z
+        updated_at:
+            description: A time value given in ISO8601 combined date and time format that represents when the project was updated.
+            returned success, when resource not defined or false
+            type: string
+            example: 2018-09-27T15:52:48Z
+        urn:
+            description: The uniform resource name of the resource.
+            returned: success, when resource is true
+            type: string
+            example: do:droplet:1
+        assigned_at:
+            description: A time value given in ISO8601 combined date and time format that represents when the project was created.
+            returned: success, when resource is true
+            type: string
+            example: 2018-09-28T19:26:37Z
+        links:
+            description: The links object contains the self object, which contains the resource relationship.
+            returned: success, when resource is true
+            type: string
+            example: https://api.digitalocean.com/v2/droplets/1
+        status:
+            description: The status of assigning and fetching the resources.
+            returned: success, when resource is true
+            type: string
+            example: ok
+            
 '''
 
 from traceback import format_exc
