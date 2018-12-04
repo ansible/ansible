@@ -27,7 +27,6 @@ options:
     state:
       description:
       - Whether the bindings should be present or absent.
-      - Only present implemented at the momemt.
       choices: [ "present", "absent" ]
       default: present
     name:
@@ -158,6 +157,9 @@ class RabbitMqBinding(object):
         """
         if self.module.params['state'] == 'present':
             if not self.is_present():
+                return True
+        elif self.module.params['state'] == 'absent':
+            if self.is_present():
                 return True
         return False
 

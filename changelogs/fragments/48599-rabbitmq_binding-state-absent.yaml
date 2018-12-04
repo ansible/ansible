@@ -1,0 +1,2 @@
+bugfixes:
+- "rabbitmq_binding - Delete binding when ``state`` is ``absent``."
