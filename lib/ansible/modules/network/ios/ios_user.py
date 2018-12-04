@@ -87,6 +87,7 @@ options:
         description:
           - The actual hashed password to be configured on the device
         required: True
+    version_added: "2.8"
   privilege:
     description:
       - The C(privilege) argument configures the privilege level of the
@@ -211,7 +212,8 @@ commands:
 """
 from copy import deepcopy
 
-import re, ast
+import re
+import ast
 import base64
 import hashlib
 
