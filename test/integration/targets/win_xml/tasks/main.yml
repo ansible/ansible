@@ -19,11 +19,11 @@
 - name: copy a test .xml file
   win_copy:
     src: config.xml
-    dest: "{{win_output_dir}}\\config.xml"
+    dest: "{{ win_output_dir }}\\config.xml"
 
 - name: add an element that only has a text child node
   win_xml:
-    path: "{{win_output_dir}}\\config.xml"
+    path: "{{ win_output_dir }}\\config.xml"
     fragment: '<string key="answer">42</string>'
     xpath: '/config'
   register: element_add_result
@@ -35,7 +35,7 @@
 
 - name: try to add the  element that only has a text child node again
   win_xml:
-    path: "{{win_output_dir}}\\config.xml"
+    path: "{{ win_output_dir }}\\config.xml"
     fragment: '<string key="answer">42</string>'
     xpath: '/config'
   register: element_add_result_second
@@ -48,11 +48,11 @@
 - name: copy a test log4j.xml
   win_copy:
     src: log4j.xml
-    dest: "{{win_output_dir}}\\log4j.xml"
+    dest: "{{ win_output_dir }}\\log4j.xml"
 
 - name: change an attribute to fatal logging
   win_xml:
-    path: "{{win_output_dir}}\\log4j.xml"
+    path: "{{ win_output_dir }}\\log4j.xml"
     xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
     type: attribute
     attribute: 'value'
@@ -60,7 +60,7 @@
 
 - name: try to change the attribute again
   win_xml:
-    path: "{{win_output_dir}}\\log4j.xml"
+    path: "{{ win_output_dir }}\\log4j.xml"
     xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
     type: attribute
     attribute: 'value'
@@ -71,3 +71,54 @@
   assert:
     that:
     - not attribute_changed_result is changed
+
+# This testing is for https://github.com/ansible/ansible/issues/48471
+# The issue was that an .xml with no encoding declaration, but a UTF8 BOM
+# with some UTF-8 characters was being written out with garbage characters.
+# The characters added by win_xml were not UTF-8 characters.
+
+- name: copy test files (https://github.com/ansible/ansible/issues/48471)
+  win_copy:
+    src: plane.zip
+    dest: "{{ win_output_dir }}\\plane.zip"
+
+- name: unarchive the test files
+  win_unzip:
+    src: "{{ win_output_dir }}\\plane.zip"
+    dest: "{{ win_output_dir }}\\"
+
+- name: change a text value in a file with UTF8 BOM and armenian characters in the description
+  win_xml:
+    path: "{{ win_output_dir }}\\plane-utf8-bom-armenian-characters.xml"
+    xpath: '/plane/year'
+    type: text
+    fragment: '1988'
+
+- name: register the sha1 of the new file
+  win_stat:
+    path: "{{ win_output_dir }}\\plane-utf8-bom-armenian-characters.xml"
+    get_checksum: yes
+  register: sha1_checksum
+
+- name: verify the checksum
+  assert:
+    that:
+      - sha1_checksum.stat.checksum == 'e3e18c3066e1bfce9a5cf87c81353fa174440944'
+
+- name: change a text value in a file with UTF-16 BE BOM and Chinese characters in the description
+  win_xml:
+    path: "{{ win_output_dir }}\\plane-utf16be-bom-chinese-characters.xml"
+    xpath: '/plane/year'
+    type: text
+    fragment: '1988'
+
+- name: register the sha1 of the new file
+  win_stat:
+    path: "{{ win_output_dir}}\\plane-utf16be-bom-chinese-characters.xml"
+    get_checksum: yes
+  register: sha1_checksum
+
+- name: verify the checksum
+  assert:
+    that:
+      - sha1_checksum.stat.checksum == 'de86f79b409383447cf4cf112b20af8ffffcfdbf'
