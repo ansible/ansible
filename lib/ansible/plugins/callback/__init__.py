@@ -29,11 +29,20 @@ from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.six import PY3
+from ansible.module_utils._text import to_text
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.vars.clean import strip_internal_keys
+
+if PY3:
+    # OrderedDict is needed for a backwards compat shim on Python3.x only
+    # https://github.com/ansible/ansible/pull/49512
+    from collections import OrderedDict
+else:
+    OrderedDict = None
 
 global_display = Display()
 
@@ -119,7 +128,18 @@ class CallbackBase(AnsiblePlugin):
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-        return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        try:
+            jsonified_results = json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        except TypeError:
+            # Python3 bug: throws an exception when keys are non-homogenous types:
+            # https://bugs.python.org/issue25457
+            # sort into an OrderedDict and then json.dumps() that instead
+            if not OrderedDict:
+                raise
+            jsonified_results = json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
+                                           cls=AnsibleJSONEncoder, indent=indent,
+                                           ensure_ascii=False, sort_keys=False)
+        return jsonified_results
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
