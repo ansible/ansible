@@ -73,12 +73,11 @@ EXAMPLES = '''
 
 import os
 
+from itertools import product
+
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin
-
-from itertools import product
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -89,8 +88,6 @@ class InventoryModule(BaseInventoryPlugin):
     def __init__(self):
 
         super(InventoryModule, self).__init__()
-
-        self._cache = FactCache()
 
     def verify_file(self, path):
 
