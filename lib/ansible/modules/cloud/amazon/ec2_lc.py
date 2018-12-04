@@ -487,7 +487,7 @@ def create_launch_config(connection, module):
         for volume in volumes:
             if 'device_name' not in volume:
                 module.fail_json(msg='Device name must be set for volume')
-            # Minimum volume size is 1GB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
+            # Minimum volume size is 1GiB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
             if 'volume_size' not in volume or int(volume['volume_size']) > 0:
                 block_device_mapping.append(create_block_device_meta(module, volume))
 
