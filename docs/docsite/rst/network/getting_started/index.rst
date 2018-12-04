@@ -29,3 +29,5 @@ This guide introduces basic Ansible concepts and guides you through your first A
    first_playbook
    first_inventory
    intermediate_concepts
+   network_roles
+   network_resources
