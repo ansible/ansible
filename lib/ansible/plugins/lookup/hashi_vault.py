@@ -7,9 +7,10 @@ __metaclass__ = type
 
 DOCUMENTATION = """
   lookup: hashi_vault
-  author: Jonathan Davila <jdavila(at)ansible.com>
-  contributors: Drew Mullen <mullen.drew@gmail.com>
-  version_added: "2.1"
+  version_added: "2.0"
+  author:
+    - Jonathan Davila <jdavila(at)ansible.com>
+    - Drew Mullen (@drewmullen) <mullen.drew@gmail.com>
   short_description: retrieve secrets from HashiCorp's vault
   requirements:
     - hvac (python library)
@@ -54,7 +55,10 @@ DOCUMENTATION = """
       type: boolean
       default: True
     namespace:
-      description: namespace where secrets reside
+      description: namespace where secrets reside.
+      requires:
+        - HVAC 0.7.0+
+        - Vault 0.11+
       default: None
 """
 
@@ -119,7 +123,6 @@ class HashiVault:
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
         self.namespace = kwargs.get('namespace', None)
 
-
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s is None:
@@ -141,9 +144,13 @@ class HashiVault:
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
         #
         self.auth_method = kwargs.get('auth_method')
+
         if self.auth_method and self.auth_method != 'token':
             try:
-                self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
+                if self.namespace is not None:
+                    self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
+                else:
+                    self.client = hvac.Client(url=self.url, verify=self.verify)
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
@@ -162,7 +169,10 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-            self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
+            if self.namespace is not None:
+                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
+            else:
+                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 
         if not self.client.is_authenticated():
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
