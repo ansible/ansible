@@ -20,7 +20,7 @@ __metaclass__ = type
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to send Port channel commands to Lenovo Switches
+# Module to work on Link Aggregation with Lenovo Switches
 # Lenovo Networking
 #
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -118,8 +118,6 @@ from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.cnos.cnos import get_config, load_config
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
-from ansible.module_utils.network.cnos.cnos import debugOutput
-
 
 def search_obj_in_list(group, lst):
     for o in lst:
@@ -143,7 +141,6 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent':
             if obj_in_have:
-                debugOutput("I am coming inside obj_in_have")
                 commands.append('no interface port-channel {0}'.format(group))
 
         elif state == 'present':
@@ -334,4 +331,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
