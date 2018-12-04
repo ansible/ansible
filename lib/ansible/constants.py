@@ -159,6 +159,9 @@ MAGIC_VARIABLE_MAPPING = dict(
     # docker TODO: remove
     docker_extra_args=('ansible_docker_extra_args', ),
 
+    # chroot
+    chroot_become=('ansible_chroot_become', ),
+
     # become
     become=('ansible_become', ),
     become_method=('ansible_become_method', ),

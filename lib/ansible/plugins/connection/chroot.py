@@ -32,6 +32,12 @@ DOCUMENTATION = """
           - name: ANSIBLE_EXECUTABLE
         vars:
           - name: ansible_executable
+      chroot_become:
+        description:
+            - Sudo mode for chroot command.
+        vars:
+          - name: ansible_chroot_become
+            version_added: '2.8'
 """
 
 import distutils.spawn
@@ -67,9 +73,13 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.chroot = self._play_context.remote_addr
+        if hasattr(self._play_context, 'chroot_become'):
+            self.chroot_become = self._play_context.chroot_become
+        else:
+            self.chroot_become = None
 
-        if os.geteuid() != 0:
-            raise AnsibleError("chroot connection requires running as root")
+        if os.geteuid() != 0 and not self.chroot_become:
+            raise AnsibleError("chroot connection requires running as root or chroot_become option")
 
         # we're running as root on the local system so do some
         # trivial checks for ensuring 'host' is actually a chroot'able dir
@@ -88,6 +98,10 @@ class Connection(ConnectionBase):
         if not self.chroot_cmd:
             raise AnsibleError("chroot command not found in PATH")
 
+        self.chroot_become_cmd = distutils.spawn.find_executable('sudo')
+        if self.chroot_become and not self.chroot_become_cmd:
+            raise AnsibleError("chroot become active. sudo command not found in PATH")
+
     def _connect(self):
         ''' connect to the chroot; nothing to do here '''
         super(Connection, self)._connect()
@@ -105,6 +119,8 @@ class Connection(ConnectionBase):
         '''
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
+        if self.chroot_become:
+            local_cmd = [self.chroot_become_cmd, '-E'] + local_cmd
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
