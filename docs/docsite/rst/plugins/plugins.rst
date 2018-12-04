@@ -16,7 +16,9 @@ This section covers the various types of plugins that are included with Ansible:
    action
    cache
    callback
+   cliconf
    connection
+   httpapi
    inventory
    lookup
    shell

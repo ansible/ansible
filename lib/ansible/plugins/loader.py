@@ -772,4 +772,5 @@ httpapi_loader = PluginLoader(
     'ansible.plugins.httpapi',
     C.DEFAULT_HTTPAPI_PLUGIN_PATH,
     'httpapi_plugins',
+    required_base_class='HttpApiBase',
 )
