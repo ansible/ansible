@@ -107,9 +107,10 @@ If (-Not (Test-Path -Path $dest -PathType Leaf)){
     Fail-Json $result "Specified path $dest does not exist or is not a file."
 }
 
-[xml]$xmlorig = $null
+$xmlorig = New-Object -TypeName System.Xml.XmlDocument
+$xmlorig.XmlResolver = $null
 Try {
-    [xml]$xmlorig = Get-Content -Path $dest
+    $xmlorig.Load($dest)
 }
 Catch {
     Fail-Json $result "Failed to parse file at '$dest' as an XML document: $($_.Exception.Message)"
