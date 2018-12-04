@@ -67,7 +67,6 @@ EXAMPLES = r'''
       password: secret
       server: lb.mydomain.com
       user: admin
-      validate_certs: no
   delegate_to: localhost
 
 - name: Add a remote syslog server on a non-standard port to log to
@@ -78,7 +77,6 @@ EXAMPLES = r'''
       password: secret
       server: lb.mydomain.com
       user: admin
-      validate_certs: no
   delegate_to: localhost
 '''
 

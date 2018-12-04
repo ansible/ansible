@@ -122,28 +122,31 @@ EXAMPLES = r'''
   bigip_gtm_monitor_bigip:
     state: present
     ip: 10.10.10.10
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_monitor
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove BIG-IP Monitor
   bigip_gtm_monitor_bigip:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_monitor
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add BIG-IP monitor for all addresses, port 514
   bigip_gtm_monitor_bigip:
-    server: lb.mydomain.com
-    user: admin
     port: 514
-    password: secret
     name: my_monitor
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

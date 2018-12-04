@@ -55,10 +55,11 @@ EXAMPLES = r'''
     destinations:
       - hsl1
       - security-log-servers-logging
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

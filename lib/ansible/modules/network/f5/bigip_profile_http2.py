@@ -113,31 +113,34 @@ EXAMPLES = r'''
 - name: Create HTTP2 profile
   bigip_profile_http2:
     name: my_profile
-    password: secret
-    server: lb.mydomain.com
     insert_header: yes
     insert_header_name: FOO
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove HTTP profile
   bigip_profile_http2:
     name: my_profile
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add HTTP profile set activation modes
   bigip_profile_http:
     name: my_profile
-    server: lb.mydomain.com
-    user: admin
     activation_modes:
       - always
-    password: secret
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 

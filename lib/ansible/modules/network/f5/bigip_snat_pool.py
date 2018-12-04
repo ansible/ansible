@@ -50,33 +50,36 @@ author:
 EXAMPLES = r'''
 - name: Add the SNAT pool 'my-snat-pool'
   bigip_snat_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my-snat-pool
     state: present
     members:
       - 10.10.10.10
       - 20.20.20.20
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Change the SNAT pool's members to a single member
   bigip_snat_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my-snat-pool
     state: present
     member: 30.30.30.30
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove the SNAT pool 'my-snat-pool'
   bigip_snat_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: johnd
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

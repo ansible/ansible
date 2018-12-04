@@ -96,28 +96,31 @@ EXAMPLES = r'''
   bigip_monitor_tcp_half_open:
     state: present
     ip: 10.10.10.10
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove TCP half-open Monitor
   bigip_monitor_tcp_half_open:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add half-open monitor for all addresses, port 514
   bigip_monitor_tcp_half_open:
-    server: lb.mydomain.com
-    user: admin
     port: 514
-    password: secret
     name: my_tcp_monitor
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 

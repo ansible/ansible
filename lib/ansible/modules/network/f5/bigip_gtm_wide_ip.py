@@ -121,56 +121,61 @@ author:
 EXAMPLES = r'''
 - name: Set lb method
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add iRules to the Wide IP
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     irules:
       - irule1
       - irule2
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove one iRule from the Virtual Server
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     irules:
       - irule1
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove all iRules from the Virtual Server
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     irules: ""
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Assign a pool with ratio to the Wide IP
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     pools:
       - name: pool1
         ratio: 100
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

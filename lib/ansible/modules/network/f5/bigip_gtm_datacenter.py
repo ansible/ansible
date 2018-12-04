@@ -64,11 +64,12 @@ author:
 EXAMPLES = r'''
 - name: Create data center "New York"
   bigip_gtm_datacenter:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: New York
     location: 222 West 23rd
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 

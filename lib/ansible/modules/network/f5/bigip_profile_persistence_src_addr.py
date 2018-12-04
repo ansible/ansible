@@ -97,13 +97,14 @@ EXAMPLES = r'''
 - name: Create a profile
   bigip_profile_persistence_src_addr:
     name: foo
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
     hash_algorithm: carp
     match_across_services: yes
     match_across_virtuals: yes
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 

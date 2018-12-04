@@ -195,19 +195,21 @@ author:
 EXAMPLES = r'''
 - name: Create a GTM pool
   bigip_gtm_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_pool
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Disable pool
   bigip_gtm_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: disabled
     name: my_pool
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
