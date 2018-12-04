@@ -483,6 +483,7 @@ except ImportError:
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'clientTimeout': 'client_timeout',
+        'defaultsFrom': 'parent',
         'explicitFlowMigration': 'explicit_flow_migration',
         'idleTimeout': 'idle_timeout',
         'ipDfMode': 'ip_df_mode',
@@ -518,6 +519,7 @@ class Parameters(AnsibleF5Parameters):
 
     api_attributes = [
         'clientTimeout',
+        'defaultsFrom',
         'description',
         'explicitFlowMigration',
         'idleTimeout',
@@ -570,6 +572,7 @@ class Parameters(AnsibleF5Parameters):
         'loose_close',
         'loose_initialization',
         'mss_override',
+        'parent',
         'reassemble_fragments',
         'receive_window_size',
         'reset_on_timeout',
@@ -606,6 +609,7 @@ class Parameters(AnsibleF5Parameters):
         'loose_close',
         'loose_initialization',
         'mss_override',
+        'parent',
         'reassemble_fragments',
         'receive_window_size',
         'reset_on_timeout',

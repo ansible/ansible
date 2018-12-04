@@ -98,6 +98,7 @@ options:
       - Required when C(state) is C(present) and virtual server does not exist.
       - When C(type) is C(internal), this parameter is ignored. For all other types,
         it is required.
+      - Destination can also be specified as a name for an existing Virtual Address.
     aliases:
       - address
       - ip
@@ -296,7 +297,7 @@ options:
     version_added: 2.8
   mask:
    description:
-      - Specifies the destination address network mask. This parameter will work with IPv4 and IPv6 tye of addresses.
+      - Specifies the destination address network mask. This parameter will work with IPv4 and IPv6 type of addresses.
       - This is an optional parameter which can be specified when creating or updating virtual server.
       - If C(destination) is set in CIDR notation format and C(mask) is provided the C(mask) parameter takes precedence.
       - If catchall destination is specified, i.e. C(0.0.0.0) for IPv4 C(::) for IPv6,
@@ -305,6 +306,8 @@ options:
         C(ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff) is set for IPv4 and IPv6 addresses respectively.
       - When C(destination) is provided in CIDR notation format and C(mask) is not specified the mask parameter is
         inferred from C(destination).
+      - When C(destination) is provided as Virtual Address name, and C(mask) is not specified,
+        the mask will be C(None) allowing device set it with its internal defaults.
    version_added: 2.8
   ip_protocol:
     description:
@@ -403,30 +406,29 @@ author:
 EXAMPLES = r'''
 - name: Modify Port of the Virtual Server
   bigip_virtual_server:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     partition: Common
     name: my-virtual-server
     port: 8080
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete virtual server
   bigip_virtual_server:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: absent
     partition: Common
     name: my-virtual-server
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add virtual server
   bigip_virtual_server:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     partition: Common
     name: my-virtual-server
@@ -449,6 +451,10 @@ EXAMPLES = r'''
       - ltm-policy-3
     enabled_vlans:
       - /Common/vlan2
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add FastL4 virtual server
@@ -459,95 +465,108 @@ EXAMPLES = r'''
     profiles:
       - fastL4
     state: present
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
+  delegate_to: localhost
 
 - name: Add iRules to the Virtual Server
   bigip_virtual_server:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     name: my-virtual-server
     irules:
       - irule1
       - irule2
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove one iRule from the Virtual Server
   bigip_virtual_server:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     name: my-virtual-server
     irules:
       - irule2
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove all iRules from the Virtual Server
   bigip_virtual_server:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     name: my-virtual-server
     irules: ""
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove pool from the Virtual Server
   bigip_virtual_server:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     name: my-virtual-server
     pool: ""
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add metadata to virtual
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
     metadata:
       ansible: 2.4
       updated_at: 2017-12-20T17:50:46Z
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add virtual with two profiles
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
     profiles:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove HTTP profile from previous virtual
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
     profiles:
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add the HTTP profile back to the previous virtual
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
     profiles:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -678,6 +697,7 @@ ip_intelligence_policy:
   type: string
   sample: /Common/ip-intelligence
 '''
+
 import os
 import re
 
@@ -1150,15 +1170,6 @@ class ApiParameters(Parameters):
             return result
         destination = re.sub(r'^/[a-zA-Z0-9_.-]+/', '', self._values['destination'])
 
-        if is_valid_ip(destination):
-            result = Destination(
-                ip=destination,
-                port=None,
-                route_domain=None,
-                mask=self.mask
-            )
-            return result
-
         # Covers the following examples
         #
         # /Common/2700:bc00:1f10:101::6%2.80
@@ -1177,11 +1188,6 @@ class ApiParameters(Parameters):
                 port = matches.group('port')
                 if port == 'any':
                     port = 0
-            ip = matches.group('ip')
-            if not is_valid_ip(ip):
-                raise F5ModuleError(
-                    "The provided destination is not a valid IP address"
-                )
             result = Destination(
                 ip=matches.group('ip'),
                 port=port,
@@ -1193,11 +1199,6 @@ class ApiParameters(Parameters):
         pattern = r'(?P<ip>[^%]+)%(?P<route_domain>[0-9]+)'
         matches = re.search(pattern, destination)
         if matches:
-            ip = matches.group('ip')
-            if not is_valid_ip(ip):
-                raise F5ModuleError(
-                    "The provided destination is not a valid IP address"
-                )
             result = Destination(
                 ip=matches.group('ip'),
                 port=None,
@@ -1206,22 +1207,20 @@ class ApiParameters(Parameters):
             )
             return result
 
-        parts = destination.split('.')
-        if len(parts) == 4:
-            # IPv4
-            ip, port = destination.split(':')
-            if not is_valid_ip(ip):
-                raise F5ModuleError(
-                    "The provided destination is not a valid IP address"
-                )
+        pattern = r'(?P<ip>^[a-zA-Z0-9_.-]+):(?P<port>[0-9]+)'
+        matches = re.search(pattern, destination)
+        if matches:
+            # this will match any IPv4 address as well as any alphanumeric Virtual Address
+            # that does not look like an IPv6 address.
             result = Destination(
-                ip=ip,
-                port=int(port),
+                ip=matches.group('ip'),
+                port=int(matches.group('port')),
                 route_domain=None,
                 mask=self.mask
             )
             return result
-        elif len(parts) == 2:
+        parts = destination.split('.')
+        if len(parts) == 2:
             # IPv6
             ip, port = destination.split('.')
             try:
@@ -1230,10 +1229,6 @@ class ApiParameters(Parameters):
                 # Can be a port of "any". This only happens with IPv6
                 if port == 'any':
                     port = 0
-            if not is_valid_ip(ip):
-                raise F5ModuleError(
-                    "The provided destination is not a valid IP address"
-                )
             result = Destination(
                 ip=ip,
                 port=port,
@@ -1241,6 +1236,16 @@ class ApiParameters(Parameters):
                 mask=self.mask
             )
             return result
+        # this check needs to be the last as for some reason IPv6 addr with %2 %2.port were also caught
+        if is_valid_ip(destination):
+            result = Destination(
+                ip=destination,
+                port=None,
+                route_domain=None,
+                mask=self.mask
+            )
+            return result
+
         else:
             result = Destination(ip=None, port=None, route_domain=None, mask=None)
             return result
@@ -1456,11 +1461,14 @@ class ModuleParameters(Parameters):
 
     @property
     def destination(self):
+        pattern = r'^[a-zA-Z0-9_.-]+'
         addr = self._values['destination'].split("%")[0].split('/')[0]
         if not is_valid_ip(addr):
-            raise F5ModuleError(
-                "The provided destination is not a valid IP address"
-            )
+            matches = re.search(pattern, addr)
+            if not matches:
+                raise F5ModuleError(
+                    "The provided destination is not a valid IP address or a Virtual Address name"
+                )
         result = self._format_destination(addr, self.port, self.route_domain)
         return result
 
@@ -1470,6 +1478,11 @@ class ModuleParameters(Parameters):
             return None
         result = self._values['destination'].split("%")
         if len(result) > 1:
+            pattern = r'^[a-zA-Z0-9_.-]+'
+            matches = re.search(pattern, result[0])
+            if matches and not is_valid_ip(matches.group(0)):
+                # we need to strip RD because when using Virtual Address names the RD is not needed.
+                return None
             return int(result[1])
         return None
 
@@ -1479,8 +1492,9 @@ class ModuleParameters(Parameters):
         if self._values['destination'] is None:
             result = Destination(ip=None, port=None, route_domain=None, mask=None)
             return result
-        sanitized = self._values['destination'].split("%")[0].split('/')[0]
-        addr = compress_address(u'{0}'.format(sanitized))
+        addr = self._values['destination'].split("%")[0].split('/')[0]
+        if is_valid_ip(addr):
+            addr = compress_address(u'{0}'.format(addr))
         result = Destination(ip=addr, port=self.port, route_domain=self.route_domain, mask=self.mask)
         return result
 
@@ -1494,8 +1508,11 @@ class ModuleParameters(Parameters):
         if addr in ['::', '::/0', '::/any6']:
             return 'any6'
         if self._values['mask'] is None:
-            return get_netmask(u'{0}'.format(addr))
-        return compress_address(u'{0}'.format(self._values['mask']))
+            if is_valid_ip(addr):
+                return get_netmask(addr)
+            else:
+                return None
+        return compress_address(self._values['mask'])
 
     @property
     def port(self):
@@ -2648,12 +2665,6 @@ class Difference(object):
     def source(self):
         if self.want.source is None:
             return None
-        want = ip_interface(u'{0}'.format(self.want.source))
-        have = ip_interface(u'{0}'.format(self.have.destination_tuple.ip))
-        if want.version != have.version:
-            raise F5ModuleError(
-                "The source and destination addresses for the virtual server must be be the same type (IPv4 or IPv6)."
-            )
         if self.want.source != self.have.source:
             return self.want.source
 
@@ -3053,7 +3064,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
@@ -3097,7 +3108,9 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 403]:
+        # Code 404 can occur when you specify a fallback profile that does
+        # not exist
+        if 'code' in response and response['code'] in [400, 403, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:

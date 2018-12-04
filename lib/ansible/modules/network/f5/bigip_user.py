@@ -50,12 +50,12 @@ options:
     description:
       - Specifies the administrative partition to which the user has access.
         C(partition_access) is required when creating a new account.
-        Should be in the form "partition:role". Valid roles include
-        C(acceleration-policy-editor), C(admin), C(application-editor), C(auditor)
-        C(certificate-manager), C(guest), C(irule-manager), C(manager), C(no-access)
+        Should be in the form "partition:role".
+      - Valid roles include C(acceleration-policy-editor), C(admin), C(application-editor),
+        C(auditor), C(certificate-manager), C(guest), C(irule-manager), C(manager), C(no-access),
         C(operator), C(resource-admin), C(user-manager), C(web-application-security-administrator),
-        and C(web-application-security-editor). Partition portion of tuple should
-        be an existing partition or the value 'all'.
+        and C(web-application-security-editor).
+      - Partition portion of tuple should be an existing partition or the value 'all'.
   state:
     description:
       - Whether the account should exist or not, taking action if the state is
@@ -67,8 +67,8 @@ options:
   update_password:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
-        C(on_create) will only set the password for newly created users. When
-        C(username_credential) is C(root), this value will be forced to C(always).
+        C(on_create) will only set the password for newly created users.
+      - When C(username_credential) is C(root), this value will be forced to C(always).
     default: always
     choices:
       - always
@@ -625,16 +625,6 @@ class BaseManager(object):
                 raise F5ModuleError(err)
 
     def validate_create_parameters(self):
-        """Password credentials and partition access are mandatory,
-
-        when creating a user resource.
-        """
-        if self.want.password_credential and \
-                self.want.update_password != 'on_create':
-            err = "The 'update_password' option " \
-                  "needs to be set to 'on_create' when creating " \
-                  "a resource with a password."
-            raise F5ModuleError(err)
         if self.want.partition_access is None:
             err = "The 'partition_access' option " \
                   "is required when creating a resource."
