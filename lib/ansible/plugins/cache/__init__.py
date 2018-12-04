@@ -1,4 +1,5 @@
 # (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2018, Ansible Project
 #
 # This file is part of Ansible
 #
@@ -29,8 +30,25 @@ from ansible.module_utils._text import to_bytes
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.loader import cache_loader
 from ansible.utils.display import Display
+from ansible.vars.fact_cache import FactCache as RealFactCache
 
 display = Display()
+
+
+class FactCache(RealFactCache):
+    """
+    This is for backwards compatibility.  Will be removed after deprecation.  It was removed as it
+    wasn't actually part of the cache plugin API.  It's actually the code to make use of cache
+    plugins, not the cache plugin itself.  Subclassing it wouldn't yield a usable Cache Plugin and
+    there was no facility to use it as anything else.
+    """
+    def __init__(self, *args, **kwargs):
+        display.deprecated('ansible.plugins.cache.FactCache has been moved to'
+                           ' ansible.vars.fact_cache.FactCache.  If you are looking for the class'
+                           ' to subclass for a cache plugin, you want'
+                           ' ansible.plugins.cache.BaseCacheModule or one of its subclasses.',
+                           version='2.12')
+        super(FactCache, self).__init__(*args, **kwargs)
 
 
 class BaseCacheModule(with_metaclass(ABCMeta, object)):
@@ -242,65 +260,6 @@ class BaseFileCacheModule(BaseCacheModule):
         :arg filepath: The filepath to store it at
         """
         pass
-
-
-class FactCache(MutableMapping):
-
-    def __init__(self, *args, **kwargs):
-
-        self._plugin = cache_loader.get(C.CACHE_PLUGIN)
-        if not self._plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
-
-        # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display = display
-
-        # in memory cache so plugins don't expire keys mid run
-        self._cache = {}
-
-    def __getitem__(self, key):
-        if not self._plugin.contains(key):
-            raise KeyError
-        return self._plugin.get(key)
-
-    def __setitem__(self, key, value):
-        self._plugin.set(key, value)
-
-    def __delitem__(self, key):
-        self._plugin.delete(key)
-
-    def __contains__(self, key):
-        return self._plugin.contains(key)
-
-    def __iter__(self):
-        return iter(self._plugin.keys())
-
-    def __len__(self):
-        return len(self._plugin.keys())
-
-    def copy(self):
-        """ Return a primitive copy of the keys and values from the cache. """
-        return dict(self)
-
-    def keys(self):
-        return self._plugin.keys()
-
-    def flush(self):
-        """ Flush the fact cache of all keys. """
-        self._plugin.flush()
-
-    def update(self, host_facts):
-        """ We override the normal update to ensure we always use the 'setter' method """
-        for key in host_facts:
-            try:
-                host_cache = self._plugin.get(key)
-                if host_cache:
-                    host_cache.update(host_facts[key])
-                else:
-                    host_cache = host_facts[key]
-                self._plugin.set(key, host_cache)
-            except KeyError:
-                self._plugin.set(key, host_facts[key])
 
 
 class InventoryFileCacheModule(BaseFileCacheModule):
