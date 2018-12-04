@@ -49,7 +49,7 @@ class ActionModule(ActionBase):
         return path
 
     def _host_is_ipv6_address(self, host):
-        return ':' in str(host)
+        return ':' in to_text(host)
 
     def _format_rsync_rsh_target(self, host, path, user):
         ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
