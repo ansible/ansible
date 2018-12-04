@@ -153,7 +153,7 @@ def get_configured_track(module, ctrack):
     track_exists = False
     command = 'show track'
     try:
-        body = run_commands(module, [command])
+        body = run_commands(module, {'command': command, 'output': 'text'})
         match = re.findall(r'Track\s+(\d+)', body[0])
     except IndexError:
         return None
