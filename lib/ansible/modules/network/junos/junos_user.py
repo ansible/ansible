@@ -61,7 +61,7 @@ options:
     description:
       - The C(encrypted_password) argument set already hashed password
         for the user account on the remote system.
-    version_added: "2.7"
+    version_added: "2.8"
   purge:
     description:
       - The C(purge) argument instructs the module to consider the
