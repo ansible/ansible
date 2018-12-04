@@ -67,20 +67,22 @@ EXAMPLES = r'''
 - name: Use a file lookup to import key
   bigip_ssl_key:
     name: key-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/key.key') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete key
   bigip_ssl_key:
     name: key-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

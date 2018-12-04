@@ -85,9 +85,10 @@ EXAMPLES = r'''
     network: management
     port: 9000
     snmp_version: 1
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create snmp v2 trap
@@ -98,9 +99,10 @@ EXAMPLES = r'''
     network: default
     port: 7000
     snmp_version: 2c
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

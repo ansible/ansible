@@ -166,11 +166,21 @@ EXAMPLES = r'''
   bigip_imish_config:
     lines: bfd slow-timer 2000
     save_when: modified
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
 
 - name: diff the running-config against a provided config
   bigip_imish_config:
     diff_against: intended
     intended_config: "{{ lookup('file', 'master.cfg') }}"
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
 
 - name: Add config to a parent block
   bigip_imish_config:
@@ -183,6 +193,11 @@ EXAMPLES = r'''
       - neighbor 10.10.10.11 fall-over bfd
     parents: router bgp 64664
     match: exact
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
 
 - name: Remove an existing acl before writing it
   bigip_imish_config:
@@ -191,6 +206,11 @@ EXAMPLES = r'''
       - access-list 10 permit 20.20.20.21
       - access-list 10 deny any
     before: no access-list 10
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
 
 - name: for idempotency, use full-form commands
   bigip_imish_config:
@@ -199,6 +219,11 @@ EXAMPLES = r'''
       - description My Interface
     # parents: int ANYCAST-P2P-2
     parents: interface ANYCAST-P2P-2
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
 '''
 
 RETURN = r'''

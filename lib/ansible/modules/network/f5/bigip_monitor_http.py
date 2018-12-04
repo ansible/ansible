@@ -123,30 +123,33 @@ EXAMPLES = r'''
   bigip_monitor_http:
     state: present
     ip: 10.10.10.10
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_http_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove HTTP Monitor
   bigip_monitor_http:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_http_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Include a username and password in the HTTP monitor
   bigip_monitor_http:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_http_monitor
     target_username: monitor_user
     target_password: monitor_pass
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

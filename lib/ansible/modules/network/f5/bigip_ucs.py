@@ -105,60 +105,66 @@ author:
 EXAMPLES = r'''
 - name: Upload UCS
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS.
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS without installing the license portion
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
     no_license: yes
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS except the license, and bypassing the platform check
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
     no_license: yes
     no_platform_check: yes
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Install (upload, install) UCS using a passphrase necessary to load the UCS
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: /root/bigip.localhost.localdomain.ucs
     state: installed
     passphrase: MyPassphrase1234
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove uploaded UCS file
   bigip_ucs:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     ucs: bigip.localhost.localdomain.ucs
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 

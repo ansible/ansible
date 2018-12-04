@@ -54,19 +54,21 @@ EXAMPLES = r'''
   bigiq_utility_license:
     license_key: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
     accept_eula: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove a utility license from the system
   bigiq_utility_license:
     license_key: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
