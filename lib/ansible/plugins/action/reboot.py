@@ -189,7 +189,7 @@ class ActionModule(ActionBase):
                 if action_desc:
                     try:
                         error = to_text(e).splitlines()[-1]
-                    except TypeError as e:
+                    except IndexError as e:
                         error = to_text(e)
                     display.debug("{0}: {1} fail '{2}', retrying in {3:.4} seconds...".format(self._task.action, action_desc,
                                                                                               error, fail_sleep))
