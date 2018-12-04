@@ -16,6 +16,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.playbook.play_context import OPTION_FLAGS
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import shell_loader, connection_loader
 from ansible.utils.display import Display
@@ -104,6 +105,14 @@ class ConnectionBase(AnsiblePlugin):
         self._shell = shell_loader.get(shell_type)
         if not self._shell:
             raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
+
+    def get_option(self, option, hostvars=None):
+        value = super(ConnectionBase, self).get_option(option, hostvars)
+
+        if value is None and option in OPTION_FLAGS:
+            value = getattr(self._play_context, option, None)
+
+        return value
 
     @property
     def connected(self):
