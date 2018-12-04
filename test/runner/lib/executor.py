@@ -161,6 +161,10 @@ def install_command_requirements(args, python_version=None):
     :type args: EnvironmentConfig
     :type python_version: str | None
     """
+    if isinstance(args, ShellConfig):
+        if args.raw:
+            return
+
     generate_egg_info(args)
 
     if not args.requirements:
@@ -1627,6 +1631,13 @@ def get_integration_remote_filter(args, targets):
         exclude.append(skip)
         display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
+
+    skip = 'skip/%s/' % args.remote.replace('/', '')
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
+                        % (skip.rstrip('/'), args.remote.replace('/', ' '), ', '.join(skipped)))
 
     python_version = 2  # remotes are expected to default to python 2
 
