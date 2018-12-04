@@ -22,7 +22,7 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, f2fs, lvm, ocfs2, reiserfs, xfs, vfat ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, f2fs, lvm, ocfs2, reiserfs, xfs, vfat, swap ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
@@ -31,6 +31,7 @@ options:
     - vfat support was added in 2.5
     - ocfs2 support was added in 2.6
     - f2fs support was added in 2.7
+    - swap support was added in 2.8
     required: yes
     aliases: [type]
   dev:
@@ -46,7 +47,7 @@ options:
   resizefs:
     description:
     - If C(yes), if the block device and filesytem size differ, grow the filesystem into the space.
-    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(f2fs), C(lvm), C(xfs) and C(vfat) filesystems.
+    - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(f2fs), C(lvm), C(xfs), C(vfat), C(swap) filesystems.
     - XFS Will only grow if mounted.
     - vFAT will likely fail if fatresize < 1.04.
     type: bool
@@ -312,6 +313,11 @@ class LVM(Filesystem):
         return block_count
 
 
+class Swap(Filesystem):
+    MKFS = 'mkswap'
+    MKFS_FORCE_FLAGS = '-f'
+
+
 FILESYSTEMS = {
     'ext2': Ext2,
     'ext3': Ext3,
@@ -324,6 +330,7 @@ FILESYSTEMS = {
     'vfat': VFAT,
     'ocfs2': Ocfs2,
     'LVM2_member': LVM,
+    'swap': Swap,
 }
 
 
