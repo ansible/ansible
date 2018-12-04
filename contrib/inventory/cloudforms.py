@@ -271,7 +271,7 @@ class CloudFormsInventory(object):
 
         while not last_page:
             offset = page * limit
-            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags,hosts,&attributes=ipaddresses" % (self.cloudforms_url, offset, limit))
+            ret = self._get_json("%s/api/vms?offset=%s&limit=%s&expand=resources,tags,hosts,&attributes=ipaddresses,hostnames" % (self.cloudforms_url, offset, limit))
             results += ret['resources']
             if ret['subcount'] < limit:
                 last_page = True
@@ -290,7 +290,9 @@ class CloudFormsInventory(object):
             print("Updating cache...")
 
         for host in self._get_hosts():
-            if self.cloudforms_suffix is not None and not host['name'].endswith(self.cloudforms_suffix):
+            if len(host['hostnames']) > 0 and host['hostnames'][0] is not None:
+                host['name'] = host['hostnames'][0]
+            elif self.cloudforms_suffix is not None and not host['name'].endswith(self.cloudforms_suffix):
                 host['name'] = host['name'] + self.cloudforms_suffix
 
             # Ignore VMs that are not powered on
