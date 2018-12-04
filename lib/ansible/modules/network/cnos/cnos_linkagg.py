@@ -160,7 +160,7 @@ RETURN = """
 commands:
   description: The list of configuration mode commands to send to the device
   returned: always, except for the platforms that use Netconf transport to
-  manage the device.
+    manage the device.
   type: list
   sample:
     - interface port-channel 30
