@@ -742,8 +742,8 @@ class PyVmomi(object):
         Constructor
         """
         if not HAS_REQUESTS:
-            self.module.fail_json(msg="Unable to find 'requests' Python library which is required."
-                                      " Please install using 'pip install requests'")
+            module.fail_json(msg="Unable to find 'requests' Python library which is required."
+                                 " Please install using 'pip install requests'")
 
         if not HAS_PYVMOMI:
             module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
