@@ -1003,7 +1003,7 @@ class ArgumentSpec(object):
             name=dict(
                 required=True,
             ),
-            file=dict(),
+            file=dict(type='path'),
             template=dict(
                 choices=self.template_map
             ),
