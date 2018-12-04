@@ -107,7 +107,7 @@ def get_config(module, flags=None):
     flags = to_list(flags)
 
     section_filter = False
-    if 'section' in flags[-1]:
+    if flags and 'section' in flags[-1]:
         section_filter = True
 
     flag_str = ' '.join(flags)
