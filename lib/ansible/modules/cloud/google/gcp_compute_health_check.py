@@ -567,7 +567,8 @@ def main():
                 port_name=dict(type='str'),
                 proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1'])
             ))
-        )
+        ),
+        mutually_exclusive=[['http_health_check', 'https_health_check', 'ssl_health_check', 'tcp_health_check']]
     )
 
     if not module.params['scopes']:

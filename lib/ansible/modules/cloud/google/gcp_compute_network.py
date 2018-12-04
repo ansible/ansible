@@ -219,7 +219,8 @@ def main():
             routing_config=dict(type='dict', options=dict(
                 routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL'])
             ))
-        )
+        ),
+        mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']]
     )
 
     if not module.params['scopes']:
