@@ -464,10 +464,10 @@ class DnfModule(YumDnf):
 
     def _ensure_dnf(self):
         if not HAS_DNF:
-            if PY2:
-                package = 'python2-dnf'
-            else:
+            if not PY2:
                 package = 'python3-dnf'
+            else:
+                package = 'python2-dnf'
 
             if self.module.check_mode:
                 self.module.fail_json(
