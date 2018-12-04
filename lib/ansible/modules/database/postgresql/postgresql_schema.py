@@ -57,7 +57,7 @@ options:
   cascade_drop:
     description:
       - Drop schema with CASCADE to remove child objects
-    type: bool  
+    type: bool
     default: false
     version_added: '2.8'
   ssl_mode:
