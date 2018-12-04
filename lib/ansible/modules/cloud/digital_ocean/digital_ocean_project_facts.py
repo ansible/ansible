@@ -204,17 +204,21 @@ def core(module):
         elif module.params['default'] is True:  # Get information about default project
             response = rest.get('projects/default')
         else:  # Get information about all projects
-            response = rest.get('projects')
+            # response = rest.get('projects')
+            response = rest.get_paginated_data(base_url='projects?', data_key_name='projects')
     else:
         if module.params['default'] is True:  # Get information about default project resources
-            response = rest.get('projects/default/resources')
+            # response = rest.get('projects/default/resources')
+            response = rest.get_paginated_data(base_url='projects/default/resources?', data_key_name='resources')
         elif module.params['default'] is None or module.params['default'] is False:  # Get information about specific project resources
-            response = rest.get('/projects/{0}/resources'.format(pid))
-
-    if response.status_code == 200:
-        module.exit_json(changed=False, data=response.json)
-    else:
-        module.fail_json(msg=response.json)
+            response = rest.get_paginated_data(base_url='/projects/{0}/resources?'.format(pid), data_key_name='resources')
+    try:
+        if response.status_code == 200:
+            module.exit_json(changed=False, data=response.json)
+        else:
+            module.fail_json(msg=response.json)
+    except AttributeError:  # Probably using paginated data
+        module.exit_json(changed=False, data=response)
     module.exit_json(changed=False)
 
 
