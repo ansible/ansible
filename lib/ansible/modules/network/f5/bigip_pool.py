@@ -156,69 +156,71 @@ author:
 EXAMPLES = r'''
 - name: Create pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     lb_method: least-connections-member
     slow_ramp_time: 120
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Modify load balancer method
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     lb_method: round-robin
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add pool member
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set a single monitor (with enforcement)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     monitor_type: single
     monitors:
       - http
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set a single monitor (without enforcement)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     monitors:
       - http
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set multiple monitors (all must succeed)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
@@ -226,13 +228,14 @@ EXAMPLES = r'''
     monitors:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set multiple monitors (at least 1 must succeed)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
@@ -241,41 +244,48 @@ EXAMPLES = r'''
     monitors:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove pool member from pool
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add metadata to pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
     metadata:
       ansible: 2.4
       updated_at: 2017-12-20T17:50:46Z
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -841,7 +851,6 @@ class ModuleManager(object):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
