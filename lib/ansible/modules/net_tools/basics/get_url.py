@@ -154,7 +154,7 @@ options:
         be placed in, creating the parent tree as required. When 'file'
         specifies the destination file for the downloaded item.
     default: 'no'
-    version_added: '2.7'
+    version_added: '2.8'
     type: bool
   others:
     description:
