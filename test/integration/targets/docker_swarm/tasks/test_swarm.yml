@@ -52,7 +52,7 @@
     assert:
       that:
          - 'output.changed'
-         - 'output.actions[0] == "Node has leaved the swarm cluster"'
+         - 'output.actions[0] == "Node has left the swarm cluster"'
 
   always:
   - name: Cleanup
