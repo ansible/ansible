@@ -1,9 +1,0 @@
----
-subversion_packages:
-- mod_dav_svn
-- subversion
-apache_listen_conf_path: /etc/httpd/conf/httpd.conf
-apache_conf_path: /etc/httpd/conf.d/subversion.conf
-apache_user: apache
-apache_group: apache
-apache_service: httpd
