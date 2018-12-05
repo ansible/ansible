@@ -261,6 +261,8 @@ def main():
                 if not cloud.delete_stack(name, wait=module.params['wait']):
                     module.fail_json(msg='delete stack failed for stack: %s' % name)
             module.exit_json(changed=changed)
+    except sdk.exceptions.HttpException as e:
+        module.fail_json(msg=to_native(e), extra_data=e.details)
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=to_native(e))
 

@@ -14,6 +14,7 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils._text import to_native
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -191,6 +192,8 @@ def main():
                          resource=resource,
                          id=resource_id)
 
+    except sdk.exceptions.HttpException as e:
+        module.fail_json(msg=to_native(e), extra_data=e.details)
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), **module.params)
 

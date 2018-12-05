@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_native
 
 __metaclass__ = type
 
@@ -248,6 +249,8 @@ def main():
                     _lb_wait_for_status(module, cloud, lb, "ACTIVE", ["ERROR"])
 
             module.exit_json(changed=changed)
+    except sdk.exceptions.HttpException as e:
+        module.fail_json(msg=to_native(e), extra_data=e.details)
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
