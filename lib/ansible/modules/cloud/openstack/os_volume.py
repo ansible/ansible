@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_native
 __metaclass__ = type
 
 
@@ -85,7 +86,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
-def _present_volume(module, cloud):
+def _present_volume(module, cloud, sdk):
     if cloud.volume_exists(module.params['display_name']):
         v = cloud.get_volume(module.params['display_name'])
         module.exit_json(changed=False, id=v['id'], volume=v)
@@ -111,9 +112,14 @@ def _present_volume(module, cloud):
     if module.params['scheduler_hints']:
         volume_args['scheduler_hints'] = module.params['scheduler_hints']
 
-    volume = cloud.create_volume(
-        wait=module.params['wait'], timeout=module.params['timeout'],
-        **volume_args)
+    try:
+        volume = cloud.create_volume(
+            wait=module.params['wait'], timeout=module.params['timeout'],
+            **volume_args)
+    except sdk.exceptions.HttpException as e:
+        if hasattr(e, 'details'):
+            module.fail_json(msg=to_native(e.details))
+        raise
     module.exit_json(changed=True, id=volume['id'], volume=volume)
 
 
@@ -157,7 +163,7 @@ def main():
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         if state == 'present':
-            _present_volume(module, cloud)
+            _present_volume(module, cloud, sdk)
         if state == 'absent':
             _absent_volume(module, cloud, sdk)
     except sdk.exceptions.OpenStackCloudException as e:
