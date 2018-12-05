@@ -193,7 +193,6 @@ EXAMPLES = '''
     command: DISABLE_FAILURE_PREDICTION
 '''
 
-import types
 import time
 import os.path
 import stat
