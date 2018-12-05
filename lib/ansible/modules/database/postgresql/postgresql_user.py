@@ -138,11 +138,11 @@ options:
   role_grant:
     description:
       - Grant membership in role to user.
-    version_added: '--'
+    version_added: '2.8'
   role_revoke:
     description:
       - Revoke membership in role from user.
-    version_added: '--'
+    version_added: '2.8'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
