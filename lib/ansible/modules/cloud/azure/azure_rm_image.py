@@ -84,6 +84,19 @@ EXAMPLES = '''
         - datadisk002
     os_type: Linux
 
+- name: Create an image from os disk via dict
+  azure_rm_image:
+    resource_group: Testing
+    name: foobar
+    source:
+        types: disks
+        resource_group: Testing
+        name: disk001
+    data_disk_sources:
+        - datadisk001
+        - datadisk002
+    os_type: Linux
+
 - name: Delete an image
   azure_rm_image:
     state: absent
