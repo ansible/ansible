@@ -22,7 +22,7 @@ short_description: get or set PRIMERGY server and iRMC facts
 
 description:
     - Ansible module to get or set basic iRMC and PRIMERGY server data via iRMC RedFish interface.
-    - For more iRMC modules see https://github.com/FujitsuPrimergy/fujitsu-ansible-irmc-integration.
+    - For more iRMC modules see U(https://github.com/FujitsuPrimergy/fujitsu-ansible-irmc-integration).
 
 requirements:
     - The module needs to run locally.
