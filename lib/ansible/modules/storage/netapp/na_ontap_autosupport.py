@@ -30,7 +30,7 @@ options:
     default: present
   node_name:
     description:
-    - The name fo the filer that owns the AutoSupport Configuration.
+    - The name of the filer that owns the AutoSupport Configuration.
     required: true
   transport:
     description:
