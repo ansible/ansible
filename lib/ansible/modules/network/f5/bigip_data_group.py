@@ -25,6 +25,10 @@ options:
     description:
       - Specifies the name of the data group.
     required: True
+  description:
+    description:
+      - The description of the monitor.
+    version_added: 2.8
   type:
     description:
       - The type of records in this data group.
@@ -274,6 +278,7 @@ try:
     from library.module_utils.compat.ipaddress import ip_network
     from library.module_utils.compat.ipaddress import ip_interface
     from library.module_utils.network.f5.icontrol import upload_file
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -288,6 +293,7 @@ except ImportError:
     from ansible.module_utils.compat.ipaddress import ip_network
     from ansible.module_utils.compat.ipaddress import ip_interface
     from ansible.module_utils.network.f5.icontrol import upload_file
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 LINE_LIMIT = 65000
@@ -502,19 +508,25 @@ class RecordsDecoder(object):
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'externalFileName': 'external_file_name'
+        'externalFileName': 'external_file_name',
     }
 
     api_attributes = [
-        'records', 'type'
+        'records',
+        'type',
+        'description',
     ]
 
     returnables = [
-        'type', 'records'
+        'type',
+        'records',
+        'description',
     ]
 
     updatables = [
-        'records', 'checksum'
+        'records',
+        'checksum',
+        'description',
     ]
 
     @property
@@ -533,10 +545,14 @@ class Parameters(AnsibleF5Parameters):
             return self._values['records_src']
         except AttributeError:
             pass
+
         if self._values['records_src']:
             records = open(self._values['records_src'])
         else:
             records = self._values['records']
+
+        if records is None:
+            return None
 
         # There is a 98% chance that the user will supply a data group that is < 1MB.
         # 99.917% chance it is less than 10 MB. This is well within the range of typical
@@ -581,12 +597,28 @@ class ApiParameters(Parameters):
     def records_list(self):
         return self.records
 
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def checksum(self):
         if self._values['checksum']:
             return self._values['checksum']
+        if self.records_src is None:
+            return None
         result = hashlib.sha1()
         records = self.records_src
         while True:
@@ -613,6 +645,8 @@ class ModuleParameters(Parameters):
     @property
     def records(self):
         results = []
+        if self.records_src is None:
+            return None
         decoder = RecordsDecoder(record_type=self.type, separator=self.separator)
         for record in self.records_src:
             result = decoder.decode(record)
@@ -693,8 +727,14 @@ class Difference(object):
     def checksum(self):
         if self.want.internal:
             return None
+        if self.want.checksum is None:
+            return None
         if self.want.checksum != self.have.checksum:
             return True
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class BaseManager(object):
@@ -911,7 +951,7 @@ class ExternalManager(BaseManager):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if zero_length(self.want.records_src):
+        if self.changes.records_src and zero_length(self.want.records_src):
             raise F5ModuleError(
                 "An external data group cannot be empty."
             )
@@ -1035,8 +1075,11 @@ class ExternalManager(BaseManager):
         params = dict(
             name=self.want.name,
             partition=self.want.partition,
-            externalFileName=external_file
+            externalFileName=external_file,
         )
+        if self.want.description:
+            params['description'] = self.want.description
+
         uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/external/".format(
             self.client.provider['server'],
             self.client.provider['server_port']
@@ -1057,16 +1100,25 @@ class ExternalManager(BaseManager):
         self.remove_file_on_device(remote_path)
 
     def update_on_device(self):
-        name = self.want.external_file_name
-        remote_path = '/var/config/rest/downloads/{0}'.format(name)
-        external_file = self._upload_to_file(name, self.have.type, remote_path, update=True)
+        params = {}
+
+        if self.want.records_src is not None:
+            name = self.want.external_file_name
+            remote_path = '/var/config/rest/downloads/{0}'.format(name)
+            external_file = self._upload_to_file(name, self.have.type, remote_path, update=True)
+            params['externalFileName'] = external_file
+        if self.changes.description is not None:
+            params['description'] = self.changes.description
+
+        if not params:
+            return
 
         uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/external/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
             transform_name(self.want.partition, self.want.name)
         )
-        params = {'externalFileName': external_file}
+
         resp = self.client.api.patch(uri, json=params)
 
         try:
@@ -1165,7 +1217,9 @@ class ExternalManager(BaseManager):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return ApiParameters(params=response)
+        result = ApiParameters(params=response)
+        result.update({'description': response_dg.get('description', None)})
+        return result
 
 
 class ModuleManager(object):
@@ -1209,6 +1263,7 @@ class ArgumentSpec(object):
             records_src=dict(type='path'),
             external_file_name=dict(),
             separator=dict(default=':='),
+            description=dict(),
             state=dict(choices=['absent', 'present'], default='present'),
             partition=dict(
                 default='Common',
