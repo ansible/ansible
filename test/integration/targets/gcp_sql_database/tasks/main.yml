@@ -65,7 +65,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length >= 1
+      - "\"{{resource_name}}\" in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a database that already exists
   gcp_sql_database:
@@ -110,7 +110,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - "\"{{resource_name}}\" not in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a database that does not exist
   gcp_sql_database:
