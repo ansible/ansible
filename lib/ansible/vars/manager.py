@@ -622,10 +622,21 @@ class VariableManager:
         if host.name not in self._fact_cache:
             self._fact_cache[host.name] = facts
         else:
-            try:
-                self._fact_cache.update(host.name, facts)
-            except KeyError:
-                self._fact_cache[host.name] = facts
+            if isinstance(self._fact_cache, FactCache):
+                try:
+                    self._fact_cache.update(host.name, facts)
+                except KeyError:
+                    self._fact_cache[host.name] = facts
+            else:
+                # Dictionary fallback so we need to use a dictionary update.
+                try:
+                    host_cache = self._fact_cache[host.name]
+                except KeyError:
+                    host_cache = facts
+                else:
+                    host_cache.update(facts)
+
+                self._fact_cache[host.name] = host_cache
 
     def set_nonpersistent_facts(self, host, facts):
         '''
