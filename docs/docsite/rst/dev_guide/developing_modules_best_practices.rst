@@ -32,7 +32,7 @@ General guidelines & tips
 =========================
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
-* Module name should be using underscores instead of hyphens or spaces as word separator. Using hyphens and spaces will prevent Ansible from importing your module.
+* Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
 * Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
