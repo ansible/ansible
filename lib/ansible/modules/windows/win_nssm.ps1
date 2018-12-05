@@ -403,7 +403,7 @@ Function Nssm-Update-Credentials
             }
 
             If ($nssm_result.stdout.split("`n`r")[0] -ne $fullUser) {
-                $cmd = "set ""$name"" ObjectName $fullUser '$password'"
+                $cmd = Argv-ToString @("set", $name, "ObjectName", $fullUser, $password)
                 $nssm_result = Nssm-Invoke $cmd
 
                 if ($nssm_result.rc -ne 0)
