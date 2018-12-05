@@ -176,34 +176,34 @@
 ## sysctl - sysctl_set with ignore_errors and ignoreerrors (to ensure backward compatibility) 
 ## 
 
-- name: set value for fictional key with ignore_errors
+- name: set value for fictional key with ignore_unknown_keys
   sysctl: 
     name: k.doesnotexist
     value: 1 
-    ignore_errors: yes
-  register: sysctl_ignore_errors0
+    ignore_unknown_keys: yes
+  register: sysctl_ignore_unknown_keys0
   
 - debug:
-    var: sysctl_ignore_errors0
+    var: sysctl_ignore_unknown_keys0
     verbosity: 1
 
-- name: validate success of set operation with ignore_errors
+- name: validate success of set operation with ignore_unknown_keys
   assert: 
     that: 
-      - sysctl_ignore_errors0 is success
+      - sysctl_ignore_unknown_keys0 is success
 
 - name: set value for fictional key with ignoreerrors
   sysctl: 
     name: k.doesnotexist
     value: 1 
     ignoreerrors: yes
-  register: sysctl_ignore_errors1
+  register: sysctl_ignoreerrors0
   
 - debug:
-    var: sysctl_ignore_errors1
+    var: sysctl_ignoreerrors0
     verbosity: 1
 
 - name: validate success of set operation with ignoreerrors
   assert: 
     that: 
-      - sysctl_ignore_errors1 is success
+      - sysctl_ignoreerrors0 is success

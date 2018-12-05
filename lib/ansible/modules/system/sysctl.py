@@ -36,7 +36,7 @@ options:
             - Whether the entry should be present or absent in the sysctl file.
         choices: [ "present", "absent" ]
         default: present
-    ignore_errors:
+    ignore_unknown_keys:
         description:
             - Use this option to ignore errors about unknown keys.
         type: bool
@@ -242,13 +242,13 @@ class SysctlModule(object):
             thiscmd = "%s %s=%s" % (self.sysctl_cmd, token, value)
         elif self.platform == 'freebsd':
             ignore_missing = ''
-            if self.args['ignore_errors']:
+            if self.args['gnore_unknown_keys']:
                 ignore_missing = '-i'
             # freebsd doesn't accept -w, but since it's not needed, just drop it
             thiscmd = "%s %s %s=%s" % (self.sysctl_cmd, ignore_missing, token, value)
         else:
             ignore_missing = ''
-            if self.args['ignore_errors']:
+            if self.args['ignore_unknown_keys']:
                 ignore_missing = '-e'
             thiscmd = "%s %s -w %s=%s" % (self.sysctl_cmd, ignore_missing, token, value)
         rc, out, err = self.module.run_command(thiscmd)
@@ -277,7 +277,7 @@ class SysctlModule(object):
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
-            if self.args['ignore_errors']:
+            if self.args['ignore_unknown_keys']:
                 sysctl_args.insert(1, '-e')
 
             rc, out, err = self.module.run_command(sysctl_args)
@@ -369,7 +369,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
-            ignore_errors=dict(aliases=['ignoreerrors'], default=False, type='bool'),
+            ignore_unknown_keys=dict(aliases=['ignoreerrors'], default=False, type='bool'),
             sysctl_file=dict(default='/etc/sysctl.conf', type='path')
         ),
         supports_check_mode=True,
