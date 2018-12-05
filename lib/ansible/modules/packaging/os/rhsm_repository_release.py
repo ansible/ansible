@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: rhsm_repository_release
 short_description: Set or Unset RHSM Repository Release version
-version_added: '2.7'
+version_added: '2.8'
 description:
   - Sets or unsets the release version used by RHSM repositories.
 notes:
