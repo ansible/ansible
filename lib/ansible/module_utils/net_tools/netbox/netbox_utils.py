@@ -128,10 +128,10 @@ def find_ids(nb, data):
             elif k == "nat_inside":
                 if v.get("vrf"):
                     vrf_id = nb.ipam.vrfs.get(**{"name": v["vrf"]})
-                    query_id = nb_endpoint.get(**{"address": v["address"], "vrf_id": vrf_id.id })
+                    query_id = nb_endpoint.get(**{"address": v["address"], "vrf_id": vrf_id.id})
                 else:
                     try:
-                        query_id = nb_endpoint.get(**{"address": v["address"] })
+                        query_id = nb_endpoint.get(**{"address": v["address"]})
                     except ValueError:
                         return {"failed": "Multiple results found while searching for %s: %s - Specify a VRF within %s" % (k, v["address"], k)}
             else:

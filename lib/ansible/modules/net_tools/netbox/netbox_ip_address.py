@@ -148,7 +148,7 @@ EXAMPLES = r'''
           family: 4
           address: 192.168.1.30
           vrf: Test
-          nat_inside: 
+          nat_inside:
             address: 192.168.1.20
             vrf: Test
           interface:
@@ -187,7 +187,7 @@ def netbox_create_ip_address(nb, nb_endpoint, data):
             result.append(data)
             return result
 
-        if not nb_endpoint.get(address=data["address"], vrf_id=data['vrf']):  
+        if not nb_endpoint.get(address=data["address"], vrf_id=data['vrf']):
             try:
                 return nb_endpoint.create([data])
             except pynetbox.RequestError as e:
