@@ -476,7 +476,6 @@ class StrategyBase:
                             ),
                         )
                     else:
-                        # increment the failed count for this host
                         self._tqm._stats.increment('failures', original_host.name)
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
