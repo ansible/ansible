@@ -846,6 +846,7 @@ class AnsibleModule(object):
             self._check_required_arguments()
             self._check_argument_types()
             self._check_argument_values()
+            self._check_argument_elements()
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
             self._check_required_if(required_if)
@@ -2024,6 +2025,7 @@ class AnsibleModule(object):
                         self._check_required_arguments(spec, param)
                         self._check_argument_types(spec, param)
                         self._check_argument_values(spec, param)
+                        self._check_argument_elements(spec, param)
 
                         self._check_required_together(v.get('required_together', None), param)
                         self._check_required_one_of(v.get('required_one_of', None), param)
@@ -2075,6 +2077,60 @@ class AnsibleModule(object):
             except (TypeError, ValueError) as e:
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" %
                                (k, type(value), wanted, to_native(e)))
+
+    def _check_argument_elements(self, spec=None, param=None):
+        ''' ensure all elements have the requested type '''
+
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+
+        for (k, v) in spec.items():
+            wanted = v.get('elements', None)
+            arg_type = v.get('type', None)
+            if k not in param:
+                continue
+
+            values = param[k]
+            if values is None:
+                continue
+
+            if arg_type != 'list' or not isinstance(values, list):
+                msg = "Invalid type %s for option '%s'" % (arg_type, k)
+                if self._options_context:
+                    msg += " found in '%s'." % " -> ".join(self._options_context)
+                msg += ", elements value check is supported only with 'list' type"
+                self.fail_json(msg=msg)
+
+            if not callable(wanted):
+                if wanted is None:
+                    # Mostly we want to default to str.
+                    wanted = 'str'
+                try:
+                    type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+                except KeyError:
+                    msg = "implementation error: unknown type %s requested for option '%s'" % (wanted, k)
+                    if self._options_context:
+                        msg += " found in '%s'." % " -> ".join(self._options_context)
+                    self.fail_json(msg=msg)
+            else:
+                # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
+                type_checker = wanted
+                wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
+            validated_params = []
+            for value in values:
+                try:
+                    validated_params.append(type_checker(value))
+                except (TypeError, ValueError) as e:
+                    msg = "Elements value for option %s" % k
+                    if self._options_context:
+                        msg += " found in '%s'" % " -> ".join(self._options_context)
+                    msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted, to_native(e))
+                    self.fail_json(msg=msg)
+
+            param[k] = validated_params
 
     def _set_defaults(self, pre=True, spec=None, param=None):
         if spec is None:
