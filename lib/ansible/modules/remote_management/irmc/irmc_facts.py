@@ -36,7 +36,7 @@ author:
 options:
     irmc_url:
         description: IP address of the iRMC to be requested for data.
-        required:    true
+        required: true
     irmc_username:
         description: iRMC user for basic authentication.
         required:    true
