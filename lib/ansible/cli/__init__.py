@@ -417,6 +417,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # base opts
         parser = SortedOptParser(usage, version=CLI.version("%prog"), description=desc, epilog=epilog)
+        parser.remove_option('--version')
+        version_help = "show program's version number, config file location, configured module search path," \
+                       " module location, executable location and exit"
+        parser.add_option('--version', action="version", help=version_help)
         parser.add_option('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
                           help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
