@@ -95,7 +95,7 @@ def get_file_arg_spec():
         serole=dict(),
         selevel=dict(),
         setype=dict(),
-        attributes=dict(aliases=['attr'])
+        attributes=dict(aliases=['attr']),
     )
     return arg_spec
 

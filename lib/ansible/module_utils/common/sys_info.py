@@ -51,10 +51,10 @@ def get_distribution_version():
     return distribution_version
 
 
-def _get_all_subclasses(cls):
+def get_all_subclasses(cls):
     '''
-    used by modules like Hardware or Network fact classes to retrieve all subclasses of a given class.
-    __subclasses__ return only direct sub classes. This one go down into the class tree.
+    used by modules like Hardware or Network fact classes to recursively retrieve all 
+    subclasses of a given class not only the direct sub classes.
     '''
     # Retrieve direct subclasses
     subclasses = cls.__subclasses__()

@@ -169,7 +169,7 @@ from ansible.module_utils.common.sys_info import (
     get_distribution,
     get_distribution_version,
     load_platform_subclass,
-    _get_all_subclasses as get_all_subclasses,
+    get_all_subclasses,
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
