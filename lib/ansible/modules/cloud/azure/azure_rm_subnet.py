@@ -276,7 +276,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                 if self.route_table != results['route_table'].get('id'):
                     changed = True
                     results['route_table']['id'] = self.route_table
-                    self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table['name']))
+                    self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table['name'] if route_table else 'None'))
 
                 if self.service_endpoints:
                     oldd = {}
