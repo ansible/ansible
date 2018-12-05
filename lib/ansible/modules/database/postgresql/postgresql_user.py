@@ -138,11 +138,11 @@ options:
   role_grant:
     description:
       - Grant membership in role to user.
-    version_added: '2.8'
+    version_added: '--'
   role_revoke:
     description:
       - Revoke membership in role from user.
-    version_added: '2.8'
+    version_added: '--'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -270,7 +270,7 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_limit, role_grant):
+def user_add(cursor, user, password, module, role_attr_flags, encrypted, expires, conn_limit, role_grant):
     """Create a new database user (role)."""
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
@@ -290,8 +290,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
 
     if role_grant:
         if not user_exists(cursor, role_grant):
-            module.fail_json(msg='Role %s does not exist' % role_grant,
-                             exception=traceback.format_exc())
+            module.fail_json(msg='Role %s does not exist' % role_grant)
             return True
         query = 'GRANT %s TO %s' % (
             pg_quote_identifier(role_grant, 'role'), pg_quote_identifier(user, 'role'))
@@ -906,7 +905,7 @@ def main():
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         else:
             try:
-                changed = user_add(cursor, user, password,
+                changed = user_add(cursor, user, password, module,
                                    role_attr_flags, encrypted, expires, conn_limit, role_grant)
             except psycopg2.ProgrammingError as e:
                 module.fail_json(msg="Unable to add user with given requirement "
