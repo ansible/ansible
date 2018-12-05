@@ -66,11 +66,6 @@ options:
     version_added: 2.7
     description:
       - uid of the dasboard to export when C(state) is C(export) or C(absent).
-<<<<<<< a7de0bd139759f1d05f238e069153c183859de1a
-=======
-      - uid of the dashboard to create and update when C(state) is C(present).
-        If uid is not provided, the module uses uid provided in json file
->>>>>>> Fix grafana dashboard - force getting uid from module
   path:
     description:
       - The path to the json file containing the Grafana dashboard to import or export.
@@ -254,12 +249,10 @@ def grafana_create_dashboard(module, data):
     else:
         if data.get('uid'):
             uid = data['uid']
-            payload['dashboard']['uid'] = uid
         elif 'uid' in payload['dashboard']:
             uid = payload['dashboard']['uid']
         else:
             uid = None
-
 
     # test if dashboard already exists
     dashboard_exists, dashboard = grafana_dashboard_exists(
@@ -274,16 +267,11 @@ def grafana_create_dashboard(module, data):
             result['changed'] = False
         else:
             # update
-<<<<<<< a7de0bd139759f1d05f238e069153c183859de1a
             if 'overwrite' in data and data['overwrite']:
-=======
-            if uid is not None:
-                payload["dashboard"].pop("id")
-            if 'overwrite' in data and data['overwrite'] == True:
->>>>>>> Fix grafana dashboard - force getting uid from module
                 payload['overwrite'] = True
             if 'message' in data and data['message']:
                 payload['message'] = data['message']
+
             r, info = fetch_url(module, '%s/api/dashboards/db' %
                                 data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
             if info['status'] == 200:
@@ -304,10 +292,7 @@ def grafana_create_dashboard(module, data):
         # create
         if 'id' in payload["dashboard"]:
             payload["dashboard"].pop("id")
-<<<<<<< 1a70828cfe03a69612df0353bc55386d99c608ff
-=======
 
->>>>>>> Fix grafana dashboard - remove duplicate about uid management (#46152)
         r, info = fetch_url(module, '%s/api/dashboards/db' %
                             data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
