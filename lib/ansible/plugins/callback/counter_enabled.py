@@ -90,8 +90,8 @@ class CallbackModule(CallbackBase):
                 colorize(u'ok', stat['ok'], C.COLOR_OK),
                 colorize(u'changed', stat['changed'], C.COLOR_CHANGED),
                 colorize(u'unreachable', stat['unreachable'], C.COLOR_UNREACHABLE),
-                colorize(u'failed', stat['failures'], C.COLOR_ERROR)),
-                colorize(u'rescued', stat['rescued'], C.COLOR_ERROR)),
+                colorize(u'failed', stat['failures'], C.COLOR_ERROR),
+                colorize(u'rescued', stat['rescued'], C.COLOR_ERROR),
                 colorize(u'ignored', stat['ignored'], C.COLOR_ERROR)),
                 screen_only=True
             )
@@ -101,8 +101,8 @@ class CallbackModule(CallbackBase):
                 colorize(u'ok', stat['ok'], None),
                 colorize(u'changed', stat['changed'], None),
                 colorize(u'unreachable', stat['unreachable'], None),
-                colorize(u'failed', stat['failures'], None)),
-                colorize(u'rescued', stat['rescued'], None)),
+                colorize(u'failed', stat['failures'], None),
+                colorize(u'rescued', stat['rescued'], None),
                 colorize(u'ignored', stat['ignored'], None)),
                 log_only=True
             )
