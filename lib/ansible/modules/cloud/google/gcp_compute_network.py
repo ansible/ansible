@@ -219,7 +219,8 @@ def main():
             routing_config=dict(type='dict', options=dict(
                 routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL'])
             ))
-        )
+        ),
+        mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']]
     )
 
     if not module.params['scopes']:
@@ -279,7 +280,7 @@ def resource_to_request(module):
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v is not None:
             return_vals[k] = v
 
     return return_vals

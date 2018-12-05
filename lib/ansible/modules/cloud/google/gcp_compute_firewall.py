@@ -448,7 +448,14 @@ def main():
             source_tags=dict(type='list', elements='str'),
             target_service_accounts=dict(type='list', elements='str'),
             target_tags=dict(type='list', elements='str')
-        )
+        ),
+        mutually_exclusive=[['allowed', 'denied'],
+                            ['destination_ranges', 'source_ranges', 'source_tags'],
+                            ['destination_ranges', 'source_ranges'],
+                            ['source_service_accounts', 'source_tags', 'target_tags'],
+                            ['destination_ranges', 'source_service_accounts', 'source_tags', 'target_service_accounts'],
+                            ['source_tags', 'target_service_accounts', 'target_tags'],
+                            ['source_service_accounts', 'target_service_accounts', 'target_tags']]
     )
 
     if not module.params['scopes']:
@@ -518,7 +525,7 @@ def resource_to_request(module):
     request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v is not None:
             return_vals[k] = v
 
     return return_vals
