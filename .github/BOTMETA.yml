@@ -41,6 +41,8 @@ files:
     support: core
   changelogs/fragments/:
     support: community
+  $modules/cloud/alicloud/:
+    support: community
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph nadirollo
   $modules/cloud/amazon/aws_api_gateway.py: willthames
