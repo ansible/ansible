@@ -15,12 +15,12 @@ DOCUMENTATION = '''
 module: route53_facts
 short_description: Retrieves route53 details using AWS methods
 description:
-    - Gets various details related to Route53 zone, record set or health check details
+    - Gets various details related to Route53 zone, record set or health check details.
 version_added: "2.0"
 options:
   query:
     description:
-      - specifies the query action to take
+      - specifies the query action to take.
     required: True
     choices: [
             'change',
@@ -33,17 +33,20 @@ options:
   change_id:
     description:
       - The ID of the change batch request.
-        The value that you specify here is the value that
+      - The value that you specify here is the value that
         ChangeResourceRecordSets returned in the Id element
         when you submitted the request.
+      - Required if C(query) is set to C(change).
     required: false
   hosted_zone_id:
     description:
-      - The Hosted Zone ID of the DNS zone
+      - The Hosted Zone ID of the DNS zone.
+      - Required if C(query) is set to C(hosted_zone) and C(hosted_zone_method) is set to C(details).
+      - Required if C(query) is set to C(record_sets).
     required: false
   max_items:
     description:
-      - Maximum number of items to return for various get/list requests
+      - Maximum number of items to return for various get/list requests.
     required: false
   next_marker:
     description:
@@ -51,16 +54,16 @@ options:
         number of entries - EG 100 or the number specified by max_items.
         If the number of entries exceeds this maximum another request can be sent
         using the NextMarker entry from the first response to get the next page
-        of results"
+        of results."
     required: false
   delegation_set_id:
     description:
-      - The DNS Zone delegation set ID
+      - The DNS Zone delegation set ID.
     required: false
   start_record_name:
     description:
       - "The first name in the lexicographic ordering of domain names that you want
-        the list_command: record_sets to start listing from"
+        the list_command: record_sets to start listing from."
     required: false
   type:
     description:
@@ -70,16 +73,20 @@ options:
   dns_name:
     description:
       - The first name in the lexicographic ordering of domain names that you want
-        the list_command to start listing from
+        the list_command to start listing from.
     required: false
   resource_id:
     description:
-      - The ID/s of the specified resource/s
+      - The ID/s of the specified resource/s.
+      - Required if C(query) is set to C(health_check) and C(health_check_method) is to C(tags).
+      - Required if C(query) is set to C(hosted_zone) and C(hosted_zone_method) is to C(tags).
     required: false
     aliases: ['resource_ids']
   health_check_id:
     description:
-      - The ID of the health check
+      - The ID of the health check.
+      - Required if C(query) is set to C(health_check) and
+        C(health_check_method) is set to C(details) or C(status) or C(failure_reason).
     required: false
   hosted_zone_method:
     description:
