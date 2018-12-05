@@ -44,7 +44,7 @@ options:
         description: Password for iRMC user for basic authentication.
         required:    true
     validate_certs:
-        description: Evaluate SSL certificate (set to false for self-signed certificate).
+        description: If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
         type:        bool
         required:    false
         default:     true
