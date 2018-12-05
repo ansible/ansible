@@ -175,8 +175,8 @@ properly or the host is not inheriting them correctly.
 Make sure ``ansible_connection: winrm`` is set in the inventory for the Windows
 host.
 
-Why are my credentials are being rejected?
-``````````````````````````````````````````
+Why are my credentials being rejected?
+``````````````````````````````````````
 This can be due to a myriad of reasons unrelated to incorrect credentials.
 
 See HTTP 401/Credentials Rejected at :doc:`windows_setup` for a more detailed
