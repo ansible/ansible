@@ -82,9 +82,6 @@ options:
       nat_inside:
         description:
           - The inside IP address this IP is assigned to
-      nat_outside:
-        description:
-          - The outside IP address this IP is assigned to
       tags:
         description:
           - Any tags that the IP address may need to be associated with
@@ -151,7 +148,9 @@ EXAMPLES = r'''
           family: 4
           address: 192.168.1.30
           vrf: Test
-          nat_inside: 192.168.1.20
+          nat_inside: 
+            address: 192.168.1.20
+            vrf: Test
           interface:
             name: GigabitEthernet1
             device: test100
@@ -184,10 +183,13 @@ def netbox_create_ip_address(nb, nb_endpoint, data):
         if norm_data.get("role"):
             norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
         data = find_ids(nb, norm_data)
+        if data.get('failed'):
+            result.append(data)
+            return result
 
-        if not nb_endpoint.get(address=data["address"], vrf_id=data['vrf']):
+        if not nb_endpoint.get(address=data["address"], vrf_id=data['vrf']):  
             try:
-                return nb_endpoint.create([norm_data])
+                return nb_endpoint.create([data])
             except pynetbox.RequestError as e:
                 return json.loads(e.error)
         else:
@@ -202,7 +204,7 @@ def netbox_create_ip_address(nb, nb_endpoint, data):
             data = find_ids(nb, norm_data)
 
             try:
-                return nb_endpoint.create([norm_data])
+                return nb_endpoint.create([data])
             except pynetbox.RequestError as e:
                 return json.loads(e.error)
         else:
@@ -281,4 +283,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
