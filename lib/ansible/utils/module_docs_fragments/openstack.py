@@ -100,10 +100,10 @@ requirements:
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
     may be used instead of providing explicit values.
-  - Auth information is driven by os-client-config, which means that values
+  - Auth information is driven by openstacksdk, which means that values
     can come from a yaml config file in /etc/ansible/openstack.yaml,
     /etc/openstack/clouds.yaml or ~/.config/openstack/clouds.yaml, then from
     standard environment variables, then finally by explicit parameters in
     plays. More information can be found at
-    U(http://docs.openstack.org/developer/os-client-config)
+    U(https://docs.openstack.org/openstacksdk/)
 '''
