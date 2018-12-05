@@ -27,7 +27,6 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S4 needs FW >= 9.04, iRMC S5 needs FW >= 1.25.
-    - Python >= 2.6
     - Python module 'future'
 
 version_added: "2.8"
