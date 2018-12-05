@@ -119,14 +119,14 @@ options:
     - Maximum number of CloudFormation events to fetch from a stack when creating or updating it.
     default: 200
     version_added: "2.7"
-  delay:
+  backoff_delay:
     description:
     - Number of seconds to wait for the next retry.
     default: 3
     version_added: "2.8"
     type: int
     required: False
-  retries:
+  backoff_retries:
     description:
     - Number of times to retry operation.
     - AWS API throttling mechanism fails Cloudformation module so we have to retry a couple of times.
@@ -134,7 +134,7 @@ options:
     version_added: "2.8"
     type: int
     required: False
-  max_delay:
+  backoff_max_delay:
     description:
     - Maximum amount of time to wait between retries.
     default: 30
@@ -600,9 +600,9 @@ def main():
         tags=dict(default=None, type='dict'),
         termination_protection=dict(default=None, type='bool'),
         events_limit=dict(default=200, type='int'),
-        retries=dict(type='int', default=10, required=False),
-        delay=dict(type='int', default=3, required=False),
-        max_delay=dict(type='int', default=30, required=False),
+        backoff_retries=dict(type='int', default=10, required=False),
+        backoff_delay=dict(type='int', default=3, required=False),
+        backoff_max_delay=dict(type='int', default=30, required=False),
     )
     )
 
@@ -675,9 +675,9 @@ def main():
     # Wrap the cloudformation client methods that this module uses with
     # automatic backoff / retry for throttling error codes
     backoff_wrapper = AWSRetry.jittered_backoff(
-        retries=module.params.get('retries'),
-        delay=module.params.get('delay'),
-        max_delay=module.params.get('max_delay')
+        retries=module.params.get('backoff_retries'),
+        delay=module.params.get('backoff_delay'),
+        max_delay=module.params.get('backoff_max_delay')
     )
     cfn.describe_stack_events = backoff_wrapper(cfn.describe_stack_events)
     cfn.create_stack = backoff_wrapper(cfn.create_stack)

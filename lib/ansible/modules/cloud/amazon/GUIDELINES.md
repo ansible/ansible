@@ -45,7 +45,7 @@ are included. If you do find an issue, please raise a bug report.
 
 When porting, keep in mind that AnsibleAWSModule also will add the default ec2
 argument spec by default. In pre-port modules, you should see common arguments
-specfied with:
+specified with:
 
 ```
 def main():
@@ -415,6 +415,13 @@ describe_instances(module.client('ec2'), InstanceIds=['i-123456789'])
 
 The call will be retried the specified number of times, so the calling functions
 don't need to be wrapped in the backoff decorator.
+
+You can also use customization for `retries`, `delay` and `max_delay` parameters used by
+`AWSRetry.jittered_backoff` API using module params. You can take a look into
+[cloudformation](/lib/ansible/modules/cloud/amazon/cloudformation.py) module for example.
+
+To make all Amazon modules uniform, please use module param as `backoff_retries` for `retries`,
+`backoff_delay` of `delay` and `backoff_max_delay` for `max_delay`.
 
 ### Returning Values
 
