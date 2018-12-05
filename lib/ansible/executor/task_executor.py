@@ -82,6 +82,8 @@ class TaskExecutor:
         self._final_q = final_q
         self._loop_eval_error = None
 
+        self.templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+
         self._task.squash()
 
     def run(self):
@@ -93,6 +95,8 @@ class TaskExecutor:
         '''
 
         display.debug("in run() - task %s" % self._task._uuid)
+
+        self._setup_play_context(self.templar, self._job_vars)
 
         try:
             try:
@@ -210,7 +214,7 @@ class TaskExecutor:
         if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
             self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+        self.templar.set_available_variables(self._job_vars)
         items = None
         loop_cache = self._job_vars.get('_ansible_loop_cache')
         if loop_cache is not None:
@@ -224,13 +228,13 @@ class TaskExecutor:
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
                     fail = False
 
-                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, loader=self._loader, fail_on_undefined=fail,
+                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=self.templar, loader=self._loader, fail_on_undefined=fail,
                                                          convert_bare=False)
                 if not fail:
-                    loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
+                    loop_terms = [t for t in loop_terms if not self.templar._contains_vars(t)]
 
                 # get lookup
-                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
+                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=self.templar)
 
                 # give lookup task 'context' for subdir (mostly needed for first_found)
                 for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
@@ -244,7 +248,7 @@ class TaskExecutor:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
         elif self._task.loop is not None:
-            items = templar.template(self._task.loop)
+            items = self.templar.template(self._task.loop)
             if not isinstance(items, list):
                 raise AnsibleError(
                     "Invalid data passed to 'loop', it requires a list, got this instead: %s."
@@ -286,13 +290,13 @@ class TaskExecutor:
         index_var = None
         label = None
         loop_pause = 0
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+        self.templar.set_available_variables(self._job_vars)
 
         # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
         if self._task.loop_control:
-            loop_var = templar.template(self._task.loop_control.loop_var)
-            index_var = templar.template(self._task.loop_control.index_var)
-            loop_pause = templar.template(self._task.loop_control.pause)
+            loop_var = self.templar.template(self._task.loop_control.loop_var)
+            index_var = self.templar.template(self._task.loop_control.index_var)
+            loop_pause = self.templar.template(self._task.loop_control.pause)
 
             # This may be 'None',so it is tempalted below after we ensure a value and an item is assigned
             label = self._task.loop_control.label
@@ -318,7 +322,7 @@ class TaskExecutor:
                 task_vars[index_var] = item_index
 
             # Update template vars to reflect current loop iteration
-            templar.set_available_variables(task_vars)
+            self.templar.set_available_variables(task_vars)
 
             # pause between loop iterations
             if loop_pause and ran_once:
@@ -359,7 +363,7 @@ class TaskExecutor:
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             try:
-                res['_ansible_item_label'] = templar.template(label, cache=False)
+                res['_ansible_item_label'] = self.templar.template(label, cache=False)
             except AnsibleUndefinedVariable as e:
                 res.update({
                     'failed': True,
@@ -394,10 +398,10 @@ class TaskExecutor:
             # optimizing it here, the templatable string might use template vars
             # that aren't available until later (it could even use vars from the
             # with_items loop) so don't make the templated string permanent yet.
-            templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+            self.templar.set_available_variables(variables)
             task_action = self._task.action
-            if templar._contains_vars(task_action):
-                task_action = templar.template(task_action, fail_on_undefined=False)
+            if self.templar._contains_vars(task_action):
+                task_action = self.templar.template(task_action, fail_on_undefined=False)
 
             if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
                 if all(isinstance(o, string_types) for o in items):
@@ -414,11 +418,11 @@ class TaskExecutor:
                     # contains a template that we can squash for
                     template_no_item = template_with_item = None
                     if name:
-                        if templar._contains_vars(name):
+                        if self.templar._contains_vars(name):
                             variables[loop_var] = '\0$'
-                            template_no_item = templar.template(name, variables, cache=False)
+                            template_no_item = self.templar.template(name, variables, cache=False)
                             variables[loop_var] = '\0@'
-                            template_with_item = templar.template(name, variables, cache=False)
+                            template_with_item = self.templar.template(name, variables, cache=False)
                             del variables[loop_var]
 
                         # Check if the user is doing some operation that doesn't take
@@ -433,8 +437,8 @@ class TaskExecutor:
                             )
                             for item in items:
                                 variables[loop_var] = item
-                                if self._task.evaluate_conditional(templar, variables):
-                                    new_item = templar.template(name, cache=False)
+                                if self._task.evaluate_conditional(self.templar, variables):
+                                    new_item = self.templar.template(name, cache=False)
                                     final_items.append(new_item)
                             self._task.args['name'] = final_items
                             # Wrap this in a list so that the calling function loop
@@ -458,18 +462,7 @@ class TaskExecutor:
                 self._task.args['name'] = name
         return items
 
-    def _execute(self, variables=None):
-        '''
-        The primary workhorse of the executor system, this runs the task
-        on the specified host (which may be the delegated_to host) and handles
-        the retry/until and block rescue/always execution
-        '''
-
-        if variables is None:
-            variables = self._job_vars
-
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
-
+    def _setup_play_context(self, templar, variables):
         context_validation_error = None
         try:
             # apply the given task's information to the connection info,
@@ -496,12 +489,28 @@ class TaskExecutor:
             # skipping this task during the conditional evaluation step
             context_validation_error = e
 
+        return context_validation_error
+
+    def _execute(self, variables=None):
+        '''
+        The primary workhorse of the executor system, this runs the task
+        on the specified host (which may be the delegated_to host) and handles
+        the retry/until and block rescue/always execution
+        '''
+
+        if variables is None:
+            variables = self._job_vars
+
+        self.templar.set_available_variables(variables)
+
+        context_validation_error = self._setup_play_context(self.templar, variables)
+
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         try:
-            if not self._task.evaluate_conditional(templar, variables):
+            if not self._task.evaluate_conditional(self.templar, variables):
                 display.debug("when evaluation is False, skipping this task")
                 return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
         except AnsibleError:
@@ -526,7 +535,7 @@ class TaskExecutor:
             if not include_file:
                 return dict(failed=True, msg="No include file was specified to the include")
 
-            include_file = templar.template(include_file)
+            include_file = self.templar.template(include_file)
             return dict(include=include_file, include_variables=include_variables)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
@@ -535,7 +544,7 @@ class TaskExecutor:
             return dict(include_variables=include_variables)
 
         # Now we do final validation on the task, which sets all fields to their final values.
-        self._task.post_validate(templar=templar)
+        self._task.post_validate(templar=self.templar)
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
@@ -549,17 +558,17 @@ class TaskExecutor:
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
-            self._connection = self._get_connection(variables=variables, templar=templar)
+            self._connection = self._get_connection(variables=variables, templar=self.templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
-        self._set_connection_options(variables, templar)
-        self._set_shell_options(variables, templar)
+        self._set_connection_options(variables, self.templar)
+        self._set_shell_options(variables, self.templar)
 
         # get handler
-        self._handler = self._get_action_handler(connection=self._connection, templar=templar)
+        self._handler = self._get_action_handler(connection=self._connection, templar=self.templar)
 
         # Apply default params for action/module, if present
         # These are collected as a list of dicts, so we need to merge them
@@ -567,7 +576,7 @@ class TaskExecutor:
         for default in self._task.module_defaults:
             module_defaults.update(default)
         if module_defaults:
-            module_defaults = templar.template(module_defaults)
+            module_defaults = self.templar.template(module_defaults)
         if self._task.action in module_defaults:
             tmp_args = module_defaults[self._task.action].copy()
             tmp_args.update(self._task.args)
@@ -627,7 +636,7 @@ class TaskExecutor:
 
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
-                    result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    result = self._poll_async_result(result=result, templar=self.templar, task_vars=vars_copy)
                     # FIXME callback 'v2_runner_on_async_poll' here
 
                 # ensure no log is preserved
@@ -638,13 +647,13 @@ class TaskExecutor:
                 if self._task.changed_when is not None and self._task.changed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.changed_when
-                    result['changed'] = cond.evaluate_conditional(templar, vars_copy)
+                    result['changed'] = cond.evaluate_conditional(self.templar, vars_copy)
 
             def _evaluate_failed_when_result(result):
                 if self._task.failed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.failed_when
-                    failed_when_result = cond.evaluate_conditional(templar, vars_copy)
+                    failed_when_result = cond.evaluate_conditional(self.templar, vars_copy)
                     result['failed_when_result'] = result['failed'] = failed_when_result
                 else:
                     failed_when_result = False
@@ -691,7 +700,7 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
-                if cond.evaluate_conditional(templar, vars_copy):
+                if cond.evaluate_conditional(self.templar, vars_copy):
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
