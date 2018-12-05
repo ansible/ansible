@@ -1,0 +1,169 @@
+---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
+
+- block:
+
+  - name: setup - remove config used in test(part1)
+    cnos_config:
+      lines:
+        - no interface port-channel 20
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: setup - remove config used in test(part2)
+    cnos_config:
+      lines:
+        - no interface port-channel 5
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: setup - remove config used in test(part3)
+    cnos_config:
+      lines:
+        - no channel-group
+      provider: "{{ cli }}"
+      parents: "{{ item }}"
+    loop:
+      - interface Ethernet1/33
+      - interface Ethernet1/44
+
+  - name: create linkagg
+    cnos_linkagg: &create
+      group: 20
+      state: present
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface port-channel 20' in result.commands"
+
+  - name: create linkagg(Idempotence)
+    cnos_linkagg: *create
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: set link aggregation group to members
+    cnos_linkagg: &configure_member
+      group: 20
+      mode: active
+      members:
+        - Ethernet1/33
+        - Ethernet1/44
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface Ethernet1/33' in result.commands"
+        - "'channel-group 20 mode active' in result.commands"
+        - "'interface Ethernet1/44' in result.commands"
+        - "'channel-group 20 mode active' in result.commands"
+
+  - name: set link aggregation group to members(Idempotence)
+    cnos_linkagg: *configure_member
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: remove link aggregation group from member
+    cnos_linkagg: &remove_member
+      group: 20
+      mode: active
+      members:
+        - Ethernet1/33
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface Ethernet1/44' in result.commands"
+        - "'no channel-group' in result.commands"
+
+  - name: remove link aggregation group from member(Idempotence)
+    cnos_linkagg: *remove_member
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: remove linkagg
+    cnos_linkagg: &remove
+      group: 20
+      state: absent
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no interface port-channel 20' in result.commands"
+
+  - name: remove linkagg(Idempotence)
+    cnos_linkagg: *remove
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: create aggregate of linkagg definitions
+    cnos_linkagg: &create_agg
+      aggregate:
+        - { group: 5 }
+        - { group: 20, mode: active, members: ['Ethernet1/33'] }
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface port-channel 5' in result.commands"
+        - "'interface port-channel 20' in result.commands"
+        - "'interface Ethernet1/33' in result.commands"
+        - "'channel-group 20 mode active' in result.commands"
+
+  - name: create aggregate of linkagg definitions(Idempotence)
+    cnos_linkagg: *create_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: teardown(part1)
+    cnos_config:
+      lines:
+        - no interface port-channel 20
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: teardown(part2)
+    cnos_config:
+      lines:
+        - no interface port-channel 5
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+  - name: teardown(part3)
+    cnos_config:
+      lines:
+        - no channel-group
+      provider: "{{ cli }}"
+      parents: "{{ item }}"
+    loop:
+      - interface Ethernet1/33
+      - interface Ethernet1/44
+
+
+- debug: msg="END cli/basic.yaml on connection={{ ansible_connection }}"
