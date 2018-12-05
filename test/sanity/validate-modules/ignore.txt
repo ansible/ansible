@@ -78,7 +78,6 @@ lib/ansible/modules/cloud/amazon/lambda_event.py E317
 lib/ansible/modules/cloud/amazon/rds.py E322
 lib/ansible/modules/cloud/amazon/rds.py E327
 lib/ansible/modules/cloud/amazon/rds_param_group.py E324
-lib/ansible/modules/cloud/amazon/rds_param_group.py E326
 lib/ansible/modules/cloud/amazon/rds_subnet_group.py E324
 lib/ansible/modules/cloud/amazon/redshift.py E322
 lib/ansible/modules/cloud/amazon/redshift.py E325
