@@ -55,10 +55,7 @@ DOCUMENTATION = """
       type: boolean
       default: True
     namespace:
-      description: namespace where secrets reside.
-      requires:
-        - HVAC 0.7.0+
-        - Vault 0.11+
+      description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+
       default: None
 """
 
