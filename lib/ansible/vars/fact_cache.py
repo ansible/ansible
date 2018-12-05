@@ -59,24 +59,40 @@ class FactCache(MutableMapping):
         self._plugin.flush()
 
     def update(self, *args):
-        """ We override the normal update to ensure we always use the 'setter' method """
+        """
+        Backwards compat shim
+
+        We thought we needed this to ensure we always called the plugin's set() method but
+        MutableMapping.update() will call our __setitem__() just fine.  It's the calls to update
+        that we need to be careful of.  This contains a bug::
+
+            fact_cache[host.name].update(facts)
+
+        It retrieves a *copy* of the facts for host.name and then updates the copy.  So the changes
+        aren't persisted.
+
+        Instead we need to do::
+
+            fact_cache.update({host.name, facts})
+
+        Which will use FactCache's update() method.
+
+        We currently need this shim for backwards compat because the update() method that we had
+        implemented took key and value as arguments instead of taking a dict.  We can remove the
+        shim in 2.12 as MutableMapping.update() should do everything that we need.
+        """
         if len(args) == 2:
-            display.deprecated('Calling FactCache.update(key, value) is deprecated.  Use the'
-                               ' normal dict.update() signature of FactCache.update({key: value})'
-                               ' instead.', version='2.12')
-            host_facts = {args[0]: args[1]}
+            # Deprecated.  Call the new function with this name
+            display.deprecated('Calling FactCache().update(key, value) is deprecated.  Use'
+                               ' FactCache().first_order_merge(key, value) if you want the old'
+                               ' behaviour or use FactCache().update({key: value}) if you want'
+                               ' dict-like behaviour.', version='2.12')
+            return self.first_order_merge(*args)
+
         elif len(args) == 1:
             host_facts = args[0]
+
         else:
             raise TypeError('update expected at most 1 argument, got {0}'.format(len(args)))
 
-        for key in host_facts:
-            try:
-                host_cache = self._plugin.get(key)
-                if host_cache:
-                    host_cache.update(host_facts[key])
-                else:
-                    host_cache = host_facts[key]
-                self._plugin.set(key, host_cache)
-            except KeyError:
-                self._plugin.set(key, host_facts[key])
+        super(FactCache, self).update(host_facts)

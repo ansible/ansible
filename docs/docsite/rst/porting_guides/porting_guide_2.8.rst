@@ -63,7 +63,8 @@ Deprecated
   2. The ``FactCache.update()`` method has been converted to follow the dict API.  It now takes a
      dictionary as its sole argument and updates itself with the dictionary's items.  The previous
      API where ``update()`` took a key and a value will now issue a deprecation warning and will be
-     removed in 2.12.
+     removed in 2.12.  If you need the old behaviour switch to ``FactCache.first_order_merge()``
+     instead.
 
 Modules
 =======
