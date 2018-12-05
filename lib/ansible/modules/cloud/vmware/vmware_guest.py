@@ -202,6 +202,13 @@ options:
     - "vmware-tools needs to be installed on the given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
+  wait_for_customization:
+    description:
+    - Wait until vCenter detects all guest customizations as successfully completed.
+    - When enabled, the VM will automatically be powered on.
+    default: 'no'
+    type: bool
+    version_added: '2.8'
   state_change_timeout:
     description:
     - If the C(state) is set to C(shutdownguest), by default the module will return immediately after sending the shutdown signal.
@@ -1316,9 +1323,9 @@ class PyVmomiHelper(PyVmomi):
                     pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
                 if (nic.device.backing and
-                   (not hasattr(nic.device.backing, 'port') or
-                    (nic.device.backing.port.portgroupKey != pg_obj.key or
-                     nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid))):
+                    (not hasattr(nic.device.backing, 'port') or
+                     (nic.device.backing.port.portgroupKey != pg_obj.key or
+                      nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid))):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -2193,11 +2200,17 @@ class PyVmomiHelper(PyVmomi):
                 task = vm.ReconfigVM_Task(vm_custom_spec)
                 self.wait_for_task(task)
 
-            if self.params['wait_for_ip_address'] or self.params['state'] in ['poweredon', 'restarted']:
+            if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
 
                 if self.params['wait_for_ip_address']:
                     self.wait_for_vm_ip(vm)
+
+                if self.params['wait_for_customization']:
+                    is_customization_ok = self.wait_for_customization(vm)
+                    if not is_customization_ok:
+                        vm_facts = self.gather_facts(vm)
+                        return {'changed': self.change_detected, 'failed': True, 'instance': vm_facts}
 
             vm_facts = self.gather_facts(vm)
             return {'changed': self.change_detected, 'failed': False, 'instance': vm_facts}
@@ -2341,6 +2354,38 @@ class PyVmomiHelper(PyVmomi):
 
         return facts
 
+    def get_vm_events(self, eventTypeIdList):
+        newvm = self.get_vm()
+        byEntity = vim.event.EventFilterSpec.ByEntity(entity=newvm, recursion="self")
+        filterSpec = vim.event.EventFilterSpec(entity=byEntity, eventTypeId=eventTypeIdList)
+        eventManager = self.content.eventManager
+        return eventManager.QueryEvent(filterSpec)
+
+    def wait_for_customization(self, vm, poll=10000, sleep=10):
+        facts = {}
+        thispoll = 0
+        while thispoll <= poll:
+            eventStarted = self.get_vm_events(['CustomizationStartedEvent'])
+            if len(eventStarted):
+                thispoll = 0
+                while thispoll <= poll:
+                    eventsFinishedResult = self.get_vm_events(['CustomizationSucceeded', 'CustomizationFailed'])
+                    if len(eventsFinishedResult):
+                        if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
+                            self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(
+                                eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
+                            return False
+                        break
+                    else:
+                        time.sleep(sleep)
+                        thispoll += 1
+                return True
+            else:
+                time.sleep(sleep)
+                thispoll += 1
+        self.module.fail_json('waiting for customizations timed out.')
+        return False
+
 
 def main():
     argument_spec = vmware_argument_spec()
@@ -2371,6 +2416,7 @@ def main():
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
         customization_spec=dict(type='str', default=None),
+        wait_for_customization=dict(type='bool', default=False),
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
