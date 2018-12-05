@@ -6,6 +6,7 @@
       public_ip_name: "pip{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       security_group_name: "sg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
       blob_name: "blob{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      empty_disk_name: "emptydisk{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
 - name: Create storage account
   azure_rm_storageaccount:
@@ -78,12 +79,22 @@
       name: "{{ vm_name }}"
       vm_size: Standard_A0
 
+- name: Create new empty managed disk
+  azure_rm_managed_disk:
+      resource_group: "{{ resource_group }}"
+      name: "{{ empty_disk_name }}"
+      storage_account_type: "Standard_LRS"
+      disk_size_gb: 1
+  register: emptydisk
+
 - name: Create an image from VM (check mode)
   azure_rm_image:
       resource_group: "{{ resource_group }}"
       source: "https://{{ storage_name }}.blob.core.windows.net/{{ storage_container_name }}/{{ blob_name }}.vhd"
       name: testimage001
       os_type: Linux
+      data_disk_sources:
+          - "{{ empty_disk_name }}"
   check_mode: yes
   register: output
 
@@ -149,6 +160,12 @@
 - assert:
     that:
       - not output.changed
+
+- name: Delete empty disk
+  azure_rm_managed_disk:
+      resource_group: "{{ resource_group }}"
+      name: "{{ empty_disk_name }}"
+      state: absent
 
 - name: Delete VM
   azure_rm_virtualmachine:
