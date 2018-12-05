@@ -1,0 +1,2 @@
+bugfixes:
+- Fix traceback when updating facts and the fact cache plugin was nonfunctional
