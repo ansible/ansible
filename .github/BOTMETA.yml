@@ -897,6 +897,8 @@ files:
   $plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  $plugins/connection/saltstack.py:
+    support: community
   $plugins/connection/winrm.py:
     maintainers: $team_windows_core
     labels:
